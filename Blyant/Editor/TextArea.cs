@@ -101,6 +101,12 @@ public partial class TextArea
         /// A comparison: ":w name" saves the text as a file in this directory (null: it is not saved)
         /// </summary>
         internal string? SaveDirectory { get; init; }
+
+        /// <summary>
+        /// Shown without word wrap, whatever the setting is (a peek of the file browser). ":wrap" changes the peek
+        /// only, not the setting
+        /// </summary>
+        internal bool NoWrap { get; init; }
     }
 
     // Set for a peek: there is no title or mode divider above the text, it is read only, Esc closes it and Enter
@@ -201,7 +207,7 @@ public partial class TextArea
             MaxCells = width - 3,
             // A peek is narrow: no line numbers
             LineNumbers = LineNumbers && !_singleLine && !readOnly && peek == null,
-            Wrap = WordWrap || _singleLine,
+            Wrap = _singleLine || (WordWrap && peek?.NoWrap != true),
             ScrollOffLines = ScrollOffLines,
             ScrollOff = ScrollOff && !_singleLine && !readOnly ? ScrollOffLines : 0,
             // Words are completed while typing, as set (not in a peek or a line of a dialog)
@@ -731,6 +737,7 @@ public partial class TextArea
                 if (_saveMode != SaveAsSettings) FileIo.SaveSettings();
                 break;
             case EditorRequest.WrapChanged:
+                if (_peek?.NoWrap == true) break;
                 WordWrap = _engine.Wrap;
                 if (_saveMode != SaveAsSettings) FileIo.SaveSettings();
                 break;

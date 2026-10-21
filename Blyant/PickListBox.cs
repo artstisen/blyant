@@ -17,6 +17,29 @@ internal static class PickListBox
     private static int _listRows;
     private static int _previewTop;
     private static int _previewRows;
+    private static Extras? _extras;
+
+    /// <summary>
+    /// What a list can have besides its rows (as the list of projects): a color for each row, a text to the right
+    /// of the preview, and keys of its own
+    /// </summary>
+    internal sealed class Extras
+    {
+        /// <summary>
+        /// The color of the text of a row (null: the normal color)
+        /// </summary>
+        internal Func<int, ConsoleColor?>? RowColor { get; init; }
+
+        /// <summary>
+        /// The text to the right of the preview, wrapped (the preview then takes the left half)
+        /// </summary>
+        internal Func<int, string>? Side { get; init; }
+
+        /// <summary>
+        /// A key pressed on a row: true if it was used. The box is drawn again (the key may have shown another box)
+        /// </summary>
+        internal Func<ConsoleKeyInfo, int, bool>? Key { get; init; }
+    }
 
     /// <summary>
     /// Show the list and let the user pick a row
@@ -26,12 +49,14 @@ internal static class PickListBox
     /// <param name="preview">The text shown below the list for a row</param>
     /// <param name="selected">The row selected from the start</param>
     /// <param name="hints">The keys, on the bottom line</param>
+    /// <param name="extras">Colors, a text to the right of the preview, and keys of the list (null: none)</param>
     /// <returns>The number of the row picked, or -1</returns>
     internal static int Show(string caption, IReadOnlyList<string> rows, Func<int, string> preview, int selected,
-        string hints)
+        string hints, Extras? extras = null)
     {
         // In the color of text in frames and boxes
         using var frameText = ConsoleColors.FrameTextScope();
+        _extras = extras;
 
         var filter = string.Empty;
         var filtering = false;
@@ -57,7 +82,8 @@ internal static class PickListBox
             if (selected != shownSelected)
             {
                 DrawPointers(view, scroll, selected);
-                DrawPreview(view.Count > 0 ? preview(view[selected]) : string.Empty);
+                DrawPreview(view.Count > 0 ? preview(view[selected]) : string.Empty,
+                    view.Count > 0 && extras?.Side is { } side ? side(view[selected]) : string.Empty);
                 shownSelected = selected;
             }
 
@@ -137,6 +163,13 @@ internal static class PickListBox
                 return view[selected];
             }
 
+            if (extras?.Key is { } onKey && view.Count > 0 && onKey(key, view[selected]))
+            {
+                DrawBox(caption);
+                shownScroll = -1;
+                continue;
+            }
+
             if (navigation == ConsoleKey.DownArrow) selected = Math.Min(selected + 1, Math.Max(0, view.Count - 1));
             if (navigation == ConsoleKey.UpArrow) selected = Math.Max(selected - 1, 0);
             if (key.Key == ConsoleKey.PageDown) selected = Math.Min(selected + _listRows, Math.Max(0, view.Count - 1));
@@ -206,11 +239,15 @@ internal static class PickListBox
             Tools.SetCursorEx(_listTop + row, _left + 1);
             var i = scroll + row;
             var text = i < view.Count
-                ? "     " + TextMetrics.Printable(Tools.TruncateString(rows[view[i]], _inner - 8, true))
+                ? TextMetrics.Printable(Tools.TruncateString(rows[view[i]], _inner - 8, true))
                 : i == 0 && filter.Length > 0
-                    ? "     " + DialogText.PickListNoMatch
+                    ? DialogText.PickListNoMatch
                     : string.Empty;
-            Console.Write(text + new string(' ', Math.Max(0, _inner - TextMetrics.WidthOf(text))));
+            Console.Write("     ");
+            if (i < view.Count && _extras?.RowColor?.Invoke(view[i]) is { } color) ConsoleColors.SetTextColor(color);
+            Console.Write(text);
+            ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
+            Console.Write(new string(' ', Math.Max(0, _inner - 5 - TextMetrics.WidthOf(text))));
         }
 
         // More above or below
@@ -237,17 +274,37 @@ internal static class PickListBox
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
     }
 
-    private static void DrawPreview(string text)
+    // The preview takes the width of the box, or the left half when there is a text to the right of it (wrapped)
+    private static void DrawPreview(string text, string side)
     {
         var lines = text.Length == 0 ? Array.Empty<string>() : text.Split('\n');
+        var hasSide = _extras?.Side != null;
+        var width = hasSide ? (_inner - 4) / 2 - 1 : _inner - 4;
+        // "| " between the two, and a blank column before the border
+        var sideWidth = _inner - 2 - width - 2 - 2;
+        var sideLines = side.Length == 0 ? new List<string>() : ChoiceBox.Wrap(side, sideWidth);
         for (var row = 0; row < _previewRows; row++)
         {
             Tools.SetCursorEx(_previewTop + row, _left + 1);
             var line = row < lines.Length
-                ? "  " + TextMetrics.Printable(Tools.TruncateString(lines[row].Replace("\t", "    "), _inner - 4, true))
+                ? "  " + TextMetrics.Printable(Tools.TruncateString(lines[row].Replace("\t", "    "), width, true))
                 : string.Empty;
             if (row == _previewRows - 1 && lines.Length > _previewRows) line = "  ...";
-            Console.Write(line + new string(' ', Math.Max(0, _inner - TextMetrics.WidthOf(line))));
+            var used = hasSide ? width + 2 : _inner;
+            Console.Write(line + new string(' ', Math.Max(0, used - TextMetrics.WidthOf(line))));
+            if (!hasSide) continue;
+
+            ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
+            Console.Write("| ");
+            ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
+            var part = row < sideLines.Count ? TextMetrics.Printable(sideLines[row]) : string.Empty;
+            // The last row ends with "..." when there is more
+            if (row == _previewRows - 1 && sideLines.Count > _previewRows)
+            {
+                part = Tools.TruncateString(part, Math.Max(0, sideWidth - 3), false).TrimEnd() + "...";
+            }
+
+            Console.Write(part + new string(' ', Math.Max(0, _inner - used - 2 - TextMetrics.WidthOf(part))));
         }
     }
 

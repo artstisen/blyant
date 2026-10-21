@@ -77,4 +77,82 @@ public class ProjectsTests : IDisposable
         // Not in a field of a box
         Assert.NotEqual(EditorRequest.Projects, new EditorEngine("x", 40, 1, true).Type(":projects<CR>"));
     }
+
+    [Fact]
+    public void TheColorOfAProject_IsKeptInTheProject_AndTheFileGoesWithTheLastColor()
+    {
+        Projects.Create("Novel", out var path);
+        var file = Path.Combine(path, Projects.InfoFileName);
+        Assert.Null(Projects.ColorOf("Novel"));
+        Assert.Equal(DialogText.Success, Projects.SetColor("Novel", ConsoleColor.DarkCyan));
+        Assert.Equal(ConsoleColor.DarkCyan, Projects.ColorOf("Novel"));
+        // LF, also on Windows
+        Assert.DoesNotContain("\r", File.ReadAllText(file));
+        Assert.Contains("color=DarkCyan\n", File.ReadAllText(file));
+        Assert.Equal(DialogText.Success, Projects.SetColor("Novel", null));
+        Assert.Null(Projects.ColorOf("Novel"));
+        Assert.False(File.Exists(file));
+        // Not among what the project holds
+        Projects.SetColor("Novel", ConsoleColor.Red);
+        Assert.Equal(Lang.T("(empty)"), Projects.Contents("Novel", 5));
+    }
+
+    [Fact]
+    public void TheFileOfAProject_WrittenElsewhere_IsRead_AndItsOtherLinesAreKept()
+    {
+        Projects.Create("Novel", out var path);
+        var file = Path.Combine(path, Projects.InfoFileName);
+        File.WriteAllText(file, "# comment\r\ncolor=blue\r\nlater=1\r\n");
+        Assert.Equal(ConsoleColor.Blue, Projects.ColorOf("Novel"));
+        Projects.SetColor("Novel", null);
+        Assert.Contains("later=1", File.ReadAllText(file));
+        Assert.Null(Projects.ColorOf("Novel"));
+        // Not a color
+        File.WriteAllText(file, "color=Plaid\ncolor=99\n");
+        Assert.Null(Projects.ColorOf("Novel"));
+    }
+
+    [Fact]
+    public void TheNoteOfAProject_IsAMarkdownFile_ShownAsItsWordsInALine()
+    {
+        Projects.Create("Novel", out var path);
+        Assert.Equal(string.Empty, Projects.NoteSnippet("Novel"));
+        Assert.Equal(DialogText.Success, Projects.EnsureNote("Novel"));
+        Assert.Equal(Path.Combine(path, Projects.NoteFileName), Projects.NotePath("Novel"));
+        // Left empty: removed
+        Projects.RemoveEmptyNote("Novel");
+        Assert.False(File.Exists(Projects.NotePath("Novel")));
+
+        File.WriteAllText(Projects.NotePath("Novel"), "# Plan\r\n\r\n> Send   chapters 1-3\n\tto the editor.\n");
+        Assert.Equal("Plan Send chapters 1-3 to the editor.", Projects.NoteSnippet("Novel"));
+        Projects.RemoveEmptyNote("Novel");
+        Assert.True(File.Exists(Projects.NotePath("Novel")));
+        // Making it again keeps what is written
+        Projects.EnsureNote("Novel");
+        Assert.StartsWith("# Plan", File.ReadAllText(Projects.NotePath("Novel")));
+        Assert.Equal(Lang.T("(empty)"), Projects.Contents("Novel", 5));
+    }
+
+    [Fact]
+    public void ANewProject_IsNotNamedAsAnother_InOtherUpperOrLowerCase()
+    {
+        // On Linux both could be made, but not where the folder may be synced to (Windows, macOS)
+        Projects.Create("Novel", out _);
+        Assert.Equal(DialogText.NameExists, Projects.NameProblem("novel"));
+        Assert.Equal(DialogText.NameExists, Projects.NameProblem("NOVEL"));
+        Assert.Null(Projects.NameProblem("Novels"));
+    }
+
+    [Fact]
+    public void TheProjectsFolderOfTheSettings_IsAFullPathOfThisSystem()
+    {
+        var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        Assert.Equal(home, Projects.DirectoryFromSetting("~"));
+        Assert.Equal(Path.Combine(home, "Writing"), Projects.DirectoryFromSetting(" ~/Writing "));
+        Assert.Equal(_directory, Projects.DirectoryFromSetting(_directory));
+        Assert.Null(Projects.DirectoryFromSetting(""));
+        Assert.Null(Projects.DirectoryFromSetting("Writing"));
+        // Written on another system
+        Assert.Null(Projects.DirectoryFromSetting(OperatingSystem.IsWindows() ? "/home/me/Writing" : @"C:\Users\me\Writing"));
+    }
 }

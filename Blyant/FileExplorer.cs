@@ -934,7 +934,16 @@ internal static partial class FileExplorer
     }
 
     /// <summary>
-    /// A file of Blyant (snippets, completions) is being edited
+    /// Open the note of a project in the editor (N in the list of projects), as the file of snippets. A file
+    /// being edited is kept
+    /// </summary>
+    internal static void EditNote(string path)
+    {
+        EditBlyantFile(path, DialogText.OpenProject, 0);
+    }
+
+    /// <summary>
+    /// A file of Blyant (snippets, completions, the note of a project) is being edited
     /// </summary>
     internal static bool EditingBlyantFile { get; private set; }
 

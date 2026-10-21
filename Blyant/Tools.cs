@@ -588,6 +588,8 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("  2 F", Lang.T("Open file: the file browser"), false));
             _shortcutList.Add(new Shortcut("  3 P", Lang.T("New project: a folder in the projects folder"), false));
             _shortcutList.Add(new Shortcut("  4 O", Lang.T("Open project: pick one in the list of projects"), false));
+            _shortcutList.Add(new Shortcut("      C", Lang.T("In the list: the color of the project"), false));
+            _shortcutList.Add(new Shortcut("      N", Lang.T("In the list: the note of the project, in the editor"), false));
             _shortcutList.Add(new Shortcut("  5 M Ctrl+O", Lang.T("The Jump menu: files, directories and pages"), false));
             _shortcutList.Add(new Shortcut("  6 U", Lang.T("Quick guide: a short introduction"), false));
             _shortcutList.Add(new Shortcut("  7", Lang.T("Exit Blyant (without asking)"), false));

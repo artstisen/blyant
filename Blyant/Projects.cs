@@ -71,7 +71,32 @@ internal static class Projects
         name = name.Trim();
         if (Tools.FileNameProblem(name) is { } problem) return problem;
         var path = Path.Combine(Directory, name);
-        return System.IO.Directory.Exists(path) || File.Exists(path) ? DialogText.NameExists : null;
+        if (System.IO.Directory.Exists(path) || File.Exists(path)) return DialogText.NameExists;
+        // Not only in upper or lower case (on Linux both can be made, but not on Windows and macOS, where the
+        // projects may be synced to)
+        return Names().Contains(name, StringComparer.OrdinalIgnoreCase) ? DialogText.NameExists : null;
+    }
+
+    /// <summary>
+    /// The projects directory of the setting "projectsdir": "~" is the home directory, and a path that is not a
+    /// full path on this system (one written on another system: "C:\Users\..." on Linux) is not used
+    /// </summary>
+    /// <returns>The directory, or null to use the default one</returns>
+    internal static string? DirectoryFromSetting(string setting)
+    {
+        setting = setting.Trim();
+        if (setting == "~" || setting.StartsWith("~/", StringComparison.Ordinal) ||
+            setting.StartsWith("~\\", StringComparison.Ordinal))
+        {
+            var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile,
+                Environment.SpecialFolderOption.DoNotVerify);
+            if (home.Length == 0) return null;
+            setting = setting.Length <= 2 ? home : Path.Combine(home, setting[2..]);
+        }
+
+        return setting.Length > 0 && Tools.IsValidPath(setting) && Path.IsPathFullyQualified(setting)
+            ? setting
+            : null;
     }
 
     /// <summary>
@@ -94,6 +119,148 @@ internal static class Projects
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or NotSupportedException)
         {
             return e.Message;
+        }
+    }
+
+    /// <summary>
+    /// The file in a project with its color (the line "color=DarkCyan"), so it goes with the folder when it is
+    /// moved, copied or synced. It is made when a color is set, and removed when the color is
+    /// </summary>
+    internal const string InfoFileName = ".blyant"; // English: the name of a file
+
+    /// <summary>
+    /// The note of a project: a Markdown file in it, written in the editor (N in the list of projects)
+    /// </summary>
+    internal const string NoteFileName = ".blyant-note.md"; // English: the name of a file
+
+    // As much of a note as is read for the list of projects
+    private const int SnippetLength = 2000;
+
+    /// <summary>
+    /// The color of a project (null if it has none, or its file cannot be read)
+    /// </summary>
+    internal static ConsoleColor? ColorOf(string name)
+    {
+        ConsoleColor? color = null;
+        foreach (var line in InfoLines(name))
+        {
+            if (line.StartsWith("color=", StringComparison.Ordinal) &&
+                Enum.TryParse<ConsoleColor>(line[6..].Trim(), true, out var parsed) && Enum.IsDefined(parsed))
+            {
+                color = parsed;
+            }
+        }
+
+        return color;
+    }
+
+    /// <summary>
+    /// Set the color of a project (null: no color). Other lines of the file (of a later version) are kept
+    /// </summary>
+    /// <returns>DialogText.Success or an error message</returns>
+    internal static string SetColor(string name, ConsoleColor? color)
+    {
+        var kept = InfoLines(name).Where(line => line.Length > 0 && !line.StartsWith('#') &&
+                                                 !line.StartsWith("color=", StringComparison.Ordinal)).ToList();
+        try
+        {
+            var path = Path.Combine(PathOf(name), InfoFileName);
+            if (color == null && kept.Count == 0)
+            {
+                if (File.Exists(path)) File.Delete(path);
+                return DialogText.Success;
+            }
+
+            var lines = new List<string> { "# Blyant: the settings of this project" }; // English
+            if (color != null) lines.Add("color=" + color);
+            lines.AddRange(kept);
+            // LF on all systems, so the file is the same wherever it is synced to
+            File.WriteAllText(path, string.Join("\n", lines) + "\n");
+            return DialogText.Success;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or NotSupportedException)
+        {
+            return e.Message;
+        }
+    }
+
+    // The lines of the file of a project (CRLF also, as it may have been written on another system)
+    private static string[] InfoLines(string name)
+    {
+        try
+        {
+            var path = Path.Combine(PathOf(name), InfoFileName);
+            return File.Exists(path) ? File.ReadAllText(path).Replace("\r", string.Empty).Split('\n') : [];
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return [];
+        }
+    }
+
+    /// <summary>
+    /// The full path of the note of a project
+    /// </summary>
+    internal static string NotePath(string name) => Path.Combine(PathOf(name), NoteFileName);
+
+    /// <summary>
+    /// The start of the note of a project, for the list of projects: its words in one line (empty if it has no
+    /// note, or it cannot be read)
+    /// </summary>
+    internal static string NoteSnippet(string name)
+    {
+        try
+        {
+            var path = NotePath(name);
+            if (!File.Exists(path)) return string.Empty;
+            using var reader = new StreamReader(path);
+            var buffer = new char[SnippetLength];
+            var text = new string(buffer, 0, reader.ReadBlock(buffer, 0, buffer.Length));
+            // Without the marks of Markdown headings and quotes ("# Plan" is "Plan")
+            var lines = text.Replace("\r", string.Empty).Split('\n').Select(line => line.TrimStart().TrimStart('#', '>'));
+            return string.Join(" ", string.Join(" ", lines).Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return string.Empty;
+        }
+    }
+
+    /// <summary>
+    /// Make the note of a project if it has none, to write it in the editor
+    /// </summary>
+    /// <returns>DialogText.Success or an error message</returns>
+    internal static string EnsureNote(string name)
+    {
+        try
+        {
+            var path = NotePath(name);
+            if (!File.Exists(path)) File.WriteAllText(path, string.Empty);
+            return DialogText.Success;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or NotSupportedException)
+        {
+            return e.Message;
+        }
+    }
+
+    /// <summary>
+    /// Remove the note of a project when nothing is written in it (after the editor is closed)
+    /// </summary>
+    internal static void RemoveEmptyNote(string name)
+    {
+        try
+        {
+            var path = NotePath(name);
+            if (File.Exists(path) && new FileInfo(path).Length < SnippetLength &&
+                File.ReadAllText(path).Trim().Length == 0)
+            {
+                File.Delete(path);
+            }
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            // It stays
         }
     }
 

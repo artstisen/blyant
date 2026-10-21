@@ -421,8 +421,7 @@ internal static class FileIo
         Init.AutoSize = Tools.TrimToLower(Get("autosize")) == DialogText.BTrue;
         StartMenu.Mode = StartMenu.ParseSetting(Get("startmode"));
         StartMenu.StartInFavorites = Tools.TrimToLower(Get("startfavorites")) == DialogText.BTrue;
-        var projects = Get("projectsdir").Trim();
-        Projects.Directory = projects.Length > 0 && Tools.IsValidPath(projects) ? projects : Projects.DefaultDirectory;
+        Projects.Directory = Projects.DirectoryFromSetting(Get("projectsdir")) ?? Projects.DefaultDirectory;
         // The clipboard (OSC 52 on unless turned off, the rest off unless turned on)
         SystemClipboard.Osc52 = Tools.TrimToLower(Get("osc52")) != DialogText.BFalse;
         SystemClipboard.PasteBin = Tools.TrimToLower(Get("pastebin")) == DialogText.BTrue;

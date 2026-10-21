@@ -534,7 +534,7 @@ internal static partial class FileExplorer
             Draw(true);
             var syntax = SyntaxHighlighter.TypeOfFile(item.Name);
             var textArea = new TextArea(left, ListTop, width, PageSize, PeekText(file.Text), 0, false, false, false,
-                TextArea.SaveAsFile, false, new TextArea.PeekOptions(syntax, () => Draw(true)));
+                TextArea.SaveAsFile, false, new TextArea.PeekOptions(syntax, () => Draw(true)) { NoWrap = true });
             Tools.HideCursor();
             if (textArea.OpenRequested)
             {

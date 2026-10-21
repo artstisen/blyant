@@ -140,6 +140,8 @@ internal static partial class QuickGuide
         (Kind.Heading, "", Lang.T("On the start page")),
         (Kind.Item, "P  :project", Lang.T("New project: a folder in the projects folder")),
         (Kind.Item, "O  :projects", Lang.T("Open project: pick one in the list of projects")),
+        (Kind.Item, "  C", Lang.T("In the list: the color of the project")),
+        (Kind.Item, "  N", Lang.T("In the list: the note of the project, in the editor")),
         (Kind.Item, "N  :new", Lang.T("New file (asks for the name if not given)")),
         (Kind.Item, "F  :file", Lang.T("Open file: the file browser")),
         (Kind.Text, "", ""),
