@@ -858,6 +858,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":wq :x ZZ", Lang.T("Save and close editor"), false));
             _shortcutList.Add(new Shortcut(":q Esc", Lang.T("Close editor (asks to save changes)"), false));
             _shortcutList.Add(new Shortcut(":q! ZQ", Lang.T("Close editor without saving"), false));
+            _shortcutList.Add(new Shortcut("Ctrl+C", Lang.T("Does not close the editor (it tells how to)"), false));
             _shortcutList.Add(new Shortcut(":e :e!", Lang.T("Read the file again (!: drop changes)"), false));
             _shortcutList.Add(new Shortcut(":help", Lang.T("Show this help"), false));
             _shortcutList.Add(new Shortcut(string.Empty, Lang.T("Moving the cursor (Normal and Visual mode)"), true));
@@ -1252,44 +1253,105 @@ internal static class Tools
             // What is being drawn cannot be completed, so the page must be drawn again
             Init.DimensionsExceptionCaught = true;
             _redrawRequested = true;
-            if (Init.AutoSize && Init.ApplyAutoSize())
-            {
-                // The dimensions follow the window: nothing to ask about
-                ClearScreen();
-                return;
-            }
-
-            ClearScreen();
-            ConsoleColors.SetColors(ConsoleColors.ColorPreset.AttentionInverted);
-            Console.Write(" " + DialogText.AttentionColon);
-            ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
-            Console.WriteLine(" " + DialogText.ErrorClientSize);
-            if (Init.AutoSize)
-            {
-                // The window is smaller than the smallest dimensions that can be used
-                Console.WriteLine("(" + Lang.F("Dimensions must be at least {0}", Init.MinLineWidth + "x" + Init.MinLineCount) + ")");
-                Console.WriteLine(DialogText.EnlargeWindow);
-                Console.ReadKey(true);
-                Init.ApplyAutoSize();
-            }
-            else
-            {
-                Console.WriteLine("(" + Lang.F("Dimensions must be at least {0}", Init.LineWidth + "x" + Init.LineCount) + ")");
-                Console.WriteLine(DialogText.FitOutputDimensions);
-                if (Console.ReadKey(true).Key == ConsoleKey.Y)
-                {
-                    // Use the size of the window from now on (not smaller than the minimum)
-                    Init.AutoSize = true;
-                    if (!Init.ApplyAutoSize()) Init.SetDefaultOutputDimensions();
-                    FileIo.SaveSettings();
-                }
-            }
-
-            ClearScreen();
+            WindowTooSmall();
         }
     }
 
+    /// <summary>
+    /// True if the terminal window is smaller than the dimensions in use (false if its size is not known)
+    /// </summary>
+    internal static bool IsWindowTooSmall()
+    {
+        try
+        {
+            return Console.WindowWidth - 1 < Init.LineWidth || Console.WindowHeight - 1 < Init.LineCount;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// The terminal window has been made smaller than the dimensions in use: they follow the window (automatic
+    /// size), or the user is asked to make the window larger or to let the dimensions follow it. The screen is
+    /// cleared: the page must be drawn again
+    /// </summary>
+    internal static void WindowTooSmall()
+    {
+        if (Init.AutoSize && Init.ApplyAutoSize())
+        {
+            // The dimensions follow the window: nothing to ask about
+            ClearScreen();
+            return;
+        }
+
+        ClearScreen();
+        ConsoleColors.SetColors(ConsoleColors.ColorPreset.AttentionInverted);
+        Console.Write(" " + DialogText.AttentionColon);
+        ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
+        Console.WriteLine(" " + DialogText.ErrorClientSize);
+        if (Init.AutoSize)
+        {
+            // The window is smaller than the smallest dimensions that can be used
+            Console.WriteLine("(" + Lang.F("Dimensions must be at least {0}", Init.MinLineWidth + "x" + Init.MinLineCount) + ")");
+            Console.WriteLine(DialogText.EnlargeWindow);
+            KeyOrLargerWindow();
+            Init.ApplyAutoSize();
+        }
+        else
+        {
+            Console.WriteLine("(" + Lang.F("Dimensions must be at least {0}", Init.LineWidth + "x" + Init.LineCount) + ")");
+            Console.WriteLine(DialogText.FitOutputDimensions);
+            if (KeyOrLargerWindow()?.Key == ConsoleKey.Y)
+            {
+                // Use the size of the window from now on (not smaller than the minimum)
+                Init.AutoSize = true;
+                if (!Init.ApplyAutoSize()) Init.SetDefaultOutputDimensions();
+                FileIo.SaveSettings();
+            }
+        }
+
+        ClearScreen();
+    }
+
+    // A key, or null as soon as the window is large enough for the dimensions in use (it was made larger while
+    // the question was shown)
+    private static ConsoleKeyInfo? KeyOrLargerWindow()
+    {
+        while (true)
+        {
+            try
+            {
+                if (Console.KeyAvailable) break;
+            }
+            catch
+            {
+                // Keys cannot be asked about (input from a file): wait for one
+                break;
+            }
+
+            if (!IsWindowTooSmall()) return null;
+            Thread.Sleep(50);
+        }
+
+        return Console.ReadKey(true);
+    }
+
     private static bool _redrawRequested;
+
+    // Ctrl+C was pressed (the signal comes on another thread: Init)
+    private static int _cancelKey;
+
+    /// <summary>
+    /// Ctrl+C was pressed: it is cancelled, and the editor tells how to close it (TakeCancelKey)
+    /// </summary>
+    internal static void NoteCancelKey() => Interlocked.Exchange(ref _cancelKey, 1);
+
+    /// <summary>
+    /// True (once) if Ctrl+C was pressed since this was asked last
+    /// </summary>
+    internal static bool TakeCancelKey() => Interlocked.Exchange(ref _cancelKey, 0) == 1;
 
     /// <summary>
     /// True (once) if a page could not be drawn because the terminal window was made smaller, and must be

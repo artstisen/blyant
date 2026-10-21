@@ -48,7 +48,7 @@ The settings are on four pages. `j` `k` (and `gg` `G`) select a setting on the p
 
 **Layout**
 
-- **Automatic size**: Follow the size of the terminal window. Turned off, the default size (80 x 23) is used until you set another
+- **Automatic size**: Follow the size of the terminal window (also while you write in the editor). Turned off, the default size (80 x 23) is used until you set another
 - **Size**: Set the number of columns and rows by hand (shown when _Automatic size_ is off)
 - **Black and white (no colors)**: Show everything in black and white. Your color scheme is kept and is used again when this is turned off
 - **Color scheme**: The color scheme in use. `Enter` opens the [color schemes](Guide-to-jump-menu.md#color-schemes), where a scheme is selected, and the colors are edited and saved as a scheme of your own (not shown when _Black and white_ is on)

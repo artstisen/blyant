@@ -19,6 +19,7 @@ Typed on the command line: press `:`, type the command and press `Enter`. `Tab` 
 - `:q!` or `ZQ` Close the editor without saving
 - `:e` (or `:reload`) Text files: read the file from disk again, when it has been changed by another program. If you have changes that are not saved it is not done; `:e!` reads the file anyway and drops your changes. What was done before cannot be undone afterwards
 - `:help` Show the list of keys
+- `Ctrl+C` does not close the editor (so text that is not saved is not lost): it tells how to close it. Where the terminal has a selection, `Ctrl+C` still copies it
 
 `Esc` first leaves what you are in the middle of: Insert or Visual mode, a command that is half typed, or the highlighting of search matches. When there is nothing to leave, it closes the editor.
 
@@ -281,6 +282,8 @@ Lines wider than the editor are wrapped onto the next rows (at a blank space whe
 - `zh` `zl` Scroll the view one column left/right (`5zl`: five columns), `zH` `zL` half the width of the editor
 - `zs` `ze` Scroll the view so the cursor is at the left/right side
 - The cursor stays in the view: if the view is scrolled past it, it is moved into the view
+
+When the terminal window is resized, the editor follows it once the size has stayed the same for a moment (with _Automatic size_ on): the text is wrapped in the new width, a split keeps half the width for each pane, and the cursor stays in view. With a fixed size, a window made smaller than that size asks whether to follow the window; the question goes away by itself when the window is made large enough again
 
 ## Scrolling
 A number of lines (12 from the start) are kept above and below the cursor: the text scrolls when the cursor comes within 12 lines of the edge, so you see what comes next while moving through it (_scrolloff_, as in Vim and Neovim). At most half the height of the editor is kept, so on a small screen the line of the cursor stays in the middle. At the start and the end of the text the cursor goes on to the edge. With _scrolloff_ off, the text scrolls when the cursor reaches the top or the bottom of the editor.

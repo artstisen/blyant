@@ -932,6 +932,27 @@ public class EditorTests
         Assert.Equal(0, editor.TopRow);
     }
 
+    [Fact]
+    public void Height_CanChange_AndTheCursorStaysInView()
+    {
+        // The terminal window is resized: 100 lines in a view of 20 rows, the cursor on line 20 (the last row)
+        var text = string.Join("\n", Enumerable.Range(1, 100).Select(n => "line " + n));
+        var editor = new EditorEngine(text, 40, 20, false);
+        editor.Type("19j");
+        Assert.Equal(0, editor.TopRow);
+        // Smaller: the view scrolls so the cursor is on its last row
+        editor.SetHeight(10);
+        Assert.Equal(10, editor.Height);
+        Assert.Equal(19, editor.Cursor.Line);
+        Assert.Equal(10, editor.TopRow);
+        // Larger again: the view stays, and the cursor is in it
+        editor.SetHeight(30);
+        Assert.Equal(10, editor.TopRow);
+        // Never less than one row
+        editor.SetHeight(0);
+        Assert.Equal(1, editor.Height);
+    }
+
     #endregion
 
     #region Reading the file again

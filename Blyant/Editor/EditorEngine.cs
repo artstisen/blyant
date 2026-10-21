@@ -116,7 +116,7 @@ internal sealed partial class EditorEngine
     /// <summary>
     /// The number of rows in the view
     /// </summary>
-    internal int Height { get; }
+    internal int Height { get; private set; }
 
     /// <summary>
     /// A single line editor is always in Insert mode. Enter accepts the text and Esc cancels.
@@ -239,6 +239,18 @@ internal sealed partial class EditorEngine
         Layout.SetWidth(width);
         TopRow = Math.Clamp(TopRow, 0, Math.Max(0, Layout.TotalRows() - 1));
         ClampCursor();
+        EnsureCursorVisible();
+    }
+
+    /// <summary>
+    /// Change the number of rows in the view (the terminal window was resized): the cursor stays in view
+    /// </summary>
+    internal void SetHeight(int height)
+    {
+        height = Math.Max(1, height);
+        if (height == Height) return;
+        Height = height;
+        TopRow = Math.Clamp(TopRow, 0, Math.Max(0, Layout.TotalRows() - 1));
         EnsureCursorVisible();
     }
 

@@ -254,7 +254,15 @@ internal static class Init
         // Set default colors
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Reset);
         WriteProgressBar(9); // progress
-        //Console.TreatControlCAsInput = true; // Prevent console from exiting when pressing CTRL+C // DOES AFFECT COPY/PASTE HENCE COMMENTED OUT
+        // Ctrl+C does not close Blyant (text that is not saved would be lost): the signal is cancelled, and the
+        // editor tells how to close it. Ctrl+C stays a signal (not a key, as TreatControlCAsInput would make it), so
+        // the terminal still copies a selection with it
+        Console.CancelKeyPress += (_, e) =>
+        {
+            if (e.SpecialKey != ConsoleSpecialKey.ControlC) return;
+            e.Cancel = true;
+            Tools.NoteCancelKey();
+        };
         // Set default buffer-size
         Log(DialogText.InitDimensions, true);
         WriteProgressBar(10); // progress

@@ -90,6 +90,7 @@ internal static class DialogText
     public static string SavIndicator => " " + Lang.T("Unsaved") + " ";
     public static string ReadOnlyLabel => " " + CaptionsReadOnly + " ";
     public static string EditorHelpHint => Lang.T(":help shows the keys of the editor");
+    public static string CancelKeyHint => Lang.T("Ctrl+C does not close the editor: type :q and press Enter");
 
     public static string HitAnyKeyToContinue => Lang.T("[Press any key to continue]");
     public static string HitAnyKeyOrEscape => Lang.T("[Press a key to continue/Esc to exit]");

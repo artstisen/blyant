@@ -69,7 +69,7 @@ public partial class TextArea
     private readonly int _top;
     private int _left;
     private int _width;
-    private readonly int _height;
+    private int _height; // Changed when the terminal window is resized (TextArea.Resize.cs)
     private readonly bool _singleLine;
     private readonly bool _readOnly;
     internal const int SaveNone = 0; // Not saved: a field of a box, or a text shown read only
@@ -200,6 +200,7 @@ public partial class TextArea
         _shownCells = new int[_height];
         Canceled = false;
         SaveWasInvoked = false;
+        StartFollowingWindow();
 
         _textWidth = width - 1;
         _engine = new EditorEngine(text ?? string.Empty, _textWidth, _height, _singleLine)
@@ -347,7 +348,15 @@ public partial class TextArea
         {
             while (!_exit)
             {
-                var key = Console.ReadKey(true);
+                var key = ReadKey();
+                if (FollowsWindow && IsCancelKey(key))
+                {
+                    // Ctrl+C that comes as a key (some terminals send it so): as the signal, it does not close
+                    _engine.SetMessage(DialogText.CancelKeyHint, false);
+                    Draw();
+                    continue;
+                }
+
                 if (_peek != null && key.Key == ConsoleKey.Enter && _engine.Mode == EditorMode.Normal)
                 {
                     // Enter in a peek: the file in the editor
@@ -407,6 +416,8 @@ public partial class TextArea
                 // When more keys are waiting (as when pasting text) they are all handled before drawing
                 if (IsKeyWaiting()) continue;
                 Draw();
+                // The text could not be drawn (the window was made smaller): drawn again as the window is now
+                if (FollowsWindow && Tools.TakeRedrawRequest()) FitToWindow();
             }
         }
         catch (Exception ex) when (ex is not NavigationException)
