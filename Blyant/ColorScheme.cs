@@ -447,7 +447,7 @@ internal sealed class ColorScheme
     private static readonly string[] BuiltInNames =
     {
         DefaultName, "Deep Blue", "Blyant Quest", "Tasty Bytes", "Yellow Monochrome", "Green Monochrome", "Ice Warp",
-        "Gray Box"
+        "Gray Box", "Bright Typist"
     };
 
     private static ColorScheme ReadBuiltIn(string name)

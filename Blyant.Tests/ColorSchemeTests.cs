@@ -71,11 +71,14 @@ public class ColorSchemeTests : IDisposable
         Assert.Equal(new[]
         {
             "Default", "Deep Blue", "Blyant Quest", "Tasty Bytes", "Yellow Monochrome", "Green Monochrome",
-            "Ice Warp", "Gray Box"
+            "Ice Warp", "Gray Box", "Bright Typist"
         }, ColorScheme.BuiltIn.Select(scheme => scheme.Name));
         Assert.Equal(ConsoleColor.DarkBlue, ColorScheme.BuiltIn[1].Background);
         Assert.Equal(ConsoleColor.DarkGray, ColorScheme.BuiltIn[7].Background);
-        Assert.All(ColorScheme.BuiltIn.Where(scheme => scheme.Name is not ("Deep Blue" or "Gray Box")),
+        // A light scheme: black text on white
+        Assert.Equal(ConsoleColor.White, ColorScheme.BuiltIn[8].Background);
+        Assert.Equal(ConsoleColor.Black, ColorScheme.BuiltIn[8].Text);
+        Assert.All(ColorScheme.BuiltIn.Where(scheme => scheme.Name is not ("Deep Blue" or "Gray Box" or "Bright Typist")),
             scheme => Assert.Null(scheme.Background));
         // The default scheme: white box borders, the focused tab cyan (not highlighted) with a gray corner, the
         // other tabs dark gray, and the logo of Blyant
@@ -219,7 +222,7 @@ public class ColorSchemeTests : IDisposable
         var read = ColorScheme.Parse(scheme.Serialize(), "Mine");
         Assert.Equal("Reflections", read.UseLogo);
         Assert.Equal("Reflections", read.Clone().UseLogo);
-        Assert.All(ColorScheme.BuiltIn.Skip(2).Where(builtIn => builtIn.Name is not ("Tasty Bytes" or "Gray Box" or "Blyant Quest")),
+        Assert.All(ColorScheme.BuiltIn.Skip(2).Where(builtIn => builtIn.Name is not ("Tasty Bytes" or "Gray Box" or "Blyant Quest" or "Bright Typist")),
             builtIn => Assert.Equal(string.Empty, builtIn.UseLogo));
         Assert.DoesNotContain("uselogo", ColorScheme.BuiltIn[6].Serialize());
         Assert.Equal(string.Empty, ColorScheme.Parse(ColorScheme.BuiltIn[6].Serialize(), "X").UseLogo);
@@ -230,7 +233,7 @@ public class ColorSchemeTests : IDisposable
     [Fact]
     public void TheSelector_KeepsItsColors_WhenTheHighlightIsChanged()
     {
-        foreach (var builtIn in ColorScheme.BuiltIn.Where(scheme => scheme.Name is not ("Tasty Bytes" or "Deep Blue" or "Gray Box")))
+        foreach (var builtIn in ColorScheme.BuiltIn.Where(scheme => scheme.Name is not ("Tasty Bytes" or "Deep Blue" or "Gray Box" or "Bright Typist")))
         {
             // From the start the colors of the highlight, as colors of its own
             Assert.Equal(builtIn.Highlight, builtIn.Selector);
@@ -405,7 +408,7 @@ public class ColorSchemeTests : IDisposable
         Assert.Equal(DialogText.Success, ColorSchemes.Save(mine));
         Assert.True(File.Exists(Path.Combine(_directory, "My scheme.txt")));
         Assert.Equal(new[] { "My scheme" }, ColorSchemes.CustomNames());
-        Assert.Equal(9, ColorSchemes.AllNames().Count);
+        Assert.Equal(ColorScheme.BuiltIn.Count + 1, ColorSchemes.AllNames().Count);
         Assert.Equal(ConsoleColor.Red, ColorSchemes.Load("my scheme")!.Logo);
         Assert.True(ColorSchemes.Exists("My scheme"));
         Assert.Equal(DialogText.Success, ColorSchemes.Delete("My scheme"));

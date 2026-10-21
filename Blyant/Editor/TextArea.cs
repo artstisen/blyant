@@ -107,6 +107,11 @@ public partial class TextArea
         /// only, not the setting
         /// </summary>
         internal bool NoWrap { get; init; }
+
+        /// <summary>
+        /// Tab in Normal mode closes it, as Esc does (the peek of the file browser, which Tab went into)
+        /// </summary>
+        internal bool TabCloses { get; init; }
     }
 
     // Set for a peek: there is no title or mode divider above the text, it is read only, Esc closes it and Enter
@@ -368,6 +373,8 @@ public partial class TextArea
                 // comparison it removes the highlighting first, so "n" "N" go to the changes again
                 if (_peek != null && key.Key == ConsoleKey.Escape && _engine.Mode == EditorMode.Normal &&
                     !_engine.HasPending && !(_peek.Changes != null && _engine.IsSearchHighlighted)) break;
+                if (_peek is { TabCloses: true } && key.Key == ConsoleKey.Tab && _engine.Mode == EditorMode.Normal &&
+                    !_engine.HasPending) break;
 
                 var request = _engine.HandleKey(key);
                 if (_peek != null && request is EditorRequest.Quit or EditorRequest.ForceQuit

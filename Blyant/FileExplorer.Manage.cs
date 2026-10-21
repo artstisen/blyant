@@ -31,7 +31,7 @@ internal static partial class FileExplorer
                 CopySelected();
                 break;
             case ConsoleKey.V:
-                PeekSelected();
+                TogglePeek();
                 break;
             case ConsoleKey.Y:
                 DuplicateSelected();
@@ -78,7 +78,7 @@ internal static partial class FileExplorer
                 Jump.ToBookmark(argument);
                 break;
             case "peek":
-                PeekSelected();
+                TogglePeek();
                 break;
             case "diff":
                 CompareFiles(argument);
@@ -495,9 +495,137 @@ internal static partial class FileExplorer
         return kept + "\n" + DialogText.PeekMore;
     }
 
-    // ":peek" or V: the selected file shown read-only in the other pane (two panes are shown for it, if one is
-    // shown). Enter opens it in the editor where the cursor is; Esc goes back to the browser
-    private static void PeekSelected()
+    // Peek (V or ":peek"): the selected file is shown read-only in the other pane (two panes are shown for it, if
+    // one is shown), and the focus stays in the list: the peek follows the selection, so files are gone through
+    // with j and k. Tab goes into the peek (to scroll and search in it; Tab or Esc goes back to the list, Enter opens
+    // the file in the editor where the cursor is). V or Esc ends the peek, and so do the keys that use the other pane
+    private static bool _peeking;
+    private static bool _peekWasDual;
+
+    // The file the peek shows (null: it is drawn again)
+    private static string? _peekShownPath;
+
+    // The focus is in the peek (it draws itself)
+    private static bool _peekFocused;
+
+    // V or ":peek": the peek on or off
+    private static void TogglePeek()
+    {
+        if (_peeking)
+        {
+            StopPeek();
+            return;
+        }
+
+        var item = SelectedItem();
+        if (item == null || item.IsDirectory)
+        {
+            _message = DialogText.PeekSelectFile;
+            return;
+        }
+
+        _peekWasDual = DualPane;
+        DualPane = true;
+        _peeking = true;
+        _peekShownPath = null;
+    }
+
+    // The other pane shows its list again
+    private static void StopPeek()
+    {
+        if (!_peeking) return;
+        _peeking = false;
+        _peekShownPath = null;
+        DualPane = _peekWasDual;
+        Reload(OtherPane);
+    }
+
+    // The keys that keep the peek: moving in the list and going into directories (the peek follows), Tab (into the
+    // peek), V and Esc (end it), and what does not use the other pane (marks, info, filter, commands, help, Jump menu)
+    private static bool KeepsPeek(ConsoleKeyInfo key) =>
+        key.Key is ConsoleKey.J or ConsoleKey.K or ConsoleKey.DownArrow or ConsoleKey.UpArrow or ConsoleKey.PageDown
+            or ConsoleKey.PageUp or ConsoleKey.Home or ConsoleKey.End or ConsoleKey.H or ConsoleKey.L
+            or ConsoleKey.LeftArrow or ConsoleKey.RightArrow or ConsoleKey.Enter or ConsoleKey.Backspace or ConsoleKey.Tab
+            or ConsoleKey.Escape or ConsoleKey.V or ConsoleKey.Spacebar or ConsoleKey.I or ConsoleKey.R ||
+        key.KeyChar is 'g' or 'G' or '-' or ':' or '/' or '?' || Jump.IsKey(key) ||
+        Keyboard.IsControl(key, ConsoleKey.D) || Keyboard.IsControl(key, ConsoleKey.F) ||
+        Keyboard.IsControl(key, ConsoleKey.U) || Keyboard.IsControl(key, ConsoleKey.B);
+
+    // The peek of the selected file, in the other pane (when the selection has changed, or all is drawn again). A
+    // directory, or a file that is not text, is told about there
+    private static void DrawPeek(bool all)
+    {
+        if (!_peeking || _peekFocused) return;
+        var item = SelectedItem();
+        var path = item?.Path ?? string.Empty;
+        if (!all && path == _peekShownPath) return;
+        try
+        {
+            // While keys are waiting (j held down), the peek is drawn when they have been handled
+            if (Console.KeyAvailable)
+            {
+                _peekShownPath = null;
+                return;
+            }
+        }
+        catch (InvalidOperationException)
+        {
+            // Keys cannot be asked about (input from a file): drawn now
+        }
+
+        _peekShownPath = path;
+        var (left, width) = PaneArea(1 - _active);
+        string? note = null;
+        TextFile? file = null;
+        if (item == null || item.IsDirectory)
+        {
+            note = DialogText.PeekSelectFile;
+        }
+        else
+        {
+            try
+            {
+                file = TextFile.Load(item.Path);
+                // A file with zero bytes in it is not text
+                if (file.Text.Contains('\0'))
+                {
+                    note = DialogText.PeekNotText;
+                    file = null;
+                }
+            }
+            catch (Exception e) when (e is not NavigationException)
+            {
+                note = e.Message;
+            }
+        }
+
+        if (file == null || item == null)
+        {
+            // The pane is cleared, with the note on its first row
+            ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
+            for (var row = 0; row < PageSize; row++)
+            {
+                Tools.SetCursorEx(ListTop + row, left);
+                Console.Write(new string(' ', width));
+            }
+
+            Tools.SetCursorEx(ListTop, left + 1);
+            ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
+            Console.Write(Tools.TruncateString(note ?? string.Empty, width - 2, true));
+            ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
+            return;
+        }
+
+        // Read only: the text is drawn, and no key is read
+        _ = new TextArea(left, ListTop, width, PageSize, PeekText(file.Text), 0, false, true, false,
+            TextArea.SaveAsFile, false,
+            new TextArea.PeekOptions(SyntaxHighlighter.TypeOfFile(item.Name), () => Draw(true)) { NoWrap = true });
+        Tools.HideCursor();
+    }
+
+    // Tab while peeking: the focus goes into the peek, to scroll and search in it (as in the editor). Tab or Esc goes
+    // back to the list, Enter opens the file in the editor where the cursor is
+    private static void FocusPeek()
     {
         var item = SelectedItem();
         if (item == null || item.IsDirectory)
@@ -511,30 +639,30 @@ internal static partial class FileExplorer
         {
             file = TextFile.Load(item.Path);
         }
-        catch (Exception e)
+        catch (Exception e) when (e is not NavigationException)
         {
             _message = e.Message;
             return;
         }
 
-        // A file with zero bytes in it is not text
         if (file.Text.Contains('\0'))
         {
             _message = DialogText.PeekNotText;
             return;
         }
 
-        var wasDual = DualPane;
-        DualPane = true;
+        _peekFocused = true;
         try
         {
-            // The pane next to the one with the file: the peek is shown on its list, below its label
-            var pane = 1 - _active;
-            var (left, width) = PaneArea(pane);
-            Draw(true);
+            var (left, width) = PaneArea(1 - _active);
             var syntax = SyntaxHighlighter.TypeOfFile(item.Name);
             var textArea = new TextArea(left, ListTop, width, PageSize, PeekText(file.Text), 0, false, false, false,
-                TextArea.SaveAsFile, false, new TextArea.PeekOptions(syntax, () => Draw(true)) { NoWrap = true });
+                TextArea.SaveAsFile, false, new TextArea.PeekOptions(syntax, () => Draw(true))
+                {
+                    NoWrap = true,
+                    TabCloses = true,
+                    Hint = DialogText.PeekFocusHint
+                });
             Tools.HideCursor();
             if (textArea.OpenRequested)
             {
@@ -548,8 +676,8 @@ internal static partial class FileExplorer
         }
         finally
         {
-            DualPane = wasDual;
-            if (!wasDual) Reload(OtherPane);
+            _peekFocused = false;
+            _peekShownPath = null;
         }
     }
 

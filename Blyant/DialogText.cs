@@ -329,6 +329,8 @@ internal static class DialogText
     public static string CompleteChooseKeys => Lang.T("Tab Choose");
     public static string CompleteManyKeys => Lang.T("Tab Next | Enter Use");
     public static string PeekHint => Lang.T("Peek: Esc closes, Enter opens the file");
+    public static string PeekFocusHint => Lang.T("Peek: Tab or Esc goes back to the list, Enter opens the file");
+    public static string FilePeekKeys => Lang.T("j/k Peek next | Tab Into peek | l Open | V Esc End peek");
     public static string PeekReadOnly => Lang.T("Peek: read only (Enter opens the file)");
     public static string PeekSelectFile => Lang.T("Select a file to peek at");
     public static string PeekNotText => Lang.T("Not a text file");
