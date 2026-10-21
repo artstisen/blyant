@@ -41,7 +41,7 @@ class Program
     // that is not there to be made)
     private static JumpTarget? OpenArgument(string argument, string currentDirectory)
     {
-        var result = StartArgument.Resolve(argument, currentDirectory, StartMenu.Only);
+        var result = StartArgument.Resolve(argument, currentDirectory);
         if (result.Message.Length > 0)
         {
             Tools.ClearScreen();
@@ -70,39 +70,27 @@ class Program
         }
     }
 
-    // Each round handles one key in the screen of the current mode. When a key leads to another
-    // screen, the screen is drawn and control returns here (see Navigation)
+    // Each round shows the start page, or goes to the place picked in the Jump menu. A page that leads to
+    // another place ends with Navigation.Wait, which brings control back here (see Navigation)
     private static void MainLoop()
     {
-        var starting = true;
         while (true)
         {
             try
             {
-                if (starting)
-                {
-                    starting = false;
-                    // (a place given at startup is opened instead of the first page)
-                    if (Jump.Pending == null) Menu.DrawTopMenu(true, true, false);
-                }
-
                 if (Jump.Pending != null)
                 {
-                    // A place was picked in the Jump menu: go there
+                    // A place was picked in the Jump menu (or given at startup): go there
                     Jump.RunPending();
-                }
-                else if (Mode.CurrentMode == Mode.SelectedMode.Login)
-                {
-                    Tools.ShowLogin(Navigation.LoginFullRedraw);
                 }
                 else
                 {
-                    Actions.HandleKey(Console.ReadKey(true));
+                    StartMenu.Run();
                 }
             }
             catch (NavigationException)
             {
-                // A new screen is shown: continue with its keys
+                // Another place is to be shown: continue with it
             }
             catch (Exception ex)
             {

@@ -1,20 +1,17 @@
 ﻿namespace Blyant;
 
 /// <summary>
-/// The page shown when Blyant starts, in a frame with three tabs (TabFrame): Mode, where the user selects what
-/// to use Blyant for (notes: the login page, or editing text files: the file browser), Configuration, with the
-/// settings on four pages (the sub-tabs General, Layout, Editor and System), and Help (the help and the about
-/// page). Tab goes from page to page.
-/// The setting "startmode" tells if the page is shown at startup, or if Blyant goes directly to one of the two.
-/// The setting "onlymode" makes Blyant a text editor only or a note application only (for running one of each):
-/// the other mode is not shown in the Mode tab, and as a text editor Blyant does not open data files.
+/// The page shown when Blyant starts, in a frame with three tabs (TabFrame): Start, where a file or a project is
+/// made or opened (New file, Open file, New project, Open project), Configuration, with the settings on four pages
+/// (the sub-tabs General, Layout, Editor and System), and Help (the help, the guides and the about page). Tab goes
+/// from page to page. The page is shown again when the file browser is closed, and after a jump.
+/// The setting "startmode" tells if the page is shown at startup, or if Blyant goes directly to the file browser.
 /// </summary>
 internal static class StartMenu
 {
     internal enum StartMode
     {
-        Select, // Show the choices
-        Notes, // Go to the login page
+        Select, // Show the start page
         Editor // Open the file browser
     }
 
@@ -23,153 +20,83 @@ internal static class StartMenu
     /// </summary>
     internal static StartMode Mode { get; set; } = StartMode.Select;
 
-    internal enum OnlyMode
-    {
-        None, // Both modes
-        Editor, // Text Editor only: no Note Management, and data files are not opened
-        Notes // Note Management only: no Text Editor in the Mode tab
-    }
+    // True at startup: the setting "startmode" is followed (else the page is shown)
+    private static bool _starting;
 
-    /// <summary>
-    /// Use Blyant for one of the modes only (setting "onlymode")
-    /// </summary>
-    internal static OnlyMode Only { get; set; } = OnlyMode.None;
-
-    /// <summary>
-    /// What happens when Blyant starts: the start mode, unless it is the mode that is not used
-    /// </summary>
-    internal static StartMode EffectiveMode =>
-        (Mode == StartMode.Notes && Only == OnlyMode.Editor) || (Mode == StartMode.Editor && Only == OnlyMode.Notes)
-            ? StartMode.Select
-            : Mode;
-
-    /// <summary>
-    /// Use one mode only, or both again. A start mode that is no longer used goes back to showing the choices
-    /// </summary>
-    internal static void SetOnly(OnlyMode only)
-    {
-        Only = only;
-        Mode = EffectiveMode;
-    }
-
-    internal static string SettingName(OnlyMode only)
-    {
-        return only switch
-        {
-            OnlyMode.Editor => "editor",
-            OnlyMode.Notes => "notes",
-            _ => "none"
-        };
-    }
-
-    internal static OnlyMode ParseOnly(string value)
-    {
-        return value.Trim().ToLowerInvariant() switch
-        {
-            "editor" => OnlyMode.Editor,
-            "notes" => OnlyMode.Notes,
-            _ => OnlyMode.None
-        };
-    }
-
-    /// <summary>
-    /// True when the page is to be shown (or passed, depending on the setting) before the login page
-    /// </summary>
-    internal static bool Pending { get; private set; }
-
-    // True to show the choices whatever the setting is
-    private static bool _showChoices;
-
-    // The page of the Configuration tab to show first (0 to 3), or -1 for the Mode tab
+    // The page of the Configuration tab to show first (0 to 3), or -1 for the Start tab
     private static int _showConfiguration = -1;
 
     // The row of the tabs (below the logo)
     private const int TabRow = 6;
 
     /// <summary>
-    /// The name of a start mode in the settings file
-    /// </summary>
-    /// <summary>
-    /// When Blyant starts in the Text Editor: open the favorites list of the file browser first
-    /// (setting "startfavorites")
+    /// When Blyant starts in the file browser: open its favorites list first (setting "startfavorites")
     /// </summary>
     internal static bool StartInFavorites { get; set; }
 
+    /// <summary>
+    /// The name of a start mode in the settings file
+    /// </summary>
     internal static string SettingName(StartMode mode)
     {
-        return mode switch
-        {
-            StartMode.Notes => "notes",
-            StartMode.Editor => "editor",
-            _ => "select"
-        };
-    }
-
-    internal static StartMode ParseSetting(string value)
-    {
-        return value.Trim().ToLowerInvariant() switch
-        {
-            "notes" => StartMode.Notes,
-            "editor" => StartMode.Editor,
-            _ => StartMode.Select
-        };
+        return mode == StartMode.Editor ? "editor" : "select";
     }
 
     /// <summary>
-    /// Blyant has started: follow the setting before the login page is shown
+    /// The start mode of its name in the settings file ("notes", of Marbles, shows the start page)
+    /// </summary>
+    internal static StartMode ParseSetting(string value)
+    {
+        return value.Trim().ToLowerInvariant() == "editor" ? StartMode.Editor : StartMode.Select;
+    }
+
+    /// <summary>
+    /// Blyant has started: the next time the page is to be shown, the setting "startmode" is followed
     /// </summary>
     internal static void Start()
     {
-        Pending = true;
-        _showChoices = false;
+        _starting = true;
         _showConfiguration = -1;
     }
 
     /// <summary>
-    /// Show the choices before the login page is shown again
+    /// Show a tab the next time the page is shown
     /// </summary>
     /// <param name="configurationPage">Show a page of the Configuration tab first (0 General, 1 Layout, 2 Editor,
-    /// 3 System), or -1 for the Mode tab</param>
+    /// 3 System), or -1 for the Start tab</param>
     internal static void Open(int configurationPage = -1)
     {
-        Pending = true;
-        _showChoices = true;
+        _starting = false;
         _showConfiguration = Math.Clamp(configurationPage, -1, 3);
     }
 
     /// <summary>
-    /// Show the page. Returns when the login page is to be shown
+    /// Show the page (called by the main loop). It is left for another place (a jump, see Navigation) or by
+    /// exiting Blyant
     /// </summary>
     internal static void Run()
     {
-        Pending = false;
         var animate = Logo.TakeAnimation();
-        if (!_showChoices)
+        if (_starting)
         {
-            if (EffectiveMode == StartMode.Notes)
-            {
-                // The login page sweeps the logo
-                if (animate) Logo.AnimateNext();
-                return;
-            }
-
-            if (EffectiveMode == StartMode.Editor && BrowseFiles()) return;
+            _starting = false;
+            if (Mode == StartMode.Editor) FileExplorer.Run(StartInFavorites);
         }
 
-        var mode = new ModePage();
+        var start = new ChoicesPage();
         var frame = _frame = new TabFrame(TabRow, () =>
             {
-                Logo.DrawLogo(true, animate, false);
+                Logo.DrawLogo(true, animate);
                 animate = false;
             },
-            new TabItem(() => DialogText.StartModeTab, mode),
+            new TabItem(() => DialogText.StartTab, start),
             new TabItem(() => DialogText.StartConfiguration, new SettingsPage(0), new SettingsPage(1),
                 new SettingsPage(2), new SettingsPage(3)),
             new TabItem(() => Lang.T("Help"), new HelpPage())) { Commands = ReadCommand };
         if (_showConfiguration >= 0) frame.Selected = 1 + _showConfiguration;
         _showConfiguration = -1;
-        // Returns when notes are chosen, or a data file was selected in the file browser
-        frame.Run();
+        // The page has nothing that closes it: it is left by a jump or by exiting
+        while (true) frame.Run();
     }
 
     // The frame of the page while it is shown (for the commands that go to a tab)
@@ -182,25 +109,31 @@ internal static class StartMenu
         return command == null ? TabResult.Redraw : RunCommand(command);
     }
 
-    // The commands of the start page: go to a tab or a page of Configuration, open the file browser, the login
-    // page, the Jump menu or a page of Blyant, show the help, or exit
+    // The commands of the start page: make or open a file or a project, go to a tab or a page of Configuration,
+    // open the Jump menu or a page of Blyant, show the help, or exit
     private static TabResult RunCommand(string command)
     {
+        var argument = CommandLine.Argument(command);
         switch (CommandLine.Name(command))
         {
-            case "note":
-            case "notes":
-                // The login page (not with Text Editor only)
-                if (Only != OnlyMode.Editor) return TabResult.Close;
-                Refused(DialogText.NotesNotUsed);
+            case "new":
+                // ":new name": a new file (in the directory of the file browser)
+                NewFile(argument);
                 break;
             case "file":
             case "browse":
-                // The file browser (not with Note Management only)
-                if (Only != OnlyMode.Notes) return BrowseFiles() ? TabResult.Close : TabResult.Redraw;
-                Refused(DialogText.EditorNotUsed);
+            case "open":
+                FileExplorer.Run();
                 break;
-            case "mode":
+            case "project":
+            case "newproject":
+                // ":project name": a new project
+                NewProject(argument);
+                break;
+            case "projects":
+                OpenProject();
+                break;
+            case "start":
                 ShowPage(0);
                 break;
             case "config":
@@ -223,12 +156,12 @@ internal static class StartMenu
                 break;
             case "book":
                 // ":book 3": jump to bookmark 3
-                Blyant.Jump.ToBookmark(CommandLine.Argument(command));
+                Blyant.Jump.ToBookmark(argument);
                 break;
             case "help":
             case "h":
                 // The keys of the start page, without going to the Help tab
-                Tools.WriteEditorHelp(false, Tools.HelpTopic.Start);
+                Tools.WriteEditorHelp(Tools.HelpTopic.Start);
                 break;
             case "about":
                 Actions.ShowAboutPages();
@@ -269,7 +202,7 @@ internal static class StartMenu
             case "quit":
             case "exit":
             case "q":
-                // As Q on the Mode tab: asked first
+                // As Q on the Start tab: asked first
                 if (ChoiceBox.Confirm(DialogText.Exit, DialogText.ExitQuestion, string.Empty, false))
                 {
                     Tools.ExitApplication();
@@ -286,33 +219,104 @@ internal static class StartMenu
         return TabResult.Redraw;
     }
 
-    // Go to a page of the frame (0 Mode, 1 to 4 the pages of Configuration)
+    // Go to a page of the frame (0 Start, 1 to 4 the pages of Configuration)
     private static void ShowPage(int page)
     {
         if (_frame != null) _frame.Selected = page;
     }
 
-    // A mode that is not used
-    private static void Refused(string message)
+    // New file: a file made in the directory the file browser was in last (the name is asked for if it is not
+    // given; without an extension it is a Markdown file), and opened in the editor with the file browser behind it
+    private static void NewFile(string name)
     {
         ChoiceBox.Forget();
-        ChoiceBox.Message(DialogText.StartSelectMode, message, string.Empty);
+        var directory = FileExplorer.LastDirectory;
+        name = name.Trim();
+        if (name.Length == 0)
+        {
+            var asked = ChoiceBox.AskText(DialogText.NewFile, Lang.F("The file is made in {0}", directory),
+                DialogText.FileNameColon, string.Empty);
+            if (asked == null) return;
+            name = asked;
+        }
+
+        name = FileOperations.WithDefaultExtension(name);
+        var path = Path.Combine(directory, name);
+        var problem = Tools.FileNameProblem(name) ??
+                      (File.Exists(path) || Directory.Exists(path) ? DialogText.NameExists : null);
+        if (problem == null)
+        {
+            try
+            {
+                // Only a new file: one that was made in the meantime is not emptied
+                new FileStream(path, FileMode.CreateNew).Dispose();
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException or NotSupportedException)
+            {
+                problem = e.Message;
+            }
+        }
+
+        EventLog.Add(DialogText.LogFile + "New: " + path + (problem == null ? string.Empty : " (" + problem + ")"));
+        if (problem != null)
+        {
+            ChoiceBox.Message(DialogText.NewFile, problem, name);
+            return;
+        }
+
+        FileExplorer.RunAtFile(Path.GetFullPath(path));
     }
 
-    // Open the file browser. True if a data file was selected there: the login page is shown for it
-    private static bool BrowseFiles()
+    // New project: a directory made in the projects directory (the name is asked for if it is not given), shown
+    // in the file browser
+    private static void NewProject(string name)
     {
-        FileExplorer.Run(StartInFavorites);
-        return FileExplorer.DataFileSelected;
+        ChoiceBox.Forget();
+        name = name.Trim();
+        if (name.Length == 0)
+        {
+            var asked = ChoiceBox.AskText(DialogText.NewProject,
+                Lang.F("The project is a folder in {0}", Projects.Directory), DialogText.ProjectNameColon,
+                string.Empty);
+            if (asked == null) return;
+            name = asked;
+        }
+
+        var status = Projects.Create(name, out var path);
+        EventLog.Add(DialogText.LogFile + "New project: " + (path.Length > 0 ? path : name) +
+                     (status == DialogText.Success ? string.Empty : " (" + status + ")"));
+        if (status != DialogText.Success)
+        {
+            ChoiceBox.Message(DialogText.NewProject, status, name);
+            return;
+        }
+
+        FileExplorer.RunAtDirectory(path);
+    }
+
+    // Open project: the projects in a list (with what each holds), the one picked shown in the file browser
+    private static void OpenProject()
+    {
+        if (ProjectsBox.Pick() is { } path) FileExplorer.RunAtDirectory(path);
+    }
+
+    // The projects directory: picked in the file browser (where it is not there yet, the directory it is to be
+    // made in)
+    private static void PickProjectsDirectory()
+    {
+        ChoiceBox.Forget();
+        var picked = FileExplorer.PickDirectory(Lang.T("Projects folder"));
+        if (picked == null) return;
+        Projects.Directory = picked;
+        FileIo.SaveSettings();
     }
 
     private enum Setting
     {
         StartSelect,
-        StartNotes,
         StartEditor,
         StartFavorites, // Shown below StartEditor when it is chosen
-        StayLoggedIn,
+        ProjectsDirectory,
         Monochrome,
         Language,
         ColorScheme,
@@ -325,8 +329,6 @@ internal static class StartMenu
         WordWrap,
         ScrollOff,
         Clipboard,
-        EditorOnly,
-        NotesOnly,
         SyntaxColors,
         Spell,
         Snippets,
@@ -342,15 +344,10 @@ internal static class StartMenu
     // The settings shown, in the order of the pages: some are only shown when they can be used
     private static List<Setting> Settings()
     {
-        // General: what happens at startup (starting in a mode that is not used cannot be chosen), using one
-        // mode only, and the language
-        var settings = new List<Setting> { Setting.StartSelect };
-        if (Only != OnlyMode.Editor) settings.Add(Setting.StartNotes);
-        if (Only != OnlyMode.Notes) settings.Add(Setting.StartEditor);
-        if (EffectiveMode == StartMode.Editor) settings.Add(Setting.StartFavorites);
-        if (Only != OnlyMode.Editor) settings.Add(Setting.StayLoggedIn);
-        settings.Add(Setting.EditorOnly);
-        settings.Add(Setting.NotesOnly);
+        // General: what happens at startup, the projects directory and the language
+        var settings = new List<Setting> { Setting.StartSelect, Setting.StartEditor };
+        if (Mode == StartMode.Editor) settings.Add(Setting.StartFavorites);
+        settings.Add(Setting.ProjectsDirectory);
         settings.Add(Setting.Language);
         // Layout
         settings.Add(Setting.AutoSize);
@@ -387,10 +384,9 @@ internal static class StartMenu
         return setting switch
         {
             Setting.StartSelect => Check(Mode == StartMode.Select) + DialogText.StartConfigSelect,
-            Setting.StartNotes => Check(Mode == StartMode.Notes) + DialogText.StartConfigNotes,
             Setting.StartEditor => Check(Mode == StartMode.Editor) + DialogText.StartConfigEditor,
             Setting.StartFavorites => indent + Check(StartInFavorites) + Lang.T("Open the favorites list first"),
-            Setting.StayLoggedIn => Check(DataSession.StayLoggedIn) + Lang.T("Stay logged into data file (Session)"),
+            Setting.ProjectsDirectory => indent + Lang.F("Projects folder: {0} (Enter: Change)", Projects.Directory),
             Setting.Monochrome => Check(ConsoleColors.Monochrome) + DialogText.ConfigMonochrome,
             Setting.Language => indent + DialogText.ConfigLanguage + Lang.CurrentName,
             Setting.ColorScheme => indent + Lang.F("Color scheme: {0} (Enter: Select/Edit)",
@@ -412,8 +408,6 @@ internal static class StartMenu
             Setting.AutoComplete => Check(Blyant.Completions.Enabled) + Lang.T("Complete words while typing"),
             Setting.Completions => indent + Lang.T("Completions editor (Enter: Open)"),
             Setting.Info => indent + DialogText.FileInfo,
-            Setting.EditorOnly => Check(Only == OnlyMode.Editor) + Lang.T("Text Editor only"),
-            Setting.NotesOnly => Check(Only == OnlyMode.Notes) + Lang.T("Note Management only"),
             Setting.EditSettings => indent + Lang.F("Edit {0}", FileIo.SettingsFileName),
             Setting.Restart => indent + DialogText.ConfigRestart,
             Setting.ViewLog => indent + DialogText.ConfigViewLog,
@@ -436,8 +430,8 @@ internal static class StartMenu
     {
         return setting switch
         {
-            Setting.StartSelect or Setting.StartNotes or Setting.StartEditor or Setting.StartFavorites
-                or Setting.StayLoggedIn or Setting.EditorOnly or Setting.NotesOnly or Setting.Language => 0,
+            Setting.StartSelect or Setting.StartEditor or Setting.StartFavorites or Setting.ProjectsDirectory
+                or Setting.Language => 0,
             Setting.AutoSize or Setting.Size or Setting.Monochrome or Setting.ColorScheme or Setting.Logo
                 or Setting.LogoAnimation or Setting.Corners => 1,
             Setting.LineNumbers or Setting.WordWrap or Setting.ScrollOff or Setting.Clipboard
@@ -460,7 +454,7 @@ internal static class StartMenu
     }
 
     // A blank row is shown above these settings when there is room: they start a group of their page
-    private static bool StartsGroup(Setting setting) => setting is Setting.EditorOnly or Setting.Language;
+    private static bool StartsGroup(Setting setting) => setting is Setting.ProjectsDirectory;
 
     // Pick the languages of the spell checker from the ones there is a spell file for: Enter turns one on or
     // off, until the box is closed with Esc
@@ -514,7 +508,7 @@ internal static class StartMenu
     private static void PickLogoAnimation()
     {
         ChoiceBox.Forget();
-        var picked = ChoiceBox.Pick(Lang.T("Logo animation"), Lang.T("How fast the logo is swept in on the login page"),
+        var picked = ChoiceBox.Pick(Lang.T("Logo animation"), Lang.T("How fast the logo is swept in on the start page"),
             string.Empty, AnimationSpeeds.Select(AnimationName).ToArray(), new[] { "1", "2", "3", "4" },
             Math.Max(0, Array.IndexOf(AnimationSpeeds, Blyant.Logo.Animation)), false);
         if (picked < 0) return;
@@ -536,78 +530,73 @@ internal static class StartMenu
     }
 
     /// <summary>
-    /// The Mode tab: what to use Blyant for (notes or text files), the quick guide, and exit
+    /// The Start tab: make or open a file or a project, the Jump menu, the quick guide, and exit
     /// </summary>
-    private sealed class ModePage : ITabPage
+    private sealed class ChoicesPage : ITabPage
     {
         private int _selected;
 
         private enum Choice
         {
-            Notes,
-            Editor,
+            NewFile,
+            OpenFile,
+            NewProject,
+            OpenProject,
             Jump,
             QuickGuide,
             Exit
         }
 
-        // The choices shown: a mode that is not used (Text Editor only, Note Management only) is left out
-        private static List<Choice> ChoicesShown()
-        {
-            var choices = new List<Choice>();
-            if (Only != OnlyMode.Editor) choices.Add(Choice.Notes);
-            if (Only != OnlyMode.Notes) choices.Add(Choice.Editor);
-            choices.Add(Choice.Jump);
-            choices.Add(Choice.QuickGuide);
-            choices.Add(Choice.Exit);
-            return choices;
-        }
+        private static readonly Choice[] Shown = Enum.GetValues<Choice>();
 
-        // The keys that open a choice at once (the same in all languages; the numbers only select). Notes: N,
-        // the file browser: F, the Jump menu: O (as Ctrl+O; j moves down), the quick guide: U, exit: Q (asks)
+        // The keys that open a choice at once (the same in all languages; the numbers only select). A new file: N,
+        // the file browser: F, a new project: P, the projects: O, the Jump menu: M (and Ctrl+O, as everywhere; j
+        // moves down), the quick guide: U, exit: Q (asks)
         private static string KeysOf(Choice choice) => choice switch
         {
-            Choice.Notes => "N",
-            Choice.Editor => "F",
-            Choice.Jump => "O",
+            Choice.NewFile => "N",
+            Choice.OpenFile => "F",
+            Choice.NewProject => "P",
+            Choice.OpenProject => "O",
+            Choice.Jump => "M",
             Choice.QuickGuide => "U",
             _ => "Q"
         };
 
         // In the language in use
-        private static string[] Choices => ChoicesShown().Select(choice => choice switch
+        private static string TextOf(Choice choice) => choice switch
         {
-            Choice.Notes => DialogText.StartNotes,
-            Choice.Editor => DialogText.StartEditor,
+            Choice.NewFile => DialogText.NewFile,
+            Choice.OpenFile => DialogText.OpenFile,
+            Choice.NewProject => DialogText.NewProject,
+            Choice.OpenProject => DialogText.OpenProject,
             Choice.Jump => DialogText.StartJump,
             Choice.QuickGuide => DialogText.QuickGuide,
             _ => DialogText.StartExit
-        }).ToArray();
+        };
 
-        public string Title => DialogText.StartModeTab;
+        public string Title => DialogText.StartTab;
         public string Keys => DialogText.StartKeys;
         public Tools.HelpTopic Help => Tools.HelpTopic.Start;
 
         public void Draw(TabArea area, bool full)
         {
-            var choices = Choices;
-            var shown = ChoicesShown();
-            _selected = Math.Min(_selected, choices.Length - 1);
+            _selected = Math.Clamp(_selected, 0, Shown.Length - 1);
             if (full)
             {
-                for (var i = 0; i < choices.Length; i++)
+                for (var i = 0; i < Shown.Length; i++)
                 {
-                    // The number, the keys that open the choice at once, and the choice
+                    // The number, the key that opens the choice at once, and the choice
                     Tools.SetCursorEx(area.Top + i, area.Left + 3);
-                    Console.Write(Tools.TruncateString((i + 1) + " " + KeysOf(shown[i]) + " .... " +
-                                                       choices[i], area.Width - 4, true));
+                    Console.Write(Tools.TruncateString((i + 1) + " " + KeysOf(Shown[i]) + " .... " +
+                                                       TextOf(Shown[i]), area.Width - 4, true));
                 }
             }
 
-            for (var i = 0; i < choices.Length; i++)
+            for (var i = 0; i < Shown.Length; i++)
             {
                 Tools.SetCursorEx(area.Top + i, area.Left);
-                // The pointer is highlighted as in the lists of entries
+                // The pointer is highlighted as in the other lists
                 if (i == _selected) ConsoleColors.SetColors(ConsoleColors.ColorPreset.SelectorInverted);
                 Console.Write(i == _selected ? "->" : "  ");
                 ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
@@ -616,26 +605,25 @@ internal static class StartMenu
 
         public TabResult HandleKey(ConsoleKeyInfo key)
         {
-            var shown = ChoicesShown();
-            var count = shown.Count;
-            _selected = Math.Min(_selected, count - 1);
+            var count = Shown.Length;
+            _selected = Math.Clamp(_selected, 0, count - 1);
             // Ctrl+O: the Jump menu, as on the other pages
             if (Blyant.Jump.IsKey(key)) return Open(Choice.Jump);
-            if (key.Key is ConsoleKey.Enter or ConsoleKey.L or ConsoleKey.RightArrow) return Open(shown[_selected]);
+            if (key.Key is ConsoleKey.Enter or ConsoleKey.L or ConsoleKey.RightArrow) return Open(Shown[_selected]);
             // The keys of the choices open them at once
             var direct = key.Key switch
             {
-                ConsoleKey.N => Choice.Notes,
-                ConsoleKey.F => Choice.Editor,
-                ConsoleKey.O => Choice.Jump,
+                ConsoleKey.N => Choice.NewFile,
+                ConsoleKey.F => Choice.OpenFile,
+                ConsoleKey.P => Choice.NewProject,
+                ConsoleKey.O => Choice.OpenProject,
+                ConsoleKey.M => Choice.Jump,
                 ConsoleKey.U => Choice.QuickGuide,
                 _ => (Choice?)null
             };
             if (direct is { } choice && (key.Modifiers & (ConsoleModifiers.Control | ConsoleModifiers.Alt)) == 0)
             {
-                // A mode that is not used (Text Editor only, Note Management only) is not opened
-                if (!shown.Contains(choice)) return TabResult.None;
-                _selected = shown.IndexOf(choice);
+                _selected = Array.IndexOf(Shown, choice);
                 return Open(choice);
             }
 
@@ -673,27 +661,37 @@ internal static class StartMenu
             return TabResult.None;
         }
 
-        // Open a choice: notes (the login page), the file browser, the Jump menu, the quick guide, or exit
+        // Open a choice. A file or a project opens the file browser, which comes back here when it is closed
         private static TabResult Open(Choice choice)
         {
             switch (choice)
             {
-                case Choice.Notes:
-                    return TabResult.Close;
-                case Choice.Editor:
-                    return BrowseFiles() ? TabResult.Close : TabResult.Redraw;
+                case Choice.NewFile:
+                    NewFile(string.Empty);
+                    break;
+                case Choice.OpenFile:
+                    FileExplorer.Run();
+                    break;
+                case Choice.NewProject:
+                    NewProject(string.Empty);
+                    break;
+                case Choice.OpenProject:
+                    OpenProject();
+                    break;
                 case Choice.Jump:
                     // A place that is opened on top of the page returns here; the others leave it
                     Blyant.Jump.Open();
-                    return TabResult.Redraw;
+                    break;
                 case Choice.QuickGuide:
                     QuickGuide.Show();
-                    return TabResult.Redraw;
+                    break;
                 default:
                     // Exit without asking
                     Tools.ExitApplication();
-                    return TabResult.Redraw;
+                    break;
             }
+
+            return TabResult.Redraw;
         }
     }
 
@@ -736,14 +734,14 @@ internal static class StartMenu
         public TabResult HandleKey(ConsoleKeyInfo key)
         {
             var count = Choices.Length;
-            // Back to the Mode tab
+            // Back to the Start tab
             if (key.Key is ConsoleKey.Escape or ConsoleKey.Q) return TabResult.FirstTab;
             if (key.Key is ConsoleKey.Enter or ConsoleKey.Spacebar or ConsoleKey.L or ConsoleKey.RightArrow)
             {
                 if (_selected == 0)
                 {
                     // As ":help": all the keys
-                    Tools.WriteEditorHelp(false);
+                    Tools.WriteEditorHelp();
                 }
                 else if (_selected <= QuickGuide.All.Length)
                 {
@@ -843,7 +841,7 @@ internal static class StartMenu
             var selected = SelectedIndex(settings);
             var count = settings.Count;
             var setting = settings[selected];
-            // Back to the Mode tab
+            // Back to the Start tab
             if (key.Key is ConsoleKey.Escape or ConsoleKey.Q) return TabResult.FirstTab;
             if (key.Key is ConsoleKey.J or ConsoleKey.DownArrow)
             {
@@ -909,18 +907,16 @@ internal static class StartMenu
             case Setting.StartSelect:
                 Mode = StartMode.Select;
                 break;
-            case Setting.StartNotes:
-                Mode = StartMode.Notes;
-                break;
             case Setting.StartEditor:
                 Mode = StartMode.Editor;
                 break;
             case Setting.StartFavorites:
                 StartInFavorites = !StartInFavorites;
                 break;
-            case Setting.StayLoggedIn:
-                DataSession.StayLoggedIn = !DataSession.StayLoggedIn;
-                break;
+            case Setting.ProjectsDirectory:
+                // Saves the settings itself
+                PickProjectsDirectory();
+                return;
             case Setting.Monochrome:
                 ConsoleColors.Monochrome = !ConsoleColors.Monochrome;
                 break;
@@ -979,13 +975,6 @@ internal static class StartMenu
                 // Saves the settings itself
                 PickLogoAnimation();
                 return;
-            case Setting.EditorOnly:
-                // Only one of the two can be set
-                SetOnly(Only == OnlyMode.Editor ? OnlyMode.None : OnlyMode.Editor);
-                break;
-            case Setting.NotesOnly:
-                SetOnly(Only == OnlyMode.Notes ? OnlyMode.None : OnlyMode.Notes);
-                break;
             case Setting.ViewLog:
                 EventLog.Show();
                 return;

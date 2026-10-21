@@ -15,7 +15,6 @@ public class StartArgumentTests : IDisposable
         _root = Path.Combine(Path.GetTempPath(), "blyant-start-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(Path.Combine(_root, "notes"));
         File.WriteAllText(Path.Combine(_root, "notes", "a.md"), "x");
-        File.WriteAllText(Path.Combine(_root, "notes", "other.mbls"), "x");
         // As the current directory tells it (on macOS the temporary directory is reached by a link)
         _root = FileOperations.RealPath(_root);
     }
@@ -26,8 +25,7 @@ public class StartArgumentTests : IDisposable
         if (Directory.Exists(_root)) Directory.Delete(_root, true);
     }
 
-    private StartArgument.Result Resolve(string argument, StartMenu.OnlyMode only = StartMenu.OnlyMode.None) =>
-        StartArgument.Resolve(argument, _root, only);
+    private StartArgument.Result Resolve(string argument) => StartArgument.Resolve(argument, _root);
 
     [Fact]
     public void AFile_IsOpened_AndARelativePathIsFromTheStartDirectory()
@@ -60,24 +58,11 @@ public class StartArgumentTests : IDisposable
     }
 
     [Fact]
-    public void AModeThatIsNotUsed_IsRefused()
+    public void StartedInADirectoryWithADataDirectory_ThatOneIsUsed()
     {
-        Assert.Equal(DialogText.EditorNotUsed, Resolve(Path.Combine("notes", "a.md"), StartMenu.OnlyMode.Notes).Message);
-        Assert.Equal(DialogText.EditorNotUsed, Resolve("notes", StartMenu.OnlyMode.Notes).Message);
-        Assert.Equal(DialogText.NotesNotUsed, Resolve(Path.Combine("notes", "other.mbls"), StartMenu.OnlyMode.Editor).Message);
-    }
-
-    [Fact]
-    public void ADataFile_InTheDataDirectory_IsSelectedOnTheLoginPage_AnOtherOneIsShownInTheBrowser()
-    {
-        // Started in a directory with a data directory: that one is used
-        Directory.CreateDirectory(Path.Combine(_root, "data", "work"));
-        File.WriteAllText(Path.Combine(_root, "data", "work", "w.mbls"), "x");
+        Directory.CreateDirectory(Path.Combine(_root, "data"));
         Directory.SetCurrentDirectory(_root);
         Assert.Equal(Path.Combine(_root, "data"), Path.GetFullPath(FileIo.GetDataDirectoryName()));
-        Assert.Equal(new JumpTarget(JumpKind.DataFile, "work/w.mbls"), Resolve(Path.Combine("data", "work", "w.mbls")).Target);
-        // Outside the data directory: the browser, which offers to copy it there
-        Assert.Equal(JumpKind.File, Resolve(Path.Combine("notes", "other.mbls")).Target!.Kind);
     }
 
     [Fact]

@@ -123,7 +123,7 @@ internal static partial class FileExplorer
                         return KeyResult.Handled;
                     case "h":
                     case "help":
-                        Tools.WriteEditorHelp(false, Tools.HelpTopic.Hotlist);
+                        Tools.WriteEditorHelp(Tools.HelpTopic.Hotlist);
                         break;
                     case "info":
                         ShowHotlistInfo(selected);
@@ -164,7 +164,7 @@ internal static partial class FileExplorer
             }
             else if (key.KeyChar == '?')
             {
-                Tools.WriteEditorHelp(false, Tools.HelpTopic.Hotlist);
+                Tools.WriteEditorHelp(Tools.HelpTopic.Hotlist);
             }
             else if (key.KeyChar == '/')
             {
@@ -432,7 +432,7 @@ internal static partial class FileExplorer
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
         Tools.ClearScreen();
         Menu.WriteModeLabel(DialogText.CaptionsHotlist, string.Empty, 0);
-        Menu.WriteNameInTopBar(false);
+        Menu.WriteNameInTopBar();
         Tools.SetCursorEx(1, 1);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.HeaderColor);
         Console.Write(Tools.TruncateString(DirectoryHotlist.Items.Count == 0

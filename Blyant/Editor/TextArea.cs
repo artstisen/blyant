@@ -72,7 +72,7 @@ public partial class TextArea
     private readonly int _height;
     private readonly bool _singleLine;
     private readonly bool _readOnly;
-    internal const int SaveAsEntry = 0;
+    internal const int SaveNone = 0; // Not saved: a field of a box, or a text shown read only
     internal const int SaveAsSettings = 1;
     internal const int SaveAsFile = 2; // A plain text file opened from the file browser
 
@@ -111,17 +111,6 @@ public partial class TextArea
     /// A peek was closed with Enter: the file is to be opened in the editor (at the cursor)
     /// </summary>
     internal bool OpenRequested { get; private set; }
-
-    /// <summary>
-    /// The syntax highlighting of the entry shown in the next text area that is made for an entry (the editor or
-    /// the preview). It is used once
-    /// </summary>
-    internal static SyntaxType NextEntrySyntax { get; set; }
-
-    /// <summary>
-    /// The next entry opened in the editor is read only (it is used once)
-    /// </summary>
-    internal static bool NextEntryReadOnly { get; set; }
 
     /// <summary>
     /// The next editor is opened split (it was closed so): the cursor index of the other pane, and whether that
@@ -239,18 +228,6 @@ public partial class TextArea
         // Yanks go to the clipboard as set (every yank, or only with "+ in front)
         _engine.ClipboardEveryYank = SystemClipboard.EveryYank;
 
-        // An entry is colored as set for the entry (a tag in its options)
-        if (saveMode == SaveAsEntry && !_singleLine && NextEntrySyntax != SyntaxType.None)
-        {
-            _engine.CompletionSyntax = NextEntrySyntax;
-            _engine.SyntaxDefault = NextEntrySyntax;
-            _engine.Syntax = NextEntrySyntax;
-        }
-
-        NextEntrySyntax = SyntaxType.None;
-        // An entry that is read only cannot be changed in the editor
-        _engine.ReadOnly = saveMode == SaveAsEntry && !_singleLine && NextEntryReadOnly;
-        NextEntryReadOnly = false;
         if (peek != null)
         {
             // A peek only shows the file
@@ -516,26 +493,19 @@ public partial class TextArea
                 break;
             case EditorRequest.Help:
                 Tools.HideCursor();
-                Tools.WriteEditorHelp(false, Tools.HelpTopic.Editor);
+                Tools.WriteEditorHelp(Tools.HelpTopic.Editor);
                 RedrawAll();
                 break;
             case EditorRequest.Clipboard:
             {
-                // Yanked text: to the system clipboard and/or the paste bin (the notes of a data file only if allowed)
-                var (message, isError) = SystemClipboard.Copy(_engine.ClipboardText, _saveMode == SaveAsEntry,
-                    !SystemClipboard.EveryYank);
+                // Yanked text: to the system clipboard and/or the paste bin
+                var (message, isError) = SystemClipboard.Copy(_engine.ClipboardText, !SystemClipboard.EveryYank);
                 if (message.Length > 0) _engine.ShowMessage(message, isError);
                 _shownStatus = null;
                 break;
             }
             case EditorRequest.PasteBinWrite:
             {
-                if (_saveMode == SaveAsEntry && !SystemClipboard.FromNotes)
-                {
-                    _engine.ShowMessage(DialogText.ClipboardNotesOff, true);
-                    break;
-                }
-
                 var append = _engine.PasteBinAppend ?? SystemClipboard.PasteBinAppend;
                 var result = SystemClipboard.WritePasteBin(_engine.PasteBinText, append);
                 _engine.ShowMessage(result == DialogText.Success
@@ -567,7 +537,7 @@ public partial class TextArea
             }
             case EditorRequest.CopyPath:
             {
-                // A note of a data file has no path
+                // Only a file has a path
                 if (_saveMode != SaveAsFile)
                 {
                     _engine.ShowMessage(DialogText.NoFilePath, true);
@@ -584,16 +554,15 @@ public partial class TextArea
             {
                 Tools.HideCursor();
                 DrawStatusLine(); // Remove the command from the bottom line
-                var result = SnippetBox.Show(_engine.SnippetText, SnippetSyntax(), _saveMode == SaveAsEntry);
+                var result = SnippetBox.Show(_engine.SnippetText, SnippetSyntax());
                 RedrawAll();
                 if (result.Action == SnippetBox.Action.Insert) _engine.InsertSnippet(result.Text);
                 if (result.Action == SnippetBox.Action.Edit) OpenSnippets(result.Line);
                 break;
             }
             case EditorRequest.MacroRecord:
-                // A warning in a note of a data file: what is typed is saved unencrypted
                 Tools.HideCursor();
-                MacroBoxes.StartRecording(_engine, _saveMode == SaveAsEntry);
+                MacroBoxes.StartRecording(_engine);
                 RedrawAll();
                 break;
             case EditorRequest.MacroStop:
@@ -629,7 +598,7 @@ public partial class TextArea
             {
                 Tools.HideCursor();
                 DrawStatusLine();
-                var title = SnippetBox.Add(_engine.SnippetText, _saveMode == SaveAsEntry);
+                var title = SnippetBox.Add(_engine.SnippetText);
                 RedrawAll();
                 if (title != null) _engine.ShowMessage(DialogText.SnippetAdded, false);
                 break;
@@ -644,7 +613,7 @@ public partial class TextArea
                 CompareWithSaved();
                 break;
             case EditorRequest.Bookmark:
-                // The file being edited (a note is in its data file: that one is bookmarked in the Jump menu)
+                // The file being edited
                 if (_saveMode == SaveAsFile && FileExplorer.CurrentFilePath.Length > 0)
                 {
                     _engine.ShowMessage(Bookmarks.AddWithMessage(
@@ -652,12 +621,12 @@ public partial class TextArea
                 }
                 else
                 {
-                    _engine.ShowMessage(DialogText.BookmarkNoteNotKept, true);
+                    _engine.ShowMessage(DialogText.BookmarkFileOnly, true);
                 }
 
                 break;
             case EditorRequest.Favorite:
-                // A file: in or out of the favorites of the file browser. A note: of the favorites of its data file
+                // A file: in or out of the favorites of the file browser
                 if (_saveMode == SaveAsFile && FileExplorer.CurrentFilePath.Length > 0)
                 {
                     FileFavorites.Load();
@@ -672,13 +641,9 @@ public partial class TextArea
                         _engine.ShowMessage(status, true);
                     }
                 }
-                else if (_saveMode == SaveAsEntry && Entries.CurrentEntryExists())
-                {
-                    _engine.ShowMessage(Actions.ToggleCurrentEntryFavorite(), false);
-                }
                 else
                 {
-                    _engine.ShowMessage(Lang.T("Only a file or a note can be a favorite"), true);
+                    _engine.ShowMessage(Lang.T("Only a file can be a favorite"), true);
                 }
 
                 break;
@@ -691,6 +656,7 @@ public partial class TextArea
                 if (_saveMode != SaveAsSettings) FileIo.SaveSettings();
                 break;
             case EditorRequest.Jump when _engine.IsRecording:
+            case EditorRequest.Projects when _engine.IsRecording:
             case EditorRequest.JumpToBookmark when _engine.IsRecording:
                 // Leaving would throw the macro away: it is stopped first (Esc)
                 _engine.SetMessage(Lang.T("Stop recording the macro first (Esc)"), true);
@@ -699,6 +665,18 @@ public partial class TextArea
                 Tools.HideCursor();
                 // Leaving the text asks about changes that are not saved
                 Jump.Open(LeaveForJump);
+                RedrawAll();
+                break;
+            case EditorRequest.Projects:
+                Tools.HideCursor();
+                DrawStatusLine(); // Remove the command from the bottom line
+                // The project picked is shown in the file browser, as a jump: changes that are not saved are asked
+                // about first
+                if (ProjectsBox.Pick() is { } project)
+                {
+                    Jump.ToPlace(new JumpTarget(JumpKind.Directory, project), LeaveForJump);
+                }
+
                 RedrawAll();
                 break;
             case EditorRequest.JumpToBookmark:
@@ -766,13 +744,6 @@ public partial class TextArea
                 ReloadFile(request == EditorRequest.ReloadForce);
                 break;
             case EditorRequest.SyntaxChanged:
-                // An entry remembers its syntax
-                if (_saveMode == SaveAsEntry)
-                {
-                    Actions.SetEntrySyntax(_engine.Syntax);
-                    _shownStatus = null;
-                }
-
                 // Colors on or off is remembered for the files that are colored when they are opened
                 if (_saveMode == SaveAsFile &&
                     SyntaxHighlighter.TypeOfFile(FileExplorer.CurrentFileName) != SyntaxType.None)
@@ -867,8 +838,7 @@ public partial class TextArea
         _exit = true;
     }
 
-    // ":diff": the text compared with the file on disk (a file), or with the text saved (an entry). Enter in the
-    // comparison goes to the line in this text
+    // ":diff": the text compared with the file on disk. Enter in the comparison goes to the line in this text
     private void CompareWithSaved()
     {
         string saved;
@@ -887,10 +857,6 @@ public partial class TextArea
                 }
 
                 name = FileExplorer.CurrentFileName;
-                break;
-            case SaveAsEntry when Entries.CurrentEntry != null:
-                saved = Entries.CurrentEntry.Text;
-                name = Entries.CurrentEntry.Title;
                 break;
             default:
                 _engine.ShowMessage(DialogText.DiffNotHere, true);
@@ -980,17 +946,15 @@ public partial class TextArea
                     };
         // A file is opened where the cursor is the next time, as when it is closed
         if (leave && _saveMode == SaveAsFile) FileExplorer.KeepCaretOfCurrentFile(this);
-        // An entry is opened split again if it is now
-        if (leave && _saveMode == SaveAsEntry) Actions.KeepSplitOfEntry(this);
         return leave;
     }
 
-    // ":new name": the file or entry to open when the editor is closed for it (and it is forgotten)
+    // ":new name": the file to open when the editor is closed for it (and it is forgotten)
     private static string? _newDocument;
 
     /// <summary>
-    /// The editor was closed for ":new name": the name of the new file, made next to the file that was edited, or
-    /// the title of the new entry, which the caller makes (and it is forgotten). Null if it was not
+    /// The editor was closed for ":new name": the name of the new file, made next to the file that was edited (and
+    /// it is forgotten). Null if it was not
     /// </summary>
     internal static string? TakeNewDocumentRequest()
     {
@@ -999,20 +963,20 @@ public partial class TextArea
         return name;
     }
 
-    // ":new name" in a text file: a new, empty file in the same directory (a plain name, not one that is there);
-    // ":new Title" in an entry: a new entry in the data file. The name is asked for if it is not given, the text
-    // being edited is asked about if it has changes, and the new one is opened in its place
+    // ":new name": a new, empty file in the same directory (a plain name, not one that is there). The name is
+    // asked for if it is not given, the text being edited is asked about if it has changes, and the new one is
+    // opened in its place
     private void NewDocument()
     {
         if (_engine.IsRecording)
         {
-            _engine.SetMessage(Lang.T("A new file or note is not made while recording"), true);
+            _engine.SetMessage(Lang.T("A new file is not made while recording"), true);
             return;
         }
 
-        if (_peek != null || _saveMode is not (SaveAsFile or SaveAsEntry) || FileExplorer.EditingBlyantFile)
+        if (_peek != null || _saveMode != SaveAsFile || FileExplorer.EditingBlyantFile)
         {
-            _engine.SetMessage(Lang.T("A new file or note is not made here"), true);
+            _engine.SetMessage(Lang.T("A new file is not made here"), true);
             return;
         }
 
@@ -1020,20 +984,15 @@ public partial class TextArea
         if (name.Length == 0)
         {
             ChoiceBox.Forget();
-            name = (_saveMode == SaveAsFile
-                ? ChoiceBox.AskText(DialogText.NewFile, DialogText.TypeNameAndPressEnter, DialogText.NameColon, string.Empty)
-                : ChoiceBox.AskText(DialogText.New, DialogText.EnterTitleAndPressEnter, DialogText.TitleColon,
-                    string.Empty))?.Trim() ?? string.Empty;
+            name = ChoiceBox.AskText(DialogText.NewFile, DialogText.TypeNameAndPressEnter, DialogText.NameColon,
+                string.Empty)?.Trim() ?? string.Empty;
             RedrawAll();
             if (name.Length == 0) return;
         }
 
-        if (_saveMode == SaveAsEntry)
-        {
-            name = Tools.ConstrainTitle(name);
-            if (!Tools.IsValid(name)) return;
-        }
-        else if (FileExplorer.NewFileProblem(name) is { } problem)
+        // Without an extension: a Markdown file
+        name = FileOperations.WithDefaultExtension(name);
+        if (FileExplorer.NewFileProblem(name) is { } problem)
         {
             _engine.SetMessage(problem, true);
             return;
@@ -1046,7 +1005,7 @@ public partial class TextArea
             return;
         }
 
-        if (_saveMode == SaveAsFile && FileExplorer.CreateFileNextToCurrent(name) is { } failed)
+        if (FileExplorer.CreateFileNextToCurrent(name) is { } failed)
         {
             RedrawAll();
             _engine.SetMessage(failed, true);
@@ -1058,16 +1017,12 @@ public partial class TextArea
         _exit = true;
     }
 
-    // ":rename" and ":title": a file gets another name (the changes that are not saved stay so, and are saved to
-    // it with ":w"), and an entry another title (saved at once, as when it is changed in a list)
+    // ":rename": the file gets another name (the changes that are not saved stay so, and are saved to it with ":w")
     private void RenameDocument()
     {
         string status;
         switch (_saveMode)
         {
-            case SaveAsFile when _engine.RenameIsTitle:
-                _engine.SetMessage(DialogText.TitleIsForEntries, true);
-                return;
             case SaveAsFile:
                 status = FileExplorer.RenameCurrentFile(_engine.RenameText);
                 if (status != DialogText.Success) break;
@@ -1076,11 +1031,6 @@ public partial class TextArea
                 _engine.SyntaxDefault = type;
                 if (SyntaxHighlighter.ColorFiles) _engine.Syntax = type;
                 _engine.SetMessage(Lang.F("Renamed to {0}", FileExplorer.CurrentFileName), false);
-                return;
-            case SaveAsEntry:
-                status = Actions.RetitleCurrentEntry(_engine.RenameText);
-                if (status != DialogText.Success) break;
-                _engine.SetMessage(DialogText.TitleChanged, false);
                 return;
             default:
                 status = DialogText.SnippetsNotHere;
@@ -1091,8 +1041,8 @@ public partial class TextArea
         if (status.Length > 0) _engine.SetMessage(status, true);
     }
 
-    // ":info": the text being edited in a box: its name (a file) or title (an entry), how many characters, words
-    // and lines it has as it is now (with the changes that are not saved), and for a file its dates and path
+    // ":info": the text being edited in a box: its name, how many characters, words and lines it has as it is now
+    // (with the changes that are not saved), and for a file its dates and path
     private void ShowDocumentInfo()
     {
         var text = GetText();
@@ -1101,9 +1051,7 @@ public partial class TextArea
             : _saveMode == SaveAsSettings ? System.IO.Path.GetFullPath(System.IO.Path.Combine(
                 FileIo.GetDataDirectoryName(), FileIo.SettingsFileName))
             : string.Empty;
-        var entry = _saveMode == SaveAsEntry && Entries.CurrentEntryExists() ? Entries.CurrentEntry : null;
         if (path.Length > 0) rows.Add((DialogText.InfoName, System.IO.Path.GetFileName(path)));
-        else if (entry != null) rows.Add((DialogText.TitleColon, entry.Title));
         rows.Add((Lang.T("Characters:"), Tools.CharacterCount(text).ToString()));
         rows.Add((Lang.T("Words:"), Tools.WordCount(text).ToString()));
         rows.Add((Lang.T("Lines:"), Tools.LineCount(text).ToString()));
@@ -1126,11 +1074,6 @@ public partial class TextArea
 
             rows.Add((DialogText.InfoPath, path));
         }
-        else if (entry != null)
-        {
-            rows.Add((DialogText.InfoCreated, entry.DateCreated));
-            rows.Add((DialogText.InfoChanged, entry.DateChanged));
-        }
 
         ChoiceBox.Forget();
         ChoiceBox.ShowRows(DialogText.InfoCaptionDocument, rows);
@@ -1141,7 +1084,7 @@ public partial class TextArea
     {
         if (_saveMode != SaveAsFile)
         {
-            // An entry of a data file cannot be changed by another program
+            // Only a file can have been changed by another program
             _engine.SetMessage(DialogText.EditorReloadFilesOnly, true);
             return;
         }
@@ -1432,12 +1375,9 @@ public partial class TextArea
         }
         else
         {
-            // Save entry: when the data file was not saved, the text stays unsaved (":q" warns about it)
-            if (!Actions.SaveContentDuringEdit(this))
-            {
-                _engine.SetMessage(DialogText.ChangesNotSaved, true);
-                return false;
-            }
+            // A text that is not kept anywhere
+            _engine.SetMessage(DialogText.StatusUnableToSave, true);
+            return false;
         }
 
         _engine.MarkSaved();
@@ -1506,7 +1446,7 @@ public partial class TextArea
                 Actions.DrawEditFileMenu();
                 break;
             default:
-                Actions.DrawEditMenu();
+                Tools.CursorTopLeft();
                 break;
         }
 

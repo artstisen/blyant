@@ -32,7 +32,7 @@ internal static class Tools
             }
 
             return input.Split(
-                new[] {Entries.ReturnNewLineCharString, Entries.ReturnCharString, Entries.NewLineCharString},
+                new[] {"\r\n", "\r", "\n"},
                 StringSplitOptions.None);
         }
         else
@@ -47,7 +47,7 @@ internal static class Tools
         {
             var tempList = new List<string>();
             tempList.AddRange(input.Split(
-                new[] {Entries.ReturnNewLineCharString, Entries.ReturnCharString, Entries.NewLineCharString},
+                new[] {"\r\n", "\r", "\n"},
                 StringSplitOptions.None));
 
             return tempList;
@@ -55,28 +55,6 @@ internal static class Tools
         else
         {
             return new List<string>();
-        }
-    }
-
-    // This will split a string on several parameters and only fetch the first instance which will be limited to 256 chars
-    public static string ConstrainTitle(string input)
-    {
-        if (IsValid(input))
-        {
-            input = input.Trim();
-            input = input.Split(
-                new[] {Entries.ReturnNewLineCharString, Entries.ReturnCharString, Entries.NewLineCharString},
-                StringSplitOptions.None)[0];
-            if (input.Length > 256)
-            {
-                input = input[..255];
-            }
-
-            return input;
-        }
-        else
-        {
-            return string.Empty;
         }
     }
 
@@ -156,15 +134,6 @@ internal static class Tools
         return invalidChars.All(c => !input.Contains(c));
     }
 
-    public static bool IsValidXml(string input)
-    {
-        if (IsValid(input) && input.Contains(FileIo.XmlDoctype))
-        {
-            return true;
-        }
-        return false;
-    }
-
 
     public static bool IsNumeric(string s)
     {
@@ -224,7 +193,7 @@ internal static class Tools
 
     internal static int LineCount(string text)
     {
-        if (!string.IsNullOrEmpty(text) && text.Contains(Entries.NewLineCharString))
+        if (!string.IsNullOrEmpty(text) && text.Contains("\n"))
         {
             return SplitStringOnNewLine(text, false).Length;
         }
@@ -262,297 +231,18 @@ internal static class Tools
     }
 
 
-    // Mask password
-    private const int MaxMaskedDisplay = 32; // The number of "*" shown (the width of the login field)
-    private static ConsoleKeyInfo _keyInfo;
-
-    // Remove the last "*" from the password field
-    private static void EraseMaskedChar()
-    {
-        // Go back, write blank, go back -same as "\b \b", but cross platform compatible
-        Console.SetCursorPosition(Console.CursorLeft - 1, Console.CursorTop);
-        Console.Write(" ");
-        Console.SetCursorPosition(Console.CursorLeft - 1, Console.CursorTop);
-    }
-    private static bool _exitLoop;
-    private static string _pass = string.Empty;
-
-    // The password typed: given to the caller, and no longer kept here
-    private static string TakePassword()
-    {
-        var typed = _pass;
-        _pass = string.Empty;
-        return typed;
-    }
-
-    // The passwords typed on the way to a new one: not kept after logging out (or an error on the way)
-    private static void ForgetPasswords()
-    {
-        _pass = string.Empty;
-        _newPass = string.Empty;
-        _newPassRepeat = string.Empty;
-        _tempResetPassword = string.Empty;
-    }
-
-    private static string ReadMasked(bool enableShortcuts)
-    {
-        _pass = string.Empty;
-        _exitLoop = false;
-        do
-        {
-            ShowCursor();
-            _keyInfo = Console.ReadKey(intercept: true);
-            HideCursor();
-            var key = _keyInfo.Key;
-
-            // Esc in an empty password field opens the options menu
-            if (enableShortcuts && key == ConsoleKey.Escape && !FileActions.IsLockedForMove() && _pass.Length == 0)
-            {
-                ShowLoginOptions();
-            }
-            else if (key == ConsoleKey.Enter)
-            {
-                if (enableShortcuts && FileActions.IsLockedForMove())
-                {
-                    FileActions.MoveCurrentDataFile();
-                    LoginRoutine(true);
-                }
-                else
-                {
-                    _exitLoop = true;
-                }
-            }
-            else if (enableShortcuts && key == ConsoleKey.Tab && _keyInfo.Modifiers == ConsoleModifiers.Shift)
-            {
-                if (!FileActions.IsLockedForMove())
-                {
-                    // Previous datafile (SHIFT+TAB)
-                    FileBrowser.SelectPreviousDataFile();
-                }
-            }
-            else if (enableShortcuts && key == ConsoleKey.LeftArrow)
-            {
-                if (!FileActions.IsLockedForMove())
-                {
-                    // Previous datafile
-                    FileBrowser.SelectPreviousDataFile();
-                }
-            }
-            else if (enableShortcuts && (key == ConsoleKey.RightArrow || key == ConsoleKey.Tab))
-            {
-                if (!FileActions.IsLockedForMove())
-                {
-                    // Next datafile
-                    FileBrowser.SelectNextDataFile();
-                }
-            }
-            else if (enableShortcuts && key == ConsoleKey.UpArrow)
-            {
-                // Next sub directory
-                FileBrowser.NextSubfolder();
-            }
-            else if (enableShortcuts && key == ConsoleKey.DownArrow)
-            {
-                // Previous sub directory
-                FileBrowser.PreviousSubfolder();
-            }
-            else if (enableShortcuts && key == ConsoleKey.Spacebar)
-            {
-                // Lock for move
-                if (IsValid(FileIo.GetFileName()) && FileBrowser.HasSubFolders() && !FileActions.IsLockedForMove())
-                {
-                    FileActions.SetLockForMove(true, false);
-                }
-                else if(FileActions.IsLockedForMove())
-                {
-                    FileActions.SetLockForMove(false, true);
-                }
-
-                LoginRoutine(false);
-            }
-            else if (enableShortcuts && key == ConsoleKey.Escape)
-            {
-                if (FileActions.IsLockedForMove())
-                {
-                    FileActions.SetLockForMove(false, true);
-                    LoginRoutine(false);
-                }
-                // Return to root/data directory
-                else if (FileIo.GetSubFolder().Length > 0)
-                {
-                    // Remove subfolder at select first file in the root/data directory
-                    FileBrowser.ResetSubfolderAndIndex();
-                    FileBrowser.ResolveDefaultDataFile();
-                    LoginRoutine(false);
-                }
-                else if(_pass.Length > 0)
-                {
-                    for (int i = 0; i < Math.Min(_pass.Length, MaxMaskedDisplay); i++)
-                    {
-                        EraseMaskedChar();
-                    }
-                    // Clear password variable
-                    _pass = string.Empty;
-                }
-            }
-            else if (key == ConsoleKey.Backspace && _pass.Length > 0)
-            {
-                if (_pass.Length <= MaxMaskedDisplay) EraseMaskedChar();
-                _pass = _pass[0..^1];
-            }
-            else if (!FileActions.IsLockedForMove() && !char.IsControl(_keyInfo.KeyChar) && key != ConsoleKey.Spacebar &&
-                     _pass.Length < Encryptor.KeyMaxLength)
-            {
-                // A long password is not shown in its full length
-                if (_pass.Length < MaxMaskedDisplay) Console.Write("*");
-                _pass += _keyInfo.KeyChar;
-            }
-        } while (!_exitLoop);
-
-        return TakePassword();
-    }
-
-    // The options of the login page, in a box: an option is selected (j/k, Enter) or picked with its key
-    private static void ShowLoginOptions()
-    {
-        var options = new (string Key, string Text)[]
-        {
-            ("F", DialogText.CaptionsFiles),
-            ("T", DialogText.StartSelectMode),
-            ("S", DialogText.StartConfiguration),
-            ("O", DialogText.CaptionsJump),
-            ("N", DialogText.NewFile),
-            ("X", DialogText.RenameFile),
-            ("C", DialogText.CopyFile),
-            ("D", DialogText.DeleteFile),
-            ("M", DialogText.MergeFiles),
-            ("I", DialogText.FileInfo),
-            ("R", DialogText.Refresh),
-            ("U", DialogText.QuickGuide),
-            ("?", Lang.T("Help")),
-            ("Q", DialogText.Exit)
-        };
-        var picked = ChoiceBox.PickOption(DialogText.CaptionsOptions, options.Select(option => option.Text).ToList(),
-            options.Select(option => option.Key).ToList(), 7, 14);
-        var choice = picked < 0 ? string.Empty : options[picked].Key;
-        if (choice == "R")
-        {
-            // Refresh
-            LoginRoutine(true);
-        }
-        else if (choice == "I")
-        {
-            // File info
-            FileActions.ShowDataFileInfo(false);
-            LoginRoutine(true);
-        }
-        else if (choice == "N")
-        {
-            // New data file
-            if (FileActions.NewDataFilePrompt())
-            {
-                Init.Log("New file: " + FileIo.GetFileName(), false);
-            }
-
-            LoginRoutine(true);
-        }
-        else if (choice == "X")
-        {
-            // Rename file
-            FileActions.RenameCurrentDataFile();
-            LoginRoutine(true);
-        }
-        else if (choice == "C")
-        {
-            // Copy file
-            FileActions.CopyCurrentDataFile();
-            LoginRoutine(true);
-        }
-        else if (choice == "D")
-        {
-            // Delete file
-            FileActions.DeleteCurrentDataFile();
-            LoginRoutine(true);
-        }
-        else if (choice == "M")
-        {
-            // Merge files
-            MergeTool merge = new MergeTool();
-            try
-            {
-                merge.MergeExport();
-            }
-            finally
-            {
-                // However the tool is left: the notes it decrypted and their password are not kept
-                RemovePrivileges(false);
-            }
-
-            LoginRoutine(true);
-        }
-        else if (choice == "F")
-        {
-            // Browse and edit text files
-            FileExplorer.Run();
-            LoginRoutine(true);
-        }
-        else if (choice == "S")
-        {
-            // The Configuration tab of the Select mode page
-            StartMenu.Open(0);
-            LoginRoutine(true);
-        }
-        else if (choice == "O")
-        {
-            // The Jump menu (O as Ctrl+O: J is taken by j, which selects in the box)
-            Jump.Open();
-            LoginRoutine(true);
-        }
-        else if (choice == "T")
-        {
-            // Select mode (notes, text editor or configuration)
-            StartMenu.Open();
-            LoginRoutine(true);
-        }
-        else if (choice == "U")
-        {
-            // Quick guide
-            QuickGuide.Show();
-            LoginRoutine(true);
-        }
-        else if (choice == "Q")
-        {
-            // Exit directly
-            ExitApplication();
-        }
-        else if (choice == "?")
-        {
-            // Help
-            WriteEditorHelp(false, HelpTopic.Login);
-            LoginRoutine(true);
-        }
-        else
-        {
-            // Close the options
-            LoginRoutine(true);
-        }
-    }
-
     /// <summary>
     /// Edit the settings file in the editor (from the Configuration page)
     /// </summary>
     /// <returns>True if the file was saved: Blyant must start over to read the settings again</returns>
     internal static bool EditSettingsFile()
     {
-        var mode = Mode.CurrentMode;
-        Mode.SetMode(Mode.SelectedMode.Edit);
         ClearScreen();
         Actions.DrawEditSettingsMenu();
         TextArea textArea = new TextArea(Console.CursorLeft, Console.CursorTop, Init.LineWidth - 1,
             Init.LineCount - 3, FileIo.ReadSettingsFile(), 0, false, false, false, 1);
         // Cleanup
         textArea.ClearUndoRedoCache();
-        Mode.SetMode(mode);
         return textArea.SaveWasInvoked;
     }
 
@@ -594,45 +284,6 @@ internal static class Tools
         {
             HideCursor();
         }
-    }
-
-    internal static string ReadMaskedSimple(bool enableCancelCommand)
-    {
-        _pass = string.Empty;
-        _exitLoop = false;
-
-        do
-        {
-            ShowCursor();
-            _keyInfo = Console.ReadKey(intercept: true);
-            HideCursor();
-            var key = _keyInfo.Key;
-
-            // Handle all trigger keys first
-            if (key == ConsoleKey.Enter)
-            {
-                _exitLoop = true;
-            }
-            else if (enableCancelCommand && key == ConsoleKey.Escape)
-            {
-                // Indicate cancel
-                _pass = DialogText.CancelCommand;
-                _exitLoop = true;
-            }
-            else if (key == ConsoleKey.Backspace && _pass.Length > 0)
-            {
-                if (_pass.Length <= MaxMaskedDisplay) EraseMaskedChar();
-                _pass = _pass[0..^1];
-            }
-            else if (!char.IsControl(_keyInfo.KeyChar) && key != ConsoleKey.Spacebar &&
-                     _pass.Length < Encryptor.KeyMaxLength)
-            {
-                if (_pass.Length < MaxMaskedDisplay) Console.Write("*");
-                _pass += _keyInfo.KeyChar;
-            }
-        } while (!_exitLoop);
-
-        return TakePassword();
     }
 
 
@@ -773,34 +424,6 @@ internal static class Tools
     #endregion
 
 
-    internal static int GetTitleEditWidth()
-    {
-        return Init.LineWidth - 15;
-    }
-
-    internal static int GetTitleListWidth()
-    {
-        return Init.LineWidth - 30;
-    }
-
-
-    internal static void Restart()
-    {
-        if (ChoiceBox.Confirm(DialogText.Restart, DialogText.RestartQuestion, string.Empty, false))
-        {
-            Init.Log(" *** Restart *** ", false);
-            RemovePrivileges(true);
-            ClearEditorHelpData();
-            // Clear transfer entry
-            Entries.ClearTransfer(false);
-            Init.RunInitialization();
-            Menu.DrawTopMenu(true, true, false);
-        }
-        else
-        {
-            Menu.DrawTopMenu(false, true, false);
-        }
-    }
 
     /// <summary>
     /// Restart Blyant and continue as when it is started: with the start page (or what it is set to show)
@@ -808,52 +431,26 @@ internal static class Tools
     internal static void RestartFromStartPage()
     {
         Init.Log(" *** Restart *** ", false);
-        RemovePrivileges(true);
+        ClearScreen();
         ClearEditorHelpData();
-        Entries.ClearTransfer(false);
         Init.RunInitialization();
         StartMenu.Start();
-        LoginRoutine(true);
-    }
-
-    internal static void ColdRestart()
-    {
-        Init.Log(" *** Restart *** ", false);
-        RemovePrivileges(true);
-        ClearEditorHelpData();
-        // Clear transfer entry
-        Entries.ClearTransfer(false);
-        Init.RunInitialization();
-        Menu.DrawTopMenu(true, true, false);
+        Navigation.Wait();
     }
 
     /// <summary>
-    /// An error that nothing else caught: it is told about, and Blyant goes on from the Data File Menu, still
-    /// logged in (the notes are saved after each change). Not logged in, or when that fails too, it starts over.
-    /// On the login page (logging in, merging, a new password) the password can be set before the notes in memory
-    /// are those of the data file: it always starts over there, so no notes are saved into another data file
+    /// An error that nothing else caught: it is told about, and Blyant starts over from the start page (the
+    /// settings are read again)
     /// </summary>
     internal static void FatalError(Exception error)
     {
-        // The kind of error only: its text can have a title or a path in it
+        // The kind of error only: its text can have a path in it
         Init.Log("Error: " + error.GetType().Name, false);
         ChoiceBox.Message(DialogText.CaptionsKeyError, DialogText.ErrorUnsupportedAction, error.Message);
-        if (Encryptor.HasKey && Mode.CurrentMode != Mode.SelectedMode.Login)
-        {
-            try
-            {
-                Mode.SetMode(Mode.SelectedMode.Manage);
-                Menu.DrawTopMenu(true, true, false);
-                return;
-            }
-            catch (Exception again) when (again is not NavigationException)
-            {
-                Init.Log("Error: " + again.GetType().Name, false);
-            }
-        }
-
-        // Start over
-        ColdRestart();
+        Init.Log(" *** Restart *** ", false);
+        ClearEditorHelpData();
+        Init.RunInitialization();
+        StartMenu.Open();
     }
 
     internal static void ActionUnsupported(string errorMsg)
@@ -862,270 +459,6 @@ internal static class Tools
     }
 
 
-    #region Login/Password
-
-    // There is only a "LoginRoutine" not a "logout" as this method provides both
-    private static LoadStatus _load = new();
-    internal static bool CreateNewDataFile;
-
-    /// <summary>
-    /// Go to the login page (this logs out of the current data file)
-    /// </summary>
-    /// <param name="fullRedraw">False to only refresh the file and directory selection</param>
-    internal static void LoginRoutine(bool fullRedraw)
-    {
-        Navigation.LoginFullRedraw = fullRedraw;
-        // Sweep the logo when arriving at the login page from elsewhere (logging out)
-        if (Mode.CurrentMode != Mode.SelectedMode.Login) Logo.AnimateNext();
-        Mode.SetMode(Mode.SelectedMode.Login);
-        Navigation.Wait();
-    }
-
-    /// <summary>
-    /// Show the login page and read the password. Called by the main loop when in Login mode.
-    /// </summary>
-    internal static void ShowLogin(bool fullRedraw)
-    {
-        // The page where notes or text files are selected comes before the login page
-        if (StartMenu.Pending)
-        {
-            StartMenu.Run();
-            fullRedraw = true;
-        }
-
-        // Follow the size of the terminal window (if automatic dimensions are on)
-        if (Init.ApplyAutoSize()) fullRedraw = true;
-        if (fullRedraw)
-        {
-            ClearScreen();
-        }
-
-        Mode.SetMode(Mode.SelectedMode.Login);
-        RemovePrivileges(fullRedraw);
-
-        // Start by checking if the data file exists
-        // If the current file is not available try to select the next available
-        if (!FileActions.IsLockedForMove() && (CreateNewDataFile || !FileBrowser.ResolveDefaultDataFile()))
-        {
-            CreateNewDataFile = false;
-            // The welcome text only for the data file made at the first start
-            if (FileActions.CurrentFileType == FileActions.FileType.Normal)
-            {
-                DisplayWelcomeText();
-            }
-
-            NewPasswordRoutine(false);
-        }
-        else
-        {
-            if (fullRedraw)
-            {
-                // Draw logo
-                Logo.DrawLogo(true, Logo.TakeAnimation());
-                CursorTopLeftDown(5);
-                // Draw login menu
-                CursorReturn();
-                ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
-                CursorDown(1);
-                CursorRight(2);
-                Console.Write(AsciiStyles.GetTopCorner() + new string('-', 34) + AsciiStyles.GetTopCorner());
-                ConsoleColors.SetColors(ConsoleColors.ColorPreset.HeaderColor);
-                CursorReturn();
-                CursorRight(4);
-                Console.Write(" " + DialogText.CaptionsLogin + " ");
-                ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
-                CursorReturn();
-                CursorDown();
-                CursorRight(2);
-                Console.Write("|" + new string(' ', 34) + "|");
-                CursorReturn();
-                CursorDown();
-                CursorRight(2);
-                Console.Write(AsciiStyles.GetBottomCorner() + new string('-', 34) + AsciiStyles.GetBottomCorner());
-                ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
-                CursorReturn();
-                CursorDown(2);
-            }
-            else
-            {
-                // Clear password field when browsing files
-                CursorTopLeftDown(7);
-                CursorRight(3);
-                Console.Write(new string(' ', 32));
-            }
-
-            // File browser
-            CursorTopLeftDown(10);
-            // Clear the bottom menu lines for file- and directory names if not a full redraw
-            if (!fullRedraw)
-            {
-                Menu.WriteDataFileName();
-                for (int i = 0; i < 6; i++)
-                {
-                    Console.Write(new string(' ', Init.LineWidth));
-                    if (i < 5)
-                    {
-                        CursorReturn();
-                        CursorDown();
-                    }
-                }
-
-                CursorReturn();
-                CursorUp(5);
-            }
-
-
-            // Write file name
-            if (FileActions.IsLockedForMove())
-            {
-                // Write file selection
-                Menu.WriteMenuItem(DialogText.PaginationLeftRight,
-                    DialogText.ExtSelectDataFile + " --> ", false);
-                ConsoleColors.SetColors(ConsoleColors.ColorPreset.HighlightInverted);
-                Console.Write(" " + TextMetrics.Printable(TruncateString(FileIo.GetFileName(), 35, true)) + " ");
-                // Write file size
-                ConsoleColors.SetColors(ConsoleColors.ColorPreset.AttentionInverted);
-                Console.Write(" " + Lang.T("Move") + " ");
-                ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
-                Console.Write(" -->");
-            }
-            else
-            {
-                // Write file selection
-                Menu.WriteMenuItem(DialogText.PaginationLeftRight,
-                    DialogText.ExtSelectDataFile + " " + FileBrowser.GetDataFileCountForDisplay() + " ", false);
-                if (FileBrowser.FilesInDirectory() > 0)
-                {
-                    // Write file name
-                    ConsoleColors.SetColors(ConsoleColors.ColorPreset.HighlightInverted);
-                    Console.Write(" " + TextMetrics.Printable(TruncateString(FileIo.GetFileName(), 35, true)) + " ");
-                    // Write file size
-                    ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
-                    Console.Write(" (" + FileIo.GetFileSize(false) + ")");
-                }
-                else
-                {
-                    // Empty directory
-                    FileIo.SetNoFileName();
-                    ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
-                    Console.Write(" " + TruncateString(DialogText.NoDataFiles, 35, true) + " ");
-                }
-            }
-
-            // Ensure normal colors
-            ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
-            CursorReturn();
-            CursorDown();
-
-            // Directory selection
-            FileBrowser.RefreshSubfoldersList();
-            if (!FileBrowser.HasSubFolders()) Menu.DimMenuItem = true;
-            Menu.WriteMenuItem(DialogText.BrowseUpDown,
-                DialogText.ExtSelectDirectory + ": ",
-                false); // Removed the GetSubfolderCount() as it clutters the scene
-            
-            if (!FileBrowser.HasSubFolders()) ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
-            else
-            {
-                ConsoleColors.SetColors(ConsoleColors.ColorPreset.HeaderColor);
-            }
-            Console.Write(TruncateString(FileIo.GetDataAndSubFolderForDisplay(), 35, true));
-            if (FileBrowser.FilesInDirectory() == 0)
-            {
-                ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
-                Console.Write(" " + DialogText.EmptyDirectory);
-            }
-            // Move indicator
-            if (FileActions.IsLockedForMove())
-            {
-                if (!FileActions.IsMoveDirectoryValid())
-                {
-                    Console.Write(" ");
-                    ConsoleColors.SetColors(ConsoleColors.ColorPreset.WarningInverted);
-                    Console.Write(" X ");
-                }
-                else if (FileActions.IsMoveDirectoryValid())
-                {
-                    Console.Write(" ");
-                    ConsoleColors.SetColors(ConsoleColors.ColorPreset.HighlightInverted);
-                    Console.Write(" <-- Enter "); // English: the name of the key
-                }
-            }
-
-            ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
-            if (FileActions.IsLockedForMove())
-            {
-                // Options disabled
-                CursorReturn();
-                CursorDown(2);
-                Console.Write(new string(' ', 2) + DialogText.FileMoveInstructions);
-                CursorReturn();
-                CursorDown();
-                Console.Write(new string(' ', 2) + DialogText.PressEscSpaceToExit);
-            }
-            else
-            {
-                CursorReturn();
-                CursorDown();
-                
-                // Additional menu items
-                if (!FileBrowser.HasSubFolders()) Menu.DimMenuItem = true;
-                Menu.WriteMenuItem(DialogText.Spacebar, DialogText.MoveFile, true);
-                Menu.WriteMenuItem(DialogText.Escape, DialogText.ClearOrMoreOptions, true);
-            }
-
-            // Place cursor at login box
-            CursorTopLeft();
-            CursorDown(7);
-            CursorRight(4);
-            // Login
-            // Else ask for current password
-            Encryptor.SetKey(ReadMasked(true)); // Set password
-            _pass = string.Empty; // Clear password stored from the masked reader
-            // Indicate loading on the bottom line: the login page stays, so that a message about a wrong
-            // password can be shown on top of it
-            HideCursor();
-            SetCursorEx(Init.LineCount - 1, 0);
-            Console.Write(" " + DialogText.Loading);
-            // Try to load file
-            _load = new LoadStatus();
-            _load = FileIo.LoadEntries();
-            if (_load.Success)
-            {
-                Init.Log("Login OK: " + FileIo.GetFolderAndFileNameWithSizeForDisplay(), false);
-                // Convert data files from older versions
-                if (_load.IsLegacyFormat)
-                {
-                    ConvertLegacyDataFile();
-                }
-
-                // Save settings to update the current loaded data file name
-                FileIo.SaveSettings();
-                Mode.SetMode(Mode.SelectedMode.Manage);
-                Menu.DrawTopMenu(true, true, false);
-            }
-            else if (!_load.Success)
-            {
-                Init.Log("Login FAILED: "  + FileIo.GetFolderAndFileNameWithSizeForDisplay(), false);
-                // What went wrong, in a box on top of the login page
-                if (_load.StatusMessage.Contains(DialogText.InvalidPassword))
-                {
-                    ChoiceBox.Message(DialogText.CaptionsLogin, DialogText.InvalidPassword,
-                        DialogText.CapsLockNotice);
-                }
-                else
-                {
-                    ChoiceBox.Message(DialogText.CaptionsLogin, _load.StatusMessage, string.Empty);
-                }
-
-                LoginRoutine(true);
-            }
-        }
-
-        // If load successful
-        Mode.SetMode(Mode.SelectedMode.Manage);
-        Menu.DrawTopMenu(true, true, false);
-    }
 
 
     /// <summary>
@@ -1157,64 +490,11 @@ internal static class Tools
         ChoiceBox.Forget();
     }
 
-    // Remove privileges but keep transfer entry
-    internal static void RemovePrivileges(bool clearScreen)
-    {
-        if (clearScreen)
-        {
-            ClearScreen();
-        }
-
-        ClearLineMemory();
-        CommandHistory.Clear();
-        Entries.ClearAllEntries(true);
-        Entries.ResetCurrentEntry();
-        Entries.ResetRecallId();
-        Entries.ResetBackupEntry();
-        Entries.ResetDeletedEntry();
-        Entries.ClearTempRankedEntries();
-        Entries.ClearSessionEntryIdList();
-        Encryptor.RemoveKey();
-        Actions.ClearAtLogout();
-        ForgetPasswords();
-        FileIo.ResetBackupFailureNotice();
-        FileIo.ForgetKnownVersion();
-    }
-
-
-    public static void ExitApplicationQuestion()
-    {
-        if (ChoiceBox.Confirm(DialogText.Exit, DialogText.ExitQuestion, string.Empty, false))
-        {
-            ExitApplication();
-        }
-        else
-        {
-            // If NO return to the current mode
-            switch (Mode.CurrentMode)
-            {
-                case Mode.SelectedMode.Login:
-                    LoginRoutine(true);
-                    break;
-                case Mode.SelectedMode.Manage:
-                    Menu.DrawTopMenu(true, true, false);
-                    break;
-                case Mode.SelectedMode.Search:
-                    Mode.SetMode(Mode.SelectedMode.Manage);
-                    Menu.DrawTopMenu(true, true, false);
-                    break;
-                default:
-                    LoginRoutine(true);
-                    break;
-            }
-        }
-    }
 
     internal static void ExitApplication()
     {
         // The places of the file browser, if Blyant is left from it (or from the editor opened from it)
         FileExplorer.RememberOnExit();
-        RemovePrivileges(false);
         ShowCursor(); // Remember to show cursor again for continuous work in the console
         // Exit the application reverting to the original console colors
         Console.ResetColor();
@@ -1222,137 +502,6 @@ internal static class Tools
         Console.WriteLine(DialogText.ApplicationExit);
         Environment.Exit(0);
     }
-
-
-    // Save a data file from an older version in the current file format (the entries are already loaded)
-    private static void ConvertLegacyDataFile()
-    {
-        var result = FileIo.ConvertLegacyFile();
-        if (result.Saved)
-        {
-            // Converted: a backup that could not be written is told about first
-            Entries.ShowSaveErrors(result);
-            Init.Log("Converted: " + FileIo.GetFileName() + " (copy: " + FileIo.LegacyCopyFileName + ")", false);
-            Menu.StatusMessage(DialogText.LegacyFileConverted, true, true, true, DialogText.CaptionsLogin,
-                DialogText.LegacyFileCopyColon + FileIo.LegacyCopyFileName, false);
-        }
-        else
-        {
-            Init.Log("Convert FAILED: " + FileIo.GetFileName(), false);
-            Menu.StatusMessage(result.Error, true, true, true, DialogText.CaptionsLogin,
-                DialogText.LegacyFileNotConverted, false);
-        }
-    }
-
-    private static string _newPass = string.Empty;
-    private static string _newPassRepeat = string.Empty;
-
-    private static void NewPasswordRoutine(bool isPasswordReset)
-    {
-        ClearScreen();
-        Mode.SetMode(Mode.SelectedMode.Login);
-        _newPass = string.Empty;
-        _newPassRepeat = string.Empty;
-
-        // If not ask for a new password
-        Menu.WriteModeLabel(DialogText.NewPassword, string.Empty, 0);
-        CursorDown(2);
-        Console.Write(" " + DialogText.EnterNewPasswordColon + " ");
-        _newPass = ReadMasked(false);
-        if (!Encryptor.IsValidPasswordLength(_newPass))
-        {
-            Menu.StatusMessage(DialogText.PasswordLength, true, true, true, DialogText.CaptionsPassword, string.Empty,
-                false);
-            // Asked again: that call does all of it (it ends on the login page; going on here would use the
-            // passwords it has cleared)
-            NewPasswordRoutine(isPasswordReset);
-            return;
-        }
-        else
-        {
-            CursorReturn();
-            CursorDown();
-            Console.Write(" " + DialogText.RepeatNewPasswordColon + " ");
-            _newPassRepeat = ReadMasked(false);
-        }
-
-        // Compare and repeat process from the beginning if the two passwords doesnt match
-        if (_newPass != _newPassRepeat)
-        {
-            Menu.StatusMessage(DialogText.PasswordMismatch, true, true, true, DialogText.CaptionsPassword, string.Empty,
-                false);
-            NewPasswordRoutine(isPasswordReset);
-            return;
-        }
-        else
-        {
-            // Submit new password (on a reset, the current one just typed is kept for going back, if the file
-            // cannot be saved with the new one)
-            var oldKey = _tempResetPassword;
-            Encryptor.SetKey(_newPass);
-
-            // Return to normal filetype
-            FileActions.CurrentFileType = FileActions.FileType.Normal;
-            // Save data file
-            var saved = Entries.SaveEntriesToFile();
-            // Clear locals
-            _pass = string.Empty;
-            _newPass = string.Empty;
-            _newPassRepeat = string.Empty;
-            _tempResetPassword = string.Empty;
-            if (saved)
-            {
-                Menu.StatusMessage(DialogText.PasswordCreated, true, true, true, DialogText.CaptionsPassword,
-                    string.Empty, false);
-            }
-            else if (isPasswordReset)
-            {
-                // The file on disk still has the old password: so does the session
-                Encryptor.SetKey(oldKey);
-                Menu.StatusMessage(DialogText.PasswordNotChanged, true, true, true, DialogText.CaptionsPassword,
-                    string.Empty, false);
-            }
-            Mode.SetMode(Mode.SelectedMode.Login);
-            Menu.DrawTopMenu(true, true, false);
-        }
-    }
-
-
-    private static string _tempResetPassword = string.Empty;
-
-    internal static void ResetPasswordRoutine()
-    {
-        // Question: Reset password?
-        if (ChoiceBox.Confirm(DialogText.CaptionsPassword, DialogText.ResetPasswordQuestion, string.Empty, false))
-        {
-            Tools.ClearScreen();
-            Mode.SetMode(Mode.SelectedMode.Login);
-            Menu.WriteModeLabel(DialogText.TitleResetPassword, string.Empty, 0);
-            Tools.CursorDown(2);
-            _tempResetPassword = string.Empty;
-            Console.Write(" " + DialogText.EnterCurrentPasswordColon + " ");
-            _tempResetPassword = ReadMasked(false);
-            // Compare passwords
-            if (Encryptor.IsCurrentKey(_tempResetPassword))
-            {
-                NewPasswordRoutine(true); // Continue to new password routine
-            }
-            else
-            {
-                ChoiceBox.Message(DialogText.CaptionsPassword, DialogText.InvalidPassword,
-                    DialogText.CapsLockNotice);
-                ResetPasswordRoutine();
-            }
-        }
-        else
-        {
-            Tools.ClearScreen();
-            Mode.SetMode(Mode.SelectedMode.Manage);
-            Menu.DrawTopMenu(false, true, false);
-        }
-    }
-
-    #endregion
 
     // JaggedRule
     private static bool _tempJagged;
@@ -1387,21 +536,6 @@ internal static class Tools
     }
 
 
-    public static List<List<T>> SplitIntoChunks<T>(List<T> list, int chunkSize)
-    {
-        if (chunkSize <= 0) return new List<List<T>>();
-        var retVal = new List<List<T>>();
-        var index = 0;
-        while (index < list.Count)
-        {
-            var count = list.Count - index > chunkSize ? chunkSize : list.Count - index;
-            retVal.Add(list.GetRange(index, count));
-            index += chunkSize;
-        }
-
-        return retVal;
-    }
-
     // Shortcuts
     //private static string tempPageNumber = "Page 1/2";
     private static List<Shortcut> _shortcutList = new();
@@ -1422,9 +556,6 @@ internal static class Tools
     {
         All,
         Start, // The page shown at startup, and its configuration
-        Login,
-        MainMenu, // The main menu of a data file
-        Menus, // The lists of entries
         Files, // The file browser
         Favorites, // The favorites of the file browser
         History, // The files opened from the file browser
@@ -1440,7 +571,7 @@ internal static class Tools
     /// <summary>
     /// Show the help: the keys of the page it is asked for from, with the option to see all keys
     /// </summary>
-    public static void WriteEditorHelp(bool returnToEditorMenu, HelpTopic topic = HelpTopic.All)
+    public static void WriteEditorHelp(HelpTopic topic = HelpTopic.All)
     {
         // Only fill the lists once
         if (_shortcutList.Count == 0)
@@ -1449,22 +580,27 @@ internal static class Tools
             // Start by collecting all shortcuts
             _shortcutList.Add(new Shortcut(string.Empty, Lang.T("Keyboard Functions"), true));
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionStart, true));
-            _shortcutList.Add(new Shortcut("j k 1-5", Lang.T("Select"), false));
+            _shortcutList.Add(new Shortcut("j k 1-7", Lang.T("Select"), false));
             _shortcutList.Add(new Shortcut("gg G", Lang.T("First/Last (also in Configuration)"), false));
             _shortcutList.Add(new Shortcut("Enter", Lang.T("Open the selected"), false));
-            _shortcutList.Add(new Shortcut("N F O U", Lang.T("Open the choice of the key at once"), false));
-            _shortcutList.Add(new Shortcut("  1 N", Lang.T("Note Management: the login page"), false));
-            _shortcutList.Add(new Shortcut("  2 F", Lang.T("Text Editor/File Management: the file browser"), false));
-            _shortcutList.Add(new Shortcut("  3 O Ctrl+O", Lang.T("The Jump menu: files, pages and data files"), false));
-            _shortcutList.Add(new Shortcut("  4 U", Lang.T("Quick guide: a short introduction"), false));
-            _shortcutList.Add(new Shortcut("  5", Lang.T("Exit Blyant (without asking)"), false));
-            _shortcutList.Add(new Shortcut("Tab", Lang.T("Next tab: Mode, Configuration, Help"), false));
+            _shortcutList.Add(new Shortcut("N F P O M U", Lang.T("Open the choice of the key at once"), false));
+            _shortcutList.Add(new Shortcut("  1 N", Lang.T("New file: in the folder of the file browser"), false));
+            _shortcutList.Add(new Shortcut("  2 F", Lang.T("Open file: the file browser"), false));
+            _shortcutList.Add(new Shortcut("  3 P", Lang.T("New project: a folder in the projects folder"), false));
+            _shortcutList.Add(new Shortcut("  4 O", Lang.T("Open project: pick one in the list of projects"), false));
+            _shortcutList.Add(new Shortcut("  5 M Ctrl+O", Lang.T("The Jump menu: files, directories and pages"), false));
+            _shortcutList.Add(new Shortcut("  6 U", Lang.T("Quick guide: a short introduction"), false));
+            _shortcutList.Add(new Shortcut("  7", Lang.T("Exit Blyant (without asking)"), false));
+            _shortcutList.Add(new Shortcut("Tab", Lang.T("Next tab: Start, Configuration, Help"), false));
             _shortcutList.Add(new Shortcut("Shift+Tab", Lang.T("The tab before"), false));
-            _shortcutList.Add(new Shortcut("Q Esc", Lang.T("Exit Blyant, asking first (Configuration: to Mode)"), false));
+            _shortcutList.Add(new Shortcut("Q Esc", Lang.T("Exit Blyant, asking first (Configuration: to Start)"), false));
             _shortcutList.Add(new Shortcut(":", Lang.T("Command line, on every tab (Tab completes)"), false));
-            _shortcutList.Add(new Shortcut("  Up Down", Lang.T("Earlier commands of this page (until logout)"), false));
-            _shortcutList.Add(new Shortcut(":note :file", Lang.T("The login page/The file browser"), false));
-            _shortcutList.Add(new Shortcut(":mode :config", Lang.T("The Mode tab/Configuration (General)"), false));
+            _shortcutList.Add(new Shortcut("  Up Down", Lang.T("Earlier commands of this page"), false));
+            _shortcutList.Add(new Shortcut(":new :new name", Lang.T("New file (asks for the name if not given)"), false));
+            _shortcutList.Add(new Shortcut(":file :open", Lang.T("Open file: the file browser"), false));
+            _shortcutList.Add(new Shortcut(":project name", Lang.T("New project (asks for the name if not given)"), false));
+            _shortcutList.Add(new Shortcut(":projects", Lang.T("Open project: the list of projects"), false));
+            _shortcutList.Add(new Shortcut(":start :config", Lang.T("The Start tab/Configuration (General)"), false));
             _shortcutList.Add(new Shortcut(":layout :editor", Lang.T("The pages of Configuration (and :system)"), false));
             _shortcutList.Add(new Shortcut(":jump :help", Lang.T("The Jump menu/The help (this list)"), false));
             _shortcutList.Add(new Shortcut(":about :quick", Lang.T("About/The quick guide"), false));
@@ -1476,11 +612,8 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":q :exit", Lang.T("Exit Blyant (asks first)"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Configuration"), Lang.T("The pages General, Layout, Editor and System"), false));
             _shortcutList.Add(new Shortcut("j k 1-9", Lang.T("Select a setting (or the number of its row)"), false));
-            _shortcutList.Add(new Shortcut("  " + Lang.T("Startup"), Lang.T("Text Editor can start in the favorites list"), false));
-            _shortcutList.Add(new Shortcut("  " + Lang.T("Stay logged in"), Lang.T("Files and pages keep the data file open"), false));
-            _shortcutList.Add(new Shortcut("  " + Lang.T("Text Editor only"), Lang.T("No Note Management, data files are not opened"), false));
-            _shortcutList.Add(new Shortcut(string.Empty, Lang.T("Note Management only: no Text Editor in Mode"), false));
-            _shortcutList.Add(new Shortcut(string.Empty, Lang.T("One at a time, to run one Blyant of each"), false));
+            _shortcutList.Add(new Shortcut("  " + Lang.T("Startup"), Lang.T("The file browser can start in the favorites list"), false));
+            _shortcutList.Add(new Shortcut("  " + Lang.T("Projects folder"), Lang.T("Enter: pick it in the file browser"), false));
             _shortcutList.Add(new Shortcut("Enter Space", Lang.T("Change the selected setting"), false));
             _shortcutList.Add(new Shortcut("l h", Lang.T("Configuration: the next/previous page"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Spell checker"), Lang.T("Enter: turn languages on or off in a list"), false));
@@ -1494,85 +627,8 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("  " + Lang.T("View log"), Lang.T("/text only shows lines containing \"text\""), false));
             _shortcutList.Add(new Shortcut("  " + FileIo.SettingsFileName, Lang.T("Edit the settings file (saved: Blyant restarts)"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Help"), Lang.T("The tab Help: all the keys, guides and About"), false));
-            _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionLogin, true));
-            _shortcutList.Add(new Shortcut("Enter", Lang.T("Log in with the password typed"), false));
-            _shortcutList.Add(new Shortcut("Left Right Tab", Lang.T("Select a data file"), false));
-            _shortcutList.Add(new Shortcut("Up Down", Lang.T("Select a directory"), false));
-            _shortcutList.Add(new Shortcut("Space", Lang.T("Move the data file to another directory"), false));
-            _shortcutList.Add(new Shortcut("Esc", Lang.T("Clear the password. When empty: Options"), false));
-            _shortcutList.Add(new Shortcut("Esc F", Lang.T("Browse and edit text files"), false));
-            _shortcutList.Add(new Shortcut("Esc T", Lang.T("Select mode (notes/text editor/startup)"), false));
-            _shortcutList.Add(new Shortcut("Esc S", Lang.T("Configuration"), false));
-            _shortcutList.Add(new Shortcut("Esc O", Lang.T("The Jump menu: files, pages and data files"), false));
-            _shortcutList.Add(new Shortcut("Esc N", Lang.T("New data file"), false));
-            _shortcutList.Add(new Shortcut("Esc X C D", Lang.T("Rename/Copy/Delete the data file"), false));
-            _shortcutList.Add(new Shortcut("Esc M", Lang.T("Merge two data files, or export one as XML"), false));
-            _shortcutList.Add(new Shortcut("Esc I", Lang.T("Information about the data file"), false));
-            _shortcutList.Add(new Shortcut("Esc j k Enter", Lang.T("Select an option and open it (or type its key)"), false));
-            _shortcutList.Add(new Shortcut("Esc R", Lang.T("Refresh the page"), false));
-            _shortcutList.Add(new Shortcut("Esc U", Lang.T("Quick guide: a short introduction"), false));
-            _shortcutList.Add(new Shortcut("Esc ?", Lang.T("Show this help"), false));
-            _shortcutList.Add(new Shortcut("Esc Q", Lang.T("Exit Blyant"), false));
-            _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionMainMenu, true));
-            _shortcutList.Add(new Shortcut(":jump Ctrl+O", Lang.T("The Jump menu: files, pages and data files"), false));
-            _shortcutList.Add(new Shortcut(":book 3", Lang.T("Jump to bookmark 3 (:book alone: the bookmarks)"), false));
-            _shortcutList.Add(new Shortcut("j k", Lang.T("Select an item (on into the next tab)"), false));
-            _shortcutList.Add(new Shortcut("l Enter Space", Lang.T("Open the selected item (Space: also on/off)"), false));
-            _shortcutList.Add(new Shortcut("Tab", Lang.T("The next tab (Shift: back)"), false));
-            _shortcutList.Add(new Shortcut("h", Lang.T("The previous tab"), false));
-            _shortcutList.Add(new Shortcut("1-4", Lang.T("Notes, Data file, Settings, Blyant"), false));
-            _shortcutList.Add(new Shortcut("gg G", Lang.T("The first/last item"), false));
-            _shortcutList.Add(new Shortcut("Esc O F S X Q", Lang.T("Options: Jump, Files, Configuration, Logout, Exit"), false));
-            _shortcutList.Add(new Shortcut("N S / A T F M", Lang.T("The keys of the items (shown in the tabs)"), false));
-            _shortcutList.Add(new Shortcut("?", Lang.T("Show this help"), false));
-            _shortcutList.Add(new Shortcut(":", Lang.T("Command line (commands are shown in the menus)"), false));
-            _shortcutList.Add(new Shortcut("  Tab", Lang.T("Complete the command (again: the next, Shift: back)"), false));
-            _shortcutList.Add(new Shortcut("  Up Down", Lang.T("Earlier commands of this page (until logout)"), false));
-            _shortcutList.Add(new Shortcut(":q :qa", Lang.T("Exit Blyant"), false));
-            _shortcutList.Add(new Shortcut(":new :new Title", Lang.T("New entry (asks for the title if not given)"), false));
-            _shortcutList.Add(new Shortcut(":logout", Lang.T("Logout"), false));
-            _shortcutList.Add(new Shortcut(":guide", Lang.T("Quick guide (a short introduction)"), false));
-            _shortcutList.Add(new Shortcut(":scheme", Lang.T("The color schemes: select and edit them"), false));
-            _shortcutList.Add(new Shortcut(":logo", Lang.T("The logos: select and edit them"), false));
-            _shortcutList.Add(new Shortcut(":language", Lang.T("Pick the language from a list"), false));
-            _shortcutList.Add(new Shortcut(":language da", Lang.T("Use Danish at once"), false));
-            _shortcutList.Add(new Shortcut(":clipboard", Lang.T("The clipboard settings"), false));
-            _shortcutList.Add(new Shortcut(":browse", Lang.T("Browse files (opening a file logs out)"), false));
-            _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionMenus, true));
-            _shortcutList.Add(new Shortcut(":jump Ctrl+O", Lang.T("The Jump menu: files, pages and data files"), false));
-            _shortcutList.Add(new Shortcut(":book 3", Lang.T("Jump to bookmark 3 (:book alone: the bookmarks)"), false));
-            _shortcutList.Add(new Shortcut("j k", Lang.T("Select (as Down/Up)"), false));
-            _shortcutList.Add(new Shortcut("Enter Space", Lang.T("Edit the selected entry"), false));
-            _shortcutList.Add(new Shortcut("1-9 0 :12", Lang.T("Select by number (0 is the 10th)"), false));
-            _shortcutList.Add(new Shortcut("h l", Lang.T("The previous/next page"), false));
-            _shortcutList.Add(new Shortcut("gg G", Lang.T("The first/last entry (on the first/last page)"), false));
-            _shortcutList.Add(new Shortcut("Home End", Lang.T("The first/last page"), false));
-            _shortcutList.Add(new Shortcut("PgUp PgDn", Lang.T("Three entries up/down"), false));
-            _shortcutList.Add(new Shortcut("Tab", Lang.T("All and Search: change the sorting"), false));
-            _shortcutList.Add(new Shortcut("P", Lang.T("Add to/Remove from the favorites (or pin/unpin)"), false));
-            _shortcutList.Add(new Shortcut("T :title", Lang.T("Change the title of the selected entry"), false));
-            _shortcutList.Add(new Shortcut(":delete", Lang.T("Delete the selected entry (asks first)"), false));
-            _shortcutList.Add(new Shortcut(":transfer", Lang.T("Add the entry to the transfer collection"), false));
-            _shortcutList.Add(new Shortcut("I :info", Lang.T("Info: dates, words, characters, lines and syntax"), false));
-            _shortcutList.Add(new Shortcut(":duplicate", Lang.T("Duplicate the selected entry"), false));
-            _shortcutList.Add(new Shortcut(":revert", Lang.T("Revert the entry to before its last edit"), false));
-            _shortcutList.Add(new Shortcut(":readonly :ro", Lang.T("Read only on/off: not edited, renamed or deleted"), false));
-            _shortcutList.Add(new Shortcut(":export", Lang.T("Export the text as a text file"), false));
-            _shortcutList.Add(new Shortcut(":import", Lang.T("Import a text file as a new entry"), false));
-            _shortcutList.Add(new Shortcut(":clipboard", Lang.T("The clipboard settings"), false));
-            _shortcutList.Add(new Shortcut("V", Lang.T("Favorites: Move the pinned entry (j k, then Esc)"), false));
-            _shortcutList.Add(new Shortcut("C :color", Lang.T("Favorites: Pick the color of the pinned entry"), false));
-            _shortcutList.Add(new Shortcut("A F M", Lang.T("All, Favorites, Session history"), false));
-            _shortcutList.Add(new Shortcut("S /", Lang.T("Search"), false));
-            _shortcutList.Add(new Shortcut("N :new", Lang.T("New entry"), false));
-            _shortcutList.Add(new Shortcut("D", Lang.T("Display timestamp"), false));
-            _shortcutList.Add(new Shortcut("?", Lang.T("Show this help"), false));
-            _shortcutList.Add(new Shortcut(":", Lang.T("Command line (Tab completes the command)"), false));
-            _shortcutList.Add(new Shortcut("  Up Down", Lang.T("Earlier commands of this page (until logout)"), false));
-            _shortcutList.Add(new Shortcut("X :logout", Lang.T("Logout"), false));
-            _shortcutList.Add(new Shortcut("Esc - :q", Lang.T("Back to the main menu"), false));
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionFiles, true));
-            _shortcutList.Add(new Shortcut(":jump Ctrl+O", Lang.T("The Jump menu: files, pages and data files"), false));
+            _shortcutList.Add(new Shortcut(":jump Ctrl+O", Lang.T("The Jump menu: files, directories and pages"), false));
             _shortcutList.Add(new Shortcut(":book 3", Lang.T("Jump to bookmark 3 (:book alone: the bookmarks)"), false));
             _shortcutList.Add(new Shortcut("j k", Lang.T("Select (as Down/Up)"), false));
             _shortcutList.Add(new Shortcut("gg G", Lang.T("First/Last"), false));
@@ -1584,6 +640,8 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("T :panes", Lang.T("Show two panes or one"), false));
             _shortcutList.Add(new Shortcut(":match", Lang.T("The other pane shows this directory too"), false));
             _shortcutList.Add(new Shortcut("N :new name", Lang.T("Create a new file and open it"), false));
+            _shortcutList.Add(new Shortcut("  " + Lang.T("No extension"), Lang.T("A Markdown file: \"chapter\" is chapter.md"), false));
+            _shortcutList.Add(new Shortcut("E :projects", Lang.T("The projects: Enter shows one in this pane"), false));
             _shortcutList.Add(new Shortcut("I :info", Lang.T("Show type, size, dates and path"), false));
             _shortcutList.Add(new Shortcut("A :mkdir name", Lang.T("Create a new directory"), false));
             _shortcutList.Add(new Shortcut("X :rename name", Lang.T("Rename the file or directory"), false));
@@ -1609,19 +667,17 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":diff -w", Lang.T("Compare, blank space does not count"), false));
             _shortcutList.Add(new Shortcut("R :refresh", Lang.T("Refresh"), false));
             _shortcutList.Add(new Shortcut(":cd path", Lang.T("Go to a directory"), false));
-            _shortcutList.Add(new Shortcut(":home", Lang.T("Go to the folder of the data files in use"), false));
+            _shortcutList.Add(new Shortcut(":home", Lang.T("Go to the projects folder (or the home directory)"), false));
             _shortcutList.Add(new Shortcut(":data", Lang.T("Go to the data directory (settings, snippets ...)"), false));
             _shortcutList.Add(new Shortcut(":", Lang.T("Command line (Tab completes the command)"), false));
-            _shortcutList.Add(new Shortcut("  Up Down", Lang.T("Earlier commands of this page (until logout)"), false));
+            _shortcutList.Add(new Shortcut("  Up Down", Lang.T("Earlier commands of this page"), false));
             _shortcutList.Add(new Shortcut("Esc Q :q", Lang.T("Close the file browser"), false));
             _shortcutList.Add(new Shortcut(":exit", Lang.T("Exit Blyant (asks first)"), false));
-            _shortcutList.Add(new Shortcut(":logout", Lang.T("Log out of the data file (staying logged in)"), false));
-            _shortcutList.Add(new Shortcut("  " + Lang.T("Text files"), Lang.T("Opened in the editor. They are NOT encrypted"), false));
+            _shortcutList.Add(new Shortcut("  " + Lang.T("Text files"), Lang.T("Opened in the editor"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Saving"), Lang.T("As UTF-8, with the line endings of the file"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Not UTF-8"), Lang.T("Can be converted (replace file or save copy)"), false));
-            _shortcutList.Add(new Shortcut("  " + Lang.T("Data files"), Lang.T("Opening one selects it on the login page"), false));
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionSearch, true));
-            _shortcutList.Add(new Shortcut(":jump Ctrl+O", Lang.T("The Jump menu: files, pages and data files"), false));
+            _shortcutList.Add(new Shortcut(":jump Ctrl+O", Lang.T("The Jump menu: files, directories and pages"), false));
             _shortcutList.Add(new Shortcut(":book 3", Lang.T("Jump to bookmark 3 (:book alone: the bookmarks)"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Name"), Lang.T("Part of the name, or with * and ? (*.md)"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Text in files"), Lang.T("Text files containing the text"), false));
@@ -1634,10 +690,10 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("/text", Lang.T("Only show the files with \"text\" (Esc: all)"), false));
             _shortcutList.Add(new Shortcut("S :find", Lang.T("Search again"), false));
             _shortcutList.Add(new Shortcut(":", Lang.T("Command line (Tab completes the command)"), false));
-            _shortcutList.Add(new Shortcut("  Up Down", Lang.T("Earlier commands of this page (until logout)"), false));
+            _shortcutList.Add(new Shortcut("  Up Down", Lang.T("Earlier commands of this page"), false));
             _shortcutList.Add(new Shortcut("Esc Q h -", Lang.T("Back to the file browser"), false));
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionFavorites, true));
-            _shortcutList.Add(new Shortcut(":jump Ctrl+O", Lang.T("The Jump menu: files, pages and data files"), false));
+            _shortcutList.Add(new Shortcut(":jump Ctrl+O", Lang.T("The Jump menu: files, directories and pages"), false));
             _shortcutList.Add(new Shortcut(":book 3", Lang.T("Jump to bookmark 3 (:book alone: the bookmarks)"), false));
             _shortcutList.Add(new Shortcut("j k gg G", Lang.T("Select"), false));
             _shortcutList.Add(new Shortcut("l Enter", Lang.T("Open the file (a directory: go to it)"), false));
@@ -1663,11 +719,11 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("/text", Lang.T("Only show paths containing \"text\" (Esc: all)"), false));
             _shortcutList.Add(new Shortcut("u :undo", Lang.T("Put back what was removed last"), false));
             _shortcutList.Add(new Shortcut(":", Lang.T("Command line (Tab completes the command)"), false));
-            _shortcutList.Add(new Shortcut("  Up Down", Lang.T("Earlier commands of this page (until logout)"), false));
+            _shortcutList.Add(new Shortcut("  Up Down", Lang.T("Earlier commands of this page"), false));
             _shortcutList.Add(new Shortcut("Esc Q F h -", Lang.T("Back to the file browser"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("The list"), Lang.T("Kept in favorites.txt in the data directory"), false));
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionHistory, true));
-            _shortcutList.Add(new Shortcut(":jump Ctrl+O", Lang.T("The Jump menu: files, pages and data files"), false));
+            _shortcutList.Add(new Shortcut(":jump Ctrl+O", Lang.T("The Jump menu: files, directories and pages"), false));
             _shortcutList.Add(new Shortcut(":book 3", Lang.T("Jump to bookmark 3 (:book alone: the bookmarks)"), false));
             _shortcutList.Add(new Shortcut("j k gg G", Lang.T("Select"), false));
             _shortcutList.Add(new Shortcut("l Enter", Lang.T("Open the file in the editor"), false));
@@ -1679,11 +735,11 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":path :name", Lang.T("Copy the path/the name shown (also p in the editor)"), false));
             _shortcutList.Add(new Shortcut("/text", Lang.T("Only show paths containing \"text\" (Esc: all)"), false));
             _shortcutList.Add(new Shortcut(":", Lang.T("Command line (Tab completes the command)"), false));
-            _shortcutList.Add(new Shortcut("  Up Down", Lang.T("Earlier commands of this page (until logout)"), false));
+            _shortcutList.Add(new Shortcut("  Up Down", Lang.T("Earlier commands of this page"), false));
             _shortcutList.Add(new Shortcut("Esc Q O h -", Lang.T("Back to the file browser"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("The list"), Lang.F("The last {0} files opened, kept in history.txt", FileHistory.MaxCount), false));
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionHotlist, true));
-            _shortcutList.Add(new Shortcut(":jump Ctrl+O", Lang.T("The Jump menu: files, pages and data files"), false));
+            _shortcutList.Add(new Shortcut(":jump Ctrl+O", Lang.T("The Jump menu: files, directories and pages"), false));
             _shortcutList.Add(new Shortcut(":book 3", Lang.T("Jump to bookmark 3 (:book alone: the bookmarks)"), false));
             _shortcutList.Add(new Shortcut("j k gg G", Lang.T("Select"), false));
             _shortcutList.Add(new Shortcut("l Enter", Lang.T("Go to the directory (in the pane with the focus)"), false));
@@ -1698,18 +754,18 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":path :name", Lang.T("Copy the path/the name shown (also p in the editor)"), false));
             _shortcutList.Add(new Shortcut("/text", Lang.T("Only show paths containing \"text\" (Esc: all)"), false));
             _shortcutList.Add(new Shortcut(":", Lang.T("Command line (Tab completes the command)"), false));
-            _shortcutList.Add(new Shortcut("  Up Down", Lang.T("Earlier commands of this page (until logout)"), false));
+            _shortcutList.Add(new Shortcut("  Up Down", Lang.T("Earlier commands of this page"), false));
             _shortcutList.Add(new Shortcut("Esc Q W h -", Lang.T("Back to the file browser"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("The list"), Lang.F("At most {0} directories, kept in hotlist.txt", DirectoryHotlist.MaxCount), false));
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionJump, true));
             _shortcutList.Add(new Shortcut(":jump :ju :jmp", Lang.T("Open the Jump menu (from most places)"), false));
             _shortcutList.Add(new Shortcut("Ctrl+O", Lang.T("Open the Jump menu (from most places)"), false));
-            _shortcutList.Add(new Shortcut("  " + Lang.T("Tabs"), Lang.T("Bookmarks, Recent, File browser, Blyant, Data files"), false));
+            _shortcutList.Add(new Shortcut("  " + Lang.T("Tabs"), Lang.T("Bookmarks, Recent, File browser, Blyant"), false));
             _shortcutList.Add(new Shortcut("  " + DialogText.CaptionsFiles, Lang.T("Its lists: History, Favorites, Hotlist"), false));
             _shortcutList.Add(new Shortcut("j k gg G", Lang.T("Select a place"), false));
             _shortcutList.Add(new Shortcut("h l", Lang.T("The list before/after (through all the lists)"), false));
             _shortcutList.Add(new Shortcut("Tab Shift+Tab", Lang.T("The next/previous tab"), false));
-            _shortcutList.Add(new Shortcut("Enter", Lang.T("Jump: open the file or page, or select the data file"), false));
+            _shortcutList.Add(new Shortcut("Enter", Lang.T("Jump: open the file, directory or page"), false));
             _shortcutList.Add(new Shortcut("/", Lang.T("Filter the places of the tab by name (Esc: all)"), false));
             _shortcutList.Add(new Shortcut("B", Lang.T("Bookmark the selected place (bookmarks.txt)"), false));
             _shortcutList.Add(new Shortcut("I D", Lang.T("Info/Remove (from Recent or Bookmarks)"), false));
@@ -1725,7 +781,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":expand :collapse", Lang.T("Bookmarks: open/close all the folders"), false));
             _shortcutList.Add(new Shortcut("u :clearbook", Lang.T("Bookmarks: put back the removed/clear (asks first)"), false));
             _shortcutList.Add(new Shortcut(":", Lang.T("A command (on the Bookmarks tab)"), false));
-            _shortcutList.Add(new Shortcut("  Up Down", Lang.T("Earlier commands of this page (until logout)"), false));
+            _shortcutList.Add(new Shortcut("  Up Down", Lang.T("Earlier commands of this page"), false));
             _shortcutList.Add(new Shortcut(":path :name", Lang.T("Copy the path/the name of the file (all tabs)"), false));
             _shortcutList.Add(new Shortcut(":book 3", Lang.T("Jump to bookmark 3 (:book alone: the bookmarks)"), false));
             _shortcutList.Add(new Shortcut("  :book 3", Lang.T("The number is shown at the right of the bookmark"), false));
@@ -1737,10 +793,9 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":pbread", Lang.T("Insert the text of the paste bin at the cursor"), false));
             _shortcutList.Add(new Shortcut(":pbclear", Lang.T("Empty the paste bin"), false));
             _shortcutList.Add(new Shortcut(":path", Lang.T("File browser, editor: copy the path of the file"), false));
-            _shortcutList.Add(new Shortcut(":clipboard", Lang.T("The clipboard settings (menu, lists, editor)"), false));
+            _shortcutList.Add(new Shortcut(":clipboard", Lang.T("The clipboard settings (start page, editor)"), false));
             _shortcutList.Add(new Shortcut("j k Enter Space", Lang.T("Settings: select and change"), false));
             _shortcutList.Add(new Shortcut("h l", Lang.T("Settings: the choice of a row (every yank, add/replace)"), false));
-            _shortcutList.Add(new Shortcut("  " + Lang.T("Notes"), Lang.T("Copying out of a data file is off until allowed"), false));
             _shortcutList.Add(new Shortcut("  OSC 52", Lang.T("Windows Terminal, iTerm2, kitty, WezTerm, tmux, SSH"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Paste bin"), Lang.T("For terminals without OSC 52 (Raspberry Pi)"), false));
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionColorScheme, true));
@@ -1761,7 +816,6 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("S", Lang.T("Save as a scheme of your own (asks for a name)"), false));
             _shortcutList.Add(new Shortcut("Esc Q", Lang.T("Close (asks to save changes)"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Open"), Lang.T(":scheme, or Configuration: Color scheme"), false));
-            _shortcutList.Add(new Shortcut(":scheme Name", Lang.T("Use the color scheme with the name"), false));
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionLogos, true));
             _shortcutList.Add(new Shortcut("Tab", Lang.T("Logos, Editor, Colors"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Logos"), Lang.T("Enter use, E edit, Y duplicate, R rename, D delete"), false));
@@ -1781,9 +835,8 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("S", Lang.T("Save as a logo of your own (asks for a name)"), false));
             _shortcutList.Add(new Shortcut("Esc Q", Lang.T("Close (asks to save changes)"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Open"), Lang.T(":logo, or Configuration: Logo"), false));
-            _shortcutList.Add(new Shortcut(":logo Name", Lang.T("Use the logo with the name"), false));
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionEditor, true));
-            _shortcutList.Add(new Shortcut(":jump Ctrl+O", Lang.T("The Jump menu: files, pages and data files"), false));
+            _shortcutList.Add(new Shortcut(":jump Ctrl+O", Lang.T("The Jump menu: files, directories and pages"), false));
             _shortcutList.Add(new Shortcut(":book 3", Lang.T("Jump to bookmark 3 (:book alone: the bookmarks)"), false));
             _shortcutList.Add(new Shortcut(string.Empty, Lang.T("Modes"), true));
             _shortcutList.Add(new Shortcut("Esc", Lang.T("Normal mode (navigate and give commands)"), false));
@@ -1796,13 +849,13 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("gv", Lang.T("Select the last selection again"), false));
             _shortcutList.Add(new Shortcut(":", Lang.T("Command line (type a command, press Enter)"), false));
             _shortcutList.Add(new Shortcut("  Tab", Lang.T("Complete the command (again: the next, Shift: back)"), false));
-            _shortcutList.Add(new Shortcut("  Up Down", Lang.T("Earlier commands of this page (until logout)"), false));
+            _shortcutList.Add(new Shortcut("  Up Down", Lang.T("Earlier commands of this page"), false));
             _shortcutList.Add(new Shortcut(string.Empty, Lang.T("Save and close"), true));
             _shortcutList.Add(new Shortcut(":w", Lang.T("Save"), false));
             _shortcutList.Add(new Shortcut(":wq :x ZZ", Lang.T("Save and close editor"), false));
             _shortcutList.Add(new Shortcut(":q Esc", Lang.T("Close editor (asks to save changes)"), false));
             _shortcutList.Add(new Shortcut(":q! ZQ", Lang.T("Close editor without saving"), false));
-            _shortcutList.Add(new Shortcut(":e :e!", Lang.T("Text files: Read the file again (!: drop changes)"), false));
+            _shortcutList.Add(new Shortcut(":e :e!", Lang.T("Read the file again (!: drop changes)"), false));
             _shortcutList.Add(new Shortcut(":help", Lang.T("Show this help"), false));
             _shortcutList.Add(new Shortcut(string.Empty, Lang.T("Moving the cursor (Normal and Visual mode)"), true));
             _shortcutList.Add(new Shortcut("h j k l", Lang.T("Left/Down/Up/Right (as the arrow keys)"), false));
@@ -1906,7 +959,6 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":regclear", Lang.T("Clear string memory"), false));
             _shortcutList.Add(new Shortcut(string.Empty, Lang.T("Other commands"), true));
             _shortcutList.Add(new Shortcut(":ts", Lang.T("Insert ISO timestamp (YYYY-MM-DD HH:MM:SS)"), false));
-            _shortcutList.Add(new Shortcut(":pw", Lang.T("Insert generated strong password"), false));
             _shortcutList.Add(new Shortcut(":trim", Lang.T("Trim blank space (line start/end)"), false));
             _shortcutList.Add(new Shortcut(":ol :ul", Lang.T("Numbered/Bulleted list (selected lines)"), false));
             _shortcutList.Add(new Shortcut(":dup", Lang.T("Duplicate the selection (or the line)"), false));
@@ -1919,7 +971,6 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("\"+y", Lang.T("Yank to the system clipboard (:clipboard)"), false));
             _shortcutList.Add(new Shortcut(":pb :pbread", Lang.T("Write to/Read from the paste bin"), false));
             _shortcutList.Add(new Shortcut(":info", Lang.T("Info: characters, words, lines, dates and path"), false));
-            _shortcutList.Add(new Shortcut("  " + Lang.T("Read only"), Lang.T("An entry set with :readonly in a list is not changed"), false));
             _shortcutList.Add(new Shortcut(":path", Lang.T("Copy the path of the file to the clipboard"), false));
             _shortcutList.Add(new Shortcut(":snip :sn", Lang.T("Snippets: insert, filter, sort, add, rename, delete"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Selection"), Lang.T(":snip puts a snippet with $0 around it"), false));
@@ -1936,29 +987,25 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":complete edit", Lang.T("Edit the file of completions (completions.txt)"), false));
             _shortcutList.Add(new Shortcut(":syntax", Lang.T("Colors on/off (on in the files of a known kind)"), false));
             _shortcutList.Add(new Shortcut(":syntax html", Lang.T("Color as html (or md css js json xml cs php)"), false));
-            _shortcutList.Add(new Shortcut("  " + Lang.T("Entries"), Lang.T("Remember their colors (shown as MD, HTML ...)"), false));
             _shortcutList.Add(new Shortcut(":number :nu", Lang.T("Line numbers on/off"), false));
             _shortcutList.Add(new Shortcut(":split", Lang.T("Two panes on/off (Tab: go to the other)"), false));
             _shortcutList.Add(new Shortcut("Tab Shift+Tab", Lang.T("Split: go to the other pane (Normal mode)"), false));
             _shortcutList.Add(new Shortcut(":only :q", Lang.T("Split: close the other pane/this pane"), false));
             _shortcutList.Add(new Shortcut(":yankall", Lang.T("Yank all the text (as gg V G y; the clipboard as y)"), false));
-            _shortcutList.Add(new Shortcut(":new name", Lang.T("New file next to this one (in a note: a new note)"), false));
+            _shortcutList.Add(new Shortcut(":new name", Lang.T("New file next to this one"), false));
+            _shortcutList.Add(new Shortcut(":projects", Lang.T("Open a project in the file browser"), false));
             _shortcutList.Add(new Shortcut(":bookmark", Lang.T("Bookmark the file being edited (Jump menu)"), false));
-            _shortcutList.Add(new Shortcut(":favorite :fav", Lang.T("Add/remove the file (or the note) as a favorite"), false));
+            _shortcutList.Add(new Shortcut(":favorite :fav", Lang.T("Add/remove the file as a favorite"), false));
             _shortcutList.Add(new Shortcut(":diff :diff -w", Lang.T("Compare with the saved text (-w: not blank space)"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Comparison"), Lang.T("n N ]c [c: the next/previous change"), false));
             _shortcutList.Add(new Shortcut(string.Empty, Lang.T("Enter: open at the line, Esc: close"), false));
             _shortcutList.Add(new Shortcut(":w name.diff", Lang.T("Save a comparison as a file"), false));
-            _shortcutList.Add(new Shortcut(":rename :title", Lang.T("Rename the file, or change the title of the entry"), false));
+            _shortcutList.Add(new Shortcut(":rename", Lang.T("Rename the file"), false));
             _shortcutList.Add(new Shortcut(":%y :%d :2,9d", Lang.T("Yank all/Delete all/Delete line 2 to 9"), false));
             _shortcutList.Add(new Shortcut(":clear", Lang.T("Clear all"), false));
         }
 
         ShowHelp(topic);
-        if (returnToEditorMenu)
-        {
-            Actions.DrawEditMenu();
-        }
     }
 
     // The lines of the help that belong to a topic: from its headline to the next headline (the editor: the
@@ -1968,9 +1015,6 @@ internal static class Tools
         var headline = topic switch
         {
             HelpTopic.Start => DialogText.HelpSectionStart,
-            HelpTopic.Login => DialogText.HelpSectionLogin,
-            HelpTopic.MainMenu => DialogText.HelpSectionMainMenu,
-            HelpTopic.Menus => DialogText.HelpSectionMenus,
             HelpTopic.Files => DialogText.HelpSectionFiles,
             HelpTopic.Favorites => DialogText.HelpSectionFavorites,
             HelpTopic.History => DialogText.HelpSectionHistory,
@@ -2137,58 +1181,6 @@ internal static class Tools
         return -1;
     }
 
-    private static void DisplayWelcomeText()
-    {
-        Tools.ClearScreen();
-        Logo.DrawLogo(true);
-        Tools.CursorTopLeftDown(6);
-        //  automatically). You can copy the data directory or the entire Blyant directory\n <- Max line length
-        // --------------------------------------------------------------------------------
-        string Paragraph(string text) => " " + string.Join("\n ", TextMetrics.Wrap(text, Init.LineWidth - 2));
-        string welcomeText = " " + Lang.F("Welcome to {0}", DialogText.ApplicationName) + "\n\n" +
-                             Paragraph(Lang.T("Your notes and settings are stored in the \"data\" directory, located " +
-                                              "alongside the Blyant program files (the program automatically creates " +
-                                              "this directory). You can copy the data directory or the entire Blyant " +
-                                              "directory to a backup, portable or cloud media if necessary, or enable " +
-                                              "automatic backup to a secondary location. Blyant uses AES-256 file " +
-                                              "encryption.")) + "\n\n" +
-                             Paragraph(Lang.T("CAUTION: It is not possible to recover your notes if you forget your " +
-                                              "password."));
-
-        int tempPreviewLineCounter = 0;
-        string[] tempOutput = Tools.SplitStringOnNewLine(welcomeText, false);
-        for (int i = 0; i < tempOutput.Length; i++)
-        {
-            // count lines
-            tempPreviewLineCounter += 1;
-            // Insert line of text
-            Console.WriteLine(tempOutput[i]);
-
-            // Write long document indicator and exit loop
-            if (tempPreviewLineCounter >= 13)
-            {
-                break;
-            }
-        }
-
-        CursorDown(2);
-        CursorRight();
-        Keyboard.AwaitAnyKey();
-    }
-
-    /// <summary>
-    /// Show the date and time in a box until a key is pressed: as written in entries, compact, and the week
-    /// </summary>
-    public static void DisplayDateTime()
-    {
-        ChoiceBox.ShowRows(Lang.T("Timestamp"), new List<(string Label, string Value)>
-        {
-            (Lang.T("Date and time:"), IsoDateTime.GetDateTimeNow()),
-            (Lang.T("Compact:"), IsoDateTime.GetDateTimeNowCompressed(string.Empty)),
-            (Lang.T("Week:"), IsoDateTime.GetIso8601WeekNumber(DateTime.Now).ToString())
-        }, 40);
-    }
-
 
     #region Cursor
 
@@ -2281,8 +1273,7 @@ internal static class Tools
             {
                 Console.WriteLine("(" + Lang.F("Dimensions must be at least {0}", Init.LineWidth + "x" + Init.LineCount) + ")");
                 Console.WriteLine(DialogText.FitOutputDimensions);
-                _keyInfo = Console.ReadKey(true);
-                if (_keyInfo.Key == ConsoleKey.Y)
+                if (Console.ReadKey(true).Key == ConsoleKey.Y)
                 {
                     // Use the size of the window from now on (not smaller than the minimum)
                     Init.AutoSize = true;
@@ -2557,8 +1548,3 @@ internal class CursorMemory
         Top = top;
     }
 }
-
-
-#region Password Generator
-
-#endregion

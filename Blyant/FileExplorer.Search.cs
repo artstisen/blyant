@@ -161,7 +161,7 @@ internal static partial class FileExplorer
                         return KeyResult.Handled;
                     case "h":
                     case "help":
-                        Tools.WriteEditorHelp(false, Tools.HelpTopic.Search);
+                        Tools.WriteEditorHelp(Tools.HelpTopic.Search);
                         break;
                     case "find":
                         return null;
@@ -182,7 +182,7 @@ internal static partial class FileExplorer
             }
             else if (key.KeyChar == '?')
             {
-                Tools.WriteEditorHelp(false, Tools.HelpTopic.Search);
+                Tools.WriteEditorHelp(Tools.HelpTopic.Search);
             }
             else if (key.KeyChar == '/')
             {
@@ -283,7 +283,7 @@ internal static partial class FileExplorer
         return false;
     }
 
-    // Open a file in the editor, at the line that was found. True if the browser must close (a data file)
+    // Open a file in the editor, at the line that was found. True if the browser must close
     private static bool OpenFound(FileSearch.Result result)
     {
         if (!FoundExists(result)) return false;
@@ -373,7 +373,7 @@ internal static partial class FileExplorer
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
         Tools.ClearScreen();
         Menu.WriteModeLabel(DialogText.SearchResultCaption, string.Empty, 0);
-        Menu.WriteNameInTopBar(false);
+        Menu.WriteNameInTopBar();
         // What was found, and where
         var header = _foundSummary + " " + Lang.T("in") + " ";
         var room = Init.LineWidth - 2 - header.Length;
@@ -400,10 +400,9 @@ internal static partial class FileExplorer
             var result = _found[_foundShown[index]];
             var info = result.IsDirectory ? DialogText.DirectoryMark : FileSizeFormatter.FormatSize(result.Size);
             DrawFoundPointer(index, index == _foundIndex);
-            ConsoleColors.SetColors(result.IsDirectory ? ConsoleColors.ColorPreset.HeaderColor :
-                result.Path.EndsWith(FileIo.GetFileNameExtension(), StringComparison.OrdinalIgnoreCase)
-                    ? ConsoleColors.ColorPreset.Favorites
-                    : ConsoleColors.ColorPreset.Normal);
+            ConsoleColors.SetColors(result.IsDirectory
+                ? ConsoleColors.ColorPreset.HeaderColor
+                : ConsoleColors.ColorPreset.Normal);
             Console.Write(" " + Tools.TruncateString(FoundName(result), nameWidth + 1, true));
             if (FileFavorites.Contains(result.Path))
             {

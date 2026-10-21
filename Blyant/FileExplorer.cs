@@ -1,9 +1,8 @@
 ﻿namespace Blyant;
 
 /// <summary>
-/// The file browser opened from the options of the login page. It lists the directories and files of a
-/// directory, and opens text files in the editor: for editing single files outside the encrypted data files.
-/// Selecting a Blyant data file returns to the login page with the file selected.
+/// The file browser, opened from the start page (Open file, Open project) and the Jump menu. It lists the
+/// directories and files of a directory in one or two panes, and opens text files in the editor.
 /// File management is found in FileExplorer.Manage.cs, the list of favorites in FileExplorer.Favorites.cs,
 /// the files opened before in FileExplorer.History.cs and the search for files in FileExplorer.Search.cs.
 /// </summary>
@@ -17,7 +16,7 @@ internal static partial class FileExplorer
 
     /// <summary>
     /// The directories shown in the two panes when the browser is opened (settings "browsedir1" and
-    /// "browsedir2"). Empty = the data directory
+    /// "browsedir2"). Empty = the home directory (HomeDirectory)
     /// </summary>
     internal static string StartDirectory { get; set; } = string.Empty;
 
@@ -86,7 +85,7 @@ internal static partial class FileExplorer
     private static string? _picked;
 
     /// <summary>
-    /// Show the file browser. Returns when it is closed, or when a data file was selected
+    /// Show the file browser. Returns when it is closed
     /// </summary>
     /// <param name="favorites">True to open the favorites list first</param>
     internal static void Run(bool favorites = false)
@@ -139,7 +138,7 @@ internal static partial class FileExplorer
         return Browse(BrowseMode.PickDirectory, caption);
     }
 
-    // Show a directory in a pane (the data directory if it does not exist), with the file or directory of that
+    // Show a directory in a pane (the home directory if it does not exist), with the file or directory of that
     // name selected (null: the first row)
     private static void StartPaneIn(Pane pane, string directory, string? select = null)
     {
@@ -148,35 +147,9 @@ internal static partial class FileExplorer
         pane.Filter = string.Empty;
         pane.Directory = string.Empty;
         var exists = System.IO.Directory.Exists(directory);
-        ChangeDirectory(exists ? directory : DataDirectory(), exists && select?.Length > 0 ? select : null);
+        ChangeDirectory(exists ? directory : HomeDirectory(), exists && select?.Length > 0 ? select : null);
         pane.ShownTop = -1;
         _active = active;
-    }
-
-    /// <summary>
-    /// True if the last run of the file browser logged out of the data file (a file was opened)
-    /// </summary>
-    internal static bool SessionEnded { get; private set; }
-
-    /// <summary>
-    /// The text file being edited comes from a data file that was logged in to (or still is): the editor tells that
-    /// it is not encrypted
-    /// </summary>
-    internal static bool FromDataFile => SessionEnded || DataSession.IsLoggedIn;
-
-    /// <summary>
-    /// True if the last run of the file browser was closed by selecting a data file (to log in to)
-    /// </summary>
-    internal static bool DataFileSelected { get; set; }
-
-    // Opening a file from the browser ends the session of the data file that is logged in to (if any),
-    // just like logging out before opening the browser from the login page
-    private static void EndSession()
-    {
-        if (Mode.CurrentMode == Mode.SelectedMode.Login) return;
-        Tools.RemovePrivileges(false);
-        Mode.SetMode(Mode.SelectedMode.Login);
-        SessionEnded = true;
     }
 
     private static string? Browse(BrowseMode mode, string caption)
@@ -185,8 +158,6 @@ internal static partial class FileExplorer
         _mode = mode;
         _caption = caption;
         _picked = null;
-        SessionEnded = false;
-        DataFileSelected = false;
         _message = string.Empty;
         if (mode == BrowseMode.Edit)
         {
@@ -217,8 +188,8 @@ internal static partial class FileExplorer
 
         _jumpDirectory = null;
         _jumpFile = null;
-        // The places of the panes are saved however the browser is left: closed, a jump (to another page),
-        // logging in from it, or exiting Blyant (Tools.ExitApplication)
+        // The places of the panes are saved however the browser is left: closed, a jump (to another page), or
+        // exiting Blyant (Tools.ExitApplication)
         _browsing = mode == BrowseMode.Edit;
         try
         {
@@ -316,7 +287,8 @@ internal static partial class FileExplorer
                 var command = CommandLine.Read(':', false,
                     _mode == BrowseMode.Edit ? CommandContext.Files : CommandContext.FilePicker);
                 var name = command == null ? string.Empty : CommandLine.Name(command).ToLowerInvariant();
-                if (_pending != null && command != null && name is not ("cd" or "home" or "data" or "h" or "help" or "panes"))
+                if (_pending != null && command != null &&
+                    name is not ("cd" or "home" or "data" or "projects" or "h" or "help" or "panes"))
                 {
                     // Only going to a directory while the place to copy or move to is selected
                     _message = DialogText.FileSelectTarget;
@@ -350,17 +322,20 @@ internal static partial class FileExplorer
 
                 if (name is "home")
                 {
-                    ChangeDirectory(DataDirectory(), null);
+                    ChangeDirectory(HomeDirectory(), null);
+                }
+                else if (name is "projects" && _mode == BrowseMode.Edit)
+                {
+                    OpenProject();
                 }
                 else if (name is "data")
                 {
-                    // The data directory itself (with the settings, the snippets, the favorites ...), also when
-                    // the data files are in a subfolder of it
+                    // The data directory (with the settings, the snippets, the favorites ...)
                     ChangeDirectory(System.IO.Path.GetFullPath(FileIo.GetDataDirectoryName()), null);
                 }
                 else if (name is "h" or "help")
                 {
-                    Tools.WriteEditorHelp(false, Tools.HelpTopic.Files);
+                    Tools.WriteEditorHelp(Tools.HelpTopic.Files);
                 }
                 else if (name == "cd" && command != null)
                 {
@@ -391,7 +366,7 @@ internal static partial class FileExplorer
             }
             else if (key.KeyChar == '?')
             {
-                Tools.WriteEditorHelp(false, Tools.HelpTopic.Files);
+                Tools.WriteEditorHelp(Tools.HelpTopic.Files);
             }
             else if (key.KeyChar == '/')
             {
@@ -469,7 +444,7 @@ internal static partial class FileExplorer
                     (_pending == null || ActivePane.Items[ActivePane.Index].IsDirectory) &&
                     Open(ActivePane.Items[ActivePane.Index]))
                 {
-                    // A file was picked, or a data file was selected: continue on the login page
+                    // A file was picked: the browser is closed
                     break;
                 }
             }
@@ -492,6 +467,12 @@ internal static partial class FileExplorer
             {
                 TogglePanes();
             }
+            else if (_mode == BrowseMode.Edit && key.Key == ConsoleKey.E &&
+                     (key.Modifiers & (ConsoleModifiers.Control | ConsoleModifiers.Alt)) == 0)
+            {
+                // The projects (also while the place to copy or move to is selected)
+                OpenProject();
+            }
             else if (_pending != null)
             {
                 // The other keys do nothing until the place to copy or move to is selected
@@ -511,7 +492,6 @@ internal static partial class FileExplorer
             }
             else if (_mode == BrowseMode.Edit && HandleFileKey(key) == KeyResult.Close)
             {
-                // A data file was selected from the favorites
                 break;
             }
 
@@ -544,7 +524,7 @@ internal static partial class FileExplorer
         if (!LoadItems(pane, null))
         {
             // The directory is gone (it can have been moved or deleted from the other pane)
-            pane.Directory = DataDirectory();
+            pane.Directory = HomeDirectory();
             pane.Filter = string.Empty;
             LoadItems(pane, null);
             _message = message;
@@ -556,9 +536,26 @@ internal static partial class FileExplorer
         pane.Top = top;
     }
 
-    private static string DataDirectory()
+    /// <summary>
+    /// The directory the file browser was in last (in the pane that had the focus), or its home directory: where
+    /// New file on the start page makes a file
+    /// </summary>
+    internal static string LastDirectory
     {
-        return System.IO.Path.GetFullPath(FileIo.GetDataAndSubFolder());
+        get
+        {
+            var last = StartPane == 1 && StartDirectory2.Length > 0 ? StartDirectory2 : StartDirectory;
+            return last.Length > 0 && Directory.Exists(last) ? System.IO.Path.GetFullPath(last) : HomeDirectory();
+        }
+    }
+
+    // Where the browser starts when it has no directory of its own (":home"): the projects directory if it is
+    // there, else the home directory of the user
+    private static string HomeDirectory()
+    {
+        if (Directory.Exists(Projects.Directory)) return System.IO.Path.GetFullPath(Projects.Directory);
+        var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        return home.Length > 0 && Directory.Exists(home) ? home : System.IO.Path.GetFullPath(FileIo.GetDataDirectoryName());
     }
 
     #region Directories
@@ -657,7 +654,7 @@ internal static partial class FileExplorer
 
     #region Opening files
 
-    /// <returns>True if a data file was selected and the browser must close</returns>
+    /// <returns>True if a file was picked and the browser must close</returns>
     private static bool Open(Item item)
     {
         if (item.IsDirectory)
@@ -678,19 +675,6 @@ internal static partial class FileExplorer
         {
             _picked = item.Path;
             return true;
-        }
-
-        if (item.Name.EndsWith(FileIo.GetFileNameExtension(), StringComparison.OrdinalIgnoreCase))
-        {
-            if (StartMenu.Only == StartMenu.OnlyMode.Editor)
-            {
-                // Text Editor only: data files are not opened
-                _message = DialogText.DataFileNotOpened;
-                return false;
-            }
-
-            DataFileSelected = SelectDataFile(item);
-            return DataFileSelected;
         }
 
         TextFile file;
@@ -750,14 +734,9 @@ internal static partial class FileExplorer
     {
         // The places of the browser are saved before the editor is opened, should Blyant not be closed as usual
         if (_browsing) RememberPanes();
-        // Staying logged in: the data file stays open (the mode it was in comes back when the editor is closed)
-        var keep = DataSession.Keep;
-        var modeBefore = Mode.CurrentMode;
-        if (!keep) EndSession();
         _file = file;
         EventLog.Add(DialogText.LogFile + "Open: " + file.Path);
         AddToHistory(file.Path);
-        Mode.SetMode(Mode.SelectedMode.Edit);
         try
         {
             // The line found by a search, or else where the cursor was when the file was closed last time (a
@@ -812,8 +791,6 @@ internal static partial class FileExplorer
         }
         finally
         {
-            // (logged out in the editor: the login page)
-            Mode.SetMode(keep && DataSession.IsLoggedIn ? modeBefore : Mode.SelectedMode.Login);
             _lastEditedPath = _file?.Path ?? file.Path;
             _file = null;
         }
@@ -932,8 +909,8 @@ internal static partial class FileExplorer
     }
 
     /// <summary>
-    /// Open the file of snippets in the editor (at a line), from the editor of a file or an entry (":snip edit").
-    /// The file or entry being edited is kept, and the data file stays open
+    /// Open the file of snippets in the editor (at a line), from the editor of a file (":snip edit"). The file
+    /// being edited is kept
     /// </summary>
     internal static void EditSnippets(int line)
     {
@@ -965,14 +942,12 @@ internal static partial class FileExplorer
     private static void EditBlyantFile(string path, string caption, int line)
     {
         var outer = _file;
-        var mode = Mode.CurrentMode;
         var editingBefore = EditingBlyantFile;
         EditingBlyantFile = true;
         try
         {
             _file = TextFile.Load(path);
             EventLog.Add(DialogText.LogFile + "Open: " + _file.Path);
-            Mode.SetMode(Mode.SelectedMode.Edit);
             Tools.ClearScreen();
             Actions.DrawEditFileMenu();
             var textArea = new TextArea(Console.CursorLeft, Console.CursorTop, Init.LineWidth - 1,
@@ -989,7 +964,6 @@ internal static partial class FileExplorer
         finally
         {
             _file = outer;
-            Mode.SetMode(mode);
             EditingBlyantFile = editingBefore;
         }
     }
@@ -1056,18 +1030,12 @@ internal static partial class FileExplorer
 
     /// <summary>
     /// What is wrong with a name for a new file next to the file being edited (":new name" in the editor): not a
-    /// name of a file (a path is not), a data file (made on the login page), or one that is there. Null if it can be
-    /// made
+    /// name of a file (a path is not), or one that is there. Null if it can be made
     /// </summary>
     internal static string? NewFileProblem(string name)
     {
         if (_file == null) return DialogText.NoFilePath;
         if (Tools.FileNameProblem(name) is { } problem) return problem;
-        if (name.EndsWith(FileIo.GetFileNameExtension(), StringComparison.OrdinalIgnoreCase))
-        {
-            return Lang.T("A data file is made on the login page (Esc N)");
-        }
-
         var path = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(_file.Path) ?? string.Empty, name);
         return File.Exists(path) || Directory.Exists(path) ? DialogText.NameExists : null;
     }
@@ -1095,7 +1063,14 @@ internal static partial class FileExplorer
         return null;
     }
 
-    // Create a file in the directory shown and open it in the editor. The name is asked for if it is not given
+    // A project picked in the list of projects is shown in the pane with the focus
+    private static void OpenProject()
+    {
+        if (ProjectsBox.Pick() is { } path && Directory.Exists(path)) ChangeDirectory(path, null);
+    }
+
+    // Create a file in the directory shown and open it in the editor. The name is asked for if it is not given; a
+    // name without an extension is a Markdown file
     private static void NewFile(string name)
     {
         if (ActivePane.Directory.Length == 0) return;
@@ -1107,6 +1082,7 @@ internal static partial class FileExplorer
             name = asked;
         }
 
+        name = FileOperations.WithDefaultExtension(name);
         var path = System.IO.Path.Combine(ActivePane.Directory, name);
         var problem = Tools.FileNameProblem(name) ??
                       (File.Exists(path) || Directory.Exists(path) ? DialogText.NameExists : null);
@@ -1129,73 +1105,8 @@ internal static partial class FileExplorer
         }
 
         LogOperation("New file", path, DialogText.Success);
-
-        if (name.EndsWith(FileIo.GetFileNameExtension(), StringComparison.OrdinalIgnoreCase))
-        {
-            // Not a text file: data files are created from the options of the login page
-            LoadItems(name);
-            return;
-        }
-
         Edit(TextFile.Create(path), false);
         LoadItems(name);
-    }
-
-    // A Blyant data file: select it on the login page. A data file outside the data directory can be copied to it
-    private static bool SelectDataFile(Item item)
-    {
-        var root = System.IO.Path.GetFullPath(FileIo.GetDataDirectoryName());
-        var directory = System.IO.Path.GetDirectoryName(item.Path) ?? string.Empty;
-        var subFolder = string.Empty;
-        if (!SamePath(directory, root))
-        {
-            if (SamePath(System.IO.Path.GetDirectoryName(directory) ?? string.Empty, root))
-            {
-                // In a directory of the data directory
-                subFolder = System.IO.Path.GetFileName(directory);
-            }
-            else
-            {
-                if (!ChoiceBox.Confirm(DialogText.CaptionsFiles, DialogText.CopyDataFile, DialogText.CopyDataFileNote,
-                        false))
-                {
-                    return false;
-                }
-
-                var target = System.IO.Path.Combine(root, item.Name);
-                if (File.Exists(target))
-                {
-                    _message = DialogText.ErrorFileAlreadyExist;
-                    return false;
-                }
-
-                try
-                {
-                    File.Copy(item.Path, target, false);
-                    Init.Log("Copy file: " + item.Name + " -> " + FileIo.GetDataDirectoryName(), false);
-                }
-                catch (Exception e)
-                {
-                    _message = e.Message;
-                    return false;
-                }
-            }
-        }
-
-        // Select the file for the login page
-        EndSession();
-        FileIo.ResetSubFolder();
-        FileIo.SetSubFolder(subFolder);
-        FileIo.SetFileName(item.Name);
-        FileBrowser.ResolveSubFolderIndex();
-        return true;
-    }
-
-    private static bool SamePath(string a, string b)
-    {
-        var comparison = OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
-        return string.Equals(a.TrimEnd(System.IO.Path.DirectorySeparatorChar),
-            b.TrimEnd(System.IO.Path.DirectorySeparatorChar), comparison);
     }
 
     #endregion
@@ -1258,7 +1169,7 @@ internal static partial class FileExplorer
         Tools.ClearScreen();
         // While the place to copy or move to is selected, the label stands out
         Menu.WriteModeLabel(_caption, string.Empty, 0, _pending != null);
-        Menu.WriteNameInTopBar(false);
+        Menu.WriteNameInTopBar();
         for (var number = 0; number < shown.Length; number++)
         {
             var pane = shown[number];
@@ -1340,8 +1251,6 @@ internal static partial class FileExplorer
         var row = index - pane.Top;
         var (left, width) = PaneArea(number);
         DrawPointer(number, index, index == pane.Index);
-        var isDataFile = !item.IsDirectory &&
-                         item.Name.EndsWith(FileIo.GetFileNameExtension(), StringComparison.OrdinalIgnoreCase);
         var showType = width >= MinWidthForType;
         var type = ItemType(item);
         // In a narrow pane a directory is marked where the size would be
@@ -1352,8 +1261,7 @@ internal static partial class FileExplorer
         var nameEnd = showType ? typeColumn - 1 : sizeEnd - SizeColumnWidth - 1;
         var name = Tools.TruncateString(item.Name + (item.IsDirectory && item.Name != ParentName ? "/" : ""),
             Math.Max(4, nameEnd - (left + 3) - 2), true);
-        var nameColors = item.IsDirectory ? ConsoleColors.ColorPreset.HeaderColor :
-            isDataFile ? ConsoleColors.ColorPreset.Favorites : ConsoleColors.ColorPreset.Normal;
+        var nameColors = item.IsDirectory ? ConsoleColors.ColorPreset.HeaderColor : ConsoleColors.ColorPreset.Normal;
         if (item.Path.Length > 0 && pane.Marks.Contains(item.Path))
         {
             // Marked
@@ -1388,17 +1296,13 @@ internal static partial class FileExplorer
 
     private const int MinWidthForType = 50; // The type column is left out in a pane that is narrower
 
-    private const int TypeColumnWidth = 11; // The width of "[Data file]"
+    private const int TypeColumnWidth = 11; // The width of "[Directory]"
     private const int SizeColumnWidth = 11; // The width of "1,023 bytes"
 
-    // What is shown in the type column: a directory, a data file, or the extension of the file ("TXT")
+    // What is shown in the type column: a directory, or the extension of the file ("TXT")
     private static string ItemType(Item item)
     {
         if (item.IsDirectory) return DialogText.DirectoryMark;
-        if (item.Name.EndsWith(FileIo.GetFileNameExtension(), StringComparison.OrdinalIgnoreCase))
-        {
-            return DialogText.DataFileMark;
-        }
 
         var extension = System.IO.Path.GetExtension(item.Name);
         // A name like ".gitignore" is not an extension

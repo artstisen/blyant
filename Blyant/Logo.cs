@@ -1,8 +1,8 @@
 ﻿namespace Blyant;
 
 /// <summary>
-/// The logo of the start and login pages: "Blyant" in the style of block letters, in ASCII.
-/// The first line holds the version number, and the name of the data file is shown at the top right
+/// The logo of the start page: "Blyant" in the style of block letters, in ASCII.
+/// The first line holds the version number
 /// </summary>
 internal static class Logo
 {
@@ -23,7 +23,7 @@ internal static class Logo
     }
 
     /// <summary>
-    /// How fast the logo is drawn with a sweep from left to right when arriving at the login page, or that it
+    /// How fast the logo is drawn with a sweep from left to right when Blyant starts, or that it
     /// is not (setting "logoanim": slow, fast, veryfast or off)
     /// </summary>
     internal static AnimationSpeed Animation { get; set; } = AnimationSpeed.Fast;
@@ -78,7 +78,7 @@ internal static class Logo
     private static bool _animateNext;
 
     /// <summary>
-    /// Ask for the logo to be animated the next time the login page is drawn
+    /// Ask for the logo to be animated the next time the start page is drawn
     /// </summary>
     internal static void AnimateNext()
     {
@@ -102,8 +102,7 @@ internal static class Logo
 
     /// <param name="showVersionNumber">Show the version number on the first line</param>
     /// <param name="animate">Sweep the logo in from the left</param>
-    /// <param name="showDataFile">Show the name of the selected data file at the top right (not on the start page)</param>
-    internal static void DrawLogo(bool showVersionNumber, bool animate, bool showDataFile = true)
+    internal static void DrawLogo(bool showVersionNumber, bool animate)
     {
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.HeaderColor);
         if (animate)
@@ -137,8 +136,6 @@ internal static class Logo
             Console.Write(DialogText.ApplicationVersion);
             ConsoleColors.SetColors(ConsoleColors.ColorPreset.HeaderColor);
         }
-
-        if (showDataFile) Menu.WriteDataFileName();
     }
 
     /// <summary>

@@ -27,7 +27,7 @@ $blyantDir = "\Documents\Blyant"
 # current directory in the file browser, "bly notes.md" opens the file in the editor)
 Function fnc-blyant {& "$psUser$blyantDir\Blyant.exe" @args}
 # (with the portable version: {dotnet "$psUser$blyantDir\Blyant.dll" @args})
-# Blyant keeps its notes and settings in the folder "data" next to the program, wherever it is started from.
+# Blyant keeps its settings in the folder "data" next to the program, wherever it is started from.
 # If the directory you start it in has a "data" folder of its own, that one is used instead
 # (this can be used intentionally to create multiple configurations)
 

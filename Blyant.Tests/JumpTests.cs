@@ -32,26 +32,25 @@ public class JumpTests : IDisposable
         var time = new DateTime(2026, 10, 14, 9, 40, 0);
         JumpHistory.Add(new JumpTarget(JumpKind.File, In("report.md")), time);
         JumpHistory.Add(new JumpTarget(JumpKind.Page, "config/editor"), time.AddMinutes(1));
-        JumpHistory.Add(new JumpTarget(JumpKind.DataFile, "notes/work.mbls"), time.AddMinutes(2));
         JumpHistory.Add(new JumpTarget(JumpKind.Directory, _root), time.AddMinutes(3));
         // Jumped to again: to the top
         JumpHistory.Add(new JumpTarget(JumpKind.File, In("report.md")), time.AddMinutes(4));
-        Assert.Equal(new[] { JumpKind.File, JumpKind.Directory, JumpKind.DataFile, JumpKind.Page },
+        Assert.Equal(new[] { JumpKind.File, JumpKind.Directory, JumpKind.Page },
             JumpHistory.Items.Select(entry => entry.Target.Kind));
         Assert.Equal(time.AddMinutes(4), JumpHistory.Items[0].Jumped);
 
         // The file: a line for each place, read again the same
         var text = JumpHistory.Serialize();
         Assert.StartsWith("2026-10-14 09:44\tfile\t" + In("report.md") + "\n", text);
-        Assert.Contains("2026-10-14 09:42\tdata\tnotes/work.mbls\n", text);
         Assert.Contains("2026-10-14 09:41\tpage\tconfig/editor\n", text);
         Assert.Equal(DialogText.Success, JumpHistory.Save());
         JumpHistory.Clear();
         JumpHistory.Load();
         Assert.Equal(text, JumpHistory.Serialize());
 
-        // Lines that cannot be read are left out, and a place only once
-        JumpHistory.Parse("nonsense\n2026-10-14 09:00\tother\tx\n2026-10-14 09:00\tpage\tschemes\n" +
+        // Lines that cannot be read are left out (a data file of Marbles too), and a place only once
+        JumpHistory.Parse("nonsense\n2026-10-14 09:00\tother\tx\n2026-10-14 09:00\tdata\tnotes/work.mbls\n" +
+                          "2026-10-14 09:00\tpage\tschemes\n" +
                           "2026-10-14 08:00\tpage\tSCHEMES\nnot a time\tpage\tlogos\n");
         Assert.Equal(new[] { "schemes", "logos" }, JumpHistory.Items.Select(entry => entry.Target.Target));
         Assert.Equal(DateTime.MinValue, JumpHistory.Items[1].Jumped);
@@ -82,7 +81,6 @@ public class JumpTests : IDisposable
         Assert.False(new JumpTarget(JumpKind.File, In("gone.md")).Exists);
         Assert.Equal(Path.GetFileName(_root), new JumpTarget(JumpKind.Directory, _root + Path.DirectorySeparatorChar).Name);
         Assert.True(new JumpTarget(JumpKind.Directory, _root).Exists);
-        Assert.Equal("notes/work.mbls", new JumpTarget(JumpKind.DataFile, "notes/work.mbls").Name);
         // A page by its name in the language in use, and a page that is not one is not there
         Assert.Equal(Lang.F("{0}: {1}", DialogText.StartConfiguration, Lang.T("Editor")),
             new JumpTarget(JumpKind.Page, "config/editor").Name);
@@ -148,15 +146,11 @@ public class JumpTests : IDisposable
     }
 
     [Fact]
-    public void RenameAndTitle_AskTheEditorToRename_WithTheNameAsTyped()
+    public void Rename_AsksTheEditorToRename_WithTheNameAsTyped()
     {
         var editor = new EditorEngine("text", 40, 10, false);
         Assert.Equal(EditorRequest.Rename, editor.Type(":rename Notes 2026.MD<CR>"));
         Assert.Equal("Notes 2026.MD", editor.RenameText);
-        Assert.False(editor.RenameIsTitle);
-        Assert.Equal(EditorRequest.Rename, editor.Type(":title A New Title<CR>"));
-        Assert.Equal("A New Title", editor.RenameText);
-        Assert.True(editor.RenameIsTitle);
         // Without a name: it is asked for
         Assert.Equal(EditorRequest.Rename, editor.Type(":rename<CR>"));
         Assert.Equal(string.Empty, editor.RenameText);

@@ -32,15 +32,15 @@ public class CommandHistoryTests : IDisposable
     }
 
     [Fact]
-    public void TheOldest_AreForgotten_AndAllAtLogout()
+    public void TheOldest_AreForgotten_AndAllWhenCleared()
     {
-        for (var i = 0; i < CommandHistory.MaxCount + 5; i++) CommandHistory.Add(CommandContext.List, "cd " + i);
-        var kept = CommandHistory.Of(CommandContext.List);
+        for (var i = 0; i < CommandHistory.MaxCount + 5; i++) CommandHistory.Add(CommandContext.Files, "cd " + i);
+        var kept = CommandHistory.Of(CommandContext.Files);
         Assert.Equal(CommandHistory.MaxCount, kept.Count);
         Assert.Equal("cd " + (CommandHistory.MaxCount + 4), kept[0]);
 
         CommandHistory.Clear();
-        Assert.Empty(CommandHistory.Of(CommandContext.List));
+        Assert.Empty(CommandHistory.Of(CommandContext.Files));
     }
 
     [Fact]

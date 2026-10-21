@@ -1,9 +1,9 @@
 ﻿namespace Blyant;
 
 /// <summary>
-/// The commands given on the command lines of a session, for each place (the editor, the file browser, a list ...),
-/// the newest first: Up and Down on a command line bring them back. They are kept in memory only, never written to
-/// a file, and cleared at logout, as a command can hold the title of a note, a file name or text of a note.
+/// The commands given on the command lines, for each place (the editor, the file browser, a list ...), the newest
+/// first: Up and Down on a command line bring them back. They are kept in memory only (until Blyant is closed), and
+/// never written to a file, as a command can hold a file name or text of a file.
 /// It does not touch the console, so it can be tested.
 /// </summary>
 internal static class CommandHistory
@@ -35,7 +35,7 @@ internal static class CommandHistory
         Places.TryGetValue(context, out var commands) ? commands.ToArray() : Array.Empty<string>();
 
     /// <summary>
-    /// Forget all the commands (at logout)
+    /// Forget all the commands
     /// </summary>
     internal static void Clear() => Places.Clear();
 }

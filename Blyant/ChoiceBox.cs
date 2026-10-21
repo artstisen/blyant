@@ -220,21 +220,6 @@ internal static class ChoiceBox
         return textArea.Canceled || typed.Length == 0 ? null : typed;
     }
 
-    /// <summary>
-    /// Ask for a key (a password) in a box: what is typed is shown as *
-    /// </summary>
-    /// <returns>The key typed, or null if canceled</returns>
-    internal static string? AskSecret(string caption, string prompt, string label)
-    {
-        // In the color of text in frames and boxes
-        using var frameText = ConsoleColors.FrameTextScope();
-
-        var (fieldTop, fieldLeft, _) = DrawField(caption, prompt, label);
-        Tools.SetCursorEx(fieldTop, fieldLeft + 1);
-        var typed = Tools.ReadMaskedSimple(true);
-        return typed == DialogText.CancelCommand ? null : typed;
-    }
-
     // A box with a line telling what to do and a label for a field. Returns where the field is
     private static (int Top, int Left, int Width) DrawField(string caption, string prompt, string label)
     {

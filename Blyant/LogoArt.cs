@@ -3,7 +3,7 @@
 namespace Blyant;
 
 /// <summary>
-/// A logo of the start and login pages: 4 rows of 63 characters, each row in a color of its own or in the color
+/// A logo of the start page: 4 rows of 63 characters, each row in a color of its own or in the color
 /// of the logo (of the color scheme). The built-in logos are "Blyant" (the one used from the start),
 /// "Reflections", "Adventure", "Islands" and "Terminal sessions"; the ones made by the user are kept as files
 /// (Logos): the 4 rows, and a line "colors=" with the color of each row ("default" for the color of the logo).

@@ -1,7 +1,9 @@
 ﻿namespace Blyant;
 
 /// <summary>
-/// A list of the 16 colors of the console, shown in a box on top of the page, to pick a color from
+/// A list of the 16 colors of the console, shown in a box on top of the page, to pick a color from. Each row has a
+/// number and a key, as the choices of the start page: the number (1-9) selects the row, and the key picks it at
+/// once. The keys are the same in all languages, and leave out the ones the box uses (g j k l q)
 /// </summary>
 internal static class ColorPicker
 {
@@ -12,6 +14,25 @@ internal static class ColorPicker
 
     private const int BoxTop = 3; // The tab of the title is on the row above
     private const int MinBoxWidth = 24; // Between the borders, at least
+    private const int NameStart = 11; // "|  -> 12 A  ": where the name starts, from the left border
+
+    // The keys of the colors (in the order of ConsoleColor), and of Default
+    private const string ColorKeys = "ABCDEFHIMNOPRSTU";
+    internal const char DefaultKey = 'X';
+
+    /// <summary>
+    /// The key that picks a color in the list at once
+    /// </summary>
+    internal static char KeyOf(ConsoleColor color) => ColorKeys[(int)color];
+
+    /// <summary>
+    /// The color of a key (upper or lower case), or null if the key is not one
+    /// </summary>
+    internal static ConsoleColor? ColorOfKey(char key)
+    {
+        var index = ColorKeys.IndexOf(char.ToUpperInvariant(key));
+        return index < 0 ? null : (ConsoleColor)index;
+    }
 
     /// <summary>
     /// The name of a color: "Dark Blue"
@@ -54,7 +75,7 @@ internal static class ColorPicker
             longest = Math.Max(longest, TextMetrics.WidthOf(Name((ConsoleColor)color)) + 2);
         }
 
-        var boxWidth = Math.Min(Math.Max(MinBoxWidth, 8 + longest), Init.LineWidth - 2);
+        var boxWidth = Math.Min(Math.Max(MinBoxWidth, NameStart - 1 + longest), Init.LineWidth - 2);
         left = Math.Max(0, Math.Min(left, Init.LineWidth - boxWidth - 2));
 
         Tools.HideCursor();
@@ -65,8 +86,10 @@ internal static class ColorPicker
             ConsoleColors.SetColors(ConsoleColors.ColorPreset.BoxBorder);
             Console.Write('|');
             ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
+            // The number and the key of the row
             var number = row < first ? "  " : (row - first + 1).ToString().PadLeft(2);
-            Console.Write("    " + number + "  ");
+            var letter = row < first ? DefaultKey : KeyOf((ConsoleColor)(row - first));
+            Console.Write("    " + number + " " + letter + "  ");
             string name;
             if (row < first)
             {
@@ -102,10 +125,10 @@ internal static class ColorPicker
                 }
             }
 
-            name = TextMetrics.StartPart(name, boxWidth - 8);
+            name = TextMetrics.StartPart(name, boxWidth - NameStart + 1);
             Console.Write(name);
             ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
-            Console.Write(new string(' ', Math.Max(0, boxWidth - 8 - TextMetrics.WidthOf(name))));
+            Console.Write(new string(' ', Math.Max(0, boxWidth - NameStart + 1 - TextMetrics.WidthOf(name))));
             ConsoleColors.SetColors(ConsoleColors.ColorPreset.BoxBorder);
             Console.Write('|');
         }
@@ -131,6 +154,28 @@ internal static class ColorPicker
                 if (!CanSelect(selected)) continue;
                 picked = selected < first ? null : (ConsoleColor)(selected - first);
                 return true;
+            }
+
+            // The key of a color (or of Default) picks it at once; one that cannot be picked is selected
+            if ((key.Modifiers & (ConsoleModifiers.Control | ConsoleModifiers.Alt)) == 0)
+            {
+                var direct = char.ToUpperInvariant(key.KeyChar) == DefaultKey && first > 0 ? 0
+                    : ColorOfKey(key.KeyChar) is { } keyColor ? (int)keyColor + first
+                    : -1;
+                if (direct >= 0)
+                {
+                    selected = direct;
+                    if (!CanSelect(selected)) continue;
+                    picked = selected < first ? null : (ConsoleColor)(selected - first);
+                    return true;
+                }
+
+                // The number of a color selects it (then Enter picks it)
+                if (key.KeyChar is >= '1' and <= '9' && CanSelect(key.KeyChar - '1' + first))
+                {
+                    selected = key.KeyChar - '1' + first;
+                    continue;
+                }
             }
 
             // Move the selection, passing the colors that cannot be picked

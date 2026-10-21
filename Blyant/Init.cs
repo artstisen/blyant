@@ -228,32 +228,28 @@ internal static class Init
         Log(DialogText.InitInitializing, true);
         WriteProgressBar(2); // progress
         WriteProgressBar(3); // progress
-        Mode.SetMode(Mode.SelectedMode.Login); // Mode decides everything, if logged in/authorized, if searching etc.
-        FileActions.CurrentFileType = FileActions.FileType.Normal; // Set file type
         WriteProgressBar(4); // progress
         // Set title
         Console.Title = DialogText.ApplicationName;
         WriteProgressBar(5); // progress
-        // Set default file name
-        FileIo.SetDefaultFileName();
         WriteProgressBar(6); // progress
         Log(DialogText.InitSetEncoding, true);
         WriteProgressBar(7); // progress
         Console.OutputEncoding = Encoding.UTF8;
         Console.InputEncoding = Encoding.UTF8;
         Log(DialogText.InitSetDefaults, true);
-        Entries.ResetRecallId();
         AsciiStyles.ResetAsciiStyle();
         Logo.Animation = Logo.AnimationSpeed.Fast;
         AutoSize = false;
         StartMenu.Mode = StartMenu.StartMode.Select;
         StartMenu.StartInFavorites = false;
-        StartMenu.Only = StartMenu.OnlyMode.None;
+        Projects.Directory = Projects.DefaultDirectory;
         ConsoleColors.Monochrome = false;
         SyntaxHighlighter.ColorFiles = true;
+        Completions.Enabled = false;
         FileExplorer.DualPane = true;
         TextArea.LineNumbers = false;
-        Logo.AnimateNext(); // Sweep the logo when the login page is first shown
+        Logo.AnimateNext(); // Sweep the logo when the start page is first shown
         WriteProgressBar(8); // progress
         // Set default colors
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Reset);
@@ -308,7 +304,6 @@ internal static class Init
                 Log(DialogText.InitOk, true);
             }
         }
-        FileBrowser.ResolveSubFolderIndex(); // Update subfolder index for selection
         WriteProgressBar(15); // progress
         // Update output dimensions if set by user
         ApplyAutoSize();

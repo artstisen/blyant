@@ -2,12 +2,12 @@
 
 /// <summary>
 /// The Jump menu: a box on top of the page with the tabs Bookmarks (places kept with B or ":bookmark"), Recent (the
-/// jump history), File browser (with its lists History, Favorites and Hotlist as sub-tabs), Blyant (the pages of
-/// Blyant) and Data files. Tab and Shift+Tab go from tab to tab, h and l through all the lists in a row (the
+/// jump history), File browser (with its lists History, Favorites and Hotlist as sub-tabs) and Blyant (the pages
+/// of Blyant). Tab and Shift+Tab go from tab to tab, h and l through all the lists in a row (the
 /// sub-tabs too); B bookmarks the selected place, and the Bookmarks tab has keys to arrange, rename and remove them. A place is picked with the
 /// selection arrow (j/k, gg/G) and Enter; h/l go from tab to tab, "/" filters the list of the tab, I shows
 /// information about the selected place and D takes a place out of the jump history. Only names are shown, not
-/// paths. With one mode only (see StartMenu.Only) the tabs of the other mode are left out
+/// paths
 /// </summary>
 internal static class JumpMenu
 {
@@ -19,8 +19,7 @@ internal static class JumpMenu
         History, // The file history of the file browser
         Favorites,
         Hotlist,
-        Configuration, // The pages of Blyant
-        DataFiles
+        Configuration // The pages of Blyant
     }
 
     // The tabs at the top: each has one list, or (the file browser) several as sub-tabs
@@ -29,8 +28,7 @@ internal static class JumpMenu
         Bookmarks,
         Recent,
         FileBrowser,
-        Blyant,
-        DataFiles
+        Blyant
     }
 
     internal static Group GroupOf(Tab tab) => tab switch
@@ -38,8 +36,7 @@ internal static class JumpMenu
         Tab.Bookmarks => Group.Bookmarks,
         Tab.Jumps => Group.Recent,
         Tab.History or Tab.Favorites or Tab.Hotlist => Group.FileBrowser,
-        Tab.Configuration => Group.Blyant,
-        _ => Group.DataFiles
+        _ => Group.Blyant
     };
 
     /// <summary>
@@ -58,15 +55,13 @@ internal static class JumpMenu
         Group.Bookmarks => Lang.T("Bookmarks"),
         Group.Recent => Lang.T("Recent"),
         Group.FileBrowser => DialogText.HelpSectionFiles,
-        Group.Blyant => DialogText.ApplicationName,
-        _ => Lang.T("Data files")
+        _ => DialogText.ApplicationName
     };
 
     // The short name of a tab, used when the names do not all fit in a row (a long language)
     private static string ShortGroupName(Group group) => group switch
     {
         Group.FileBrowser => DialogText.CaptionsFiles,
-        Group.DataFiles => Lang.T("Data"),
         _ => GroupName(group)
     };
 
@@ -123,26 +118,13 @@ internal static class JumpMenu
     private static string BookCommand(Row row) =>
         row.Bookmark is { IsFolder: false } entry ? ":book " + Bookmarks.NumberOf(entry) : string.Empty; // English
 
-    private const int MarkWidth = 4; // "FILE", "DIR", "PAGE", "DATA"
+    private const int MarkWidth = 4; // "FILE", "DIR", "PAGE"
     private const int TimeWidth = 10; // "09:41" today, else "2026-10-12"
 
     /// <summary>
-    /// The lists that are shown: with one mode only (see StartMenu.Only) the lists of the other mode are left out
+    /// The lists that are shown, in the order h and l go through them
     /// </summary>
-    internal static List<Tab> Tabs(StartMenu.OnlyMode only)
-    {
-        var tabs = new List<Tab> { Tab.Bookmarks, Tab.Jumps };
-        if (only != StartMenu.OnlyMode.Notes)
-        {
-            tabs.Add(Tab.History);
-            tabs.Add(Tab.Favorites);
-            tabs.Add(Tab.Hotlist);
-        }
-
-        tabs.Add(Tab.Configuration);
-        if (only != StartMenu.OnlyMode.Editor) tabs.Add(Tab.DataFiles);
-        return tabs;
-    }
+    internal static List<Tab> Tabs() => Enum.GetValues<Tab>().ToList();
 
     // The name of a sub-tab, in the language in use
     private static string TabName(Tab tab) => tab switch
@@ -151,14 +133,6 @@ internal static class JumpMenu
         Tab.Favorites => Lang.T("Favorites"),
         Tab.Hotlist => DialogText.CaptionsHotlist,
         _ => GroupName(GroupOf(tab))
-    };
-
-    // The places a mode that is not used leads to are left out
-    internal static bool Usable(JumpTarget target) => target.Kind switch
-    {
-        JumpKind.File or JumpKind.Directory => StartMenu.Only != StartMenu.OnlyMode.Notes,
-        JumpKind.DataFile => StartMenu.Only != StartMenu.OnlyMode.Editor,
-        _ => true
     };
 
     // The places of a tab
@@ -170,8 +144,7 @@ internal static class JumpMenu
                 return BookmarkRows(string.Empty);
             case Tab.Jumps:
                 JumpHistory.Load();
-                return JumpHistory.Items.Where(entry => Usable(entry.Target))
-                    .Select(entry => new Row(entry.Target, entry.Jumped)).ToList();
+                return JumpHistory.Items.Select(entry => new Row(entry.Target, entry.Jumped)).ToList();
             case Tab.History:
                 FileHistory.Load();
                 return FileHistory.Items.Select(entry => new Row(new JumpTarget(JumpKind.File, entry.Path), entry.Opened))
@@ -189,18 +162,15 @@ internal static class JumpMenu
                     {
                         Label = entry.Name.Length > 0 ? entry.Name : null
                     }).ToList();
-            case Tab.Configuration:
-                return JumpPages.Ids.Select(id => new Row(new JumpTarget(JumpKind.Page, id), DateTime.MinValue))
-                    .ToList();
             default:
-                return DataFiles().Select(path => new Row(new JumpTarget(JumpKind.DataFile, path), DateTime.MinValue))
+                return JumpPages.Ids.Select(id => new Row(new JumpTarget(JumpKind.Page, id), DateTime.MinValue))
                     .ToList();
         }
     }
 
     // The rows of the Bookmarks tab (as the list is now; it is read when the menu opens). Without a filter: the folders,
     // and the bookmarks in the open ones two spaces in. With a filter: the bookmarks with the text in their names,
-    // without the folders. The bookmarks of a mode that is not used are left out
+    // without the folders
     private static List<Row> BookmarkRows(string filter)
     {
         var rows = new List<Row>();
@@ -212,8 +182,7 @@ internal static class JumpMenu
                 closed = entry.Collapsed;
                 if (filter.Length > 0) continue;
                 var start = Bookmarks.Items.ToList().IndexOf(entry);
-                var count = Bookmarks.Items.Skip(start + 1).Take(Bookmarks.FolderCount(start))
-                    .Count(item => Usable(item.Target));
+                var count = Bookmarks.FolderCount(start);
                 rows.Add(new Row(entry.Target, DateTime.MinValue)
                 {
                     Bookmark = entry,
@@ -224,7 +193,6 @@ internal static class JumpMenu
             }
 
             if (!entry.InFolder) closed = false;
-            if (!Usable(entry.Target)) continue;
             if (filter.Length > 0 && !entry.Shown.Contains(filter, StringComparison.OrdinalIgnoreCase)) continue;
             if (filter.Length == 0 && entry.InFolder && closed) continue;
             rows.Add(new Row(entry.Target, DateTime.MinValue)
@@ -236,34 +204,6 @@ internal static class JumpMenu
         }
 
         return rows;
-    }
-
-    /// <summary>
-    /// The data files in the data directory and in the directories in it, by their paths in the data directory
-    /// ("work.mbls", "notes/work.mbls")
-    /// </summary>
-    internal static List<string> DataFiles()
-    {
-        var files = new List<string>();
-        try
-        {
-            var root = FileIo.GetDataDirectoryName();
-            var pattern = "*" + FileIo.GetFileNameExtension();
-            files.AddRange(Directory.GetFiles(root, pattern).Select(Path.GetFileName).OfType<string>()
-                .OrderBy(name => name, StringComparer.OrdinalIgnoreCase));
-            foreach (var directory in Directory.GetDirectories(root).OrderBy(name => name, StringComparer.OrdinalIgnoreCase))
-            {
-                var folder = Path.GetFileName(directory);
-                files.AddRange(Directory.GetFiles(directory, pattern).Select(Path.GetFileName).OfType<string>()
-                    .OrderBy(name => name, StringComparer.OrdinalIgnoreCase).Select(name => folder + "/" + name));
-            }
-        }
-        catch
-        {
-            // A data directory that cannot be read has no data files to show
-        }
-
-        return files;
     }
 
     /// <summary>
@@ -281,12 +221,11 @@ internal static class JumpMenu
         return TextMetrics.StartPart(name, start) + "..." + TextMetrics.EndPart(name, end);
     }
 
-    // The kind of a place, in short (English, as the kinds of text in the lists of entries)
+    // The kind of a place, in short (English, as the kinds of file in the file browser)
     private static string Mark(JumpTarget target) => target.Kind switch
     {
         JumpKind.Directory => "DIR",
         JumpKind.Page => "PAGE",
-        JumpKind.DataFile => "DATA",
         _ => "FILE"
     };
 
@@ -304,7 +243,7 @@ internal static class JumpMenu
     {
         // In the color of text in frames and boxes
         using var frameText = ConsoleColors.FrameTextScope();
-        var tabs = Tabs(StartMenu.Only);
+        var tabs = Tabs();
         // The favorites, for the colors of the names
         FileFavorites.Load();
         var filters = new Dictionary<Tab, string>();
@@ -529,7 +468,7 @@ internal static class JumpMenu
 
                     break;
                 case '?':
-                    Tools.WriteEditorHelp(false, Tools.HelpTopic.Jump);
+                    Tools.WriteEditorHelp(Tools.HelpTopic.Jump);
                     Tools.ClearScreen();
                     break;
             }
@@ -933,7 +872,7 @@ internal static class JumpMenu
     private static void CopyPathOrName(Row row, bool path)
     {
         var target = row.Target;
-        if (row.IsFolder || target.Kind is not (JumpKind.File or JumpKind.Directory or JumpKind.DataFile))
+        if (row.IsFolder || target.Kind is not (JumpKind.File or JumpKind.Directory))
         {
             _message = Lang.T("A page of Blyant or a folder has no path or file name");
             return;
@@ -986,7 +925,7 @@ internal static class JumpMenu
         if (command is "q" or "quit" or "close") return true;
         if (command is "h" or "help")
         {
-            Tools.WriteEditorHelp(false, Tools.HelpTopic.Jump);
+            Tools.WriteEditorHelp(Tools.HelpTopic.Jump);
             Tools.ClearScreen();
             return false;
         }
@@ -1072,7 +1011,6 @@ internal static class JumpMenu
             {
                 JumpKind.Directory => DialogText.InfoTypeDirectory,
                 JumpKind.Page => Lang.T("Page of Blyant"),
-                JumpKind.DataFile => DialogText.InfoTypeDataFile,
                 _ => Lang.T("File")
             })
         };

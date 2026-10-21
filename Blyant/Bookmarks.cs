@@ -3,7 +3,7 @@
 namespace Blyant;
 
 /// <summary>
-/// The bookmarks of the Jump menu: places kept to jump to (a file, a directory, a page of Blyant or a data file),
+/// The bookmarks of the Jump menu: places kept to jump to (a file, a directory or a page of Blyant),
 /// added with B on any list of the Jump menu, or with ":bookmark" in the editor and the file browser. They are in
 /// the order they were added, which can be changed on the Bookmarks tab. A bookmark can be given a name and a text
 /// color of its own, and bookmarks can be grouped in folders (as the favorites of the file browser). The list holds
@@ -13,10 +13,10 @@ namespace Blyant;
 /// closed folder are): ":book 3" jumps to the third.
 ///
 /// The list is kept in the file "bookmarks.txt" in the data directory, one bookmark on each line: the kind ("file",
-/// "dir", "page" or "data", as in jump.txt), a tab character, the place, and after other tab characters the name it
-/// was given and its color (if any). A folder has its name in brackets ("[Work]"), its color and "collapsed" if it is
-/// closed; the bookmarks in a folder are the lines after it that start with a blank space. No titles or text of notes
-/// are kept: a data file is kept by its path in the data directory.
+/// "dir" or "page", as in jump.txt), a tab character, the place, and after other tab characters the name it was
+/// given and its color (if any). A folder has its name in brackets ("[Work]"), its color and "collapsed" if it is
+/// closed; the bookmarks in a folder are the lines after it that start with a blank space. (The lines of data files,
+/// kept by Marbles, are left out.)
 ///
 /// This class does not touch the console: the list is shown by JumpMenu.
 /// </summary>

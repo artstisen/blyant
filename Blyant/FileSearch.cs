@@ -9,7 +9,7 @@ namespace Blyant;
 /// A name is found if it contains the text given. "*" and "?" stand for any characters and any one
 /// character, and then the whole name must match ("*.md"). As a regular expression the name, and a line of
 /// the file, must have a match. Hidden files and directories are not searched, links to directories are not
-/// followed, and only text files that the editor can open are searched for text (not Blyant data files).
+/// followed, and only text files that the editor can open are searched for text.
 /// </summary>
 internal static class FileSearch
 {
@@ -179,10 +179,9 @@ internal static class FileSearch
     }
 
     // Find the first line of a text file with a match. False if there is none, or the file is not a text file
-    // that can be opened (too large, not text, a Blyant data file)
+    // that can be opened (too large, not text)
     private static bool FindText(string path, Regex pattern, Result result)
     {
-        if (path.EndsWith(FileIo.GetFileNameExtension(), StringComparison.OrdinalIgnoreCase)) return false;
         string text;
         try
         {

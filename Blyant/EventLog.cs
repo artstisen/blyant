@@ -1,13 +1,12 @@
 ﻿namespace Blyant;
 
 /// <summary>
-/// The log of what has happened since Blyant was started: startup, logins, commands and file operations.
+/// The log of what has happened since Blyant was started: startup, commands and file operations.
 /// It is kept in memory only (nothing is written to disk), and holds a limited number of lines: the oldest
 /// are removed when it is full.
 ///
-/// The log can be read from the login page without a password. For that reason the commands given while
-/// logged in to a data file, and in the editor, are logged by name only: titles, search texts and other
-/// things typed after a command are left out.
+/// The log can be read by anyone at the screen (":log"). For that reason the commands are logged by name only:
+/// search texts and other things typed after a command are left out.
 /// </summary>
 internal static class EventLog
 {
@@ -40,7 +39,7 @@ internal static class EventLog
 
     /// <summary>
     /// What is logged for a command: its name only, without the lines it works on and what follows it.
-    /// Titles, search texts and the text of a replace command are never logged
+    /// Search texts and the text of a replace command are never logged
     /// </summary>
     /// <param name="command">The command as typed, without the ":"</param>
     internal static string CommandName(string command)
@@ -56,7 +55,7 @@ internal static class EventLog
         // A command followed directly by its text, as in "s/old/new/"
         if (end < command.Length && !char.IsWhiteSpace(command[end])) name = name[..1];
         // Only the names of commands are logged: anything else typed on a command line (by mistake,
-        // it could be a password) is not
+        // it could be text of a file) is not
         if (!Commands.IsKnown(name)) return "(not a command)";
         return name + (end < command.Length ? " ..." : string.Empty);
     }

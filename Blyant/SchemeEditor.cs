@@ -98,7 +98,7 @@ internal static class SchemeEditor
         var frame = new TabFrame(TabRow, () =>
             {
                 Menu.WriteModeLabel(DialogText.CaptionsColorScheme, string.Empty, 0);
-                Menu.WriteNameInTopBar(false);
+                Menu.WriteNameInTopBar();
             },
             new TabItem(() => Lang.T("Schemes"), new SchemesPage()),
             new TabItem(() => Lang.T("Colors"), new ColorsPage(0), new ColorsPage(1), new ColorsPage(2)),

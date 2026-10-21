@@ -181,7 +181,7 @@ internal static partial class FileExplorer
                         return FavoriteAction.Close;
                     case "h":
                     case "help":
-                        Tools.WriteEditorHelp(false, Tools.HelpTopic.Favorites);
+                        Tools.WriteEditorHelp(Tools.HelpTopic.Favorites);
                         break;
                     case "color":
                         PickFavoriteColor(selected);
@@ -237,7 +237,7 @@ internal static partial class FileExplorer
             }
             else if (key.KeyChar == '?')
             {
-                Tools.WriteEditorHelp(false, Tools.HelpTopic.Favorites);
+                Tools.WriteEditorHelp(Tools.HelpTopic.Favorites);
             }
             else if (key.KeyChar == '/')
             {
@@ -726,7 +726,7 @@ internal static partial class FileExplorer
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
         Tools.ClearScreen();
         Menu.WriteModeLabel(DialogText.CaptionsFileFavorites, string.Empty, 0);
-        Menu.WriteNameInTopBar(false);
+        Menu.WriteNameInTopBar();
         Tools.SetCursorEx(1, 1);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.HeaderColor);
         Console.Write(_favorites.Count == 0 && _favoriteFilter.Length == 0

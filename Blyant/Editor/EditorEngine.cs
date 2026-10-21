@@ -43,8 +43,8 @@ internal enum EditorRequest
     ClipboardSettings, // ":clipboard": show the clipboard settings
     DocumentInfo, // ":info": show the size, the dates and the path of the text being edited
     Jump, // ":jump", ":ju" or Ctrl+O: show the Jump menu
-    Rename, // ":rename" or ":title": rename the file (RenameText: the new name, or empty to ask), or the title
-            // of the entry
+    Projects, // ":projects": show the projects, to open one in the file browser
+    Rename, // ":rename": rename the file (RenameText: the new name, or empty to ask)
     WrapChanged, // Wrapping of long lines was turned on or off
     ScrollOffChanged, // The lines kept around the cursor (ScrollOff) were changed
     CopyPath, // ":path": the path of the file being edited to the clipboard
@@ -53,20 +53,20 @@ internal enum EditorRequest
     SnippetsEdit, // ":snip edit": open the file of the snippets
     CompleteChanged, // Completing words while typing was turned on or off (":complete")
     CompletionsEdit, // ":complete edit": open the file of the completions
-    Diff, // ":diff": compare the text with the file on disk (or the saved entry)
+    Diff, // ":diff": compare the text with the file on disk
     WriteCopy, // ":w name": save the text as a new file (a comparison)
     Bookmark, // ":bookmark": keep the file as a bookmark of the Jump menu
     JumpToBookmark, // ":book 3": jump to bookmark 3 (BookArgument)
     StringMemory, // ":reglist": show the strings of the string memory, to pick one to insert
-    MacroRecord, // ":record": start recording a macro (the host warns first in a note of a data file)
+    MacroRecord, // ":record": start recording a macro
     MacroStop, // The Esc that would close the editor, while recording: ask whether to stop, save or go on
     MacroList, // ":macro": show the macros, to pick one to play
     Split, // ":split": show the text in two panes
     SwitchPane, // Tab (Shift+Tab) in Normal mode: the other pane of a split gets the keys
     ClosePane, // ":q" in a split: close this pane (the other shows the text)
     OnlyPane, // ":only": close the other pane of a split
-    NewDocument, // ":new name": a new file next to this one (in an entry: a new entry), opened in its place
-    Favorite // ":favorite": the file a favorite of the file browser, or the note a favorite of its data file (or not)
+    NewDocument, // ":new name": a new file next to this one, opened in its place
+    Favorite // ":favorite": the file a favorite of the file browser (or not)
 }
 
 /// <summary>
@@ -379,17 +379,12 @@ internal sealed partial class EditorEngine
     internal string RenameText { get; private set; } = string.Empty;
 
     /// <summary>
-    /// ":new name": the name of the new file, or the title of the new entry, as typed (empty: it is asked for)
+    /// ":new name": the name of the new file, as typed (empty: it is asked for)
     /// </summary>
     internal string NewName { get; private set; } = string.Empty;
 
     /// <summary>
-    /// True if the command was ":title" (in a file, the name is changed with ":rename")
-    /// </summary>
-    internal bool RenameIsTitle { get; private set; }
-
-    /// <summary>
-    /// The text cannot be changed (an entry that is read only): commands that would change it are refused with
+    /// The text cannot be changed (a peek, a comparison): commands that would change it are refused with
     /// a message, and INSERT mode is not entered. Moving, searching and yanking work as usual
     /// </summary>
     internal bool ReadOnly
@@ -399,7 +394,7 @@ internal sealed partial class EditorEngine
     }
 
     /// <summary>
-    /// What is said when a change of a read-only text is refused (null: the text of a read-only entry)
+    /// What is said when a change of a read-only text is refused (null: DialogText.EditorReadOnly)
     /// </summary>
     internal string? ReadOnlyMessage { get; set; }
 
@@ -992,7 +987,7 @@ internal sealed partial class EditorEngine
             return;
         }
 
-        // ":new name" (":new Title" in an entry): the host makes it and opens it in place of this text
+        // ":new name": the host makes the file and opens it in place of this text
         var newDocument = Regex.Match(command, "^new(?: +(.*))?$");
         if (newDocument.Success)
         {
@@ -1216,10 +1211,6 @@ internal sealed partial class EditorEngine
             case "timestamp":
                 InsertAtCursor(IsoDateTime.GetDateTimeNow());
                 break;
-            case "pw":
-            case "password":
-                InsertAtCursor(new PasswordGenerator().GeneratePassword());
-                break;
             case "trim":
                 TrimLines();
                 break;
@@ -1290,10 +1281,12 @@ internal sealed partial class EditorEngine
             case "jmp":
                 if (!SingleLine) _request = EditorRequest.Jump;
                 break;
+            case "projects":
+            case "proj":
+                if (!SingleLine) _request = EditorRequest.Projects;
+                break;
             case "rename":
-            case "title":
                 if (SingleLine) break;
-                RenameIsTitle = command == "title";
                 _request = EditorRequest.Rename;
                 break;
             case "path":

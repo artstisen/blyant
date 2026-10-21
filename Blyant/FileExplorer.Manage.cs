@@ -9,7 +9,7 @@ internal static partial class FileExplorer
     {
         NotHandled,
         Handled,
-        Close // The browser must close (a data file was selected)
+        Close // The browser must close
     }
 
     // A key for managing files (only when the browser is opened for editing files)
@@ -126,21 +126,6 @@ internal static partial class FileExplorer
             case "bookmark":
                 BookmarkSelected();
                 break;
-            case "logout":
-                // Staying logged in: end the session of the data file (the browser stays)
-                if (DataSession.IsLoggedIn)
-                {
-                    var dataFile = FileIo.GetFileName();
-                    DataSession.LogOut();
-                    SessionEnded = true;
-                    _message = Lang.F("Logged out of {0}", dataFile);
-                }
-                else
-                {
-                    _message = DialogText.NotLoggedIn;
-                }
-
-                break;
             case "refresh":
                 // As R: read the directories again, keeping the selection
                 LoadItems(ActivePane.Items.Count > 0 ? ActivePane.Items[ActivePane.Index].Name : null);
@@ -180,27 +165,15 @@ internal static partial class FileExplorer
         return item.Name == ParentName ? null : item;
     }
 
-    private static bool IsDataFile(Item item)
-    {
-        return !item.IsDirectory &&
-               item.Name.EndsWith(FileIo.GetFileNameExtension(), StringComparison.OrdinalIgnoreCase);
-    }
-
     // Why a file or directory cannot be renamed, moved or deleted here (null if it can): it is used by Blyant
     private static string? Protection(Item item)
     {
         var dataDirectory = System.IO.Path.GetFullPath(FileIo.GetDataDirectoryName());
-        // The data file that is logged in to
-        var loggedIn = Mode.CurrentMode != Mode.SelectedMode.Login && DataSession.IsLoggedIn
-            ? System.IO.Path.Combine(FileIo.GetDataAndSubFolder(), FileIo.GetFileName())
-            : null;
         if (item.IsDirectory)
         {
-            // The data directory, the directories it is in, and the directory of the data file logged in to (and
-            // those it is in): the data file would be gone when the notes are saved
+            // The data directory and the directories it is in: the settings and the lists would be gone
             return FileOperations.SamePath(item.Path, dataDirectory) ||
-                   FileOperations.IsInside(dataDirectory, item.Path) ||
-                   (loggedIn != null && FileOperations.IsInside(System.IO.Path.GetFullPath(loggedIn), item.Path))
+                   FileOperations.IsInside(dataDirectory, item.Path)
                 ? DialogText.FileUsedByBlyant
                 : null;
         }
@@ -208,11 +181,6 @@ internal static partial class FileExplorer
         if (FileOperations.SamePath(item.Path, System.IO.Path.Combine(dataDirectory, FileIo.SettingsFileName)) ||
             FileOperations.SamePath(item.Path, FileFavorites.FilePath) ||
             FileOperations.SamePath(item.Path, FileHistory.FilePath))
-        {
-            return DialogText.FileUsedByBlyant;
-        }
-
-        if (loggedIn != null && FileOperations.SamePath(item.Path, loggedIn))
         {
             return DialogText.FileUsedByBlyant;
         }
@@ -538,12 +506,6 @@ internal static partial class FileExplorer
             return;
         }
 
-        if (IsDataFile(item))
-        {
-            _message = DialogText.PeekDataFile;
-            return;
-        }
-
         TextFile file;
         try
         {
@@ -674,12 +636,6 @@ internal static partial class FileExplorer
                 return;
             }
 
-            if (path.EndsWith(FileIo.GetFileNameExtension(), StringComparison.OrdinalIgnoreCase))
-            {
-                _message = DialogText.DiffDataFile;
-                return;
-            }
-
             try
             {
                 var file = TextFile.Load(path);
@@ -724,7 +680,7 @@ internal static partial class FileExplorer
         }
 
         var place = DiffView.Show(oldFile.Text, newFile.Text, Named(oldPath, oldChanged), Named(newPath, newChanged),
-            ActivePane.Directory.Length > 0 ? ActivePane.Directory : DataDirectory(), ignoreSpace,
+            ActivePane.Directory.Length > 0 ? ActivePane.Directory : HomeDirectory(), ignoreSpace,
             string.Join(" ", notes), out var message);
         _message = message;
         if (place is not { } at) return;
@@ -757,8 +713,7 @@ internal static partial class FileExplorer
         return string.Empty;
     }
 
-    // ":bookmark": the selected file or directory as a bookmark of the Jump menu (on "..": the directory shown). A data
-    // file in the data directory is kept as a data file (a jump to it selects it on the login page)
+    // ":bookmark": the selected file or directory as a bookmark of the Jump menu (on "..": the directory shown)
     private static void BookmarkSelected()
     {
         var item = SelectedItem();
@@ -769,20 +724,7 @@ internal static partial class FileExplorer
             return;
         }
 
-        JumpTarget target;
-        if (item == null || item.IsDirectory)
-        {
-            target = new JumpTarget(JumpKind.Directory, path);
-        }
-        else if (IsDataFile(item) && StartArgument.DataFileInDataDirectory(path) is { } inData)
-        {
-            target = new JumpTarget(JumpKind.DataFile, inData);
-        }
-        else
-        {
-            target = new JumpTarget(JumpKind.File, path);
-        }
-
+        var target = new JumpTarget(item == null || item.IsDirectory ? JumpKind.Directory : JumpKind.File, path);
         _message = Bookmarks.AddWithMessage(target);
     }
 
@@ -924,7 +866,7 @@ internal static partial class FileExplorer
             }
             else
             {
-                note = IsDataFile(item) ? DialogText.DeleteDataFileNote : DialogText.DeleteFileNote;
+                note = DialogText.DeleteFileNote;
             }
 
             return ChoiceBox.Confirm(item.IsDirectory ? DialogText.DeleteDirectory : DialogText.DeleteFile,
@@ -947,7 +889,6 @@ internal static partial class FileExplorer
         }
 
         var note2 = Lang.F("In all {0} files and {1} directories. They cannot be recovered.", allFiles, allDirectories);
-        if (items.Any(IsDataFile)) note2 += " " + DialogText.DeleteDataFilesNote;
         return ChoiceBox.Confirm(DialogText.DeleteMarkedCaption,
             Lang.F("Delete the {0} marked files and directories?", items.Count), note2, true);
     }
@@ -1009,7 +950,6 @@ internal static partial class FileExplorer
     private static string FileType(Item item, FileSystemInfo info)
     {
         var type = item.IsDirectory ? DialogText.InfoTypeDirectory :
-            IsDataFile(item) ? DialogText.InfoTypeDataFile :
             info.Extension.Length > 1 ? Lang.F("{0} file", info.Extension[1..].ToUpperInvariant()) :
             DialogText.InfoTypeNoExtension;
         if (info.LinkTarget != null) type += Lang.F(", link to {0}", info.LinkTarget);

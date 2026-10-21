@@ -3,21 +3,20 @@ A free, open-source, cross-platform, Vim-style modal text editor for writing in 
 
 Blyant is a sister application of [Marbles](https://github.com/artstisen/marbles), the Vim-style editor for encrypted notes, and starts from its code base (Marbles v1.5.3). Where Marbles is about private notes kept in an encrypted data file, Blyant is about writing: Markdown files, organised in projects.
 
-> **Status: being remodelled.** Blyant still has the features it was given by Marbles, encrypted data files included. These are being removed, and the program reshaped into a Markdown-focused tool for managing writing projects and their files. The description below is of the code as it is now.
+> **Status: in progress.** The encrypted notes of Marbles are gone, and Blyant starts with files and projects. A project is a folder of files for now; a page for managing the files of a project is planned.
 
 ## Key features
 
-**Encrypted notes**
-- All your notes in a single encrypted data file (AES-256-GCM), easy to back up and carry along
-- Search, favorites, pinned notes, session history and read-only notes
-- Several data files, which can be created, merged, exported and managed from within Blyant
-- Handles large documents and data files with thousands of notes
+**Files and projects**
+- The start page: New file, Open file, New project and Open project, a key each
+- A project is a folder with the files of a piece of writing, kept in a projects folder of your choosing
+- Your files are ordinary text files on your own computer, to back up, sync and open with any other program
 
 **A Vim-style editor**
 - Normal, Insert and Visual modes (also block selection), counts, text objects, registers and undo
 - Split view: the same text in two panes side by side, remembered when you open it again
 - Syntax highlighting (Markdown, HTML, PHP, CSS, JavaScript, C#, JSON, XML), spell checking and word completion
-- Search and replace with regular expressions, file comparison (diff), code snippets, and a macro recorder whose macros can be edited as text
+- Search and replace with regular expressions, file comparison (diff), snippets, and a macro recorder whose macros can be edited as text
 - A command line with `Tab` completion and command history on every page
 
 **A file manager**
@@ -26,7 +25,7 @@ Blyant is a sister application of [Marbles](https://github.com/artstisen/marbles
 - Peek at a file without opening it, and open any file at the place you left it
 
 **Quick to get around**
-- The Jump menu (`Ctrl+O`): bookmarks, recent places, files, pages and data files in a few keys
+- The Jump menu (`Ctrl+O`): bookmarks, recent places, files, directories and pages in a few keys
 - The same keys everywhere: `h` `j` `k` `l` to move, `/` to search, `?` for help and `:` for commands
 - Built-in guides: a quick guide and short guides to each part of Blyant
 
@@ -38,20 +37,18 @@ Blyant is a sister application of [Marbles](https://github.com/artstisen/marbles
 
 ## Getting started
 1. Download the build for your platform from the [releases page](https://github.com/artstisen/blyant/releases), and unzip it into a directory of your choice.
-2. Start `Blyant` (or `Blyant.exe` on Windows) in your terminal. `blyant .` opens the file browser in the directory you are in.
-3. Choose between your encrypted notes and the file browser. Press `?` on any page to see its keys, or open the Quick guide from the start page.
+2. Start `Blyant` (or `Blyant.exe` on Windows) in your terminal. `blyant .` opens the file browser in the directory you are in, and `blyant chapter.md` opens the file in the editor.
+3. On the start page, press `P` for a new project or `N` for a new file. Press `?` on any page to see its keys, or open the Quick guide from the start page.
 
 See the [guide to installation](Guide-to-installation.md) for the builds and the details.
 
 ## Pure 7-bit ASCII TUI
 The aim is to make an unbloated set of core tools. I've included functionality that I would normally have added via lightweight, functional plugins and init modifications in Neovim, without disrupting the classic terminal aesthetic.
 
-The interface of Blyant is drawn with standard 128-character ASCII only (no extended ASCII or ANSI character sets). This makes Blyant compatible with all standard monospaced fonts, regardless of the platform. Encrypted notes and text/code files can contain any Unicode text.
+The interface of Blyant is drawn with standard 128-character ASCII only (no extended ASCII or ANSI character sets). This makes Blyant compatible with all standard monospaced fonts, regardless of the platform. The files can contain any Unicode text.
 
 ## About Blyant
-Blyant provides a simple interface for creating, editing, searching, copying, arranging, importing, exporting and deleting notes. Notes are stored as a searchable collection of entries in a single encrypted file for easy portability. Multiple data files can be created and managed from within the program itself.
-
-Blyant also works as a text editor: when it starts, you choose between your encrypted notes and a file browser for editing ordinary text and code files (.txt, .md, .html, .json, .cs ...) with the same editor. It can be set to start directly in either. The file browser can also manage files and directories, and keeps your favorite files, the file history and a directory hotlist.
+When Blyant starts, the start page offers New file, Open file, New project and Open project. A project is a folder in the projects folder (by default `Blyant` in your Documents folder), and it is worked on in the file browser, where text files (.md, .txt, .html ...) are opened in the editor. The file browser also manages files and directories, and keeps your favorite files, the file history and a directory hotlist. Blyant can be set to start directly in the file browser.
 
 Blyant is operated in the style of Vim: the editor has Normal, Insert and Visual modes, and the menus and lists use the same keys for moving around (`h` `j` `k` `l`), searching (`/`), help (`?`) and commands (`:`).
 
@@ -60,10 +57,10 @@ See the [guide to installing the Windows Terminal CRT mod](Guide-to-windows-term
 
 ## Guides
 - [Download and installation](Guide-to-installation.md)
-- [Login page](Guide-to-login-menu.md)
-- [Main menu, lists and entries](Guide-to-main-menu.md)
+- [Start page, projects and the file browser](Guide-to-start-page.md)
+- [Jump menu, color schemes and logos](Guide-to-jump-menu.md)
 - [Editor](Guide-to-editor.md)
-- [Changes and upgrading from earlier versions](CHANGELOG.md)
+- [Changes](CHANGELOG.md)
 - [PowerShell scripting tips](Guide-to-windows-terminal-crt.md)
 
 Inside Blyant, press `?` for the list of keys.
@@ -79,7 +76,6 @@ Inside Blyant, press `?` for the list of keys.
 | Console I/O encoding | UTF-8 |
 | Languages | English and German built in; Danish, Norwegian (bokmål), Swedish, Spanish, French, Italian, Polish, Dutch and Finnish as language files that can be changed, and more can be added (the commands and keys are the same in all languages). The language files are also a pack of their own on the releases page (`Blyant-languages-0.1.0.zip`) |
 | Date/time format | ISO 8601 |
-| File encryption | AES-256-GCM, with the key derived from the password using PBKDF2-HMAC-SHA256 |
 | Software license | [MIT](LICENSE) |
 
 ## Building from source

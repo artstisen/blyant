@@ -32,7 +32,7 @@ internal static class LogoEditor
         var frame = new TabFrame(TabRow, () =>
             {
                 Menu.WriteModeLabel(DialogText.CaptionsLogos, string.Empty, 0);
-                Menu.WriteNameInTopBar(false);
+                Menu.WriteNameInTopBar();
             },
             new TabItem(() => Lang.T("Logos"), new ListPage()),
             new TabItem(() => Lang.T("Editor"), new EditorPage()),

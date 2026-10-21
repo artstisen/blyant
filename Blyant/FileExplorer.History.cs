@@ -67,7 +67,7 @@ internal static partial class FileExplorer
                         return KeyResult.Handled;
                     case "h":
                     case "help":
-                        Tools.WriteEditorHelp(false, Tools.HelpTopic.History);
+                        Tools.WriteEditorHelp(Tools.HelpTopic.History);
                         break;
                     case "info":
                         ShowHistoryInfo(selected);
@@ -102,7 +102,7 @@ internal static partial class FileExplorer
             }
             else if (key.KeyChar == '?')
             {
-                Tools.WriteEditorHelp(false, Tools.HelpTopic.History);
+                Tools.WriteEditorHelp(Tools.HelpTopic.History);
             }
             else if (key.KeyChar == '/')
             {
@@ -218,7 +218,7 @@ internal static partial class FileExplorer
         return null;
     }
 
-    // Open a file in the editor. True if the browser must close (a data file was selected)
+    // Open a file in the editor. True if the browser must close
     private static bool OpenFromHistory(int number)
     {
         var path = HistoryPath(number);
@@ -341,7 +341,7 @@ internal static partial class FileExplorer
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
         Tools.ClearScreen();
         Menu.WriteModeLabel(DialogText.CaptionsFileHistory, string.Empty, 0);
-        Menu.WriteNameInTopBar(false);
+        Menu.WriteNameInTopBar();
         Tools.SetCursorEx(1, 1);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.HeaderColor);
         Console.Write(Tools.TruncateString(FileHistory.Items.Count == 0
@@ -369,10 +369,7 @@ internal static partial class FileExplorer
             var info = !exists ? DialogText.FavoriteMissing :
                 entry.Opened == DateTime.MinValue ? string.Empty : entry.Opened.ToString("yyyy-MM-dd HH:mm");
             DrawHistoryPointer(index, index == _historyIndex);
-            ConsoleColors.SetColors(entry.Path.EndsWith(FileIo.GetFileNameExtension(),
-                StringComparison.OrdinalIgnoreCase)
-                ? ConsoleColors.ColorPreset.Favorites
-                : ConsoleColors.ColorPreset.Normal);
+            ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
             Console.Write(" " + Tools.TruncateString(System.IO.Path.GetFileName(entry.Path), nameWidth + 1, true));
             if (FileFavorites.Contains(entry.Path))
             {

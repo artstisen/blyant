@@ -129,7 +129,6 @@ public class DiffTests
         Assert.Equal("None", Style(" same", 1));
         Assert.Equal(SyntaxType.Diff, SyntaxHighlighter.TypeOfFile("fix.patch"));
         Assert.Equal(SyntaxType.Diff, SyntaxHighlighter.ParseType("diff"));
-        Assert.Equal(SyntaxType.Diff, EntrySyntax.Get(EntrySyntax.Set("fp", SyntaxType.Diff)));
     }
 
     private static EditorEngine Comparison()

@@ -37,8 +37,7 @@ internal static class SnippetBox
     /// </summary>
     /// <param name="selection">The text selected in the editor (added with A), or empty</param>
     /// <param name="syntax">The kind of text being edited: the snippets for it are shown first</param>
-    /// <param name="fromNote">True when a note of the data file is edited (adding its text is asked about)</param>
-    internal static Result Show(string selection, SyntaxType syntax, bool fromNote)
+    internal static Result Show(string selection, SyntaxType syntax)
     {
         if (!EnsureFile()) return default;
         var status = Snippets.Load();
@@ -51,7 +50,7 @@ internal static class SnippetBox
         _inBox = true;
         try
         {
-            return ShowList(selection, syntax, fromNote);
+            return ShowList(selection, syntax);
         }
         finally
         {
@@ -59,7 +58,7 @@ internal static class SnippetBox
         }
     }
 
-    private static Result ShowList(string selection, SyntaxType syntax, bool fromNote)
+    private static Result ShowList(string selection, SyntaxType syntax)
     {
         var filter = string.Empty;
         var filtering = false;
@@ -208,7 +207,7 @@ internal static class SnippetBox
                 }
                 case 'a' or 'A':
                 {
-                    var title = Add(selection, fromNote);
+                    var title = Add(selection);
                     drawBox = true;
                     if (title == null) break;
                     var index = Snippets.IndexOf(title);
@@ -244,11 +243,10 @@ internal static class SnippetBox
     }
 
     /// <summary>
-    /// Add a text as a snippet (":snip add"): the title is asked for. If the text is from a note of the data file,
-    /// the user is asked first, as the file of the snippets is not encrypted
+    /// Add a text as a snippet (":snip add"): the title is asked for
     /// </summary>
     /// <returns>The title of the snippet added, or null</returns>
-    internal static string? Add(string text, bool fromNote)
+    internal static string? Add(string text)
     {
         if (!EnsureFile()) return null;
         var status = Snippets.Load();
@@ -256,16 +254,6 @@ internal static class SnippetBox
         {
             ShowMessage(status);
             return null;
-        }
-
-        if (fromNote && text.Trim().Length > 0)
-        {
-            Cover();
-            if (!ChoiceBox.Confirm(DialogText.CaptionsSnippets, DialogText.SnippetFromNote,
-                    DialogText.SnippetFromNoteNote, true))
-            {
-                return null;
-            }
         }
 
         var title = AskTitle(DialogText.SnippetAdd, DialogText.SnippetAddPrompt, string.Empty, -1);

@@ -44,18 +44,18 @@ public class BookmarksTests : IDisposable
         Bookmarks.Add(FileAt("a.md"));
         Bookmarks.Add(new JumpTarget(JumpKind.Directory, In("docs")));
         Bookmarks.Add(new JumpTarget(JumpKind.Page, "config/editor"));
-        Bookmarks.Add(new JumpTarget(JumpKind.DataFile, "notes/work.mbls"));
         Bookmarks.Rename(0, "Budget");
-        Assert.Equal("file\t" + In("a.md") + "\tBudget\ndir\t" + In("docs") + "\npage\tconfig/editor\n" +
-                     "data\tnotes/work.mbls\n", Bookmarks.Serialize());
+        Assert.Equal("file\t" + In("a.md") + "\tBudget\ndir\t" + In("docs") + "\npage\tconfig/editor\n",
+            Bookmarks.Serialize());
         Assert.Equal(DialogText.Success, Bookmarks.Save());
         Bookmarks.Clear();
         Bookmarks.Load();
-        Assert.Equal(4, Bookmarks.Items.Count);
+        Assert.Equal(3, Bookmarks.Items.Count);
         Assert.Equal("Budget", Bookmarks.Items[0].Shown);
-        Assert.Equal(new JumpTarget(JumpKind.DataFile, "notes/work.mbls"), Bookmarks.Items[3].Target);
-        // Edited by hand: an unknown kind, a blank line and a place there twice are not used
-        Bookmarks.Parse("nonsense\tx\n\nfile\t" + In("a.md") + "\nfile\t" + In("a.md") + "\r\n");
+        Assert.Equal(new JumpTarget(JumpKind.Page, "config/editor"), Bookmarks.Items[2].Target);
+        // Edited by hand: an unknown kind (a data file of Marbles), a blank line and a place there twice are not used
+        Bookmarks.Parse("nonsense\tx\n\ndata\tnotes/work.mbls\nfile\t" + In("a.md") + "\nfile\t" + In("a.md") +
+                        "\r\n");
         Assert.Single(Bookmarks.Items);
     }
 
@@ -170,11 +170,11 @@ public class BookmarksTests : IDisposable
     [Fact]
     public void TheJumpMenu_HasTabsWithTheListsOfTheFileBrowserAsSubTabs()
     {
-        var tabs = JumpMenu.Tabs(StartMenu.OnlyMode.None);
+        var tabs = JumpMenu.Tabs();
         Assert.Equal(new[]
         {
             JumpMenu.Tab.Bookmarks, JumpMenu.Tab.Jumps, JumpMenu.Tab.History, JumpMenu.Tab.Favorites,
-            JumpMenu.Tab.Hotlist, JumpMenu.Tab.Configuration, JumpMenu.Tab.DataFiles
+            JumpMenu.Tab.Hotlist, JumpMenu.Tab.Configuration
         }, tabs);
         Assert.Equal(new[] { JumpMenu.Group.FileBrowser },
             new[] { JumpMenu.Tab.History, JumpMenu.Tab.Favorites, JumpMenu.Tab.Hotlist }.Select(JumpMenu.GroupOf).Distinct());
@@ -184,8 +184,5 @@ public class BookmarksTests : IDisposable
         Assert.Equal(tabs.IndexOf(JumpMenu.Tab.Jumps), JumpMenu.NextGroup(tabs, tabs.IndexOf(JumpMenu.Tab.Hotlist), true));
         Assert.Equal(tabs.IndexOf(JumpMenu.Tab.History), JumpMenu.NextGroup(tabs, tabs.IndexOf(JumpMenu.Tab.Jumps), false));
         Assert.Equal(0, JumpMenu.NextGroup(tabs, tabs.Count - 1, false));
-        // One mode only: the lists of the other mode are left out
-        Assert.DoesNotContain(JumpMenu.Tab.History, JumpMenu.Tabs(StartMenu.OnlyMode.Notes));
-        Assert.DoesNotContain(JumpMenu.Tab.DataFiles, JumpMenu.Tabs(StartMenu.OnlyMode.Editor));
     }
 }

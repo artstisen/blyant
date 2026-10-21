@@ -3,10 +3,10 @@
 For anyone changing the code, people and coding agents alike.
 
 ## Blyant and Marbles
-Blyant starts from the code of Marbles v1.5.3, which goes on as a program of its own (in its own repository). Blyant is being remodelled into a Markdown-focused tool for writing and for managing projects and their files: the encrypted data files (`.mbls`), the login page and Note Management are to be removed. Until they are, code and texts about them are still there; comments that tell what earlier versions of Marbles did (the data file format) name Marbles on purpose.
+Blyant starts from the code of Marbles v1.5.3, which goes on as a program of its own (in its own repository). Blyant is a Markdown-focused tool for writing and for managing projects and their files: the encrypted data files of Marbles (`.mbls`), its login page and Note Management are not part of it. A project is a folder in the projects folder (`Projects`, setting `projectsdir`); a page for managing the files of a project is planned. Lines that Marbles wrote in the lists for its data files (`data` in `jump.txt` and `bookmarks.txt`) are skipped when read, and comments that tell what Marbles did name Marbles on purpose.
 
 ## Commands
-Every place with a command line (main menu, entry view, lists of entries, file browser, favorites, search results, editor) has a table of its commands in `Blyant/Commands.cs`. `Tab` completes from these tables, and the log uses them to tell a command from other text.
+Every place with a command line (start page, file browser, favorites, history, hotlist, search results, Jump menu, editor) has a table of its commands in `Blyant/Commands.cs`. `Tab` completes from these tables, and the log uses them to tell a command from other text.
 
 **When a command is added, renamed or removed, change the table of that place in `Commands.cs` in the same change.**
 
@@ -16,7 +16,7 @@ Every place with a command line (main menu, entry view, lists of entries, file b
 - `CommandTests` compares the tables with the code that runs the commands (it reads the source files), and fails with the names that differ. If the code that runs the commands of a place is moved or restructured, update where that test looks
 - Also add the command to the help (`Tools.cs`, the section of the place) and to the guide that covers it
 - When what a key or command does changes (a key gets another meaning, a command does more or is refused in a case), update the help rows of the place, its key hints on the bottom line, the guide and `CHANGELOG.md` in the same change, and the language files when a text changes
-- The short guides in the program (the Help tab of the start page: `QuickGuide.cs` and `QuickGuide.Guides.cs`) show the most used keys of the Jump menu, the file browser, the editor and Note Management. When such a key or command changes, update its guide too
+- The short guides in the program (the Help tab of the start page: `QuickGuide.cs` and `QuickGuide.Guides.cs`) show the most used keys of projects, the file browser, the editor and the Jump menu. When such a key or command changes, update its guide too
 
 ## Texts and languages
 Text shown to the user is written in English in the code and given to `Lang.T("...")`, or `Lang.F("... {0} ...", value)` when it has values in it. German is built into the program (`Blyant/Lang/de.txt`); the other languages are files in `Blyant/Lang/External/` (`da.txt` ...), published in the folder `lang` next to the program.
@@ -40,8 +40,7 @@ Text shown to the user is written in English in the code and given to `Lang.T(".
 - No dependencies besides .NET itself
 - `EditorEngine`, `TextBuffer`, the highlighters and `CommandCompletion` do not touch the console, so they can be tested. Keep it that way: drawing belongs in `TextArea` and the pages
 - Text shown to the user is kept in `DialogText` (or written in a `Lang.T` call where it is used)
-- The log (`EventLog`) can be read without a password: never log titles, the text of notes, search texts or passwords. Commands are logged by name only
-- The encryption (AES-256-GCM, PBKDF2-HMAC-SHA256) is not to be changed without it being asked for
+- The log (`EventLog`) can be read by anyone at the screen: never log the text of files or search texts. Commands are logged by name only
 
 ## Releases
 - The version is set in `DialogText.ApplicationVersion` and in `Blyant.csproj` (`AssemblyVersion`, `FileVersion`)

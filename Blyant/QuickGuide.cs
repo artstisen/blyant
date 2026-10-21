@@ -2,9 +2,9 @@
 
 /// <summary>
 /// The quick guide: a short introduction to Blyant for a new user, shown on a page of its own.
-/// It tells what the two parts of Blyant are for, how to move around, and how the modes of the editor work.
+/// It tells how to start (files and projects), how to move around, and how the modes of the editor work.
 /// It is kept short on purpose: the help ("?") has all the keys. The short guides of the Help tab (the Jump menu,
-/// the file browser, the text editor and Note Management) are shown the same way (QuickGuide.Guides.cs).
+/// the file browser, the text editor and projects) are shown the same way (QuickGuide.Guides.cs).
 /// </summary>
 internal static partial class QuickGuide
 {
@@ -17,10 +17,10 @@ internal static partial class QuickGuide
         Jump,
         Files,
         Editor,
-        Notes
+        Projects
     }
 
-    internal static readonly Guide[] All = { Guide.Quick, Guide.Jump, Guide.Files, Guide.Editor, Guide.Notes };
+    internal static readonly Guide[] All = { Guide.Quick, Guide.Projects, Guide.Files, Guide.Editor, Guide.Jump };
 
     /// <summary>
     /// The name of a guide, in the language in use
@@ -30,7 +30,7 @@ internal static partial class QuickGuide
         Guide.Jump => Lang.T("Jump menu guide"),
         Guide.Files => Lang.T("File browser guide"),
         Guide.Editor => Lang.T("Text editor guide"),
-        Guide.Notes => Lang.T("Note Management guide"),
+        Guide.Projects => Lang.T("Projects guide"),
         _ => DialogText.QuickGuide
     };
 
@@ -40,7 +40,7 @@ internal static partial class QuickGuide
         Guide.Jump => Tools.HelpTopic.Jump,
         Guide.Files => Tools.HelpTopic.Files,
         Guide.Editor => Tools.HelpTopic.Editor,
-        Guide.Notes => Tools.HelpTopic.MainMenu,
+        Guide.Projects => Tools.HelpTopic.Start,
         _ => Tools.HelpTopic.All
     };
 
@@ -49,7 +49,7 @@ internal static partial class QuickGuide
         Guide.Jump => JumpGuide(),
         Guide.Files => FilesGuide(),
         Guide.Editor => EditorGuide(),
-        Guide.Notes => NotesGuide(),
+        Guide.Projects => ProjectsGuide(),
         _ => Paragraphs()
     };
 
@@ -72,13 +72,11 @@ internal static partial class QuickGuide
     {
         (Kind.Title, "", Lang.T("Quick guide")),
         (Kind.Text, "", ""),
-        (Kind.Heading, "", Lang.T("Blyant has two parts, selected on the start page")),
-        (Kind.Item, Lang.T("Note Management"), Lang.T("Your notes, kept in a data file that is encrypted with your password. " +
-                                                       "Log in, then press N for a new note, S or / to search and F for " +
-                                                       "your favorites.")),
-        (Kind.Item, Lang.T("Text Editor"), Lang.T("A file browser for ordinary text and code files (they are not " +
-                                                   "encrypted). Enter opens a file in the editor. Manage files and " +
-                                                   "organize favorites.")),
+        (Kind.Heading, "", Lang.T("Start with a file or a project, on the start page")),
+        (Kind.Item, "N  F", Lang.T("New file/Open file: the file browser, where Enter opens a file in the editor. " +
+                                   "Manage files and organize favorites there.")),
+        (Kind.Item, "P  O", Lang.T("New project/Open project: a project is a folder with the files of a piece of " +
+                                   "writing, kept in the projects folder.")),
         (Kind.Text, "", ""),
         (Kind.Heading, "", Lang.T("Moving around (the same keys everywhere)")),
         (Kind.Item, "j  k", Lang.T("Down/Up. The arrow keys work too")),
@@ -173,7 +171,7 @@ internal static partial class QuickGuide
             if (key.KeyChar == '?')
             {
                 // All the keys (a guide of a part: the keys of that part)
-                Tools.WriteEditorHelp(false, HelpOf(guide));
+                Tools.WriteEditorHelp(HelpOf(guide));
             }
             else if (key.KeyChar == 'G' || key.Key == ConsoleKey.End)
             {

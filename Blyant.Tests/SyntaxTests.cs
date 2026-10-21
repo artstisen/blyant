@@ -238,8 +238,6 @@ public class SyntaxTests
         Assert.Equal(SyntaxType.CSharp, SyntaxHighlighter.ParseType("cs"));
         Assert.Equal(SyntaxType.CSharp, SyntaxHighlighter.ParseType("C#"));
         Assert.Equal("C#", SyntaxHighlighter.Name(SyntaxType.CSharp));
-        // A note remembers it with the letter "s"
-        Assert.Equal(SyntaxType.CSharp, EntrySyntax.Get(EntrySyntax.Set("fp1", SyntaxType.CSharp)));
     }
 
     #endregion
@@ -279,8 +277,6 @@ public class SyntaxTests
         Assert.Equal(new[] { "......", "WWWWW" }, Styles(SyntaxType.Php, "if $x;", "<?php"));
         Assert.Equal(SyntaxType.Php, SyntaxHighlighter.ParseType("php"));
         Assert.Equal("PHP", SyntaxHighlighter.Name(SyntaxType.Php));
-        // A note remembers it with the letter "q"
-        Assert.Equal(SyntaxType.Php, EntrySyntax.Get(EntrySyntax.Set("f", SyntaxType.Php)));
     }
 
     #endregion

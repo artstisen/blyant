@@ -1,7 +1,7 @@
 ﻿namespace Blyant.Tests;
 
 /// <summary>
-/// Entries that are read only: a tag in their options, and an editor that does not change their text
+/// A text that is read only (a peek, a comparison): the editor does not change it
 /// </summary>
 [Collection("Static state")]
 public class ReadOnlyTests
@@ -12,26 +12,6 @@ public class ReadOnlyTests
     }
 
     private static EditorEngine ReadOnlyEditor(string text) => new(text, 40, 10, false) { ReadOnly = true };
-
-    [Fact]
-    public void ReadOnly_IsATagInTheOptions_KeptWithTheOtherTags()
-    {
-        var entry = new Entry("Title", "Text") { Options = "fp3Em" };
-        Assert.False(Entries.IsReadOnly(entry));
-        Entries.SetReadOnly(entry, true);
-        Assert.True(Entries.IsReadOnly(entry));
-        Assert.Equal("fp3Emr", entry.Options);
-        Assert.Equal(SyntaxType.Markdown, EntrySyntax.Get(entry.Options));
-        // Set twice: one tag
-        Entries.SetReadOnly(entry, true);
-        Assert.Equal("fp3Emr", entry.Options);
-        Entries.SetReadOnly(entry, false);
-        Assert.Equal("fp3Em", entry.Options);
-        Assert.False(Entries.IsReadOnly(entry));
-        // An entry without options, and a cleared one (whose options are a text)
-        Assert.False(Entries.IsReadOnly(new Entry("A", "B") { Options = string.Empty }));
-        Assert.False(Entries.IsReadOnly(new Entry("A", "B") { Options = DialogText.Cleared }));
-    }
 
     [Fact]
     public void TheEditor_DoesNotChangeAReadOnlyText_AndSaysWhy()

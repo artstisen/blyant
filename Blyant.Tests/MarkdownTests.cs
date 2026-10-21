@@ -33,6 +33,9 @@ public class MarkdownTests
     [InlineData("*it*", "IIII")]
     [InlineData("a *it* b", "..IIII..")]
     [InlineData("__bold__ _it_", "BBBBBBBB.IIII")]
+    [InlineData("_some text_", "IIIIIIIIIII")] // Italic with underscores or with asterisks
+    [InlineData("*some text*", "IIIIIIIIIII")]
+    [InlineData("an *italic* and an _italic_ word", "...IIIIIIII........IIIIIIII.....")]
     [InlineData("***both***", "BBBBBBBBBB")]
     [InlineData("a * b * c", ".........")]
     [InlineData("2 * 3 = 6", ".........")]

@@ -7,6 +7,22 @@
 /// </summary>
 internal static class FileOperations
 {
+    /// <summary>
+    /// The extension a new file gets when its name has none: Markdown
+    /// </summary>
+    internal const string DefaultExtension = ".md";
+
+    /// <summary>
+    /// The name of a new file: a name without an extension gets ".md" ("chapter 1" is "chapter 1.md"). A name that
+    /// starts with a dot (".gitignore") or ends with one (which is not a name to use) is left as it is
+    /// </summary>
+    internal static string WithDefaultExtension(string name)
+    {
+        name = name.Trim();
+        if (name.Length == 0 || name.StartsWith('.') || name.EndsWith('.') || Path.HasExtension(name)) return name;
+        return name + DefaultExtension;
+    }
+
     private const string CopySuffix = "-copy";
 
     private static StringComparison PathComparison =>

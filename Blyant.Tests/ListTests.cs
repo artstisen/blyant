@@ -3,6 +3,7 @@
 /// <summary>
 /// ":ol" and ":ul": the selected lines as a numbered or bulleted list
 /// </summary>
+[Collection("Static state")] // The editor shares its string memory with the other tests of it
 public class ListTests
 {
     private static string Run(string text, string keys)

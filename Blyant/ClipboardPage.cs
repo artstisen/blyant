@@ -2,8 +2,8 @@
 
 /// <summary>
 /// The page with the clipboard settings: where yanked text goes (the system clipboard through OSC 52, the paste
-/// bin file), when (every yank, or only with "+ in front), whether text may leave the notes of a data file, and the
-/// paste bin file. Opened with ":clipboard" (main menu and editor) and from the Configuration page.
+/// bin file), when (every yank, or only with "+ in front), and the paste bin file. Opened with ":clipboard" (the
+/// start page and the editor) and from the Configuration page.
 /// A change is saved in the settings file at once.
 /// </summary>
 internal static class ClipboardPage
@@ -16,7 +16,6 @@ internal static class ClipboardPage
         Osc52,
         PasteBin,
         When,
-        FromNotes,
         File,
         Append,
         Clear
@@ -36,7 +35,6 @@ internal static class ClipboardPage
             Row.When => indent + (SystemClipboard.EveryYank
                 ? Lang.T("Copied: every yank (h/l: only with \"+y)")
                 : Lang.T("Copied: only with \"+y (h/l: every yank)")),
-            Row.FromNotes => Check(SystemClipboard.FromNotes) + Lang.T("Also from the notes of a data file"),
             Row.File => indent + Lang.F("Paste bin file: {0}", SystemClipboard.PasteBinFile),
             Row.Append => indent + (SystemClipboard.PasteBinAppend
                 ? Lang.T("Paste bin: add to the end")
@@ -108,7 +106,7 @@ internal static class ClipboardPage
             }
             else if (key.KeyChar == '?')
             {
-                Tools.WriteEditorHelp(false, Tools.HelpTopic.Clipboard);
+                Tools.WriteEditorHelp(Tools.HelpTopic.Clipboard);
             }
             else if (key.Key is ConsoleKey.Enter or ConsoleKey.Spacebar ||
                      navigation is ConsoleKey.RightArrow or ConsoleKey.LeftArrow &&
@@ -138,9 +136,6 @@ internal static class ClipboardPage
                 break;
             case Row.When:
                 SystemClipboard.EveryYank = !SystemClipboard.EveryYank;
-                break;
-            case Row.FromNotes:
-                SystemClipboard.FromNotes = !SystemClipboard.FromNotes;
                 break;
             case Row.Append:
                 SystemClipboard.PasteBinAppend = !SystemClipboard.PasteBinAppend;
@@ -184,7 +179,7 @@ internal static class ClipboardPage
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
         Tools.ClearScreen();
         Menu.WriteModeLabel(DialogText.CaptionsClipboard, string.Empty, 0);
-        Menu.WriteNameInTopBar(false);
+        Menu.WriteNameInTopBar();
         Tools.SetCursorEx(1, 0);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
         Console.Write(new string('-', Init.LineWidth));

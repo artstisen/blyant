@@ -1,8 +1,8 @@
 ﻿namespace Blyant;
 
 /// <summary>
-/// Comparisons in the editor: ":diff" asks the host to compare the text with the file on disk (or the saved
-/// entry), and in the view of a comparison "n" "N" and "]c" "[c" go to the next and the previous change (the
+/// Comparisons in the editor: ":diff" asks the host to compare the text with the file on disk, and in the view
+/// of a comparison "n" "N" and "]c" "[c" go to the next and the previous change (the
 /// lines where the changes start are given by the host). ":w name" asks the host to save the text as a new file
 /// (a comparison is saved so).
 /// </summary>

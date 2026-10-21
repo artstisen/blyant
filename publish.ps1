@@ -32,7 +32,7 @@ foreach ($platform in $Platforms) {
 $version = ($csproj.Project.PropertyGroup.FileVersion | Where-Object { $_ } | Select-Object -First 1) -replace '\.0$', ''
 
 # Each folder is emptied first, so files left from earlier versions are not released. A data folder (made when a
-# version was tried there) holds data files and settings: it is never deleted, nothing is published. All folders
+# version was tried there) holds settings and lists: it is never deleted, nothing is published. All folders
 # are checked before any is emptied
 foreach ($platform in $Platforms) {
     if (Test-Path (Join-Path $output $platform "data")) {

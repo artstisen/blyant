@@ -609,26 +609,19 @@ internal static class MacroFiles
 }
 
 /// <summary>
-/// The boxes of the macros in the editor: recording starts (with a warning in a note of a data file), the question
-/// when it stops, and the list of macros (":macro")
+/// The boxes of the macros in the editor: recording starts, the question when it stops, and the list of macros
+/// (":macro")
 /// </summary>
 internal static class MacroBoxes
 {
     /// <summary>
-    /// ":record": start recording, after a warning in a note of a data file (what is typed is saved unencrypted)
+    /// ":record": start recording
     /// </summary>
-    internal static void StartRecording(EditorEngine engine, bool inNote)
+    internal static void StartRecording(EditorEngine engine)
     {
         if (engine.IsRecording)
         {
             engine.ShowMessage(Lang.T("A macro is being recorded already"), false);
-            return;
-        }
-
-        if (inNote && !ChoiceBox.Confirm(Lang.T("Record a macro"),
-                Lang.T("The text you type is saved unencrypted in the file of the macro."),
-                Lang.T("Record a macro of this note anyway?"), true))
-        {
             return;
         }
 

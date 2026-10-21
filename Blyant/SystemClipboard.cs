@@ -30,11 +30,6 @@ internal static class SystemClipboard
     internal static bool EveryYank { get; set; } = true;
 
     /// <summary>
-    /// Text may be sent out of the notes of a data file too, which are kept encrypted (setting "clipboardnotes")
-    /// </summary>
-    internal static bool FromNotes { get; set; }
-
-    /// <summary>
     /// Text written to the paste bin is added to the end of it, else it replaces it (setting "pastebinappend")
     /// </summary>
     internal static bool PasteBinAppend { get; set; }
@@ -63,7 +58,6 @@ internal static class SystemClipboard
         Osc52 = true;
         PasteBin = false;
         EveryYank = true;
-        FromNotes = false;
         PasteBinAppend = false;
         PasteBinFile = DefaultPasteBinFile;
     }
@@ -80,17 +74,15 @@ internal static class SystemClipboard
     /// Send yanked text on, as set: to the system clipboard and/or the paste bin
     /// </summary>
     /// <param name="text">The text yanked</param>
-    /// <param name="fromNote">The text is from a note of a data file</param>
     /// <param name="asked">The yank had "+ in front (a message is shown if nothing is turned on)</param>
     /// <returns>The message for the status line of the editor (empty: none), and if it is an error</returns>
-    internal static (string Message, bool IsError) Copy(string text, bool fromNote, bool asked)
+    internal static (string Message, bool IsError) Copy(string text, bool asked)
     {
         if (!Osc52 && !PasteBin)
         {
             return asked ? (DialogText.ClipboardAllOff, true) : (string.Empty, false);
         }
 
-        if (fromNote && !FromNotes) return (DialogText.ClipboardNotesOff, true);
         if (Osc52) WriteOsc52(text);
         if (PasteBin)
         {
@@ -112,7 +104,7 @@ internal static class SystemClipboard
     {
         if (text.Length == 0) return (string.Empty, false);
         Tools.StoreInLineMemory(text);
-        var (message, isError) = Copy(text, false, false);
+        var (message, isError) = Copy(text, false);
         if (isError) return (message, true);
         return (Osc52 && PasteBin ? DialogText.CopiedToAllAndMemory
             : Osc52 ? DialogText.CopiedToClipboardAndMemory

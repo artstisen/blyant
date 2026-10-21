@@ -2,6 +2,8 @@
 
 namespace Blyant.Tests;
 
+// With the other tests of the string memory (the editor test yanks and puts), so none clears it in between
+[Collection("Static state")]
 public class CommandTests
 {
     #region Completion
@@ -30,10 +32,11 @@ public class CommandTests
         // Shift+Tab goes the other way
         Assert.Equal("color collapse co color", Tabs(CommandContext.Favorites, "co", 4, false));
         // Each place has its own commands
-        Assert.Equal("scheme sc", Tabs(CommandContext.Menu, "sc", 2));
+        Assert.Equal("scheme sc", Tabs(CommandContext.Start, "sc", 2));
         Assert.Equal("copy co", Tabs(CommandContext.Files, "co", 2));
         // Capital letters are completed too
-        Assert.Equal("undelete", Tabs(CommandContext.Menu, "UND", 1));
+        Assert.Equal("clipboard", Tabs(CommandContext.Start, "CLIP", 1));
+        Assert.Equal("completions", Tabs(CommandContext.Start, "COMPL", 1));
     }
 
     [Fact]
@@ -47,11 +50,11 @@ public class CommandTests
     [Fact]
     public void Tab_LeavesTheTextAlone_WhenNothingStartsWithIt()
     {
-        Assert.Equal("xyz xyz", Tabs(CommandContext.Menu, "xyz", 2));
+        Assert.Equal("xyz xyz", Tabs(CommandContext.Start, "xyz", 2));
         // A command that is complete, and has no longer one
-        Assert.Equal("undelete", Tabs(CommandContext.Menu, "undelete", 1));
+        Assert.Equal("completions", Tabs(CommandContext.Start, "completions", 1));
         // Only the name is completed, not what follows it
-        Assert.Equal("new he", Tabs(CommandContext.Menu, "new he", 1));
+        Assert.Equal("new he", Tabs(CommandContext.Start, "new he", 1));
         Assert.Equal("syntax h", Tabs(CommandContext.Editor, "syntax h", 1));
     }
 
@@ -158,14 +161,6 @@ public class CommandTests
     }
 
     [Fact]
-    public void TheTables_HaveTheCommandsOfTheMenusAndLists()
-    {
-        var common = Method("Actions.cs", "RunCommonCommand");
-        AssertSame(CommandContext.Menu, Compared(common, Method("Actions.cs", "RunManageCommand")));
-        AssertSame(CommandContext.List, Compared(common, Method("Actions.cs", "RunListCommand")));
-    }
-
-    [Fact]
     public void TheTables_HaveTheCommandsOfTheFileBrowser()
     {
         const string read = "var command = CommandLine.Read(";
@@ -217,7 +212,10 @@ public class CommandTests
         }
 
         Assert.False(Commands.IsKnown("mypassword"));
-        Assert.False(Commands.IsKnown(CommandContext.Menu, "collapse"));
+        Assert.False(Commands.IsKnown(CommandContext.Start, "collapse"));
+        // The commands of the notes of Marbles are gone
+        Assert.False(Commands.IsKnown("logout"));
+        Assert.False(Commands.IsKnown("password"));
     }
 
     #endregion

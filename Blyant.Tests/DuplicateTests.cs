@@ -3,6 +3,7 @@
 /// <summary>
 /// ":dup": a copy of the selection right after it (of the line, or the lines of a range, without a selection)
 /// </summary>
+[Collection("Static state")] // The editor shares its string memory with the other tests of it
 public class DuplicateTests
 {
     private static EditorEngine Run(string text, string keys)

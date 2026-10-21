@@ -10,7 +10,6 @@ public class ClipboardTests : IDisposable
     private readonly string _savedFile = SystemClipboard.PasteBinFile;
     private readonly bool _savedOsc52 = SystemClipboard.Osc52;
     private readonly bool _savedPasteBin = SystemClipboard.PasteBin;
-    private readonly bool _savedNotes = SystemClipboard.FromNotes;
 
     public ClipboardTests()
     {
@@ -25,7 +24,6 @@ public class ClipboardTests : IDisposable
         SystemClipboard.PasteBinFile = _savedFile;
         SystemClipboard.Osc52 = _savedOsc52;
         SystemClipboard.PasteBin = _savedPasteBin;
-        SystemClipboard.FromNotes = _savedNotes;
         Directory.Delete(_directory, true);
     }
 
@@ -132,13 +130,11 @@ public class ClipboardTests : IDisposable
     {
         SystemClipboard.Osc52 = false;
         SystemClipboard.PasteBin = false;
-        Assert.Equal((DialogText.ClipboardAllOff, true), SystemClipboard.Copy("x", false, true));
-        Assert.Equal((string.Empty, false), SystemClipboard.Copy("x", false, false));
-        SystemClipboard.PasteBin = true;
-        SystemClipboard.FromNotes = false;
-        Assert.Equal((DialogText.ClipboardNotesOff, true), SystemClipboard.Copy("x", true, true));
+        Assert.Equal((DialogText.ClipboardAllOff, true), SystemClipboard.Copy("x", true));
+        Assert.Equal((string.Empty, false), SystemClipboard.Copy("x", false));
         Assert.False(File.Exists(SystemClipboard.PasteBinFile));
-        Assert.Equal((DialogText.CopiedToPasteBin, false), SystemClipboard.Copy("from a file", false, true));
+        SystemClipboard.PasteBin = true;
+        Assert.Equal((DialogText.CopiedToPasteBin, false), SystemClipboard.Copy("from a file", true));
         SystemClipboard.ReadPasteBin(out var text);
         Assert.Equal("from a file", text);
     }

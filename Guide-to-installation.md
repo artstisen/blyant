@@ -38,9 +38,9 @@ Only the portable version needs this. Ensure that you have the .NET 10 runtime i
 - [Download the .NET Runtime 10.0](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)
 
 ## Good to know
-You can create an alias like "_mbls_" to run Blyant with less typing. See [this guide](Guide-to-windows-terminal-crt.md) for more information.
+You can create an alias like "_bly_" to run Blyant with less typing. See [this guide](Guide-to-windows-terminal-crt.md) for more information.
 
-Blyant keeps your notes and settings in a directory named "data", next to the Blyant program, so the same notes and settings are used wherever Blyant is started from. If the directory you start Blyant in has a directory "data" of its own, that one is used instead (as earlier versions did, which used the directory they were started in). If the program directory cannot be written to (a program installed for all users), the data directory is "Blyant/data" in your application data (`~/.local/share` on Linux, `AppData\Local` on Windows). The languages other than English and German are files in the folder "lang" next to the program (see [Language files](#language-files)). To use spell checking in the editor, place spell files in a directory named "spell" next to it (see the [guide to the editor](Guide-to-editor.md#spell-checking)). Blyant needs a terminal window of at least 80 columns and 23 rows.
+Blyant keeps its settings and lists (favorites, history, bookmarks, snippets, macros ...) in a directory named "data", next to the Blyant program, so the same settings are used wherever Blyant is started from. If the directory you start Blyant in has a directory "data" of its own, that one is used instead. Your projects are kept in the projects folder: by default the folder "Blyant" in your Documents folder (set in Configuration, General). If the program directory cannot be written to (a program installed for all users), the data directory is "Blyant/data" in your application data (`~/.local/share` on Linux, `AppData\Local` on Windows). The languages other than English and German are files in the folder "lang" next to the program (see [Language files](#language-files)). To use spell checking in the editor, place spell files in a directory named "spell" next to it (see the [guide to the editor](Guide-to-editor.md#spell-checking)). Blyant needs a terminal window of at least 80 columns and 23 rows.
 
 ## Starting Blyant with a file
 Give a file or a directory when you start Blyant, and it is opened at once, without the start page:
@@ -49,10 +49,9 @@ Give a file or a directory when you start Blyant, and it is opened at once, with
 blyant notes.md                Open notes.md in the editor (the file browser is in its directory behind it)
 blyant ~/projects/site         Show the directory in the file browser
 blyant .                       Show the directory you are in, in the file browser
-blyant work.mbls               Select the data file on the login page (in the data directory)
 ```
 
-A path that is not a full path is taken from the directory you are in. Closing the editor (`:q`) shows the file browser in the directory of the file, and closing the file browser the start page, as after a jump from the [Jump menu](Guide-to-main-menu.md#jump-menu); `:exit` leaves Blyant. A file that is not there yet (in a directory that is) is made if you want that: Blyant asks first. A data file outside the data directory is shown in the file browser, which offers to copy it to the data directory. With _Text Editor only_ a data file is not opened, and with _Note Management only_ a text file or directory is not.
+A path that is not a full path is taken from the directory you are in. Closing the editor (`:q`) shows the file browser in the directory of the file, and closing the file browser the start page, as after a jump from the [Jump menu](Guide-to-jump-menu.md#jump-menu); `:exit` leaves Blyant. A file that is not there yet (in a directory that is) is made if you want that: Blyant asks first.
 
 (On Windows the program is `Blyant.exe`, and the portable version is started with `dotnet Blyant.dll notes.md`.)
 

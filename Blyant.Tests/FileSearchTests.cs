@@ -10,7 +10,6 @@ public class FileSearchTests : IDisposable
         _root = Path.Combine(Path.GetTempPath(), "blyant_search_" + Guid.NewGuid().ToString("N"));
         Make("notes.md", "# Title\nSome text about cats\nMore");
         Make("Plan.txt", "The plan\nline two has Dogs in it");
-        Make("data.mbls", "cats");
         Make(Path.Combine("sub", "deep.md"), "nothing here\n\tindented cats line");
         Make(Path.Combine("sub", "inner", "notes(1).txt"), "x");
         File.WriteAllBytes(Path.Combine(_root, "binary.bin"), new byte[] { 0, 1, 2, 0xFF, 0xFE, 0, 99, 97, 116, 115 });
@@ -84,7 +83,7 @@ public class FileSearchTests : IDisposable
     [Fact]
     public void Text_IsFoundInTextFiles_WithTheLine()
     {
-        // Not in the data file, and not in the file that is not text
+        // Not in the file that is not text
         Assert.Equal(new[] { "notes.md", "sub/deep.md" }, Find("", "cats"));
         Assert.Equal(new[] { "Plan.txt" }, Find("", "dogs"));
         Assert.Empty(Find("", "dogs", matchCase: true));

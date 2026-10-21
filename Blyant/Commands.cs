@@ -5,8 +5,6 @@
 /// </summary>
 internal enum CommandContext
 {
-    Menu, // The main menu of a data file
-    List, // A list of entries
     Files, // The file browser
     FilePicker, // The file browser when a file or directory is picked for something
     Favorites, // The favorites of the file browser
@@ -14,7 +12,7 @@ internal enum CommandContext
     Hotlist, // The directory hotlist of the file browser
     Search, // The files found by a search in the file browser
     Editor,
-    Start, // The start page (Select mode): its tabs Mode, Configuration and Help
+    Start, // The start page: its tabs Start, Configuration and Help
     Jump // The Jump menu (the commands work on its Bookmarks tab)
 }
 
@@ -45,22 +43,10 @@ internal static class Commands
         }
     }
 
-    // Leaving Blyant or the data file, from the menus and lists of a data file
-    private const string Common = " quitall exit logout";
-    private const string CommonShort = " qa";
-
     private static readonly Dictionary<CommandContext, Table> Tables = new()
     {
-        [CommandContext.Menu] = new Table(
-            "quit help about guide jump book new browse number import transfer undelete backup defaults scheme " +
-            "bw size password restart language clipboard logo config" + Common,
-            "q h nu ju jmp" + CommonShort),
-        [CommandContext.List] = new Table(
-            "quit close help jump book browse new title delete color transfer size duplicate revert export import info clipboard" +
-            " readonly" + Common,
-            "q h ro ju jmp" + CommonShort),
         [CommandContext.Files] = new Table(
-            "quit close exit home data help jump book peek diff cd new info mkdir rename copy duplicate move delete favorite favorites history hotlist hotadd bookmark refresh logout panes match path name find",
+            "quit close exit home data help jump book peek diff cd new info mkdir rename copy duplicate move delete favorite favorites history hotlist hotadd bookmark refresh panes match path name find projects",
             "q h fav favs hist hot ju jmp"),
         [CommandContext.FilePicker] = new Table(
             "quit close home data help cd",
@@ -78,17 +64,17 @@ internal static class Commands
             "quit close help jump book find info goto favorite",
             "q h fav ju jmp"),
         [CommandContext.Start] = new Table(
-            "note file mode config general layout editor system jump book help about quick scheme logo snippet completions clipboard " +
-            "log restart reset quit exit",
-            "notes browse ju jmp h guide snip comp q"),
+            "new file open project projects start config general layout editor system jump book help about quick scheme logo " +
+            "snippet completions clipboard log restart reset quit exit",
+            "browse newproject ju jmp h guide snip comp q"),
         [CommandContext.Jump] = new Table(
             "quit close help info folder expand collapse rename color remove move top bottom undo clearbook path name",
             "q h u"),
         [CommandContext.Editor] = new Table(
             "write quit quit! wq help edit edit! reload reload! undo redo delete yank replace nohlsearch " +
-            "spell nospell spellnext spellprev suggest spelladd syntax number nonumber timestamp password " +
-            "favorite record play macro trim clear registers reglist regclear putall vsel vline block ol ul dup duplicate pb pbappend pbread pbclear clipboard path sort sort! wrap nowrap snip complete diff scrolloff info jump book bookmark yankall rename title split only new",
-            "w q q! wq! x h e e! u red d y s rep noh set spellsuggest spellgood nu nonu ts pw reg sn ju jmp fav")
+            "spell nospell spellnext spellprev suggest spelladd syntax number nonumber timestamp " +
+            "favorite record play macro trim clear registers reglist regclear putall vsel vline block ol ul dup duplicate pb pbappend pbread pbclear clipboard path sort sort! wrap nowrap snip complete diff scrolloff info jump book bookmark yankall rename split only new projects",
+            "w q q! wq! x h e e! u red d y s rep noh set spellsuggest spellgood nu nonu ts reg sn ju jmp fav proj")
     };
 
     /// <summary>

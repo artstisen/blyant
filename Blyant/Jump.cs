@@ -4,26 +4,24 @@ using System.Text;
 namespace Blyant;
 
 /// <summary>
-/// What a jump goes to: a file (opened in the editor), a directory (shown in the file browser), a page of
-/// Blyant, or a data file (selected on the login page)
+/// What a jump goes to: a file (opened in the editor), a directory (shown in the file browser), or a page of
+/// Blyant
 /// </summary>
 internal enum JumpKind
 {
     File,
     Directory,
-    Page,
-    DataFile
+    Page
 }
 
 /// <summary>
-/// A place to jump to. For a file and a directory the target is the full path, for a page the name of the page
-/// (see JumpPages), and for a data file its path in the data directory ("work.mbls" or "notes/work.mbls")
+/// A place to jump to. For a file and a directory the target is the full path, and for a page the name of the
+/// page (see JumpPages)
 /// </summary>
 internal sealed record JumpTarget(JumpKind Kind, string Target)
 {
     /// <summary>
-    /// The name shown in the Jump menu: the name of a file or directory (not its path), the name of a page, or
-    /// the path of a data file in the data directory
+    /// The name shown in the Jump menu: the name of a file or directory (not its path), or the name of a page
     /// </summary>
     internal string Name => Kind switch
     {
@@ -34,47 +32,28 @@ internal sealed record JumpTarget(JumpKind Kind, string Target)
     };
 
     /// <summary>
-    /// The full path of a file, directory or data file (empty for a page)
+    /// The full path of a file or directory (empty for a page)
     /// </summary>
-    internal string FullPath => Kind switch
-    {
-        JumpKind.File or JumpKind.Directory => Target,
-        JumpKind.DataFile => System.IO.Path.GetFullPath(System.IO.Path.Combine(FileIo.GetDataDirectoryName(),
-            Target.Replace('/', System.IO.Path.DirectorySeparatorChar))),
-        _ => string.Empty
-    };
+    internal string FullPath => Kind is JumpKind.File or JumpKind.Directory ? Target : string.Empty;
 
     /// <summary>
     /// True if what it goes to is there (a page always is)
     /// </summary>
     internal bool Exists => Kind switch
     {
-        JumpKind.File or JumpKind.DataFile => File.Exists(FullPath),
+        JumpKind.File => File.Exists(FullPath),
         JumpKind.Directory => Directory.Exists(FullPath),
         _ => JumpPages.Ids.Contains(Target)
     };
 
     /// <summary>
-    /// The place after a file or directory got a new path (renamed or moved), or null if it is not affected. A
-    /// data file stays a data file while it is in the data directory
+    /// The place after a file or directory got a new path (renamed or moved), or null if it is not affected
     /// </summary>
-    internal JumpTarget? Followed(string oldPath, string newPath)
-    {
-        switch (Kind)
-        {
-            case JumpKind.File or JumpKind.Directory:
-                return CaretPosition.NewPath(Target, oldPath, newPath) is { } path ? this with { Target = path } : null;
-            case JumpKind.DataFile:
-                // (with links followed: the data directory can be written in two ways)
-                return CaretPosition.NewPath(FileOperations.RealPath(FullPath), FileOperations.RealPath(oldPath),
-                           FileOperations.RealPath(newPath)) is { } moved &&
-                       StartArgument.DataFileInDataDirectory(moved) is { } inData
-                    ? this with { Target = inData }
-                    : null;
-            default:
-                return null;
-        }
-    }
+    internal JumpTarget? Followed(string oldPath, string newPath) =>
+        Kind is JumpKind.File or JumpKind.Directory &&
+        CaretPosition.NewPath(Target, oldPath, newPath) is { } path
+            ? this with { Target = path }
+            : null;
 
     /// <summary>
     /// The same place as another (paths are compared as the file system does)
@@ -138,9 +117,9 @@ internal static class JumpPages
 /// to the top, and the list holds at most MaxCount places.
 ///
 /// The list is kept in the file "jump.txt" in the data directory, with one line for each place: the time of
-/// the jump (yyyy-MM-dd HH:mm), a tab character, the kind of place (file, dir, page or data), a tab character
-/// and the place: the path of a file or directory, the name of a page, or the path of a data file in the data
-/// directory.
+/// the jump (yyyy-MM-dd HH:mm), a tab character, the kind of place (file, dir or page), a tab character and the
+/// place: the path of a file or directory, or the name of a page. (The lines of data files, kept by Marbles, are
+/// left out.)
 /// </summary>
 internal static class JumpHistory
 {
@@ -168,7 +147,6 @@ internal static class JumpHistory
     {
         JumpKind.Directory => "dir",
         JumpKind.Page => "page",
-        JumpKind.DataFile => "data",
         _ => "file"
     };
 
@@ -177,7 +155,6 @@ internal static class JumpHistory
         "file" => JumpKind.File,
         "dir" => JumpKind.Directory,
         "page" => JumpKind.Page,
-        "data" => JumpKind.DataFile,
         _ => null
     };
 
@@ -269,8 +246,7 @@ internal static class JumpHistory
     }
 
     /// <summary>
-    /// A file or directory has a new path (renamed or moved): the files, directories and data files of the list
-    /// follow it
+    /// A file or directory has a new path (renamed or moved): the files and directories of the list follow it
     /// </summary>
     /// <returns>True if the list was changed</returns>
     internal static bool PathChanged(string oldPath, string newPath)
@@ -298,12 +274,11 @@ internal static class JumpHistory
 }
 
 /// <summary>
-/// Jumping: the Jump menu is opened (":jump", ":ju" or Ctrl+O, and from the options of the login page), and the
-/// place picked there is gone to. A page that is shown on top of a page (color schemes, logos, clipboard,
-/// snippets, help, about) is opened where the jump was made from. For the other places (a file, a directory,
-/// a page of the Configuration tab, a data file) the page the jump was made from is left: the jump is kept as
-/// pending and control goes back to the main loop (see Navigation), which makes it. A data file that is logged
-/// in to is logged out of first.
+/// Jumping: the Jump menu is opened (":jump", ":ju" or Ctrl+O), and the place picked there is gone to. A page
+/// that is shown on top of a page (color schemes, logos, clipboard, snippets, help, about) is opened where the
+/// jump was made from. For the other places (a file, a directory, a page of the Configuration tab) the page the
+/// jump was made from is left: the jump is kept as pending and control goes back to the main loop (see
+/// Navigation), which makes it.
 /// </summary>
 internal static class Jump
 {
@@ -357,14 +332,6 @@ internal static class Jump
         Navigation.Wait();
     }
 
-    // A jump to the data file that is logged in to
-    private static bool IsOpenDataFile(JumpTarget target)
-    {
-        if (!DataSession.IsLoggedIn) return false;
-        var open = Path.Combine(FileIo.GetDataDirectoryName(), FileIo.GetSubFolder(), FileIo.GetFileName());
-        return FileOperations.SamePath(Path.GetFullPath(open), target.FullPath);
-    }
-
     /// <summary>
     /// ":book 3": jump to bookmark 3 (its number on the Bookmarks tab of the Jump menu). ":book" alone shows the
     /// Jump menu on the Bookmarks tab. A number that is not a bookmark is told about in a box. Returns when nothing
@@ -397,12 +364,6 @@ internal static class Jump
         }
 
         var target = places[number - 1].Target;
-        if (!JumpMenu.Usable(target))
-        {
-            ChoiceBox.Message(Lang.T("Bookmarks"), DialogText.BookNotInThisMode, target.Name);
-            return;
-        }
-
         if (!target.Exists)
         {
             ChoiceBox.Message(Lang.T("Bookmarks"), DialogText.FileNotFound, target.FullPath);
@@ -418,6 +379,17 @@ internal static class Jump
 
         if (beforeLeaving != null && !beforeLeaving()) return;
         Remember(target);
+        Pending = target;
+        Navigation.Wait();
+    }
+
+    /// <summary>
+    /// Go to a place picked elsewhere than in the Jump menu (a project, from the editor). It is not kept in the jump
+    /// history. Returns when the page is not left (beforeLeaving says to stay)
+    /// </summary>
+    internal static void ToPlace(JumpTarget target, Func<bool>? beforeLeaving = null)
+    {
+        if (beforeLeaving != null && !beforeLeaving()) return;
         Pending = target;
         Navigation.Wait();
     }
@@ -453,7 +425,7 @@ internal static class Jump
                 FileExplorer.EditCompletions();
                 break;
             case "help":
-                Tools.WriteEditorHelp(false);
+                Tools.WriteEditorHelp();
                 break;
             case "about":
                 Actions.ShowAboutPages();
@@ -465,26 +437,14 @@ internal static class Jump
     }
 
     /// <summary>
-    /// Make the pending jump (called by the main loop). It ends with the screen it goes to (see Navigation)
+    /// Make the pending jump (called by the main loop). Afterwards the start page is shown (or a page of its
+    /// Configuration tab)
     /// </summary>
     internal static void RunPending()
     {
         var target = Pending;
         Pending = null;
         if (target == null) return;
-        // A data file that is logged in to is logged out of, unless staying logged in (and not going to another
-        // data file). Staying: the data file is open in the main menu's mode while the place is shown
-        var keep = DataSession.Keep && !(target.Kind == JumpKind.DataFile && !IsOpenDataFile(target));
-        if (keep)
-        {
-            Mode.SetMode(Mode.SelectedMode.Manage);
-        }
-        else if (Mode.CurrentMode != Mode.SelectedMode.Login || DataSession.IsLoggedIn)
-        {
-            Tools.RemovePrivileges(true);
-            Mode.SetMode(Mode.SelectedMode.Login);
-        }
-
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
         Tools.ClearScreen();
         switch (target.Kind)
@@ -494,52 +454,21 @@ internal static class Jump
                 if (!target.Exists)
                 {
                     NotFound(target);
-                    if (keep) DataSession.ReturnToMainMenu();
                     StartMenu.Open();
                     break;
                 }
 
                 // The file browser, in the directory of the file (which is opened in the editor), or in the
-                // directory. Closing it shows the Select mode page, as when it is closed there (staying logged in:
-                // the main menu of the data file)
+                // directory. Closing it shows the start page, as when it is closed there
                 if (target.Kind == JumpKind.File) FileExplorer.RunAtFile(target.FullPath);
                 else FileExplorer.RunAtDirectory(target.FullPath);
-                if (FileExplorer.DataFileSelected) break;
-                if (DataSession.Keep) DataSession.ReturnToMainMenu();
                 StartMenu.Open();
                 break;
-            case JumpKind.DataFile:
-                if (!target.Exists)
-                {
-                    NotFound(target);
-                    break;
-                }
-
-                // The data file that is open (staying logged in): its main menu
-                if (keep) DataSession.ReturnToMainMenu();
-
-                // The data file is selected on the login page
-                var relative = target.Target.Replace('\\', '/');
-                var slash = relative.LastIndexOf('/');
-                FileIo.ResetSubFolder();
-                FileIo.SetSubFolder(slash < 0 ? string.Empty : relative[..slash]);
-                FileIo.SetFileName(slash < 0 ? relative : relative[(slash + 1)..]);
-                FileBrowser.ResolveSubFolderIndex();
-                break;
             default:
-                // A page of the Configuration tab of the Select mode page (staying logged in: the main menu of the
-                // data file comes back afterwards)
-                if (keep)
-                {
-                    DataSession.ShowStartPage(JumpPages.ConfigurationPage(target.Target));
-                    break;
-                }
-
+                // A page of the Configuration tab of the start page
                 StartMenu.Open(JumpPages.ConfigurationPage(target.Target));
                 break;
         }
-
-        Tools.LoginRoutine(true);
     }
 
     // The place is not there any more (a file that was deleted or moved)

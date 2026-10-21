@@ -37,7 +37,7 @@ public class EventLogTests
     public void Filter_FindsLinesContainingAText()
     {
         EventLog.Add("File: Rename: a.txt -> b.txt");
-        EventLog.Add("Login OK: data.mbls");
+        EventLog.Add("Settings saved");
         EventLog.Add("File: Delete: c.txt - FAILED: Access denied");
         Assert.Equal(3, EventLog.Filter("").Count);
         Assert.Equal(2, EventLog.Filter("file:").Count);

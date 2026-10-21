@@ -10,7 +10,8 @@ public class SettingsTests : IDisposable
 
     private string SettingsFile => Path.Combine(_workDirectory, "data", "settings.ini");
 
-    // A settings file as written by v1.0.1.x, including the key mapping that no longer exists
+    // A settings file as written by Marbles v1.0.1.x, including the key mapping and the data file that no longer
+    // exist
     private const string LegacySettings = @"; Last modified 2024-03-15 09:55:06
 [SETTINGS]
 
@@ -57,7 +58,6 @@ backup=
     {
         Directory.CreateDirectory(Path.Combine(_workDirectory, "data"));
         Directory.SetCurrentDirectory(_workDirectory);
-        FileIo.ResetSubFolder();
         Init.UsingDefaultSettings = false;
     }
 
@@ -66,7 +66,7 @@ backup=
         Init.SetDefaultOutputDimensions();
         Logo.Animation = Logo.AnimationSpeed.Fast;
         AsciiStyles.ResetAsciiStyle();
-        FileIo.SetDefaultFileName();
+        Projects.Directory = Projects.DefaultDirectory;
         Directory.SetCurrentDirectory(_originalDirectory);
         Directory.Delete(_workDirectory, true);
     }
@@ -104,42 +104,31 @@ backup=
     public void SettingsFromEarlierVersions_AreLoaded()
     {
         File.WriteAllText(SettingsFile, LegacySettings);
-        File.WriteAllText(Path.Combine(_workDirectory, "data", "notes.mbls"), "x");
 
         Assert.True(FileIo.LoadSettings());
         Assert.False(Init.UsingDefaultSettings);
         Assert.Equal(100, Init.LineWidth);
         Assert.Equal(30, Init.LineCount);
         Assert.Equal(1, AsciiStyles.GetAsciiStyle());
-        Assert.Equal("notes.mbls", FileIo.GetFileName());
-        Assert.False(FileIo.BackupEnabled());
     }
 
-    [Theory]
-    [InlineData("onlymode=editor", "Editor")]
-    [InlineData("onlymode= Notes ", "Notes")]
-    [InlineData("onlymode=none", "None")]
-    [InlineData("onlymode=other", "None")]
-    [InlineData("", "None")]
-    public void OnlyMode_IsLoadedAndSaved_AndResetWithTheSettings(string setting, string expected)
+    [Fact]
+    public void TheProjectsFolder_IsLoadedAndSaved_AndResetWithTheSettings()
     {
-        File.WriteAllText(SettingsFile, LegacySettings + "\n" + setting + "\n");
-        File.WriteAllText(Path.Combine(_workDirectory, "data", "notes.mbls"), "x");
-        try
-        {
-            Assert.True(FileIo.LoadSettings());
-            Assert.Equal(expected, StartMenu.Only.ToString());
-            FileIo.SaveSettings();
-            Assert.Equal(expected.ToLowerInvariant(), FileIo.ParseSettings(File.ReadAllText(SettingsFile))["onlymode"]);
-            // Resetting all settings uses both modes again
-            Actions.ApplyDefaultSettings();
-            Assert.Equal(StartMenu.OnlyMode.None, StartMenu.Only);
-            Assert.Equal("none", FileIo.ParseSettings(File.ReadAllText(SettingsFile))["onlymode"]);
-        }
-        finally
-        {
-            StartMenu.Only = StartMenu.OnlyMode.None;
-        }
+        var folder = Path.Combine(_workDirectory, "My projects");
+        File.WriteAllText(SettingsFile, LegacySettings + "\nprojectsdir=" + folder + "\n");
+        Assert.True(FileIo.LoadSettings());
+        Assert.Equal(folder, Projects.Directory);
+        FileIo.SaveSettings();
+        Assert.Equal(folder, FileIo.ParseSettings(File.ReadAllText(SettingsFile))["projectsdir"]);
+        // Not set: the folder Blyant in the Documents folder
+        File.WriteAllText(SettingsFile, LegacySettings);
+        Assert.True(FileIo.LoadSettings());
+        Assert.Equal(Projects.DefaultDirectory, Projects.Directory);
+        Assert.Equal("Blyant", Path.GetFileName(Projects.DefaultDirectory));
+        Projects.Directory = folder;
+        Actions.ApplyDefaultSettings();
+        Assert.Equal(Projects.DefaultDirectory, Projects.Directory);
     }
 
     [Theory]
@@ -153,7 +142,6 @@ backup=
         string saved)
     {
         File.WriteAllText(SettingsFile, LegacySettings + "\n" + setting + "\n");
-        File.WriteAllText(Path.Combine(_workDirectory, "data", "notes.mbls"), "x");
         try
         {
             Assert.True(FileIo.LoadSettings());
@@ -182,36 +170,8 @@ backup=
         Assert.True(Logo.ColumnTime(31, 800) is > 390 and < 420);
     }
 
-    [Fact]
-    public void WithOneModeOnly_BlyantDoesNotStartInTheOther()
-    {
-        try
-        {
-            StartMenu.Mode = StartMenu.StartMode.Notes;
-            StartMenu.Only = StartMenu.OnlyMode.Editor; // As read from a settings file
-            Assert.Equal(StartMenu.StartMode.Select, StartMenu.EffectiveMode);
-            StartMenu.Only = StartMenu.OnlyMode.Notes;
-            Assert.Equal(StartMenu.StartMode.Notes, StartMenu.EffectiveMode);
-
-            // Set on the Configuration page: the start mode goes back to showing the choices
-            StartMenu.Mode = StartMenu.StartMode.Editor;
-            StartMenu.SetOnly(StartMenu.OnlyMode.Notes);
-            Assert.Equal(StartMenu.StartMode.Select, StartMenu.Mode);
-            StartMenu.Mode = StartMenu.StartMode.Editor;
-            StartMenu.SetOnly(StartMenu.OnlyMode.Editor);
-            Assert.Equal(StartMenu.StartMode.Editor, StartMenu.Mode);
-            StartMenu.SetOnly(StartMenu.OnlyMode.None);
-            Assert.Equal(StartMenu.StartMode.Editor, StartMenu.Mode);
-        }
-        finally
-        {
-            StartMenu.Mode = StartMenu.StartMode.Select;
-            StartMenu.Only = StartMenu.OnlyMode.None;
-        }
-    }
-
     [Theory]
-    [InlineData("startmode=notes", "Notes")]
+    [InlineData("startmode=notes", "Select")] // Marbles: the login page
     [InlineData("startmode= Editor ", "Editor")]
     [InlineData("startmode=select", "Select")]
     [InlineData("startmode=other", "Select")]
@@ -219,13 +179,13 @@ backup=
     public void StartMode_IsLoadedAndSaved(string setting, string expected)
     {
         File.WriteAllText(SettingsFile, LegacySettings + "\n" + setting + "\n");
-        File.WriteAllText(Path.Combine(_workDirectory, "data", "notes.mbls"), "x");
         try
         {
             Assert.True(FileIo.LoadSettings());
             Assert.Equal(expected, StartMenu.Mode.ToString());
             FileIo.SaveSettings();
             Assert.Equal(expected.ToLowerInvariant(), FileIo.ParseSettings(File.ReadAllText(SettingsFile))["startmode"]);
+            Assert.Equal(expected == "Editor" ? "editor" : "select", StartMenu.SettingName(StartMenu.Mode));
         }
         finally
         {
@@ -237,7 +197,6 @@ backup=
     public void SavedSettings_HaveNoKeyMapping_AndLoadAgain()
     {
         File.WriteAllText(SettingsFile, LegacySettings);
-        File.WriteAllText(Path.Combine(_workDirectory, "data", "notes.mbls"), "x");
         FileIo.LoadSettings();
         FileIo.SaveSettings();
 
@@ -249,9 +208,15 @@ backup=
         // The logo presets are gone: the logo in use is a setting by its name
         Assert.Equal("Blyant", settings["logo"]);
         Assert.False(settings.ContainsKey("logotxt"));
-        Assert.Equal("notes.mbls", settings["file"]);
-        Assert.Equal(36, settings.Count);
-        Assert.Equal("none", settings["onlymode"]);
+        // The settings of the data files of Marbles are gone
+        Assert.False(settings.ContainsKey("file"));
+        Assert.False(settings.ContainsKey("subdir"));
+        Assert.False(settings.ContainsKey("backup"));
+        Assert.False(settings.ContainsKey("onlymode"));
+        Assert.False(settings.ContainsKey("clipboardnotes"));
+        Assert.False(settings.ContainsKey("stayloggedin"));
+        Assert.Equal(31, settings.Count);
+        Assert.Equal(Projects.DefaultDirectory, settings["projectsdir"]);
         Assert.Equal("fast", settings["logoanim"]);
         Assert.Equal("true", settings["wrap"]);
         Assert.Equal("file", settings["snipsort"]);
@@ -265,14 +230,12 @@ backup=
         Assert.Equal("true", settings["osc52"]);
         Assert.Equal("false", settings["pastebin"]);
         Assert.Equal("all", settings["clipboardyank"]);
-        Assert.Equal("false", settings["clipboardnotes"]);
         Assert.Equal("false", settings["pastebinappend"]);
         Assert.Equal("paste-bin.txt", settings["pastebinfile"]);
         Assert.Equal("en", settings["language"]);
         Assert.Equal("false", settings["linenumbers"]);
         Assert.Equal("true", settings["browsedual"]);
         Assert.Equal("false", settings["autocomplete"]);
-        Assert.Equal("false", settings["stayloggedin"]);
         Assert.Equal("1", settings["browsepane"]);
         Assert.Equal(string.Empty, settings["browsesel1"]);
         Assert.Equal(string.Empty, settings["browsesel2"]);
@@ -312,7 +275,6 @@ backup=
         Assert.False(Logo.AnimationEnabled);
         Assert.Equal(40, Init.LineCount);
         Assert.Equal(Init.MinLineWidth, Init.LineWidth);
-        Assert.Equal("data.mbls", FileIo.GetFileName());
     }
 
     [Theory]
@@ -331,8 +293,7 @@ backup=
             mine.Text = ConsoleColor.White;
             Assert.Equal(DialogText.Success, ColorSchemes.Save(mine));
             File.WriteAllText(SettingsFile, setting + "\n");
-            File.WriteAllText(Path.Combine(_workDirectory, "data", "notes.mbls"), "x");
-            Assert.True(FileIo.LoadSettings());
+                Assert.True(FileIo.LoadSettings());
             Assert.Equal(expected, ConsoleColors.Current.Name);
             if (expected == "Mine") Assert.Equal(ConsoleColor.White, ConsoleColors.Current.Text);
             FileIo.SaveSettings();

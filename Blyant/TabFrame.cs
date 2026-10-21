@@ -201,7 +201,7 @@ internal sealed class TabFrame
 
             if (key.KeyChar == '?' && !page.CapturesKeys)
             {
-                Tools.WriteEditorHelp(false, page.Help);
+                Tools.WriteEditorHelp(page.Help);
                 full = true;
                 continue;
             }
@@ -251,7 +251,7 @@ internal sealed class TabFrame
     /// <summary>
     /// Draw a frame with tabs, from a row to the row above the bottom line, with a row of sub-tabs inside it when
     /// there are names for them. The rows inside the frame are not cleared. It is used by a TabFrame, and by a
-    /// page that reads its keys itself (the main menu of a data file)
+    /// page that reads its keys itself
     /// </summary>
     /// <param name="top">The row of the tops of the tabs (the frame starts two rows below)</param>
     /// <param name="names">The names of the tabs</param>

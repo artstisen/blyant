@@ -2,11 +2,11 @@
 
 The editor works in the style of Vim. It is always in one of these modes, shown at the left of the bottom line:
 
-- **NORMAL**: keys move the cursor and give commands. This is where you start when opening an entry with text.
-- **INSERT**: keys type text. An empty entry starts here. Press `Esc` to return to Normal mode.
+- **NORMAL**: keys move the cursor and give commands. This is where you start when opening a file with text.
+- **INSERT**: keys type text. An empty file starts here. Press `Esc` to return to Normal mode.
 - **VISUAL**, **V-LINE** and **V-BLOCK**: movements select text (whole lines, or a block of columns) for a command.
 
-The line above the text also tells what the keys do: **NAVIGATE** in Normal mode, **EDIT** in Insert mode, **SELECT** in the Visual modes and **COMMAND** while a command or search is typed (these words follow the language of Blyant; the names of the modes at the bottom are always in English). The top row shows _EDITOR_ at the left, followed by the title of the note or the name of the file, and the label _Unsaved_ (or _Read only_) at the right; the line of the mode is right below it, so the text has all the rows down to the bottom line. A long title or name is cut short. When the editor opens, the bottom line says that `:help` shows the keys of the editor (until the first key).
+The line above the text also tells what the keys do: **NAVIGATE** in Normal mode, **EDIT** in Insert mode, **SELECT** in the Visual modes and **COMMAND** while a command or search is typed (these words follow the language of Blyant; the names of the modes at the bottom are always in English). The top row shows _EDITOR_ at the left, followed by the name of the file, and the label _Unsaved_ (or _Read only_) at the right; the line of the mode is right below it, so the text has all the rows down to the bottom line. A long name is cut short. When the editor opens, the bottom line says that `:help` shows the keys of the editor (until the first key).
 
 When a text file is edited (from the file browser), the bottom line shows its type, encoding and line endings, like `HTML UTF-8 (BOM) CRLF` or `TXT Windows-1252 LF` (a file in another encoding than UTF-8 becomes UTF-8 when it is saved; the line endings are kept: `CRLF` as used by Windows, `LF` as used by Linux and macOS). The bottom line also shows messages, the current memory string, the cursor position as `line:column` and how far into the text the cursor is. Inside Blyant, `:help` shows the list of keys.
 
@@ -141,7 +141,7 @@ Blyant reads spell files from a directory named `spell`, next to the `data` dire
 The words you add are saved as plain text, one word per line, in `spell/<language>.utf-8.add` (for the first of the languages). This is the format of Neovim's word list, so an existing list can be copied to the directory as well.
 
 ## Comparing
-`:diff` compares the text you are editing with the file as it is saved on disk (or, in a note, with the note as it was saved), so you can see what you have changed before you save it. Two files are compared in the [file browser](Guide-to-login-menu.md#file-browser), with `:diff` there.
+`:diff` compares the text you are editing with the file as it is saved on disk, so you can see what you have changed before you save it. Two files are compared in the [file browser](Guide-to-start-page.md#file-browser), with `:diff` there.
 
 The comparison is shown read only, as a unified diff (as `git diff` shows one): the lines that differ, with three unchanged lines around them. A line removed starts with `-` (colored as heading 1, red in the Default scheme), a line added with `+` (heading 5, green), and each part of the comparison starts with a line like `@@ -12,7 +12,8 @@`: where it is in the old text (line 12, 7 lines) and in the new one. The line at the top tells how many changes there are, and how many lines were added and removed.
 
@@ -157,16 +157,16 @@ If too many lines differ (more than 2000), the comparison is not shown.
 ## Line numbers
 - `:number` (or `:nu`) Show or hide line numbers (they are off until turned on). `:set number` and `:set nonumber` do one of the two
 
-The numbers are shown to the left of the text, with a small gap. A long line that continues on the next row has its number on the first row only, so the numbers are the ones used by `:5` and shown as `line:column` on the bottom line. The number of the line the cursor is on stands out. Line numbers are on from the start. The choice is remembered (`linenumbers` in the settings file) and is used for notes and text files alike. It can also be set on the Configuration page of the start page, and with `:number` on page 2 of the main menu.
+The numbers are shown to the left of the text, with a small gap. A long line that continues on the next row has its number on the first row only, so the numbers are the ones used by `:5` and shown as `line:column` on the bottom line. The number of the line the cursor is on stands out. Line numbers are on from the start. The choice is remembered (`linenumbers` in the settings file) and is used for all your files alike. It can also be set on the Configuration page of the start page, and with `:number` on page 2 of the main menu.
 
 When text is copied from the terminal window with the mouse, the line numbers are copied too: turn them off first (`:nu`). Text yanked in the editor never has them.
 
 ## Snippets
-Snippets are pieces of text (a tag, a block of CSS, a whole page) with a title, kept for inserting again. They are kept in `snippets.txt` in the data directory, for notes and text files alike.
+Snippets are pieces of text (a tag, a block of CSS, a whole page) with a title, kept for inserting again. They are kept in `snippets.txt` in the data directory, for all your files alike.
 
 - `:snip` (or `:sn`) Show the snippets in a box. The first time, the box asks to make the file (with two examples)
 - `CTRL+K` in Insert mode: the same, and the snippet is inserted at the cursor (between the characters, where you are typing). The editor stays in Insert mode, with the cursor at `$0` or after the snippet, and one `u` (after `Esc`) undoes the snippet, apart from what was typed before it
-- `:snip add` (or `:sn add`) Keep the selected text as a snippet (select it and type `:snip add`), or the line without a selection. The title is asked for. In a note of a data file it asks first, as the file of snippets is not encrypted
+- `:snip add` (or `:sn add`) Keep the selected text as a snippet (select it and type `:snip add`), or the line without a selection. The title is asked for
 - `:snip edit` (or `:sn edit`) Open the file of snippets in the editor. Changes to the text being edited are asked about (saved or not) first, and when the file of snippets is closed, the text is opened again where the cursor was
 
 In the box:
@@ -209,8 +209,6 @@ A macro is what you do in the editor, recorded so it can be done again: in the s
 
 A macro works on the text being edited only: it cannot save, close or leave the text, and what would do that (`:w`, `:q`, `Ctrl+O` ...) stops the macro with a message telling the line. While you record, the Jump menu (`Ctrl+O`, `:jump`) and `:book` are not opened (stop recording with `Esc` first), so the recording is not lost. A `command` or `find` line longer than the command line (64 characters) is not understood. So does a line that is not understood, a search that finds nothing, and a macro that plays itself (or plays macros more than eight deep). What opens a box (the snippets, the string memory, find-and-replace, spelling suggestions) is not recorded: you are told so on the bottom line. Words are not completed while recording (what `Tab` would complete to depends on the lists), and a macro cannot add a word to your word list (`zg`). A name of a macro cannot end with a number (`:play copy 2` plays _copy_ twice).
 
-In a note of a data file, you are warned before recording starts: the macro is a plain text file, so what you type while recording is saved unencrypted.
-
 **The macro files:** each macro is a file in the folder `macros` of the data directory, named after the macro (`Bullet list.macro`). It can be opened in the file browser and edited like any text file. The lines are written so they can be read and changed by hand, one step on each line (the words stay English in all languages, as the commands of the editor):
 
 ```
@@ -232,27 +230,39 @@ down
 A macro file is colored, and with completing on (`:complete`), the words of the steps are completed while you type, as other completions (`Tab`).
 
 ## Completing words
-With completing turned on, the word you type in Insert mode is looked up in lists of words, and what it can be completed to is shown on the line above the text (where the mode is shown otherwise), for notes and text files alike. Nothing is guessed from the text, and the text is not changed until you use a completion. It is off from the start: turn it on with `:complete`, or with **Complete words while typing** on the Editor page of Configuration (the setting `autocomplete`).
+With completing turned on, the word you type in Insert mode is looked up in lists of words, and what it can be completed to is shown on the line above the text (where the mode is shown otherwise). Nothing is guessed from the text, and the text is not changed until you use a completion. It is off from the start: turn it on with `:complete`, or with **Complete words while typing** on the Editor page of Configuration (the setting `autocomplete`). Turning it on the first time makes the file of completions, `completions.txt` (see below), with the lists to start with.
 
+- The words of the Markdown list and of the list for all text start with `/`, so they are not offered while you write: a word of a sentence does not start so (`co` in "company" does not offer `/code`). A word of your own can start with `/` too
+- The Markdown list a new file starts with:
+  - Headings: `/h1` to `/h6` (`# ` to `###### `)
+  - Text: `/bold` (`**...**`), `/italic` (`*...*`; `_..._` is italic too, and colored as such), `/bolditalic` (`***...***`), `/strike` (`~~...~~`) and `/inline` (`` `...` ``, code in a line)
+  - Blocks: `/quote` (`> `), `/list` (`- `), `/numbered` (`1. `), `/task` (`- [ ] `), `/done` (`- [x] `), `/code` (a block of code between ```` ``` ```` lines), `/table` (a table of two columns) and `/hr` (`---`, a line across)
+  - Links and notes: `/link` (`[...]()`), `/image` (`![...]()`), `/url` (`<...>`), `/footnote` (`[^...]`, in the text) and `/footdef` (`[^...]: `, the text of the footnote, at the end)
+  - For a piece of writing: `/frontmatter` (a block with the title at the top of the file, between `---` lines), `/comment` (`<!-- ... -->`, a note that is not shown), and `/note` and `/warning` (a quote marked `[!NOTE]` or `[!WARNING]`, shown as a box by GitHub)
+- A completion is shown by the first line of its text, with `...` where the cursor goes: `/bold` in Markdown is shown as `**...**`, and `<div` in HTML as `<div>...</div>`
 - `Tab` When one completion is shown: complete the word with it
-- `Tab` When more are shown: choose the first, and the next with each `Tab` (`Shift+Tab` goes back). The one chosen is highlighted, and `Enter` uses it. Before a completion is chosen, `Enter` starts a new line as usual
+- `Tab` When more are shown: choose the first, and the next with each `Tab` (`Shift+Tab` goes back). When the whole word of one of them is typed (`/bold`, while `/bolditalic` is shown too), `Tab` completes with it at once. The one chosen is highlighted, and `Enter` uses it. Before a completion is chosen, `Enter` starts a new line as usual
 - Typing on, or `Backspace`, looks up the word again. `Esc` closes the list, and the next `Esc` leaves Insert mode
 - Without completions shown, `Tab` inserts blank space as usual
 - A completion is one change: `u` undoes it, and leaves the word that was typed. The lines after the first are indented as the line of the cursor, and the cursor goes to `$0` in the completion (or after it)
 - `:complete` Turn completing on or off (`:complete on`, `:complete off`). It is remembered
 - `:complete edit` Open the file of completions in the editor, as `:snip edit` (changes to the text being edited are asked about first)
 
-A word is looked up when it has 2 characters or more and the cursor is at its end. It can start with `<`, `</`, `<!`, `&`, `@`, `#`, `.` or `:`, so `<d` finds the HTML tags starting so, and `console.lo` the JavaScript `console.log`. At most 8 completions are shown, those for the kind of text first.
+A word is looked up when it has 2 characters or more and the cursor is at its end. It can start with `<`, `</`, `<!`, `/`, `&`, `@`, `#`, `.` or `:`, so `<d` finds the HTML tags starting so, `/bo` the Markdown `/bold`, and `console.lo` the JavaScript `console.log`. At most 8 completions are shown, those for the kind of text first.
 
-The lists are kept in `completions.txt` in the data directory. It is made when completing is turned on (or the file is opened) and there is none, with lists of HTML tags, CSS properties, JavaScript, Markdown and a few for all text, and a short explanation at the top. It is also opened from the Configuration tab of the start page (**Completions editor**), the command `:completions` there, and the Jump menu. A changed file is used as soon as it is saved:
+The lists are kept in `completions.txt` in the data directory. It is made when completing is turned on (or the file is opened) and there is none, with lists of HTML tags, CSS properties, JavaScript, Markdown (see below) and a few for all text (`/todo`, `/lorem`), and a short explanation at the top. Until it is made, the lists it starts with are used. It is also opened from the Configuration tab of the start page (**Completions editor**), the command `:completions` there, and the Jump menu. A changed file is used as soon as it is saved:
 
 ```
 === HTML tags (html)
 <div = <div>$0</div>
 <ul = <ul>\n    <li>$0</li>\n</ul>
 
+=== Markdown (md)
+/bold = **$0**
+/link = [$0]()
+
 === All text
-lorem = Lorem ipsum dolor sit amet
+/lorem = Lorem ipsum dolor sit amet
 Blyant
 ```
 
@@ -285,7 +295,7 @@ The editor can color the parts of a text by what they are, for Markdown, HTML, C
 
 - Files named `.md`, `.html`/`.htm`, `.css`, `.js`/`.mjs`, `.json`, `.cs`, `.php` and `.xml` (also `.svg`, `.xsd`, `.xsl`, `.xaml`, `.rss`, `.csproj` and other XML files) are colored when they are opened from the file browser
 - `:syntax` Turn the colors on or off (`:syntax on` and `:syntax off` do one of the two). When you turn them off in one of these files, that is remembered (`syntaxcolors` in the settings file), so files are opened without colors until you turn them on again
-- `:syntax md`, `:syntax html`, `:syntax css`, `:syntax js`, `:syntax json`, `:syntax xml`, `:syntax cs`, `:syntax php`, `:syntax diff` Color the text as that kind, whatever the name of the file is. This is how the colors are used in a note of a data file, where they are off until you ask for them. In a note, `:syntax` alone colors it as Markdown. A note remembers its colors: they are kept in the note (in the encrypted data file), so it is colored when it is opened again, and the lists show the kind (_MD_, _HTML_, _CSS_, _JS_, _JSON_, _XML_, _DIFF_) before the date. `:syntax off` removes it
+- `:syntax md`, `:syntax html`, `:syntax css`, `:syntax js`, `:syntax json`, `:syntax xml`, `:syntax cs`, `:syntax php`, `:syntax diff` Color the text as that kind, whatever the name of the file is. (for this time: the next time the file is colored by its name again). `:syntax off` removes it
 
 Selected text, search matches and misspelled words are shown on top of the colors. With _Black and white_ on, the colored parts are shown brighter than the text.
 
@@ -318,10 +328,10 @@ This too is a simple reading. Regular expressions written between slashes in Jav
 
 C# is read the same way as JavaScript, with the words of C#: strings in quotes, `@"verbatim strings"` and `"""raw strings"""` (also over several lines), and `$"..."` strings, where the code inside `{...}` is shown as part of the string. A name written with `@` in front (`@class`) is not a word of the language. Names of your own (classes, methods) are not colored.
 
-PHP is colored as it is in a PHP file: the HTML as HTML, and the code from `<?php` (or `<?=`) to `?>` as PHP, also over several lines; a file that starts with `<?php` and has no `?>` is PHP to its end (and text before `<?php`, as in a note with only code, is read as HTML). The words of PHP are colored in any letter case (`IF`, `Function`), but not after `->` (`$a->list`). Strings in quotes can go over several lines, and so can heredoc and nowdoc text (`<<<EOT`): it ends at the line that starts with its own marker (as `EOT;` or `EOT, $x);`). A block of PHP inside the value of an attribute or in a `<script>` or `<style>` is colored when it ends on the same line.
+PHP is colored as it is in a PHP file: the HTML as HTML, and the code from `<?php` (or `<?=`) to `?>` as PHP, also over several lines; a file that starts with `<?php` and has no `?>` is PHP to its end (and text before `<?php` is read as HTML). The words of PHP are colored in any letter case (`IF`, `Function`), but not after `->` (`$a->list`). Strings in quotes can go over several lines, and so can heredoc and nowdoc text (`<<<EOT`): it ends at the line that starts with its own marker (as `EOT;` or `EOT, $x);`). A block of PHP inside the value of an attribute or in a `<script>` or `<style>` is colored when it ends on the same line.
 
 ## String memory
-Text that is yanked, and lines that are deleted, are kept in the string memory (up to 64 strings). The memory is kept while you are logged in, so text can be copied from one entry to another. The status line shows `mem 3/11`: the selected string (the one `p` and `P` put) and how many strings there are. A new string is added last and selected, so the two numbers are the same until another is selected with `CTRL+P` `CTRL+N`.
+Text that is yanked, and lines that are deleted, are kept in the string memory (up to 64 strings). The memory is kept until Blyant is closed, so text can be copied from one file to another. The status line shows `mem 3/11`: the selected string (the one `p` and `P` put) and how many strings there are. A new string is added last and selected, so the two numbers are the same until another is selected with `CTRL+P` `CTRL+N`.
 
 - `p` `P` Paste the current memory string. `:path` and `:name` in the file browser put a path or a name there too, as the current string, so it can be pasted in the editor
 - `CTRL+P` `CTRL+N` Select the previous/next memory string
@@ -336,35 +346,33 @@ What is yanked (`y`, `yy`, `Y`, `:y` ...) is kept in the string memory of Blyant
 - **The system clipboard** through the terminal (OSC 52). This works in Windows Terminal, iTerm2, kitty, WezTerm and tmux, also over SSH (the text lands on the clipboard of the computer you sit at). It does not work in the console of a Raspberry Pi or in the Terminal of macOS; there nothing happens.
 - **The paste bin**, a text file (`paste-bin.txt` in the data directory, with the settings and the snippets, unless set otherwise: a name or a path that is not a full path is in the data directory) that other programs can read. Use it where OSC 52 does not work.
 
-Only yanks go out, never text that is deleted. By default every yank goes out. It can be set so that a yank only goes out when `"+` is typed in front of it: `"+yy` (the line), `"+yw`, or select text and type `"+y` (`"*` works as `"+`). Text from the notes of a data file, which are encrypted, is not sent out until that is allowed on the clipboard settings page.
+Only yanks go out, never text that is deleted. By default every yank goes out. It can be set so that a yank only goes out when `"+` is typed in front of it: `"+yy` (the line), `"+yw`, or select text and type `"+y` (`"*` works as `"+`).
 
 - `:pb` Write the selection (select and type `:`, as for `:dup`), or else the whole text, to the paste bin. It replaces the text of the paste bin, or is added to its end, as set
 - `:pbappend` Add the selection (or the whole text) to the end of the paste bin, on lines of its own
 - `:pbread` Insert the text of the paste bin at the cursor (text written to the file by other programs comes in this way)
 - `:pbclear` Empty the paste bin
-- **Read only**: an entry that is set read only (`:readonly` in the lists) has the label _Read only_ at the top right. It can be read, searched, selected and yanked, but not changed: the keys and commands that would change it do nothing, INSERT mode is not entered, and the bottom line says _Read only (:readonly in a list)_. It is turned off with `:readonly` in a list again
-- `Ctrl+O` or `:jump` (`:ju`, `:jmp`) Open the [Jump menu](Guide-to-main-menu.md#jump-menu), to go to another file, a page of Blyant or a data file. If the text has changes that are not saved, you are asked whether to save them first. Pages such as Color schemes and Help open on top of the editor
+- `Ctrl+O` or `:jump` (`:ju`, `:jmp`) Open the [Jump menu](Guide-to-jump-menu.md#jump-menu), to go to another file, a directory or a page of Blyant. If the text has changes that are not saved, you are asked whether to save them first. Pages such as Color schemes and Help open on top of the editor
 - `:rename` Rename the file being edited, in its directory: type the new name in the box (the current name is filled in), or give it after the command, `:rename notes.md`. Changes that are not saved stay so: `:w` saves them to the file by its new name. The favorites, the file history and the jumps follow the file, and the colors follow the kind of file the new name tells (`.txt` to `.md`). A name that is taken, or that a file cannot have, is refused. `settings.ini` and `snippets.txt` keep their names, as Blyant uses them
-- `:title` (or `:rename`) in an entry of a data file: Change its title, in the box or after the command (`:title Shopping list`). The new title is saved in the data file at once, as when it is changed in a list; the text is saved as usual with `:w`. A read-only entry keeps its title. In a file, `:title` says to use `:rename`
-- `:info` Show information about the text being edited in a box: for a file its name, the number of characters, words and lines, the dates it was created and changed, and its full path. The numbers are of the text as it is now, with the changes that are not saved; the dates are those of the file on disk. For an entry of a data file the box has its title, the numbers and the dates of the entry. Any key closes the box
+- `:info` Show information about the text being edited in a box: for a file its name, the number of characters, words and lines, the dates it was created and changed, and its full path. The numbers are of the text as it is now, with the changes that are not saved; the dates are those of the file on disk. Any key closes the box
 - `:path` Copy the full path of the file being edited (opened from the file browser) to the system clipboard and/or the paste bin, as set, and to the string memory (so `p` puts it in). Also in the file browser, for the selected file or directory
-- `:clipboard` The clipboard settings (also in the main menu, and on the Configuration page of the start page): the system clipboard (OSC 52) on or off, the paste bin on or off, every yank or only with `"+`, also from the notes of a data file, the paste bin file, and whether text is added to it or replaces it. `h` `l` change the choice of a row, `Enter` or `Space` change a setting. The settings are `osc52`, `pastebin`, `clipboardyank` (`all`, the default, or `plus`), `clipboardnotes`, `pastebinappend` and `pastebinfile` in the settings file
+- `:clipboard` The clipboard settings (also on the start page, and on its Configuration tab): the system clipboard (OSC 52) on or off, the paste bin on or off, every yank or only with `"+`, the paste bin file, and whether text is added to it or replaces it. `h` `l` change the choice of a row, `Enter` or `Space` change a setting. The settings are `osc52`, `pastebin`, `clipboardyank` (`all`, the default, or `plus`), `pastebinappend` and `pastebinfile` in the settings file
 
-The paste bin is not encrypted: text from a note written to it can be read by anyone with access to the file. Empty it with `:pbclear` when it is not needed any more.
+The paste bin is a plain text file: what is written to it can be read by anyone with access to the file. Empty it with `:pbclear` when it is not needed any more.
 
 ## Other commands
 - `:ts` Insert an ISO timestamp (YYYY-MM-DD HH:MM:SS)
-- `:pw` Insert a generated strong password
 - `:trim` Trim blank space at the start and end of all lines
 - `:ol` Make the selected lines a numbered list (`1. `, `2. ` ...), and `:ul` a bulleted list (`- `). Select the lines with `V` (or `v`, `Q`) and type the command: the command line then starts with `'<,'>`, which stands for the selected lines. Without a selection the command works on the line of the cursor, and `:2,5ol` on lines 2 to 5. Lines that are a list of the other kind are changed to this kind, and when all the lines already are a list of the kind asked for, the list marks are removed again. Blank lines are left as they are, the indentation is kept, and indented lines are numbered as a list of their own (1, 2 ... again under each item). One `u` undoes it
 - `:sort` Sort the selected lines (select them and type `:sort`), or all the lines without a selection, or `:2,9sort` lines 2 to 9. `:sort!` sorts them the other way, and `:sort i` (or `:sort! i`) does not tell upper and lower case apart. The lines are sorted by the values of their characters (uppercase before lowercase, æøå after z). One `u` undoes it
 - `:dup` (or `:duplicate`) Duplicate the selection: select the text and type `:dup` (the command line starts with `'<,'>`). Text selected with `v` is copied right after itself, the lines selected with `V` are copied below the last of them, and a block selected with `Q` is copied to the right of the block (the text to the right of it stays in line). Without a selection the line of the cursor is duplicated, and `:2,5dup` copies lines 2 to 5 below line 5. A number after the command makes that many copies (at most 500): `:dup 5` makes five copies of the line (or the selection), to fill out a list of HTML elements afterwards. The cursor goes to the start of the (first) copy, and one `u` undoes it
-- `:diff` Compare the text with the file on disk, or the saved note (see [Comparing](#comparing))
-- `:book 3` Jump to bookmark 3 of the [Jump menu](Guide-to-main-menu.md#bookmarks) (changes that are not saved are asked about first); `:book` alone shows the bookmarks
-- `:new name` Make a new, empty file in the same directory as the file being edited, and open it in its place (in a note: `:new Title` makes a new note in the data file and opens it). Without a name, it is asked for. Only a plain name is used (not a path), and not one that is there already; a data file is made on the login page instead. If the text being edited has changes, you are asked about them first. Closing the new file goes back to the file browser, and the file before it is in the file history. Not in the settings, snippets or completions files, in a peek, or while a macro is recorded
-- `:split` Show the text in two panes side by side, to see two parts of it at once (in a note too); `:split` again goes back to one pane, as `:only`. Both panes show the same text: a change made in one is seen in the other at once, and the other pane keeps showing the place it was at (its cursor moves with lines added or removed above it). `Tab` (or `Shift+Tab`) in Normal mode goes to the other pane; the pane with the focus has the cursor, and the mode is shown over it. The top row, _Unsaved_ and the bottom line are those of the text, as with one pane. `:q` closes the pane with the focus and `:only` the other one, and the pane left takes the whole width; `Esc` closes the editor as usual. Each pane has its own cursor, view, search and line numbers (`:number` in that pane), and undo works on the text in both. While a macro is recorded, `Tab` does not go to the other pane. A text closed in two panes is opened in two panes again, with each cursor where it was and the focus in the same pane: a text file through the file history and the favorites (where the cursor of the other pane is written after the line and column, as `12:5|40:1`, or `12:5|<40:1` when that pane was at the left), and a note through its data file (encrypted, as the rest of the note; a data file with it can still be opened by earlier versions of Blyant, which leave it out)
-- `:favorite` (or `:fav`) Make the file being edited a favorite of the [file browser](Guide-to-login-menu.md#favorites), or take it out of the favorites if it is one, as `P` in the file browser. In a note of a data file, it makes the note a favorite of the data file (or not), as `P` in the list of notes: a note that is pinned is no longer pinned either. It is saved at once
-- `:bookmark` Bookmark the file being edited: it is then on the Bookmarks tab of the [Jump menu](Guide-to-main-menu.md#bookmarks). A note is not bookmarked by itself (bookmark its data file in the Jump menu)
+- `:diff` Compare the text with the file on disk (see [Comparing](#comparing))
+- `:projects` (or `:proj`) Show the projects in a list: the one picked is shown in the file browser, as a jump (changes that are not saved are asked about first)
+- `:book 3` Jump to bookmark 3 of the [Jump menu](Guide-to-jump-menu.md#bookmarks) (changes that are not saved are asked about first); `:book` alone shows the bookmarks
+- `:new name` Make a new, empty file in the same directory as the file being edited, and open it in its place. Without a name, it is asked for; a name without an extension makes a Markdown file (`:new chapter 2` makes `chapter 2.md`). Only a plain name is used (not a path), and not one that is there already. If the text being edited has changes, you are asked about them first. Closing the new file goes back to the file browser, and the file before it is in the file history. Not in the settings, snippets or completions files, in a peek, or while a macro is recorded
+- `:split` Show the text in two panes side by side, to see two parts of it at once; `:split` again goes back to one pane, as `:only`. Both panes show the same text: a change made in one is seen in the other at once, and the other pane keeps showing the place it was at (its cursor moves with lines added or removed above it). `Tab` (or `Shift+Tab`) in Normal mode goes to the other pane; the pane with the focus has the cursor, and the mode is shown over it. The top row, _Unsaved_ and the bottom line are those of the text, as with one pane. `:q` closes the pane with the focus and `:only` the other one, and the pane left takes the whole width; `Esc` closes the editor as usual. Each pane has its own cursor, view, search and line numbers (`:number` in that pane), and undo works on the text in both. While a macro is recorded, `Tab` does not go to the other pane. A text closed in two panes is opened in two panes again, with each cursor where it was and the focus in the same pane: a text file through the file history and the favorites (where the cursor of the other pane is written after the line and column, as `12:5|40:1`, or `12:5|<40:1` when that pane was at the left)
+- `:favorite` (or `:fav`) Make the file being edited a favorite of the [file browser](Guide-to-start-page.md#favorites), or take it out of the favorites if it is one, as `P` in the file browser. It is saved at once
+- `:bookmark` Bookmark the file being edited: it is then on the Bookmarks tab of the [Jump menu](Guide-to-jump-menu.md#bookmarks).
 - `:yankall` Yank all the text, as `gg` `V` `G` `y` (and `:%y`). It goes to the string memory, and to the system clipboard and/or the paste bin as set for `y`
 - `:%y` `:%d` Yank all/Delete all, `:2,9d` Delete line 2 to 9
 - `:clear` Clear all text

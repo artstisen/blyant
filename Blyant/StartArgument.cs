@@ -5,8 +5,6 @@
 /// is not a full path is taken from the directory Blyant is started in):
 ///   a text file      opened in the editor, with the file browser in its directory behind it
 ///   a directory      shown in the file browser
-///   a data file      selected on the login page (one outside the data directory is shown in the file browser,
-///                    which offers to copy it there)
 ///   a file that is not there, in a directory that is: Blyant asks to make it
 /// The place is opened as a jump of the Jump menu (Jump.Pending). This class does not touch the console.
 /// </summary>
@@ -23,8 +21,7 @@ internal static class StartArgument
     /// </summary>
     /// <param name="argument">The path, as given</param>
     /// <param name="currentDirectory">The directory Blyant is started in</param>
-    /// <param name="only">The one mode Blyant is set to, if any</param>
-    internal static Result Resolve(string argument, string currentDirectory, StartMenu.OnlyMode only)
+    internal static Result Resolve(string argument, string currentDirectory)
     {
         string path;
         try
@@ -36,52 +33,16 @@ internal static class StartArgument
             return new Result(null, argument, Message: e.Message);
         }
 
-        var dataFile = path.EndsWith(FileIo.GetFileNameExtension(), StringComparison.OrdinalIgnoreCase);
-        if (Directory.Exists(path))
-        {
-            return only == StartMenu.OnlyMode.Notes
-                ? new Result(null, path, Message: DialogText.EditorNotUsed)
-                : new Result(new JumpTarget(JumpKind.Directory, path), path);
-        }
-
-        if (File.Exists(path))
-        {
-            if (dataFile)
-            {
-                if (only == StartMenu.OnlyMode.Editor) return new Result(null, path, Message: DialogText.NotesNotUsed);
-                // A data file in the data directory (or a directory in it) is selected on the login page
-                if (DataFileInDataDirectory(path) is { } inData)
-                {
-                    return new Result(new JumpTarget(JumpKind.DataFile, inData), path);
-                }
-            }
-            else if (only == StartMenu.OnlyMode.Notes)
-            {
-                return new Result(null, path, Message: DialogText.EditorNotUsed);
-            }
-
-            return new Result(new JumpTarget(JumpKind.File, path), path);
-        }
+        if (Directory.Exists(path)) return new Result(new JumpTarget(JumpKind.Directory, path), path);
+        if (File.Exists(path)) return new Result(new JumpTarget(JumpKind.File, path), path);
 
         // Not there: a text file can be made (in a directory that is there)
         var parent = System.IO.Path.GetDirectoryName(path);
-        if (!dataFile && only != StartMenu.OnlyMode.Notes && parent != null && Directory.Exists(parent))
+        if (parent != null && Directory.Exists(parent))
         {
             return new Result(new JumpTarget(JumpKind.File, path), path, AskToCreate: true);
         }
 
         return new Result(null, path, Message: Lang.F("Not found: {0}", path));
-    }
-
-    // The path of a data file in the data directory as the login page knows it ("work.mbls", "notes/work.mbls"), or
-    // null if it is not in the data directory or a directory in it
-    internal static string? DataFileInDataDirectory(string path)
-    {
-        // (with links followed: the same directory can be written in two ways)
-        var data = FileOperations.RealPath(FileIo.GetDataDirectoryName());
-        path = FileOperations.RealPath(path);
-        if (!FileOperations.IsInside(path, data)) return null;
-        var relative = System.IO.Path.GetRelativePath(data, path).Replace('\\', '/');
-        return relative.Count(c => c == '/') <= 1 ? relative : null;
     }
 }

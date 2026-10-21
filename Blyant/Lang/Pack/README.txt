@@ -15,7 +15,7 @@ when you want to change a translation or make a new one.
 To use them
 -----------
 Put the folder "lang" next to the Blyant program (or in the data directory of Blyant, which is used first), and
-choose the language on the start page (Configuration > General > Language) or with ":language da" in the main menu.
+choose the language on the start page (Configuration > General > Language).
 
 To change a translation
 -----------------------
