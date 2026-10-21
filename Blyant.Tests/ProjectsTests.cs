@@ -73,6 +73,7 @@ public class ProjectsTests : IDisposable
         var editor = new EditorEngine("text", 40, 10, false);
         Assert.Equal(EditorRequest.Projects, editor.Type(":projects<CR>"));
         Assert.Equal(EditorRequest.Projects, editor.Type(":proj<CR>"));
+        Assert.Equal(EditorRequest.Projects, editor.Type(":pro<CR>"));
         Assert.Equal("text", editor.Buffer.GetText());
         // Not in a field of a box
         Assert.NotEqual(EditorRequest.Projects, new EditorEngine("x", 40, 1, true).Type(":projects<CR>"));

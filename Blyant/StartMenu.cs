@@ -131,6 +131,8 @@ internal static class StartMenu
                 NewProject(argument);
                 break;
             case "projects":
+            case "proj":
+            case "pro":
                 OpenProject();
                 break;
             case "start":

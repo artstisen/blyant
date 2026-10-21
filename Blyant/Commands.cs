@@ -47,7 +47,7 @@ internal static class Commands
     {
         [CommandContext.Files] = new Table(
             "quit close exit home data help jump book peek diff cd new info mkdir rename copy duplicate move delete favorite favorites history hotlist hotadd bookmark refresh panes match path name find projects",
-            "q h fav favs hist hot ju jmp"),
+            "q h fav favs hist hot ju jmp proj pro"),
         [CommandContext.FilePicker] = new Table(
             "quit close home data help cd",
             "q h"),
@@ -66,7 +66,7 @@ internal static class Commands
         [CommandContext.Start] = new Table(
             "new file open project projects start config general layout editor system jump book help about quick scheme logo " +
             "snippet completions clipboard log restart reset quit exit",
-            "browse newproject ju jmp h guide snip comp q"),
+            "browse newproject proj pro ju jmp h guide snip comp q"),
         [CommandContext.Jump] = new Table(
             "quit close help info folder expand collapse rename color remove move top bottom undo clearbook path name",
             "q h u"),
@@ -74,7 +74,7 @@ internal static class Commands
             "write quit quit! wq help edit edit! reload reload! undo redo delete yank replace nohlsearch " +
             "spell nospell spellnext spellprev suggest spelladd syntax number nonumber timestamp " +
             "favorite record play macro trim clear registers reglist regclear putall vsel vline block ol ul dup duplicate pb pbappend pbread pbclear clipboard path sort sort! wrap nowrap snip complete diff scrolloff info jump book bookmark yankall rename split only new projects",
-            "w q q! wq! x h e e! u red d y s rep noh set spellsuggest spellgood nu nonu ts reg sn ju jmp fav proj")
+            "w q q! wq! x h e e! u red d y s rep noh set spellsuggest spellgood nu nonu ts reg sn ju jmp fav proj pro")
     };
 
     /// <summary>

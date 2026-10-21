@@ -15,10 +15,11 @@ The same keys are used everywhere in Blyant:
 - `Esc` Return/Cancel
 
 ## Jump menu
-The Jump menu takes you straight to a place in Blyant. It is opened with `Ctrl+O`, or the command `:jump` (`:ju`, `:jmp`), from the start page, the file browser (with its favorites, history and search results) and the editor, and it is a choice of the Start tab of the start page (`5` `M`, or `Ctrl+O` there too). It is a box on top of the page with four tabs, one of them with sub-tabs:
+The Jump menu takes you straight to a place in Blyant. It is opened with `Ctrl+O`, or the command `:jump` (`:ju`, `:jmp`), from the start page, the file browser (with its favorites, history and search results) and the editor, and it is a choice of the Start tab of the start page (`5` `M`, or `Ctrl+O` there too). It is a box on top of the page with five tabs, one of them with sub-tabs:
 
 - **Bookmarks**: the places you have kept as bookmarks (see [Bookmarks](#bookmarks) below)
 - **Recent**: the places you have jumped to with the menu, the latest first, with the time (today) or the date of the jump. Only jumps made in the menu are kept, not files and pages opened in other ways (the tab says so next to the filter)
+- **Projects**: the [projects](Guide-to-start-page.md#projects), in alphabetical order and in their colors. `Enter` shows the project picked in the file browser. Colors and notes are set in the list of projects (_Open project_, `:projects` or `:pro`)
 - **File browser**, with the lists of the [file browser](Guide-to-start-page.md#file-browser) as sub-tabs:
   - **History**: the files opened from the file browser, with when they were opened
   - **Favorites**: the files and directories of the favorites of the file browser. A favorite with a color of its own is shown in it, on every tab

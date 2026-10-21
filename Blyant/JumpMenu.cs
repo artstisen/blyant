@@ -2,7 +2,7 @@
 
 /// <summary>
 /// The Jump menu: a box on top of the page with the tabs Bookmarks (places kept with B or ":bookmark"), Recent (the
-/// jump history), File browser (with its lists History, Favorites and Hotlist as sub-tabs) and Blyant (the pages
+/// jump history), Projects (the folders in the projects folder), File browser (with its lists History, Favorites and Hotlist as sub-tabs) and Blyant (the pages
 /// of Blyant). Tab and Shift+Tab go from tab to tab, h and l through all the lists in a row (the
 /// sub-tabs too); B bookmarks the selected place, and the Bookmarks tab has keys to arrange, rename and remove them. A place is picked with the
 /// selection arrow (j/k, gg/G) and Enter; h/l go from tab to tab, "/" filters the list of the tab, I shows
@@ -16,6 +16,7 @@ internal static class JumpMenu
     {
         Bookmarks,
         Jumps, // Recent: the jump history
+        Projects, // The projects: the folders in the projects folder
         History, // The file history of the file browser
         Favorites,
         Hotlist,
@@ -27,6 +28,7 @@ internal static class JumpMenu
     {
         Bookmarks,
         Recent,
+        Projects,
         FileBrowser,
         Blyant
     }
@@ -35,6 +37,7 @@ internal static class JumpMenu
     {
         Tab.Bookmarks => Group.Bookmarks,
         Tab.Jumps => Group.Recent,
+        Tab.Projects => Group.Projects,
         Tab.History or Tab.Favorites or Tab.Hotlist => Group.FileBrowser,
         _ => Group.Blyant
     };
@@ -54,6 +57,7 @@ internal static class JumpMenu
     {
         Group.Bookmarks => Lang.T("Bookmarks"),
         Group.Recent => Lang.T("Recent"),
+        Group.Projects => Lang.T("Projects"),
         Group.FileBrowser => DialogText.HelpSectionFiles,
         _ => DialogText.ApplicationName
     };
@@ -145,6 +149,16 @@ internal static class JumpMenu
             case Tab.Jumps:
                 JumpHistory.Load();
                 return JumpHistory.Items.Select(entry => new Row(entry.Target, entry.Jumped)).ToList();
+            case Tab.Projects:
+                // In the color of the project (else of a favorite)
+                return Projects.Names().Select(name =>
+                {
+                    var target = new JumpTarget(JumpKind.Directory, Projects.PathOf(name));
+                    return new Row(target, DateTime.MinValue)
+                    {
+                        Color = Projects.ColorOf(name) ?? FavoriteColor(target)
+                    };
+                }).ToList();
             case Tab.History:
                 FileHistory.Load();
                 return FileHistory.Items.Select(entry => new Row(new JumpTarget(JumpKind.File, entry.Path), entry.Opened))
@@ -520,6 +534,7 @@ internal static class JumpMenu
         var note = _message.Length > 0 ? _message
             : tabs[tab] == Tab.Jumps ? Lang.T("Only jumps made in this menu, the latest first")
             : tabs[tab] == Tab.Bookmarks && rows.Count == 0 && filter.Length == 0 ? DialogText.BookmarksEmpty
+            : tabs[tab] == Tab.Projects && rows.Count == 0 && filter.Length == 0 ? DialogText.NoProjectsYet
             : string.Empty;
         if (note.Length > 0 && room > 10)
         {

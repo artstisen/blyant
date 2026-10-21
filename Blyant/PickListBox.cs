@@ -165,6 +165,8 @@ internal static class PickListBox
 
             if (extras?.Key is { } onKey && view.Count > 0 && onKey(key, view[selected]))
             {
+                // Again: the key may have opened another list (the editor of a note, and in it ":reglist")
+                _extras = extras;
                 DrawBox(caption);
                 shownScroll = -1;
                 continue;

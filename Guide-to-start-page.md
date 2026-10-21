@@ -32,7 +32,7 @@ In the list of projects, each project can have a color and a note:
 
 Both files are in the folder of the project, so they go with it when it is copied, moved or synced. They start with a dot, so they are not shown with what the project holds.
 
-The list of projects can also be opened from the file browser (`E` or `:projects`: the project picked is shown in the pane with the focus) and from the editor (`:projects`: the project picked is shown in the file browser, as a jump, after asking about changes that are not saved).
+The list of projects can also be opened from the file browser (`E` or `:projects`, `:pro`: the project picked is shown in the pane with the focus) and from the editor (`:projects`, `:pro`: the project picked is shown in the file browser, as a jump, after asking about changes that are not saved).
 
 ### Configuration
 The settings are on four pages. `j` `k` (and `gg` `G`) select a setting on the page, and the number of a row selects it. `Enter` or `Space` changes it. `Esc` or `Q` goes back to the Start tab. Changes are saved at once.
@@ -80,7 +80,7 @@ The settings are on four pages. `j` `k` (and `gg` `G`) select a setting on the p
 On every tab of the start page (Start, the pages of Configuration, Help), `:` opens the command line on the bottom line. `Tab` completes the command you are typing, from the commands of this page, and `Up`/`Down` bring back the commands given here before:
 
 - `:new` (or `:new name`) New file, as `N`; `:file` (or `:open`, `:browse`) The file browser, as _Open file_
-- `:project` (or `:project name`, `:newproject`) New project, as `P`; `:projects` The list of projects, as _Open project_
+- `:project` (or `:project name`, `:newproject`) New project, as `P`; `:projects` (`:pro`, `:proj`) The list of projects, as _Open project_
 - `:start` The Start tab; `:config` (or `:general`), `:layout`, `:editor` and `:system` The pages of the Configuration tab (`:editor` is the Editor page of Configuration, not the text editor)
 - `:jump` (or `:ju`, `:jmp`) The [Jump menu](Guide-to-jump-menu.md#jump-menu); `:book 3` Jump to bookmark 3
 - `:help` (or `:h`) The help of the start page, as `?`; `:about` The about page; `:quick` (or `:guide`) The quick guide
@@ -114,7 +114,7 @@ The browser starts in the projects folder (or your home directory, if there is n
 - `h`, `-` or `Backspace` Go to the directory above (above the root of a drive on Windows: the list of drives)
 - `/text` Only show the names containing "text". `Esc` shows all again
 - `N` or `:new name` Create a new file in the directory and open it. Without a name (`N` or `:new`) you are asked for it. A name without an extension makes a Markdown file: `chapter 1` is `chapter 1.md` (a name that starts with a dot, as `.gitignore`, is kept as it is)
-- `E` or `:projects` Show the [projects](#projects) in a list: `Enter` shows the one picked in the pane with the focus, `/` filters and `Esc` closes. While the place to copy or move to is selected, it takes you to a project too
+- `E` or `:projects` (`:pro`, `:proj`) Show the [projects](#projects) in a list: `Enter` shows the one picked in the pane with the focus, `/` filters and `Esc` closes. While the place to copy or move to is selected, it takes you to a project too
 - `I` or `:info` (also in the list of favorites) Show information about the selected file or directory: type, size (for a directory: the number of files and directories in it), when it was created and last changed, and the full path. Any key closes the box
 - `V` or `:peek` Peek at the selected file: it is shown read-only in the other pane (with one pane shown, the second pane is shown while you peek). Move and search in it with the keys of the editor (`j` `k`, `gg` `G`, `Ctrl+D`, `/text`, `y` to yank to the clipboard ...); what would change the text is refused. The file is shown without word wrap, also when word wrap is on in the editor (`h` `l`, `0` `$` move along a long line); `:wrap` turns it on for this peek only. `Enter` opens the file in the editor at the line of the cursor, and `Esc` (or `:q`) goes back to the browser. A large file is shown up to about 2000 lines (100 KB), with a last line telling that there is more. Directories and files that are not text are not peeked at
 - See [Managing files](#managing-files), [Favorites](#favorites), [File history](#file-history) and [Directory hotlist](#directory-hotlist) below for the other keys

@@ -173,16 +173,17 @@ public class BookmarksTests : IDisposable
         var tabs = JumpMenu.Tabs();
         Assert.Equal(new[]
         {
-            JumpMenu.Tab.Bookmarks, JumpMenu.Tab.Jumps, JumpMenu.Tab.History, JumpMenu.Tab.Favorites,
-            JumpMenu.Tab.Hotlist, JumpMenu.Tab.Configuration
+            JumpMenu.Tab.Bookmarks, JumpMenu.Tab.Jumps, JumpMenu.Tab.Projects, JumpMenu.Tab.History,
+            JumpMenu.Tab.Favorites, JumpMenu.Tab.Hotlist, JumpMenu.Tab.Configuration
         }, tabs);
         Assert.Equal(new[] { JumpMenu.Group.FileBrowser },
             new[] { JumpMenu.Tab.History, JumpMenu.Tab.Favorites, JumpMenu.Tab.Hotlist }.Select(JumpMenu.GroupOf).Distinct());
         // Tab: from a list of the file browser to the next tab (Blyant), Shift+Tab: to the first list of the tab
-        // before (Recent); from the last tab round to the first
+        // before (Projects); from the last tab round to the first. Projects is after Recent
         Assert.Equal(tabs.IndexOf(JumpMenu.Tab.Configuration), JumpMenu.NextGroup(tabs, tabs.IndexOf(JumpMenu.Tab.Favorites), false));
-        Assert.Equal(tabs.IndexOf(JumpMenu.Tab.Jumps), JumpMenu.NextGroup(tabs, tabs.IndexOf(JumpMenu.Tab.Hotlist), true));
-        Assert.Equal(tabs.IndexOf(JumpMenu.Tab.History), JumpMenu.NextGroup(tabs, tabs.IndexOf(JumpMenu.Tab.Jumps), false));
+        Assert.Equal(tabs.IndexOf(JumpMenu.Tab.Projects), JumpMenu.NextGroup(tabs, tabs.IndexOf(JumpMenu.Tab.Hotlist), true));
+        Assert.Equal(tabs.IndexOf(JumpMenu.Tab.Projects), JumpMenu.NextGroup(tabs, tabs.IndexOf(JumpMenu.Tab.Jumps), false));
+        Assert.Equal(tabs.IndexOf(JumpMenu.Tab.History), JumpMenu.NextGroup(tabs, tabs.IndexOf(JumpMenu.Tab.Projects), false));
         Assert.Equal(0, JumpMenu.NextGroup(tabs, tabs.Count - 1, false));
     }
 }

@@ -601,7 +601,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":new :new name", Lang.T("New file (asks for the name if not given)"), false));
             _shortcutList.Add(new Shortcut(":file :open", Lang.T("Open file: the file browser"), false));
             _shortcutList.Add(new Shortcut(":project name", Lang.T("New project (asks for the name if not given)"), false));
-            _shortcutList.Add(new Shortcut(":projects", Lang.T("Open project: the list of projects"), false));
+            _shortcutList.Add(new Shortcut(":projects :pro", Lang.T("Open project: the list of projects"), false));
             _shortcutList.Add(new Shortcut(":start :config", Lang.T("The Start tab/Configuration (General)"), false));
             _shortcutList.Add(new Shortcut(":layout :editor", Lang.T("The pages of Configuration (and :system)"), false));
             _shortcutList.Add(new Shortcut(":jump :help", Lang.T("The Jump menu/The help (this list)"), false));
@@ -643,7 +643,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":match", Lang.T("The other pane shows this directory too"), false));
             _shortcutList.Add(new Shortcut("N :new name", Lang.T("Create a new file and open it"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("No extension"), Lang.T("A Markdown file: \"chapter\" is chapter.md"), false));
-            _shortcutList.Add(new Shortcut("E :projects", Lang.T("The projects: Enter shows one in this pane"), false));
+            _shortcutList.Add(new Shortcut("E :projects :pro", Lang.T("The projects: Enter shows one in this pane"), false));
             _shortcutList.Add(new Shortcut("I :info", Lang.T("Show type, size, dates and path"), false));
             _shortcutList.Add(new Shortcut("A :mkdir name", Lang.T("Create a new directory"), false));
             _shortcutList.Add(new Shortcut("X :rename name", Lang.T("Rename the file or directory"), false));
@@ -762,7 +762,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionJump, true));
             _shortcutList.Add(new Shortcut(":jump :ju :jmp", Lang.T("Open the Jump menu (from most places)"), false));
             _shortcutList.Add(new Shortcut("Ctrl+O", Lang.T("Open the Jump menu (from most places)"), false));
-            _shortcutList.Add(new Shortcut("  " + Lang.T("Tabs"), Lang.T("Bookmarks, Recent, File browser, Blyant"), false));
+            _shortcutList.Add(new Shortcut("  " + Lang.T("Tabs"), Lang.T("Bookmarks, Recent, Projects, File browser, Blyant"), false));
             _shortcutList.Add(new Shortcut("  " + DialogText.CaptionsFiles, Lang.T("Its lists: History, Favorites, Hotlist"), false));
             _shortcutList.Add(new Shortcut("j k gg G", Lang.T("Select a place"), false));
             _shortcutList.Add(new Shortcut("h l", Lang.T("The list before/after (through all the lists)"), false));
@@ -773,6 +773,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("I D", Lang.T("Info/Remove (from Recent or Bookmarks)"), false));
             _shortcutList.Add(new Shortcut("Esc Q", Lang.T("Close the Jump menu"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Recent"), Lang.T("The places jumped to, the latest first (jump.txt)"), false));
+            _shortcutList.Add(new Shortcut("  " + Lang.T("Projects"), Lang.T("The projects: Enter shows one in the file browser"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Bookmarks"), Lang.T("Places kept with B, or :bookmark in the editor"), false));
             _shortcutList.Add(new Shortcut("V j k Esc", Lang.T("Bookmarks: move the selected one"), false));
             _shortcutList.Add(new Shortcut("T E", Lang.T("Bookmarks: move it to the top/end"), false));
@@ -995,7 +996,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":only :q", Lang.T("Split: close the other pane/this pane"), false));
             _shortcutList.Add(new Shortcut(":yankall", Lang.T("Yank all the text (as gg V G y; the clipboard as y)"), false));
             _shortcutList.Add(new Shortcut(":new name", Lang.T("New file next to this one"), false));
-            _shortcutList.Add(new Shortcut(":projects", Lang.T("Open a project in the file browser"), false));
+            _shortcutList.Add(new Shortcut(":projects :pro", Lang.T("Open a project in the file browser"), false));
             _shortcutList.Add(new Shortcut(":bookmark", Lang.T("Bookmark the file being edited (Jump menu)"), false));
             _shortcutList.Add(new Shortcut(":favorite :fav", Lang.T("Add/remove the file as a favorite"), false));
             _shortcutList.Add(new Shortcut(":diff :diff -w", Lang.T("Compare with the saved text (-w: not blank space)"), false));

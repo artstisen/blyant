@@ -21,8 +21,7 @@ internal static class ProjectsBox
         var names = Projects.Names();
         if (names.Count == 0)
         {
-            ChoiceBox.Message(DialogText.OpenProject, Lang.T("No projects yet: New project on the start page makes one"),
-                Projects.Directory);
+            ChoiceBox.Message(DialogText.OpenProject, DialogText.NoProjectsYet, Projects.Directory);
             return null;
         }
 

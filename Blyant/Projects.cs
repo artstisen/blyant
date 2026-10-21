@@ -1,4 +1,6 @@
-﻿namespace Blyant;
+﻿using System.Text;
+
+namespace Blyant;
 
 /// <summary>
 /// The projects: a project is a directory with the files of a piece of writing in it. The projects are kept in
@@ -160,10 +162,11 @@ internal static class Projects
     /// <returns>DialogText.Success or an error message</returns>
     internal static string SetColor(string name, ConsoleColor? color)
     {
-        var kept = InfoLines(name).Where(line => line.Length > 0 && !line.StartsWith('#') &&
-                                                 !line.StartsWith("color=", StringComparison.Ordinal)).ToList();
         try
         {
+            // A file that cannot be read is not written over (its other lines would be lost)
+            var kept = ReadInfoLines(name).Where(line => line.Length > 0 && !line.StartsWith('#') &&
+                                                         !line.StartsWith("color=", StringComparison.Ordinal)).ToList();
             var path = Path.Combine(PathOf(name), InfoFileName);
             if (color == null && kept.Count == 0)
             {
@@ -174,8 +177,9 @@ internal static class Projects
             var lines = new List<string> { "# Blyant: the settings of this project" }; // English
             if (color != null) lines.Add("color=" + color);
             lines.AddRange(kept);
-            // LF on all systems, so the file is the same wherever it is synced to
-            File.WriteAllText(path, string.Join("\n", lines) + "\n");
+            // LF on all systems, so the file is the same wherever it is synced to. Written safely, and a file that
+            // is hidden (on Windows) stays so
+            FileIo.WriteAllBytesSafe(path, new UTF8Encoding(false).GetBytes(string.Join("\n", lines) + "\n"));
             return DialogText.Success;
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or NotSupportedException)
@@ -184,18 +188,24 @@ internal static class Projects
         }
     }
 
-    // The lines of the file of a project (CRLF also, as it may have been written on another system)
+    // The lines of the file of a project (none if it cannot be read)
     private static string[] InfoLines(string name)
     {
         try
         {
-            var path = Path.Combine(PathOf(name), InfoFileName);
-            return File.Exists(path) ? File.ReadAllText(path).Replace("\r", string.Empty).Split('\n') : [];
+            return ReadInfoLines(name);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
             return [];
         }
+    }
+
+    // The lines of the file of a project (CRLF also, as it may have been written on another system)
+    private static string[] ReadInfoLines(string name)
+    {
+        var path = Path.Combine(PathOf(name), InfoFileName);
+        return File.Exists(path) ? File.ReadAllText(path).Replace("\r", string.Empty).Split('\n') : [];
     }
 
     /// <summary>
@@ -215,7 +225,10 @@ internal static class Projects
             if (!File.Exists(path)) return string.Empty;
             using var reader = new StreamReader(path);
             var buffer = new char[SnippetLength];
-            var text = new string(buffer, 0, reader.ReadBlock(buffer, 0, buffer.Length));
+            var count = reader.ReadBlock(buffer, 0, buffer.Length);
+            // Not half a character at the end (a surrogate pair cut by the length)
+            if (count > 0 && char.IsHighSurrogate(buffer[count - 1])) count--;
+            var text = new string(buffer, 0, count);
             // Without the marks of Markdown headings and quotes ("# Plan" is "Plan")
             var lines = text.Replace("\r", string.Empty).Split('\n').Select(line => line.TrimStart().TrimStart('#', '>'));
             return string.Join(" ", string.Join(" ", lines).Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
@@ -235,7 +248,7 @@ internal static class Projects
         try
         {
             var path = NotePath(name);
-            if (!File.Exists(path)) File.WriteAllText(path, string.Empty);
+            if (!File.Exists(path)) FileIo.WriteAllBytesSafe(path, []);
             return DialogText.Success;
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or NotSupportedException)

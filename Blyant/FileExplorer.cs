@@ -288,7 +288,7 @@ internal static partial class FileExplorer
                     _mode == BrowseMode.Edit ? CommandContext.Files : CommandContext.FilePicker);
                 var name = command == null ? string.Empty : CommandLine.Name(command).ToLowerInvariant();
                 if (_pending != null && command != null &&
-                    name is not ("cd" or "home" or "data" or "projects" or "h" or "help" or "panes"))
+                    name is not ("cd" or "home" or "data" or "projects" or "proj" or "pro" or "h" or "help" or "panes"))
                 {
                     // Only going to a directory while the place to copy or move to is selected
                     _message = DialogText.FileSelectTarget;
@@ -324,7 +324,7 @@ internal static partial class FileExplorer
                 {
                     ChangeDirectory(HomeDirectory(), null);
                 }
-                else if (name is "projects" && _mode == BrowseMode.Edit)
+                else if (name is "projects" or "proj" or "pro" && _mode == BrowseMode.Edit)
                 {
                     OpenProject();
                 }

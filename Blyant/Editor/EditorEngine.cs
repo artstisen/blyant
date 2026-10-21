@@ -1283,6 +1283,7 @@ internal sealed partial class EditorEngine
                 break;
             case "projects":
             case "proj":
+            case "pro":
                 if (!SingleLine) _request = EditorRequest.Projects;
                 break;
             case "rename":

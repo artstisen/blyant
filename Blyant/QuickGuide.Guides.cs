@@ -17,6 +17,7 @@ internal static partial class QuickGuide
         (Kind.Heading, "", Lang.T("The tabs")),
         (Kind.Item, Lang.T("Bookmarks"), Lang.T("Places kept with B, or :bookmark in the editor")),
         (Kind.Item, Lang.T("Recent"), Lang.T("The places jumped to, the latest first (jump.txt)")),
+        (Kind.Item, Lang.T("Projects"), Lang.T("The projects: Enter shows one in the file browser")),
         (Kind.Item, DialogText.HelpSectionFiles, Lang.T("Its lists: History, Favorites, Hotlist")),
         (Kind.Item, DialogText.ApplicationName, Lang.T("The pages of Blyant: settings, color schemes, logos, help")),
         (Kind.Text, "", ""),
