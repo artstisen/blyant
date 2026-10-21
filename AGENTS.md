@@ -43,5 +43,5 @@ Text shown to the user is written in English in the code and given to `Lang.T(".
 - The log (`EventLog`) can be read by anyone at the screen: never log the text of files or search texts. Commands are logged by name only
 
 ## Releases
-- The version is set in `DialogText.ApplicationVersion` and in `Blyant.csproj` (`AssemblyVersion`, `FileVersion`)
+- The version is set in `DialogText.ApplicationVersion` and in `Blyant.csproj`: `Version` (the product version, `0.1.0`), `AssemblyVersion` and `FileVersion` (`0.1.0.0`). Change all four together
 - `publish.ps1` builds the `publish` folder
