@@ -941,6 +941,8 @@ fr: "dans"
 # FileExplorer.cs
 en: "This file is not UTF-8. It is read as {0}."
 fr: "Ce fichier n'est pas en UTF-8. Il est lu comme {0}."
+en: "PEEK"
+fr: "APERÇU"
 en: "PANE {0}"
 fr: "VOLET {0}"
 

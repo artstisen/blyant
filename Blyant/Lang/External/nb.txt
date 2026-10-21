@@ -941,6 +941,8 @@ nb: "i"
 # FileExplorer.cs
 en: "This file is not UTF-8. It is read as {0}."
 nb: "Filen er ikke UTF-8. Den leses som {0}."
+en: "PEEK"
+nb: "TITT"
 en: "PANE {0}"
 nb: "RUTE {0}"
 

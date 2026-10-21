@@ -941,6 +941,8 @@ fi: "kansiossa:"
 # FileExplorer.cs
 en: "This file is not UTF-8. It is read as {0}."
 fi: "Tiedosto ei ole UTF-8. Se luetaan muodossa {0}."
+en: "PEEK"
+fi: "ESIKATSELU"
 en: "PANE {0}"
 fi: "RUUTU {0}"
 

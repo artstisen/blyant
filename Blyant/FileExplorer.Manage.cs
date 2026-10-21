@@ -574,6 +574,8 @@ internal static partial class FileExplorer
         }
 
         _peekShownPath = path;
+        // The title of the pane: the name of the file
+        DrawPaneHeader(1 - _active);
         var (left, width) = PaneArea(1 - _active);
         string? note = null;
         TextFile? file = null;
@@ -654,6 +656,9 @@ internal static partial class FileExplorer
         _peekFocused = true;
         try
         {
+            // The title of the peek is highlighted, that of the list not
+            DrawPaneHeader(0);
+            DrawPaneHeader(1);
             var (left, width) = PaneArea(1 - _active);
             var syntax = SyntaxHighlighter.TypeOfFile(item.Name);
             var textArea = new TextArea(left, ListTop, width, PageSize, PeekText(file.Text), 0, false, false, false,

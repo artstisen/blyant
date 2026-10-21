@@ -941,6 +941,8 @@ nl: "in"
 # FileExplorer.cs
 en: "This file is not UTF-8. It is read as {0}."
 nl: "Dit bestand is geen UTF-8. Gelezen als {0}."
+en: "PEEK"
+nl: "INKIJK"
 en: "PANE {0}"
 nl: "PANEEL {0}"
 

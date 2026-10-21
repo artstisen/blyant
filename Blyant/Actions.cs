@@ -214,8 +214,10 @@ internal static class Actions
         StartMenu.StartInFavorites = false;
         Projects.Directory = Projects.DefaultDirectory;
         SystemClipboard.SetDefaults();
-        Init.AutoSize = false;
+        // The dimensions follow the window (and are the default ones when it is not known, or smaller)
         Init.SetDefaultOutputDimensions();
+        Init.AutoSize = true;
+        Init.ApplyAutoSize();
         FileIo.SaveSettings();
     }
 

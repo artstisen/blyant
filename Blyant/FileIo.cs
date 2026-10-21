@@ -417,8 +417,8 @@ internal static class FileIo
         Init.SetLineWidth((byte)Math.Clamp(GetNumber("linewidth") ?? Init.MinLineWidth, 0, byte.MaxValue));
         Init.SetLineCount((byte)Math.Clamp(GetNumber("linecount") ?? Init.MinLineCount, 0, byte.MaxValue));
 
-        // Automatic dimensions (off unless turned on)
-        Init.AutoSize = Tools.TrimToLower(Get("autosize")) == DialogText.BTrue;
+        // Automatic dimensions (on unless turned off)
+        Init.AutoSize = Tools.TrimToLower(Get("autosize")) != DialogText.BFalse;
         StartMenu.Mode = StartMenu.ParseSetting(Get("startmode"));
         StartMenu.StartInFavorites = Tools.TrimToLower(Get("startfavorites")) == DialogText.BTrue;
         Projects.Directory = Projects.DirectoryFromSetting(Get("projectsdir")) ?? Projects.DefaultDirectory;

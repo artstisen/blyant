@@ -941,6 +941,8 @@ pl: "w"
 # FileExplorer.cs
 en: "This file is not UTF-8. It is read as {0}."
 pl: "Ten plik nie jest w UTF-8. Jest czytany jako {0}."
+en: "PEEK"
+pl: "PODGLĄD"
 en: "PANE {0}"
 pl: "PANEL {0}"
 

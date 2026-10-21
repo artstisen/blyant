@@ -1242,12 +1242,17 @@ internal static partial class FileExplorer
     {
         var pane = ShownPane(number);
         var (left, width) = PaneArea(number);
+        // The pane with the peek is labeled so, with the name of the file it shows (else the directory). The focus is
+        // in the peek while Tab has gone into it
+        var peek = IsPeekPane(number);
+        var focused = peek ? _peekFocused : HasFocus(number) && !_peekFocused;
         // The directory (the end of a long path is shown)
         var room = width - 2;
-        var path = pane.Directory.Length == 0 ? DialogText.Drives : pane.Directory;
+        var path = peek ? SelectedItem() is { IsDirectory: false } item ? item.Name : string.Empty
+            : pane.Directory.Length == 0 ? DialogText.Drives : pane.Directory;
         path = TextMetrics.KeepEnd(path, room);
         Tools.SetCursorEx(1, left);
-        ConsoleColors.SetColors(HasFocus(number)
+        ConsoleColors.SetColors(focused
             ? ConsoleColors.ColorPreset.HeaderColor
             : ConsoleColors.ColorPreset.Divider);
         Console.Write(" " + path.PadRight(room));
@@ -1259,16 +1264,17 @@ internal static partial class FileExplorer
         // The label of the pane: highlighted on the one with the focus (in the attention color while the place to
         // copy or move to is selected, as the label at the top)
         Tools.SetCursorEx(2, left + 2);
-        if (HasFocus(number))
+        var label = peek ? Lang.T("PEEK") : Lang.F("PANE {0}", number + 1);
+        if (focused)
         {
             ConsoleColors.SetColors(_pending != null
                 ? ConsoleColors.ColorPreset.AttentionInverted
                 : ConsoleColors.ColorPreset.HighlightInverted);
-            Console.Write(" " + Lang.F("PANE {0}", number + 1) + " ");
+            Console.Write(" " + label + " ");
         }
         else
         {
-            Console.Write(" " + Lang.F("PANE {0}", number + 1).ToLowerInvariant() + " ");
+            Console.Write(" " + label.ToLowerInvariant() + " ");
         }
 
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);

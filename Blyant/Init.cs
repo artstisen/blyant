@@ -26,9 +26,9 @@ internal static class Init
 
   
     /// <summary>
-    /// Use the size of the terminal window as the output dimensions (setting "autosize")
+    /// Use the size of the terminal window as the output dimensions (setting "autosize", on unless turned off)
     /// </summary>
-    internal static bool AutoSize { get; set; }
+    internal static bool AutoSize { get; set; } = true;
 
     /// <summary>
     /// Set the output dimensions from the size of the terminal window if AutoSize is on.
@@ -240,7 +240,7 @@ internal static class Init
         Log(DialogText.InitSetDefaults, true);
         AsciiStyles.ResetAsciiStyle();
         Logo.Animation = Logo.AnimationSpeed.Fast;
-        AutoSize = false;
+        AutoSize = true;
         StartMenu.Mode = StartMenu.StartMode.Select;
         StartMenu.StartInFavorites = false;
         Projects.Directory = Projects.DefaultDirectory;

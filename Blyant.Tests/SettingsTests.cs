@@ -64,6 +64,7 @@ backup=
     public void Dispose()
     {
         Init.SetDefaultOutputDimensions();
+        Init.AutoSize = true;
         Logo.Animation = Logo.AnimationSpeed.Fast;
         AsciiStyles.ResetAsciiStyle();
         Projects.Directory = Projects.DefaultDirectory;
@@ -265,6 +266,24 @@ backup=
         Assert.True(FileIo.LoadSettings());
         Assert.Equal(string.Empty, FileExplorer.StartSelected);
         Assert.Equal(string.Empty, FileExplorer.StartSelected2);
+    }
+
+    [Fact]
+    public void AutomaticSize_IsOnUnlessTurnedOff_AndOnWhenTheSettingsAreReset()
+    {
+        // Not in the settings file (a new one, or one from before): on
+        File.WriteAllText(SettingsFile, LegacySettings);
+        Assert.True(FileIo.LoadSettings());
+        Assert.True(Init.AutoSize);
+        File.WriteAllText(SettingsFile, LegacySettings + "\nautosize=false\n");
+        Assert.True(FileIo.LoadSettings());
+        Assert.False(Init.AutoSize);
+        FileIo.SaveSettings();
+        Assert.Equal("false", FileIo.ParseSettings(File.ReadAllText(SettingsFile))["autosize"]);
+        // Reset: on again
+        Actions.ApplyDefaultSettings();
+        Assert.True(Init.AutoSize);
+        Assert.Equal("true", FileIo.ParseSettings(File.ReadAllText(SettingsFile))["autosize"]);
     }
 
     [Fact]
