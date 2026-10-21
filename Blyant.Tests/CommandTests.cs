@@ -185,6 +185,13 @@ public class CommandTests
     }
 
     [Fact]
+    public void TheTables_HaveTheCommandsOfTheListOfProjects()
+    {
+        AssertSame(CommandContext.Projects, Compared(Part("ProjectsBox.cs", "var command = CommandLine.Read(",
+            "// (the end of the commands)")));
+    }
+
+    [Fact]
     public void TheTables_HaveTheCommandsOfTheStartPage()
     {
         AssertSame(CommandContext.Start, Compared(Method("StartMenu.cs", "RunCommand")));

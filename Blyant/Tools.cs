@@ -564,6 +564,7 @@ internal static class Tools
         ColorScheme, // The color scheme editor
         Logos, // The logos and the logo editor
         Jump, // The Jump menu
+        Projects, // The list of projects
         Clipboard, // The clipboard settings
         Editor
     }
@@ -760,6 +761,19 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("  Up Down", Lang.T("Earlier commands of this page"), false));
             _shortcutList.Add(new Shortcut("Esc Q W h -", Lang.T("Back to the file browser"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("The list"), Lang.F("At most {0} directories, kept in hotlist.txt", DirectoryHotlist.MaxCount), false));
+            _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionProjects, true));
+            _shortcutList.Add(new Shortcut("O :projects :pro", Lang.T("Open project (start page; E in the file browser)"), false));
+            _shortcutList.Add(new Shortcut("j k gg G", Lang.T("Select a project"), false));
+            _shortcutList.Add(new Shortcut("Enter l", Lang.T("Show the project in the file browser"), false));
+            _shortcutList.Add(new Shortcut("C :color", Lang.T("The color of the project in the lists"), false));
+            _shortcutList.Add(new Shortcut("N :note", Lang.T("The note of the project, in the editor"), false));
+            _shortcutList.Add(new Shortcut("I :info", Lang.T("Information about the project folder"), false));
+            _shortcutList.Add(new Shortcut(":path :name", Lang.T("Copy the path/the name of the folder"), false));
+            _shortcutList.Add(new Shortcut("/", Lang.T("Filter the projects by name (Esc: all)"), false));
+            _shortcutList.Add(new Shortcut(":", Lang.T("Command line (Tab completes the command)"), false));
+            _shortcutList.Add(new Shortcut("  Up Down", Lang.T("Earlier commands of this page"), false));
+            _shortcutList.Add(new Shortcut("? :help", Lang.T("The keys of the list (this help)"), false));
+            _shortcutList.Add(new Shortcut("Esc Q :q", Lang.T("Close the list"), false));
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionJump, true));
             _shortcutList.Add(new Shortcut(":jump :ju :jmp", Lang.T("Open the Jump menu (from most places)"), false));
             _shortcutList.Add(new Shortcut("Ctrl+O", Lang.T("Open the Jump menu (from most places)"), false));
@@ -1029,6 +1043,7 @@ internal static class Tools
             HelpTopic.ColorScheme => DialogText.HelpSectionColorScheme,
             HelpTopic.Logos => DialogText.HelpSectionLogos,
             HelpTopic.Jump => DialogText.HelpSectionJump,
+            HelpTopic.Projects => DialogText.HelpSectionProjects,
             HelpTopic.Editor => DialogText.HelpSectionEditor,
             _ => string.Empty
         };

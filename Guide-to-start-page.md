@@ -12,7 +12,7 @@ Each choice has a number and a key, shown in front of it. The number selects the
 - `1` `N` **New file**: Make a new, empty file and open it in the editor, with the [file browser](#file-browser) behind it. You are asked for its name; a name without an extension makes a Markdown file (`chapter 1` is `chapter 1.md`). The file is made in the directory the file browser was in last (shown in the box), or in the projects folder the first time
 - `2` `F` **Open file**: Open the [file browser](#file-browser), where `Enter` opens a file in the editor. Closing the file browser returns here
 - `3` `P` **New project**: Make a new [project](#projects): you are asked for its name, a folder of that name is made in the projects folder, and it is shown in the file browser
-- `4` `O` **Open project**: The [projects](#projects) in a list to pick from, with what each holds below the list and the start of its note to the right of that. `Enter` shows the project picked in the file browser, `C` picks the color of the project, `N` opens its note in the editor, `/` filters the list and `Esc` closes it
+- `4` `O` **Open project**: The [projects](#projects) in a list to pick from, with what each holds below the list and the start of its note to the right of that. `Enter` shows the project picked in the file browser, `C` picks the color of the project, `N` opens its note in the editor, `I` shows information about it, `/` filters the list, `:` is its command line, `?` shows its keys and `Esc` closes it
 - `5` `M` **Jump menu**: Open the [Jump menu](Guide-to-jump-menu.md#jump-menu), to go straight to a file, a directory or a page of Blyant (also with `Ctrl+O`). Pages such as Color schemes and Help open on top of the start page
 - `6` `U` **Quick guide**: A short introduction to Blyant: files and projects, the keys for moving around, and the modes of the editor. `Esc` closes it, and `?` shows the help with all the keys
 - `7` **Exit**: Close Blyant at once (`Enter` on it). `Q` exits too, after asking
@@ -31,6 +31,14 @@ In the list of projects, each project can have a color and a note:
 - `N` opens the **note** of the project in the editor: what to do next, an idea, where you are. It is the Markdown file `.blyant-note.md` in the project, and the start of it is shown to the right of what the project holds (with `...` where there is more). `:wq` saves it and goes back to the list; a note left empty is removed
 
 Both files are in the folder of the project, so they go with it when it is copied, moved or synced. They start with a dot, so they are not shown with what the project holds.
+
+`I` in the list of projects shows information about the selected project, in a box as `I` in the Jump menu: its name, what the folder holds, when it was made and changed, its color, the start of its note and its path. The list has a command line of its own (`:`, with `Tab` completing the command and `Up`/`Down` bringing back the commands given before), with commands on the selected project:
+
+- `:info` Information about the project, as `I`
+- `:path` and `:name` Copy the full path of the project folder, or its name, to the clipboard (and the string memory, as set in the clipboard settings)
+- `:color` and `:note` The color and the note, as `C` and `N`
+- `:help` (or `?`) The keys of the list
+- `:q` (`:quit`, `:close`) Close the list, as `Esc`
 
 The list of projects can also be opened from the file browser (`E` or `:projects`, `:pro`: the project picked is shown in the pane with the focus) and from the editor (`:projects`, `:pro`: the project picked is shown in the file browser, as a jump, after asking about changes that are not saved).
 

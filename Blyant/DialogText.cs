@@ -197,6 +197,8 @@ internal static class DialogText
     public static string OpenFile => Lang.T("Open file");
     public static string NewProject => Lang.T("New project");
     public static string OpenProject => Lang.T("Open project");
+    public static string ProjectInfo => Lang.T("Project info");
+    public static string HelpSectionProjects => Lang.T("List of projects");
     public static string NoProjectsYet => Lang.T("No projects yet: New project on the start page makes one");
     public static string FileNameColon => Lang.T("File name:");
     public static string ProjectNameColon => Lang.T("Project name:");

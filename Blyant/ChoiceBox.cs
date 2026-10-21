@@ -261,7 +261,10 @@ internal static class ChoiceBox
             do
             {
                 var part = rest.Length <= room ? rest : rest[..room];
-                lines.Add((first ? label : string.Empty, part));
+                // Text goes on at a blank space when there is one in the second half of the row (a path at the room)
+                var space = part.Length < rest.Length ? part.LastIndexOf(' ') : -1;
+                if (space > room / 2) part = part[..(space + 1)];
+                lines.Add((first ? label : string.Empty, part.TrimEnd()));
                 rest = rest[part.Length..];
                 first = false;
             } while (rest.Length > 0);

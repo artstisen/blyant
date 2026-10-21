@@ -36,10 +36,29 @@ internal static class PickListBox
         internal Func<int, string>? Side { get; init; }
 
         /// <summary>
-        /// A key pressed on a row: true if it was used. The box is drawn again (the key may have shown another box)
+        /// A key pressed on a row: whether it was used (the box is drawn again: the key may have shown another box),
+        /// or closes the list
         /// </summary>
-        internal Func<ConsoleKeyInfo, int, bool>? Key { get; init; }
+        internal Func<ConsoleKeyInfo, int, KeyUse>? Key { get; init; }
     }
+
+    /// <summary>
+    /// What a key of a list (Extras.Key) did
+    /// </summary>
+    internal enum KeyUse
+    {
+        None, // Not a key of the list: the box handles it
+        Used,
+        Close // The list is closed without picking (":q")
+    }
+
+    // A message shown in place of the filter until the next key (ShowMessage)
+    private static string _message = string.Empty;
+
+    /// <summary>
+    /// Show a message in the box (what a key of the list did: a path copied ...), until the next key
+    /// </summary>
+    internal static void ShowMessage(string message) => _message = message;
 
     /// <summary>
     /// Show the list and let the user pick a row
@@ -57,6 +76,7 @@ internal static class PickListBox
         // In the color of text in frames and boxes
         using var frameText = ConsoleColors.FrameTextScope();
         _extras = extras;
+        _message = string.Empty;
 
         var filter = string.Empty;
         var filtering = false;
@@ -101,6 +121,7 @@ internal static class PickListBox
 
             var key = Console.ReadKey(true);
             Tools.HideCursor();
+            _message = string.Empty;
             if (filtering)
             {
                 if (key.Key is ConsoleKey.Tab or ConsoleKey.DownArrow or ConsoleKey.UpArrow)
@@ -163,7 +184,9 @@ internal static class PickListBox
                 return view[selected];
             }
 
-            if (extras?.Key is { } onKey && view.Count > 0 && onKey(key, view[selected]))
+            var use = extras?.Key is { } onKey && view.Count > 0 ? onKey(key, view[selected]) : KeyUse.None;
+            if (use == KeyUse.Close) return -1;
+            if (use == KeyUse.Used)
             {
                 // Again: the key may have opened another list (the editor of a note, and in it ":reglist")
                 _extras = extras;
@@ -229,6 +252,17 @@ internal static class PickListBox
     {
         var text = filtering || filter.Length > 0 ? FilterText(filter) : string.Empty;
         Tools.SetCursorEx(_top + 2, _left + 3);
+        if (_message.Length > 0 && !filtering)
+        {
+            // A message: highlighted, with a blank space on each side in the highlight (as in the Jump menu)
+            var message = " " + Tools.TruncateString(_message, _inner - 6, true) + " ";
+            ConsoleColors.SetColors(ConsoleColors.ColorPreset.AttentionInverted);
+            Console.Write(message);
+            ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
+            Console.Write(new string(' ', Math.Max(0, _inner - 4 - TextMetrics.WidthOf(message))));
+            return;
+        }
+
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
         Console.Write(Tools.TruncateString(text, _inner - 4, true).PadRight(_inner - 4));
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);

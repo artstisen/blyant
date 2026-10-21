@@ -13,7 +13,8 @@ internal enum CommandContext
     Search, // The files found by a search in the file browser
     Editor,
     Start, // The start page: its tabs Start, Configuration and Help
-    Jump // The Jump menu (the commands work on its Bookmarks tab)
+    Jump, // The Jump menu (the commands work on its Bookmarks tab)
+    Projects // The list of projects (the commands work on the selected project)
 }
 
 /// <summary>
@@ -70,6 +71,9 @@ internal static class Commands
         [CommandContext.Jump] = new Table(
             "quit close help info folder expand collapse rename color remove move top bottom undo clearbook path name",
             "q h u"),
+        [CommandContext.Projects] = new Table(
+            "quit close help info path name color note",
+            "q h"),
         [CommandContext.Editor] = new Table(
             "write quit quit! wq help edit edit! reload reload! undo redo delete yank replace nohlsearch " +
             "spell nospell spellnext spellprev suggest spelladd syntax number nonumber timestamp " +
