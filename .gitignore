@@ -1,0 +1,29 @@
+# Build output
+[Bb]in/
+[Oo]bj/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# JetBrains Rider
+.idea/
+*.DotSettings.user
+
+# VS Code
+.vscode/
+
+# Blyant runtime data (encrypted notes, settings, imports/exports)
+data/
+*.mbls
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Published builds
+publish/
+
+# Spelling dictionaries (supplied by the user, not part of the source)
+/spell/

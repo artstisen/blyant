@@ -1,0 +1,281 @@
+﻿namespace Blyant;
+
+/// <summary>
+/// The colors of Blyant: the color scheme in use (Current) and the one being edited in the color scheme editor
+/// (Preview), and the styles text is written in (ColorPreset), which take their colors from the scheme.
+/// With black and white on, the styles are shown in gray, white and black, whatever the scheme is.
+/// </summary>
+internal static class ConsoleColors
+{
+    /// <summary>
+    /// The color scheme in use (setting "colorscheme": its name)
+    /// </summary>
+    internal static ColorScheme Current { get; private set; } = ColorScheme.Default;
+
+    /// <summary>
+    /// The color scheme being edited in the color scheme editor (nothing is used until it is saved)
+    /// </summary>
+    internal static ColorScheme Preview { get; set; } = ColorScheme.Default;
+
+    /// <summary>
+    /// Use a color scheme (a copy is kept)
+    /// </summary>
+    internal static void Use(ColorScheme scheme)
+    {
+        Current = scheme.Clone();
+        SetColors(ColorPreset.Normal);
+    }
+
+    /// <summary>
+    /// The background color of the color scheme, or null to use the background of the terminal
+    /// </summary>
+    internal static ConsoleColor? Background => Current.Background;
+
+    /// <summary>
+    /// True if text in this color cannot be seen on the background of the color scheme in use
+    /// </summary>
+    internal static bool IsBackgroundColor(ConsoleColor color) => color == Current.BackgroundColor;
+
+    /// <summary>
+    /// True to show everything in black and white, whatever the colors of the color scheme are
+    /// (setting "monochrome"). The color scheme is kept, and is used again when this is turned off
+    /// </summary>
+    internal static bool Monochrome { get; set; }
+
+    #region The styles
+
+    public enum ColorPreset
+    {
+        Reset, // Use the default color scheme
+        Normal,
+        NormalInverted,
+        HeaderColor,
+        Divider,
+        Favorites,
+        Accent,
+        EditorTitle,
+        HighlightInverted,
+        AttentionInverted,
+        WarningInverted,
+        TabFrame, // The frames with tabs
+        TabCorner, // The left side, corner and top of the tab shown
+        BoxBorder, // The borders of the boxes on top of a page
+        TabShown, // The name of the tab shown, when the tab is not highlighted
+        OtherTabs, // The names of the tabs not shown
+        KeyHint, // The keys on the bottom line: what they do
+        KeyHintInverted, // The keys on the bottom line: the key
+        UnsavedInverted, // The label "Unsaved" (a text has changes that are not saved)
+        LineNumber, // The line numbers of the editor
+        CurrentLineNumber, // The number of the line the cursor is on
+        SelectorInverted, // The selection arrow "->" of lists, menus and settings
+        FrameText // The text in frames with tabs and in boxes
+    }
+
+    // The colors of text on the normal background: the background of the color scheme, or that of the terminal
+    private static void SetNormalBackground(ColorScheme scheme)
+    {
+        Console.ResetColor();
+        if (scheme.Background is { } background) Console.BackgroundColor = background;
+    }
+
+    // The colors used when everything is shown in black and white
+    private static void SetMonochromeColors(ColorPreset preset)
+    {
+        switch (preset)
+        {
+            case ColorPreset.HeaderColor:
+            case ColorPreset.Favorites:
+            case ColorPreset.Accent:
+            case ColorPreset.EditorTitle:
+                Console.ResetColor();
+                Console.ForegroundColor = ConsoleColor.White;
+                break;
+            case ColorPreset.NormalInverted:
+            case ColorPreset.KeyHintInverted:
+            case ColorPreset.UnsavedInverted:
+            case ColorPreset.SelectorInverted:
+            case ColorPreset.HighlightInverted:
+            case ColorPreset.AttentionInverted:
+            case ColorPreset.WarningInverted:
+                Console.BackgroundColor = ConsoleColor.Gray;
+                Console.ForegroundColor = ConsoleColor.Black;
+                break;
+            default:
+                Console.ResetColor();
+                Console.ForegroundColor = ConsoleColor.Gray;
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Write in a style, in the colors of the color scheme in use
+    /// </summary>
+    public static void SetColors(ColorPreset preset)
+    {
+        if (preset == ColorPreset.Reset)
+        {
+            Current = ColorScheme.Default;
+            preset = ColorPreset.Normal;
+        }
+
+        if (Monochrome)
+        {
+            SetMonochromeColors(preset);
+            return;
+        }
+
+        // In a frame with tabs or a box the normal text has the color of text there
+        SetStyle(Current, preset == ColorPreset.Normal && _inFrame ? ColorPreset.FrameText : preset);
+    }
+
+    // True while the text in a frame with tabs or a box is written
+    private static bool _inFrame;
+
+    /// <summary>
+    /// While the scope is open (until it is disposed), the normal text is written in the color of the text in
+    /// frames with tabs and in boxes ("Tab text" of the color scheme). The highlighted text keeps its colors.
+    /// The normal colors are set when it opens and when it is disposed, for text written without setting them
+    /// </summary>
+    internal static IDisposable FrameTextScope()
+    {
+        var before = _inFrame;
+        _inFrame = true;
+        SetColors(ColorPreset.Normal);
+        return new FrameScope(before);
+    }
+
+    // Puts back what was before the scope when it is disposed
+    private sealed class FrameScope(bool before) : IDisposable
+    {
+        public void Dispose()
+        {
+            _inFrame = before;
+            SetColors(ColorPreset.Normal);
+        }
+    }
+
+    /// <summary>
+    /// Write in a style, in the colors of the color scheme being edited (black and white is not used here)
+    /// </summary>
+    public static void SetColorsFromPreview(ColorPreset preset)
+    {
+        SetStyle(Preview, preset == ColorPreset.Reset ? ColorPreset.Normal : preset);
+    }
+
+    private static void SetStyle(ColorScheme scheme, ColorPreset preset)
+    {
+        switch (preset)
+        {
+            case ColorPreset.NormalInverted:
+                Console.BackgroundColor = scheme.Text;
+                Console.ForegroundColor = scheme.BackgroundColor;
+                return;
+            case ColorPreset.KeyHintInverted:
+                Console.BackgroundColor = scheme.KeyHintsColor;
+                Console.ForegroundColor = scheme.BackgroundColor;
+                return;
+            case ColorPreset.UnsavedInverted:
+                Console.BackgroundColor = scheme.UnsavedColor;
+                Console.ForegroundColor = scheme.UnsavedTextColor;
+                return;
+            case ColorPreset.SelectorInverted:
+                Console.BackgroundColor = scheme.SelectorColor;
+                Console.ForegroundColor = scheme.SelectorTextColor;
+                return;
+            case ColorPreset.HighlightInverted:
+                Console.BackgroundColor = scheme.Highlight;
+                Console.ForegroundColor = scheme.HighlightText;
+                return;
+            case ColorPreset.AttentionInverted:
+                Console.BackgroundColor = scheme.Attention;
+                Console.ForegroundColor = scheme.AttentionText;
+                return;
+            case ColorPreset.WarningInverted:
+                Console.BackgroundColor = scheme.Warning;
+                Console.ForegroundColor = scheme.WarningText;
+                return;
+        }
+
+        SetNormalBackground(scheme);
+        Console.ForegroundColor = preset switch
+        {
+            ColorPreset.HeaderColor => scheme.Logo,
+            ColorPreset.Divider => scheme.Dividers,
+            ColorPreset.Favorites => scheme.Favorites,
+            ColorPreset.Accent => scheme.Accent,
+            ColorPreset.EditorTitle => scheme.EditorTitle,
+            ColorPreset.TabFrame => scheme.TabFrameColor,
+            ColorPreset.TabCorner => scheme.TabCornerColor,
+            ColorPreset.BoxBorder => scheme.BoxBorderColor,
+            ColorPreset.TabShown => scheme.TabShownColor,
+            ColorPreset.OtherTabs => scheme.OtherTabsColor,
+            ColorPreset.KeyHint => scheme.KeyHintsColor,
+            ColorPreset.LineNumber => scheme.LineNumbersColor,
+            ColorPreset.CurrentLineNumber => scheme.CurrentLineNumberColor,
+            ColorPreset.FrameText => scheme.FrameTextColor,
+            _ => scheme.Text
+        };
+    }
+
+    /// <summary>
+    /// Write text in a color on the normal background (the normal text color is used if the color is that
+    /// of the background)
+    /// </summary>
+    internal static void SetTextColor(ConsoleColor color)
+    {
+        SetColors(ColorPreset.Normal);
+        if (Monochrome)
+        {
+            // No colors: text with a color of its own is shown brighter
+            Console.ForegroundColor = ConsoleColor.White;
+        }
+        else if (!IsBackgroundColor(color))
+        {
+            Console.ForegroundColor = color;
+        }
+    }
+
+    /// <summary>
+    /// Write colored text of the editor in its color (Syntax 1 to 12 of the color scheme, counted from 0). With
+    /// preview: the colors being edited
+    /// </summary>
+    internal static void SetSyntaxColor(int number, bool preview = false)
+    {
+        if (preview)
+        {
+            SetStyle(Preview, ColorPreset.Normal);
+            Console.ForegroundColor = Preview.SyntaxColor(number);
+            return;
+        }
+
+        SetTextColor(Current.SyntaxColor(number));
+    }
+
+    /// <summary>
+    /// Write in the colors of the tab shown in a frame with tabs, and of the titles of boxes (with preview: the
+    /// colors being edited). Highlighted: the background of the highlight (by default the color of the tab frames)
+    /// with the text in the color of the focused tab. When the highlight is off, that color on the normal
+    /// background. In black and white the highlight is inverted
+    /// </summary>
+    internal static void SetTabColors(bool preview = false)
+    {
+        var scheme = preview ? Preview : Current;
+        if (Monochrome && !preview)
+        {
+            if (Current.TabHighlight) SetMonochromeColors(ColorPreset.HighlightInverted);
+            else SetMonochromeColors(ColorPreset.Normal);
+            return;
+        }
+
+        if (!scheme.TabHighlight)
+        {
+            SetStyle(scheme, ColorPreset.TabShown);
+            return;
+        }
+
+        Console.BackgroundColor = scheme.TabColor;
+        Console.ForegroundColor = scheme.TabTextColor;
+    }
+
+    #endregion
+}
