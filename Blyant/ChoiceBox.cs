@@ -37,8 +37,8 @@ internal static class ChoiceBox
 
     /// <summary>
     /// Ask before deleting files, so that text typed by mistake (the keys of a word meant for the editor) cannot
-    /// answer yes: letters do nothing in this box. No is selected from the start, the arrow keys select, Enter
-    /// picks, and Esc is no
+    /// answer yes: no letter answers in this box (Y does nothing). No is selected from the start, j/k (or the
+    /// arrow keys) select, only Enter picks, and Esc is no
     /// </summary>
     /// <returns>True for yes</returns>
     internal static bool ConfirmGuarded(string caption, string question, string note)
@@ -50,8 +50,8 @@ internal static class ChoiceBox
     /// <summary>
     /// Pick one of a few choices. The key of each choice is shown in front of it and picks it at once
     /// </summary>
-    /// <param name="guarded">Only the arrow keys, Enter, Space and Esc (or Q) work: no letter picks or
-    /// selects, and no keys are shown in front of the choices</param>
+    /// <param name="guarded">No letter picks a choice, and only Enter picks the selected one (j/k and the
+    /// arrow keys select, Esc, Q and h cancel); no keys are shown in front of the choices</param>
     /// <returns>The number of the choice, or -1 if the box was closed with Esc</returns>
     internal static int Pick(string caption, string question, string note, IReadOnlyList<string> choices,
         IReadOnlyList<string> keys, int selected, bool warning, bool guarded = false)
@@ -79,7 +79,7 @@ internal static class ChoiceBox
                   Tools.TruncateString(choices[number], width - keyWidth - 11, true));
         }
 
-        WriteHints(guarded ? DialogText.GuardedChoiceKeys : DialogText.ChoiceKeys);
+        WriteHints(DialogText.ChoiceKeys);
         while (true)
         {
             for (var i = 0; i < choices.Count; i++)
@@ -96,12 +96,13 @@ internal static class ChoiceBox
             var key = Console.ReadKey(true);
             if (guarded)
             {
-                // The keys of letters are left out, so typing cannot select Yes (Space and Enter pick the
-                // selected choice, which is No unless an arrow key was used)
-                if (key.Key is ConsoleKey.Escape or ConsoleKey.Q or ConsoleKey.LeftArrow) return -1;
-                if (key.Key is ConsoleKey.Enter or ConsoleKey.Spacebar or ConsoleKey.RightArrow) return selected;
-                if (key.Key == ConsoleKey.DownArrow) selected = Math.Min(selected + 1, choices.Count - 1);
-                if (key.Key == ConsoleKey.UpArrow) selected = Math.Max(selected - 1, 0);
+                // No letter picks a choice, and only Enter picks the selected one (not Space or l), so a word
+                // typed by mistake cannot answer Yes: in "dark ", the k selects Yes, and the space would pick it
+                var move = Keyboard.ToNavigationKey(key).Key;
+                if (key.Key is ConsoleKey.Escape or ConsoleKey.Q || move == ConsoleKey.LeftArrow) return -1;
+                if (key.Key == ConsoleKey.Enter) return selected;
+                if (move == ConsoleKey.DownArrow) selected = Math.Min(selected + 1, choices.Count - 1);
+                if (move == ConsoleKey.UpArrow) selected = Math.Max(selected - 1, 0);
                 continue;
             }
 
