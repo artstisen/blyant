@@ -192,6 +192,10 @@ public partial class TextArea
         // Taken at once, so it is never left for another editor
         var split = NextSplit;
         NextSplit = null;
+        // Opened from a recovery copy: the copy goes with the changes, as one this editor wrote
+        _recoveryOwned = NextRecovered;
+        NextRecovered = false;
+        if (_recoveryOwned) _recoveryPath = FileExplorer.CurrentFilePath;
         _peek = peek;
         _top = top;
         _left = left;
@@ -349,11 +353,28 @@ public partial class TextArea
 
     private void MainLoop()
     {
+        // The editor of a file: its text is copied if the terminal is closed (a box opened from it is not)
+        var recovering = _recovering;
+        if (RecoveryActive) _recovering = this;
+        try
+        {
+            MainLoopKeys();
+        }
+        finally
+        {
+            _recovering = recovering;
+        }
+    }
+
+    private void MainLoopKeys()
+    {
         try
         {
             while (!_exit)
             {
+                _handlingKey = false;
                 var key = ReadKey();
+                _handlingKey = true;
                 if (FollowsWindow && IsCancelKey(key))
                 {
                     // Ctrl+C that comes as a key (some terminals send it so): as the signal, it does not close
@@ -426,10 +447,17 @@ public partial class TextArea
                 // The text could not be drawn (the window was made smaller): drawn again as the window is now
                 if (FollowsWindow && Tools.TakeRedrawRequest()) FitToWindow();
             }
+
+            // Closed as the user asked: saved, or the changes given up
+            _handlingKey = false;
+            EndRecovery();
         }
         catch (Exception ex) when (ex is not NavigationException)
         {
             Tools.HideCursor();
+            // Stopped on an error: the text is copied first, and the copy stays unless the text is saved now
+            _handlingKey = false;
+            if (RecoveryActive && _engine.IsModified) WriteRecovery(_engine.Buffer.Version);
             Tools.ActionUnsupported(ex.Message);
             // Offer to save before closing
             Canceled = true;
@@ -971,6 +999,8 @@ public partial class TextArea
                     };
         // A file is opened where the cursor is the next time, as when it is closed
         if (leave && _saveMode == SaveAsFile) FileExplorer.KeepCaretOfCurrentFile(this);
+        // Saved, or the changes given up: the recovery copy goes
+        if (leave) EndRecovery();
         return leave;
     }
 
@@ -1379,6 +1409,9 @@ public partial class TextArea
     /// <returns>False if the text could not be saved (the reason is shown as a message)</returns>
     private bool Save()
     {
+        // A peek is never saved: it shows another file than the one the editor saves to, and maybe only the start
+        // of it (it is read only, so this only guards against a request let through by mistake)
+        if (_peek != null) return true;
         if (!_engine.IsModified) return true;
         Tools.HideCursor();
         DocumentInfo.HasChanged = true;
@@ -1406,6 +1439,7 @@ public partial class TextArea
         }
 
         _engine.MarkSaved();
+        RecoverySaved();
         DocumentInfo.HasChanged = false;
         Menu.InitializeSaveIndicator();
         return true;

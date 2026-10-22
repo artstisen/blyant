@@ -59,7 +59,8 @@ class Program
 
         try
         {
-            File.WriteAllText(result.Path, string.Empty);
+            // Only a new file: one that has come since it was looked for is not emptied
+            new FileStream(result.Path, FileMode.CreateNew).Dispose();
             EventLog.Add(DialogText.LogFile + "New: " + result.Path);
             return result.Target;
         }

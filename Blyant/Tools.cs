@@ -674,6 +674,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":home", Lang.T("Go to the projects folder (or the home directory)"), false));
             _shortcutList.Add(new Shortcut(":data", Lang.T("Go to the data directory (settings, snippets ...)"), false));
             _shortcutList.Add(new Shortcut(":trash", Lang.T("Go to the trash (what was deleted)"), false));
+            _shortcutList.Add(new Shortcut(":recovery", Lang.T("Go to the recovery copies of unsaved text"), false));
             _shortcutList.Add(new Shortcut(":", Lang.T("Command line (Tab completes the command)"), false));
             _shortcutList.Add(new Shortcut("  Up Down", Lang.T("Earlier commands of this page"), false));
             _shortcutList.Add(new Shortcut("Esc Q :q", Lang.T("Close the file browser"), false));

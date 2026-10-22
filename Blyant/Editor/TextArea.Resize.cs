@@ -54,6 +54,8 @@ public partial class TextArea
     // The next key. Meanwhile the editor follows the size of the window, and tells how to close it after Ctrl+C
     private ConsoleKeyInfo ReadKey()
     {
+        // (also between keys typed without a pause: a copy at least now and then)
+        RecoveryTick();
         if (!FollowsWindow) return Console.ReadKey(true);
         var seen = _windowSize; // The new size, and when it was seen first
         var seenAt = 0L;
@@ -91,6 +93,8 @@ public partial class TextArea
                 FitToWindow();
             }
 
+            // A recovery copy when a pause has come after a change
+            RecoveryTick();
             WaitForInput();
         }
 

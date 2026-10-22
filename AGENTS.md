@@ -40,7 +40,17 @@ Text shown to the user is written in English in the code and given to `Lang.T(".
 - No dependencies besides .NET itself
 - `EditorEngine`, `TextBuffer`, the highlighters and `CommandCompletion` do not touch the console, so they can be tested. Keep it that way: drawing belongs in `TextArea` and the pages
 - Text shown to the user is kept in `DialogText` (or written in a `Lang.T` call where it is used)
-- The log (`EventLog`) can be read by anyone at the screen: never log the text of files or search texts. Commands are logged by name only
+- The log (`EventLog`) can be read by anyone at the screen: never log the text of files or search texts. Commands are logged by name only. It is also written to `log.txt` in the data directory
+
+## Files
+The files of the user, and Blyant's own files, must never be left empty or half written, whenever Blyant is stopped (the terminal closed, the computer turned off).
+
+- A file that is there is replaced with `FileIo.WriteAllBytesSafe`: it writes a temporary file next to it, flushes it to the disk, and then puts it in the place of the file in one step. Never `File.WriteAllText`, `File.WriteAllBytes`, `FileMode.Create` or `FileMode.Truncate`, which empty the file first
+- A new file is made with `FileMode.CreateNew`, so a file that has come since it was looked for is not emptied
+- A list that only grows (`log.txt`, `trash.txt` in the trash, the words added to the spell checker, the paste bin when added to) is appended to (`File.AppendAllText`): what is in it is not written again, so an interrupted write can only lose the line being added
+- Deleting in the file browser goes to the trash (`FileOperations.MoveToTrash`) unless the setting `deletetotrash` is off, and is always asked about first, in a box that a word typed by mistake cannot answer (`ChoiceBox.ConfirmGuarded`)
+- What only shows a file (a peek, a comparison) never writes it
+- `SafeWriteTests` reads the source and fails on the ways of writing that empty a file first
 
 ## Releases
 - The version is set in `DialogText.ApplicationVersion` and in `Blyant.csproj`: `Version` (the product version, `0.1.0`), `AssemblyVersion` and `FileVersion` (`0.1.0.0`). Change all four together

@@ -245,6 +245,7 @@ internal static class Init
         StartMenu.StartInFavorites = false;
         Projects.Directory = Projects.DefaultDirectory;
         Projects.DeleteToTrash = true;
+        Recovery.Enabled = true;
         ConsoleColors.Monochrome = false;
         SyntaxHighlighter.ColorFiles = true;
         Completions.Enabled = false;
@@ -264,6 +265,8 @@ internal static class Init
             e.Cancel = true;
             Tools.NoteCancelKey();
         };
+        // The terminal closed (or the computer shutting down): the text being edited is copied before Blyant stops
+        TextArea.WatchClose();
         // Set default buffer-size
         Log(DialogText.InitDimensions, true);
         WriteProgressBar(10); // progress

@@ -357,6 +357,19 @@ internal static partial class FileExplorer
                         _message = DialogText.TrashEmpty;
                     }
                 }
+                else if (name is "recovery" && _mode == BrowseMode.Edit)
+                {
+                    // The recovery copies of text that was not saved (in the data directory)
+                    if (Directory.Exists(Recovery.Directory) &&
+                        Directory.EnumerateFileSystemEntries(Recovery.Directory).Any())
+                    {
+                        ChangeDirectory(Recovery.Directory, null);
+                    }
+                    else
+                    {
+                        _message = DialogText.RecoveryEmpty;
+                    }
+                }
                 else if (name is "h" or "help")
                 {
                     Tools.WriteEditorHelp(Tools.HelpTopic.Files);
@@ -761,6 +774,8 @@ internal static partial class FileExplorer
         // The places of the browser are saved before the editor is opened, should Blyant not be closed as usual
         if (_browsing) RememberPanes();
         _file = file;
+        // Text of the file that was not saved when Blyant stopped: the user is asked what to do with it
+        var recovered = OfferRecovery(file);
         EventLog.Add(DialogText.LogFile + "Open: " + file.Path);
         AddToHistory(file.Path);
         try
@@ -771,9 +786,9 @@ internal static partial class FileExplorer
             (int Index, bool OtherLeft)? split = null;
             if (!_openAtFound && CaretOfFile(file.Path) is { } caret)
             {
-                cursorIndex = CaretPosition.IndexOf(_file?.Text ?? string.Empty, caret.Line, caret.Column);
+                cursorIndex = CaretPosition.IndexOf(recovered ?? _file?.Text ?? string.Empty, caret.Line, caret.Column);
                 // Closed in a split: opened split again
-                split = CaretPosition.SplitOf(caret.Split, _file?.Text ?? string.Empty);
+                split = CaretPosition.SplitOf(caret.Split, recovered ?? _file?.Text ?? string.Empty);
             }
 
             while (true)
@@ -781,8 +796,13 @@ internal static partial class FileExplorer
                 Tools.ClearScreen();
                 Actions.DrawEditFileMenu();
                 TextArea.NextSplit = split;
+                // The recovered text is opened as changes that are not saved yet
+                if (recovered != null) modified = true;
+                TextArea.NextRecovered = recovered != null;
                 var textArea = new TextArea(Console.CursorLeft, Console.CursorTop, Init.LineWidth - 1,
-                    Init.LineCount - 3, _file?.Text ?? string.Empty, cursorIndex, false, false, false, TextArea.SaveAsFile, modified);
+                    Init.LineCount - 3, recovered ?? _file?.Text ?? string.Empty, cursorIndex, false, false, false,
+                    TextArea.SaveAsFile, modified);
+                recovered = null;
                 textArea.ClearUndoRedoCache();
                 if (_file != null) file = _file; // Renamed in the editor
                 KeepCaret(file.Path, textArea);
@@ -824,6 +844,80 @@ internal static partial class FileExplorer
 
     // The path of the file edited last (it can have been renamed in the editor)
     private static string _lastEditedPath = string.Empty;
+
+    // A file is opened that has a recovery copy (text that was not saved when Blyant stopped, see Recovery): the
+    // recovered text can be opened, compared with the file, or given up. Returns the text to open, or null to open
+    // the file as it is (Esc keeps the copy, to decide later). Nothing is asked when the copy has the text of the
+    // file, or another Blyant that is running is editing it
+    private static string? OfferRecovery(TextFile file)
+    {
+        var copy = Recovery.Find(file.Path);
+        if (copy == null) return null;
+        if (Recovery.WrittenByOtherRunning(copy))
+        {
+            EventLog.Add(DialogText.LogFile + "Recovery copy: " + file.Path + " - kept (another Blyant is editing it)");
+            return null;
+        }
+
+        if (TextBuffer.Normalize(copy.Text) == TextBuffer.Normalize(file.Text))
+        {
+            Recovery.Delete(file.Path);
+            return null;
+        }
+
+        var name = System.IO.Path.GetFileName(file.Path);
+        var note = Lang.F("Written {0}.", copy.Written.ToLocalTime().ToString("yyyy-MM-dd HH:mm",
+            System.Globalization.CultureInfo.InvariantCulture));
+        try
+        {
+            if (File.Exists(file.Path) && File.GetLastWriteTimeUtc(file.Path) > copy.Written)
+            {
+                note += " " + Lang.T("The file was changed after the copy was made.");
+            }
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            // Only a note
+        }
+
+        while (true)
+        {
+            var choice = ChoiceBox.Pick(DialogText.CaptionsRecovery,
+                Lang.F("\"{0}\" has changes that were not saved.", Tools.TruncateString(name, 40, true)), note,
+                new[]
+                {
+                    Lang.T("Open the recovered text"), Lang.T("Show the differences"),
+                    Lang.T("Keep the file as it is"), Lang.T("Decide later")
+                },
+                new[] { "R", "D", "K", "Esc" }, 0, false);
+            switch (choice)
+            {
+                case 0:
+                    EventLog.Add(DialogText.LogFile + "Recovery copy opened: " + file.Path);
+                    return copy.Text;
+                case 1:
+                    Tools.HideCursor();
+                    DiffView.Show(file.Text, copy.Text, Lang.F("{0} (saved)", name), Lang.F("{0} (recovered)", name),
+                        System.IO.Path.GetDirectoryName(file.Path) ?? Recovery.Directory, false, string.Empty, out _);
+                    Tools.ClearScreen();
+                    ChoiceBox.Forget();
+                    break;
+                case 2:
+                    if (ChoiceBox.ConfirmGuarded(DialogText.CaptionsRecovery, Lang.T("Delete the recovered text?"),
+                            Lang.T("The file is opened as it is. This cannot be undone")))
+                    {
+                        Recovery.Delete(file.Path);
+                        EventLog.Add(DialogText.LogFile + "Recovery copy deleted: " + file.Path);
+                        return null;
+                    }
+
+                    break;
+                default:
+                    // Later: the copy stays, and is offered the next time
+                    return null;
+            }
+        }
+    }
 
     /// <summary>
     /// Give the file being edited another name in its directory (":rename" in the editor). The favorites, the
@@ -982,12 +1076,15 @@ internal static partial class FileExplorer
         try
         {
             _file = TextFile.Load(path);
+            var recovered = OfferRecovery(_file);
             EventLog.Add(DialogText.LogFile + "Open: " + _file.Path);
             Tools.ClearScreen();
             Actions.DrawEditFileMenu();
+            TextArea.NextRecovered = recovered != null;
+            var text = recovered ?? _file.Text;
             var textArea = new TextArea(Console.CursorLeft, Console.CursorTop, Init.LineWidth - 1,
-                Init.LineCount - 3, _file.Text, Snippets.IndexOfLine(_file.Text, line), false, false, false,
-                TextArea.SaveAsFile);
+                Init.LineCount - 3, text, Snippets.IndexOfLine(text, line), false, false, false,
+                TextArea.SaveAsFile, recovered != null);
             textArea.ClearUndoRedoCache();
             TextArea.TakeSideFileRequest();
         }
@@ -1130,7 +1227,8 @@ internal static partial class FileExplorer
 
         try
         {
-            File.WriteAllBytes(path, Array.Empty<byte>());
+            // Only a new file: one that has come since it was looked for is not emptied
+            new FileStream(path, FileMode.CreateNew).Dispose();
         }
         catch (Exception e)
         {

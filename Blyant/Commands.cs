@@ -47,7 +47,7 @@ internal static class Commands
     private static readonly Dictionary<CommandContext, Table> Tables = new()
     {
         [CommandContext.Files] = new Table(
-            "quit close exit home data help jump book peek diff cd new info mkdir rename copy duplicate move delete favorite favorites history hotlist hotadd bookmark refresh panes match path name find projects trash",
+            "quit close exit home data help jump book peek diff cd new info mkdir rename copy duplicate move delete favorite favorites history hotlist hotadd bookmark refresh panes match path name find projects trash recovery",
             "q h fav favs hist hot ju jmp proj pro"),
         [CommandContext.FilePicker] = new Table(
             "quit close home data help cd",

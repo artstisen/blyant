@@ -337,6 +337,7 @@ internal static class StartMenu
         Snippets,
         AutoComplete,
         Completions,
+        Recovery,
         Reset,
         EditSettings,
         Restart,
@@ -371,6 +372,7 @@ internal static class StartMenu
         settings.Add(Setting.Snippets);
         settings.Add(Setting.AutoComplete);
         settings.Add(Setting.Completions);
+        settings.Add(Setting.Recovery);
         // System
         settings.Add(Setting.Reset);
         settings.Add(Setting.EditSettings);
@@ -412,6 +414,7 @@ internal static class StartMenu
             Setting.Snippets => indent + Lang.T("Snippet editor (Enter: Open)"),
             Setting.AutoComplete => Check(Blyant.Completions.Enabled) + Lang.T("Complete words while typing"),
             Setting.Completions => indent + Lang.T("Completions editor (Enter: Open)"),
+            Setting.Recovery => Check(Blyant.Recovery.Enabled) + Lang.T("Recovery copies of unsaved text (:recovery)"),
             Setting.Info => indent + DialogText.FileInfo,
             Setting.EditSettings => indent + Lang.F("Edit {0}", FileIo.SettingsFileName),
             Setting.Restart => indent + DialogText.ConfigRestart,
@@ -441,7 +444,7 @@ internal static class StartMenu
                 or Setting.LogoAnimation or Setting.Corners => 1,
             Setting.LineNumbers or Setting.WordWrap or Setting.ScrollOff or Setting.Clipboard
                 or Setting.SyntaxColors or Setting.Spell or Setting.Snippets or Setting.AutoComplete
-                or Setting.Completions => 2,
+                or Setting.Completions or Setting.Recovery => 2,
             _ => 3
         };
     }
@@ -924,6 +927,9 @@ internal static class StartMenu
                 return;
             case Setting.DeleteToTrash:
                 Projects.DeleteToTrash = !Projects.DeleteToTrash;
+                break;
+            case Setting.Recovery:
+                Blyant.Recovery.Enabled = !Blyant.Recovery.Enabled;
                 break;
             case Setting.Monochrome:
                 ConsoleColors.Monochrome = !ConsoleColors.Monochrome;

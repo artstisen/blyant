@@ -76,6 +76,7 @@ The settings are on four pages. `j` `k` (and `gg` `G`) select a setting on the p
 - **Snippet editor**: Open the file of [snippets](Guide-to-editor.md#snippets), `snippets.txt`, in the editor. If there is no file yet, you are asked whether to make one, with two examples. Closing the editor returns to this page
 - **Complete words while typing**: In Insert mode, the word typed is looked up in the lists of completions, and `Tab` completes it (see [Completing words](Guide-to-editor.md#completing-words)). Off from the start; turning it on makes the file of completions, `completions.txt`, with the lists to start with (HTML, CSS, JavaScript, Markdown with bold and italic, and a few for all text); `:complete` in the editor changes it too. It is the setting `autocomplete`
 - **Completions editor**: Open the file of completions, `completions.txt`, in the editor. If there is no file yet, it is made with lists to start with. Closing the editor returns to this page
+- **Recovery copies of unsaved text**: While a file has changes that are not saved, a copy of the text is kept in `recovery` in the data directory, and offered when the file is opened again (see [Recovery copies](Guide-to-editor.md#recovery-copies)). On from the start. It is the setting `recovery`
 
 **System**
 
@@ -138,6 +139,7 @@ The browser starts in the projects folder (or your home directory, if there is n
 - `:match` With two panes: the other pane shows the directory of the pane with the focus (with the same file or directory selected). The focus stays where it is
 - `:cd path` Go to a directory. `:home` Go to the projects folder (or your home directory, if there is no projects folder yet)
 - `:trash` Go to the [trash](#the-trash), with what was deleted
+- `:recovery` Go to the [recovery copies](Guide-to-editor.md#recovery-copies) of text that was not saved
 - `:data` Go to the data directory itself, with the files Blyant keeps there: `settings.ini`, `snippets.txt` and `completions.txt` (the snippets and the completions of the editor), `favorites.txt`, `history.txt` and `hotlist.txt` (of the file browser), and `jump.txt` and `bookmarks.txt` (of the Jump menu)
 - `Tab` on the command line completes the command you are typing, and goes through the commands of the file browser when pressed again; `Up` and `Down` bring back the commands given in the file browser before
 - `?` Help
@@ -306,4 +308,4 @@ As the log can be read by anyone at the screen, commands are logged by name only
 The logo is drawn with a sweep when Blyant starts. Any key ends the sweep. Its speed is set with _Logo animation_ on the Layout page of the Configuration tab, where it can also be turned off.
 
 ## Directories
-Blyant keeps its settings and lists in the directory `data`: in the directory it is started from, if there is one there, else next to the program (and where the program directory cannot be written to, `Blyant/data` in the application data of the user). The data directory holds `settings.ini`, the lists of the file browser and the Jump menu, the snippets, the completions, the macros, the color schemes and the logos of your own, and the log (`log.txt`). Your projects are not kept there, but in the [projects folder](#projects).
+Blyant keeps its settings and lists in the directory `data`: in the directory it is started from, if there is one there, else next to the program (and where the program directory cannot be written to, `Blyant/data` in the application data of the user). The data directory holds `settings.ini`, the lists of the file browser and the Jump menu, the snippets, the completions, the macros, the color schemes and the logos of your own, the log (`log.txt`) and the recovery copies of text that was not saved (`recovery`). Your projects are not kept there, but in the [projects folder](#projects).

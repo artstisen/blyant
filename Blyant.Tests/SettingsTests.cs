@@ -134,6 +134,21 @@ backup=
     }
 
     [Fact]
+    public void Recovery_IsOnUnlessTurnedOff_AndSaved()
+    {
+        File.WriteAllText(SettingsFile, LegacySettings);
+        Assert.True(FileIo.LoadSettings());
+        Assert.True(Recovery.Enabled);
+        File.WriteAllText(SettingsFile, LegacySettings + "\nrecovery=false\n");
+        Assert.True(FileIo.LoadSettings());
+        Assert.False(Recovery.Enabled);
+        FileIo.SaveSettings();
+        Assert.Equal("false", FileIo.ParseSettings(File.ReadAllText(SettingsFile))["recovery"]);
+        Actions.ApplyDefaultSettings();
+        Assert.True(Recovery.Enabled);
+    }
+
+    [Fact]
     public void DeleteToTrash_IsOnUnlessTurnedOff_AndSaved()
     {
         File.WriteAllText(SettingsFile, LegacySettings);
@@ -232,7 +247,8 @@ backup=
         Assert.False(settings.ContainsKey("onlymode"));
         Assert.False(settings.ContainsKey("clipboardnotes"));
         Assert.False(settings.ContainsKey("stayloggedin"));
-        Assert.Equal(32, settings.Count);
+        Assert.Equal(33, settings.Count);
+        Assert.Equal("true", settings["recovery"]);
         Assert.Equal(Projects.DefaultDirectory, settings["projectsdir"]);
         Assert.Equal("true", settings["deletetotrash"]);
         Assert.Equal("fast", settings["logoanim"]);

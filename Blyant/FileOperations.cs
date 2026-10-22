@@ -26,10 +26,13 @@ internal static class FileOperations
 
     private const string CopySuffix = "-copy";
 
+    /// <summary>
+    /// True where names of files are the same in upper and lower case ("Notes.md" is "notes.md"): Windows, macOS
+    /// </summary>
+    internal static bool NamesIgnoreCase => OperatingSystem.IsWindows() || OperatingSystem.IsMacOS();
+
     private static StringComparison PathComparison =>
-        OperatingSystem.IsWindows() || OperatingSystem.IsMacOS()
-            ? StringComparison.OrdinalIgnoreCase
-            : StringComparison.Ordinal;
+        NamesIgnoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
 
     private static string Trimmed(string path)
     {

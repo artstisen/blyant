@@ -263,6 +263,9 @@ internal static class DialogText
     public static string TrashNotPossible => Lang.T("It cannot be moved to the trash");
     public static string FileItemTrashed => Lang.T("Moved to the trash: ");
     public static string TrashEmpty => Lang.T("The trash is empty");
+    // Recovery copies of text that was not saved
+    public static string CaptionsRecovery => Lang.T("Recovery");
+    public static string RecoveryEmpty => Lang.T("There are no recovery copies");
     public static string FileMarkedKeys => Lang.T("Space Mark | Y Duplicate | C Copy | M Move | P Fave | D Delete | Esc Unmark");
     // The keys of a box of choices (ChoiceBox)
     public static string ChoiceKeys => Lang.T("j/k Select | Enter Choose | Esc Cancel");

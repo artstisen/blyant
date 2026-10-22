@@ -133,11 +133,13 @@ internal static class SystemClipboard
             {
                 var existing = File.ReadAllText(path, Encoding.UTF8);
                 if (existing.Length > 0 && !existing.EndsWith('\n')) lines = Environment.NewLine + lines;
+                // Added to the end: what is in it is not written again, so it cannot be lost
                 File.AppendAllText(path, lines, new UTF8Encoding(false));
             }
             else
             {
-                File.WriteAllText(path, lines, new UTF8Encoding(false));
+                // Replaced safely: a write that is interrupted leaves the paste bin as it was
+                FileIo.WriteAllBytesSafe(path, new UTF8Encoding(false).GetBytes(lines));
             }
 
             return DialogText.Success;
@@ -178,7 +180,7 @@ internal static class SystemClipboard
         try
         {
             var path = PasteBinPath;
-            if (File.Exists(path)) File.WriteAllText(path, string.Empty);
+            if (File.Exists(path)) FileIo.WriteAllBytesSafe(path, []);
             return DialogText.Success;
         }
         catch (Exception e)

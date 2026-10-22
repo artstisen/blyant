@@ -277,6 +277,8 @@ internal static class FileIo
         _tempSettings += "browsepane=" + (FileExplorer.StartPane + 1) + '\n';
         // Two panes side by side in the file browser (false: one pane)
         _tempSettings += "browsedual=" + (FileExplorer.DualPane ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        // Recovery copies of text that is not saved, in the directory "recovery" (false: none are written)
+        _tempSettings += "recovery=" + (Recovery.Enabled ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // Complete words while typing in the editor (the lists are in completions.txt)
         _tempSettings += "autocomplete=" + (Completions.Enabled ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // Color Markdown, HTML, CSS, JavaScript and JSON files in the editor (the editor command :syntax turns
@@ -481,6 +483,8 @@ internal static class FileIo
         FileExplorer.StartPane = Get("browsepane").Trim() == "2" ? 1 : 0;
         // Two panes unless turned off
         FileExplorer.DualPane = Tools.TrimToLower(Get("browsedual")) != DialogText.BFalse;
+        // Recovery copies: on unless turned off
+        Recovery.Enabled = Tools.TrimToLower(Get("recovery")) != DialogText.BFalse;
         // Completing words while typing: off unless turned on
         Completions.Enabled = Tools.TrimToLower(Get("autocomplete")) == DialogText.BTrue;
 

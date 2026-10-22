@@ -23,6 +23,20 @@ Typed on the command line: press `:`, type the command and press `Enter`. `Tab` 
 
 `Esc` first leaves what you are in the middle of: Insert or Visual mode, a command that is half typed, or the highlighting of search matches. When there is nothing to leave, it closes the editor.
 
+### Recovery copies
+While a file has changes that are not saved, Blyant keeps a copy of the text, so it is not lost if Blyant is stopped: the terminal window closed, the computer turned off or out of power. The copy is written when you stop typing for 2 seconds, and at least every 30 seconds while you type on. When the terminal window is closed (or the computer is shut down or you log off), the last changes are copied before Blyant stops. The copy is removed when the text is saved, and when you close the editor and give up the changes, so after a normal session there are none.
+
+When you open a file that has a recovery copy, you are asked what to do with it:
+
+- `R` **Open the recovered text**: the editor opens with the text of the copy, as changes that are not saved yet. Look it over and save it with `:w`
+- `D` **Show the differences**: the file and the copy compared, with the changes highlighted (as `:diff`). `Esc` goes back to the question
+- `K` **Keep the file as it is**: the copy is deleted (you are asked first)
+- `Esc` **Decide later**: the file is opened as it is, and the copy is kept and offered the next time
+
+The question tells when the copy was written, and if the file was changed after that (by another program, or on another computer through a synced folder). Nothing is asked if the copy has the same text as the file (it is removed), or if another Blyant that is running is editing the file.
+
+The copies are kept in the directory `recovery` in the data directory, named after the file and a code made from its path (`chapter 1.md.3f2a9c1d.txt`). Each starts with a few lines telling which file it is a copy of and when it was written, then a line `---`, and then the text, so a copy can also be opened and read like any file. `:recovery` in the file browser goes there. Copies are made of the files opened from the file browser (and of the snippets, the completions and the notes of projects), not of the settings file. _Recovery copies of unsaved text_ on the Editor page of Configuration (setting `recovery`, on from the start) turns them off.
+
 ## Entering Insert mode
 - `i` / `a` Insert before/after the cursor
 - `I` / `A` Insert at the start/end of the line
