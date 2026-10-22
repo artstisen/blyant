@@ -2,11 +2,12 @@
 
 /// <summary>
 /// The log of what has happened since Blyant was started: startup, commands and file operations.
-/// It is kept in memory only (nothing is written to disk), and holds a limited number of lines: the oldest
-/// are removed when it is full.
+/// It is kept in memory, holding a limited number of lines (the oldest are removed when it is full), and is also
+/// written to the file log.txt in the data directory, with the date, so it can be read after Blyant is closed.
+/// When that file has grown large it is renamed log.old.txt at startup, and a new one is begun.
 ///
-/// The log can be read by anyone at the screen (":log"). For that reason the commands are logged by name only:
-/// search texts and other things typed after a command are left out.
+/// The log can be read by anyone at the screen (":log", and the file). For that reason the commands are logged by
+/// name only: search texts and other things typed after a command are left out, and so is the text of files.
 /// </summary>
 internal static class EventLog
 {
@@ -15,13 +16,34 @@ internal static class EventLog
     /// </summary>
     internal const int MaxLines = 1000;
 
+    /// <summary>
+    /// The file the log is written to, in the data directory
+    /// </summary>
+    internal const string FileName = "log.txt"; // English: the name of a file
+
+    /// <summary>
+    /// The earlier log, when the file had grown larger than MaxFileSize
+    /// </summary>
+    internal const string OldFileName = "log.old.txt"; // English: the name of a file
+
+    internal const long MaxFileSize = 1024 * 1024;
+
     private const int MaxLineLength = 400;
     private static readonly List<string> Lines = new();
     private static int _removed; // The number of lines removed to keep the log within its limit
 
+    // The file written to (null until the data directory is known), and the lines added before that
+    private static string? _filePath;
+    private static readonly List<string> Unwritten = new();
+
     internal static int Count => Lines.Count;
 
     internal static IReadOnlyList<string> All => Lines;
+
+    /// <summary>
+    /// The file the log is written to (null if none)
+    /// </summary>
+    internal static string? FilePath => _filePath;
 
     /// <summary>
     /// Add a line to the log (with the time)
@@ -30,11 +52,70 @@ internal static class EventLog
     {
         text = text.Replace('\r', ' ').Replace('\n', ' ');
         if (text.Length > MaxLineLength) text = text[..MaxLineLength] + "...";
-        Lines.Add("[" + DateTime.Now.ToString("HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture) + "] " + text);
+        var now = DateTime.Now;
+        var line = "[" + now.ToString("HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture) + "] " + text;
+        Write(now.ToString("yyyy-MM-dd ", System.Globalization.CultureInfo.InvariantCulture) + line);
+        Lines.Add(line);
         if (Lines.Count <= MaxLines) return;
         var excess = Lines.Count - MaxLines;
         Lines.RemoveRange(0, excess);
         _removed += excess;
+    }
+
+    /// <summary>
+    /// Write the log to a file from now on (log.txt in the data directory), beginning with the lines added
+    /// before. A file that has grown larger than MaxFileSize is kept as log.old.txt (replacing the one before),
+    /// and a new file is begun
+    /// </summary>
+    internal static void StartFile(string path)
+    {
+        path = Path.GetFullPath(path);
+        if (_filePath != null && FileOperations.SamePath(_filePath, path)) return;
+        _filePath = path;
+        try
+        {
+            if (File.Exists(path) && new FileInfo(path).Length > MaxFileSize)
+            {
+                File.Move(path, Path.Combine(Path.GetDirectoryName(path) ?? string.Empty, OldFileName), true);
+            }
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            // The log goes on in the file as it is
+        }
+
+        var earlier = new List<string>(Unwritten);
+        Unwritten.Clear();
+        foreach (var line in earlier) Write(line);
+    }
+
+    /// <summary>
+    /// Stop writing the log to a file (for tests)
+    /// </summary>
+    internal static void StopFile()
+    {
+        _filePath = null;
+        Unwritten.Clear();
+    }
+
+    // Add a line (with the date) to the file, or keep it until there is one
+    private static void Write(string line)
+    {
+        if (_filePath == null)
+        {
+            Unwritten.Add(line);
+            if (Unwritten.Count > MaxLines) Unwritten.RemoveAt(0);
+            return;
+        }
+
+        try
+        {
+            File.AppendAllText(_filePath, line + Environment.NewLine, new System.Text.UTF8Encoding(false));
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or NotSupportedException)
+        {
+            // The log is still kept in memory
+        }
     }
 
     /// <summary>

@@ -345,6 +345,18 @@ internal static partial class FileExplorer
                     // The data directory (with the settings, the snippets, the favorites ...)
                     ChangeDirectory(System.IO.Path.GetFullPath(FileIo.GetDataDirectoryName()), null);
                 }
+                else if (name is "trash" && _mode == BrowseMode.Edit)
+                {
+                    // What was deleted (in the projects folder). Deleting there is for good
+                    if (Directory.Exists(Projects.TrashDirectory))
+                    {
+                        ChangeDirectory(Projects.TrashDirectory, null);
+                    }
+                    else
+                    {
+                        _message = DialogText.TrashEmpty;
+                    }
+                }
                 else if (name is "h" or "help")
                 {
                     Tools.WriteEditorHelp(Tools.HelpTopic.Files);

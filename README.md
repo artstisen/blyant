@@ -48,7 +48,7 @@ The aim is to make an unbloated set of core tools. I've included functionality t
 The interface of Blyant is drawn with standard 128-character ASCII only (no extended ASCII or ANSI character sets). This makes Blyant compatible with all standard monospaced fonts, regardless of the platform. The files can contain any Unicode text.
 
 ## About Blyant
-When Blyant starts, the start page offers New file, Open file, New project and Open project. A project is a folder in the projects folder (by default `Blyant` in your Documents folder), and it is worked on in the file browser, where text files (.md, .txt, .html ...) are opened in the editor. The file browser also manages files and directories, and keeps your favorite files, the file history and a directory hotlist. Blyant can be set to start directly in the file browser.
+When Blyant starts, the start page offers New file, Open file, New project and Open project. A project is a folder in the projects folder (by default `Blyant-Projects` in your Documents folder), and it is worked on in the file browser, where text files (.md, .txt, .html ...) are opened in the editor. The file browser also manages files and directories, and keeps your favorite files, the file history and a directory hotlist. Blyant can be set to start directly in the file browser.
 
 Blyant is operated in the style of Vim: the editor has Normal, Insert and Visual modes, and the menus and lists use the same keys for moving around (`h` `j` `k` `l`), searching (`/`), help (`?`) and commands (`:`).
 

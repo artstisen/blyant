@@ -655,7 +655,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("C :copy", Lang.T("Copy: go to the directory, then S (Esc cancels)"), false));
             _shortcutList.Add(new Shortcut("M :move", Lang.T("Move: go to the directory, then S (Esc cancels)"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Two panes"), Lang.T("C and M go to the other pane: S copies to it"), false));
-            _shortcutList.Add(new Shortcut("D :delete", Lang.T("Delete (asks first, cannot be undone)"), false));
+            _shortcutList.Add(new Shortcut("D :delete", Lang.T("Delete to the trash (asks first)"), false));
             _shortcutList.Add(new Shortcut("P :fav", Lang.T("Add to/Remove from the favorites (*)"), false));
             _shortcutList.Add(new Shortcut("F :favorites", Lang.T("Show the favorites"), false));
             _shortcutList.Add(new Shortcut("O :history", Lang.T("Show the files opened before (file history)"), false));
@@ -673,6 +673,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":cd path", Lang.T("Go to a directory"), false));
             _shortcutList.Add(new Shortcut(":home", Lang.T("Go to the projects folder (or the home directory)"), false));
             _shortcutList.Add(new Shortcut(":data", Lang.T("Go to the data directory (settings, snippets ...)"), false));
+            _shortcutList.Add(new Shortcut(":trash", Lang.T("Go to the trash (what was deleted)"), false));
             _shortcutList.Add(new Shortcut(":", Lang.T("Command line (Tab completes the command)"), false));
             _shortcutList.Add(new Shortcut("  Up Down", Lang.T("Earlier commands of this page"), false));
             _shortcutList.Add(new Shortcut("Esc Q :q", Lang.T("Close the file browser"), false));

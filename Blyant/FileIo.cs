@@ -239,6 +239,8 @@ internal static class FileIo
                          '\n';
         // The directory the projects are made in (New project) and listed from (Open project)
         _tempSettings += "projectsdir=" + Projects.Directory + '\n';
+        // Deleting in the file browser moves to the trash (".trash" in the projects folder); false: deleted for good
+        _tempSettings += "deletetotrash=" + (Projects.DeleteToTrash ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // The clipboard: yanks to the system clipboard (OSC 52) and/or the paste bin, every yank ("all") or only
         // with "+ in front ("plus"), and the paste bin file
         _tempSettings += "osc52=" + (SystemClipboard.Osc52 ? DialogText.BTrue : DialogText.BFalse) + '\n';
@@ -422,6 +424,8 @@ internal static class FileIo
         StartMenu.Mode = StartMenu.ParseSetting(Get("startmode"));
         StartMenu.StartInFavorites = Tools.TrimToLower(Get("startfavorites")) == DialogText.BTrue;
         Projects.Directory = Projects.DirectoryFromSetting(Get("projectsdir")) ?? Projects.DefaultDirectory;
+        // Deleting to the trash: on unless turned off
+        Projects.DeleteToTrash = Tools.TrimToLower(Get("deletetotrash")) != DialogText.BFalse;
         // The clipboard (OSC 52 on unless turned off, the rest off unless turned on)
         SystemClipboard.Osc52 = Tools.TrimToLower(Get("osc52")) != DialogText.BFalse;
         SystemClipboard.PasteBin = Tools.TrimToLower(Get("pastebin")) == DialogText.BTrue;

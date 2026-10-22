@@ -20,7 +20,7 @@ Each choice has a number and a key, shown in front of it. The number selects the
 Move the selection with `j`/`k` (or the arrow keys) or the number, and press `Enter`. `?` shows the help, and `Q` (or `Esc`) exits Blyant after asking in a box on top of the page (`Y`/`N`, or `j`/`k` and `Enter`; `Esc` cancels).
 
 ### Projects
-A project is a folder with the files of a piece of writing in it: the chapters of a book, the parts of an article, notes and drafts. The projects are kept in the **projects folder**: by default the folder `Blyant` in your Documents folder (`Documents` in your home directory on macOS, and on Linux the documents folder of your desktop, `XDG_DOCUMENTS_DIR`, or else `~/Documents`). It is made when the first project is made. Another folder is set with _Projects folder_ on the General page of Configuration (saved as `projectsdir` in the settings file; `~/Writing` is `Writing` in your home directory). A folder in the settings file that is not a full path on the system Blyant runs on (`C:\Users\...` on Linux, when the settings file is shared between computers) is not used: the default folder is used instead.
+A project is a folder with the files of a piece of writing in it: the chapters of a book, the parts of an article, notes and drafts. The projects are kept in the **projects folder**: by default the folder `Blyant-Projects` in your Documents folder (`Documents` in your home directory on macOS, and on Linux the documents folder of your desktop, `XDG_DOCUMENTS_DIR`, or else `~/Documents`). It is made when the first project is made. Another folder is set with _Projects folder_ on the General page of Configuration (saved as `projectsdir` in the settings file; `~/Writing` is `Writing` in your home directory). A folder in the settings file that is not a full path on the system Blyant runs on (`C:\Users\...` on Linux, when the settings file is shared between computers) is not used: the default folder is used instead.
 
 A project can be made on Windows, macOS and Linux alike, and synced between them: its name may not have the characters `\ / : * ? " < > |` in it, and may not be the name of another project in other upper or lower case (`novel` when there is `Novel`).
 
@@ -52,6 +52,7 @@ The settings are on four pages. `j` `k` (and `gg` `G`) select a setting on the p
   - **Open the favorites list first** (shown when starting in the file browser): Start in the [favorites](#favorites) of the file browser. Closing the list shows the file browser. Saved as `startfavorites` in the settings file
   - The choice is saved as `startmode` (`select` or `editor`) in the settings file
 - **Projects folder**: Where the [projects](#projects) are kept. `Enter` opens the file browser to pick the folder: go to it and press `S`
+- **Delete to the trash**: Deleting in the file browser moves to the [trash](#the-trash) (on from the start). Off: deleted files cannot be recovered
 - **Language**: The language of the menus, help and messages. English and Deutsch (German) are built in; Dansk (Danish), Norsk bokmål (Norwegian), Svenska (Swedish), Español (Spanish), Français (French), Italiano (Italian), Polski (Polish), Nederlands (Dutch) and Suomi (Finnish) are language files in the folder `lang` next to Blyant (see [Language files](Guide-to-installation.md#language-files)). `Enter` shows the languages in a box to pick from; a language from a file shows how much of it is translated (`Polski (pl)  98%`), and `(lang)` after a built-in language means a file in a folder `lang` is used instead of it. Commands, keys and the names of the editor modes (NORMAL, INSERT, VISUAL ...) are English in all languages, so they can be talked about the same way everywhere. The guides, the settings file and the log are in English
 
 **Layout**
@@ -136,6 +137,7 @@ The browser starts in the projects folder (or your home directory, if there is n
 - `:path` and `:name` also put the path or name in the [string memory](Guide-to-editor.md#string-memory) of the editor, as the current string: `p` in the editor (or `CTRL+R` in Insert mode) puts it in the text. This works also when the clipboard and the paste bin are turned off
 - `:match` With two panes: the other pane shows the directory of the pane with the focus (with the same file or directory selected). The focus stays where it is
 - `:cd path` Go to a directory. `:home` Go to the projects folder (or your home directory, if there is no projects folder yet)
+- `:trash` Go to the [trash](#the-trash), with what was deleted
 - `:data` Go to the data directory itself, with the files Blyant keeps there: `settings.ini`, `snippets.txt` and `completions.txt` (the snippets and the completions of the editor), `favorites.txt`, `history.txt` and `hotlist.txt` (of the file browser), and `jump.txt` and `bookmarks.txt` (of the Jump menu)
 - `Tab` on the command line completes the command you are typing, and goes through the commands of the file browser when pressed again; `Up` and `Down` bring back the commands given in the file browser before
 - `?` Help
@@ -154,10 +156,10 @@ These work on the selected file or directory. Duplicate, copy, move, favorite an
 - `Y` or `:duplicate` Make a copy in the same directory (named `name-copy`)
 - `C` or `:copy` Copy to another directory
 - `M` or `:move` Move to another directory
-- `D` or `:delete` Delete. You are asked first, and for a directory you are told how many files and directories it contains
+- `D` or `:delete` Delete: move to the [trash](#the-trash) (or delete for good, when that is turned off). You are asked first, and for a directory you are told how many files and directories it contains
 - `Space` Mark (or unmark) the selected file or directory and go to the next. A marked one has a `+` in front of its name, and the number marked is shown at the bottom right of the pane. While some are marked, `Y` `C` `M` `P` and `D` work on all the marked ones instead of the selected one: they are duplicated, copied or moved to the directory you select, made favorites (or, if they all are favorites already, removed from the favorites), or deleted after one question that tells how many files and directories are deleted in all. The marks stay while the pane shows the same directory (also with a filter), and `Esc` clears them. If one of them fails, the operation stops there and the message tells which one; those not done stay marked. `X` (rename) and `I` (info) always work on the selected one
 
-Names (of a new file or directory, a new name for one, and the name of a favorites folder) are typed in a box on top of the list: `Enter` accepts, `Esc` cancels. Questions (delete, converting a file that is not UTF-8, and removing favorites) are asked in a box too: `Y` or `N` answers at once, or select with `j` `k` and press `Enter`. `Esc` cancels. When something cannot be undone, the question is highlighted as a warning and _No_ is selected first.
+Names (of a new file or directory, a new name for one, and the name of a favorites folder) are typed in a box on top of the list: `Enter` accepts, `Esc` cancels. Questions (delete, converting a file that is not UTF-8, and removing favorites) are asked in a box too: `Y` or `N` answers at once, or select with `j` `k` and press `Enter`. `Esc` cancels. When something cannot be undone, the question is highlighted as a warning and _No_ is selected first. The question before deleting takes no letters at all: select _Yes_ with the arrow key `Up` and press `Enter` (`Esc`, `Q` or `Enter` on _No_ cancels). That way text typed in the browser by mistake, meant for the editor, cannot answer it: in "today", `d` asks to delete, and `y` would have answered yes.
 
 A new name (of a file or a directory) follows the same rules on all platforms, so files can be copied between Windows, macOS and Linux: it cannot contain `\ / : * ? " < > |` or control characters, cannot end with a dot or a space, can be at most 255 characters long, and cannot be a name Windows keeps for devices (`CON`, `PRN`, `AUX`, `NUL`, `COM1`-`COM9`, `LPT1`-`LPT9`, also with an extension, as `con.txt`). If a name cannot be used, the message tells why, or that a file or directory with that name already exists.
 
@@ -165,11 +167,21 @@ For copy and move you select where to: after `C` or `M` the browser stays as it 
 
 Things to know:
 
-- **Deleted files cannot be recovered.** They are not moved to a recycle bin.
+- **Deleted files go to the trash** of Blyant (see below), not to the recycle bin of the system. With _Delete to the trash_ turned off, deleted files cannot be recovered.
 - Nothing is overwritten. An operation is refused if something with the same name is already in the target directory.
 - A directory cannot be copied or moved into itself.
 - What Blyant is using cannot be renamed, moved or deleted here: the data directory (and the directories it is in), `settings.ini`, the favorites list and the file history.
 - Hidden files are not shown in the browser, but they are included when a directory is copied, moved or deleted.
+
+### The trash
+What is deleted in the file browser is moved to the trash: the folder `.trash` in the projects folder (hidden from the list of projects, as its name starts with a dot). It is made when the first file is deleted. `:trash` goes there, and a file is restored by moving it back (`M`, or `X` to give it its old name).
+
+- Each file or directory gets the time it was deleted in front of its name: `2026-10-22 14.03.11 chapter 1.md`. So a file deleted twice is kept twice
+- The list `trash.txt` in the trash tells where each one was: its name in the trash, when it was deleted, and the folder it came from (separated by tab characters)
+- Deleting in the trash is for good, and so is deleting the trash itself, or a folder the trash is in (the projects folder). The question says so
+- If something cannot be moved to the trash (it cannot be written to, or the trash is on another drive and the copy fails), you are asked whether to delete it for good instead
+- The trash is not emptied by itself: delete what is in it when you no longer need it
+- _Delete to the trash_ on the General page of Configuration (setting `deletetotrash`) turns the trash off: files are then deleted for good
 
 ### Searching for files
 `/text` only narrows the list of the directory shown. To find files in the directories below it as well, or by the text in them, use the search:
@@ -279,14 +291,14 @@ The hotlist holds at most 100 directories. A directory that is gone is shown as 
 When a file is closed in the editor, the line and column of the cursor are kept: in the history, and in the favorites if the file is one. The next time the file is opened, the cursor is placed there, so you go on where you left off. The favorites are looked in first, as the history holds only the last 100 files. If the file has changed since and the line or column is no longer there, the cursor goes to the end of the line or of the text. A file opened from the results of a [search](#searching-for-files) is opened at the line found instead.
 
 ## The log
-The log lists what has happened since Blyant was started: the startup, commands, and the file operations of the file browser and the start page (new, open, rename, copy, move and delete, with the reason if one failed). It is shown from the System page of Configuration (_View log_), or with `:log`.
+The log lists what has happened since Blyant was started: the startup, commands, and the file operations of the file browser and the start page (new, open, rename, copy, move and delete, with the reason if one failed). It is shown from the System page of Configuration (_View log_), or with `:log`. A deletion tells whether it went to the trash, and where.
 
 - The log opens at the end, with the latest lines
 - `h` `l` Previous/Next page, `j` `k` One line, `gg` `G` First/Last
 - `/text` Only show the lines containing "text", for example `/failed` or `/file:`. `Esc` shows all again
 - `Esc` or `Q` Close the log
 
-The log is kept in memory only: nothing is written to disk, and it is empty when Blyant is started. It holds the latest 1000 lines.
+The log shown holds the latest 1000 lines since Blyant was started. It is also written to the file `log.txt` in the data directory, with the date in front of each line, so it can be read after Blyant is closed (`:data` in the file browser goes there). When `log.txt` has grown larger than 1 MB, it is renamed `log.old.txt` at startup (replacing the one before) and a new one is begun. Commands are logged by name only, and the text of your files is never logged.
 
 As the log can be read by anyone at the screen, commands are logged by name only (`:new ...`, `:s ...`): search texts and other text typed after a command are not in the log. Something typed on a command line that is not a command is logged as "(not a command)". File names and paths in the file browser are logged in full.
 
@@ -294,4 +306,4 @@ As the log can be read by anyone at the screen, commands are logged by name only
 The logo is drawn with a sweep when Blyant starts. Any key ends the sweep. Its speed is set with _Logo animation_ on the Layout page of the Configuration tab, where it can also be turned off.
 
 ## Directories
-Blyant keeps its settings and lists in the directory `data`: in the directory it is started from, if there is one there, else next to the program (and where the program directory cannot be written to, `Blyant/data` in the application data of the user). The data directory holds `settings.ini`, the lists of the file browser and the Jump menu, the snippets, the completions, the macros, the color schemes and the logos of your own. Your projects are not kept there, but in the [projects folder](#projects).
+Blyant keeps its settings and lists in the directory `data`: in the directory it is started from, if there is one there, else next to the program (and where the program directory cannot be written to, `Blyant/data` in the application data of the user). The data directory holds `settings.ini`, the lists of the file browser and the Jump menu, the snippets, the completions, the macros, the color schemes and the logos of your own, and the log (`log.txt`). Your projects are not kept there, but in the [projects folder](#projects).

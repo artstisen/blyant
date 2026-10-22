@@ -213,6 +213,7 @@ internal static class Actions
         StartMenu.Mode = StartMenu.StartMode.Select;
         StartMenu.StartInFavorites = false;
         Projects.Directory = Projects.DefaultDirectory;
+        Projects.DeleteToTrash = true;
         SystemClipboard.SetDefaults();
         // The dimensions follow the window (and are the default ones when it is not known, or smaller)
         Init.SetDefaultOutputDimensions();

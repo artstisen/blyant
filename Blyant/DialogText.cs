@@ -257,6 +257,15 @@ internal static class DialogText
     public static string DeleteDirectory => Lang.T("Delete directory");
     public static string DeleteNamed => Lang.T("Delete \"{0}\"?");
     public static string DeleteMarkedCaption => Lang.T("Delete files and directories");
+    // Deleting to the trash (a directory in the projects folder)
+    public static string TrashNamed => Lang.T("Move \"{0}\" to the trash?");
+    public static string TrashFileNote => Lang.T("It can be found again with :trash");
+    public static string TrashNotPossible => Lang.T("It cannot be moved to the trash");
+    public static string FileItemTrashed => Lang.T("Moved to the trash: ");
+    public static string TrashEmpty => Lang.T("The trash is empty");
+    // The keys of a box that asks before something is deleted: letters do nothing in it, so text typed by
+    // mistake cannot answer Yes
+    public static string GuardedChoiceKeys => Lang.T("Up/Down Select | Enter Choose | Esc Cancel");
     public static string FileMarkedKeys => Lang.T("Space Mark | Y Duplicate | C Copy | M Move | P Fave | D Delete | Esc Unmark");
     // The keys of a box of choices (ChoiceBox)
     public static string ChoiceKeys => Lang.T("j/k Select | Enter Choose | Esc Cancel");

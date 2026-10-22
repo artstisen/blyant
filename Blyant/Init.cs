@@ -244,6 +244,7 @@ internal static class Init
         StartMenu.Mode = StartMenu.StartMode.Select;
         StartMenu.StartInFavorites = false;
         Projects.Directory = Projects.DefaultDirectory;
+        Projects.DeleteToTrash = true;
         ConsoleColors.Monochrome = false;
         SyntaxHighlighter.ColorFiles = true;
         Completions.Enabled = false;
@@ -286,6 +287,9 @@ internal static class Init
             {
                 Log(DialogText.InitOk, true);
             }
+
+            // The log is written to log.txt in the data directory from now on (with what is logged so far)
+            EventLog.StartFile(Path.Combine(FileIo.GetDataDirectoryName(), EventLog.FileName));
         }
         WriteProgressBar(13); // progress
         Log(DialogText.InitLoadingSettings, true);

@@ -66,7 +66,7 @@ internal static partial class QuickGuide
         (Kind.Item, "Space", Lang.T("Mark/Unmark: Y C M P D work on the marked")),
         (Kind.Item, "C", Lang.T("Copy: go to the directory, then S (Esc cancels)")),
         (Kind.Item, "M", Lang.T("Move: go to the directory, then S (Esc cancels)")),
-        (Kind.Item, "D", Lang.T("Delete (asks first, cannot be undone)")),
+        (Kind.Item, "D", Lang.T("Delete to the trash (asks first)")),
         (Kind.Item, "V", Lang.T("Peek on/off: the file in the other pane, j/k the next")),
         (Kind.Text, "", ""),
         (Kind.Heading, "", Lang.T("Finding files again")),

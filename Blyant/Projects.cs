@@ -4,17 +4,37 @@ namespace Blyant;
 
 /// <summary>
 /// The projects: a project is a directory with the files of a piece of writing in it. The projects are kept in
-/// the projects directory (setting "projectsdir"; by default "Blyant" in the Documents folder of the user, or in
-/// the home directory where there is none). New project on the start page makes a directory there, and Open
+/// the projects directory (setting "projectsdir"; by default "Blyant-Projects" in the Documents folder of the user,
+/// or in the home directory where there is none). New project on the start page makes a directory there, and Open
 /// project lists the directories there; either opens the project in the file browser.
 /// This class does not touch the console, so it can be tested.
 /// </summary>
 internal static class Projects
 {
-    private const string DefaultName = "Blyant"; // English: the name of a directory
+    // Not "Blyant": that is the name a folder for the program gets, and the program and its data do not belong
+    // with the writing
+    private const string DefaultName = "Blyant-Projects"; // English: the name of a directory
 
     /// <summary>
-    /// The projects directory used when none is set: "Blyant" in the Documents folder (or the home directory)
+    /// The trash: a directory in the projects directory, hidden from the list of projects (its name starts with
+    /// a dot). What is deleted in the file browser is moved here when the setting "deletetotrash" is on
+    /// </summary>
+    internal const string TrashName = ".trash"; // English: the name of a directory
+
+    /// <summary>
+    /// The trash directory (it is made when the first file is moved to it)
+    /// </summary>
+    internal static string TrashDirectory => Path.GetFullPath(Path.Combine(Directory, TrashName));
+
+    /// <summary>
+    /// Deleting in the file browser moves to the trash (setting "deletetotrash", on unless turned off). Off: the
+    /// files are deleted at once and cannot be recovered
+    /// </summary>
+    internal static bool DeleteToTrash { get; set; } = true;
+
+    /// <summary>
+    /// The projects directory used when none is set: "Blyant-Projects" in the Documents folder (or the home
+    /// directory)
     /// </summary>
     internal static string DefaultDirectory
     {

@@ -9,6 +9,38 @@ public class EventLogTests
     }
 
     [Fact]
+    public void TheLog_IsWrittenToAFile_WithTheDate_IncludingWhatCameBefore()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "blyant_log_" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        try
+        {
+            EventLog.StopFile();
+            EventLog.Add("before the file");
+            var path = Path.Combine(directory, EventLog.FileName);
+            EventLog.StartFile(path);
+            EventLog.Add("after");
+            var lines = File.ReadAllLines(path);
+            Assert.Equal(2, lines.Length);
+            Assert.Matches(@"^\d{4}-\d\d-\d\d \[\d\d:\d\d:\d\d\] before the file$", lines[0]);
+            Assert.EndsWith("] after", lines[1]);
+            EventLog.StopFile();
+
+            // A large file is kept as log.old.txt, and a new one begun
+            File.WriteAllText(path, new string('x', (int)EventLog.MaxFileSize + 1));
+            EventLog.StartFile(path);
+            EventLog.Add("new");
+            Assert.True(File.Exists(Path.Combine(directory, EventLog.OldFileName)));
+            Assert.Single(File.ReadAllLines(path));
+        }
+        finally
+        {
+            EventLog.StopFile();
+            Directory.Delete(directory, true);
+        }
+    }
+
+    [Fact]
     public void Lines_HaveTheTime_AndAreKeptOnOneLine()
     {
         EventLog.Add("one\ntwo");

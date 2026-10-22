@@ -956,16 +956,20 @@ internal static partial class FileExplorer
     {
         var items = MarkedOrSelected();
         if (items.Count == 0 || AnyProtected(items)) return;
-        if (!ConfirmDelete(items)) return;
+        // To the trash, unless that is turned off, or it is the trash or what is in it (deleting there is for
+        // good), or a directory the trash is in
+        var trash = Projects.TrashDirectory;
+        var toTrash = Projects.DeleteToTrash && items.All(item => FileOperations.CanTrash(item.Path, trash));
+        if (!ConfirmDelete(items, toTrash)) return;
 
         string? failed = null;
         Item? failedItem = null;
         var done = 0;
+        var trashed = 0;
         var favoritesChanged = false;
         foreach (var item in items)
         {
-            var result = FileOperations.Delete(item.Path);
-            LogOperation(item.IsDirectory ? "Delete directory" : "Delete", item.Path, result);
+            var result = DeleteItem(item, toTrash, out var wasTrashed);
             if (result != DialogText.Success)
             {
                 failed = Failure(items, item, result);
@@ -974,16 +978,60 @@ internal static partial class FileExplorer
             }
 
             done++;
+            if (wasTrashed) trashed++;
             if (FileFavorites.PathDeleted(item.Path)) favoritesChanged = true;
         }
 
-        Finish(failed ?? DialogText.Success, failedItem?.Path,
-            items.Count == 1 ? DialogText.FileItemDeleted + items[0].Name : Lang.F("{0} deleted", done));
+        string message;
+        if (items.Count == 1)
+        {
+            message = (trashed == 1 ? DialogText.FileItemTrashed : DialogText.FileItemDeleted) + items[0].Name;
+        }
+        else
+        {
+            message = trashed == done ? Lang.F("{0} moved to the trash", done) : Lang.F("{0} deleted", done);
+        }
+
+        Finish(failed ?? DialogText.Success, failedItem?.Path, message);
         if (favoritesChanged) SaveFavorites();
     }
 
-    // Ask before deleting, in a box on top of the list, telling what is deleted
-    private static bool ConfirmDelete(List<Item> items)
+    // Delete one file or directory: to the trash, or for good. One that cannot be moved to the trash is only
+    // deleted for good if the user says so
+    private static string DeleteItem(Item item, bool toTrash, out bool trashed)
+    {
+        trashed = false;
+        var kind = item.IsDirectory ? "Delete directory" : "Delete";
+        if (toTrash)
+        {
+            var result = FileOperations.MoveToTrash(item.Path, Projects.TrashDirectory, out var trashedPath,
+                ShowProgress);
+            LogOperation(kind + " (to the trash)", item.Path + (trashedPath.Length > 0 ? " -> " + trashedPath : ""),
+                result);
+            if (result == DialogText.Success)
+            {
+                trashed = true;
+                return result;
+            }
+
+            if (result == DialogText.FileCanceled || result == DialogText.FileNotFound) return result;
+            Draw(true);
+            if (!ChoiceBox.ConfirmGuarded(item.IsDirectory ? DialogText.DeleteDirectory : DialogText.DeleteFile,
+                    Lang.F("\"{0}\" could not be moved to the trash. Delete it for good?",
+                        Tools.TruncateString(item.Name, 40, true)), result))
+            {
+                return result;
+            }
+        }
+
+        var deleted = FileOperations.Delete(item.Path);
+        LogOperation(kind, item.Path, deleted);
+        return deleted;
+    }
+
+    // Ask before deleting, in a box on top of the list, telling what is deleted and whether it goes to the trash.
+    // Letters do nothing in the box: text typed by mistake cannot answer it
+    private static bool ConfirmDelete(List<Item> items, bool toTrash)
     {
         if (items.Count == 1)
         {
@@ -992,18 +1040,30 @@ internal static partial class FileExplorer
             if (item.IsDirectory)
             {
                 var (files, directories) = FileOperations.Count(item.Path);
-                note = files + directories == 0
-                    ? DialogText.DeleteEmptyDirectoryNote
-                    : Lang.F("With all its content: {0} files and {1} directories. They cannot be recovered", files,
-                        directories);
+                if (files + directories == 0)
+                {
+                    note = DialogText.DeleteEmptyDirectoryNote;
+                }
+                else if (toTrash)
+                {
+                    note = Lang.F("With all its content: {0} files and {1} directories", files, directories);
+                }
+                else
+                {
+                    note = Lang.F("With all its content: {0} files and {1} directories. They cannot be recovered",
+                        files, directories);
+                }
+
+                if (toTrash) note += ". " + DialogText.TrashFileNote;
             }
             else
             {
-                note = DialogText.DeleteFileNote;
+                note = toTrash ? DialogText.TrashFileNote : DialogText.DeleteFileNote;
             }
 
-            return ChoiceBox.Confirm(item.IsDirectory ? DialogText.DeleteDirectory : DialogText.DeleteFile,
-                DialogText.DeleteNamed.Replace("{0}", Tools.TruncateString(item.Name, 40, true)), note, true);
+            var name = Tools.TruncateString(item.Name, 40, true);
+            return ChoiceBox.ConfirmGuarded(item.IsDirectory ? DialogText.DeleteDirectory : DialogText.DeleteFile,
+                (toTrash ? DialogText.TrashNamed : DialogText.DeleteNamed).Replace("{0}", name), note);
         }
 
         // All the files and directories, with the content of the directories
@@ -1021,9 +1081,17 @@ internal static partial class FileExplorer
             allDirectories += directories + 1;
         }
 
+        if (toTrash)
+        {
+            return ChoiceBox.ConfirmGuarded(DialogText.DeleteMarkedCaption,
+                Lang.F("Move the {0} marked files and directories to the trash?", items.Count),
+                Lang.F("In all {0} files and {1} directories.", allFiles, allDirectories) + " " +
+                DialogText.TrashFileNote);
+        }
+
         var note2 = Lang.F("In all {0} files and {1} directories. They cannot be recovered.", allFiles, allDirectories);
-        return ChoiceBox.Confirm(DialogText.DeleteMarkedCaption,
-            Lang.F("Delete the {0} marked files and directories?", items.Count), note2, true);
+        return ChoiceBox.ConfirmGuarded(DialogText.DeleteMarkedCaption,
+            Lang.F("Delete the {0} marked files and directories?", items.Count), note2);
     }
 
     // Show information about the selected file or directory in a box on top of the list, until a key is pressed

@@ -122,14 +122,30 @@ backup=
         Assert.Equal(folder, Projects.Directory);
         FileIo.SaveSettings();
         Assert.Equal(folder, FileIo.ParseSettings(File.ReadAllText(SettingsFile))["projectsdir"]);
-        // Not set: the folder Blyant in the Documents folder
+        // Not set: the folder Blyant-Projects in the Documents folder (not "Blyant", the name of a folder for
+        // the program)
         File.WriteAllText(SettingsFile, LegacySettings);
         Assert.True(FileIo.LoadSettings());
         Assert.Equal(Projects.DefaultDirectory, Projects.Directory);
-        Assert.Equal("Blyant", Path.GetFileName(Projects.DefaultDirectory));
+        Assert.Equal("Blyant-Projects", Path.GetFileName(Projects.DefaultDirectory));
         Projects.Directory = folder;
         Actions.ApplyDefaultSettings();
         Assert.Equal(Projects.DefaultDirectory, Projects.Directory);
+    }
+
+    [Fact]
+    public void DeleteToTrash_IsOnUnlessTurnedOff_AndSaved()
+    {
+        File.WriteAllText(SettingsFile, LegacySettings);
+        Assert.True(FileIo.LoadSettings());
+        Assert.True(Projects.DeleteToTrash);
+        File.WriteAllText(SettingsFile, LegacySettings + "\ndeletetotrash=false\n");
+        Assert.True(FileIo.LoadSettings());
+        Assert.False(Projects.DeleteToTrash);
+        FileIo.SaveSettings();
+        Assert.Equal("false", FileIo.ParseSettings(File.ReadAllText(SettingsFile))["deletetotrash"]);
+        Actions.ApplyDefaultSettings();
+        Assert.True(Projects.DeleteToTrash);
     }
 
     [Theory]
@@ -216,8 +232,9 @@ backup=
         Assert.False(settings.ContainsKey("onlymode"));
         Assert.False(settings.ContainsKey("clipboardnotes"));
         Assert.False(settings.ContainsKey("stayloggedin"));
-        Assert.Equal(31, settings.Count);
+        Assert.Equal(32, settings.Count);
         Assert.Equal(Projects.DefaultDirectory, settings["projectsdir"]);
+        Assert.Equal("true", settings["deletetotrash"]);
         Assert.Equal("fast", settings["logoanim"]);
         Assert.Equal("true", settings["wrap"]);
         Assert.Equal("file", settings["snipsort"]);

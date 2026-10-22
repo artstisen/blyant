@@ -319,6 +319,7 @@ internal static class StartMenu
         StartEditor,
         StartFavorites, // Shown below StartEditor when it is chosen
         ProjectsDirectory,
+        DeleteToTrash,
         Monochrome,
         Language,
         ColorScheme,
@@ -350,6 +351,7 @@ internal static class StartMenu
         var settings = new List<Setting> { Setting.StartSelect, Setting.StartEditor };
         if (Mode == StartMode.Editor) settings.Add(Setting.StartFavorites);
         settings.Add(Setting.ProjectsDirectory);
+        settings.Add(Setting.DeleteToTrash);
         settings.Add(Setting.Language);
         // Layout
         settings.Add(Setting.AutoSize);
@@ -389,6 +391,7 @@ internal static class StartMenu
             Setting.StartEditor => Check(Mode == StartMode.Editor) + DialogText.StartConfigEditor,
             Setting.StartFavorites => indent + Check(StartInFavorites) + Lang.T("Open the favorites list first"),
             Setting.ProjectsDirectory => indent + Lang.F("Projects folder: {0} (Enter: Change)", Projects.Directory),
+            Setting.DeleteToTrash => Check(Projects.DeleteToTrash) + Lang.T("Delete to the trash (:trash in the file browser)"),
             Setting.Monochrome => Check(ConsoleColors.Monochrome) + DialogText.ConfigMonochrome,
             Setting.Language => indent + DialogText.ConfigLanguage + Lang.CurrentName,
             Setting.ColorScheme => indent + Lang.F("Color scheme: {0} (Enter: Select/Edit)",
@@ -433,7 +436,7 @@ internal static class StartMenu
         return setting switch
         {
             Setting.StartSelect or Setting.StartEditor or Setting.StartFavorites or Setting.ProjectsDirectory
-                or Setting.Language => 0,
+                or Setting.DeleteToTrash or Setting.Language => 0,
             Setting.AutoSize or Setting.Size or Setting.Monochrome or Setting.ColorScheme or Setting.Logo
                 or Setting.LogoAnimation or Setting.Corners => 1,
             Setting.LineNumbers or Setting.WordWrap or Setting.ScrollOff or Setting.Clipboard
@@ -919,6 +922,9 @@ internal static class StartMenu
                 // Saves the settings itself
                 PickProjectsDirectory();
                 return;
+            case Setting.DeleteToTrash:
+                Projects.DeleteToTrash = !Projects.DeleteToTrash;
+                break;
             case Setting.Monochrome:
                 ConsoleColors.Monochrome = !ConsoleColors.Monochrome;
                 break;

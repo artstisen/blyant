@@ -211,6 +211,49 @@ public class FileManagementTests : IDisposable
         Assert.Equal(DialogText.FileNotFound, FileOperations.Delete(file));
     }
 
+    [Fact]
+    public void MoveToTrash_KeepsFilesAndDirectories_AndWhereTheyWere()
+    {
+        var trash = In("projects", ".trash");
+        var file = MakeFile("text", "projects", "novel", "chapter 1.md");
+        MakeFile("1", "projects", "novel", "notes", "one.md");
+        Assert.Equal(DialogText.Success, FileOperations.MoveToTrash(file, trash, out var trashedFile));
+        Assert.False(File.Exists(file));
+        Assert.Equal("text", File.ReadAllText(trashedFile));
+        Assert.Equal(trash, Path.GetDirectoryName(trashedFile));
+        Assert.Matches(@"^\d{4}-\d\d-\d\d \d\d\.\d\d\.\d\d chapter 1\.md$", Path.GetFileName(trashedFile));
+        // The same name again: a name of its own
+        MakeFile("again", "projects", "novel", "chapter 1.md");
+        Assert.Equal(DialogText.Success, FileOperations.MoveToTrash(file, trash, out var again));
+        Assert.NotEqual(trashedFile, again);
+        Assert.Equal("again", File.ReadAllText(again));
+        // A directory, with its content
+        Assert.Equal(DialogText.Success, FileOperations.MoveToTrash(In("projects", "novel", "notes"), trash,
+            out var trashedDirectory));
+        Assert.Equal("1", File.ReadAllText(Path.Combine(trashedDirectory, "one.md")));
+        // The list tells where each was
+        var list = File.ReadAllText(Path.Combine(trash, FileOperations.TrashListName));
+        Assert.StartsWith("# ", list);
+        Assert.Contains(Path.GetFileName(trashedFile) + "\t", list);
+        Assert.Contains("\t" + file + "\n", list);
+        Assert.Contains("\t" + In("projects", "novel", "notes") + "\n", list);
+        Assert.Equal(DialogText.FileNotFound, FileOperations.MoveToTrash(file, trash, out _));
+    }
+
+    [Fact]
+    public void MoveToTrash_IsRefused_ForTheTrashAndWhatHoldsIt()
+    {
+        var trash = In("projects", ".trash");
+        var inTrash = MakeFile("x", "projects", ".trash", "old.md");
+        Assert.False(FileOperations.CanTrash(trash, trash));
+        Assert.False(FileOperations.CanTrash(inTrash, trash));
+        Assert.False(FileOperations.CanTrash(In("projects"), trash));
+        Assert.True(FileOperations.CanTrash(MakeFile("y", "projects", "a.md"), trash));
+        Assert.Equal(DialogText.TrashNotPossible, FileOperations.MoveToTrash(inTrash, trash, out _));
+        Assert.Equal(DialogText.TrashNotPossible, FileOperations.MoveToTrash(In("projects"), trash, out _));
+        Assert.True(File.Exists(inTrash));
+    }
+
     #endregion
 
     #region Saving

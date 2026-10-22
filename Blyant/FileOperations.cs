@@ -3,7 +3,8 @@
 /// <summary>
 /// The file management of the file browser: creating directories, and renaming, copying, moving and deleting
 /// files and directories. The methods return DialogText.Success or an error message, and never touch the console.
-/// Nothing is overwritten: an operation is refused when the target exists. Deleted files cannot be recovered.
+/// Nothing is overwritten: an operation is refused when the target exists. Files moved to the trash can be found
+/// again there; deleted files cannot be recovered.
 /// </summary>
 internal static class FileOperations
 {
@@ -397,6 +398,100 @@ internal static class FileOperations
         const int notSameDevice = unchecked((int)0x80070011);
         return error.HResult == notSameDevice || !string.Equals(Path.GetPathRoot(Path.GetFullPath(source)),
             Path.GetPathRoot(Path.GetFullPath(targetDirectory)), StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// The list in the trash of what was moved there: one line for each, with its name in the trash, when it was
+    /// deleted and where it was
+    /// </summary>
+    internal const string TrashListName = "trash.txt"; // English: the name of a file
+
+    /// <summary>
+    /// True if a file or directory can be moved to the trash: not the trash itself, something in it (deleting
+    /// there is for good), or a directory the trash is in
+    /// </summary>
+    internal static bool CanTrash(string path, string trashDirectory)
+    {
+        return !SamePath(path, trashDirectory) && !IsInside(path, trashDirectory) && !IsInside(trashDirectory, path);
+    }
+
+    /// <summary>
+    /// Move a file or directory to the trash, under a name of its own there that starts with the time
+    /// ("2026-10-22 14.03.11 chapter 1.md"), and add where it was to the list in the trash. The trash is made if
+    /// it is not there
+    /// </summary>
+    /// <param name="path">The file or directory</param>
+    /// <param name="trashDirectory">The trash</param>
+    /// <param name="trashedPath">Where it is in the trash</param>
+    /// <param name="progress">Called with the name of each file when the files have to be copied (the trash is
+    /// on another drive). Returns false to cancel</param>
+    internal static string MoveToTrash(string path, string trashDirectory, out string trashedPath,
+        Func<string, bool>? progress = null)
+    {
+        trashedPath = string.Empty;
+        var isDirectory = Directory.Exists(path) && !File.Exists(path);
+        if (!isDirectory && !File.Exists(path)) return DialogText.FileNotFound;
+        if (!CanTrash(path, trashDirectory)) return DialogText.TrashNotPossible;
+        var deleted = DateTime.Now;
+        var name = deleted.ToString("yyyy-MM-dd HH.mm.ss ", System.Globalization.CultureInfo.InvariantCulture) +
+                   Path.GetFileName(Trimmed(path));
+        try
+        {
+            Directory.CreateDirectory(trashDirectory);
+            var target = UniquePath(trashDirectory, name);
+            if (!isDirectory)
+            {
+                // (to another drive the file is copied, and the original removed)
+                File.Move(path, target, false);
+            }
+            else
+            {
+                try
+                {
+                    Directory.Move(path, target);
+                }
+                catch (IOException e) when (!IsLink(path) && !Directory.Exists(target) &&
+                                            IsOtherDrive(e, path, trashDirectory))
+                {
+                    // As when it is moved to another drive: the original is removed when all of it is copied
+                    if (!CopyDirectory(path, target, progress))
+                    {
+                        Directory.Delete(target, true);
+                        return DialogText.FileCanceled;
+                    }
+
+                    Directory.Delete(path, true);
+                }
+            }
+
+            trashedPath = target;
+        }
+        catch (Exception e)
+        {
+            return e.Message;
+        }
+
+        try
+        {
+            // LF on all systems, as the files of projects. The list is only for finding where it was
+            var list = Path.Combine(trashDirectory, TrashListName);
+            var line = Path.GetFileName(trashedPath) + "\t" +
+                       deleted.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture) +
+                       "\t" + Path.GetFullPath(path) + "\n";
+            if (!File.Exists(list))
+            {
+                // English: the list is read by people, in any language
+                line = "# Blyant: what was moved to the trash (name in the trash, when, where it was)\n" + line;
+            }
+
+            File.AppendAllText(list, line, new System.Text.UTF8Encoding(false));
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            // It is in the trash: the list is only a help to find where it came from
+        }
+
+        return DialogText.Success;
     }
 
     /// <summary>
