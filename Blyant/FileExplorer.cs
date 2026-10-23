@@ -154,6 +154,40 @@ internal static partial class FileExplorer
 
     private static string? Browse(BrowseMode mode, string caption)
     {
+        // Opened from a browser that is open (a folder picked from the list of projects, opened from the browser
+        // or the editor): that browser is as it was when this one is closed
+        if (_browseDepth > 0)
+        {
+            var saved = (_mode, _caption, _pending, _picked, _message, _active, _browsing, _peeking);
+            _browseDepth++;
+            _peeking = false;
+            try
+            {
+                return BrowseOnce(mode, caption);
+            }
+            finally
+            {
+                _browseDepth--;
+                (_mode, _caption, _pending, _picked, _message, _active, _browsing, _peeking) = saved;
+            }
+        }
+
+        _browseDepth++;
+        try
+        {
+            return BrowseOnce(mode, caption);
+        }
+        finally
+        {
+            _browseDepth--;
+        }
+    }
+
+    // The browsers open (one inside another: Browse)
+    private static int _browseDepth;
+
+    private static string? BrowseOnce(BrowseMode mode, string caption)
+    {
         _pending = null;
         _mode = mode;
         _caption = caption;
@@ -345,12 +379,32 @@ internal static partial class FileExplorer
                     // The data directory (with the settings, the snippets, the favorites ...)
                     ChangeDirectory(System.IO.Path.GetFullPath(FileIo.GetDataDirectoryName()), null);
                 }
+                else if (name is "project" && _mode == BrowseMode.Edit)
+                {
+                    // ":project add": the directory shown is added to the projects
+                    var argument = command!.Length > name.Length ? command[name.Length..].Trim() : string.Empty;
+                    if (!argument.Equals("add", StringComparison.OrdinalIgnoreCase))
+                    {
+                        _message = Lang.T(":project add  adds the directory shown to the projects");
+                    }
+                    else if (ActivePane.Directory.Length == 0)
+                    {
+                        _message = DialogText.DirectoryNotFound;
+                    }
+                    else if (ProjectsBox.AddFolder(ActivePane.Directory) != null)
+                    {
+                        _message = Lang.F("Added to the projects: {0}", System.IO.Path.GetFileName(
+                            System.IO.Path.TrimEndingDirectorySeparator(ActivePane.Directory)));
+                    }
+
+                    Draw(true);
+                }
                 else if (name is "trash" && _mode == BrowseMode.Edit)
                 {
-                    // What was deleted (in the projects folder). Deleting there is for good
-                    if (Directory.Exists(Projects.TrashDirectory))
+                    // What was deleted (in the data directory). Deleting there is for good
+                    if (Directory.Exists(FileOperations.TrashDirectory))
                     {
-                        ChangeDirectory(Projects.TrashDirectory, null);
+                        ChangeDirectory(FileOperations.TrashDirectory, null);
                     }
                     else
                     {
@@ -588,11 +642,11 @@ internal static partial class FileExplorer
         }
     }
 
-    // Where the browser starts when it has no directory of its own (":home"): the projects directory if it is
-    // there, else the home directory of the user
+    // Where the browser starts when it has no directory of its own (":home"): the projects folder if one is set
+    // and there, else the home directory of the user
     private static string HomeDirectory()
     {
-        if (Directory.Exists(Projects.Directory)) return System.IO.Path.GetFullPath(Projects.Directory);
+        if (Projects.HasFolder && Directory.Exists(Projects.Directory)) return System.IO.Path.GetFullPath(Projects.Directory);
         var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         return home.Length > 0 && Directory.Exists(home) ? home : System.IO.Path.GetFullPath(FileIo.GetDataDirectoryName());
     }

@@ -67,7 +67,8 @@ backup=
         Init.AutoSize = true;
         Logo.Animation = Logo.AnimationSpeed.Fast;
         AsciiStyles.ResetAsciiStyle();
-        Projects.Directory = Projects.DefaultDirectory;
+        Projects.Directory = string.Empty;
+        Projects.AskEachTime = false;
         Directory.SetCurrentDirectory(_originalDirectory);
         Directory.Delete(_workDirectory, true);
     }
@@ -122,15 +123,33 @@ backup=
         Assert.Equal(folder, Projects.Directory);
         FileIo.SaveSettings();
         Assert.Equal(folder, FileIo.ParseSettings(File.ReadAllText(SettingsFile))["projectsdir"]);
-        // Not set: the folder Blyant-Projects in the Documents folder (not "Blyant", the name of a folder for
-        // the program)
+        // Not set: none until the user decides (and saved as none, so it is still not set the next time)
         File.WriteAllText(SettingsFile, LegacySettings);
         Assert.True(FileIo.LoadSettings());
-        Assert.Equal(Projects.DefaultDirectory, Projects.Directory);
-        Assert.Equal("Blyant-Projects", Path.GetFileName(Projects.DefaultDirectory));
+        Assert.False(Projects.HasFolder);
+        Assert.False(Projects.IsDecided);
+        FileIo.SaveSettings();
+        Assert.Equal(string.Empty, FileIo.ParseSettings(File.ReadAllText(SettingsFile))["projectsdir"]);
         Projects.Directory = folder;
         Actions.ApplyDefaultSettings();
-        Assert.Equal(Projects.DefaultDirectory, Projects.Directory);
+        Assert.False(Projects.HasFolder);
+    }
+
+    [Fact]
+    public void NoProjectsFolder_AskEachTime_IsSaved()
+    {
+        File.WriteAllText(SettingsFile, LegacySettings + "\nprojectsdir=\nprojectsask=true\n");
+        Assert.True(FileIo.LoadSettings());
+        Assert.True(Projects.AskEachTime);
+        Assert.True(Projects.IsDecided);
+        FileIo.SaveSettings();
+        Assert.Equal("true", FileIo.ParseSettings(File.ReadAllText(SettingsFile))["projectsask"]);
+        // A projects folder set: it is used, not asked
+        File.WriteAllText(SettingsFile, LegacySettings + "\nprojectsdir=" + _workDirectory + "\nprojectsask=true\n");
+        Assert.True(FileIo.LoadSettings());
+        Assert.False(Projects.AskEachTime);
+        Actions.ApplyDefaultSettings();
+        Assert.False(Projects.IsDecided);
     }
 
     [Fact]
@@ -153,14 +172,14 @@ backup=
     {
         File.WriteAllText(SettingsFile, LegacySettings);
         Assert.True(FileIo.LoadSettings());
-        Assert.True(Projects.DeleteToTrash);
+        Assert.True(FileOperations.DeleteToTrash);
         File.WriteAllText(SettingsFile, LegacySettings + "\ndeletetotrash=false\n");
         Assert.True(FileIo.LoadSettings());
-        Assert.False(Projects.DeleteToTrash);
+        Assert.False(FileOperations.DeleteToTrash);
         FileIo.SaveSettings();
         Assert.Equal("false", FileIo.ParseSettings(File.ReadAllText(SettingsFile))["deletetotrash"]);
         Actions.ApplyDefaultSettings();
-        Assert.True(Projects.DeleteToTrash);
+        Assert.True(FileOperations.DeleteToTrash);
     }
 
     [Theory]
@@ -247,9 +266,10 @@ backup=
         Assert.False(settings.ContainsKey("onlymode"));
         Assert.False(settings.ContainsKey("clipboardnotes"));
         Assert.False(settings.ContainsKey("stayloggedin"));
-        Assert.Equal(33, settings.Count);
+        Assert.Equal(34, settings.Count);
+        Assert.Equal("false", settings["projectsask"]);
         Assert.Equal("true", settings["recovery"]);
-        Assert.Equal(Projects.DefaultDirectory, settings["projectsdir"]);
+        Assert.Equal(string.Empty, settings["projectsdir"]);
         Assert.Equal("true", settings["deletetotrash"]);
         Assert.Equal("fast", settings["logoanim"]);
         Assert.Equal("true", settings["wrap"]);

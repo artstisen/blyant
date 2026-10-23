@@ -212,8 +212,9 @@ internal static class Actions
         Logo.Animation = Logo.AnimationSpeed.Fast;
         StartMenu.Mode = StartMenu.StartMode.Select;
         StartMenu.StartInFavorites = false;
-        Projects.Directory = Projects.DefaultDirectory;
-        Projects.DeleteToTrash = true;
+        Projects.Directory = string.Empty;
+        Projects.AskEachTime = false;
+        FileOperations.DeleteToTrash = true;
         Recovery.Enabled = true;
         SystemClipboard.SetDefaults();
         // The dimensions follow the window (and are the default ones when it is not known, or smaller)

@@ -1,25 +1,42 @@
 ﻿namespace Blyant.Tests;
 
 /// <summary>
-/// The projects (folders in the projects folder), the name of a new file (Markdown without an extension), and
-/// ":projects" in the editor
+/// The projects (folders in the projects folder, and folders added from anywhere), the name of a new file
+/// (Markdown without an extension), and ":projects" in the editor
 /// </summary>
 [Collection("Static state")]
 public class ProjectsTests : IDisposable
 {
     private readonly string _directory = Path.Combine(Path.GetTempPath(), "blyant-projects-" + Guid.NewGuid().ToString("N"));
     private readonly string _saved = Projects.Directory;
+    private readonly bool _savedAsk = Projects.AskEachTime;
 
     public ProjectsTests()
     {
         Projects.Directory = Path.Combine(_directory, "Projects");
+        Projects.AskEachTime = false;
+        Projects.ListPathOverride = Path.Combine(_directory, "data", Projects.ListFileName);
     }
 
     public void Dispose()
     {
         Projects.Directory = _saved;
+        Projects.AskEachTime = _savedAsk;
+        Projects.ListPathOverride = null;
         if (Directory.Exists(_directory)) Directory.Delete(_directory, true);
     }
+
+    private string In(params string[] parts) => Path.Combine(new[] { _directory }.Concat(parts).ToArray());
+
+    // A project made in the projects folder
+    private static string Make(string name)
+    {
+        Assert.Equal(DialogText.Success, Projects.Create(Projects.Directory, name, out var path));
+        return path;
+    }
+
+    private static List<string> NamesOf(IEnumerable<Projects.Project> projects) =>
+        projects.Select(project => project.Name).ToList();
 
     [Theory]
     [InlineData("chapter", "chapter.md")]
@@ -38,14 +55,28 @@ public class ProjectsTests : IDisposable
     [Fact]
     public void AProject_IsMadeInTheProjectsFolder_WhichIsMadeToo()
     {
-        Assert.Empty(Projects.Names());
-        Assert.Equal(DialogText.Success, Projects.Create(" Novel ", out var path));
+        Assert.Empty(Projects.All());
+        Assert.Equal(DialogText.Success, Projects.Create(Projects.Directory, " Novel ", out var path));
         Assert.Equal(Path.Combine(Projects.Directory, "Novel"), path);
         Assert.True(Directory.Exists(path));
+        // In the folder: not added to the list
+        Assert.Empty(Projects.AddedPaths());
         // Not twice, and not with a name that cannot be used
-        Assert.Equal(DialogText.NameExists, Projects.Create("Novel", out _));
-        Assert.NotEqual(DialogText.Success, Projects.Create("a/b", out _));
-        Assert.Null(Projects.NameProblem("Short stories"));
+        Assert.Equal(DialogText.NameExists, Projects.Create(Projects.Directory, "Novel", out _));
+        Assert.NotEqual(DialogText.Success, Projects.Create(Projects.Directory, "a/b", out _));
+        Assert.Null(Projects.NameProblem(Projects.Directory, "Short stories"));
+    }
+
+    [Fact]
+    public void TheProjectsFolder_IsNotSet_UntilTheUserDecides()
+    {
+        Projects.Directory = string.Empty;
+        Assert.False(Projects.HasFolder);
+        Assert.False(Projects.IsDecided);
+        Assert.Empty(Projects.InFolder());
+        Projects.AskEachTime = true;
+        Assert.True(Projects.IsDecided);
+        Assert.Equal("Blyant-Projects", Path.GetFileName(Projects.DefaultDirectory));
     }
 
     [Fact]
@@ -53,18 +84,95 @@ public class ProjectsTests : IDisposable
     {
         foreach (var name in new[] { "b", "A", ".hidden", "c" }) Directory.CreateDirectory(Path.Combine(Projects.Directory, name));
         File.WriteAllText(Path.Combine(Projects.Directory, "a file.md"), "x");
-        Assert.Equal(new[] { "A", "b", "c" }, Projects.Names());
+        Assert.Equal(new[] { "A", "b", "c" }, NamesOf(Projects.InFolder()));
+        Assert.All(Projects.InFolder(), project => Assert.False(project.Added));
+    }
+
+    [Fact]
+    public void AFolderFromAnywhere_IsAdded_AndShownWithTheOthers()
+    {
+        Make("Novel");
+        var essays = In("Elsewhere", "Essays");
+        Directory.CreateDirectory(essays);
+        Assert.Equal(DialogText.Success, Projects.Add(essays));
+        Assert.Equal(new[] { essays }, Projects.AddedPaths());
+        Assert.True(Projects.Added().Single().Added);
+        Assert.Equal(new[] { "Essays", "Novel" }, NamesOf(Projects.All()));
+        // Not twice, not the projects folder, not one in it, and not a folder that is not there
+        Assert.Equal(DialogText.ProjectAlready, Projects.Add(essays + Path.DirectorySeparatorChar));
+        Assert.Equal(DialogText.ProjectIsTheFolder, Projects.Add(Projects.Directory));
+        Assert.Equal(DialogText.ProjectAlready, Projects.Add(Path.Combine(Projects.Directory, "Novel")));
+        Assert.Equal(DialogText.DirectoryNotFound, Projects.Add(In("nowhere")));
+        // Taken off the list: the folder stays
+        Assert.Equal(DialogText.Success, Projects.Remove(essays));
+        Assert.Empty(Projects.Added());
+        Assert.True(Directory.Exists(essays));
+    }
+
+    [Fact]
+    public void ANewProject_OutsideTheProjectsFolder_IsAdded()
+    {
+        var parent = In("Writing");
+        Assert.Equal(DialogText.Success, Projects.Create(parent, "Poems", out var path));
+        Assert.True(Directory.Exists(path));
+        Assert.Equal(new[] { path }, Projects.AddedPaths());
+        // Without a projects folder too
+        Projects.Directory = string.Empty;
+        Assert.Equal(DialogText.Success, Projects.Create(parent, "Songs", out var songs));
+        Assert.Equal(new[] { path, songs }, Projects.AddedPaths());
+        Assert.Equal(new[] { "Poems", "Songs" }, NamesOf(Projects.All()));
+    }
+
+    [Fact]
+    public void AddedProjects_FollowTheirFolder_AndOneThatIsGoneIsMissing()
+    {
+        var essays = In("Elsewhere", "Essays");
+        Directory.CreateDirectory(essays);
+        Projects.Add(essays);
+        // The folder it is in is renamed
+        Projects.PathChanged(In("Elsewhere"), In("Moved"));
+        Assert.Equal(new[] { In("Moved", "Essays") }, Projects.AddedPaths());
+        // It is renamed itself
+        Projects.PathChanged(In("Moved", "Essays"), In("Moved", "Articles"));
+        Assert.Equal(new[] { In("Moved", "Articles") }, Projects.AddedPaths());
+        // Not there: missing, but still on the list
+        Assert.True(Projects.Added().Single().Missing);
+    }
+
+    [Fact]
+    public void ProjectsOfTheSameName_AreToldApart_ByTheFolderTheyAreIn()
+    {
+        Make("Novel");
+        var other = In("Old", "Novel");
+        Directory.CreateDirectory(other);
+        Projects.Add(other);
+        var all = Projects.All();
+        Assert.Equal(new[] { "Novel (Old)", "Novel (Projects)" }, Projects.DisplayNames(all).OrderBy(n => n));
+    }
+
+    [Fact]
+    public void TheListOfAddedProjects_IsAFileOfPaths()
+    {
+        var a = In("a");
+        Directory.CreateDirectory(a);
+        Projects.Add(a);
+        var text = File.ReadAllText(Projects.ListPath);
+        Assert.StartsWith("# ", text);
+        Assert.Contains("\n" + a + "\n", text);
+        // Lines written by hand: blank lines and comments are skipped, and a path that is not a full path
+        File.WriteAllText(Projects.ListPath, "# mine\r\n\r\n" + a + "\r\nrelative\\path\r\n");
+        Assert.Equal(new[] { a }, Projects.AddedPaths());
     }
 
     [Fact]
     public void WhatAProjectHolds_DirectoriesFirst_AndHowManyMore()
     {
-        Projects.Create("Book", out var path);
-        Assert.Equal(Lang.T("(empty)"), Projects.Contents("Book", 5));
+        var path = Make("Book");
+        Assert.Equal(Lang.T("(empty)"), Projects.Contents(path, 5));
         Directory.CreateDirectory(Path.Combine(path, "notes"));
         foreach (var name in new[] { "c.md", "a.md", "b.md" }) File.WriteAllText(Path.Combine(path, name), "x");
-        Assert.Equal("notes/\na.md\nb.md\nc.md", Projects.Contents("Book", 5));
-        Assert.Equal("notes/\n" + Lang.F("... and {0} more", 3), Projects.Contents("Book", 2));
+        Assert.Equal("notes/\na.md\nb.md\nc.md", Projects.Contents(path, 5));
+        Assert.Equal("notes/\n" + Lang.F("... and {0} more", 3), Projects.Contents(path, 2));
     }
 
     [Fact]
@@ -82,66 +190,66 @@ public class ProjectsTests : IDisposable
     [Fact]
     public void TheColorOfAProject_IsKeptInTheProject_AndTheFileGoesWithTheLastColor()
     {
-        Projects.Create("Novel", out var path);
+        var path = Make("Novel");
         var file = Path.Combine(path, Projects.InfoFileName);
-        Assert.Null(Projects.ColorOf("Novel"));
-        Assert.Equal(DialogText.Success, Projects.SetColor("Novel", ConsoleColor.DarkCyan));
-        Assert.Equal(ConsoleColor.DarkCyan, Projects.ColorOf("Novel"));
+        Assert.Null(Projects.ColorOf(path));
+        Assert.Equal(DialogText.Success, Projects.SetColor(path, ConsoleColor.DarkCyan));
+        Assert.Equal(ConsoleColor.DarkCyan, Projects.ColorOf(path));
         // LF, also on Windows
         Assert.DoesNotContain("\r", File.ReadAllText(file));
         Assert.Contains("color=DarkCyan\n", File.ReadAllText(file));
-        Assert.Equal(DialogText.Success, Projects.SetColor("Novel", null));
-        Assert.Null(Projects.ColorOf("Novel"));
+        Assert.Equal(DialogText.Success, Projects.SetColor(path, null));
+        Assert.Null(Projects.ColorOf(path));
         Assert.False(File.Exists(file));
         // Not among what the project holds
-        Projects.SetColor("Novel", ConsoleColor.Red);
-        Assert.Equal(Lang.T("(empty)"), Projects.Contents("Novel", 5));
+        Projects.SetColor(path, ConsoleColor.Red);
+        Assert.Equal(Lang.T("(empty)"), Projects.Contents(path, 5));
     }
 
     [Fact]
     public void TheFileOfAProject_WrittenElsewhere_IsRead_AndItsOtherLinesAreKept()
     {
-        Projects.Create("Novel", out var path);
+        var path = Make("Novel");
         var file = Path.Combine(path, Projects.InfoFileName);
         File.WriteAllText(file, "# comment\r\ncolor=blue\r\nlater=1\r\n");
-        Assert.Equal(ConsoleColor.Blue, Projects.ColorOf("Novel"));
-        Projects.SetColor("Novel", null);
+        Assert.Equal(ConsoleColor.Blue, Projects.ColorOf(path));
+        Projects.SetColor(path, null);
         Assert.Contains("later=1", File.ReadAllText(file));
-        Assert.Null(Projects.ColorOf("Novel"));
+        Assert.Null(Projects.ColorOf(path));
         // Not a color
         File.WriteAllText(file, "color=Plaid\ncolor=99\n");
-        Assert.Null(Projects.ColorOf("Novel"));
+        Assert.Null(Projects.ColorOf(path));
     }
 
     [Fact]
     public void TheNoteOfAProject_IsAMarkdownFile_ShownAsItsWordsInALine()
     {
-        Projects.Create("Novel", out var path);
-        Assert.Equal(string.Empty, Projects.NoteSnippet("Novel"));
-        Assert.Equal(DialogText.Success, Projects.EnsureNote("Novel"));
-        Assert.Equal(Path.Combine(path, Projects.NoteFileName), Projects.NotePath("Novel"));
+        var path = Make("Novel");
+        Assert.Equal(string.Empty, Projects.NoteSnippet(path));
+        Assert.Equal(DialogText.Success, Projects.EnsureNote(path));
+        Assert.Equal(Path.Combine(path, Projects.NoteFileName), Projects.NotePath(path));
         // Left empty: removed
-        Projects.RemoveEmptyNote("Novel");
-        Assert.False(File.Exists(Projects.NotePath("Novel")));
+        Projects.RemoveEmptyNote(path);
+        Assert.False(File.Exists(Projects.NotePath(path)));
 
-        File.WriteAllText(Projects.NotePath("Novel"), "# Plan\r\n\r\n> Send   chapters 1-3\n\tto the editor.\n");
-        Assert.Equal("Plan Send chapters 1-3 to the editor.", Projects.NoteSnippet("Novel"));
-        Projects.RemoveEmptyNote("Novel");
-        Assert.True(File.Exists(Projects.NotePath("Novel")));
+        File.WriteAllText(Projects.NotePath(path), "# Plan\r\n\r\n> Send   chapters 1-3\n\tto the editor.\n");
+        Assert.Equal("Plan Send chapters 1-3 to the editor.", Projects.NoteSnippet(path));
+        Projects.RemoveEmptyNote(path);
+        Assert.True(File.Exists(Projects.NotePath(path)));
         // Making it again keeps what is written
-        Projects.EnsureNote("Novel");
-        Assert.StartsWith("# Plan", File.ReadAllText(Projects.NotePath("Novel")));
-        Assert.Equal(Lang.T("(empty)"), Projects.Contents("Novel", 5));
+        Projects.EnsureNote(path);
+        Assert.StartsWith("# Plan", File.ReadAllText(Projects.NotePath(path)));
+        Assert.Equal(Lang.T("(empty)"), Projects.Contents(path, 5));
     }
 
     [Fact]
     public void ANewProject_IsNotNamedAsAnother_InOtherUpperOrLowerCase()
     {
         // On Linux both could be made, but not where the folder may be synced to (Windows, macOS)
-        Projects.Create("Novel", out _);
-        Assert.Equal(DialogText.NameExists, Projects.NameProblem("novel"));
-        Assert.Equal(DialogText.NameExists, Projects.NameProblem("NOVEL"));
-        Assert.Null(Projects.NameProblem("Novels"));
+        Make("Novel");
+        Assert.Equal(DialogText.NameExists, Projects.NameProblem(Projects.Directory, "novel"));
+        Assert.Equal(DialogText.NameExists, Projects.NameProblem(Projects.Directory, "NOVEL"));
+        Assert.Null(Projects.NameProblem(Projects.Directory, "Novels"));
     }
 
     [Fact]

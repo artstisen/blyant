@@ -404,6 +404,29 @@ internal static class FileOperations
     }
 
     /// <summary>
+    /// The trash: the directory "trash" in the data directory, for all that is deleted in the file browser, in a
+    /// project or not. It goes with the data directory when Blyant is copied or backed up
+    /// </summary>
+    internal const string TrashName = "trash"; // English: the name of a directory
+
+    /// <summary>
+    /// The trash directory, for tests
+    /// </summary>
+    internal static string? TrashOverride { get; set; }
+
+    /// <summary>
+    /// The trash directory (it is made when the first file is moved to it)
+    /// </summary>
+    internal static string TrashDirectory =>
+        Path.GetFullPath(TrashOverride ?? Path.Combine(FileIo.GetDataDirectoryName(), TrashName));
+
+    /// <summary>
+    /// Deleting in the file browser moves to the trash (setting "deletetotrash", on unless turned off). Off: the
+    /// files are deleted at once and cannot be recovered
+    /// </summary>
+    internal static bool DeleteToTrash { get; set; } = true;
+
+    /// <summary>
     /// The list in the trash of what was moved there: one line for each, with its name in the trash, when it was
     /// deleted and where it was
     /// </summary>

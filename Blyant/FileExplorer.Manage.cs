@@ -958,8 +958,8 @@ internal static partial class FileExplorer
         if (items.Count == 0 || AnyProtected(items)) return;
         // To the trash, unless that is turned off, or it is the trash or what is in it (deleting there is for
         // good), or a directory the trash is in
-        var trash = Projects.TrashDirectory;
-        var toTrash = Projects.DeleteToTrash && items.All(item => FileOperations.CanTrash(item.Path, trash));
+        var trash = FileOperations.TrashDirectory;
+        var toTrash = FileOperations.DeleteToTrash && items.All(item => FileOperations.CanTrash(item.Path, trash));
         if (!ConfirmDelete(items, toTrash)) return;
 
         string? failed = null;
@@ -1004,7 +1004,7 @@ internal static partial class FileExplorer
         var kind = item.IsDirectory ? "Delete directory" : "Delete";
         if (toTrash)
         {
-            var result = FileOperations.MoveToTrash(item.Path, Projects.TrashDirectory, out var trashedPath,
+            var result = FileOperations.MoveToTrash(item.Path, FileOperations.TrashDirectory, out var trashedPath,
                 ShowProgress);
             LogOperation(kind + " (to the trash)", item.Path + (trashedPath.Length > 0 ? " -> " + trashedPath : ""),
                 result);

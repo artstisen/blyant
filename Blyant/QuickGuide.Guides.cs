@@ -135,11 +135,11 @@ internal static partial class QuickGuide
         (Kind.Title, "", Title(Guide.Projects)),
         (Kind.Text, "", ""),
         (Kind.Text, "", Lang.T("A project is a folder with the files of a piece of writing in it: the chapters of a " +
-                               "book, the parts of an article, notes and drafts. The projects are kept in the " +
-                               "projects folder.")),
+                               "book, the parts of an article, notes and drafts. The projects are the folders in " +
+                               "the projects folder, and the folders you add from anywhere.")),
         (Kind.Text, "", ""),
         (Kind.Heading, "", Lang.T("On the start page")),
-        (Kind.Item, "P  :project", Lang.T("New project: a folder in the projects folder")),
+        (Kind.Item, "P  :project", Lang.T("New project (the first time: where the projects go)")),
         (Kind.Item, "O  :projects", Lang.T("Open project: pick one in the list of projects")),
         (Kind.Item, "  C", Lang.T("In the list: the color of the project")),
         (Kind.Item, "  N", Lang.T("In the list: the note of the project, in the editor")),

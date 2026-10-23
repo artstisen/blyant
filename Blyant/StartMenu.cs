@@ -273,31 +273,12 @@ internal static class StartMenu
         FileExplorer.RunAtFile(Path.GetFullPath(path));
     }
 
-    // New project: a directory made in the projects directory (the name is asked for if it is not given), shown
-    // in the file browser
+    // New project: a directory made in the projects folder, or where the user picks when there is none (the first
+    // time, the user is asked where the projects go; the name is asked for if it is not given), shown in the file
+    // browser
     private static void NewProject(string name)
     {
-        ChoiceBox.Forget();
-        name = name.Trim();
-        if (name.Length == 0)
-        {
-            var asked = ChoiceBox.AskText(DialogText.NewProject,
-                Lang.F("The project is a folder in {0}", Projects.Directory), DialogText.ProjectNameColon,
-                string.Empty);
-            if (asked == null) return;
-            name = asked;
-        }
-
-        var status = Projects.Create(name, out var path);
-        EventLog.Add(DialogText.LogFile + "New project: " + (path.Length > 0 ? path : name) +
-                     (status == DialogText.Success ? string.Empty : " (" + status + ")"));
-        if (status != DialogText.Success)
-        {
-            ChoiceBox.Message(DialogText.NewProject, status, name);
-            return;
-        }
-
-        FileExplorer.RunAtDirectory(path);
+        if (ProjectsBox.NewProject(name, ProjectsBox.Place.Default) is { } path) FileExplorer.RunAtDirectory(path);
     }
 
     // Open project: the projects in a list (with what each holds), the one picked shown in the file browser
@@ -306,15 +287,17 @@ internal static class StartMenu
         if (ProjectsBox.Pick() is { } path) FileExplorer.RunAtDirectory(path);
     }
 
-    // The projects directory: picked in the file browser (where it is not there yet, the directory it is to be
-    // made in)
+    // The projects folder: the one in Documents, another picked in the file browser, or none (saved by the box)
     private static void PickProjectsDirectory()
     {
-        ChoiceBox.Forget();
-        var picked = FileExplorer.PickDirectory(Lang.T("Projects folder"));
-        if (picked == null) return;
-        Projects.Directory = picked;
-        FileIo.SaveSettings();
+        ProjectsBox.AskProjectsFolder();
+    }
+
+    // The projects folder as Configuration shows it
+    private static string ProjectsFolderText()
+    {
+        if (Projects.HasFolder) return Projects.Directory;
+        return Projects.AskEachTime ? Lang.T("(ask each time)") : Lang.T("(not set)");
     }
 
     private enum Setting
@@ -396,8 +379,8 @@ internal static class StartMenu
             Setting.StartSelect => Check(Mode == StartMode.Select) + DialogText.StartConfigSelect,
             Setting.StartEditor => Check(Mode == StartMode.Editor) + DialogText.StartConfigEditor,
             Setting.StartFavorites => indent + Check(StartInFavorites) + Lang.T("Open the favorites list first"),
-            Setting.ProjectsDirectory => indent + Lang.F("Projects folder: {0} (Enter: Change)", Projects.Directory),
-            Setting.DeleteToTrash => Check(Projects.DeleteToTrash) + Lang.T("Delete to the trash (:trash in the file browser)"),
+            Setting.ProjectsDirectory => indent + Lang.F("Projects folder: {0} (Enter: Change)", ProjectsFolderText()),
+            Setting.DeleteToTrash => Check(FileOperations.DeleteToTrash) + Lang.T("Delete to the trash (:trash in the file browser)"),
             Setting.Monochrome => Check(ConsoleColors.Monochrome) + DialogText.ConfigMonochrome,
             Setting.Language => indent + DialogText.ConfigLanguage + Lang.CurrentName,
             Setting.ColorScheme => indent + Lang.F("Color scheme: {0} (Enter: Select/Edit)",
@@ -930,7 +913,7 @@ internal static class StartMenu
                 PickProjectsDirectory();
                 return;
             case Setting.DeleteToTrash:
-                Projects.DeleteToTrash = !Projects.DeleteToTrash;
+                FileOperations.DeleteToTrash = !FileOperations.DeleteToTrash;
                 break;
             case Setting.Recovery:
                 Blyant.Recovery.Enabled = !Blyant.Recovery.Enabled;

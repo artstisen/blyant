@@ -20,23 +20,41 @@ Each choice has a number and a key, shown in front of it. The number selects the
 Move the selection with `j`/`k` (or the arrow keys) or the number, and press `Enter`. `?` shows the help, and `Q` (or `Esc`) exits Blyant after asking in a box on top of the page (`Y`/`N`, or `j`/`k` and `Enter`; `Esc` cancels).
 
 ### Projects
-A project is a folder with the files of a piece of writing in it: the chapters of a book, the parts of an article, notes and drafts. The projects are kept in the **projects folder**: by default the folder `Blyant-Projects` in your Documents folder (`Documents` in your home directory on macOS, and on Linux the documents folder of your desktop, `XDG_DOCUMENTS_DIR`, or else `~/Documents`). It is made when the first project is made. Another folder is set with _Projects folder_ on the General page of Configuration (saved as `projectsdir` in the settings file; `~/Writing` is `Writing` in your home directory). A folder in the settings file that is not a full path on the system Blyant runs on (`C:\Users\...` on Linux, when the settings file is shared between computers) is not used: the default folder is used instead.
+A project is a folder with the files of a piece of writing in it: the chapters of a book, the parts of an article, notes and drafts. The projects are the folders in the **projects folder**, and the folders you **add** from anywhere on your computer.
+
+No projects folder is set from the start, and nothing is made until you make your first project. Then you are asked where your projects should be kept:
+
+- `1` **In Documents**: the folder `Blyant-Projects` in your Documents folder (`Documents` in your home directory on macOS, and on Linux the documents folder of your desktop, `XDG_DOCUMENTS_DIR`, or else `~/Documents`). It is made with the first project
+- `2` **Choose another folder**: pick it in the file browser (go to it and press `S`)
+- `3` **No projects folder**: you pick where each new project is made, and it is added to the projects
+- `Esc` Cancel: you are asked again the next time
+
+This can be changed later with _Projects folder_ on the General page of Configuration (saved as `projectsdir` in the settings file, and `projectsask` for "no projects folder"; `~/Writing` is `Writing` in your home directory). A folder in the settings file that is not a full path on the system Blyant runs on (`C:\Users\...` on Linux, when the settings file is shared between computers) is not used: you are asked again.
+
+A folder you already have (a book you started in another program, a folder in a synced folder) is **added** to the projects with `A` in the list of projects, or with `:project add` in the file browser (the directory shown in the pane with the focus). The added folders are kept in `projects.txt` in the data directory, a folder on each line. An added folder stays where it is: renaming or moving it in the file browser updates the list, and one that is gone (moved, renamed or deleted outside Blyant) is shown as _(missing)_ until you take it off the list.
 
 A project can be made on Windows, macOS and Linux alike, and synced between them: its name may not have the characters `\ / : * ? " < > |` in it, and may not be the name of another project in other upper or lower case (`novel` when there is `Novel`).
 
-_Open project_ lists the folders in the projects folder (not the hidden ones), in alphabetical order. A project is worked on in the file browser: `N` makes a file in it (a Markdown file when the name has no extension), `A` a folder, and `Enter` opens a file in the editor. In the file browser, `:home` goes to the projects folder.
+_Open project_ lists the projects, in alphabetical order (not the hidden folders of the projects folder). With projects both in the projects folder and added, the list has three tabs, and `Tab` (`Shift+Tab`) goes between them: **All**, **Added** and **Projects folder**; the list opens on the tab you used last. In _All_, an added project has _(added)_ after its name, and two projects of the same name have the name of the folder they are in after it. Below the list is where the selected project is and what it holds.
 
-In the list of projects, each project can have a color and a note:
+- `P` (`:new`) makes a **new project**: in the projects folder, or on the _Added_ tab (or without a projects folder) in a folder you pick in the file browser, and then it is added to the list
+- `A` (`:add`) **adds** a folder you pick in the file browser. A folder that is a project already, or the projects folder itself, is not added
+- `D` (`:remove`) takes an added project **off the list**, after asking. The folder and its files stay as they are. A project in the projects folder is not removed here: it is deleted in the file browser, as other folders are
+
+ A project is worked on in the file browser: `N` makes a file in it (a Markdown file when the name has no extension), `A` a folder, and `Enter` opens a file in the editor. In the file browser, `:home` goes to the projects folder.
+
+In the list of projects, each project can have a color and a note (an added project too):
 - `C` picks the **color** of the name of the project in the list (_[Default]_ takes it away). It is kept in the file `.blyant` in the project
 - `N` opens the **note** of the project in the editor: what to do next, an idea, where you are. It is the Markdown file `.blyant-note.md` in the project, and the start of it is shown to the right of what the project holds (with `...` where there is more). `:wq` saves it and goes back to the list; a note left empty is removed
 
 Both files are in the folder of the project, so they go with it when it is copied, moved or synced. They start with a dot, so they are not shown with what the project holds.
 
-`I` in the list of projects shows information about the selected project, in a box as `I` in the Jump menu: its name, what the folder holds, when it was made and changed, its color, the start of its note and its path. The list has a command line of its own (`:`, with `Tab` completing the command and `Up`/`Down` bringing back the commands given before), with commands on the selected project:
+`I` in the list of projects shows information about the selected project, in a box as `I` in the Jump menu: its name, what the folder holds, when it was made and changed, its color, the start of its note, whether it was added or is in the projects folder, and its path. The list has a command line of its own (`:`, with `Tab` completing the command and `Up`/`Down` bringing back the commands given before), with commands on the selected project:
 
 - `:info` Information about the project, as `I`
 - `:path` and `:name` Copy the full path of the project folder, or its name, to the clipboard (and the string memory, as set in the clipboard settings)
 - `:color` and `:note` The color and the note, as `C` and `N`
+- `:new name`, `:add` and `:remove` A new project, a folder added, and an added project off the list, as `P`, `A` and `D`
 - `:help` (or `?`) The keys of the list
 - `:q` (`:quit`, `:close`) Close the list, as `Esc`
 
@@ -51,7 +69,7 @@ The settings are on four pages. `j` `k` (and `gg` `G`) select a setting on the p
 - **Start in the file browser**: Go directly to the file browser
   - **Open the favorites list first** (shown when starting in the file browser): Start in the [favorites](#favorites) of the file browser. Closing the list shows the file browser. Saved as `startfavorites` in the settings file
   - The choice is saved as `startmode` (`select` or `editor`) in the settings file
-- **Projects folder**: Where the [projects](#projects) are kept. `Enter` opens the file browser to pick the folder: go to it and press `S`
+- **Projects folder**: Where the [projects](#projects) are kept: _(not set)_ until you make your first project. `Enter` asks as then: the folder `Blyant-Projects` in Documents, another folder (picked in the file browser: go to it and press `S`), or none (you pick where each new project is made)
 - **Delete to the trash**: Deleting in the file browser moves to the [trash](#the-trash) (on from the start). Off: deleted files cannot be recovered
 - **Language**: The language of the menus, help and messages. English and Deutsch (German) are built in; Dansk (Danish), Norsk bokmål (Norwegian), Svenska (Swedish), Español (Spanish), Français (French), Italiano (Italian), Polski (Polish), Nederlands (Dutch) and Suomi (Finnish) are language files in the folder `lang` next to Blyant (see [Language files](Guide-to-installation.md#language-files)). `Enter` shows the languages in a box to pick from; a language from a file shows how much of it is translated (`Polski (pl)  98%`), and `(lang)` after a built-in language means a file in a folder `lang` is used instead of it. Commands, keys and the names of the editor modes (NORMAL, INSERT, VISUAL ...) are English in all languages, so they can be talked about the same way everywhere. The guides, the settings file and the log are in English
 
@@ -140,6 +158,7 @@ The browser starts in the projects folder (or your home directory, if there is n
 - `:cd path` Go to a directory. `:home` Go to the projects folder (or your home directory, if there is no projects folder yet)
 - `:trash` Go to the [trash](#the-trash), with what was deleted
 - `:recovery` Go to the [recovery copies](Guide-to-editor.md#recovery-copies) of text that was not saved
+- `:project add` Add the directory shown to the [projects](#projects)
 - `:data` Go to the data directory itself, with the files Blyant keeps there: `settings.ini`, `snippets.txt` and `completions.txt` (the snippets and the completions of the editor), `favorites.txt`, `history.txt` and `hotlist.txt` (of the file browser), and `jump.txt` and `bookmarks.txt` (of the Jump menu)
 - `Tab` on the command line completes the command you are typing, and goes through the commands of the file browser when pressed again; `Up` and `Down` bring back the commands given in the file browser before
 - `?` Help
@@ -176,11 +195,11 @@ Things to know:
 - Hidden files are not shown in the browser, but they are included when a directory is copied, moved or deleted.
 
 ### The trash
-What is deleted in the file browser is moved to the trash: the folder `.trash` in the projects folder (hidden from the list of projects, as its name starts with a dot). It is made when the first file is deleted. `:trash` goes there, and a file is restored by moving it back (`M`, or `X` to give it its old name).
+What is deleted in the file browser is moved to the trash: the directory `trash` in the data directory, for all that is deleted, in a project or not. It is made when the first file is deleted, and goes with the data directory when Blyant is copied or backed up. Something deleted on another drive than the data directory is copied to the trash, and then removed (a large directory takes a while; `Esc` cancels). `:trash` goes there, and a file is restored by moving it back (`M`, or `X` to give it its old name).
 
 - Each file or directory gets the time it was deleted in front of its name: `2026-10-22 14.03.11 chapter 1.md`. So a file deleted twice is kept twice
 - The list `trash.txt` in the trash tells where each one was: its name in the trash, when it was deleted, and the folder it came from (separated by tab characters)
-- Deleting in the trash is for good, and so is deleting the trash itself, or a folder the trash is in (the projects folder). The question says so
+- Deleting in the trash is for good, and so is deleting the trash itself. The question says so
 - If something cannot be moved to the trash (it cannot be written to, or the trash is on another drive and the copy fails), you are asked whether to delete it for good instead
 - The trash is not emptied by itself: delete what is in it when you no longer need it
 - _Delete to the trash_ on the General page of Configuration (setting `deletetotrash`) turns the trash off: files are then deleted for good
@@ -295,7 +314,7 @@ When a file is closed in the editor, the line and column of the cursor are kept:
 ## The log
 The log lists what has happened since Blyant was started: the startup, commands, and the file operations of the file browser and the start page (new, open, rename, copy, move and delete, with the reason if one failed). It is shown from the System page of Configuration (_View log_), or with `:log`. A deletion tells whether it went to the trash, and where.
 
-All that Blyant does with files by itself is logged too, with the path: `New:` (a file made), `Write:` (a file saved: your text with `:w`, the settings, the lists, the recovery copies), `Append:` (added to the end: the paste bin, the words added to the spell checker, `trash.txt`), `New directory:` (the data directory, the projects folder, a project, `.trash`, `recovery` ...), `Rename:`, `Copy:` and `Delete:`. One that failed has ` - FAILED:` and the reason after it. What is written in the files is never logged.
+All that Blyant does with files by itself is logged too, with the path: `New:` (a file made), `Write:` (a file saved: your text with `:w`, the settings, the lists, the recovery copies), `Append:` (added to the end: the paste bin, the words added to the spell checker, `trash.txt`), `New directory:` (the data directory, the projects folder, a project, `trash`, `recovery` ...), `Rename:`, `Copy:` and `Delete:`. One that failed has ` - FAILED:` and the reason after it. What is written in the files is never logged.
 
 - The log opens at the end, with the latest lines
 - `h` `l` Previous/Next page, `j` `k` One line, `gg` `G` First/Last
@@ -310,4 +329,4 @@ As the log can be read by anyone at the screen, commands are logged by name only
 The logo is drawn with a sweep when Blyant starts. Any key ends the sweep. Its speed is set with _Logo animation_ on the Layout page of the Configuration tab, where it can also be turned off.
 
 ## Directories
-Blyant keeps its settings and lists in the directory `data`: in the directory it is started from, if there is one there, else next to the program (and where the program directory cannot be written to, `Blyant/data` in the application data of the user). The data directory holds `settings.ini`, the lists of the file browser and the Jump menu, the snippets, the completions, the macros, the color schemes and the logos of your own, the log (`log.txt`) and the recovery copies of text that was not saved (`recovery`). Your projects are not kept there, but in the [projects folder](#projects).
+Blyant keeps its settings and lists in the directory `data`: in the directory it is started from, if there is one there, else next to the program (and where the program directory cannot be written to, `Blyant/data` in the application data of the user). The data directory holds `settings.ini`, the lists of the file browser and the Jump menu, the snippets, the completions, the macros, the color schemes and the logos of your own, the log (`log.txt`), the recovery copies of text that was not saved (`recovery`) and the [trash](#the-trash) (`trash`). Your projects are not kept there, but in the [projects folder](#projects).

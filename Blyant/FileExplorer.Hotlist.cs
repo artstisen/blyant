@@ -400,11 +400,13 @@ internal static partial class FileExplorer
         if (result != DialogText.Success) _hotlistMessage = result;
     }
 
-    // A directory was renamed or moved in the browser: the hotlist follows it
+    // A directory was renamed or moved in the browser: the hotlist follows it, and so do the projects added from
+    // anywhere
     private static void HotlistPathChanged(string oldPath, string newPath)
     {
         DirectoryHotlist.Load();
         if (DirectoryHotlist.PathChanged(oldPath, newPath)) DirectoryHotlist.Save();
+        Projects.PathChanged(oldPath, newPath);
     }
 
     #region Drawing

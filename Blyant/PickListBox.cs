@@ -36,10 +36,25 @@ internal static class PickListBox
         internal Func<int, string>? Side { get; init; }
 
         /// <summary>
-        /// A key pressed on a row: whether it was used (the box is drawn again: the key may have shown another box),
-        /// or closes the list
+        /// A key pressed on a row (-1 when the list is empty): whether it was used (the box is drawn again: the key
+        /// may have shown another box), closes the list, or the list must be made again (Show returns Reload)
         /// </summary>
         internal Func<ConsoleKeyInfo, int, KeyUse>? Key { get; init; }
+
+        /// <summary>
+        /// The tabs of the list, shown at the right of the filter line (none: no tabs)
+        /// </summary>
+        internal IReadOnlyList<string>? Tabs { get; init; }
+
+        /// <summary>
+        /// The tab shown
+        /// </summary>
+        internal int ActiveTab { get; init; }
+
+        /// <summary>
+        /// Shown in the list when it has no rows (what to do to get some)
+        /// </summary>
+        internal string? EmptyText { get; init; }
     }
 
     /// <summary>
@@ -49,8 +64,14 @@ internal static class PickListBox
     {
         None, // Not a key of the list: the box handles it
         Used,
-        Close // The list is closed without picking (":q")
+        Close, // The list is closed without picking (":q")
+        Reload // The rows have changed, or another tab is shown: Show returns Reload, to be called again
     }
+
+    /// <summary>
+    /// What Show returns when a key of the list asked for it to be made again (KeyUse.Reload)
+    /// </summary>
+    internal const int Reload = -2;
 
     // A message shown in place of the filter until the next key (ShowMessage)
     private static string _message = string.Empty;
@@ -184,8 +205,9 @@ internal static class PickListBox
                 return view[selected];
             }
 
-            var use = extras?.Key is { } onKey && view.Count > 0 ? onKey(key, view[selected]) : KeyUse.None;
+            var use = extras?.Key is { } onKey ? onKey(key, view.Count > 0 ? view[selected] : -1) : KeyUse.None;
             if (use == KeyUse.Close) return -1;
+            if (use == KeyUse.Reload) return Reload;
             if (use == KeyUse.Used)
             {
                 // Again: the key may have opened another list (the editor of a note, and in it ":reglist")
@@ -251,20 +273,44 @@ internal static class PickListBox
     private static void DrawFilter(string filter, bool filtering)
     {
         var text = filtering || filter.Length > 0 ? FilterText(filter) : string.Empty;
+        // The tabs at the right of the line, the tab shown highlighted ("All | Added | Projects folder")
+        var tabs = _extras?.Tabs is { Count: > 0 } names ? names : null;
+        var tabsWidth = tabs == null ? 0 : tabs.Sum(name => TextMetrics.WidthOf(name) + 2) + tabs.Count - 1;
+        var room = Math.Max(10, _inner - 4 - (tabsWidth > 0 ? tabsWidth + 2 : 0));
         Tools.SetCursorEx(_top + 2, _left + 3);
         if (_message.Length > 0 && !filtering)
         {
             // A message: highlighted, with a blank space on each side in the highlight (as in the Jump menu)
-            var message = " " + Tools.TruncateString(_message, _inner - 6, true) + " ";
+            var message = " " + Tools.TruncateString(_message, room - 2, true) + " ";
             ConsoleColors.SetColors(ConsoleColors.ColorPreset.AttentionInverted);
             Console.Write(message);
             ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
-            Console.Write(new string(' ', Math.Max(0, _inner - 4 - TextMetrics.WidthOf(message))));
-            return;
+            Console.Write(new string(' ', Math.Max(0, room - TextMetrics.WidthOf(message))));
+        }
+        else
+        {
+            ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
+            var shown = Tools.TruncateString(text, room, true);
+            Console.Write(shown + new string(' ', Math.Max(0, room - TextMetrics.WidthOf(shown))));
+            ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
         }
 
-        ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
-        Console.Write(Tools.TruncateString(text, _inner - 4, true).PadRight(_inner - 4));
+        if (tabs == null || tabsWidth > _inner - 14) return;
+        Tools.SetCursorEx(_top + 2, _left + _inner - 1 - tabsWidth);
+        for (var i = 0; i < tabs.Count; i++)
+        {
+            if (i > 0)
+            {
+                ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
+                Console.Write("|");
+            }
+
+            ConsoleColors.SetColors(i == _extras!.ActiveTab
+                ? ConsoleColors.ColorPreset.SelectorInverted
+                : ConsoleColors.ColorPreset.Normal);
+            Console.Write(" " + tabs[i] + " ");
+        }
+
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
     }
 
@@ -278,7 +324,9 @@ internal static class PickListBox
                 ? TextMetrics.Printable(Tools.TruncateString(rows[view[i]], _inner - 8, true))
                 : i == 0 && filter.Length > 0
                     ? DialogText.PickListNoMatch
-                    : string.Empty;
+                    : i == 0 && rows.Count == 0 && _extras?.EmptyText is { } empty
+                        ? Tools.TruncateString(empty, _inner - 8, true)
+                        : string.Empty;
             Console.Write("     ");
             if (i < view.Count && _extras?.RowColor?.Invoke(view[i]) is { } color) ConsoleColors.SetTextColor(color);
             Console.Write(text);

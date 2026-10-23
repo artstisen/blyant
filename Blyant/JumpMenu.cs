@@ -151,12 +151,13 @@ internal static class JumpMenu
                 return JumpHistory.Items.Select(entry => new Row(entry.Target, entry.Jumped)).ToList();
             case Tab.Projects:
                 // In the color of the project (else of a favorite)
-                return Projects.Names().Select(name =>
+                // (all of them: in the projects folder and added)
+                return Projects.All().Select(project =>
                 {
-                    var target = new JumpTarget(JumpKind.Directory, Projects.PathOf(name));
+                    var target = new JumpTarget(JumpKind.Directory, project.Path);
                     return new Row(target, DateTime.MinValue)
                     {
-                        Color = Projects.ColorOf(name) ?? FavoriteColor(target)
+                        Color = Projects.ColorOf(project.Path) ?? FavoriteColor(target)
                     };
                 }).ToList();
             case Tab.History:

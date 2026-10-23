@@ -243,8 +243,9 @@ internal static class Init
         AutoSize = true;
         StartMenu.Mode = StartMenu.StartMode.Select;
         StartMenu.StartInFavorites = false;
-        Projects.Directory = Projects.DefaultDirectory;
-        Projects.DeleteToTrash = true;
+        Projects.Directory = string.Empty;
+        Projects.AskEachTime = false;
+        FileOperations.DeleteToTrash = true;
         Recovery.Enabled = true;
         ConsoleColors.Monochrome = false;
         SyntaxHighlighter.ColorFiles = true;

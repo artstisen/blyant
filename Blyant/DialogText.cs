@@ -198,8 +198,12 @@ internal static class DialogText
     public static string NewProject => Lang.T("New project");
     public static string OpenProject => Lang.T("Open project");
     public static string ProjectInfo => Lang.T("Project info");
+    public static string AddProject => Lang.T("Add a project");
+    public static string ProjectAlready => Lang.T("This folder is a project already");
+    public static string ProjectIsTheFolder => Lang.T("This is the projects folder: its folders are the projects");
+    public static string ProjectMissing => Lang.T("The folder is not there (moved, renamed or deleted)");
     public static string HelpSectionProjects => Lang.T("List of projects");
-    public static string NoProjectsYet => Lang.T("No projects yet: New project on the start page makes one");
+    public static string NoProjectsYet => Lang.T("No projects yet: New project makes one, Open project adds a folder");
     public static string FileNameColon => Lang.T("File name:");
     public static string ProjectNameColon => Lang.T("Project name:");
     public static string StartConfiguration => Lang.T("Configuration");
