@@ -208,6 +208,11 @@ internal static partial class FileExplorer
                 StartPaneIn(Panes[1], Panes[0].Directory);
             }
         }
+        else if (mode == BrowseMode.PickDirectory && PickStart() is { } place)
+        {
+            // Where a folder was picked last (or the picking canceled)
+            StartPaneIn(PickPane, place.Directory, place.Select);
+        }
         else
         {
             StartPaneIn(PickPane, StartDirectory);
@@ -225,12 +230,15 @@ internal static partial class FileExplorer
         // The places of the panes are saved however the browser is left: closed, a jump (to another page), or
         // exiting Blyant (Tools.ExitApplication)
         _browsing = mode == BrowseMode.Edit;
+        string? result = null;
         try
         {
-            return BrowseLoop(mode, jumpFile);
+            result = BrowseLoop(mode, jumpFile);
+            return result;
         }
         finally
         {
+            if (mode == BrowseMode.PickDirectory) RememberPickPlace(result);
             if (mode == BrowseMode.Edit)
             {
                 _browsing = false;
@@ -271,6 +279,59 @@ internal static partial class FileExplorer
     }
 
     // The name of the file or directory selected in a pane (empty on "..": the first row)
+    /// <summary>
+    /// Where the folder pickers start (setting "pickdir"): the folder picked last, or what was selected where the
+    /// picking was canceled (a path ending with a separator: that directory, with nothing selected). Empty: where
+    /// the file browser was. The pickers share it, and the panes of the file browser are not changed by it
+    /// </summary>
+    internal static string PickPlace { get; set; } = string.Empty;
+
+    // The directory a folder picker starts in, and the name selected in it (null: none)
+    private static (string Directory, string? Select)? PickStart()
+    {
+        if (PickPlace.Length == 0) return null;
+        var place = PickPlace;
+        if (place.EndsWith(System.IO.Path.DirectorySeparatorChar) || place.EndsWith(System.IO.Path.AltDirectorySeparatorChar))
+        {
+            var directory = System.IO.Path.TrimEndingDirectorySeparator(place);
+            if (directory.Length == 0) directory = place;
+            return Directory.Exists(directory) ? (directory, null) : null;
+        }
+
+        // The folder picked: the one it is in, with it selected (the folders next to it are near)
+        var parent = System.IO.Path.GetDirectoryName(place);
+        if (parent == null || !Directory.Exists(parent)) return null;
+        return (parent, System.IO.Path.GetFileName(place));
+    }
+
+    // A folder picker is closed: the folder picked, or where it was canceled, is where the next one starts
+    private static void RememberPickPlace(string? picked)
+    {
+        string place;
+        if (picked != null)
+        {
+            place = System.IO.Path.TrimEndingDirectorySeparator(System.IO.Path.GetFullPath(picked));
+            // A root ("C:\") has no folder it is in: started in itself
+            if (System.IO.Path.GetDirectoryName(place) == null) place = System.IO.Path.GetFullPath(picked);
+        }
+        else if (PickPane.Directory.Length > 0)
+        {
+            var name = SelectedName(PickPane);
+            place = name.Length > 0 && name != ParentName
+                ? System.IO.Path.Combine(PickPane.Directory, name)
+                : System.IO.Path.TrimEndingDirectorySeparator(PickPane.Directory) + System.IO.Path.DirectorySeparatorChar;
+        }
+        else
+        {
+            // The list of drives: as before
+            return;
+        }
+
+        if (place == PickPlace) return;
+        PickPlace = place;
+        FileIo.SaveSettings();
+    }
+
     private static string SelectedName(Pane pane)
     {
         if (pane.Index <= 0 || pane.Index >= pane.Items.Count) return string.Empty;

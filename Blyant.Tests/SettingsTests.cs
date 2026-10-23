@@ -136,6 +136,21 @@ backup=
     }
 
     [Fact]
+    public void WhereTheFolderPickersStart_IsLoadedAndSaved()
+    {
+        var place = Path.Combine(_workDirectory, "Writing", "Essays");
+        File.WriteAllText(SettingsFile, LegacySettings + "\npickdir=" + place + "\n");
+        Assert.True(FileIo.LoadSettings());
+        Assert.Equal(place, FileExplorer.PickPlace);
+        FileIo.SaveSettings();
+        Assert.Equal(place, FileIo.ParseSettings(File.ReadAllText(SettingsFile))["pickdir"]);
+        // Not a full path on this system: where the browser was
+        File.WriteAllText(SettingsFile, LegacySettings + "\npickdir=Writing\n");
+        Assert.True(FileIo.LoadSettings());
+        Assert.Equal(string.Empty, FileExplorer.PickPlace);
+    }
+
+    [Fact]
     public void NoProjectsFolder_AskEachTime_IsSaved()
     {
         File.WriteAllText(SettingsFile, LegacySettings + "\nprojectsdir=\nprojectsask=true\n");
@@ -266,7 +281,8 @@ backup=
         Assert.False(settings.ContainsKey("onlymode"));
         Assert.False(settings.ContainsKey("clipboardnotes"));
         Assert.False(settings.ContainsKey("stayloggedin"));
-        Assert.Equal(34, settings.Count);
+        Assert.Equal(35, settings.Count);
+        Assert.Equal(string.Empty, settings["pickdir"]);
         Assert.Equal("false", settings["projectsask"]);
         Assert.Equal("true", settings["recovery"]);
         Assert.Equal(string.Empty, settings["projectsdir"]);

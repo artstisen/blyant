@@ -229,11 +229,14 @@ public partial class TextArea
         CommandCompletion.Arguments["play"] = MacroFiles.Names;
         CommandCompletion.Arguments["macro"] = MacroFiles.Names;
         if (_engine.AutoComplete) Completions.Refresh();
-        // Files of a known kind (Markdown, HTML, CSS, JavaScript, JSON) are colored, unless that is turned off
+        // Files of a known kind (Markdown, HTML, CSS, JavaScript, JSON ...) are colored, unless that is turned off,
+        // and so is the settings file (as INI) when it is edited from Configuration
         var fileType = peek != null ? peek.Syntax
             : saveMode == SaveAsFile && !_singleLine && !readOnly
                 ? SyntaxHighlighter.TypeOfFile(FileExplorer.CurrentFileName)
-                : SyntaxType.None;
+                : saveMode == SaveAsSettings && !_singleLine && !readOnly
+                    ? SyntaxType.Ini
+                    : SyntaxType.None;
         _engine.CompletionSyntax = fileType;
         if (fileType != SyntaxType.None)
         {

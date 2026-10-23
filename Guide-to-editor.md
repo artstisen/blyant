@@ -308,11 +308,11 @@ A number of lines (12 from the start) are kept above and below the cursor: the t
 - The choice is remembered (`scrolloff` and `scrolllines` in the settings file), and it can be turned on and off on the Configuration page of the start page
 
 ## Colors
-The editor can color the parts of a text by what they are, for Markdown, HTML, CSS, JavaScript, JSON, XML, C# and PHP. The text itself is shown as it is written: it is coloring, not a preview, and nothing is checked for errors.
+The editor can color the parts of a text by what they are, for Markdown, HTML, CSS, JavaScript, JSON, XML, C#, PHP and settings files (INI). The text itself is shown as it is written: it is coloring, not a preview, and nothing is checked for errors.
 
-- Files named `.md`, `.html`/`.htm`, `.css`, `.js`/`.mjs`, `.json`, `.cs`, `.php` and `.xml` (also `.svg`, `.xsd`, `.xsl`, `.xaml`, `.rss`, `.csproj` and other XML files) are colored when they are opened from the file browser
+- Files named `.md`, `.html`/`.htm`, `.css`, `.js`/`.mjs`, `.json`, `.cs`, `.php` and `.xml` (also `.svg`, `.xsd`, `.xsl`, `.xaml`, `.rss`, `.csproj` and other XML files), and `.ini`, `.cfg`, `.conf` and `.editorconfig` (settings files) are colored when they are opened from the file browser. So is Blyant's own `settings.ini`, also when it is edited from the System page of Configuration
 - `:syntax` Turn the colors on or off (`:syntax on` and `:syntax off` do one of the two). When you turn them off in one of these files, that is remembered (`syntaxcolors` in the settings file), so files are opened without colors until you turn them on again
-- `:syntax md`, `:syntax html`, `:syntax css`, `:syntax js`, `:syntax json`, `:syntax xml`, `:syntax cs`, `:syntax php`, `:syntax diff` Color the text as that kind, whatever the name of the file is. (for this time: the next time the file is colored by its name again). `:syntax off` removes it
+- `:syntax md`, `:syntax html`, `:syntax css`, `:syntax js`, `:syntax json`, `:syntax xml`, `:syntax cs`, `:syntax php`, `:syntax ini`, `:syntax diff` Color the text as that kind, whatever the name of the file is. (for this time: the next time the file is colored by its name again). `:syntax off` removes it
 
 Selected text, search matches and misspelled words are shown on top of the colors. With _Black and white_ on, the colored parts are shown brighter than the text.
 
@@ -340,6 +340,16 @@ The reading of Markdown is simple: emphasis inside emphasis is shown as the oute
 | Numbers (also with units, like `12px`), CSS colors like `#fff`, and character entities like `&amp;` | Magenta |
 
 In an HTML file, what is between `<style>` and `</style>` is colored as CSS, and what is between `<script>` and `</script>` as JavaScript. XML is colored like HTML (tags, attributes, comments and entities), without the CSS and JavaScript, and the text of a `<![CDATA[ ... ]]>` section is left uncolored.
+
+### Settings files (INI)
+
+| | |
+|---|---|
+| Comments: lines starting with `;` or `#` | The color of dividers |
+| `[sections]`, and the values `true`, `false`, `yes`, `no`, `on` and `off` | The color of the logo and labels |
+| The names before `=` | The color of the preview title |
+| Other values (text, paths) | The color of favorites |
+| Values that are numbers | Magenta |
 
 This too is a simple reading. Regular expressions written between slashes in JavaScript are not recognized (and can be colored wrongly if they contain quotes), the code inside `${...}` in a template string is shown as part of the string, and CSS or JavaScript written in the attributes of an HTML tag is shown as an ordinary value.
 

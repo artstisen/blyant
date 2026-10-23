@@ -55,6 +55,14 @@ internal static class PickListBox
         /// Shown in the list when it has no rows (what to do to get some)
         /// </summary>
         internal string? EmptyText { get; init; }
+
+        /// <summary>
+        /// The labels of the parts below the list, written in the line above them: of the preview, and of the text
+        /// to the right of it (null: none)
+        /// </summary>
+        internal string? PreviewLabel { get; init; }
+
+        internal string? SideLabel { get; init; }
     }
 
     /// <summary>
@@ -265,7 +273,31 @@ internal static class PickListBox
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
         Tools.SetCursorEx(_previewTop - 1, left + 3);
         Console.Write(new string('-', width - 4));
+        // The labels of the preview and of the text to the right of it, a little in from where their text starts
+        var (previewColumn, sideColumn) = PartColumns();
+        DrawLabel(_extras?.PreviewLabel, previewColumn, sideColumn >= 0 ? sideColumn - 2 : _left + _inner - 2);
+        if (sideColumn >= 0) DrawLabel(_extras?.SideLabel, sideColumn, _left + _inner - 2);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
+    }
+
+    // Where the text of the preview starts, and of the text to the right of it (-1: none), as DrawPreview writes them
+    private static (int Preview, int Side) PartColumns()
+    {
+        var preview = _left + 3;
+        if (_extras?.Side == null) return (preview, -1);
+        var width = (_inner - 4) / 2 - 1;
+        return (preview, _left + 1 + width + 2 + 2);
+    }
+
+    // A label in the divider line, from two columns after a column (cut before the end it may reach)
+    private static void DrawLabel(string? label, int column, int end)
+    {
+        if (string.IsNullOrEmpty(label)) return;
+        var text = " " + Tools.TruncateString(label, Math.Max(1, end - column - 4), true) + " ";
+        Tools.SetCursorEx(_previewTop - 1, column + 1);
+        ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
+        Console.Write(text);
+        ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
     }
 
     private static string FilterText(string filter) => Lang.F("Filter: {0}", filter);

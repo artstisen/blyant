@@ -251,6 +251,7 @@ internal static class Init
         SyntaxHighlighter.ColorFiles = true;
         Completions.Enabled = false;
         FileExplorer.DualPane = true;
+        FileExplorer.PickPlace = string.Empty;
         TextArea.LineNumbers = false;
         Logo.AnimateNext(); // Sweep the logo when the start page is first shown
         WriteProgressBar(8); // progress

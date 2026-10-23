@@ -376,6 +376,9 @@ internal static class FileIo
         _tempSettings += "browsesel1=" + FileExplorer.StartSelected + '\n';
         _tempSettings += "browsesel2=" + FileExplorer.StartSelected2 + '\n';
         _tempSettings += "browsepane=" + (FileExplorer.StartPane + 1) + '\n';
+        // Where the folder pickers start: the folder picked last (or, ending with a separator, the directory where
+        // the picking was canceled)
+        _tempSettings += "pickdir=" + FileExplorer.PickPlace + '\n';
         // Two panes side by side in the file browser (false: one pane)
         _tempSettings += "browsedual=" + (FileExplorer.DualPane ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // Recovery copies of text that is not saved, in the directory "recovery" (false: none are written)
@@ -584,6 +587,11 @@ internal static class FileIo
         FileExplorer.StartSelected = Get("browsesel1").Trim();
         FileExplorer.StartSelected2 = Get("browsesel2").Trim();
         FileExplorer.StartPane = Get("browsepane").Trim() == "2" ? 1 : 0;
+        // (a path that is not a full path on this system is not used: the pickers start where the browser was)
+        var pickPlace = Get("pickdir").Trim();
+        FileExplorer.PickPlace = Tools.IsValidPath(pickPlace) && Path.IsPathFullyQualified(pickPlace)
+            ? pickPlace
+            : string.Empty;
         // Two panes unless turned off
         FileExplorer.DualPane = Tools.TrimToLower(Get("browsedual")) != DialogText.BFalse;
         // Recovery copies: on unless turned off

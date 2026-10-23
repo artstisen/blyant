@@ -82,6 +82,9 @@ internal static class ProjectsBox
                 Tabs = tabs.Count > 1 ? tabs.Select(TabName).ToList() : null,
                 ActiveTab = Math.Max(0, tabs.IndexOf(_tab)),
                 EmptyText = Lang.T("No projects yet: P makes a new one, A adds a folder"),
+                // Below the list: where the project is and what it holds, and the start of its note
+                PreviewLabel = Lang.T("Files"),
+                SideLabel = Lang.T("Note"),
                 Key = (key, i) =>
                 {
                     var project = i >= 0 ? projects[i] : null;
