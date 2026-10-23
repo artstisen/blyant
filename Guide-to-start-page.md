@@ -172,6 +172,7 @@ The browser starts in the projects folder (or your home directory, if there is n
 - `:trash` Go to the [trash](#the-trash), with what was deleted
 - `:recovery` Go to the [recovery copies](Guide-to-editor.md#recovery-copies) of text that was not saved
 - `:project add` Add the directory shown to the [projects](#projects)
+- `:protect off` and `:protect on` Lift or restore the protection of the files Blyant uses (see [Managing files](#managing-files)), for this session
 - `:data` Go to the data directory itself, with the files Blyant keeps there: `settings.ini`, `snippets.txt` and `completions.txt` (the snippets and the completions of the editor), `favorites.txt`, `history.txt` and `hotlist.txt` (of the file browser), and `jump.txt` and `bookmarks.txt` (of the Jump menu)
 - `Tab` on the command line completes the command you are typing, and goes through the commands of the file browser when pressed again; `Up` and `Down` bring back the commands given in the file browser before
 - `?` Help
@@ -204,7 +205,7 @@ Things to know:
 - **Deleted files go to the trash** of Blyant (see below), not to the recycle bin of the system. With _Delete to trash_ turned off, deleted files cannot be recovered.
 - Nothing is overwritten. An operation is refused if something with the same name is already in the target directory.
 - A directory cannot be copied or moved into itself.
-- What Blyant is using cannot be renamed, moved or deleted here: the data directory (and the directories it is in), `settings.ini`, the favorites list and the file history.
+- What Blyant is using cannot be renamed, moved or deleted here: the data directory (and the directories it is in), `settings.ini`, the favorites list and the file history. `:protect off` lifts this, for this session only (it is on again when Blyant starts), and `:protect on` puts it back; `:protect` tells which it is. While it is off, _UNPROTECTED_ is shown at the top right of the file browser, and the question before deleting one of these tells that Blyant uses it. A list that is deleted or renamed is made new (empty) when Blyant needs it, `settings.ini` gives the default settings at the next start, and the data directory cannot go to the trash (the trash is in it): it is deleted for good
 - Hidden files are not shown in the browser, but they are included when a directory is copied, moved or deleted.
 
 ### The trash

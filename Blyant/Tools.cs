@@ -681,6 +681,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":trash", Lang.T("Go to the trash (what was deleted)"), false));
             _shortcutList.Add(new Shortcut(":recovery", Lang.T("Go to the recovery copies of unsaved text"), false));
             _shortcutList.Add(new Shortcut(":project add", Lang.T("Add the directory shown to the projects"), false));
+            _shortcutList.Add(new Shortcut(":protect off on", Lang.T("Lift/restore the protection of Blyant's files (this session)"), false));
             _shortcutList.Add(new Shortcut(":", Lang.T("Command line (Tab completes the command)"), false));
             _shortcutList.Add(new Shortcut("  Up Down", Lang.T("Earlier commands of this page"), false));
             _shortcutList.Add(new Shortcut("Esc Q :q", Lang.T("Close the file browser"), false));

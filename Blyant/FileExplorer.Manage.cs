@@ -123,6 +123,11 @@ internal static partial class FileExplorer
             case "hotadd":
                 AddToHotlist();
                 break;
+            case "protect":
+                // ":protect off" (on): Blyant's own files can be renamed, moved and deleted, for this session
+                ProtectCommand(argument);
+                Draw(true);
+                break;
             case "bookmark":
                 BookmarkSelected();
                 break;
@@ -165,27 +170,66 @@ internal static partial class FileExplorer
         return item.Name == ParentName ? null : item;
     }
 
-    // Why a file or directory cannot be renamed, moved or deleted here (null if it can): it is used by Blyant
+    /// <summary>
+    /// The protection of Blyant's own files is lifted (":protect off"): the data directory, settings.ini, the
+    /// favorites and the history can be renamed, moved and deleted. For this session only: it is on again when
+    /// Blyant starts
+    /// </summary>
+    internal static bool Unprotected { get; private set; }
+
+    // ":protect" (on, off, or how it is): the protection of the files Blyant uses
+    private static void ProtectCommand(string argument)
+    {
+        switch (argument.Trim().ToLowerInvariant())
+        {
+            case "off":
+                Unprotected = true;
+                EventLog.Add(DialogText.LogFile + "Protection of Blyant's files: off");
+                _message = Lang.T("Blyant's own files can be renamed, moved and deleted (until :protect on)");
+                break;
+            case "on":
+                Unprotected = false;
+                EventLog.Add(DialogText.LogFile + "Protection of Blyant's files: on");
+                _message = Lang.T("Blyant's own files are protected again");
+                break;
+            default:
+                _message = Unprotected
+                    ? Lang.T("Protection is off: Blyant's own files can be changed (:protect on)")
+                    : Lang.T("Protection is on: Blyant's own files are kept (:protect off lifts it)");
+                break;
+        }
+    }
+
+    // Why a file or directory cannot be renamed, moved or deleted here (null if it can): it is used by Blyant,
+    // unless the protection is lifted (":protect off")
     private static string? Protection(Item item)
+    {
+        return Unprotected || !UsedByBlyant(item) ? null : DialogText.FileUsedByBlyant;
+    }
+
+    // What the question before deleting tells about a file or directory Blyant uses, and what follows
+    private static string UsedByBlyantNote(Item item)
+    {
+        return item.IsDirectory
+            ? Lang.F("Blyant uses this ({0}): its settings and lists are in it.", item.Name)
+            : Lang.F("Blyant uses this file ({0}): a new one is made when it is needed.", item.Name);
+    }
+
+    // True for a file or directory that Blyant uses: the data directory and the directories it is in, the settings,
+    // the favorites and the history
+    private static bool UsedByBlyant(Item item)
     {
         var dataDirectory = System.IO.Path.GetFullPath(FileIo.GetDataDirectoryName());
         if (item.IsDirectory)
         {
             // The data directory and the directories it is in: the settings and the lists would be gone
             return FileOperations.SamePath(item.Path, dataDirectory) ||
-                   FileOperations.IsInside(dataDirectory, item.Path)
-                ? DialogText.FileUsedByBlyant
-                : null;
+                   FileOperations.IsInside(dataDirectory, item.Path);
         }
 
-        if (FileOperations.SamePath(item.Path, System.IO.Path.Combine(dataDirectory, FileIo.SettingsFileName)) ||
-            FileOperations.SamePath(item.Path, FileFavorites.FilePath) ||
-            FileOperations.SamePath(item.Path, FileHistory.FilePath))
-        {
-            return DialogText.FileUsedByBlyant;
-        }
-
-        return null;
+        return FileOperations.SamePath(item.Path, System.IO.Path.Combine(dataDirectory, FileIo.SettingsFileName)) ||
+               FileOperations.SamePath(item.Path, FileFavorites.FilePath) ||
+               FileOperations.SamePath(item.Path, FileHistory.FilePath);
     }
 
     private static bool IsProtected(Item item)
@@ -1061,6 +1105,8 @@ internal static partial class FileExplorer
                 note = toTrash ? DialogText.TrashFileNote : DialogText.DeleteFileNote;
             }
 
+            // A file or directory Blyant uses (the protection lifted): told first
+            if (UsedByBlyant(item)) note = UsedByBlyantNote(item) + " " + note;
             var name = Tools.TruncateString(item.Name, 40, true);
             return ChoiceBox.ConfirmGuarded(item.IsDirectory ? DialogText.DeleteDirectory : DialogText.DeleteFile,
                 (toTrash ? DialogText.TrashNamed : DialogText.DeleteNamed).Replace("{0}", name), note);
@@ -1081,15 +1127,19 @@ internal static partial class FileExplorer
             allDirectories += directories + 1;
         }
 
+        // Files or directories Blyant uses among them (the protection lifted): told first
+        var used = items.FirstOrDefault(UsedByBlyant);
+        var usedNote = used == null ? string.Empty : UsedByBlyantNote(used) + " ";
         if (toTrash)
         {
             return ChoiceBox.ConfirmGuarded(DialogText.DeleteMarkedCaption,
                 Lang.F("Move the {0} marked files and directories to the trash?", items.Count),
-                Lang.F("In all {0} files and {1} directories.", allFiles, allDirectories) + " " +
+                usedNote + Lang.F("In all {0} files and {1} directories.", allFiles, allDirectories) + " " +
                 DialogText.TrashFileNote);
         }
 
-        var note2 = Lang.F("In all {0} files and {1} directories. They cannot be recovered.", allFiles, allDirectories);
+        var note2 = usedNote +
+                    Lang.F("In all {0} files and {1} directories. They cannot be recovered.", allFiles, allDirectories);
         return ChoiceBox.ConfirmGuarded(DialogText.DeleteMarkedCaption,
             Lang.F("Delete the {0} marked files and directories?", items.Count), note2);
     }

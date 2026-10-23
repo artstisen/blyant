@@ -1506,6 +1506,15 @@ internal static partial class FileExplorer
         // While the place to copy or move to is selected, the label stands out
         Menu.WriteModeLabel(_caption, string.Empty, 0, _pending != null);
         Menu.WriteNameInTopBar();
+        if (Unprotected && _mode == BrowseMode.Edit)
+        {
+            // Blyant's own files can be renamed, moved and deleted (":protect off"): told at the top right
+            var marker = " " + Lang.T("UNPROTECTED") + " ";
+            Tools.SetCursorEx(0, Math.Max(0, Init.LineWidth - TextMetrics.WidthOf(marker) - 1));
+            ConsoleColors.SetColors(ConsoleColors.ColorPreset.WarningInverted);
+            Console.Write(marker);
+            ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
+        }
         for (var number = 0; number < shown.Length; number++)
         {
             var pane = shown[number];
