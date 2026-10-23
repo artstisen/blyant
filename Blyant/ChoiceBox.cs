@@ -248,8 +248,30 @@ internal static class ChoiceBox
         return textArea.Canceled || typed.Length == 0 ? null : typed;
     }
 
+    /// <summary>
+    /// Ask for a text in a box, as AskText, where Tab leaves the field to choose something else for it (the folder
+    /// of a new file): tab is then true, and the text is returned as it was typed (also empty)
+    /// </summary>
+    /// <param name="hints">The keys, on the bottom line (with Tab)</param>
+    /// <returns>The text typed, or null if canceled (or nothing was typed, without Tab)</returns>
+    internal static string? AskTextOrTab(string caption, string prompt, string label, string text, string hints,
+        out bool tab)
+    {
+        using var frameText = ConsoleColors.FrameTextScope();
+
+        var (fieldTop, fieldLeft, fieldWidth) = DrawField(caption, prompt, label, hints);
+        TextArea.NextTabLeaves = true;
+        var textArea = new TextArea(fieldLeft, fieldTop, fieldWidth, 1, text, 0, text.Length > 0, false, false, 0);
+        ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
+        tab = textArea.TabPressed;
+        if (tab) return textArea.GetText().Trim();
+        var typed = textArea.GetText().Trim();
+        return textArea.Canceled || typed.Length == 0 ? null : typed;
+    }
+
     // A box with a line telling what to do and a label for a field. Returns where the field is
-    private static (int Top, int Left, int Width) DrawField(string caption, string prompt, string label)
+    private static (int Top, int Left, int Width) DrawField(string caption, string prompt, string label,
+        string? hints = null)
     {
         var inner = Math.Clamp(Math.Max(TextMetrics.WidthOf(prompt) + 4, 64), 10, Init.LineWidth - 6);
         var promptLines = Wrap(prompt, inner - 4);
@@ -259,7 +281,7 @@ internal static class ChoiceBox
         WriteText(top, left, new List<string>(), promptLines, false, width);
         Tools.SetCursorEx(top + 1 + fieldRow, left + 3);
         Console.Write(label);
-        WriteHints(DialogText.AskTextKeys);
+        WriteHints(hints ?? DialogText.AskTextKeys);
         // The field takes the rest of the row
         var fieldLeft = left + 3 + TextMetrics.WidthOf(label);
         return (top + 1 + fieldRow, fieldLeft, Math.Max(4, left + width - fieldLeft));

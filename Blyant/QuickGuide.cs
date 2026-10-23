@@ -73,10 +73,10 @@ internal static partial class QuickGuide
         (Kind.Title, "", Lang.T("Quick guide")),
         (Kind.Text, "", ""),
         (Kind.Heading, "", Lang.T("Start with a file or a project, on the start page")),
-        (Kind.Item, "N  F", Lang.T("New file/Open file: the file browser, where Enter opens a file in the editor. " +
+        (Kind.Item, "N  F", Lang.T("New file/File browser: in the file browser, Enter opens a file in the editor. " +
                                    "Manage files and organize favorites there.")),
         (Kind.Item, "P  O", Lang.T("New project/Open project: a project is a folder with the files of a piece of " +
-                                   "writing, kept in the projects folder.")),
+                                   "writing, in the projects folder or added from anywhere.")),
         (Kind.Text, "", ""),
         (Kind.Heading, "", Lang.T("Moving around (the same keys everywhere)")),
         (Kind.Item, "j  k", Lang.T("Down/Up. The arrow keys work too")),

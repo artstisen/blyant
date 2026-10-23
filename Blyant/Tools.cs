@@ -585,8 +585,8 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("gg G", Lang.T("First/Last (also in Configuration)"), false));
             _shortcutList.Add(new Shortcut("Enter", Lang.T("Open the selected"), false));
             _shortcutList.Add(new Shortcut("N F P O M U", Lang.T("Open the choice of the key at once"), false));
-            _shortcutList.Add(new Shortcut("  1 N", Lang.T("New file: in the folder of the file browser"), false));
-            _shortcutList.Add(new Shortcut("  2 F", Lang.T("Open file: the file browser"), false));
+            _shortcutList.Add(new Shortcut("  1 N", Lang.T("New file (Tab in the box: another folder)"), false));
+            _shortcutList.Add(new Shortcut("  2 F", Lang.T("File browser: open, make and manage files"), false));
             _shortcutList.Add(new Shortcut("  3 P", Lang.T("New project: a folder in the projects folder"), false));
             _shortcutList.Add(new Shortcut("  4 O", Lang.T("Open project: pick one in the list of projects"), false));
             _shortcutList.Add(new Shortcut("      C", Lang.T("In the list: the color of the project"), false));
@@ -599,8 +599,8 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("Q Esc", Lang.T("Exit Blyant, asking first (Configuration: to Start)"), false));
             _shortcutList.Add(new Shortcut(":", Lang.T("Command line, on every tab (Tab completes)"), false));
             _shortcutList.Add(new Shortcut("  Up Down", Lang.T("Earlier commands of this page"), false));
-            _shortcutList.Add(new Shortcut(":new :new name", Lang.T("New file (asks for the name if not given)"), false));
-            _shortcutList.Add(new Shortcut(":file :open", Lang.T("Open file: the file browser"), false));
+            _shortcutList.Add(new Shortcut(":new :new name", Lang.T("New file (Tab in the box: another folder)"), false));
+            _shortcutList.Add(new Shortcut(":file :open", Lang.T("File browser: open, make and manage files"), false));
             _shortcutList.Add(new Shortcut(":project name", Lang.T("New project (asks for the name if not given)"), false));
             _shortcutList.Add(new Shortcut(":projects :pro", Lang.T("Open project: the list of projects"), false));
             _shortcutList.Add(new Shortcut(":start :config", Lang.T("The Start tab/Configuration (General)"), false));

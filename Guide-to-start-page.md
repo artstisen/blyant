@@ -9,8 +9,14 @@ Blyant is a text editor for writing: files, and projects of files. When it start
 ### Start
 Each choice has a number and a key, shown in front of it. The number selects the choice (then `Enter` opens it), and the key opens it at once. The keys are the same in all languages.
 
-- `1` `N` **New file**: Make a new, empty file and open it in the editor, with the [file browser](#file-browser) behind it. You are asked for its name; a name without an extension makes a Markdown file (`chapter 1` is `chapter 1.md`). The file is made in the directory the file browser was in last (shown in the box), or in the projects folder the first time
-- `2` `F` **Open file**: Open the [file browser](#file-browser), where `Enter` opens a file in the editor. Closing the file browser returns here
+- `1` `N` **New file**: Make a new, empty file and open it in the editor, with the [file browser](#file-browser) behind it. You are asked for its name; a name without an extension makes a Markdown file (`chapter 1` is `chapter 1.md`). The file is made in the directory the file browser was in last (shown in the box). `Tab` in the box chooses another folder, and the name you typed is kept:
+
+    - `1` to `4`: the folder of pane 1 and pane 2 of the file browser, the folder picked last (when adding a project, for instance), and the projects folder. Only those that are there, each once, with the end of the path and what the place is after it. `j`/`k` (and `gg`/`G`) select, `Enter` chooses
+    - `B` **Browse...**: pick the folder in the file browser (it opens where a folder was picked last)
+    - `Esc` Back to the name, in the same folder
+
+  With one place or none, `Tab` opens the file browser at once. `Enter` makes the file and opens it
+- `2` `F` **File browser**: Open the [file browser](#file-browser), where `Enter` opens a file in the editor, and files and folders are made, renamed, copied, moved and deleted. Closing the file browser returns here
 - `3` `P` **New project**: Make a new [project](#projects): you are asked for its name, a folder of that name is made in the projects folder, and it is shown in the file browser
 - `4` `O` **Open project**: The [projects](#projects) in a list to pick from, with what each holds below the list and the start of its note to the right of that. `Enter` shows the project picked in the file browser, `C` picks the color of the project, `N` opens its note in the editor, `I` shows information about it, `/` filters the list, `:` is its command line, `?` shows its keys and `Esc` closes it
 - `5` `M` **Jump menu**: Open the [Jump menu](Guide-to-jump-menu.md#jump-menu), to go straight to a file, a directory or a page of Blyant (also with `Ctrl+O`). Pages such as Color schemes and Help open on top of the start page
@@ -109,7 +115,7 @@ The settings are on four pages. `j` `k` (and `gg` `G`) select a setting on the p
 ### Commands
 On every tab of the start page (Start, the pages of Configuration, Help), `:` opens the command line on the bottom line. `Tab` completes the command you are typing, from the commands of this page, and `Up`/`Down` bring back the commands given here before:
 
-- `:new` (or `:new name`) New file, as `N`; `:file` (or `:open`, `:browse`) The file browser, as _Open file_
+- `:new` (or `:new name`) New file, as `N` (with `:new name`, the box is shown with the name filled in, so the folder can be changed: `Enter` makes it); `:file` (or `:open`, `:browse`) The file browser, as _File browser_
 - `:project` (or `:project name`, `:newproject`) New project, as `P`; `:projects` (`:pro`, `:proj`) The list of projects, as _Open project_
 - `:start` The Start tab; `:config` (or `:general`), `:layout`, `:editor` and `:system` The pages of the Configuration tab (`:editor` is the Editor page of Configuration, not the text editor)
 - `:jump` (or `:ju`, `:jmp`) The [Jump menu](Guide-to-jump-menu.md#jump-menu); `:book 3` Jump to bookmark 3
@@ -128,7 +134,7 @@ The command names are the same in all languages.
 Select with `j`/`k` or the number and press `Enter`. `Esc` goes back to the Start tab.
 
 ## File browser
-The file browser (_Open file_, `F` on the start page) is where files and projects are worked on: text files (.md, .txt, .html ...) are opened in the Blyant editor, and files and directories are made, renamed, copied, moved and deleted.
+The file browser (_File browser_, `F` on the start page) is where files and projects are worked on: text files (.md, .txt, .html ...) are opened in the Blyant editor, and files and directories are made, renamed, copied, moved and deleted.
 
 The browser shows two panes side by side, each with its own directory. The pane with the focus has a highlighted label (`PANE 1` or `PANE 2`) in the line above its list, and all keys work on that pane.
 

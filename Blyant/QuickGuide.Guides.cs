@@ -47,7 +47,7 @@ internal static partial class QuickGuide
         (Kind.Text, "", ""),
         (Kind.Text, "", Lang.T("The file browser shows the files and directories of your computer. Text files are " +
                                "opened in the editor.")),
-        (Kind.Item, "F", Lang.T("Open it from the start page (Open file)")),
+        (Kind.Item, "F", Lang.T("Open it from the start page (File browser)")),
         (Kind.Text, "", ""),
         (Kind.Heading, "", Lang.T("Moving around")),
         (Kind.Item, "j  k", Lang.T("Select (as Down/Up)")),
@@ -143,8 +143,8 @@ internal static partial class QuickGuide
         (Kind.Item, "O  :projects", Lang.T("Open project: pick one in the list of projects")),
         (Kind.Item, "  C", Lang.T("In the list: the color of the project")),
         (Kind.Item, "  N", Lang.T("In the list: the note of the project, in the editor")),
-        (Kind.Item, "N  :new", Lang.T("New file (asks for the name if not given)")),
-        (Kind.Item, "F  :file", Lang.T("Open file: the file browser")),
+        (Kind.Item, "N  :new", Lang.T("New file (Tab in the box: another folder)")),
+        (Kind.Item, "F  :file", Lang.T("File browser: open, make and manage files")),
         (Kind.Text, "", ""),
         (Kind.Heading, "", Lang.T("In a project")),
         (Kind.Text, "", Lang.T("A project is shown in the file browser: N makes a file in it (a Markdown file when " +

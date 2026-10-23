@@ -2,7 +2,7 @@
 
 /// <summary>
 /// The page shown when Blyant starts, in a frame with three tabs (TabFrame): Start, where a file or a project is
-/// made or opened (New file, Open file, New project, Open project), Configuration, with the settings on four pages
+/// made or opened (New file, File browser, New project, Open project), Configuration, with the settings on four pages
 /// (the sub-tabs General, Layout, Editor and System), and Help (the help, the guides and the about page). Tab goes
 /// from page to page. The page is shown again when the file browser is closed, and after a jump.
 /// The setting "startmode" tells if the page is shown at startup, or if Blyant goes directly to the file browser.
@@ -227,19 +227,30 @@ internal static class StartMenu
         if (_frame != null) _frame.Selected = page;
     }
 
-    // New file: a file made in the directory the file browser was in last (the name is asked for if it is not
-    // given; without an extension it is a Markdown file), and opened in the editor with the file browser behind it
+    // New file: a file made in the directory the file browser was in last, or another (Tab in the box: the places
+    // saved, or one picked), and opened in the editor with the file browser behind it. The name is asked for, also
+    // when it is given (":new name"), so the folder can be changed; without an extension it is a Markdown file
     private static void NewFile(string name)
     {
         ChoiceBox.Forget();
         var directory = FileExplorer.LastDirectory;
         name = name.Trim();
-        if (name.Length == 0)
+        while (true)
         {
-            var asked = ChoiceBox.AskText(DialogText.NewFile, Lang.F("The file is made in {0}", directory),
-                DialogText.FileNameColon, string.Empty);
-            if (asked == null) return;
-            name = asked;
+            var asked = ChoiceBox.AskTextOrTab(DialogText.NewFile, Lang.F("The file is made in {0}", directory),
+                DialogText.FileNameColon, name, Lang.T("Enter OK | Tab Another folder | Esc Cancel"), out var tab);
+            if (!tab)
+            {
+                if (asked == null) return;
+                name = asked;
+                break;
+            }
+
+            // Tab: another folder (the name typed is kept)
+            name = asked ?? string.Empty;
+            if (PickNewFileFolder(directory) is { } other) directory = other;
+            Tools.ClearScreen();
+            ChoiceBox.Forget();
         }
 
         name = FileOperations.WithDefaultExtension(name);
@@ -271,6 +282,57 @@ internal static class StartMenu
         }
 
         FileExplorer.RunAtFile(Path.GetFullPath(path));
+    }
+
+    /// <summary>
+    /// The places a new file can be made in, besides one picked: the directories of the two panes of the file
+    /// browser, the folder picked last, and the projects folder. Each once, only those that are there, in this
+    /// order
+    /// </summary>
+    internal static List<(string Directory, string Label)> NewFilePlaces()
+    {
+        var places = new List<(string Directory, string Label)>();
+
+        void Add(string directory, string label)
+        {
+            if (directory.Length == 0 || !Directory.Exists(directory)) return;
+            directory = Path.TrimEndingDirectorySeparator(Path.GetFullPath(directory));
+            if (directory.Length == 0 || places.Any(place => FileOperations.SamePath(place.Directory, directory))) return;
+            places.Add((directory, label));
+        }
+
+        Add(FileExplorer.StartDirectory, Lang.T("pane 1"));
+        Add(FileExplorer.StartDirectory2, Lang.T("pane 2"));
+        // The folder picked (or, ending with a separator, the one the picking was canceled in)
+        var picked = FileExplorer.PickPlace;
+        if (picked.Length > 0) Add(Path.TrimEndingDirectorySeparator(picked), Lang.T("picked last"));
+        if (Projects.HasFolder) Add(Projects.Directory, Lang.T("projects folder"));
+        return places;
+    }
+
+    // Tab in the box of a new file: the places saved in a list (1-9, j/k gg G and Enter), or B to pick one in the
+    // file browser. With one place or none, the file browser at once. Returns the directory, or null (Esc: back)
+    private static string? PickNewFileFolder(string current)
+    {
+        var places = NewFilePlaces();
+        if (places.Count > 1)
+        {
+            // (it covers the box of the name, which is drawn again after it)
+            var keys = places.Select((_, i) => (i + 1).ToString()).Append("B").Append("Esc").ToList();
+            // The path keeps its end (where it is), and after it what the place is
+            var room = Math.Max(16, Init.LineWidth - 26 - places.Max(place => TextMetrics.WidthOf(place.Label)));
+            var choices = places.Select(place => TextMetrics.KeepEnd(place.Directory, room) + "  (" + place.Label + ")")
+                .Append(Lang.T("Browse...")).Append(Lang.T("Back")).ToList();
+            var selected = Math.Max(0, places.FindIndex(place => FileOperations.SamePath(place.Directory, current)));
+            var choice = ChoiceBox.Pick(Lang.T("Where to make the file"), Lang.T("The folder of the new file"),
+                string.Empty, choices, keys, selected, false);
+            if (choice < 0 || choice == places.Count + 1) return null;
+            if (choice < places.Count) return places[choice].Directory;
+        }
+
+        // Browse: picked in the file browser (where a folder was picked last)
+        ChoiceBox.Forget();
+        return FileExplorer.PickDirectory(Lang.T("Where to make the file"));
     }
 
     // New project: a directory made in the projects folder, or where the user picks when there is none (the first
@@ -534,7 +596,7 @@ internal static class StartMenu
         private enum Choice
         {
             NewFile,
-            OpenFile,
+            FileBrowser,
             NewProject,
             OpenProject,
             Jump,
@@ -550,7 +612,7 @@ internal static class StartMenu
         private static string KeysOf(Choice choice) => choice switch
         {
             Choice.NewFile => "N",
-            Choice.OpenFile => "F",
+            Choice.FileBrowser => "F",
             Choice.NewProject => "P",
             Choice.OpenProject => "O",
             Choice.Jump => "M",
@@ -562,7 +624,7 @@ internal static class StartMenu
         private static string TextOf(Choice choice) => choice switch
         {
             Choice.NewFile => DialogText.NewFile,
-            Choice.OpenFile => DialogText.OpenFile,
+            Choice.FileBrowser => DialogText.FileBrowser,
             Choice.NewProject => DialogText.NewProject,
             Choice.OpenProject => DialogText.OpenProject,
             Choice.Jump => DialogText.StartJump,
@@ -609,7 +671,7 @@ internal static class StartMenu
             var direct = key.Key switch
             {
                 ConsoleKey.N => Choice.NewFile,
-                ConsoleKey.F => Choice.OpenFile,
+                ConsoleKey.F => Choice.FileBrowser,
                 ConsoleKey.P => Choice.NewProject,
                 ConsoleKey.O => Choice.OpenProject,
                 ConsoleKey.M => Choice.Jump,
@@ -664,7 +726,7 @@ internal static class StartMenu
                 case Choice.NewFile:
                     NewFile(string.Empty);
                     break;
-                case Choice.OpenFile:
+                case Choice.FileBrowser:
                     FileExplorer.Run();
                     break;
                 case Choice.NewProject:

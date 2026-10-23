@@ -1,7 +1,7 @@
 ﻿namespace Blyant;
 
 /// <summary>
-/// The file browser, opened from the start page (Open file, Open project) and the Jump menu. It lists the
+/// The file browser, opened from the start page (File browser, Open project) and the Jump menu. It lists the
 /// directories and files of a directory in one or two panes, and opens text files in the editor.
 /// File management is found in FileExplorer.Manage.cs, the list of favorites in FileExplorer.Favorites.cs,
 /// the files opened before in FileExplorer.History.cs and the search for files in FileExplorer.Search.cs.

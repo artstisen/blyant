@@ -80,19 +80,19 @@ public class ColorSchemeTests : IDisposable
         Assert.Equal(ConsoleColor.Black, ColorScheme.BuiltIn[8].Text);
         Assert.All(ColorScheme.BuiltIn.Where(scheme => scheme.Name is not ("Deep Blue" or "Gray Box" or "Bright Typist")),
             scheme => Assert.Null(scheme.Background));
-        // The default scheme: white box borders, the focused tab cyan (not highlighted) with a gray corner, the
-        // other tabs dark gray, and the logo of Blyant
+        // The default scheme: white box borders, the focused tab cyan on black and highlighted, with a white corner,
+        // the other tabs dark gray, and the logo of Blyant
         var standard = ColorScheme.BuiltIn[0];
         Assert.Equal(ConsoleColor.White, standard.BoxBorderColor);
-        Assert.Equal(ConsoleColor.Gray, standard.TabCornerColor);
+        Assert.Equal(ConsoleColor.White, standard.TabCornerColor);
         Assert.Equal(ConsoleColor.White, standard.CurrentLineNumberColor);
         Assert.Equal("Blyant", standard.UseLogo);
         Assert.NotNull(Logos.Load(standard.UseLogo));
         Assert.Equal(ConsoleColor.DarkGray, standard.TabFrameColor);
-        Assert.Equal(ConsoleColor.DarkCyan, standard.TabColor);
+        Assert.Equal(ConsoleColor.Black, standard.TabColor);
         Assert.Equal(ConsoleColor.Cyan, standard.TabShownColor);
         Assert.Equal(ConsoleColor.DarkGray, standard.OtherTabsColor);
-        Assert.False(standard.TabHighlight);
+        Assert.True(standard.TabHighlight);
         // In the others (but Tasty Bytes, with colors of its own) the new colors are those of the dividers, and
         // the tab is highlighted
         Assert.All(ColorScheme.BuiltIn.Skip(1).Where(scheme => scheme.Name != "Tasty Bytes"), scheme =>
@@ -127,8 +127,8 @@ public class ColorSchemeTests : IDisposable
         Assert.Equal(ConsoleColor.White, read.Text);
         Assert.Equal(ColorScheme.BuiltIn[0].Logo, read.Logo);
         Assert.Null(read.Background);
-        // As the default scheme: no highlight of the focused tab
-        Assert.False(read.TabHighlight);
+        // As the default scheme: the focused tab is highlighted
+        Assert.True(read.TabHighlight);
     }
 
     [Fact]

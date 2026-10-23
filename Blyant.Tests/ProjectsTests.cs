@@ -253,6 +253,36 @@ public class ProjectsTests : IDisposable
     }
 
     [Fact]
+    public void ANewFile_CanBeMadeInThePlacesSaved_EachOnce_AndOnlyThoseThatAreThere()
+    {
+        var saved = (FileExplorer.StartDirectory, FileExplorer.StartDirectory2, FileExplorer.PickPlace);
+        try
+        {
+            var one = In("One");
+            var two = In("Two");
+            var picked = In("Picked", "Essays");
+            foreach (var directory in new[] { one, two, picked, Projects.Directory }) Directory.CreateDirectory(directory);
+            FileExplorer.StartDirectory = one;
+            FileExplorer.StartDirectory2 = two;
+            FileExplorer.PickPlace = picked;
+            Assert.Equal(new[] { one, two, picked, Projects.Directory },
+                StartMenu.NewFilePlaces().Select(place => place.Directory));
+            // The same place twice is there once, and a folder that is not there is left out
+            FileExplorer.StartDirectory2 = one + Path.DirectorySeparatorChar;
+            FileExplorer.PickPlace = In("Gone");
+            Projects.Directory = string.Empty;
+            Assert.Equal(new[] { one }, StartMenu.NewFilePlaces().Select(place => place.Directory));
+            // Where the picking was canceled (ending with a separator): that directory
+            FileExplorer.PickPlace = two + Path.DirectorySeparatorChar;
+            Assert.Equal(new[] { one, two }, StartMenu.NewFilePlaces().Select(place => place.Directory));
+        }
+        finally
+        {
+            (FileExplorer.StartDirectory, FileExplorer.StartDirectory2, FileExplorer.PickPlace) = saved;
+        }
+    }
+
+    [Fact]
     public void TheProjectsFolderOfTheSettings_IsAFullPathOfThisSystem()
     {
         var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);

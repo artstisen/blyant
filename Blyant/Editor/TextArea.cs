@@ -130,6 +130,19 @@ public partial class TextArea
     internal static (int Index, bool OtherLeft)? NextSplit { get; set; }
 
     /// <summary>
+    /// The next field (a text area of one line) is left with Tab, which TabPressed then tells (a box that has
+    /// more than the field: the folder of a new file). Taken by the constructor
+    /// </summary>
+    internal static bool NextTabLeaves { get; set; }
+
+    private readonly bool _tabLeaves;
+
+    /// <summary>
+    /// The field was left with Tab (NextTabLeaves); its text is as it was typed
+    /// </summary>
+    internal bool TabPressed { get; private set; }
+
+    /// <summary>
     /// A file of Blyant opened from the editor, which is closed for it: the snippets (":snip edit", at a line) or
     /// the completions (":complete edit")
     /// </summary>
@@ -192,6 +205,8 @@ public partial class TextArea
         // Taken at once, so it is never left for another editor
         var split = NextSplit;
         NextSplit = null;
+        _tabLeaves = NextTabLeaves;
+        NextTabLeaves = false;
         // Opened from a recovery copy: the copy goes with the changes, as one this editor wrote
         _recoveryOwned = NextRecovered;
         NextRecovered = false;
@@ -378,6 +393,13 @@ public partial class TextArea
                 _handlingKey = false;
                 var key = ReadKey();
                 _handlingKey = true;
+                if (_tabLeaves && _singleLine && key.Key == ConsoleKey.Tab &&
+                    (key.Modifiers & ConsoleModifiers.Shift) == 0)
+                {
+                    // The box goes on to its other part, with the text as it is
+                    TabPressed = true;
+                    break;
+                }
                 if (FollowsWindow && IsCancelKey(key))
                 {
                     // Ctrl+C that comes as a key (some terminals send it so): as the signal, it does not close

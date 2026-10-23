@@ -194,7 +194,7 @@ internal static class DialogText
     public static string CaptionsFiles => Lang.T("Files");
 
     public static string StartTab => Lang.T("Start");
-    public static string OpenFile => Lang.T("Open file");
+    public static string FileBrowser => Lang.T("File browser");
     public static string NewProject => Lang.T("New project");
     public static string OpenProject => Lang.T("Open project");
     public static string ProjectInfo => Lang.T("Project info");
