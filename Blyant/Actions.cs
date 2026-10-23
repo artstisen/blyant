@@ -202,7 +202,7 @@ internal static class Actions
         AsciiStyles.ResetAsciiStyle();
         ConsoleColors.Monochrome = false;
         SyntaxHighlighter.ColorFiles = true;
-        Completions.Enabled = false;
+        Completions.Enabled = true;
         FileExplorer.DualPane = true;
         TextArea.LineNumbers = false;
         TextArea.WordWrap = true;
@@ -213,6 +213,7 @@ internal static class Actions
         Logo.Current = LogoArt.BuiltIn;
         Logo.Animation = Logo.AnimationSpeed.Fast;
         StartMenu.Mode = StartMenu.StartMode.Select;
+        FileOperations.DefaultExtension = FileOperations.MarkdownExtension;
         StartMenu.StartInFavorites = false;
         Projects.Directory = string.Empty;
         Projects.AskEachTime = false;

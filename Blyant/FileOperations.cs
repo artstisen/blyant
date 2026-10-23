@@ -9,13 +9,52 @@
 internal static class FileOperations
 {
     /// <summary>
-    /// The extension a new file gets when its name has none: Markdown
+    /// Markdown, the kind of new files from the start
     /// </summary>
-    internal const string DefaultExtension = ".md";
+    internal const string MarkdownExtension = ".md";
 
     /// <summary>
-    /// The name of a new file: a name without an extension gets ".md" ("chapter 1" is "chapter 1.md"). A name that
-    /// starts with a dot (".gitignore") or ends with one (which is not a name to use) is left as it is
+    /// The kinds a new file and a blank page can be (setting "filetype"): Markdown, plain text, and the kinds the
+    /// editor colors. The extension, and the name (the same in all languages, but for plain text: PlainText)
+    /// </summary>
+    internal static readonly IReadOnlyList<(string Extension, string Name)> FileTypes = new[]
+    {
+        (MarkdownExtension, "Markdown"), (".txt", PlainText), (".html", "HTML"), (".css", "CSS"),
+        (".js", "JavaScript"), (".json", "JSON"), (".xml", "XML"), (".cs", "C#"), (".php", "PHP"), (".ini", "INI")
+    };
+
+    // The name of plain text in FileTypes (shown in the language in use: FileTypeName)
+    private const string PlainText = "Plain text";
+
+    /// <summary>
+    /// The name of a kind of file as it is shown, in the language in use
+    /// </summary>
+    internal static string FileTypeName(string extension)
+    {
+        var type = FileTypes.FirstOrDefault(type => type.Extension == extension);
+        if (type.Name == null) return extension;
+        return type.Name == PlainText ? Lang.T("Plain text") : type.Name;
+    }
+
+    /// <summary>
+    /// The extension of a kind in the setting "filetype" ("md", or ".md"), or null if it is not one of the list
+    /// </summary>
+    internal static string? ParseFileType(string value)
+    {
+        var extension = "." + value.Trim().TrimStart('.').ToLowerInvariant();
+        return FileTypes.Any(type => type.Extension == extension) ? extension : null;
+    }
+
+    /// <summary>
+    /// The extension a new file (and a blank page, when it is saved) gets when its name has none: Markdown, unless
+    /// another kind is set (setting "filetype")
+    /// </summary>
+    internal static string DefaultExtension { get; set; } = MarkdownExtension;
+
+    /// <summary>
+    /// The name of a new file: a name without an extension gets the one of the kind set (".md": "chapter 1" is
+    /// "chapter 1.md"). A name that starts with a dot (".gitignore") or ends with one (which is not a name to use)
+    /// is left as it is
     /// </summary>
     internal static string WithDefaultExtension(string name)
     {

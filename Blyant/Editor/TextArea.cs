@@ -251,8 +251,10 @@ public partial class TextArea
         // and so is the settings file (as INI) when it is edited from Configuration
         var fileType = peek != null ? peek.Syntax
             : saveMode == SaveAsFile && !_singleLine && !readOnly
-                // (a blank page is Markdown, as a new file without an extension)
-                ? FileExplorer.IsUntitled ? SyntaxType.Markdown : SyntaxHighlighter.TypeOfFile(FileExplorer.CurrentFileName)
+                // (a blank page is of the kind of new files: Markdown, unless another is set)
+                ? FileExplorer.IsUntitled
+                    ? SyntaxHighlighter.TypeOfFile(FileOperations.DefaultExtension)
+                    : SyntaxHighlighter.TypeOfFile(FileExplorer.CurrentFileName)
                 : saveMode == SaveAsSettings && !_singleLine && !readOnly
                     ? SyntaxType.Ini
                     : SyntaxType.None;
@@ -853,7 +855,9 @@ public partial class TextArea
     {
         if (_engine.Syntax != SyntaxType.None) return _engine.Syntax;
         if (_saveMode != SaveAsFile) return SyntaxType.None;
-        return FileExplorer.IsUntitled ? SyntaxType.Markdown : SyntaxHighlighter.TypeOfFile(FileExplorer.CurrentFileName);
+        return SyntaxHighlighter.TypeOfFile(FileExplorer.IsUntitled
+            ? FileOperations.DefaultExtension
+            : FileExplorer.CurrentFileName);
     }
 
     // ":snip edit": close the editor to open the file of snippets (at a line). The caller opens it, and this text

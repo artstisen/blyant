@@ -619,7 +619,8 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":q :exit", Lang.T("Exit Blyant (asks first)"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Configuration"), Lang.T("The pages General, Layout, Editor and System"), false));
             _shortcutList.Add(new Shortcut("j k 1-9", Lang.T("Select a setting (or the number of its row)"), false));
-            _shortcutList.Add(new Shortcut("  " + Lang.T("Startup"), Lang.T("The file browser can start in the favorites list"), false));
+            _shortcutList.Add(new Shortcut("  " + Lang.T("Startup"), Lang.T("The start page, the file browser or a blank page"), false));
+            _shortcutList.Add(new Shortcut("  " + Lang.T("New files"), Lang.T("Their kind (Markdown, plain text, HTML ...): Enter"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Projects folder"), Lang.T("Enter: in Documents, another, or none"), false));
             _shortcutList.Add(new Shortcut("Enter Space", Lang.T("Change the selected setting"), false));
             _shortcutList.Add(new Shortcut("l h", Lang.T("Configuration: the next/previous page"), false));

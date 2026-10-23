@@ -242,6 +242,7 @@ internal static class Init
         Logo.Animation = Logo.AnimationSpeed.Fast;
         AutoSize = true;
         StartMenu.Mode = StartMenu.StartMode.Select;
+        FileOperations.DefaultExtension = FileOperations.MarkdownExtension;
         StartMenu.StartInFavorites = false;
         Projects.Directory = string.Empty;
         Projects.AskEachTime = false;
@@ -249,7 +250,7 @@ internal static class Init
         Recovery.Enabled = true;
         ConsoleColors.Monochrome = false;
         SyntaxHighlighter.ColorFiles = true;
-        Completions.Enabled = false;
+        Completions.Enabled = true;
         FileExplorer.DualPane = true;
         FileExplorer.PickPlace = string.Empty;
         TextArea.LineNumbers = false;
@@ -321,6 +322,9 @@ internal static class Init
                 Log(DialogText.InitOk, true);
             }
         }
+        // Completing words is on: the file of completions is made if there is none, so it is ready (a file that is
+        // there is never written over)
+        if (Completions.Enabled) Completions.EnsureFile();
         WriteProgressBar(15); // progress
         // Update output dimensions if set by user
         ApplyAutoSize();

@@ -288,14 +288,14 @@ public class CompletionsTests : IDisposable
     }
 
     [Fact]
-    public void CompletingWords_IsOffFromTheStart()
+    public void CompletingWords_IsOnFromTheStart()
     {
         var saved = Completions.Enabled;
         try
         {
-            Completions.Enabled = true;
+            Completions.Enabled = false;
             Actions.ApplyDefaultSettings();
-            Assert.False(Completions.Enabled);
+            Assert.True(Completions.Enabled);
         }
         finally
         {

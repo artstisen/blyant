@@ -53,6 +53,27 @@ public class ProjectsTests : IDisposable
     }
 
     [Fact]
+    public void ANewFile_GetsTheKindSet_WhenItsNameHasNoExtension()
+    {
+        try
+        {
+            FileOperations.DefaultExtension = ".txt";
+            Assert.Equal("notes.txt", FileOperations.WithDefaultExtension("notes"));
+            Assert.Equal("page.md", FileOperations.WithDefaultExtension("page.md"));
+            Assert.Equal(".gitignore", FileOperations.WithDefaultExtension(".gitignore"));
+            Assert.Equal(".html", FileOperations.ParseFileType("HTML"));
+            Assert.Equal(".ini", FileOperations.ParseFileType(".ini"));
+            Assert.Null(FileOperations.ParseFileType("docx"));
+            Assert.Equal("C#", FileOperations.FileTypeName(".cs"));
+            Assert.Equal(10, FileOperations.FileTypes.Count);
+        }
+        finally
+        {
+            FileOperations.DefaultExtension = FileOperations.MarkdownExtension;
+        }
+    }
+
+    [Fact]
     public void AProject_IsMadeInTheProjectsFolder_WhichIsMadeToo()
     {
         Assert.Empty(Projects.All());

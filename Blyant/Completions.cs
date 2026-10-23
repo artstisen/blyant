@@ -53,7 +53,7 @@ internal static class Completions
     /// Complete words while typing (setting "autocomplete", ":complete" in the editor). Off unless turned on: turning
     /// it on makes the file of completions, with the lists it starts with
     /// </summary>
-    internal static bool Enabled { get; set; }
+    internal static bool Enabled { get; set; } = true;
 
     private static readonly List<Item> List = new();
 

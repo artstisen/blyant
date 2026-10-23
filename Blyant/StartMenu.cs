@@ -12,7 +12,8 @@ internal static class StartMenu
     internal enum StartMode
     {
         Select, // Show the start page
-        Editor // Open the file browser
+        Editor, // Open the file browser
+        Blank // Open a blank page (the start page comes when it is closed)
     }
 
     /// <summary>
@@ -39,7 +40,12 @@ internal static class StartMenu
     /// </summary>
     internal static string SettingName(StartMode mode)
     {
-        return mode == StartMode.Editor ? "editor" : "select";
+        return mode switch
+        {
+            StartMode.Editor => "editor",
+            StartMode.Blank => "blank",
+            _ => "select"
+        };
     }
 
     /// <summary>
@@ -47,7 +53,12 @@ internal static class StartMenu
     /// </summary>
     internal static StartMode ParseSetting(string value)
     {
-        return value.Trim().ToLowerInvariant() == "editor" ? StartMode.Editor : StartMode.Select;
+        return value.Trim().ToLowerInvariant() switch
+        {
+            "editor" => StartMode.Editor,
+            "blank" => StartMode.Blank,
+            _ => StartMode.Select
+        };
     }
 
     /// <summary>
@@ -81,6 +92,7 @@ internal static class StartMenu
         {
             _starting = false;
             if (Mode == StartMode.Editor) FileExplorer.Run(StartInFavorites);
+            if (Mode == StartMode.Blank) FileExplorer.EditBlank();
         }
 
         var start = new ChoicesPage();
@@ -407,6 +419,23 @@ internal static class StartMenu
         if (ProjectsBox.Pick() is { } path) FileExplorer.RunAtDirectory(path);
     }
 
+    // The kind of new files and blank pages: picked in a list (1-9, 0, j/k gg G and Enter; Esc: as it is)
+    private static void PickFileType()
+    {
+        ChoiceBox.Forget();
+        var types = FileOperations.FileTypes;
+        var choices = types.Select(type => FileOperations.FileTypeName(type.Extension) + " (" + type.Extension + ")")
+            .ToList();
+        var keys = types.Select((_, i) => ((i + 1) % 10).ToString()).ToList();
+        var selected = Math.Max(0, types.ToList().FindIndex(type => type.Extension == FileOperations.DefaultExtension));
+        var picked = ChoiceBox.Pick(Lang.T("New files and blank pages"),
+            Lang.T("Assumed file type (redefined upon saving)"), string.Empty, choices,
+            keys, selected, false);
+        if (picked < 0) return;
+        FileOperations.DefaultExtension = types[picked].Extension;
+        FileIo.SaveSettings();
+    }
+
     // The projects folder: the one in Documents, another picked in the file browser, or none (saved by the box)
     private static void PickProjectsDirectory()
     {
@@ -425,6 +454,8 @@ internal static class StartMenu
         StartSelect,
         StartEditor,
         StartFavorites, // Shown below StartEditor when it is chosen
+        StartBlank,
+        FileType,
         ProjectsDirectory,
         DeleteToTrash,
         Monochrome,
@@ -458,6 +489,8 @@ internal static class StartMenu
         // General: what happens at startup, the projects directory and the language
         var settings = new List<Setting> { Setting.StartSelect, Setting.StartEditor };
         if (Mode == StartMode.Editor) settings.Add(Setting.StartFavorites);
+        settings.Add(Setting.StartBlank);
+        settings.Add(Setting.FileType);
         settings.Add(Setting.ProjectsDirectory);
         settings.Add(Setting.DeleteToTrash);
         settings.Add(Setting.Language);
@@ -498,9 +531,12 @@ internal static class StartMenu
         {
             Setting.StartSelect => Check(Mode == StartMode.Select) + DialogText.StartConfigSelect,
             Setting.StartEditor => Check(Mode == StartMode.Editor) + DialogText.StartConfigEditor,
+            Setting.StartBlank => Check(Mode == StartMode.Blank) + Lang.T("Start on a blank page"),
+            Setting.FileType => indent + Lang.F("New files and blank pages: {0} (Enter: Change)",
+                FileOperations.FileTypeName(FileOperations.DefaultExtension) + " (" + FileOperations.DefaultExtension + ")"),
             Setting.StartFavorites => indent + Check(StartInFavorites) + Lang.T("Open the favorites list first"),
             Setting.ProjectsDirectory => indent + Lang.F("Projects folder: {0} (Enter: Change)", ProjectsFolderText()),
-            Setting.DeleteToTrash => Check(FileOperations.DeleteToTrash) + Lang.T("Delete to the trash (:trash in the file browser)"),
+            Setting.DeleteToTrash => Check(FileOperations.DeleteToTrash) + Lang.T("Delete to trash (:trash in the file browser)"),
             Setting.Monochrome => Check(ConsoleColors.Monochrome) + DialogText.ConfigMonochrome,
             Setting.Language => indent + DialogText.ConfigLanguage + Lang.CurrentName,
             Setting.ColorScheme => indent + Lang.F("Color scheme: {0} (Enter: Select/Edit)",
@@ -545,7 +581,8 @@ internal static class StartMenu
     {
         return setting switch
         {
-            Setting.StartSelect or Setting.StartEditor or Setting.StartFavorites or Setting.ProjectsDirectory
+            Setting.StartSelect or Setting.StartEditor or Setting.StartFavorites or Setting.StartBlank
+                or Setting.FileType or Setting.ProjectsDirectory
                 or Setting.DeleteToTrash or Setting.Language => 0,
             Setting.AutoSize or Setting.Size or Setting.Monochrome or Setting.ColorScheme or Setting.Logo
                 or Setting.LogoAnimation or Setting.Corners => 1,
@@ -1059,6 +1096,13 @@ internal static class StartMenu
             case Setting.StartEditor:
                 Mode = StartMode.Editor;
                 break;
+            case Setting.StartBlank:
+                Mode = StartMode.Blank;
+                break;
+            case Setting.FileType:
+                // Saves the settings itself
+                PickFileType();
+                return;
             case Setting.StartFavorites:
                 StartInFavorites = !StartInFavorites;
                 break;
@@ -1154,6 +1198,8 @@ internal static class StartMenu
                 if (ChoiceBox.Confirm(DialogText.CaptionsSettings, DialogText.ResetSettingsQuestion, string.Empty, true))
                 {
                     Actions.ApplyDefaultSettings();
+                    // Completing words is on again: the file is made if there is none (one that is there is kept)
+                    Blyant.Completions.EnsureFile();
                 }
 
                 return;

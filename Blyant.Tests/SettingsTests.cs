@@ -136,6 +136,27 @@ backup=
     }
 
     [Fact]
+    public void TheKindOfNewFiles_AndStartingOnABlankPage_AreLoadedAndSaved()
+    {
+        File.WriteAllText(SettingsFile, LegacySettings + "\nfiletype=txt\nstartmode=blank\n");
+        Assert.True(FileIo.LoadSettings());
+        Assert.Equal(".txt", FileOperations.DefaultExtension);
+        Assert.Equal(StartMenu.StartMode.Blank, StartMenu.Mode);
+        FileIo.SaveSettings();
+        var saved = FileIo.ParseSettings(File.ReadAllText(SettingsFile));
+        Assert.Equal("txt", saved["filetype"]);
+        Assert.Equal("blank", saved["startmode"]);
+        // Not a kind of the list: Markdown
+        File.WriteAllText(SettingsFile, LegacySettings + "\nfiletype=docx\n");
+        Assert.True(FileIo.LoadSettings());
+        Assert.Equal(".md", FileOperations.DefaultExtension);
+        FileOperations.DefaultExtension = ".html";
+        Actions.ApplyDefaultSettings();
+        Assert.Equal(".md", FileOperations.DefaultExtension);
+        Assert.Equal(StartMenu.StartMode.Select, StartMenu.Mode);
+    }
+
+    [Fact]
     public void WhereTheFolderPickersStart_IsLoadedAndSaved()
     {
         var place = Path.Combine(_workDirectory, "Writing", "Essays");
@@ -281,7 +302,8 @@ backup=
         Assert.False(settings.ContainsKey("onlymode"));
         Assert.False(settings.ContainsKey("clipboardnotes"));
         Assert.False(settings.ContainsKey("stayloggedin"));
-        Assert.Equal(35, settings.Count);
+        Assert.Equal(36, settings.Count);
+        Assert.Equal("md", settings["filetype"]);
         Assert.Equal(string.Empty, settings["pickdir"]);
         Assert.Equal("false", settings["projectsask"]);
         Assert.Equal("true", settings["recovery"]);
@@ -305,7 +327,7 @@ backup=
         Assert.Equal("en", settings["language"]);
         Assert.Equal("false", settings["linenumbers"]);
         Assert.Equal("true", settings["browsedual"]);
-        Assert.Equal("false", settings["autocomplete"]);
+        Assert.Equal("true", settings["autocomplete"]);
         Assert.Equal("1", settings["browsepane"]);
         Assert.Equal(string.Empty, settings["browsesel1"]);
         Assert.Equal(string.Empty, settings["browsesel2"]);

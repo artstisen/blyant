@@ -330,8 +330,10 @@ internal static class FileIo
         // Comment
         _tempSettings += '\n';
         _tempSettings += "; OPTIONAL" + '\n';
-        // What to show at startup: select (the start page) or editor (the file browser)
+        // What to show at startup: select (the start page), editor (the file browser) or blank (a blank page)
         _tempSettings += "startmode=" + StartMenu.SettingName(StartMenu.Mode) + '\n';
+        // The kind of new files and blank pages: the extension a name without one gets (md, txt, html ...)
+        _tempSettings += "filetype=" + FileOperations.DefaultExtension.TrimStart('.') + '\n';
         // Starting in the file browser: open the favorites list first
         _tempSettings += "startfavorites=" + (StartMenu.StartInFavorites ? DialogText.BTrue : DialogText.BFalse) +
                          '\n';
@@ -528,6 +530,8 @@ internal static class FileIo
         // Automatic dimensions (on unless turned off)
         Init.AutoSize = Tools.TrimToLower(Get("autosize")) != DialogText.BFalse;
         StartMenu.Mode = StartMenu.ParseSetting(Get("startmode"));
+        // The kind of new files and blank pages (Markdown unless another of the list is set)
+        FileOperations.DefaultExtension = FileOperations.ParseFileType(Get("filetype")) ?? FileOperations.MarkdownExtension;
         StartMenu.StartInFavorites = Tools.TrimToLower(Get("startfavorites")) == DialogText.BTrue;
         // None until the user decides (at the first new project)
         Projects.Directory = Projects.DirectoryFromSetting(Get("projectsdir")) ?? string.Empty;
@@ -596,8 +600,8 @@ internal static class FileIo
         FileExplorer.DualPane = Tools.TrimToLower(Get("browsedual")) != DialogText.BFalse;
         // Recovery copies: on unless turned off
         Recovery.Enabled = Tools.TrimToLower(Get("recovery")) != DialogText.BFalse;
-        // Completing words while typing: off unless turned on
-        Completions.Enabled = Tools.TrimToLower(Get("autocomplete")) == DialogText.BTrue;
+        // Completing words while typing: on unless turned off (a settings file of before, with "false", keeps it off)
+        Completions.Enabled = Tools.TrimToLower(Get("autocomplete")) != DialogText.BFalse;
 
         // Spell checking languages
         var spellLanguages = Get("spelllang").Replace(" ", string.Empty);
