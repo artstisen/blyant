@@ -69,7 +69,7 @@ internal static class Commands
             "snippet completions clipboard log restart reset quit exit",
             "browse newproject proj pro ju jmp h guide snip comp q"),
         [CommandContext.Jump] = new Table(
-            "quit close help info folder expand collapse rename color remove move top bottom undo clearbook path name",
+            "quit close help info folder expand collapse rename color remove move top bottom undo clearbook import path name",
             "q h u"),
         [CommandContext.Projects] = new Table(
             "quit close help info path name color note new add remove",

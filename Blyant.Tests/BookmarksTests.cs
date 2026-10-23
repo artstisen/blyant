@@ -28,14 +28,61 @@ public class BookmarksTests : IDisposable
     private JumpTarget FileAt(string name) => new(JumpKind.File, In(name));
 
     [Fact]
-    public void Places_AreAddedAtTheEnd_Once_AndThereIsALimit()
+    public void TheFavorites_AreCopiedIntoTheBookmarks_WithTheirFolders_AndWhatIsThereIsLeftOut()
+    {
+        Directory.CreateDirectory(In("Novel"));
+        File.WriteAllText(In("notes.md"), "x");
+        var favorites = new List<FileFavorites.Favorite>
+        {
+            new() { Path = In("notes.md"), Color = ConsoleColor.Green },
+            new() { Path = In("Novel") },
+            new() { IsFolder = true, Name = "Work", Color = ConsoleColor.Cyan, Collapsed = true },
+            new() { Path = In("gone.md"), InFolder = true }, // Not there: copied too
+            new() { Path = In("plan.md"), InFolder = true },
+            new() { IsFolder = true, Name = "Ideas" },
+            new() { Path = In("idea.md"), InFolder = true },
+            new() { Path = In("last.md") } // After a folder, out of it
+        };
+        Bookmarks.Add(FileAt("plan.md")); // A bookmark already
+        Bookmarks.AddFolder("ideas", 1); // A folder of the same name (in other case)
+        var before = Bookmarks.Items.Count;
+
+        // Counted first, without changing the list
+        var plan = Bookmarks.ImportFavorites(favorites, false);
+        Assert.Equal(new Bookmarks.ImportResult(5, 1, 1, 1), plan);
+        Assert.Equal(before, Bookmarks.Items.Count);
+
+        Assert.Equal(plan, Bookmarks.ImportFavorites(favorites, true));
+        var items = Bookmarks.Items.ToList();
+        var notes = items.Single(entry => entry.Target.SameAs(FileAt("notes.md")));
+        Assert.Equal(ConsoleColor.Green, notes.Color);
+        Assert.Equal(JumpKind.Directory, items.Single(entry => entry.Target.Target == In("Novel")).Target.Kind);
+        var work = items.Single(entry => entry.IsFolder && entry.Name == "Work");
+        Assert.True(work.Collapsed);
+        Assert.Equal(ConsoleColor.Cyan, work.Color);
+        // In the folder, in their order
+        var at = items.IndexOf(work);
+        Assert.Equal(In("gone.md"), items[at + 1].Target.Target);
+        Assert.True(items[at + 1].InFolder);
+        // Merged into the folder there was
+        var ideas = items.Single(entry => entry.IsFolder && entry.Name == "ideas");
+        Assert.Equal(In("idea.md"), items[items.IndexOf(ideas) + 1].Target.Target);
+        Assert.True(items[items.IndexOf(ideas) + 1].InFolder);
+        // Not in a folder
+        Assert.False(items.Single(entry => entry.Target.Target == In("last.md")).InFolder);
+        // Again: all are there
+        Assert.Equal(0, Bookmarks.ImportFavorites(favorites, true).Added);
+    }
+
+    [Fact]
+    public void Places_AreAddedAtTheEnd_Once_WithoutALimit()
     {
         Assert.Equal(Bookmarks.AddResult.Added, Bookmarks.Add(FileAt("a.md")));
         Assert.Equal(Bookmarks.AddResult.Added, Bookmarks.Add(new JumpTarget(JumpKind.Page, "schemes")));
         Assert.Equal(Bookmarks.AddResult.AlreadyThere, Bookmarks.Add(FileAt("a.md")));
         Assert.Equal(2, Bookmarks.Items.Count);
-        for (var i = Bookmarks.Items.Count; i < Bookmarks.MaxCount; i++) Bookmarks.Add(FileAt("f" + i + ".md"));
-        Assert.Equal(Bookmarks.AddResult.Full, Bookmarks.Add(FileAt("one more.md")));
+        for (var i = 0; i < 250; i++) Assert.Equal(Bookmarks.AddResult.Added, Bookmarks.Add(FileAt("f" + i + ".md")));
+        Assert.Equal(252, Bookmarks.Items.Count);
     }
 
     [Fact]
@@ -127,11 +174,12 @@ public class BookmarksTests : IDisposable
         Bookmarks.Parse("file\t" + In("a.md") + "\npage\thelp\tHelp me\n");
         Assert.Equal(new[] { "a.md", "Help me" }, Bookmarks.Items.Select(entry => entry.Shown));
         Assert.All(Bookmarks.Items, entry => Assert.Null(entry.Color));
-        // The folders do not count towards the most bookmarks there can be
+        // More than there could be before (100) are kept, also when read from the file
         Bookmarks.Clear();
-        Bookmarks.AddFolder("F", 0);
-        for (var i = 0; i < Bookmarks.MaxCount; i++) Assert.Equal(Bookmarks.AddResult.Added, Bookmarks.Add(FileAt(i + ".md")));
-        Assert.Equal(Bookmarks.AddResult.Full, Bookmarks.Add(FileAt("one more.md")));
+        for (var i = 0; i < 150; i++) Bookmarks.Add(FileAt(i + ".md"));
+        Bookmarks.Save();
+        Bookmarks.Load();
+        Assert.Equal(150, Bookmarks.Items.Count);
     }
 
     [Fact]

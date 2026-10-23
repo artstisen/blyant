@@ -917,6 +917,46 @@ internal static class JumpMenu
         _message = DialogText.BookmarksCleared;
     }
 
+    // ":import favorites": the favorites of the file browser copied into the bookmarks, after asking with what it
+    // will do (the favorites stay; places that are bookmarks already are left out, folders of the same name merged)
+    private static void ImportFavorites(string argument)
+    {
+        if (!argument.Trim().Equals("favorites", StringComparison.OrdinalIgnoreCase))
+        {
+            _message = Lang.T(":import favorites  copies the favorites of the file browser here");
+            return;
+        }
+
+        FileFavorites.Load();
+        var favorites = FileFavorites.Items;
+        if (!favorites.Any(favorite => !favorite.IsFolder))
+        {
+            _message = Lang.T("There are no favorites to copy");
+            return;
+        }
+
+        var plan = Bookmarks.ImportFavorites(favorites, false);
+        if (plan.Added == 0)
+        {
+            _message = Lang.T("All the favorites are bookmarks already");
+            return;
+        }
+
+        ChoiceBox.Forget();
+        // What will be done, a sentence for each that there is
+        var note = Lang.F("{0} files and directories are added.", plan.Added);
+        if (plan.NewFolders > 0) note += " " + Lang.F("New folders: {0}.", plan.NewFolders);
+        if (plan.MergedFolders > 0) note += " " + Lang.F("Added to folders of the same name: {0}.", plan.MergedFolders);
+        if (plan.Skipped > 0) note += " " + Lang.F("{0} are bookmarks already, and are left out.", plan.Skipped);
+        if (!ChoiceBox.Confirm(Lang.T("Bookmarks"), Lang.T("Copy the favorites to the bookmarks?"), note, false)) return;
+        var done = Bookmarks.ImportFavorites(favorites, true);
+        Marks.Clear();
+        SaveBookmarks();
+        EventLog.Add(DialogText.LogFile + "Favorites copied to the bookmarks: " + done.Added + " added, " +
+                     done.Skipped + " left out");
+        if (_message.Length == 0) _message = Lang.F("{0} favorites copied to the bookmarks", done.Added);
+    }
+
     // ":expand" ":collapse": open or close all the folders
     private static void SetBookmarkFolders(bool collapsed)
     {
@@ -937,7 +977,7 @@ internal static class JumpMenu
         var command = CommandLine.Read(CommandContext.Jump);
         if (command == null) return false;
         // A name can follow the command
-        if (CommandLine.Name(command) is "folder" or "rename") command = CommandLine.Name(command);
+        if (CommandLine.Name(command) is "folder" or "rename" or "import") command = CommandLine.Name(command);
         if (command is "q" or "quit" or "close") return true;
         if (command is "h" or "help")
         {
@@ -1003,6 +1043,9 @@ internal static class JumpMenu
                 break;
             case "clearbook":
                 ClearBookmarks();
+                break;
+            case "import":
+                ImportFavorites(CommandLine.LastArgument);
                 break;
         }
 

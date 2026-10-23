@@ -6,8 +6,8 @@ namespace Blyant;
 /// The bookmarks of the Jump menu: places kept to jump to (a file, a directory or a page of Blyant),
 /// added with B on any list of the Jump menu, or with ":bookmark" in the editor and the file browser. They are in
 /// the order they were added, which can be changed on the Bookmarks tab. A bookmark can be given a name and a text
-/// color of its own, and bookmarks can be grouped in folders (as the favorites of the file browser). The list holds
-/// at most MaxCount places.
+/// color of its own, and bookmarks can be grouped in folders (as the favorites of the file browser). The list has
+/// no limit; ":import favorites" copies the favorites of the file browser into it (ImportFavorites).
 ///
 /// The bookmarks are numbered 1, 2, 3 ... in the order of the list (folders are not counted, and the bookmarks in a
 /// closed folder are): ":book 3" jumps to the third.
@@ -24,11 +24,6 @@ internal static class Bookmarks
 {
     internal const string FileName = "bookmarks.txt";
     private const string CollapsedMark = "collapsed";
-
-    /// <summary>
-    /// The most places in the list (the folders are not counted)
-    /// </summary>
-    internal const int MaxCount = 100;
 
     /// <summary>
     /// A bookmark (a place, the name it was given and its color), or a folder (its name and color)
@@ -155,7 +150,7 @@ internal static class Bookmarks
             var place = kind is JumpKind.File or JumpKind.Directory ? FileOperations.ListedPath(parts[1]) : parts[1].Trim();
             if (place.Length == 0) continue;
             var target = new JumpTarget(kind, place);
-            if (Contains(target) || Places.Count >= MaxCount) continue;
+            if (Contains(target)) continue;
             // The bookmarks of a folder follow it directly
             if (!inFolder) hasFolder = false;
             List.Add(new Entry(target, parts.Length > 2 ? parts[2].Trim() : string.Empty)
@@ -221,11 +216,91 @@ internal static class Bookmarks
     {
         Added,
         AlreadyThere,
-        Full,
         NotKept // A tab or a line break in its path
     }
 
     private static readonly char[] LineBreaking = { '\t', '\r', '\n' };
+
+    /// <summary>
+    /// What copying the favorites into the bookmarks did (or would do: ImportFavorites with apply false)
+    /// </summary>
+    /// <param name="Added">The places added</param>
+    /// <param name="Skipped">The places that were bookmarks already (left where they are)</param>
+    /// <param name="NewFolders">The folders made</param>
+    /// <param name="MergedFolders">The folders of the favorites added to a bookmark folder of the same name</param>
+    internal sealed record ImportResult(int Added, int Skipped, int NewFolders, int MergedFolders);
+
+    /// <summary>
+    /// Copy the favorites of the file browser into the bookmarks: a file as a bookmark of a file, a directory of a
+    /// directory, a folder as a folder (with its color, and closed if it is), in their order, after the bookmarks
+    /// there are. A place that is a bookmark already is left out, and a folder with the name of a bookmark folder
+    /// is added to it (at its end). The favorites stay as they are; one whose file is gone is copied too
+    /// </summary>
+    /// <param name="favorites">The favorites, in their order (a folder followed by those in it)</param>
+    /// <param name="apply">False to only count what would be done</param>
+    internal static ImportResult ImportFavorites(IReadOnlyList<FileFavorites.Favorite> favorites, bool apply)
+    {
+        // The list is changed on a copy when only counting
+        var list = apply ? List : List.Select(Copy).ToList();
+        int added = 0, skipped = 0, newFolders = 0, merged = 0;
+        Entry? folder = null; // The bookmark folder the favorites of the folder go to
+        var seen = new List<JumpTarget>();
+        foreach (var favorite in favorites)
+        {
+            if (favorite.IsFolder)
+            {
+                folder = list.FirstOrDefault(entry => entry.IsFolder &&
+                                                      entry.Name.Equals(favorite.Name, StringComparison.OrdinalIgnoreCase));
+                if (folder != null)
+                {
+                    merged++;
+                    continue;
+                }
+
+                folder = Entry.Folder(favorite.Name);
+                folder.Color = favorite.Color;
+                folder.Collapsed = favorite.Collapsed;
+                list.Add(folder);
+                newFolders++;
+                continue;
+            }
+
+            if (!favorite.InFolder) folder = null;
+            var path = Path.GetFullPath(favorite.Path);
+            // A favorite that is gone keeps its kind as far as it can be told: a name without an extension is
+            // taken for a directory only when it is there
+            var target = new JumpTarget(Directory.Exists(path) ? JumpKind.Directory : JumpKind.File, path);
+            if (list.Exists(entry => !entry.IsFolder && entry.Target.SameAs(target)) ||
+                seen.Exists(other => other.SameAs(target)) || path.IndexOfAny(LineBreaking) >= 0)
+            {
+                skipped++;
+                continue;
+            }
+
+            seen.Add(target);
+            var bookmark = new Entry(target) { Color = favorite.Color, InFolder = folder != null };
+            if (folder == null)
+            {
+                list.Add(bookmark);
+            }
+            else
+            {
+                // Last in its folder
+                var at = list.IndexOf(folder) + 1;
+                while (at < list.Count && list[at].InFolder) at++;
+                list.Insert(at, bookmark);
+            }
+
+            added++;
+        }
+
+        return new ImportResult(added, skipped, newFolders, merged);
+    }
+
+    private static Entry Copy(Entry entry) =>
+        entry.IsFolder
+            ? new Entry(entry.Target, entry.Name) { IsFolder = true, Color = entry.Color, Collapsed = entry.Collapsed }
+            : new Entry(entry.Target, entry.Name) { Color = entry.Color, InFolder = entry.InFolder };
 
     /// <summary>
     /// Add a place at the end of the list, outside the folders (a place that is there already stays where it is)
@@ -238,7 +313,6 @@ internal static class Bookmarks
         }
 
         if (Contains(target)) return AddResult.AlreadyThere;
-        if (Places.Count >= MaxCount) return AddResult.Full;
         // (a tab or a line break in it would break the line of the file)
         if (target.Target.IndexOfAny(LineBreaking) >= 0 || target.Name.IndexOfAny(LineBreaking) >= 0)
         {
@@ -374,7 +448,6 @@ internal static class Bookmarks
         Load();
         var result = Add(target);
         if (result == AddResult.AlreadyThere) return Lang.F("Already bookmarked: {0}", target.Name);
-        if (result == AddResult.Full) return Lang.F("The bookmarks are full ({0})", MaxCount);
         if (result == AddResult.NotKept) return Lang.T("A path with a tab or a line break is not kept");
         var status = Save();
         return status == DialogText.Success ? Lang.F("Bookmarked: {0}", target.Name) : status;
