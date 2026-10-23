@@ -703,6 +703,9 @@ internal static partial class FileExplorer
         }
     }
 
+    // The columns of the lines between the columns of the list (none when it is empty)
+    private static int[] _favoriteLines = Array.Empty<int>();
+
     private static int _shownFavoriteTop = -1;
     private static int _shownFavoriteIndex = -1;
 
@@ -732,11 +735,8 @@ internal static partial class FileExplorer
         Console.Write(_favorites.Count == 0 && _favoriteFilter.Length == 0
             ? DialogText.FavoritesEmpty
             : DialogText.FavoritesHeader);
-        Tools.SetCursorEx(2, 0);
-        ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
-        Console.Write(new string('-', Init.LineWidth));
-
-        // The names in a column, followed by the directories
+        // The columns: the names, the directories they are in, and what they are (size, directory, number of
+        // favorites in a folder), with lines between them and their labels in the divider line
         var nameWidth = 0;
         foreach (var number in _favorites)
         {
@@ -744,16 +744,33 @@ internal static partial class FileExplorer
         }
 
         nameWidth = Math.Min(nameWidth, Init.LineWidth / 2 - 6);
+        var infos = _favorites.Select(FavoriteInfo).ToList();
+        var infoWidth = Math.Max(TextMetrics.WidthOf(DialogText.ColumnInfo) + 2,
+            infos.Count == 0 ? 0 : infos.Max(info => TextMetrics.WidthOf(info.Text)));
+        // The lines between the columns: after the name, and before the info
+        var nameLine = 3 + nameWidth + 2;
+        var infoLine = Init.LineWidth - 2 - infoWidth - 1;
+        var columns = _favorites.Count > 0;
+        _favoriteLines = columns ? new[] { nameLine, infoLine } : Array.Empty<int>();
+        Tools.SetCursorEx(2, 0);
+        ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
+        Console.Write(new string('-', Init.LineWidth));
+        if (columns)
+        {
+            DrawColumnLabels(2, new[] { (1, DialogText.ColumnName), (nameLine, DialogText.ColumnPath), (infoLine, DialogText.ColumnInfo) },
+                new[] { nameLine, infoLine });
+            for (var row = 0; row < FavoritePageSize; row++)
+            {
+                DrawColumnLine(ListTop + row, nameLine);
+                DrawColumnLine(ListTop + row, infoLine);
+            }
+        }
+
         for (var row = 0; row < FavoritePageSize && _favoriteTop + row < _favorites.Count; row++)
         {
             var index = _favoriteTop + row;
             var favorite = FileFavorites.Items[_favorites[index]];
-            var isDirectory = !favorite.IsFolder && Directory.Exists(favorite.Path);
-            var exists = favorite.IsFolder || isDirectory || File.Exists(favorite.Path);
-            var count = favorite.IsFolder ? FileFavorites.FolderCount(_favorites[index]) : 0;
-            var info = favorite.IsFolder ? (count == 1 ? Lang.T("1 favorite") : Lang.F("{0} favorites", count)) :
-                !exists ? DialogText.FavoriteMissing :
-                isDirectory ? DialogText.DirectoryMark : FileSizeFormatter.FormatSize(new FileInfo(favorite.Path).Length);
+            var (info, isDirectory, exists) = infos[index];
             DrawFavoritePointer(index, index == _favoriteIndex);
             var name = Tools.TruncateString(FavoriteLabel(_favorites[index]) + (isDirectory ? "/" : ""),
                 nameWidth + 1, true);
@@ -788,12 +805,12 @@ internal static partial class FileExplorer
             }
 
             ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
-            // The directory it is in (the end of a long path is shown)
+            // The directory it is in (the end of a long path is shown), between the lines
             var directory = favorite.IsFolder
                 ? string.Empty
                 : System.IO.Path.GetDirectoryName(favorite.Path) ?? string.Empty;
-            var column = 3 + nameWidth + 3;
-            var room = Init.LineWidth - column - info.Length - 3;
+            var column = nameLine + 2;
+            var room = infoLine - 1 - column;
             if (room > 8)
             {
                 directory = TextMetrics.KeepEnd(directory, room);
@@ -801,8 +818,9 @@ internal static partial class FileExplorer
                 Console.Write(directory);
             }
 
+            // What it is, at the right (sizes line up)
             if (!exists) ConsoleColors.SetColors(ConsoleColors.ColorPreset.AttentionInverted);
-            Tools.SetCursorEx(ListTop + row, Init.LineWidth - info.Length - 1);
+            Tools.SetCursorEx(ListTop + row, Init.LineWidth - TextMetrics.WidthOf(info) - 1);
             Console.Write(info);
             ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
         }
@@ -810,6 +828,81 @@ internal static partial class FileExplorer
         _shownFavoriteTop = _favoriteTop;
         _shownFavoriteIndex = _favoriteIndex;
         DrawFavoriteStatus();
+    }
+
+    // What the info column shows for an item of the list: the number of favorites in a folder, that a file is
+    // missing, that it is a directory, or the size of the file. And whether it is a directory, and is there
+    private static (string Text, bool IsDirectory, bool Exists) FavoriteInfo(int number)
+    {
+        var favorite = FileFavorites.Items[number];
+        if (favorite.IsFolder)
+        {
+            var count = FileFavorites.FolderCount(number);
+            return (count == 1 ? Lang.T("1 favorite") : Lang.F("{0} favorites", count), false, true);
+        }
+
+        var isDirectory = Directory.Exists(favorite.Path);
+        var exists = isDirectory || File.Exists(favorite.Path);
+        if (!exists) return (DialogText.FavoriteMissing, false, false);
+        if (isDirectory) return (DialogText.DirectoryMark, true, true);
+        try
+        {
+            return (FileSizeFormatter.FormatSize(new FileInfo(favorite.Path).Length), false, true);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return (DialogText.FavoriteMissing, false, false);
+        }
+    }
+
+    /// <summary>
+    /// The labels of the columns of a list, in its divider line (a row of "-"), with a "+" where a line between
+    /// columns meets it. Each label starts at a column (a line, or the left), a blank space in
+    /// </summary>
+    internal static void DrawColumnLabels(int row, IReadOnlyList<(int Column, string Label)> labels,
+        IReadOnlyList<int> lines)
+    {
+        ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
+        foreach (var line in lines)
+        {
+            Tools.SetCursorEx(row, line);
+            Console.Write("+");
+        }
+
+        ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
+        foreach (var (column, label) in labels)
+        {
+            Tools.SetCursorEx(row, column + 2);
+            Console.Write(" " + label + " ");
+        }
+
+        ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
+    }
+
+    /// <summary>
+    /// Where the lines between the columns of a list end: a "+" in a divider line
+    /// </summary>
+    internal static void DrawColumnEnds(int row, IReadOnlyList<int> lines)
+    {
+        ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
+        foreach (var line in lines)
+        {
+            Tools.SetCursorEx(row, line);
+            Console.Write("+");
+        }
+
+        ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
+    }
+
+    /// <summary>
+    /// A line between two columns of a list, on a row
+    /// </summary>
+    internal static void DrawColumnLine(int row, int column)
+    {
+        ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
+        Tools.SetCursorEx(row, column);
+        Console.Write("|");
+        ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
     }
 
     // What is shown for an item of the list: the name of the file, two blank spaces in if it is in a
@@ -846,6 +939,10 @@ internal static partial class FileExplorer
         Tools.SetCursorEx(Init.LineCount - 2, 0);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
         Console.Write(new string('-', Init.LineWidth));
+        // Where the lines between the columns end
+        DrawColumnEnds(Init.LineCount - 2, _favoriteLines);
+        ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
+
         var status = " " + (_favorites.Count == 0 ? 0 : _favoriteIndex + 1) + "/" + _favorites.Count + " ";
         if (_favoriteFilter.Length > 0) status += "/" + _favoriteFilter + " ";
         if (_favoriteMarks.Count > 0) status = " " + Lang.F("{0} marked", _favoriteMarks.Count) + " -" + status;

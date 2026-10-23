@@ -235,7 +235,7 @@ The box opens in the _Name_ field: type and press `Enter`. `j` `k` select a row,
 
 While it searches, the bottom line shows the directory being read and the number of files found. `Esc` stops the search and shows what was found so far. The search also stops at 5000 files. Hidden files and directories are not searched, and links to directories are not followed.
 
-The files found are shown in a list, with the directory they are in. When you searched for a text, the first line containing it is shown with its line number.
+The files found are shown in a list with three columns, as the favorites: _Name_, _Path_ (the directory they are in, from the directory searched) and _Info_ (the size, or `<DIR>`). When you searched for a text, the middle column is _Line_: the first line containing it, with its line number.
 
 - `j` `k` Select, `gg` `G` First/Last
 - `l` or `Enter` Open the file in the editor, at the line that was found. Closing the editor returns to the list
@@ -251,6 +251,8 @@ Files and directories you use often can be marked as favorites:
 
 - `P` or `:fav` Add the selected file or directory to the favorites, or remove it. Favorites are marked with a `*`
 - `F` or `:favorites` Show the list of favorites
+
+The list has three columns, with lines between them and their labels at the top: _Name_ (the name of the file or directory), _Path_ (the directory it is in; the end of a long path is shown) and _Info_ (the size of a file, `<DIR>` for a directory, _(missing)_ for one that is gone, and the number of favorites in a favorites folder).
 
 In the list of favorites:
 
@@ -285,6 +287,8 @@ While the list is filtered with `/text` the favorites found are shown without th
 The list is kept in the file `favorites.txt` in the data directory (one line per favorite: the color, a tab character and the path; a folder has its name in brackets instead of a path, and the favorites in it start with a blank space). A file that has been closed in the editor has the line and column of the cursor before its path (`3:12` and a tab character). Favorites follow when you rename or move a file or directory in the browser, and are removed when you delete it. A favorite whose file is gone is shown as _(missing)_.
 
 ### File history
+The list has three columns, as the favorites: _Name_, _Path_ (the directory the file is in) and _Opened_ (when it was opened last, or _(missing)_ for a file that is gone).
+
 The file history lists the files you have opened in the editor from the file browser (also from the favorites, the search and the history itself), the last opened first, with the time each was opened. A file opened again moves to the top. It is practical when you work on many files over several days.
 
 - `O` or `:history` (in the file browser) Show the file history
@@ -303,6 +307,8 @@ The file history lists the files you have opened in the editor from the file bro
 The history holds the last 100 files: when it is full, the file opened longest ago is dropped. A file that is gone is shown as _(missing)_. The list is kept in the file `history.txt` in the data directory (one line per file: the time it was opened, a tab character and the path, with the line and column of the cursor and a tab character before the path once the file has been closed in the editor).
 
 ### Directory hotlist
+The list has two columns, as the favorites: _Name_ (the name of the directory, or the name you gave it) and _Path_ (with _(missing)_ at the end for one that is gone).
+
 The directory hotlist keeps directories you want to go back to. `B` (or `:hotadd`) in the file browser adds the directory shown in the pane with the focus, whatever file or directory is selected in it, at the end of the list. A directory that is in the list already stays where it is. Taking directories out is done on the page of the list.
 
 - `W` or `:hotlist` (or `:hot`) in the file browser: Show the hotlist. Each row has the name of the directory (or the name you gave it), and its path after it. The hotlist is also a tab of the [Jump menu](Guide-to-jump-menu.md#jump-menu)

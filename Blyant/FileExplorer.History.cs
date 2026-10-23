@@ -321,6 +321,9 @@ internal static partial class FileExplorer
 
     private const int HistoryTimeWidth = 16; // The width of "2026-10-10 20:45"
 
+    // The columns of the lines between the columns of the list (none when it is empty)
+    private static int[] _historyLines = Array.Empty<int>();
+
     private static void DrawHistory(bool all)
     {
         if (_historyIndex < _historyTop) _historyTop = _historyIndex;
@@ -352,15 +355,32 @@ internal static partial class FileExplorer
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
         Console.Write(new string('-', Init.LineWidth));
 
-        // The names in a column, followed by the directory and the time the file was opened
+        // The columns: the names (with a * after a favorite), the directories they are in, and the time each was
+        // opened, with lines between them and their labels in the divider line (as in the favorites)
         var nameWidth = 0;
-        for (var row = 0; row < HistoryPageSize && _historyTop + row < _historyShown.Count; row++)
+        foreach (var number in _historyShown)
         {
-            var path = FileHistory.Items[_historyShown[_historyTop + row]].Path;
-            nameWidth = Math.Max(nameWidth, System.IO.Path.GetFileName(path).Length);
+            nameWidth = Math.Max(nameWidth, System.IO.Path.GetFileName(FileHistory.Items[number].Path).Length);
         }
 
         nameWidth = Math.Min(nameWidth, Init.LineWidth / 2 - 8);
+        var infoWidth = Math.Max(HistoryTimeWidth, Math.Max(TextMetrics.WidthOf(DialogText.FavoriteMissing),
+            TextMetrics.WidthOf(DialogText.ColumnOpened) + 2));
+        var nameLine = 3 + nameWidth + 4;
+        var infoLine = Init.LineWidth - 2 - infoWidth - 1;
+        _historyLines = _historyShown.Count > 0 ? new[] { nameLine, infoLine } : Array.Empty<int>();
+        if (_historyShown.Count > 0)
+        {
+            DrawColumnLabels(2, new[]
+            {
+                (1, DialogText.ColumnName), (nameLine, DialogText.ColumnPath), (infoLine, DialogText.ColumnOpened)
+            }, _historyLines);
+            for (var row = 0; row < HistoryPageSize; row++)
+            {
+                foreach (var line in _historyLines) DrawColumnLine(ListTop + row, line);
+            }
+        }
+
         for (var row = 0; row < HistoryPageSize && _historyTop + row < _historyShown.Count; row++)
         {
             var index = _historyTop + row;
@@ -378,10 +398,10 @@ internal static partial class FileExplorer
                 Console.Write(" *");
             }
 
-            // The directory it is in (the end of a long path is shown)
+            // The directory it is in (the end of a long path is shown), between the lines
             ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
-            var column = 3 + nameWidth + 4;
-            var room = Init.LineWidth - column - HistoryTimeWidth - 3;
+            var column = nameLine + 2;
+            var room = infoLine - 1 - column;
             if (room > 8)
             {
                 var directory = System.IO.Path.GetDirectoryName(entry.Path) ?? string.Empty;
@@ -419,6 +439,8 @@ internal static partial class FileExplorer
         Tools.SetCursorEx(Init.LineCount - 2, 0);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
         Console.Write(new string('-', Init.LineWidth));
+        DrawColumnEnds(Init.LineCount - 2, _historyLines);
+        ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
         var status = " " + (_historyShown.Count == 0 ? 0 : _historyIndex + 1) + "/" + _historyShown.Count + " ";
         if (_historyFilter.Length > 0) status += "/" + _historyFilter + " ";
         Tools.SetCursorEx(Init.LineCount - 2, Init.LineWidth - status.Length - 2);

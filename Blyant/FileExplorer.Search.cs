@@ -350,6 +350,9 @@ internal static partial class FileExplorer
     #region Drawing
 
     private static int FoundPageSize => Init.LineCount - ListTop - 2;
+    // The columns of the lines between the columns of the list (none when it is empty)
+    private static int[] _foundLines = Array.Empty<int>();
+
     private static int _shownFoundTop = -1;
     private static int _shownFoundIndex = -1;
 
@@ -386,14 +389,33 @@ internal static partial class FileExplorer
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
         Console.Write(new string('-', Init.LineWidth));
 
-        // The names in a column, followed by the directory (or the line that was found)
+        // The columns: the names (with a * after a favorite), the directories they are in (or the line found, when
+        // the text of the files was searched), and the size, with lines between them and their labels in the
+        // divider line (as in the favorites)
         var nameWidth = 0;
-        for (var row = 0; row < FoundPageSize && _foundTop + row < _foundShown.Count; row++)
+        foreach (var number in _foundShown)
         {
-            nameWidth = Math.Max(nameWidth, FoundName(_found[_foundShown[_foundTop + row]]).Length);
+            nameWidth = Math.Max(nameWidth, FoundName(_found[number]).Length);
         }
 
         nameWidth = Math.Min(nameWidth, Init.LineWidth / 2 - 8);
+        var infoWidth = Math.Max(SizeColumnWidth, TextMetrics.WidthOf(DialogText.ColumnInfo) + 2);
+        var nameLine = 3 + nameWidth + 4;
+        var infoLine = Init.LineWidth - 2 - infoWidth - 1;
+        _foundLines = _foundShown.Count > 0 ? new[] { nameLine, infoLine } : Array.Empty<int>();
+        if (_foundShown.Count > 0)
+        {
+            DrawColumnLabels(2, new[]
+            {
+                (1, DialogText.ColumnName), (nameLine, _foundHasText ? DialogText.ColumnLine : DialogText.ColumnPath),
+                (infoLine, DialogText.ColumnInfo)
+            }, _foundLines);
+            for (var row = 0; row < FoundPageSize; row++)
+            {
+                foreach (var line in _foundLines) DrawColumnLine(ListTop + row, line);
+            }
+        }
+
         for (var row = 0; row < FoundPageSize && _foundTop + row < _foundShown.Count; row++)
         {
             var index = _foundTop + row;
@@ -411,8 +433,8 @@ internal static partial class FileExplorer
             }
 
             ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
-            var column = 3 + nameWidth + 4;
-            room = Init.LineWidth - column - SizeColumnWidth - 3;
+            var column = nameLine + 2;
+            room = infoLine - 1 - column;
             if (room > 8)
             {
                 Tools.SetCursorEx(ListTop + row, column);
@@ -473,6 +495,8 @@ internal static partial class FileExplorer
         Tools.SetCursorEx(Init.LineCount - 2, 0);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
         Console.Write(new string('-', Init.LineWidth));
+        DrawColumnEnds(Init.LineCount - 2, _foundLines);
+        ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
         var status = " " + (_foundShown.Count == 0 ? 0 : _foundIndex + 1) + "/" + _foundShown.Count + " ";
         if (_foundFilter.Length > 0) status += "/" + _foundFilter + " ";
         Tools.SetCursorEx(Init.LineCount - 2, Init.LineWidth - status.Length - 2);

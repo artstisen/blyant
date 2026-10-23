@@ -451,6 +451,12 @@ internal static class DialogText
     public static string HistoryClearCaption => Lang.T("Clear file history");
     public static string HistoryClearNote => Lang.T("The files themselves are not changed");
     public static string HistoryCleared => Lang.T("The file history is cleared");
+    // The labels of the columns of the lists of the file browser (favorites, history, hotlist, search results)
+    public static string ColumnName => Lang.T("Name");
+    public static string ColumnPath => Lang.T("Path");
+    public static string ColumnOpened => Lang.T("Opened");
+    public static string ColumnLine => Lang.T("Line");
+    public static string ColumnInfo => Lang.T("Info");
     public static string FavoritesHeader => Lang.T("Files and directories marked as favorites (P in the file browser)");
     public static string FavoritesEmpty => Lang.T("No favorites yet: press P on a file or directory in the file browser");
     public static string FavoritesExpanded => Lang.T("All folders are open");

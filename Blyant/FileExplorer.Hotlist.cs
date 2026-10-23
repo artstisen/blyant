@@ -411,6 +411,9 @@ internal static partial class FileExplorer
 
     #region Drawing
 
+    // The column of the line between the columns of the list (none when it is empty)
+    private static int[] _hotlistLines = Array.Empty<int>();
+
     private static int _shownHotlistTop = -1;
     private static int _shownHotlistIndex = -1;
 
@@ -445,15 +448,24 @@ internal static partial class FileExplorer
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
         Console.Write(new string('-', Init.LineWidth));
 
-        // The names in a column, followed by the paths
+        // The columns: the names, and the paths (a directory that is gone: "(missing)" at the end), with a line
+        // between them and their labels in the divider line (as in the favorites)
         var nameWidth = 0;
-        for (var row = 0; row < HistoryPageSize && _hotlistTop + row < _hotlistShown.Count; row++)
+        foreach (var number in _hotlistShown)
         {
-            nameWidth = Math.Max(nameWidth,
-                TextMetrics.WidthOf(DirectoryHotlist.Items[_hotlistShown[_hotlistTop + row]].Shown));
+            nameWidth = Math.Max(nameWidth, TextMetrics.WidthOf(DirectoryHotlist.Items[number].Shown));
         }
 
         nameWidth = Math.Min(nameWidth, Init.LineWidth / 2 - 8);
+        var nameLine = 3 + nameWidth + 2;
+        _hotlistLines = _hotlistShown.Count > 0 ? new[] { nameLine } : Array.Empty<int>();
+        if (_hotlistShown.Count > 0)
+        {
+            DrawColumnLabels(2, new[] { (1, DialogText.ColumnName), (nameLine, DialogText.ColumnPath) },
+                _hotlistLines);
+            for (var row = 0; row < HistoryPageSize; row++) DrawColumnLine(ListTop + row, nameLine);
+        }
+
         for (var row = 0; row < HistoryPageSize && _hotlistTop + row < _hotlistShown.Count; row++)
         {
             var index = _hotlistTop + row;
@@ -469,7 +481,7 @@ internal static partial class FileExplorer
 
             // The path (the end of a long path is shown)
             ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
-            var column = 3 + nameWidth + 4;
+            var column = nameLine + 2;
             var missing = exists ? string.Empty : DialogText.FavoriteMissing;
             var room = Init.LineWidth - column - TextMetrics.WidthOf(missing) - 3;
             if (room > 8)
@@ -512,6 +524,8 @@ internal static partial class FileExplorer
         Tools.SetCursorEx(Init.LineCount - 2, 0);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
         Console.Write(new string('-', Init.LineWidth));
+        DrawColumnEnds(Init.LineCount - 2, _hotlistLines);
+        ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
         var status = " " + (_hotlistShown.Count == 0 ? 0 : _hotlistIndex + 1) + "/" + _hotlistShown.Count + " ";
         if (_hotlistFilter.Length > 0) status += "/" + _hotlistFilter + " ";
         Tools.SetCursorEx(Init.LineCount - 2, Init.LineWidth - status.Length - 2);
