@@ -97,6 +97,29 @@ public class RecoveryTests : IDisposable
     }
 
     [Fact]
+    public void ABlankPage_HasACopyOfItsOwn_ListedWithTheCopiesOfFiles()
+    {
+        var untitled = Recovery.NewUntitledCopyPath();
+        Assert.Equal(Recovery.Directory, Path.GetDirectoryName(untitled));
+        Assert.Matches(@"^untitled-\d{4}-\d\d-\d\d \d\d\.\d\d\.\d\d\.txt$", Path.GetFileName(untitled));
+        Assert.Equal(DialogText.Success, Recovery.WriteCopy(untitled, string.Empty, "an idea"));
+        // Another blank page opened in the same second: a name of its own
+        Assert.NotEqual(untitled, Recovery.NewUntitledCopyPath());
+        Assert.Equal(DialogText.Success, Recovery.Write(In("a.md"), "file text"));
+        var all = Recovery.All();
+        Assert.Equal(2, all.Count);
+        var page = all.Single(copy => copy.IsUntitled);
+        Assert.Equal("an idea", page.Text);
+        Assert.Equal(untitled, page.CopyPath);
+        Assert.False(all.Single(copy => copy.FilePath.Length > 0).IsUntitled);
+        // Not a copy: left out
+        File.WriteAllText(Path.Combine(Recovery.Directory, "notes.txt"), "just text");
+        Assert.Equal(2, Recovery.All().Count);
+        Recovery.DeleteCopy(untitled);
+        Assert.Single(Recovery.All());
+    }
+
+    [Fact]
     public void TheCopy_HasLinesThatTellWhatItIs()
     {
         var text = Recovery.Serialize(In("a.md"), "text", new DateTime(2026, 10, 22, 12, 3, 11, DateTimeKind.Utc));

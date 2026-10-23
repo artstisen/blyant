@@ -159,7 +159,9 @@ internal static class Actions
     internal static void DrawEditFileMenu()
     {
         Tools.CursorTopLeft();
-        DrawEditorFrame(DialogText.CaptionsEditor, FileExplorer.CurrentFileName, string.Empty);
+        // (a blank page is not named until it is saved)
+        DrawEditorFrame(DialogText.CaptionsEditor,
+            FileExplorer.IsUntitled ? DialogText.Untitled : FileExplorer.CurrentFileName, string.Empty);
     }
 
     /// <summary>

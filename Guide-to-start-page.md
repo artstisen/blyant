@@ -16,12 +16,14 @@ Each choice has a number and a key, shown in front of it. The number selects the
     - `Esc` Back to the name, in the same folder
 
   With one place or none, `Tab` opens the file browser at once. `Enter` makes the file and opens it
-- `2` `F` **File browser**: Open the [file browser](#file-browser), where `Enter` opens a file in the editor, and files and folders are made, renamed, copied, moved and deleted. Closing the file browser returns here
-- `3` `P` **New project**: Make a new [project](#projects): you are asked for its name, a folder of that name is made in the projects folder, and it is shown in the file browser
-- `4` `O` **Open project**: The [projects](#projects) in a list to pick from, with what each holds below the list and the start of its note to the right of that. `Enter` shows the project picked in the file browser, `C` picks the color of the project, `N` opens its note in the editor, `I` shows information about it, `/` filters the list, `:` is its command line, `?` shows its keys and `Esc` closes it
-- `5` `M` **Jump menu**: Open the [Jump menu](Guide-to-jump-menu.md#jump-menu), to go straight to a file, a directory or a page of Blyant (also with `Ctrl+O`). Pages such as Color schemes and Help open on top of the start page
-- `6` `U` **Quick guide**: A short introduction to Blyant: files and projects, the keys for moving around, and the modes of the editor. `Esc` closes it, and `?` shows the help with all the keys
-- `7` **Exit**: Close Blyant at once (`Enter` on it). `Q` exits too, after asking
+- `2` `B` **Blank page**: Open the editor at once on an empty page, to write first and decide later what and where to save it as. It is Markdown, as a new file. When you save it (`:w`, `:wq`, `:x`), you are asked for the name and the folder in the same box as for a new file (with `Tab` for another folder), and from then on it is an ordinary file. `:w name` saves it with that name in the box. `:q` asks what to do with the text (an empty page closes at once). Until it is saved, `:e`, `:rename`, `:new`, `:path` and `:snip edit` tell you to save it first. While you write, a recovery copy is kept, as for a file (see below)
+- `3` `R` **Recover unsaved text**: Shown only when there are [recovery copies](Guide-to-editor.md#recovery-copies) of text that was not saved (the choices below it then have a number more). It lists them, the newest first, with the start of the text below the list: blank pages that were not saved, and files. `Enter` opens one: a blank page as a blank page with its text, a file in the editor, where you are asked what to do with the copy (a file that is gone is opened as a blank page with the text). `D` deletes a copy, after asking. Blyant stopped while a blank page had text in it (the terminal closed, the computer turned off): this is where you find it
+- `3` `F` **File browser**: Open the [file browser](#file-browser), where `Enter` opens a file in the editor, and files and folders are made, renamed, copied, moved and deleted. Closing the file browser returns here
+- `4` `P` **New project**: Make a new [project](#projects): you are asked for its name, a folder of that name is made in the projects folder, and it is shown in the file browser
+- `5` `O` **Open project**: The [projects](#projects) in a list to pick from, with what each holds below the list and the start of its note to the right of that. `Enter` shows the project picked in the file browser, `C` picks the color of the project, `N` opens its note in the editor, `I` shows information about it, `/` filters the list, `:` is its command line, `?` shows its keys and `Esc` closes it
+- `6` `M` **Jump menu**: Open the [Jump menu](Guide-to-jump-menu.md#jump-menu), to go straight to a file, a directory or a page of Blyant (also with `Ctrl+O`). Pages such as Color schemes and Help open on top of the start page
+- `7` `U` **Quick guide**: A short introduction to Blyant: files and projects, the keys for moving around, and the modes of the editor. `Esc` closes it, and `?` shows the help with all the keys
+- `8` **Exit**: Close Blyant at once (`Enter` on it). `Q` exits too, after asking
 
 Move the selection with `j`/`k` (or the arrow keys) or the number, and press `Enter`. `?` shows the help, and `Q` (or `Esc`) exits Blyant after asking in a box on top of the page (`Y`/`N`, or `j`/`k` and `Enter`; `Esc` cancels).
 
@@ -115,6 +117,7 @@ The settings are on four pages. `j` `k` (and `gg` `G`) select a setting on the p
 ### Commands
 On every tab of the start page (Start, the pages of Configuration, Help), `:` opens the command line on the bottom line. `Tab` completes the command you are typing, from the commands of this page, and `Up`/`Down` bring back the commands given here before:
 
+- `:blank` A blank page, as `B`; `:recover` Recover unsaved text, as `R`
 - `:new` (or `:new name`) New file, as `N` (with `:new name`, the box is shown with the name filled in, so the folder can be changed: `Enter` makes it); `:file` (or `:open`, `:browse`) The file browser, as _File browser_
 - `:project` (or `:project name`, `:newproject`) New project, as `P`; `:projects` (`:pro`, `:proj`) The list of projects, as _Open project_
 - `:start` The Start tab; `:config` (or `:general`), `:layout`, `:editor` and `:system` The pages of the Configuration tab (`:editor` is the Editor page of Configuration, not the text editor)

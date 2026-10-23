@@ -120,6 +120,14 @@ internal static class StartMenu
                 // ":new name": a new file (in the directory of the file browser)
                 NewFile(argument);
                 break;
+            case "blank":
+                // A blank page: the editor at once, the name and the folder asked for when it is saved
+                FileExplorer.EditBlank();
+                break;
+            case "recover":
+                // The recovery copies of text that was not saved, to open one
+                RecoverUnsaved();
+                break;
             case "file":
             case "browse":
             case "open":
@@ -233,55 +241,105 @@ internal static class StartMenu
     private static void NewFile(string name)
     {
         ChoiceBox.Forget();
+        var path = AskNewFile(DialogText.NewFile, name);
+        if (path == null) return;
+        try
+        {
+            // Only a new file: one that was made in the meantime is not emptied (it is logged, or why it failed)
+            FileIo.CreateNewFile(path);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or NotSupportedException)
+        {
+            ChoiceBox.Message(DialogText.NewFile, e.Message, Path.GetFileName(path));
+            return;
+        }
+
+        FileExplorer.RunAtFile(path);
+    }
+
+    // Recover unsaved text: the recovery copies (of blank pages and of files), the newest first, with the start of
+    // the text below the list. Enter opens one (a blank page with its text, or the file, where what to do is
+    // asked), D deletes one (asked first)
+    private static void RecoverUnsaved()
+    {
+        while (true)
+        {
+            ChoiceBox.Forget();
+            var copies = Recovery.All();
+            if (copies.Count == 0)
+            {
+                ChoiceBox.Message(DialogText.RecoverUnsaved, DialogText.RecoveryEmpty, string.Empty);
+                return;
+            }
+
+            var rows = copies.Select(copy => copy.Written.ToLocalTime().ToString("yyyy-MM-dd HH:mm",
+                    System.Globalization.CultureInfo.InvariantCulture) + "  " +
+                (copy.IsUntitled ? DialogText.Untitled : Path.GetFileName(copy.FilePath))).ToList();
+            var extras = new PickListBox.Extras
+            {
+                PreviewLabel = Lang.T("Text"),
+                Key = (key, i) =>
+                {
+                    if (i < 0 || char.ToUpperInvariant(key.KeyChar) != 'D') return PickListBox.KeyUse.None;
+                    if (!ChoiceBox.ConfirmGuarded(DialogText.RecoverUnsaved, Lang.T("Delete the recovered text?"),
+                            Lang.T("This cannot be undone")))
+                    {
+                        return PickListBox.KeyUse.Used;
+                    }
+
+                    Recovery.DeleteCopy(copies[i].CopyPath);
+                    return PickListBox.KeyUse.Reload;
+                }
+            };
+            var picked = PickListBox.Show(Lang.F("Recover unsaved text ({0})", copies.Count), rows,
+                i => (copies[i].IsUntitled ? DialogText.BlankPage : copies[i].FilePath) + "\n" + copies[i].Text, 0,
+                Lang.T("j/k Select | Enter Open | D Delete | / Filter | Esc Close"), extras);
+            if (picked == PickListBox.Reload) continue;
+            if (picked < 0) return;
+            FileExplorer.OpenRecoveryCopy(copies[picked]);
+            return;
+        }
+    }
+
+    /// <summary>
+    /// Ask for the name and the folder of a new file (New file, and a blank page saved): the name in a box, in the
+    /// directory the file browser was in last, or another (Tab: the places saved, or one picked). A name without an
+    /// extension is a Markdown file. A name that cannot be used, or is there, is told, and asked for again
+    /// </summary>
+    /// <param name="caption">The title of the box</param>
+    /// <param name="name">The name to start with (can be empty)</param>
+    /// <returns>The full path of the file to make (it is not made), or null if canceled</returns>
+    internal static string? AskNewFile(string caption, string name)
+    {
         var directory = FileExplorer.LastDirectory;
         name = name.Trim();
         while (true)
         {
-            var asked = ChoiceBox.AskTextOrTab(DialogText.NewFile, Lang.F("The file is made in {0}", directory),
+            var asked = ChoiceBox.AskTextOrTab(caption, Lang.F("The file is made in {0}", directory),
                 DialogText.FileNameColon, name, Lang.T("Enter OK | Tab Another folder | Esc Cancel"), out var tab);
-            if (!tab)
+            if (tab)
             {
-                if (asked == null) return;
-                name = asked;
-                break;
+                // Tab: another folder (the name typed is kept)
+                name = asked ?? string.Empty;
+                if (PickNewFileFolder(directory) is { } other) directory = other;
+                Tools.ClearScreen();
+                ChoiceBox.Forget();
+                continue;
             }
 
-            // Tab: another folder (the name typed is kept)
-            name = asked ?? string.Empty;
-            if (PickNewFileFolder(directory) is { } other) directory = other;
+            if (asked == null) return null;
+            name = asked;
+            var file = FileOperations.WithDefaultExtension(name);
+            var path = Path.Combine(directory, file);
+            var problem = Tools.FileNameProblem(file) ??
+                          (File.Exists(path) || Directory.Exists(path) ? DialogText.NameExists : null);
+            if (problem == null) return Path.GetFullPath(path);
+            // A name that cannot be used (the file is not tried): told, and the name asked for again
+            EventLog.Add(DialogText.LogFile + "New: " + path + " (" + problem + ")");
+            ChoiceBox.Message(caption, problem, file);
             Tools.ClearScreen();
             ChoiceBox.Forget();
         }
-
-        name = FileOperations.WithDefaultExtension(name);
-        var path = Path.Combine(directory, name);
-        var problem = Tools.FileNameProblem(name) ??
-                      (File.Exists(path) || Directory.Exists(path) ? DialogText.NameExists : null);
-        if (problem != null)
-        {
-            // A name that cannot be used (the file is not tried)
-            EventLog.Add(DialogText.LogFile + "New: " + path + " (" + problem + ")");
-        }
-        else
-        {
-            try
-            {
-                // Only a new file: one that was made in the meantime is not emptied (it is logged, or why it failed)
-                FileIo.CreateNewFile(path);
-            }
-            catch (Exception e) when (e is IOException or UnauthorizedAccessException or NotSupportedException)
-            {
-                problem = e.Message;
-            }
-        }
-
-        if (problem != null)
-        {
-            ChoiceBox.Message(DialogText.NewFile, problem, name);
-            return;
-        }
-
-        FileExplorer.RunAtFile(Path.GetFullPath(path));
     }
 
     /// <summary>
@@ -596,6 +654,8 @@ internal static class StartMenu
         private enum Choice
         {
             NewFile,
+            BlankPage,
+            Recover, // Only while there are recovery copies
             FileBrowser,
             NewProject,
             OpenProject,
@@ -604,14 +664,24 @@ internal static class StartMenu
             Exit
         }
 
-        private static readonly Choice[] Shown = Enum.GetValues<Choice>();
+        // The choices shown: all, but Recover only while there are recovery copies (looked at when the page is
+        // drawn in full)
+        private Choice[] _shown = Shown();
+
+        private static Choice[] Shown()
+        {
+            var recover = Recovery.All().Count > 0;
+            return Enum.GetValues<Choice>().Where(choice => choice != Choice.Recover || recover).ToArray();
+        }
 
         // The keys that open a choice at once (the same in all languages; the numbers only select). A new file: N,
-        // the file browser: F, a new project: P, the projects: O, the Jump menu: M (and Ctrl+O, as everywhere; j
+        // a blank page: B, recovering unsaved text: R, the file browser: F, a new project: P, the projects: O, the Jump menu: M (and Ctrl+O, as everywhere; j
         // moves down), the quick guide: U, exit: Q (asks)
         private static string KeysOf(Choice choice) => choice switch
         {
             Choice.NewFile => "N",
+            Choice.BlankPage => "B",
+            Choice.Recover => "R",
             Choice.FileBrowser => "F",
             Choice.NewProject => "P",
             Choice.OpenProject => "O",
@@ -624,6 +694,8 @@ internal static class StartMenu
         private static string TextOf(Choice choice) => choice switch
         {
             Choice.NewFile => DialogText.NewFile,
+            Choice.BlankPage => DialogText.BlankPage,
+            Choice.Recover => DialogText.RecoverUnsaved,
             Choice.FileBrowser => DialogText.FileBrowser,
             Choice.NewProject => DialogText.NewProject,
             Choice.OpenProject => DialogText.OpenProject,
@@ -638,19 +710,31 @@ internal static class StartMenu
 
         public void Draw(TabArea area, bool full)
         {
-            _selected = Math.Clamp(_selected, 0, Shown.Length - 1);
             if (full)
             {
-                for (var i = 0; i < Shown.Length; i++)
+                // (a choice that comes or goes keeps the selection on the same choice)
+                var current = _shown[Math.Clamp(_selected, 0, _shown.Length - 1)];
+                _shown = Shown();
+                _selected = Math.Max(0, Array.IndexOf(_shown, current));
+            }
+
+            _selected = Math.Clamp(_selected, 0, _shown.Length - 1);
+            if (full)
+            {
+                for (var i = 0; i < _shown.Length; i++)
                 {
                     // The number, the key that opens the choice at once, and the choice
                     Tools.SetCursorEx(area.Top + i, area.Left + 3);
-                    Console.Write(Tools.TruncateString((i + 1) + " " + KeysOf(Shown[i]) + " .... " +
-                                                       TextOf(Shown[i]), area.Width - 4, true));
+                    Console.Write(Tools.TruncateString((i + 1) + " " + KeysOf(_shown[i]) + " .... " +
+                                                       TextOf(_shown[i]), area.Width - 4, true));
                 }
+
+                // The row of a choice that has gone (Recover) is cleared
+                Tools.SetCursorEx(area.Top + _shown.Length, area.Left);
+                Console.Write(new string(' ', Math.Max(0, area.Width - 1)));
             }
 
-            for (var i = 0; i < Shown.Length; i++)
+            for (var i = 0; i < _shown.Length; i++)
             {
                 Tools.SetCursorEx(area.Top + i, area.Left);
                 // The pointer is highlighted as in the other lists
@@ -662,15 +746,17 @@ internal static class StartMenu
 
         public TabResult HandleKey(ConsoleKeyInfo key)
         {
-            var count = Shown.Length;
+            var count = _shown.Length;
             _selected = Math.Clamp(_selected, 0, count - 1);
             // Ctrl+O: the Jump menu, as on the other pages
             if (Blyant.Jump.IsKey(key)) return Open(Choice.Jump);
-            if (key.Key is ConsoleKey.Enter or ConsoleKey.L or ConsoleKey.RightArrow) return Open(Shown[_selected]);
+            if (key.Key is ConsoleKey.Enter or ConsoleKey.L or ConsoleKey.RightArrow) return Open(_shown[_selected]);
             // The keys of the choices open them at once
             var direct = key.Key switch
             {
                 ConsoleKey.N => Choice.NewFile,
+                ConsoleKey.B => Choice.BlankPage,
+                ConsoleKey.R when _shown.Contains(Choice.Recover) => Choice.Recover,
                 ConsoleKey.F => Choice.FileBrowser,
                 ConsoleKey.P => Choice.NewProject,
                 ConsoleKey.O => Choice.OpenProject,
@@ -680,7 +766,7 @@ internal static class StartMenu
             };
             if (direct is { } choice && (key.Modifiers & (ConsoleModifiers.Control | ConsoleModifiers.Alt)) == 0)
             {
-                _selected = Array.IndexOf(Shown, choice);
+                _selected = Array.IndexOf(_shown, choice);
                 return Open(choice);
             }
 
@@ -725,6 +811,12 @@ internal static class StartMenu
             {
                 case Choice.NewFile:
                     NewFile(string.Empty);
+                    break;
+                case Choice.BlankPage:
+                    FileExplorer.EditBlank();
+                    break;
+                case Choice.Recover:
+                    RecoverUnsaved();
                     break;
                 case Choice.FileBrowser:
                     FileExplorer.Run();

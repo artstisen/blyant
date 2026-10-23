@@ -913,7 +913,7 @@ internal static partial class FileExplorer
                 TextArea.NextSplit = split;
                 // The recovered text is opened as changes that are not saved yet
                 if (recovered != null) modified = true;
-                TextArea.NextRecovered = recovered != null;
+                TextArea.NextRecoveredCopy = recovered != null ? Recovery.CopyPathOf(file.Path) : null;
                 var textArea = new TextArea(Console.CursorLeft, Console.CursorTop, Init.LineWidth - 1,
                     Init.LineCount - 3, recovered ?? _file?.Text ?? string.Empty, cursorIndex, false, false, false,
                     TextArea.SaveAsFile, modified);
@@ -955,6 +955,56 @@ internal static partial class FileExplorer
             _lastEditedPath = _file?.Path ?? file.Path;
             _file = null;
         }
+    }
+
+    /// <summary>
+    /// A blank page in the editor: a text that is not a file yet, Markdown, named and placed when it is saved (as a
+    /// new file). With the text of a recovery copy (a blank page that was not saved, or a file that is gone), the
+    /// copy goes with the changes. When the editor is closed, the page it was opened from is shown again
+    /// </summary>
+    internal static void EditBlank(string text = "", string? recoveredCopy = null)
+    {
+        var outer = _file;
+        _file = TextFile.Create(string.Empty);
+        UntitledCopy = Recovery.NewUntitledCopyPath();
+        EventLog.Add(DialogText.LogFile + "Open: (blank page)" +
+                     (recoveredCopy != null ? " from " + recoveredCopy : string.Empty));
+        try
+        {
+            Tools.ClearScreen();
+            Actions.DrawEditFileMenu();
+            TextArea.NextRecoveredCopy = recoveredCopy;
+            var textArea = new TextArea(Console.CursorLeft, Console.CursorTop, Init.LineWidth - 1,
+                Init.LineCount - 3, text, 0, false, false, false, TextArea.SaveAsFile, text.Length > 0);
+            textArea.ClearUndoRedoCache();
+            // Saved as a file: opened where the cursor was, the next time
+            if (!IsUntitled) KeepCaret(_file.Path, textArea);
+        }
+        catch (Exception e) when (e is not NavigationException)
+        {
+            Tools.ClearScreen();
+            ChoiceBox.Message(DialogText.BlankPage, e.Message, string.Empty);
+        }
+        finally
+        {
+            _file = outer;
+            UntitledCopy = string.Empty;
+        }
+    }
+
+    /// <summary>
+    /// Open the text of a recovery copy: a blank page that was not saved (or a file that is gone) as a blank page
+    /// with the text, a file that is there in the file browser and the editor, where what to do is asked
+    /// </summary>
+    internal static void OpenRecoveryCopy(Recovery.Copy copy)
+    {
+        if (!copy.IsUntitled && File.Exists(copy.FilePath))
+        {
+            RunAtFile(copy.FilePath);
+            return;
+        }
+
+        EditBlank(copy.Text, copy.CopyPath);
     }
 
     // The path of the file edited last (it can have been renamed in the editor)
@@ -1044,6 +1094,7 @@ internal static partial class FileExplorer
     internal static string RenameCurrentFile(string name)
     {
         if (_file == null) return DialogText.FileNotFound;
+        if (IsUntitled) return DialogText.SaveFirst;
         var path = System.IO.Path.GetFullPath(_file.Path);
         var settings = System.IO.Path.GetFullPath(System.IO.Path.Combine(FileIo.GetDataDirectoryName(),
             FileIo.SettingsFileName));
@@ -1096,7 +1147,7 @@ internal static partial class FileExplorer
     /// </summary>
     internal static void KeepCaretOfCurrentFile(TextArea textArea)
     {
-        if (_file != null) KeepCaret(_file.Path, textArea);
+        if (_file != null && !IsUntitled) KeepCaret(_file.Path, textArea);
     }
 
     // Keep where the cursor is in a file that is closed in the editor: in the history, and in the favorites if
@@ -1195,7 +1246,7 @@ internal static partial class FileExplorer
             EventLog.Add(DialogText.LogFile + "Open: " + _file.Path);
             Tools.ClearScreen();
             Actions.DrawEditFileMenu();
-            TextArea.NextRecovered = recovered != null;
+            TextArea.NextRecoveredCopy = recovered != null ? Recovery.CopyPathOf(_file.Path) : null;
             var text = recovered ?? _file.Text;
             var textArea = new TextArea(Console.CursorLeft, Console.CursorTop, Init.LineWidth - 1,
                 Init.LineCount - 3, text, Snippets.IndexOfLine(text, line), false, false, false,
@@ -1221,9 +1272,20 @@ internal static partial class FileExplorer
     internal static string CurrentFileName => _file == null ? string.Empty : System.IO.Path.GetFileName(_file.Path);
 
     /// <summary>
+    /// The text being edited is a blank page: not a file yet (it is named when it is saved)
+    /// </summary>
+    internal static bool IsUntitled => _file != null && _file.Path.Length == 0;
+
+    /// <summary>
+    /// The file of the recovery copy of the blank page being edited (empty if it is not one)
+    /// </summary>
+    internal static string UntitledCopy { get; private set; } = string.Empty;
+
+    /// <summary>
     /// The full path of the file being edited (empty if none)
     /// </summary>
-    internal static string CurrentFilePath => _file == null ? string.Empty : System.IO.Path.GetFullPath(_file.Path);
+    internal static string CurrentFilePath =>
+        _file == null || _file.Path.Length == 0 ? string.Empty : System.IO.Path.GetFullPath(_file.Path);
 
     /// <summary>
     /// The type and encoding of the file being edited, and line endings of the file being edited, for the bottom line of the editor:
@@ -1234,7 +1296,8 @@ internal static partial class FileExplorer
         get
         {
             if (_file == null) return string.Empty;
-            var extension = System.IO.Path.GetExtension(_file.Path);
+            // (a blank page is Markdown until it is saved)
+            var extension = IsUntitled ? FileOperations.DefaultExtension : System.IO.Path.GetExtension(_file.Path);
             // (".blyant" is a type, as in the file browser)
             var type = extension.Length > 1
                 ? Tools.TruncateString(extension[1..].ToUpperInvariant(), 10, true) + " "
@@ -1252,6 +1315,7 @@ internal static partial class FileExplorer
     {
         text = string.Empty;
         if (_file == null) return DialogText.FileNotFound;
+        if (IsUntitled) return DialogText.SaveFirst;
         try
         {
             if (!File.Exists(_file.Path)) return DialogText.FileNotFound;
@@ -1271,9 +1335,32 @@ internal static partial class FileExplorer
     /// Save the text of the file being edited (called by the editor)
     /// </summary>
     /// <returns>DialogText.Success or an error message</returns>
-    internal static string SaveCurrentFile(string text)
+    internal static string SaveCurrentFile(string text, string name = "")
     {
-        return _file == null ? DialogText.StatusUnableToSave : _file.Save(text);
+        if (_file == null) return DialogText.StatusUnableToSave;
+        if (IsUntitled)
+        {
+            // A blank page: where and as what is asked (as for a new file), and the file is made
+            var path = StartMenu.AskNewFile(DialogText.SaveAs, name);
+            if (path == null) return DialogText.NotSaved;
+            try
+            {
+                FileIo.CreateNewFile(path);
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException or NotSupportedException)
+            {
+                return e.Message;
+            }
+
+            _file.Path = path;
+            AddToHistory(path);
+            // The file browser shows it where it was made, the next time
+            StartDirectory = System.IO.Path.GetDirectoryName(path) ?? StartDirectory;
+            StartSelected = System.IO.Path.GetFileName(path);
+            StartPane = 0;
+        }
+
+        return _file.Save(text);
     }
 
     /// <summary>
@@ -1283,6 +1370,7 @@ internal static partial class FileExplorer
     internal static string? NewFileProblem(string name)
     {
         if (_file == null) return DialogText.NoFilePath;
+        if (IsUntitled) return DialogText.SaveFirst;
         if (Tools.FileNameProblem(name) is { } problem) return problem;
         var path = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(_file.Path) ?? string.Empty, name);
         return File.Exists(path) || Directory.Exists(path) ? DialogText.NameExists : null;

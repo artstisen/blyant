@@ -13,7 +13,7 @@ When a text file is edited (from the file browser), the bottom line shows its ty
 ## Save and close
 Typed on the command line: press `:`, type the command and press `Enter`. `Tab` completes the command you are typing (`:spelln` and `Tab` gives `:spellnext`), `Tab` again gives the next command that starts the same and `Shift+Tab` the previous. With nothing typed, `Tab` goes through all the commands of the editor. Lines typed in front of a command are kept (`:%d` and `Tab` gives `:%delete`). `Up` and `Down` bring back the commands given in the editor before, the newest first (with the start of a command typed: only those that start with it). They are kept in memory only and forgotten at logout; a macro being recorded gets each command line as it was given (also one brought back with `Up` or completed with `Tab`), not the keys.
 
-- `:w` Save
+- `:w` Save (a [blank page](Guide-to-start-page.md#start) asks for its name and folder first; `:w name` with the name filled in)
 - `:wq` or `:x` or `ZZ` Save and close the editor
 - `:q` or `Esc` in Normal mode: Close the editor (asks what to do with unsaved changes)
 - `:q!` or `ZQ` Close the editor without saving
@@ -35,7 +35,7 @@ When you open a file that has a recovery copy, you are asked what to do with it:
 
 The question tells when the copy was written, and if the file was changed after that (by another program, or on another computer through a synced folder). Nothing is asked if the copy has the same text as the file (it is removed), or if another Blyant that is running is editing the file.
 
-The copies are kept in the directory `recovery` in the data directory, named after the file and a code made from its path (`chapter 1.md.3f2a9c1d.txt`). Each starts with a few lines telling which file it is a copy of and when it was written, then a line `---`, and then the text, so a copy can also be opened and read like any file. `:recovery` in the file browser goes there. Copies are made of the files opened from the file browser (and of the snippets, the completions and the notes of projects), not of the settings file. _Recovery copies of unsaved text_ on the Editor page of Configuration (setting `recovery`, on from the start) turns them off.
+The copies are kept in the directory `recovery` in the data directory, named after the file and a code made from its path (`chapter 1.md.3f2a9c1d.txt`). Each starts with a few lines telling which file it is a copy of and when it was written, then a line `---`, and then the text, so a copy can also be opened and read like any file. `:recovery` in the file browser goes there. A blank page (`B` on the start page) has a copy of its own (`untitled-` and the time it was opened), until it is saved as a file. _Recover unsaved text_ on the start page, shown while there are copies, lists them all and opens the one you pick. Copies are made of the files opened from the file browser (and of the snippets, the completions and the notes of projects), not of the settings file. _Recovery copies of unsaved text_ on the Editor page of Configuration (setting `recovery`, on from the start) turns them off.
 
 ## Entering Insert mode
 - `i` / `a` Insert before/after the cursor

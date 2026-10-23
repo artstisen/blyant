@@ -61,7 +61,13 @@ internal static class Recovery
     /// same number</param>
     /// <param name="Text">The text, with LF line endings</param>
     internal sealed record Copy(string CopyPath, string FilePath, DateTime Written, int ProcessId,
-        DateTime ProcessStarted, string Text);
+        DateTime ProcessStarted, string Text)
+    {
+        /// <summary>
+        /// A copy of a blank page (a text that was not a file yet)
+        /// </summary>
+        internal bool IsUntitled => FilePath.Length == 0;
+    }
 
     /// <summary>
     /// The file of the copy of a file. The code is the start of the SHA-256 of the full path (in lower case where
@@ -89,7 +95,8 @@ internal static class Recovery
         var builder = new StringBuilder();
         // English: read by people in any language, and by Blyant
         builder.Append("# Blyant: a recovery copy of text that was not saved. The text follows the line \"---\".\n");
-        builder.Append("file=").Append(Path.GetFullPath(filePath)).Append('\n');
+        // (empty for a text that is not a file yet: a blank page)
+        builder.Append("file=").Append(filePath.Length > 0 ? Path.GetFullPath(filePath) : string.Empty).Append('\n');
         builder.Append("written=").Append(written.ToString("o", CultureInfo.InvariantCulture)).Append('\n');
         builder.Append("process=").Append(Environment.ProcessId.ToString(CultureInfo.InvariantCulture)).Append('\n');
         builder.Append("started=").Append(OwnStart.ToString("o", CultureInfo.InvariantCulture)).Append('\n');
@@ -114,7 +121,8 @@ internal static class Recovery
             start = end + 1;
             if (line == Separator)
             {
-                if (!values.TryGetValue("file", out var file) || file.Length == 0) return null;
+                // (an empty file: a blank page, a text that was not a file yet)
+                if (!values.TryGetValue("file", out var file)) return null;
                 values.TryGetValue("written", out var written);
                 values.TryGetValue("process", out var process);
                 values.TryGetValue("started", out var started);
@@ -139,12 +147,18 @@ internal static class Recovery
     /// not there
     /// </summary>
     /// <returns>DialogText.Success or an error message</returns>
-    internal static string Write(string filePath, string text)
+    internal static string Write(string filePath, string text) => WriteCopy(CopyPathOf(filePath), filePath, text);
+
+    /// <summary>
+    /// Write a copy to its file (replacing the one before, safely): of a file, or of a blank page (filePath empty)
+    /// </summary>
+    /// <returns>DialogText.Success or an error message</returns>
+    internal static string WriteCopy(string copyPath, string filePath, string text)
     {
         try
         {
             FileIo.CreateDirectory(Directory);
-            FileIo.WriteAllBytesSafe(CopyPathOf(filePath),
+            FileIo.WriteAllBytesSafe(copyPath,
                 new UTF8Encoding(false).GetBytes(Serialize(filePath, text, DateTime.UtcNow)));
             return DialogText.Success;
         }
@@ -176,18 +190,75 @@ internal static class Recovery
     /// <summary>
     /// Remove the copy of a file (if there is one)
     /// </summary>
-    internal static void Delete(string filePath)
+    internal static void Delete(string filePath) => DeleteCopy(CopyPathOf(filePath));
+
+    /// <summary>
+    /// Remove a copy by the path of its file (if it is there)
+    /// </summary>
+    internal static void DeleteCopy(string copyPath)
     {
         try
         {
-            var path = CopyPathOf(filePath);
-            FileIo.DeleteFile(path);
+            if (copyPath.Length > 0) FileIo.DeleteFile(copyPath);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException)
         {
             // It is offered when the file is opened, and can be removed then
         }
     }
+
+    #region Blank pages
+
+    // The copies of blank pages: "untitled-2026-10-23 14.03.11.txt"
+    private const string UntitledPrefix = "untitled-"; // English: the start of the name of a file
+
+    /// <summary>
+    /// A name for the copy of a new blank page, from the time it is opened (with a number after it if one of that
+    /// name is there)
+    /// </summary>
+    internal static string NewUntitledCopyPath()
+    {
+        var stamp = DateTime.Now.ToString("yyyy-MM-dd HH.mm.ss", CultureInfo.InvariantCulture);
+        var path = Path.Combine(Directory, UntitledPrefix + stamp + Extension);
+        for (var number = 2; File.Exists(path); number++)
+        {
+            path = Path.Combine(Directory, UntitledPrefix + stamp + " " + number + Extension);
+        }
+
+        return path;
+    }
+
+    /// <summary>
+    /// All the copies there are (of files and of blank pages), the newest first. Those that cannot be read, or
+    /// are not copies, are left out
+    /// </summary>
+    internal static List<Copy> All()
+    {
+        var copies = new List<Copy>();
+        try
+        {
+            if (!System.IO.Directory.Exists(Directory)) return copies;
+            foreach (var path in System.IO.Directory.EnumerateFiles(Directory, "*" + Extension))
+            {
+                try
+                {
+                    if (Parse(File.ReadAllText(path, Encoding.UTF8), path) is { } copy) copies.Add(copy);
+                }
+                catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+                {
+                    // Left out
+                }
+            }
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            // None to offer
+        }
+
+        return copies.OrderByDescending(copy => copy.Written).ToList();
+    }
+
+    #endregion
 
     // When this process was started (UTC)
     private static DateTime OwnStart => _ownStart ??= StartOf(Process.GetCurrentProcess()) ?? DateTime.UtcNow;

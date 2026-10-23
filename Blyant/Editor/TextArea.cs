@@ -142,6 +142,9 @@ public partial class TextArea
     /// </summary>
     internal bool TabPressed { get; private set; }
 
+    // ":w name" on a blank page: the name to start with in the box of the name (once)
+    private string _saveName = string.Empty;
+
     /// <summary>
     /// A file of Blyant opened from the editor, which is closed for it: the snippets (":snip edit", at a line) or
     /// the completions (":complete edit")
@@ -208,9 +211,9 @@ public partial class TextArea
         _tabLeaves = NextTabLeaves;
         NextTabLeaves = false;
         // Opened from a recovery copy: the copy goes with the changes, as one this editor wrote
-        _recoveryOwned = NextRecovered;
-        NextRecovered = false;
-        if (_recoveryOwned) _recoveryPath = FileExplorer.CurrentFilePath;
+        _recoveryCopy = NextRecoveredCopy ?? string.Empty;
+        _recoveryOwned = _recoveryCopy.Length > 0;
+        NextRecoveredCopy = null;
         _peek = peek;
         _top = top;
         _left = left;
@@ -248,7 +251,8 @@ public partial class TextArea
         // and so is the settings file (as INI) when it is edited from Configuration
         var fileType = peek != null ? peek.Syntax
             : saveMode == SaveAsFile && !_singleLine && !readOnly
-                ? SyntaxHighlighter.TypeOfFile(FileExplorer.CurrentFileName)
+                // (a blank page is Markdown, as a new file without an extension)
+                ? FileExplorer.IsUntitled ? SyntaxType.Markdown : SyntaxHighlighter.TypeOfFile(FileExplorer.CurrentFileName)
                 : saveMode == SaveAsSettings && !_singleLine && !readOnly
                     ? SyntaxType.Ini
                     : SyntaxType.None;
@@ -615,9 +619,9 @@ public partial class TextArea
             case EditorRequest.CopyPath:
             {
                 // Only a file has a path
-                if (_saveMode != SaveAsFile)
+                if (_saveMode != SaveAsFile || FileExplorer.IsUntitled)
                 {
-                    _engine.ShowMessage(DialogText.NoFilePath, true);
+                    _engine.ShowMessage(FileExplorer.IsUntitled ? DialogText.SaveFirst : DialogText.NoFilePath, true);
                     break;
                 }
 
@@ -723,6 +727,12 @@ public partial class TextArea
                     _engine.ShowMessage(Lang.T("Only a file can be a favorite"), true);
                 }
 
+                break;
+            case EditorRequest.WriteCopy when _saveMode == SaveAsFile && FileExplorer.IsUntitled:
+                // ":w name" on a blank page: saved, with the name in the box (the folder can be changed there)
+                _saveName = _engine.WriteName;
+                if (!_engine.IsModified) _engine.MarkModified();
+                if (Save()) _engine.SetMessage(DialogText.EditorSaved, false);
                 break;
             case EditorRequest.WriteCopy:
                 _engine.ShowMessage(DialogText.WriteCopyNotHere, true);
@@ -842,7 +852,8 @@ public partial class TextArea
     private SyntaxType SnippetSyntax()
     {
         if (_engine.Syntax != SyntaxType.None) return _engine.Syntax;
-        return _saveMode == SaveAsFile ? SyntaxHighlighter.TypeOfFile(FileExplorer.CurrentFileName) : SyntaxType.None;
+        if (_saveMode != SaveAsFile) return SyntaxType.None;
+        return FileExplorer.IsUntitled ? SyntaxType.Markdown : SyntaxHighlighter.TypeOfFile(FileExplorer.CurrentFileName);
     }
 
     // ":snip edit": close the editor to open the file of snippets (at a line). The caller opens it, and this text
@@ -891,6 +902,13 @@ public partial class TextArea
     // Close the editor to open a file of Blyant: the caller opens it, and this text again when it is closed
     private void OpenSideFile(SideFile file, string path, string isOpenMessage, string switchNote)
     {
+        // A blank page is not left for another file (it would not come back): it is saved first
+        if (_saveMode == SaveAsFile && FileExplorer.IsUntitled)
+        {
+            _engine.ShowMessage(DialogText.SaveFirst, true);
+            return;
+        }
+
         // The file is the one being edited: go to the line
         if (_saveMode == SaveAsFile && FileOperations.SamePath(FileExplorer.CurrentFilePath,
                 System.IO.Path.GetFullPath(path)))
@@ -1166,6 +1184,13 @@ public partial class TextArea
         {
             // Only a file can have been changed by another program
             _engine.SetMessage(DialogText.EditorReloadFilesOnly, true);
+            return;
+        }
+
+        if (FileExplorer.IsUntitled)
+        {
+            // A blank page is not a file yet
+            _engine.SetMessage(DialogText.SaveFirst, true);
             return;
         }
 
@@ -1448,8 +1473,23 @@ public partial class TextArea
         }
         else if (_saveMode == SaveAsFile)
         {
-            // Save as a plain text file
-            var status = FileExplorer.SaveCurrentFile(GetText());
+            // Save as a plain text file. A blank page is named (and placed) first, in a box on top of the text
+            var untitled = FileExplorer.IsUntitled;
+            var status = FileExplorer.SaveCurrentFile(GetText(), _saveName);
+            _saveName = string.Empty;
+            if (untitled)
+            {
+                RedrawAll();
+                if (!FileExplorer.IsUntitled)
+                {
+                    // Named: colored as the kind of file its name tells (Markdown without an extension)
+                    var type = SyntaxHighlighter.TypeOfFile(FileExplorer.CurrentFileName);
+                    _engine.SyntaxDefault = type;
+                    _engine.CompletionSyntax = type;
+                    _engine.Syntax = SyntaxHighlighter.ColorFiles ? type : SyntaxType.None;
+                }
+            }
+
             if (status != DialogText.Success)
             {
                 _engine.SetMessage(status, true);

@@ -75,6 +75,7 @@ internal static partial class QuickGuide
         (Kind.Heading, "", Lang.T("Start with a file or a project, on the start page")),
         (Kind.Item, "N  F", Lang.T("New file/File browser: in the file browser, Enter opens a file in the editor. " +
                                    "Manage files and organize favorites there.")),
+        (Kind.Item, "B", Lang.T("Blank page: write first, the name and folder when saved")),
         (Kind.Item, "P  O", Lang.T("New project/Open project: a project is a folder with the files of a piece of " +
                                    "writing, in the projects folder or added from anywhere.")),
         (Kind.Text, "", ""),

@@ -65,7 +65,7 @@ internal static class Commands
             "quit close help jump book find info goto favorite",
             "q h fav ju jmp"),
         [CommandContext.Start] = new Table(
-            "new file open project projects start config general layout editor system jump book help about quick scheme logo " +
+            "new blank recover file open project projects start config general layout editor system jump book help about quick scheme logo " +
             "snippet completions clipboard log restart reset quit exit",
             "browse newproject proj pro ju jmp h guide snip comp q"),
         [CommandContext.Jump] = new Table(

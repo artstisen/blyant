@@ -199,6 +199,13 @@ internal static class DialogText
     public static string OpenProject => Lang.T("Open project");
     public static string ProjectInfo => Lang.T("Project info");
     public static string AddProject => Lang.T("Add a project");
+    // A blank page: a text that is not a file yet, named and placed when it is saved
+    public static string BlankPage => Lang.T("Blank page");
+    public static string Untitled => Lang.T("(untitled)");
+    public static string SaveAs => Lang.T("Save as");
+    public static string NotSaved => Lang.T("Not saved");
+    public static string SaveFirst => Lang.T("Save the text first (:w)");
+    public static string RecoverUnsaved => Lang.T("Recover unsaved text");
     public static string ProjectAlready => Lang.T("This folder is a project already");
     public static string ProjectIsTheFolder => Lang.T("This is the projects folder: its folders are the projects");
     public static string ProjectMissing => Lang.T("The folder is not there (moved, renamed or deleted)");
