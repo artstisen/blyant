@@ -72,21 +72,27 @@ internal static class EventLog
         path = Path.GetFullPath(path);
         if (_filePath != null && FileOperations.SamePath(_filePath, path)) return;
         _filePath = path;
+        string? renamed = null;
+        var old = Path.Combine(Path.GetDirectoryName(path) ?? string.Empty, OldFileName);
         try
         {
             if (File.Exists(path) && new FileInfo(path).Length > MaxFileSize)
             {
-                File.Move(path, Path.Combine(Path.GetDirectoryName(path) ?? string.Empty, OldFileName), true);
+                // (not through FileIo, which would log it before the lines that came before it)
+                File.Move(path, old, true);
+                renamed = "Rename: " + path + " -> " + old;
             }
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
             // The log goes on in the file as it is
+            renamed = "Rename: " + path + " -> " + old + " - FAILED: " + e.Message;
         }
 
         var earlier = new List<string>(Unwritten);
         Unwritten.Clear();
         foreach (var line in earlier) Write(line);
+        if (renamed != null) Add(DialogText.LogFile + renamed);
     }
 
     /// <summary>

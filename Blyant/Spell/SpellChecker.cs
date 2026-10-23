@@ -230,11 +230,11 @@ internal sealed class SpellChecker
             }
             else
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(_addFilePath))!);
+                FileIo.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(_addFilePath))!);
             }
 
-            File.AppendAllText(_addFilePath, (needsNewLine ? "\n" : string.Empty) + word + "\n",
-                new UTF8Encoding(false));
+            // (the word is not logged: only that the file was added to)
+            FileIo.AppendText(_addFilePath, (needsNewLine ? "\n" : string.Empty) + word + "\n");
         }
         catch (Exception e)
         {

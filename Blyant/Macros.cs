@@ -592,7 +592,7 @@ internal static class MacroFiles
     {
         try
         {
-            Directory.CreateDirectory(Folder);
+            FileIo.CreateDirectory(Folder);
             var text = new StringBuilder();
             // English: the file is a macro, in the language of macros
             text.Append("# Macro: ").Append(name).Append('\n');

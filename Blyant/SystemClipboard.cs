@@ -134,7 +134,7 @@ internal static class SystemClipboard
                 var existing = File.ReadAllText(path, Encoding.UTF8);
                 if (existing.Length > 0 && !existing.EndsWith('\n')) lines = Environment.NewLine + lines;
                 // Added to the end: what is in it is not written again, so it cannot be lost
-                File.AppendAllText(path, lines, new UTF8Encoding(false));
+                FileIo.AppendText(path, lines);
             }
             else
             {

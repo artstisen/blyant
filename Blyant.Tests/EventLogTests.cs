@@ -31,7 +31,11 @@ public class EventLogTests
             EventLog.StartFile(path);
             EventLog.Add("new");
             Assert.True(File.Exists(Path.Combine(directory, EventLog.OldFileName)));
-            Assert.Single(File.ReadAllLines(path));
+            // The new file tells it, after the lines that came before
+            lines = File.ReadAllLines(path);
+            Assert.Equal(2, lines.Length);
+            Assert.Contains("File: Rename: ", lines[0]);
+            Assert.EndsWith("] new", lines[1]);
         }
         finally
         {

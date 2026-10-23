@@ -571,7 +571,7 @@ internal static class ColorSchemes
         if (!IsValidName(scheme.Name)) return DialogText.SchemeNameInvalid;
         try
         {
-            System.IO.Directory.CreateDirectory(Directory);
+            FileIo.CreateDirectory(Directory);
             FileIo.WriteAllBytesSafe(PathOf(scheme.Name), new UTF8Encoding(false).GetBytes(scheme.Serialize()));
             return DialogText.Success;
         }
@@ -595,7 +595,7 @@ internal static class ColorSchemes
             if (!File.Exists(PathOf(name))) return DialogText.SchemeNameInvalid;
             var sameScheme = name.Trim().Equals(newName.Trim(), StringComparison.OrdinalIgnoreCase);
             if (!sameScheme && File.Exists(PathOf(newName))) return DialogText.SchemeNameTaken;
-            if (name.Trim() != newName.Trim()) File.Move(PathOf(name), Path.Combine(Directory, newName.Trim() + Extension)); // (the new name as typed)
+            if (name.Trim() != newName.Trim()) FileIo.MoveFile(PathOf(name), Path.Combine(Directory, newName.Trim() + Extension), false); // (the new name as typed)
             return DialogText.Success;
         }
         catch (Exception e)
@@ -629,7 +629,7 @@ internal static class ColorSchemes
         if (!IsValidName(name)) return DialogText.SchemeNameInvalid;
         try
         {
-            File.Delete(PathOf(name));
+            FileIo.DeleteFile(PathOf(name));
             return DialogText.Success;
         }
         catch (Exception e)

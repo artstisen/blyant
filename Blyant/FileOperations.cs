@@ -440,7 +440,7 @@ internal static class FileOperations
                    Path.GetFileName(Trimmed(path));
         try
         {
-            Directory.CreateDirectory(trashDirectory);
+            FileIo.CreateDirectory(trashDirectory);
             var target = UniquePath(trashDirectory, name);
             if (!isDirectory)
             {
@@ -487,7 +487,7 @@ internal static class FileOperations
                 line = "# Blyant: what was moved to the trash (name in the trash, when, where it was)\n" + line;
             }
 
-            File.AppendAllText(list, line, new System.Text.UTF8Encoding(false));
+            FileIo.AppendText(list, line);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {

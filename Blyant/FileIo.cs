@@ -40,6 +40,7 @@ internal static class FileIo
             {
             }
 
+            LogFile("Test file (made and deleted at once): " + Path.GetFullPath(test));
             return true;
         }
         catch
@@ -72,7 +73,7 @@ internal static class FileIo
             {
                 // Create data folder
                 Init.DataDirectoryCreated = true;
-                Directory.CreateDirectory(DataDirectory);
+                CreateDirectory(DataDirectory);
                 // Exit as data is the only directory
             }
 
@@ -84,6 +85,98 @@ internal static class FileIo
             return false;
         }
     }
+
+    #region Logged file operations
+
+    // Every change Blyant makes by itself to files and directories goes through these methods (or through
+    // WriteAllBytesSafe), so the log tells them all: what was made, written, added to, renamed, copied or deleted,
+    // and why it failed. The operations of the file browser (FileOperations) are logged there, as a whole
+    // (AGENTS.md). Only paths are logged, never what is written
+
+    private static void LogFile(string text)
+    {
+        EventLog.Add(DialogText.LogFile + text);
+    }
+
+    // Do an operation, and log it (or why it failed, before the error goes on to the caller)
+    private static void Logged(string text, Action operation)
+    {
+        try
+        {
+            operation();
+        }
+        catch (Exception e)
+        {
+            LogFile(text + " - FAILED: " + e.Message);
+            throw;
+        }
+
+        LogFile(text);
+    }
+
+    /// <summary>
+    /// Make a directory, and the directories it is in, if they are not there (each one made is logged)
+    /// </summary>
+    internal static void CreateDirectory(string path)
+    {
+        var full = Path.GetFullPath(path);
+        if (Directory.Exists(full)) return;
+        // The directories that are not there, the outermost first
+        var missing = new List<string>();
+        for (var directory = full; !string.IsNullOrEmpty(directory) && !Directory.Exists(directory);
+             directory = Path.GetDirectoryName(directory))
+        {
+            missing.Insert(0, directory);
+        }
+
+        foreach (var directory in missing) Logged("New directory: " + directory, () => Directory.CreateDirectory(directory));
+    }
+
+    /// <summary>
+    /// Make a new, empty file. It must not be there: a file that has come since it was looked for is not emptied
+    /// </summary>
+    internal static void CreateNewFile(string path)
+    {
+        Logged("New: " + Path.GetFullPath(path), () => new FileStream(path, FileMode.CreateNew).Dispose());
+    }
+
+    /// <summary>
+    /// Delete a file of Blyant's own (if it is there)
+    /// </summary>
+    internal static void DeleteFile(string path)
+    {
+        if (!File.Exists(path)) return;
+        Logged("Delete: " + Path.GetFullPath(path), () => File.Delete(path));
+    }
+
+    /// <summary>
+    /// Give a file another name or place
+    /// </summary>
+    internal static void MoveFile(string source, string target, bool overwrite)
+    {
+        Logged("Rename: " + Path.GetFullPath(source) + " -> " + Path.GetFullPath(target),
+            () => File.Move(source, target, overwrite));
+    }
+
+    /// <summary>
+    /// Copy a file
+    /// </summary>
+    internal static void CopyFile(string source, string target, bool overwrite)
+    {
+        Logged("Copy: " + Path.GetFullPath(source) + " -> " + Path.GetFullPath(target),
+            () => File.Copy(source, target, overwrite));
+    }
+
+    /// <summary>
+    /// Add text to the end of a file (it is made if it is not there): what is in it is not written again
+    /// </summary>
+    internal static void AppendText(string path, string text)
+    {
+        var verb = File.Exists(path) ? "Append: " : "New: ";
+        Logged(verb + Path.GetFullPath(path), () => File.AppendAllText(path, text, new UTF8Encoding(false)));
+    }
+
+    #endregion
 
     #region Write file
 
@@ -98,6 +191,11 @@ internal static class FileIo
     internal static void WriteAllBytesSafe(string path, byte[] content)
     {
         path = LinkedFile(path);
+        Logged((File.Exists(path) ? "Write: " : "New: ") + Path.GetFullPath(path), () => WriteSafe(path, content));
+    }
+
+    private static void WriteSafe(string path, byte[] content)
+    {
         // A name of its own (in the same directory, so the file is replaced in one step): never a file of the user
         var tempPath = path + "." + Guid.NewGuid().ToString("N")[..8] + TempFileNameExtension;
         // The file that replaces the target is a new file: remember when the target was created, and its permissions
@@ -328,7 +426,7 @@ internal static class FileIo
                 if (_keepUnreadSettings)
                 {
                     // Not written at all when the copy cannot be made
-                    if (File.Exists(path)) File.Copy(path, path + UnreadSettingsExtension, true);
+                    if (File.Exists(path)) CopyFile(path, path + UnreadSettingsExtension, true);
                     _keepUnreadSettings = false;
                 }
 

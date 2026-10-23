@@ -201,7 +201,7 @@ internal static class Snippets
         try
         {
             var directory = Path.GetDirectoryName(Path.GetFullPath(FilePath));
-            if (directory != null) Directory.CreateDirectory(directory);
+            if (directory != null) FileIo.CreateDirectory(directory);
             FileIo.WriteAllBytesSafe(FilePath, new UTF8Encoding(false).GetBytes(text));
             Parse(text);
             return DialogText.Success;

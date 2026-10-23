@@ -369,7 +369,7 @@ internal static class Logos
         if (!IsValidName(logo.Name)) return DialogText.LogoNameInvalid;
         try
         {
-            System.IO.Directory.CreateDirectory(Directory);
+            FileIo.CreateDirectory(Directory);
             FileIo.WriteAllBytesSafe(PathOf(logo.Name), new UTF8Encoding(false).GetBytes(logo.Serialize()));
             return DialogText.Success;
         }
@@ -392,7 +392,7 @@ internal static class Logos
             if (!File.Exists(PathOf(name))) return DialogText.LogoNameInvalid;
             var sameLogo = name.Trim().Equals(newName.Trim(), StringComparison.OrdinalIgnoreCase);
             if (!sameLogo && File.Exists(PathOf(newName))) return DialogText.LogoNameTaken;
-            if (name.Trim() != newName.Trim()) File.Move(PathOf(name), Path.Combine(Directory, newName.Trim() + Extension)); // (the new name as typed)
+            if (name.Trim() != newName.Trim()) FileIo.MoveFile(PathOf(name), Path.Combine(Directory, newName.Trim() + Extension), false); // (the new name as typed)
             return DialogText.Success;
         }
         catch (Exception e)
@@ -426,7 +426,7 @@ internal static class Logos
         if (!IsValidName(name)) return DialogText.LogoNameInvalid;
         try
         {
-            File.Delete(PathOf(name));
+            FileIo.DeleteFile(PathOf(name));
             return DialogText.Success;
         }
         catch (Exception e)

@@ -60,8 +60,7 @@ class Program
         try
         {
             // Only a new file: one that has come since it was looked for is not emptied
-            new FileStream(result.Path, FileMode.CreateNew).Dispose();
-            EventLog.Add(DialogText.LogFile + "New: " + result.Path);
+            FileIo.CreateNewFile(result.Path);
             return result.Target;
         }
         catch (Exception e)

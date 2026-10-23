@@ -115,7 +115,7 @@ The browser shows two panes side by side, each with its own directory. The pane 
 - `Tab` Go to the other pane. The selection of the pane without the focus is still shown, but not highlighted
 - `T` or `:panes` Show one pane (the one with the focus, in the full width of the window) or two
 
-In a pane that is narrow, as when the window is 80 columns wide, the type column is left out and long names are shortened. With one pane, or a wide window, all columns are shown.
+The type column shows the extension of a file in capitals (`MD`, `TXT`), and for a name that starts with a dot and has no other, the name itself: `.blyant` is `BLYANT`, as in the information of `I`. In a pane that is narrow, as when the window is 80 columns wide, the type column is left out and long names are shortened. With one pane, or a wide window, all columns are shown.
 
 The browser starts in the projects folder (or your home directory, if there is no projects folder yet) and remembers the directories of both panes, the file or directory selected in each, the pane that had the focus and whether one or two panes were shown (`browsedir1`, `browsedir2`, `browsesel1`, `browsesel2`, `browsepane` and `browsedual` in the settings file). They are saved however the browser is left (closed, a jump to another page, or exiting Blyant), and also when a file is opened in the editor. The selection is remembered by name: if the file is gone, the first row is selected.
 
@@ -294,6 +294,8 @@ When a file is closed in the editor, the line and column of the cursor are kept:
 
 ## The log
 The log lists what has happened since Blyant was started: the startup, commands, and the file operations of the file browser and the start page (new, open, rename, copy, move and delete, with the reason if one failed). It is shown from the System page of Configuration (_View log_), or with `:log`. A deletion tells whether it went to the trash, and where.
+
+All that Blyant does with files by itself is logged too, with the path: `New:` (a file made), `Write:` (a file saved: your text with `:w`, the settings, the lists, the recovery copies), `Append:` (added to the end: the paste bin, the words added to the spell checker, `trash.txt`), `New directory:` (the data directory, the projects folder, a project, `.trash`, `recovery` ...), `Rename:`, `Copy:` and `Delete:`. One that failed has ` - FAILED:` and the reason after it. What is written in the files is never logged.
 
 - The log opens at the end, with the latest lines
 - `h` `l` Previous/Next page, `j` `k` One line, `gg` `G` First/Last

@@ -7,6 +7,7 @@ namespace Blyant.Tests;
 /// file is made with FileMode.CreateNew, and a list that only grows is appended to. The source is read for the
 /// ways of writing that would empty a file first, so that an interrupted write could leave it empty or half written
 /// </summary>
+[Collection("Static state")]
 public class SafeWriteTests
 {
     private static string SourceDirectory()
@@ -47,6 +48,78 @@ public class SafeWriteTests
 
         Assert.True(found.Count == 0, "Use FileIo.WriteAllBytesSafe (or FileMode.CreateNew for a new file):\n" +
                                       string.Join("\n", found));
+    }
+
+    // The ways of changing files and directories that are only used in FileIo (which logs them), in
+    // FileOperations (the operations of the file browser, which logs them as a whole) and in EventLog (the log file)
+    private static readonly Regex Unlogged = new(
+        @"\b(File|Directory)\.(Delete|Move|Copy|CreateDirectory|CreateSymbolicLink|AppendAllText|AppendAllLines|" +
+        @"SetAttributes)\s*\(|FileMode\.CreateNew|\.CopyTo\s*\(|\.MoveTo\s*\(");
+
+    private static readonly string[] LoggingFiles = { "FileIo.cs", "FileOperations.cs", "EventLog.cs" };
+
+    [Fact]
+    public void FileOperations_GoThroughFileIo_SoTheyAreLogged()
+    {
+        var root = SourceDirectory();
+        var found = new List<string>();
+        foreach (var path in Directory.EnumerateFiles(root, "*.cs", SearchOption.AllDirectories))
+        {
+            if (path.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar) ||
+                path.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar) ||
+                LoggingFiles.Contains(Path.GetFileName(path))) continue;
+            var lines = File.ReadAllLines(path);
+            for (var i = 0; i < lines.Length; i++)
+            {
+                if (Unlogged.IsMatch(lines[i]))
+                {
+                    found.Add(Path.GetRelativePath(root, path) + ":" + (i + 1) + ": " + lines[i].Trim());
+                }
+            }
+        }
+
+        Assert.True(found.Count == 0, "Use the methods of FileIo (CreateDirectory, CreateNewFile, DeleteFile, " +
+                                      "MoveFile, CopyFile, AppendText), which log what they do:\n" +
+                                      string.Join("\n", found));
+    }
+
+    [Fact]
+    public void FileIo_LogsWhatItDoes_WithThePathOnly()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "blyant_logged_" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            EventLog.Clear();
+            var file = Path.Combine(directory, "sub", "list.txt");
+            FileIo.CreateDirectory(Path.Combine(directory, "sub"));
+            FileIo.WriteAllBytesSafe(file, "secret text"u8.ToArray());
+            FileIo.WriteAllBytesSafe(file, "more secret text"u8.ToArray());
+            FileIo.AppendText(file, "added secret");
+            FileIo.CopyFile(file, file + ".bad", false);
+            FileIo.MoveFile(file + ".bad", file + ".old", false);
+            FileIo.DeleteFile(file + ".old");
+            Assert.ThrowsAny<IOException>(() => FileIo.CreateNewFile(file));
+            var log = EventLog.All.Select(line => line[11..]).ToList();
+            Assert.Equal(new[]
+            {
+                "File: New directory: " + directory,
+                "File: New directory: " + Path.Combine(directory, "sub"),
+                "File: New: " + file,
+                "File: Write: " + file,
+                "File: Append: " + file,
+                "File: Copy: " + file + " -> " + file + ".bad",
+                "File: Rename: " + file + ".bad -> " + file + ".old",
+                "File: Delete: " + file + ".old"
+            }, log.Take(8));
+            Assert.StartsWith("File: New: " + file + " - FAILED: ", log[8]);
+            // What is written is never logged
+            Assert.DoesNotContain(log, line => line.Contains("secret"));
+        }
+        finally
+        {
+            EventLog.Clear();
+            if (Directory.Exists(directory)) Directory.Delete(directory, true);
+        }
     }
 
     [Fact]

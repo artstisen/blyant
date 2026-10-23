@@ -135,7 +135,7 @@ internal static class Projects
         try
         {
             path = PathOf(name);
-            System.IO.Directory.CreateDirectory(path);
+            FileIo.CreateDirectory(path);
             return DialogText.Success;
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or NotSupportedException)
@@ -190,7 +190,7 @@ internal static class Projects
             var path = Path.Combine(PathOf(name), InfoFileName);
             if (color == null && kept.Count == 0)
             {
-                if (File.Exists(path)) File.Delete(path);
+                FileIo.DeleteFile(path);
                 return DialogText.Success;
             }
 
@@ -288,7 +288,7 @@ internal static class Projects
             if (File.Exists(path) && new FileInfo(path).Length < SnippetLength &&
                 File.ReadAllText(path).Trim().Length == 0)
             {
-                File.Delete(path);
+                FileIo.DeleteFile(path);
             }
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)

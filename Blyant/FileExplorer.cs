@@ -1120,7 +1120,8 @@ internal static partial class FileExplorer
         {
             if (_file == null) return string.Empty;
             var extension = System.IO.Path.GetExtension(_file.Path);
-            var type = extension.Length > 1 && extension.Length < System.IO.Path.GetFileName(_file.Path).Length
+            // (".blyant" is a type, as in the file browser)
+            var type = extension.Length > 1
                 ? Tools.TruncateString(extension[1..].ToUpperInvariant(), 10, true) + " "
                 : string.Empty;
             return type + _file.EncodingLabel + " " + _file.LineEndingLabel;
@@ -1182,16 +1183,14 @@ internal static partial class FileExplorer
         var path = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(_file.Path) ?? string.Empty, name);
         try
         {
-            // Only a new file: one that was made since the name was checked is not emptied
-            new FileStream(path, FileMode.CreateNew).Dispose();
+            // Only a new file: one that was made since the name was checked is not emptied (logged)
+            FileIo.CreateNewFile(path);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or NotSupportedException)
         {
-            LogOperation("New file", path, e.Message);
             return e.Message;
         }
 
-        LogOperation("New file", path, DialogText.Success);
         return null;
     }
 
@@ -1227,17 +1226,15 @@ internal static partial class FileExplorer
 
         try
         {
-            // Only a new file: one that has come since it was looked for is not emptied
-            new FileStream(path, FileMode.CreateNew).Dispose();
+            // Only a new file: one that has come since it was looked for is not emptied (logged)
+            FileIo.CreateNewFile(path);
         }
         catch (Exception e)
         {
             _message = e.Message;
-            LogOperation("New file", path, _message);
             return;
         }
 
-        LogOperation("New file", path, DialogText.Success);
         Edit(TextFile.Create(path), false);
         LoadItems(name);
     }
@@ -1445,14 +1442,14 @@ internal static partial class FileExplorer
     private const int TypeColumnWidth = 11; // The width of "[Directory]"
     private const int SizeColumnWidth = 11; // The width of "1,023 bytes"
 
-    // What is shown in the type column: a directory, or the extension of the file ("TXT")
+    // What is shown in the type column: a directory, or the extension of the file ("TXT"). A name that starts with
+    // a dot and has no other (".blyant", ".gitignore") is its type, as the info box tells
     private static string ItemType(Item item)
     {
         if (item.IsDirectory) return DialogText.DirectoryMark;
 
         var extension = System.IO.Path.GetExtension(item.Name);
-        // A name like ".gitignore" is not an extension
-        if (extension.Length < 2 || extension.Length == item.Name.Length) return string.Empty;
+        if (extension.Length < 2) return string.Empty;
         return Tools.TruncateString(extension[1..].ToUpperInvariant(), TypeColumnWidth, true);
     }
 

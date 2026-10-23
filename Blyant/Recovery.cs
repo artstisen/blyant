@@ -143,7 +143,7 @@ internal static class Recovery
     {
         try
         {
-            System.IO.Directory.CreateDirectory(Directory);
+            FileIo.CreateDirectory(Directory);
             FileIo.WriteAllBytesSafe(CopyPathOf(filePath),
                 new UTF8Encoding(false).GetBytes(Serialize(filePath, text, DateTime.UtcNow)));
             return DialogText.Success;
@@ -181,7 +181,7 @@ internal static class Recovery
         try
         {
             var path = CopyPathOf(filePath);
-            if (File.Exists(path)) File.Delete(path);
+            FileIo.DeleteFile(path);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException)
         {

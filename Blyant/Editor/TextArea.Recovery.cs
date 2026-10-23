@@ -82,17 +82,11 @@ public partial class TextArea
                 Recovery.Delete(_recoveryPath);
             }
 
-            var status = Recovery.Write(path, GetText());
-            if (status == DialogText.Success)
+            // (the copy written, or why it failed, is logged by FileIo; it is tried again at the next change)
+            if (Recovery.Write(path, GetText()) == DialogText.Success)
             {
-                if (!_recoveryOwned || _recoveryPath != path) EventLog.Add(DialogText.LogFile + "Recovery copy: " + path);
                 _recoveryOwned = true;
                 _recoveryPath = path;
-            }
-            else if (_copiedVersion == -1 || _recoveryOwned)
-            {
-                // Told once (it is tried again at the next change)
-                EventLog.Add(DialogText.LogFile + "Recovery copy: " + path + " - FAILED: " + status);
             }
 
             _copiedVersion = version;

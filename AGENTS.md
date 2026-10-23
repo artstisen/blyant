@@ -50,7 +50,8 @@ The files of the user, and Blyant's own files, must never be left empty or half 
 - A list that only grows (`log.txt`, `trash.txt` in the trash, the words added to the spell checker, the paste bin when added to) is appended to (`File.AppendAllText`): what is in it is not written again, so an interrupted write can only lose the line being added
 - Deleting in the file browser goes to the trash (`FileOperations.MoveToTrash`) unless the setting `deletetotrash` is off, and is always asked about first, in a box that a word typed by mistake cannot answer (`ChoiceBox.ConfirmGuarded`)
 - What only shows a file (a peek, a comparison) never writes it
-- `SafeWriteTests` reads the source and fails on the ways of writing that empty a file first
+- Every file operation is logged (the path, never what is written). Blyant's own operations go through `FileIo`: `WriteAllBytesSafe`, `CreateNewFile`, `CreateDirectory`, `DeleteFile`, `MoveFile`, `CopyFile` and `AppendText` log what they do, and why it failed. The operations of the file browser (`FileOperations`) are logged by the file browser, as a whole (one line for a directory copied)
+- `SafeWriteTests` reads the source and fails on the ways of writing that empty a file first, and on file operations outside `FileIo`, `FileOperations` and `EventLog`
 
 ## Releases
 - The version is set in `DialogText.ApplicationVersion` and in `Blyant.csproj`: `Version` (the product version, `0.1.0`), `AssemblyVersion` and `FileVersion` (`0.1.0.0`). Change all four together

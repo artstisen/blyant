@@ -246,12 +246,17 @@ internal static class StartMenu
         var path = Path.Combine(directory, name);
         var problem = Tools.FileNameProblem(name) ??
                       (File.Exists(path) || Directory.Exists(path) ? DialogText.NameExists : null);
-        if (problem == null)
+        if (problem != null)
+        {
+            // A name that cannot be used (the file is not tried)
+            EventLog.Add(DialogText.LogFile + "New: " + path + " (" + problem + ")");
+        }
+        else
         {
             try
             {
-                // Only a new file: one that was made in the meantime is not emptied
-                new FileStream(path, FileMode.CreateNew).Dispose();
+                // Only a new file: one that was made in the meantime is not emptied (it is logged, or why it failed)
+                FileIo.CreateNewFile(path);
             }
             catch (Exception e) when (e is IOException or UnauthorizedAccessException or NotSupportedException)
             {
@@ -259,7 +264,6 @@ internal static class StartMenu
             }
         }
 
-        EventLog.Add(DialogText.LogFile + "New: " + path + (problem == null ? string.Empty : " (" + problem + ")"));
         if (problem != null)
         {
             ChoiceBox.Message(DialogText.NewFile, problem, name);
