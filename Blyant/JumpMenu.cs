@@ -123,7 +123,6 @@ internal static class JumpMenu
         row.Bookmark is { IsFolder: false } entry ? ":book " + Bookmarks.NumberOf(entry) : string.Empty; // English
 
     private const int MarkWidth = 4; // "FILE", "DIR", "PAGE"
-    private const int TimeWidth = 10; // "09:41" today, else "2026-10-12"
 
     /// <summary>
     /// The lists that are shown, in the order h and l go through them
@@ -243,6 +242,10 @@ internal static class JumpMenu
         JumpKind.Page => "PAGE",
         _ => "FILE"
     };
+
+    // The name shown for a place: with a mark when it is not there any more
+    private static string RowName(Row row) =>
+        row.IsFolder || row.Target.Exists ? row.Name : row.Name + " " + DialogText.FavoriteMissing;
 
     // When a place was jumped to or opened: the time today, else the date
     private static string When(DateTime time) =>
@@ -554,29 +557,51 @@ internal static class JumpMenu
             }
         }
 
-        // The names of the columns, between divider lines: the name, the kind, and the command that jumps to a
-        // bookmark (Bookmarks) or when it was jumped to or opened (Recent, History)
-        var typeLabel = Lang.T("Type");
-        var markWidth = Math.Max(MarkWidth, TextMetrics.WidthOf(typeLabel));
+        // The columns, with lines between them and their names in the divider line: the name, the command that
+        // jumps to a bookmark (Bookmarks) or when it was jumped to or opened (Recent, History), the directory the
+        // place is in, and its kind. The name is as wide as the longest (at most half the box), so the command is
+        // next to it, also in a wide window; the directory takes the room that is left
         var lastLabel = tabs[tab] == Tab.Bookmarks ? Lang.T("Command")
             : tabs[tab] is Tab.Jumps or Tab.History ? Lang.T("When")
             : string.Empty;
-        var typeColumn = left + width - markWidth - TimeWidth - 2;
+        var lasts = rows.Select(row => tabs[tab] == Tab.Bookmarks ? BookCommand(row) : When(row.Time)).ToList();
+        var typeLabel = Lang.T("Type");
+        var markWidth = Math.Max(MarkWidth, TextMetrics.WidthOf(typeLabel));
+        var nameColumn = left + 4;
+        var nameWidth = Math.Clamp(rows.Count == 0 ? 0 : rows.Max(row => TextMetrics.WidthOf(RowName(row))),
+            TextMetrics.WidthOf(DialogText.ColumnName) + 2, Math.Max(10, width / 2 - 8));
+        var nameLine = nameColumn + nameWidth + 1;
+        var lastWidth = lastLabel.Length == 0 ? 0
+            : Math.Max(TextMetrics.WidthOf(lastLabel) + 2, lasts.Count == 0 ? 0 : lasts.Max(TextMetrics.WidthOf));
+        var lastLine = lastLabel.Length == 0 ? nameLine : nameLine + 2 + lastWidth + 1;
+        // (two cells of room after the kind, so its name is not pressed against the edge of the menu)
+        var typeColumn = left + width - markWidth - 3;
+        var typeLine = typeColumn - 2;
+        var pathColumn = lastLine + 2;
+        var pathWidth = typeLine - 1 - pathColumn;
+        // (no room for the directory: the kind follows at once)
+        if (pathWidth < 8)
+        {
+            pathWidth = 0;
+            typeLine = lastLine;
+        }
+
+        var lines = new List<int> { nameLine };
+        if (lastLabel.Length > 0) lines.Add(lastLine);
+        if (pathWidth > 0) lines.Add(typeLine);
+        var labels = new List<(int, string)> { (nameColumn - 3, DialogText.ColumnName) };
+        if (lastLabel.Length > 0) labels.Add((nameLine, lastLabel));
+        if (pathWidth > 0) labels.Add((lastLine, DialogText.ColumnPath));
+        labels.Add((typeLine, typeLabel));
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
-        Tools.SetCursorEx(top + 5, left + 4);
-        Console.Write(Tools.TruncateString(Lang.T("Name"), Math.Max(1, typeColumn - left - 6), true));
-        Tools.SetCursorEx(top + 5, typeColumn);
-        Console.Write(typeLabel.PadRight(markWidth) + "  " +
-                      Tools.TruncateString(lastLabel, TimeWidth, false).PadLeft(TimeWidth));
-        ConsoleColors.SetColors(ConsoleColors.ColorPreset.TabFrame);
-        Tools.SetCursorEx(top + 6, left + 2);
+        Tools.SetCursorEx(top + 5, left + 2);
         Console.Write(new string('-', Math.Max(0, width - 2)));
+        if (rows.Count > 0) FileExplorer.DrawColumnLabels(top + 5, labels, lines);
 
         // The places
-        var first = top + 7;
+        var first = top + 6;
         var visible = Math.Max(1, top + height - first + 1);
         scroll = Math.Clamp(scroll, Math.Max(0, selected - visible + 1), selected);
-        var nameWidth = Math.Max(10, width - 4 - markWidth - TimeWidth - 4);
         if (rows.Count == 0)
         {
             Tools.SetCursorEx(first, left + 4);
@@ -604,9 +629,8 @@ internal static class JumpMenu
             // The name, in the color of the bookmark or of a favorite (a place that is not there any more is dimmed
             // and marked). A folder is shown with its name and the number of bookmarks in it
             var exists = row.IsFolder || row.Target.Exists;
-            var name = exists ? row.Name : row.Name + " " + DialogText.FavoriteMissing;
-            name = ShortName(name, nameWidth);
-            Tools.SetCursorEx(first + line, left + 4);
+            var name = ShortName(RowName(row), nameWidth);
+            Tools.SetCursorEx(first + line, nameColumn);
             // The bookmark that is moved is highlighted, from the blank space before it (as in the other lists)
             if (_moving && index == selected)
             {
@@ -620,12 +644,25 @@ internal static class JumpMenu
             else ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
             Console.Write(name);
 
-            // The kind, and when (a bookmark: the command that jumps to it; a folder: nothing)
-            Tools.SetCursorEx(first + line, typeColumn);
+            // The lines between the columns, the command (or when), the directory and the kind (a folder of
+            // bookmarks: only its name)
+            foreach (var column in lines) FileExplorer.DrawColumnLine(first + line, column);
             ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
-            var last = tabs[tab] == Tab.Bookmarks ? BookCommand(row) : When(row.Time);
-            Console.Write((row.IsFolder ? string.Empty : Mark(row.Target)).PadRight(markWidth) + "  " +
-                          last.PadLeft(TimeWidth));
+            if (lastLabel.Length > 0)
+            {
+                Tools.SetCursorEx(first + line, nameLine + 2);
+                Console.Write(lasts[index]);
+            }
+
+            if (row.IsFolder) continue;
+            if (pathWidth > 0 && Path.GetDirectoryName(row.Target.FullPath) is { Length: > 0 } directory)
+            {
+                Tools.SetCursorEx(first + line, pathColumn);
+                Console.Write(TextMetrics.KeepEnd(directory, pathWidth));
+            }
+
+            Tools.SetCursorEx(first + line, typeLine + 2);
+            Console.Write(Mark(row.Target));
         }
 
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
