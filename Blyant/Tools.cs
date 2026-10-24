@@ -621,6 +621,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("Tab", Lang.T("Next tab: Start, Configuration, Help"), false));
             _shortcutList.Add(new Shortcut("Shift+Tab", Lang.T("The tab before"), false));
             _shortcutList.Add(new Shortcut("Q Esc", Lang.T("Exit Blyant, asking first (Configuration: to Start)"), false));
+            _shortcutList.Add(new Shortcut("X", Lang.T("Hide the hints (Configuration, System: show them)"), false));
             _shortcutList.Add(new Shortcut(":", Lang.T("Command line, on every tab (Tab completes)"), false));
             _shortcutList.Add(new Shortcut("  Up Down", Lang.T("Earlier commands of this page"), false));
             _shortcutList.Add(new Shortcut(":new :new name", Lang.T("New file (Tab in the box: another folder)"), false));

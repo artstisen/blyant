@@ -25,6 +25,8 @@ Each choice has a number and a key, shown in front of it. The number selects the
 - `7` `U` **Quick guide**: A short introduction to Blyant: files and projects, the keys for moving around, and the modes of the editor. `Esc` closes it, and `?` shows the help with all the keys
 - `8` **Exit**: Close Blyant at once (`Enter` on it). `Q` exits too, after asking
 
+To the right of the menu a **hint** tells about one of the features of Blyant: the command line, the Jump menu, favorites, writing Markdown with completions and `:surround`, recovery copies, the trash, splitting and comparing, peeking at files and the notes of projects. Each time Blyant starts the next one is shown, nine in all, and then the first again (setting `hintindex`). `X` hides them; **Show hints on the start page** in Configuration (System) shows them again, and they go on where they were (while they are hidden, the hint does not change). In a window too narrow for it, no hint is shown.
+
 Move the selection with `j`/`k` (or the arrow keys) or the number, and press `Enter`. `?` shows the help, and `Q` (or `Esc`) exits Blyant after asking in a box on top of the page (`Y`/`N`, or `j`/`k` and `Enter`; `Esc` cancels).
 
 ### Projects
@@ -111,6 +113,7 @@ The settings are on four pages. `j` `k` (and `gg` `G`) select a setting on the p
 
 **System**
 
+- **Show hints on the start page**: A hint about a feature of Blyant to the right of the menu of the Start tab, the next one each time Blyant starts (on from the start; `X` on the Start tab hides them). Setting `hints`
 - **Reset all settings**: Set all settings back to their defaults (you are asked first, in a box where _No_ is selected first)
 - **Edit settings.ini**: Open the settings file in the editor (it can also be edited from the file system). When the file is saved, Blyant starts over and reads the settings again; closing it without saving returns to the page
 - **Restart Blyant**: Start Blyant over: the settings are read again and the start page is shown as at startup (you are asked first, in a box)

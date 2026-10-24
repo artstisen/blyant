@@ -477,6 +477,7 @@ internal static class StartMenu
         AutoComplete,
         Completions,
         Recovery,
+        Hints,
         Reset,
         EditSettings,
         Restart,
@@ -516,6 +517,7 @@ internal static class StartMenu
         settings.Add(Setting.Completions);
         settings.Add(Setting.Recovery);
         // System
+        settings.Add(Setting.Hints);
         settings.Add(Setting.Reset);
         settings.Add(Setting.EditSettings);
         settings.Add(Setting.Restart);
@@ -540,6 +542,7 @@ internal static class StartMenu
             Setting.ProjectsDirectory => indent + Lang.F("Projects folder: {0} (Enter: Change)", ProjectsFolderText()),
             Setting.DeleteToTrash => Check(FileOperations.DeleteToTrash) + Lang.T("Delete to trash (:trash in the file browser)"),
             Setting.CommandList => Check(Blyant.CommandList.Enabled) + Lang.T("List the commands above the command line"),
+            Setting.Hints => Check(Blyant.Hints.Enabled) + Lang.T("Show hints on the start page"),
             Setting.Monochrome => Check(ConsoleColors.Monochrome) + DialogText.ConfigMonochrome,
             Setting.Language => indent + DialogText.ConfigLanguage + Lang.CurrentName,
             Setting.ColorScheme => indent + Lang.F("Color scheme: {0} (Enter: Select/Edit)",
@@ -772,6 +775,7 @@ internal static class StartMenu
                 // The row of a choice that has gone (Recover) is cleared
                 Tools.SetCursorEx(area.Top + _shown.Length, area.Left);
                 Console.Write(new string(' ', Math.Max(0, area.Width - 1)));
+                if (Hints.Enabled) DrawHint(area);
             }
 
             for (var i = 0; i < _shown.Length; i++)
@@ -783,6 +787,55 @@ internal static class StartMenu
                 ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
             }
         }
+
+        // The hint, in a box to the right of the menu (none if there is no room for it)
+        private void DrawHint(TabArea area)
+        {
+            var menu = _shown.Max(choice => TextMetrics.WidthOf((_shown.Length + " " + KeysOf(choice) + " .... " +
+                                                                  TextOf(choice))));
+            var left = area.Left + 3 + menu + 4;
+            var width = area.Left + area.Width - 2 - left;
+            var inner = width - 4;
+            if (inner < MinHintWidth) return;
+            var (text, number) = Hints.Current();
+            var lines = TextMetrics.Wrap(text, inner);
+            if (lines.Count + 2 > area.Height) return;
+            var title = Lang.F("Hint {0} of {1}", number, Hints.All().Length);
+            var hide = Lang.T("Hide hints");
+            var corner = AsciiStyles.GetTopCorner();
+            var bottomCorner = AsciiStyles.GetBottomCorner();
+            // The top, with the number of the hint
+            Tools.SetCursorEx(area.Top, left);
+            ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
+            Console.Write(corner + "-- ");
+            ConsoleColors.SetColors(ConsoleColors.ColorPreset.Accent);
+            Console.Write(title);
+            ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
+            Console.Write(" " + new string('-', Math.Max(0, width - 6 - TextMetrics.WidthOf(title))) + corner);
+            // The text
+            for (var i = 0; i < lines.Count; i++)
+            {
+                Tools.SetCursorEx(area.Top + 1 + i, left);
+                ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
+                Console.Write("| ");
+                ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
+                Console.Write(lines[i] + new string(' ', Math.Max(0, inner - TextMetrics.WidthOf(lines[i]))));
+                ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
+                Console.Write(" |");
+            }
+
+            // The bottom, with the key that hides the hints (the key is the same in all languages)
+            Tools.SetCursorEx(area.Top + 1 + lines.Count, left);
+            Console.Write(bottomCorner + new string('-', Math.Max(0, width - 6 - TextMetrics.WidthOf(hide))) + " ");
+            ConsoleColors.SetColors(ConsoleColors.ColorPreset.Accent);
+            Console.Write("X"); // English: a key
+            ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
+            Console.Write(" " + hide + " " + bottomCorner);
+            ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
+        }
+
+        // The narrowest text of a hint (a narrower window has no hint)
+        private const int MinHintWidth = 24;
 
         public TabResult HandleKey(ConsoleKeyInfo key)
         {
@@ -808,6 +861,15 @@ internal static class StartMenu
             {
                 _selected = Array.IndexOf(_shown, choice);
                 return Open(choice);
+            }
+
+            if (key.Key == ConsoleKey.X && Hints.Enabled &&
+                (key.Modifiers & (ConsoleModifiers.Control | ConsoleModifiers.Alt)) == 0)
+            {
+                // The hints are hidden (Configuration, System: shown again)
+                Hints.Enabled = false;
+                FileIo.SaveSettings();
+                return TabResult.Redraw;
             }
 
             if (key.Key is ConsoleKey.Escape or ConsoleKey.Q)
@@ -1118,6 +1180,9 @@ internal static class StartMenu
                 break;
             case Setting.CommandList:
                 Blyant.CommandList.Enabled = !Blyant.CommandList.Enabled;
+                break;
+            case Setting.Hints:
+                Blyant.Hints.Enabled = !Blyant.Hints.Enabled;
                 break;
             case Setting.Recovery:
                 Blyant.Recovery.Enabled = !Blyant.Recovery.Enabled;

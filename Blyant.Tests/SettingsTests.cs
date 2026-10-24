@@ -305,7 +305,7 @@ backup=
         Assert.False(settings.ContainsKey("onlymode"));
         Assert.False(settings.ContainsKey("clipboardnotes"));
         Assert.False(settings.ContainsKey("stayloggedin"));
-        Assert.Equal(37, settings.Count);
+        Assert.Equal(39, settings.Count);
         Assert.Equal("md", settings["filetype"]);
         Assert.Equal(string.Empty, settings["pickdir"]);
         Assert.Equal("false", settings["projectsask"]);
@@ -313,6 +313,7 @@ backup=
         Assert.Equal(string.Empty, settings["projectsdir"]);
         Assert.Equal("true", settings["deletetotrash"]);
         Assert.Equal("true", settings["commandlist"]);
+        Assert.Equal("true", settings["hints"]);
         Assert.Equal("fast", settings["logoanim"]);
         Assert.Equal("true", settings["wrap"]);
         Assert.Equal("file", settings["snipsort"]);

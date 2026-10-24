@@ -420,6 +420,9 @@ internal static class FileIo
         _tempSettings += "deletetotrash=" + (FileOperations.DeleteToTrash ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // The commands of the place in a box above the command line while a command is typed
         _tempSettings += "commandlist=" + (CommandList.Enabled ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        // The hints on the start page, and the one shown (the next each time Blyant starts, while they are shown)
+        _tempSettings += "hints=" + (Hints.Enabled ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        _tempSettings += "hintindex=" + Hints.Index + '\n';
         // The clipboard: yanks to the system clipboard (OSC 52) and/or the paste bin, every yank ("all") or only
         // with "+ in front ("plus"), and the paste bin file
         _tempSettings += "osc52=" + (SystemClipboard.Osc52 ? DialogText.BTrue : DialogText.BFalse) + '\n';
@@ -615,6 +618,8 @@ internal static class FileIo
         // Deleting to the trash: on unless turned off
         FileOperations.DeleteToTrash = Tools.TrimToLower(Get("deletetotrash")) != DialogText.BFalse;
         CommandList.Enabled = Tools.TrimToLower(Get("commandlist")) != DialogText.BFalse;
+        Hints.Enabled = Tools.TrimToLower(Get("hints")) != DialogText.BFalse;
+        Hints.Index = int.TryParse(Get("hintindex").Trim(), out var hint) && hint >= -1 ? hint : -1;
         // The clipboard (OSC 52 on unless turned off, the rest off unless turned on)
         SystemClipboard.Osc52 = Tools.TrimToLower(Get("osc52")) != DialogText.BFalse;
         SystemClipboard.PasteBin = Tools.TrimToLower(Get("pastebin")) == DialogText.BTrue;
