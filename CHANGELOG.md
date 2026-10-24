@@ -47,6 +47,7 @@
   - `B` in the Jump menu no longer forgets the bookmark that `u` could put back
   - The languages are picked with `1` to `9` and then letters: with 10 or more, typing `1` picked the first at once
   - Texts cut for the screen count terminal cells (wide characters take two), and a text that fits exactly is no longer cut
+- **An empty line is yanked as a line**: `yy`, `dd`, `cc` and `V` `y` on an empty line put it in the register, as in Vim. Before, the register kept what was in it, so `p` put that back instead of the empty line.
 - **Speed and limits** (from the code review):
   - Changes inside lines no longer move the layout of all the lines after them: `:%s` on 100 000 lines takes a tenth of the time, and undoing it is at once
   - `:dup` puts in no more text at once than `p` does (10 million characters)

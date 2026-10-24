@@ -587,6 +587,19 @@ public class EditorTests
         Assert.Equal(expected, editor.GetText());
     }
 
+    [Theory]
+    // An empty line yanked or deleted is a line in the register (it takes the place of what was there before)
+    [InlineData("yiwjyyp", "one\n\n\ntwo")]
+    [InlineData("yiwjVyP", "one\n\n\ntwo")]
+    [InlineData("yiwjddp", "one\ntwo\n")]
+    [InlineData("yiwjccx<Esc>kp", "one\n\nx\ntwo")]
+    public void AnEmptyLine_IsYankedAndDeletedAsALine(string keys, string expected)
+    {
+        var editor = Editor("one\n\ntwo");
+        editor.Type(keys);
+        Assert.Equal(expected, editor.GetText());
+    }
+
     [Fact]
     public void Repeat_WorksOnOtherLines()
     {

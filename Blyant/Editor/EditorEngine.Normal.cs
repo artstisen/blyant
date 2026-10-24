@@ -1385,8 +1385,9 @@ internal sealed partial class EditorEngine
 
     private void StoreRegister(string text, bool linewise, bool small)
     {
-        if (text.Length == 0) return;
+        // (whole lines get their line break first: an empty line yanked or deleted is a line, as in Vim)
         if (linewise && !text.EndsWith(TextBuffer.NewLine)) text += TextBuffer.NewLine;
+        if (text.Length == 0) return;
         _useSmallRegister = small;
         if (small)
         {
