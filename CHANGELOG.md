@@ -47,6 +47,7 @@
   - `B` in the Jump menu no longer forgets the bookmark that `u` could put back
   - The languages are picked with `1` to `9` and then letters: with 10 or more, typing `1` picked the first at once
   - Texts cut for the screen count terminal cells (wide characters take two), and a text that fits exactly is no longer cut
+- **An icon for Blyant.exe**: a pencil in the colors of the Default scheme, writing a cursor, in all the sizes Windows uses (16 to 256 pixels). It is drawn by `tools/icon.py`, which also writes it as SVG (`Blyant/Blyant.svg`), for a web site
 - **Linux, macOS and the Raspberry Pi** (from a review for those systems):
   - On a terminal of 8 colors (the text console of Linux and of a Raspberry Pi, `TERM=linux`) the bright colors are shown: dark gray was black there, so dividers, frames, borders and line numbers could not be seen, and white looked as gray
   - `Esc` and a key typed quickly after it (or while the screen was drawn) came from the terminal as one key with Alt, and the key was typed into the text: they are two keys again

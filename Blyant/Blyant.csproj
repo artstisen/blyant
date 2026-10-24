@@ -13,6 +13,9 @@
         <FileVersion>0.1.0.0</FileVersion>
         <!-- No dependency on the ICU libraries of the system (needed for the self-contained Linux builds) -->
         <InvariantGlobalization>true</InvariantGlobalization>
+        <!-- The icon of Blyant.exe (Windows): a pencil writing a cursor, 16 to 256 pixels. It is drawn by
+             tools/icon.py. Only a build on Windows puts it in (elsewhere the program has the default icon) -->
+        <ApplicationIcon>Blyant.ico</ApplicationIcon>
     </PropertyGroup>
 
     <ItemGroup>

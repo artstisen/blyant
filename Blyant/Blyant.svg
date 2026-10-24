@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+<title>Blyant</title>
+<rect x="49" y="49" width="926" height="926" rx="181" fill="#101418" stroke="#343e46" stroke-width="18"/>
+<g transform="translate(495.5 510) rotate(-45) translate(-468.5 -106) scale(1.11947 1.11579)">
+<polygon points="0,95 230,0 230,190" fill="#eecea0"/>
+<polygon points="0,95 230,126.667 230,190" fill="#cda676"/>
+<polygon points="0,95 70,66.087 70,123.913" fill="#282c30"/>
+<rect x="230" y="0" width="410" height="63.3333" fill="#a0ecec"/>
+<rect x="230" y="63.3333" width="410" height="63.3333" fill="#61d6d6"/>
+<rect x="230" y="126.667" width="410" height="63.3333" fill="#2896a0"/>
+<path d="M230 31.6667L230 63.3333A31.6667 31.6667 0 0 1 230 0Z" fill="#a0ecec"/>
+<path d="M230 95L230 126.667A31.6667 31.6667 0 0 1 230 63.3333Z" fill="#61d6d6"/>
+<path d="M230 158.333L230 190A31.6667 31.6667 0 0 1 230 126.667Z" fill="#2896a0"/>
+<rect x="640" y="0" width="72" height="190" fill="#cccccc"/>
+<rect x="658" y="0" width="8" height="190" fill="#8c8c8c"/>
+<rect x="686" y="0" width="8" height="190" fill="#8c8c8c"/>
+<rect x="712" y="0" width="30" height="190" fill="#f9f1a5"/>
+<path d="M742 95L742 0A95 95 0 0 1 742 190Z" fill="#f9f1a5"/>
+<rect x="712" y="126.667" width="30" height="63.3333" fill="#d7c45c"/>
+<path d="M742 95L837 95A95 95 0 0 1 742 190Z" fill="#d7c45c"/>
+</g>
+<rect x="412" y="823" width="200" height="55" fill="#f9f1a5"/>
+</svg>
