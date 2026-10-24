@@ -222,6 +222,7 @@ internal static class Actions
         Projects.Directory = string.Empty;
         Projects.AskEachTime = false;
         FileOperations.DeleteToTrash = true;
+        CommandList.Enabled = true;
         Recovery.Enabled = true;
         SystemClipboard.SetDefaults();
         // The dimensions follow the window (and are the default ones when it is not known, or smaller)

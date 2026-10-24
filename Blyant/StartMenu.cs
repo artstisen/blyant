@@ -458,6 +458,7 @@ internal static class StartMenu
         FileType,
         ProjectsDirectory,
         DeleteToTrash,
+        CommandList,
         Monochrome,
         Language,
         ColorScheme,
@@ -493,6 +494,7 @@ internal static class StartMenu
         settings.Add(Setting.FileType);
         settings.Add(Setting.ProjectsDirectory);
         settings.Add(Setting.DeleteToTrash);
+        settings.Add(Setting.CommandList);
         settings.Add(Setting.Language);
         // Layout
         settings.Add(Setting.AutoSize);
@@ -537,6 +539,7 @@ internal static class StartMenu
             Setting.StartFavorites => indent + Check(StartInFavorites) + Lang.T("Open the favorites list first"),
             Setting.ProjectsDirectory => indent + Lang.F("Projects folder: {0} (Enter: Change)", ProjectsFolderText()),
             Setting.DeleteToTrash => Check(FileOperations.DeleteToTrash) + Lang.T("Delete to trash (:trash in the file browser)"),
+            Setting.CommandList => Check(Blyant.CommandList.Enabled) + Lang.T("List the commands above the command line"),
             Setting.Monochrome => Check(ConsoleColors.Monochrome) + DialogText.ConfigMonochrome,
             Setting.Language => indent + DialogText.ConfigLanguage + Lang.CurrentName,
             Setting.ColorScheme => indent + Lang.F("Color scheme: {0} (Enter: Select/Edit)",
@@ -583,7 +586,7 @@ internal static class StartMenu
         {
             Setting.StartSelect or Setting.StartEditor or Setting.StartFavorites or Setting.StartBlank
                 or Setting.FileType or Setting.ProjectsDirectory
-                or Setting.DeleteToTrash or Setting.Language => 0,
+                or Setting.DeleteToTrash or Setting.CommandList or Setting.Language => 0,
             Setting.AutoSize or Setting.Size or Setting.Monochrome or Setting.ColorScheme or Setting.Logo
                 or Setting.LogoAnimation or Setting.Corners => 1,
             Setting.LineNumbers or Setting.WordWrap or Setting.ScrollOff or Setting.Clipboard
@@ -1112,6 +1115,9 @@ internal static class StartMenu
                 return;
             case Setting.DeleteToTrash:
                 FileOperations.DeleteToTrash = !FileOperations.DeleteToTrash;
+                break;
+            case Setting.CommandList:
+                Blyant.CommandList.Enabled = !Blyant.CommandList.Enabled;
                 break;
             case Setting.Recovery:
                 Blyant.Recovery.Enabled = !Blyant.Recovery.Enabled;

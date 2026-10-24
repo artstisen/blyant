@@ -96,6 +96,11 @@ class Shortcut
     public bool IsHeadline => _isHeadline;
 
     /// <summary>
+    /// The keys (or commands) of the row
+    /// </summary>
+    public string Key => _key;
+
+    /// <summary>
     /// The key and description as one text (for searching)
     /// </summary>
     public string Text => _key + " " + _description;

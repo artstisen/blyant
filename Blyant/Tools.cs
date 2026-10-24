@@ -574,7 +574,29 @@ internal static class Tools
     /// </summary>
     public static void WriteEditorHelp(HelpTopic topic = HelpTopic.All)
     {
-        // Only fill the lists once
+        FillHelp();
+        ShowHelp(topic);
+    }
+
+    /// <summary>
+    /// What a command does, from its row in the help of a place (or else anywhere in the help): the row whose keys
+    /// have ":name" ("Duplicate the selection (or the line)" for "dup"). Null if the help has no row for it
+    /// </summary>
+    internal static string? CommandDescription(HelpTopic topic, string name)
+    {
+        FillHelp();
+        var command = ":" + name;
+        bool Names(Shortcut row) => !row.IsHeadline && row.GetDescription().Length > 0 &&
+                                    row.Key.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                                        .Any(key => key.Equals(command, StringComparison.OrdinalIgnoreCase));
+        var (first, count) = HelpRange(topic);
+        return (_shortcutList.Skip(first).Take(count).FirstOrDefault(Names) ?? _shortcutList.FirstOrDefault(Names))
+            ?.GetDescription();
+    }
+
+    // The rows of the help, made once (in the language in use: they are made again when it changes)
+    private static void FillHelp()
+    {
         if (_shortcutList.Count == 0)
         {
             _shortcutList = new List<Shortcut>();
@@ -1040,8 +1062,6 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":%y :%d :2,9d", Lang.T("Yank all/Delete all/Delete line 2 to 9"), false));
             _shortcutList.Add(new Shortcut(":clear", Lang.T("Clear all"), false));
         }
-
-        ShowHelp(topic);
     }
 
     // The lines of the help that belong to a topic: from its headline to the next headline (the editor: the

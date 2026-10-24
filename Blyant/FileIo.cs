@@ -418,6 +418,8 @@ internal static class FileIo
         _tempSettings += "projectsask=" + (Projects.AskEachTime ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // Deleting in the file browser moves to the trash ("trash" in the data directory); false: deleted for good
         _tempSettings += "deletetotrash=" + (FileOperations.DeleteToTrash ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        // The commands of the place in a box above the command line while a command is typed
+        _tempSettings += "commandlist=" + (CommandList.Enabled ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // The clipboard: yanks to the system clipboard (OSC 52) and/or the paste bin, every yank ("all") or only
         // with "+ in front ("plus"), and the paste bin file
         _tempSettings += "osc52=" + (SystemClipboard.Osc52 ? DialogText.BTrue : DialogText.BFalse) + '\n';
@@ -612,6 +614,7 @@ internal static class FileIo
         Projects.AskEachTime = !Projects.HasFolder && Tools.TrimToLower(Get("projectsask")) == DialogText.BTrue;
         // Deleting to the trash: on unless turned off
         FileOperations.DeleteToTrash = Tools.TrimToLower(Get("deletetotrash")) != DialogText.BFalse;
+        CommandList.Enabled = Tools.TrimToLower(Get("commandlist")) != DialogText.BFalse;
         // The clipboard (OSC 52 on unless turned off, the rest off unless turned on)
         SystemClipboard.Osc52 = Tools.TrimToLower(Get("osc52")) != DialogText.BFalse;
         SystemClipboard.PasteBin = Tools.TrimToLower(Get("pastebin")) == DialogText.BTrue;

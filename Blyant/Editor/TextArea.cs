@@ -1651,9 +1651,30 @@ public partial class TextArea
         {
             DrawModeDivider();
             DrawStatusLine();
+            if (DrawCommandList()) return;
         }
 
         PlaceCursor();
+    }
+
+    private CommandList? _commandList; // The box of commands above the command line, while it is shown
+
+    // The commands in a box above the command line while a command is typed (not a search). When the command line
+    // is closed, what the box covered is drawn again (all of it: also the other pane of a split). True if the
+    // window was drawn again (and the cursor placed)
+    private bool DrawCommandList()
+    {
+        if (_engine.Mode == EditorMode.Command && CommandList.Enabled && _peek == null)
+        {
+            _commandList ??= new CommandList(CommandContext.Editor);
+            _commandList.Draw(_engine.CommandText);
+            return false;
+        }
+
+        if (_commandList == null) return false;
+        _commandList = null;
+        RedrawAll();
+        return true;
     }
 
     // The rows of the text that have changed since they were written
