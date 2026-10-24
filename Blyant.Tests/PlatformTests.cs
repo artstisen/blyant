@@ -77,13 +77,23 @@ public class PlatformTests
     }
 
     [Theory]
-    [InlineData("linux", null, null, true)]
-    [InlineData("xterm-256color", "7600", null, true)]
-    [InlineData("xterm-256color", null, "Apple_Terminal", true)]
-    [InlineData("xterm-256color", null, "iTerm.app", false)]
-    [InlineData("xterm-kitty", null, null, false)]
-    public void TheTerminalsThatDropTheClipboard_AreKnown(string term, string? vte, string? program, bool expected)
+    [InlineData("TERM=linux", true)]
+    [InlineData("TERM=xterm-256color VTE_VERSION=7600", true)]
+    [InlineData("TERM=xterm-256color TERM_PROGRAM=Apple_Terminal", true)]
+    [InlineData("TERM=xterm-256color TERM_PROGRAM=iTerm.app", false)]
+    [InlineData("TERM=xterm-kitty", false)]
+    // VTE_VERSION passed on from GNOME Terminal to another terminal, or to tmux, that takes the sequence
+    [InlineData("TERM=xterm-kitty VTE_VERSION=7600", false)]
+    [InlineData("TERM=xterm-256color VTE_VERSION=7600 KITTY_WINDOW_ID=1", false)]
+    [InlineData("TERM=wezterm VTE_VERSION=7600", false)]
+    [InlineData("TERM=xterm-256color VTE_VERSION=7600 WEZTERM_EXECUTABLE=/usr/bin/wezterm", false)]
+    [InlineData("TERM=alacritty VTE_VERSION=7600", false)]
+    [InlineData("TERM=tmux-256color VTE_VERSION=7600 TMUX=/tmp/tmux-1000/default", false)]
+    [InlineData("TERM=xterm-256color VTE_VERSION=7600 TERM_PROGRAM=vscode", false)]
+    public void TheTerminalsThatDropTheClipboard_AreKnown(string environment, bool expected)
     {
-        Assert.Equal(expected, SystemClipboard.WithoutClipboard(term, vte, program));
+        var variables = environment.Split(' ').Select(pair => pair.Split('=', 2))
+            .ToDictionary(pair => pair[0], pair => pair[1]);
+        Assert.Equal(expected, SystemClipboard.WithoutClipboard(name => variables.GetValueOrDefault(name)));
     }
 }

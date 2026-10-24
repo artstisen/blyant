@@ -67,7 +67,7 @@ internal static partial class FileExplorer
             var hadMessage = _hotlistMessage.Length > 0;
             _hotlistMessage = string.Empty;
             var selected = _hotlistShown.Count > 0 ? _hotlistShown[_hotlistIndex] : -1;
-            var key = Console.ReadKey(true);
+            var key = Keyboard.ReadKey();
             var navigation = Keyboard.ToNavigationKey(key).Key;
             if (_hotlistMoving)
             {

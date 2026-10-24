@@ -356,7 +356,7 @@ internal static partial class FileExplorer
             // Starting in the favorites list is the same as pressing F (closing the list shows the file browser)
             var key = _openFavorites && _mode == BrowseMode.Edit
                 ? new ConsoleKeyInfo('F', ConsoleKey.F, true, false, false)
-                : Console.ReadKey(true);
+                : Keyboard.ReadKey();
             _openFavorites = false;
             // Moving the selection only redraws the selection pointer (unless the list has to scroll)
             var redraw = true;

@@ -30,7 +30,8 @@ Write down what differs, and copy `data/log.txt` afterwards: it tells what Blyan
 - [ ] `Ctrl+R` (redo), `Ctrl+O` (Jump menu), `Ctrl+K` (snippets), `Ctrl+D` / `Ctrl+U` (half page)
 - [ ] `Ctrl+C` in the editor: a message tells how to close; Blyant does not stop
 - [ ] `Ctrl+\`: Blyant does not stop (it used to stop at once)
-- [ ] `Ctrl+Z`, then `fg`: Blyant comes back and the editor is drawn again by itself
+- [ ] `Ctrl+Z`, then `fg`: Blyant comes back and the page is drawn again by itself, without a key: try it in the editor, the file browser, the start page and the Jump menu
+- [ ] In the file browser, `V` to peek at a file, `Tab` into the peek, then `Esc` and `j` quickly: the peek closes and the selection moves down (the `j` is not lost)
 - [ ] Keys with `AltGr` (on a keyboard that has it): `@ { } [ ] \ |` are typed as text
 
 ## 4. The window
@@ -62,6 +63,7 @@ Write down what differs, and copy `data/log.txt` afterwards: it tells what Blyan
 - [ ] `:clipboard`, turn the paste bin on, `yy`: the line is in `data/paste-bin.txt`
 - [ ] Over SSH from **Windows Terminal**: `yy` puts the line on the Windows clipboard (OSC 52), and the message says "Copied to the clipboard"
 - [ ] A very long yank (`ggyG` in a large file): not sent to the terminal, the message tells why
+- [ ] If you have kitty, WezTerm or Alacritty: start it from LXTerminal and run Blyant in it. `yy` says "Copied to the clipboard" (not "may not take the clipboard"); the same in tmux
 
 ## 8. Speed
 

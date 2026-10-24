@@ -125,7 +125,7 @@ internal static partial class FileExplorer
             var hadMessage = _foundMessage.Length > 0;
             _foundMessage = string.Empty;
             var selected = _foundShown.Count > 0 ? _found[_foundShown[_foundIndex]] : null;
-            var key = Console.ReadKey(true);
+            var key = Keyboard.ReadKey();
             if (Jump.IsKey(key))
             {
                 // The Jump menu

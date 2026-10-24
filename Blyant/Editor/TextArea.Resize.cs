@@ -65,6 +65,9 @@ public partial class TextArea
             return after;
         }
 
+        // A key handed back by a page that closed before it could use it
+        if (Keyboard.TakePending() is { } pending) return pending;
+
         var key = ReadTerminalKey();
         if (OperatingSystem.IsWindows() || !IsEscapeAndKey(key)) return key;
         _keyAfterEscape = new ConsoleKeyInfo(key.KeyChar, key.Key, (key.Modifiers & ConsoleModifiers.Shift) != 0,

@@ -491,6 +491,12 @@ public partial class TextArea
             // Closed as the user asked: saved, or the changes given up
             _handlingKey = false;
             EndRecovery();
+            // The key typed right after the Esc that closed it (a peek): for the page shown now
+            if (_keyAfterEscape is { } left)
+            {
+                _keyAfterEscape = null;
+                Keyboard.PushBack(left);
+            }
         }
         catch (Exception ex) when (ex is not NavigationException)
         {

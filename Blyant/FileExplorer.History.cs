@@ -31,7 +31,7 @@ internal static partial class FileExplorer
             var hadMessage = _historyMessage.Length > 0;
             _historyMessage = string.Empty;
             var selected = _historyShown.Count > 0 ? _historyShown[_historyIndex] : -1;
-            var key = Console.ReadKey(true);
+            var key = Keyboard.ReadKey();
             if (Jump.IsKey(key))
             {
                 // The Jump menu

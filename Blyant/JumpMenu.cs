@@ -294,7 +294,7 @@ internal static class JumpMenu
             selected = Math.Clamp(selected, 0, Math.Max(0, rows.Count - 1));
             var visible = Draw(tabs, tab, filter, rows, selected, ref scroll);
             _message = _moving ? DialogText.Moving : string.Empty;
-            var key = Console.ReadKey(true);
+            var key = Keyboard.ReadKey();
             var navigation = Keyboard.ToNavigationKey(key).Key;
             if (_moving)
             {

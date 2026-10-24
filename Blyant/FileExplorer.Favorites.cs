@@ -114,7 +114,7 @@ internal static partial class FileExplorer
             var hadMessage = _favoriteMessage.Length > 0;
             _favoriteMessage = string.Empty;
             var selected = _favorites.Count > 0 ? _favorites[_favoriteIndex] : -1;
-            var key = Console.ReadKey(true);
+            var key = Keyboard.ReadKey();
             if (Jump.IsKey(key))
             {
                 // The Jump menu

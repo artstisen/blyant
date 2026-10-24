@@ -39,6 +39,65 @@ internal static class Keyboard
 
     #endregion
 
+    #region The key of a page
+
+    // A key to be read next, handed back by a page that closed before it could use it (a peek closed by Esc, with
+    // the key typed right after it, see TextArea.ReadKey)
+    private static ConsoleKeyInfo? _pending;
+
+    /// <summary>
+    /// The key a page gets when it must be drawn again (Blyant goes on after Ctrl+Z and "fg", and the shell wrote on
+    /// the screen). It does nothing on a page: the page is drawn again as after any key
+    /// </summary>
+    internal static readonly ConsoleKeyInfo RedrawKey = new('\0', ConsoleKey.F24, false, false, false);
+
+    internal static bool IsRedraw(ConsoleKeyInfo key) => key.Key == ConsoleKey.F24 && key.KeyChar == '\0';
+
+    /// <summary>
+    /// Keep a key to be read next by the page that is shown now
+    /// </summary>
+    internal static void PushBack(ConsoleKeyInfo key) => _pending = key;
+
+    /// <summary>
+    /// The key handed back, if there is one (it is taken)
+    /// </summary>
+    internal static ConsoleKeyInfo? TakePending()
+    {
+        var pending = _pending;
+        _pending = null;
+        return pending;
+    }
+
+    /// <summary>
+    /// The next key of a page: a key handed back first. On Linux and macOS the keyboard is looked at now and then
+    /// while waiting, so RedrawKey comes when Blyant goes on after Ctrl+Z (Windows has no Ctrl+Z of a terminal)
+    /// </summary>
+    internal static ConsoleKeyInfo ReadKey()
+    {
+        if (TakePending() is { } pending) return pending;
+        if (OperatingSystem.IsWindows()) return Console.ReadKey(true);
+        while (true)
+        {
+            if (Tools.TakeContinued()) return RedrawKey;
+            try
+            {
+                if (Console.KeyAvailable) return Console.ReadKey(true);
+            }
+            catch (InvalidOperationException)
+            {
+                // Keys cannot be asked about: wait for one
+                return Console.ReadKey(true);
+            }
+
+            Thread.Sleep(KeyWaitMilliseconds);
+        }
+    }
+
+    // How long a page waits between looking at the keyboard (Linux, macOS; as the editor)
+    private const int KeyWaitMilliseconds = 15;
+
+    #endregion
+
     #region Await keypress
     public static void AwaitAnyKey()
     {

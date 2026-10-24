@@ -147,12 +147,28 @@ internal static class SystemClipboard
     /// True in a terminal that is known to drop the clipboard sequence (OSC 52): the text console of Linux (and of
     /// a Raspberry Pi), the terminals made with VTE (LXTerminal, GNOME Terminal) and the Terminal of macOS
     /// </summary>
-    internal static bool TerminalWithoutClipboard { get; } = !OperatingSystem.IsWindows() && WithoutClipboard(
-        Environment.GetEnvironmentVariable("TERM"), Environment.GetEnvironmentVariable("VTE_VERSION"),
-        Environment.GetEnvironmentVariable("TERM_PROGRAM"));
+    internal static bool TerminalWithoutClipboard { get; } =
+        !OperatingSystem.IsWindows() && WithoutClipboard(Environment.GetEnvironmentVariable);
 
-    internal static bool WithoutClipboard(string? term, string? vteVersion, string? termProgram) =>
-        term == "linux" || !string.IsNullOrEmpty(vteVersion) || termProgram == "Apple_Terminal";
+    // The terminals that take the clipboard sequence, by their TERM, and the variables they set of their own
+    private static readonly string[] ClipboardTerms = { "xterm-kitty", "wezterm", "alacritty", "foot", "contour" };
+    private static readonly string[] ClipboardMarkers = { "KITTY_WINDOW_ID", "WEZTERM_EXECUTABLE", "ALACRITTY_SOCKET" };
+
+    /// <summary>
+    /// The terminal drops the clipboard sequence, as told by the variables of the environment (looked up with
+    /// "variable"). VTE_VERSION is passed on to all that is started in a VTE terminal, also another terminal
+    /// (kitty started from GNOME Terminal) and tmux, which can pass the sequence on: it only tells of VTE when
+    /// nothing tells of one of those
+    /// </summary>
+    internal static bool WithoutClipboard(Func<string, string?> variable)
+    {
+        var term = variable("TERM");
+        if (term == "linux" || variable("TERM_PROGRAM") == "Apple_Terminal") return true;
+        if (string.IsNullOrEmpty(variable("VTE_VERSION"))) return false;
+        if (!string.IsNullOrEmpty(variable("TMUX")) || !string.IsNullOrEmpty(variable("TERM_PROGRAM"))) return false;
+        if (term != null && ClipboardTerms.Any(name => term.StartsWith(name, StringComparison.Ordinal))) return false;
+        return !ClipboardMarkers.Any(marker => !string.IsNullOrEmpty(variable(marker)));
+    }
 
     /// <summary>
     /// Copy a name or a path (":name", ":path"): to the string memory, as the current string, so "p" and CTRL+R in

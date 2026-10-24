@@ -481,15 +481,19 @@ internal static class FileOperations
     }
 
     // The part of a directory copied before the copying stopped
-    private static void RemovePartialCopy(string target)
+    // (logged here: the file browser logs that the move failed, and this tells what was left of it)
+    internal static void RemovePartialCopy(string target)
     {
+        if (!Directory.Exists(target)) return;
         try
         {
-            if (Directory.Exists(target)) Directory.Delete(target, true);
+            Directory.Delete(target, true);
+            EventLog.Add(DialogText.LogFile + "Partial copy removed from the trash: " + target);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
             // Left in the trash: it can be deleted there
+            EventLog.Add(DialogText.LogFile + "Partial copy left in the trash: " + target + " (" + e.Message + ")");
         }
     }
 

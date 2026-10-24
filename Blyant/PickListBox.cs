@@ -148,9 +148,17 @@ internal static class PickListBox
                 Tools.SetCursorEx(Init.LineCount - 1, 0);
             }
 
-            var key = Console.ReadKey(true);
+            var key = Keyboard.ReadKey();
             Tools.HideCursor();
             _message = string.Empty;
+            if (Keyboard.IsRedraw(key))
+            {
+                // Back after Ctrl+Z: the box is drawn again (the shell wrote on the screen)
+                DrawBox(caption);
+                shownScroll = -1;
+                continue;
+            }
+
             if (filtering)
             {
                 if (key.Key is ConsoleKey.Tab or ConsoleKey.DownArrow or ConsoleKey.UpArrow)
