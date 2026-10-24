@@ -2,9 +2,9 @@
 
 /// <summary>
 /// Hints on the Start tab of the start page, in a box to the right of the menu: one feature of Blyant at a time,
-/// the next each time Blyant starts (setting "hintindex"). X on the Start tab hides them, and Configuration
-/// (System) shows them again (setting "hints"). While they are hidden the hint does not change, and nothing is
-/// written for it
+/// the next each time Blyant starts and shows the start page (setting "hintindex"). X on the Start tab hides them,
+/// and Configuration (System) shows them again (setting "hints"). While they are hidden the hint does not change,
+/// and nothing is written for it
 /// </summary>
 internal static class Hints
 {
@@ -54,12 +54,27 @@ internal static class Hints
         return (all[index], index + 1);
     }
 
+    // The hint has gone on in this session
+    private static bool _advanced;
+
     /// <summary>
-    /// Blyant starts: the next hint is shown, and the settings are saved with it (not while the hints are hidden)
+    /// The start page is shown: the first time in a session, the next hint (so one is not passed over when Blyant
+    /// starts in a file or the file browser)
+    /// </summary>
+    internal static void AdvanceOnce()
+    {
+        if (_advanced) return;
+        _advanced = true;
+        Advance();
+    }
+
+    /// <summary>
+    /// The next hint, saved with the settings. Not while the hints are hidden, and not when the settings file could
+    /// not be read (then it is not written: it would be replaced with the settings in use)
     /// </summary>
     internal static void Advance()
     {
-        if (!Enabled) return;
+        if (!Enabled || FileIo.SettingsUnread) return;
         Index = (Math.Max(-1, Index) + 1) % All().Length;
         FileIo.SaveSettings();
     }

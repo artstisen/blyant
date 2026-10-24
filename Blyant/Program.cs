@@ -31,9 +31,6 @@ class Program
                 Lang.T("Put it in the folder lang next to Blyant (or in the data directory)."));
         }
 
-        // The next hint of the start page (once each time Blyant starts, not when it restarts)
-        Hints.Advance();
-
         // Started with a file or directory ("blyant notes.md"): it is opened as a jump, without the start page
         if (args.Length > 0 && OpenArgument(args[0], currentDirectory) is { } target)
         {

@@ -2537,6 +2537,8 @@ en: "There is no completion {0} for this text"
 sv: "Det finns ingen komplettering {0} för den här texten"
 en: "{0} has no place for the text ($0)"
 sv: "{0} har ingen plats för texten ($0)"
+en: "Nothing to surround"
+sv: "Inget att omge"
 en: "A block is surrounded line by line: use a completion of one line"
 sv: "Ett block omges rad för rad: använd en komplettering på en rad"
 

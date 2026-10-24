@@ -41,14 +41,28 @@ internal sealed partial class EditorEngine
         {
             case EditorMode.Visual:
             {
-                // The text selected (the last character included), without a line break at its end
+                // The text selected (the last character included). Line breaks at its start or end stay outside
+                // the frame (a selection from the end of a line, or onto an empty line)
                 var from = _commandSelectionFrom;
                 var to = _commandSelectionTo;
                 to = to.Col < Buffer.LineLength(to.Line)
                     ? new TextPos(to.Line, to.Col + TextMetrics.ElementLength(Buffer[to.Line], to.Col))
                     : new TextPos(to.Line, Buffer.LineLength(to.Line));
                 var text = Buffer.GetText(from, to);
-                if (text.Length == 0) return;
+                var start = 0;
+                while (start < text.Length && text[start] == TextBuffer.NewLine) start++;
+                var end = text.Length;
+                while (end > start && text[end - 1] == TextBuffer.NewLine) end--;
+                if (end == start)
+                {
+                    SetError(Lang.T("Nothing to surround"));
+                    return;
+                }
+
+                var origin = Buffer.ToIndex(from);
+                to = Buffer.FromIndex(origin + end);
+                from = Buffer.FromIndex(origin + start);
+                text = text[start..end];
                 var framed = Framed(frame, text, Indent(from.Line));
                 Delete(from, to);
                 Cursor = Left(Insert(from, framed), 1);
@@ -63,6 +77,7 @@ internal sealed partial class EditorEngine
                 }
 
                 var (top, bottom, left, right) = _commandBlock;
+                var any = false;
                 for (var line = top; line <= bottom; line++)
                 {
                     // The part of the line in the block, without the blank space at its end
@@ -71,7 +86,10 @@ internal sealed partial class EditorEngine
                     if (part.Length == 0) continue;
                     Delete(new TextPos(line, start), new TextPos(line, start + part.Length));
                     Insert(new TextPos(line, start), Framed(frame, part, string.Empty));
+                    any = true;
                 }
+
+                if (!any) SetError(Lang.T("Nothing to surround"));
 
                 Cursor = new TextPos(top, BlockRange(top, left, right).Start);
                 break;
@@ -93,6 +111,7 @@ internal sealed partial class EditorEngine
                 else
                 {
                     // Each line by itself, after its indent (empty lines are left as they are)
+                    var any = false;
                     for (var line = first; line <= last; line++)
                     {
                         var indent = Indent(line);
@@ -100,7 +119,10 @@ internal sealed partial class EditorEngine
                         if (text.Length == 0) continue;
                         Delete(new TextPos(line, indent.Length), new TextPos(line, Buffer.LineLength(line)));
                         Insert(new TextPos(line, indent.Length), Framed(frame, text, indent));
+                        any = true;
                     }
+
+                    if (!any) SetError(Lang.T("Nothing to surround"));
                 }
 
                 Cursor = new TextPos(first, FirstNonBlank(first));

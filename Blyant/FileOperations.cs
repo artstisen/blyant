@@ -480,16 +480,6 @@ internal static class FileOperations
         return !SamePath(path, trashDirectory) && !IsInside(path, trashDirectory) && !IsInside(trashDirectory, path);
     }
 
-    /// <summary>
-    /// Move a file or directory to the trash, under a name of its own there that starts with the time
-    /// ("2026-10-22 14.03.11 chapter 1.md"), and add where it was to the list in the trash. The trash is made if
-    /// it is not there
-    /// </summary>
-    /// <param name="path">The file or directory</param>
-    /// <param name="trashDirectory">The trash</param>
-    /// <param name="trashedPath">Where it is in the trash</param>
-    /// <param name="progress">Called with the name of each file when the files have to be copied (the trash is
-    /// on another drive). Returns false to cancel</param>
     // The part of a directory copied before the copying stopped
     private static void RemovePartialCopy(string target)
     {
@@ -506,21 +496,42 @@ internal static class FileOperations
     /// <summary>
     /// A name for a file Blyant keeps of a file of the user (in the trash, a recovery copy): one that can be made on
     /// every file system, also FAT and exFAT on a memory stick (no : ? * " &lt; &gt; | \ / or control
-    /// characters, no blank space or dot at the end), and short enough to have a time or a code added. The real
-    /// name is kept in the list of the trash, and in the copy
+    /// characters, no blank space or dot at the end), and short enough to have a time or a code added: at most
+    /// maxBytes in UTF-8, as Linux and macOS count a name (255 bytes; a letter like "ø" takes two), never splitting
+    /// a character. The real name is kept in the list of the trash, and in the copy
     /// </summary>
-    internal static string StoredName(string name, int maxLength = 200)
+    internal static string StoredName(string name, int maxBytes = 180)
     {
         var chars = name.Select(c => c is ':' or '?' or '*' or '"' or '<' or '>' or '|' or '\\' or '/' ||
                                      char.IsControl(c)
             ? '_'
             : c).ToArray();
         var stored = new string(chars);
-        if (stored.Length > maxLength) stored = stored[..maxLength];
-        stored = stored.TrimEnd(' ', '.');
+        var end = 0;
+        var bytes = 0;
+        while (end < stored.Length)
+        {
+            var length = char.IsSurrogatePair(stored, end) ? 2 : 1;
+            var size = System.Text.Encoding.UTF8.GetByteCount(stored.AsSpan(end, length));
+            if (bytes + size > maxBytes) break;
+            bytes += size;
+            end += length;
+        }
+
+        stored = stored[..end].TrimEnd(' ', '.');
         return stored.Length > 0 ? stored : "_";
     }
 
+    /// <summary>
+    /// Move a file or directory to the trash, under a name of its own there that starts with the time
+    /// ("2026-10-22 14.03.11 chapter 1.md"), and add where it was to the list in the trash. The trash is made if
+    /// it is not there
+    /// </summary>
+    /// <param name="path">The file or directory</param>
+    /// <param name="trashDirectory">The trash</param>
+    /// <param name="trashedPath">Where it is in the trash</param>
+    /// <param name="progress">Called with the name of each file when the files have to be copied (the trash is
+    /// on another drive). Returns false to cancel</param>
     internal static string MoveToTrash(string path, string trashDirectory, out string trashedPath,
         Func<string, bool>? progress = null)
     {

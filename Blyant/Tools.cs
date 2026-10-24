@@ -497,7 +497,7 @@ internal static class Tools
         FileExplorer.RememberOnExit();
         ShowCursor(); // Remember to show cursor again for continuous work in the console
         // Exit the application reverting to the original console colors
-        Console.ResetColor();
+        ConsoleColors.Reset();
         Console.Clear();
         Console.WriteLine(DialogText.ApplicationExit);
         Environment.Exit(0);

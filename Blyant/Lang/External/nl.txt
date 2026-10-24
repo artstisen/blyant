@@ -2537,6 +2537,8 @@ en: "There is no completion {0} for this text"
 nl: "Er is geen aanvulling {0} voor deze tekst"
 en: "{0} has no place for the text ($0)"
 nl: "{0} heeft geen plaats voor de tekst ($0)"
+en: "Nothing to surround"
+nl: "Niets om te omgeven"
 en: "A block is surrounded line by line: use a completion of one line"
 nl: "Een blok wordt regel voor regel omgeven: gebruik een aanvulling van één regel"
 

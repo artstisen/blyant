@@ -2537,6 +2537,8 @@ en: "There is no completion {0} for this text"
 pl: "Brak uzupełnienia {0} dla tego tekstu"
 en: "{0} has no place for the text ($0)"
 pl: "{0} nie ma miejsca na tekst ($0)"
+en: "Nothing to surround"
+pl: "Nic do otoczenia"
 en: "A block is surrounded line by line: use a completion of one line"
 pl: "Blok jest otaczany wiersz po wierszu: użyj uzupełnienia jednowierszowego"
 

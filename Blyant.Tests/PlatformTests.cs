@@ -67,8 +67,13 @@ public class PlatformTests
     public void AStoredName_IsShortEnoughForATimeOrACodeToBeAdded()
     {
         var stored = FileOperations.StoredName(new string('a', 250) + ".md");
-        Assert.Equal(200, stored.Length);
-        Assert.True(("2026-10-24 10.00.00 " + stored).Length <= 255);
+        Assert.Equal(180, stored.Length);
+        // Counted in bytes, as Linux and macOS count a name: "ø" takes two, and no character is split
+        var danish = FileOperations.StoredName(new string('ø', 150) + ".md");
+        Assert.Equal(90, danish.Length);
+        Assert.True(System.Text.Encoding.UTF8.GetByteCount("2026-10-24 10.00.00 " + danish) <= 255);
+        var emoji = FileOperations.StoredName(new string('a', 179) + "😀");
+        Assert.Equal(179, emoji.Length);
     }
 
     [Theory]

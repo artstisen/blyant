@@ -156,6 +156,7 @@ internal static class CommandLine
         finally
         {
             Tools.HideCursor();
+            list?.Clear();
             // Remove the highlighted line
             WriteLine(string.Empty, ConsoleColors.ColorPreset.Normal, false);
         }

@@ -61,6 +61,28 @@ public class SurroundTests : IDisposable
     }
 
     [Theory]
+    // A selection onto an empty line: the line break stays outside the marks
+    [InlineData("abc\n\nx", "vj:surround /bold<CR>", "**abc**\n\nx")]
+    public void LineBreaksAtTheEndsOfTheSelection_StayOutside(string text, string keys, string expected)
+    {
+        var editor = Editor(text);
+        editor.Type(keys);
+        Assert.Equal(expected, editor.Buffer.GetText());
+    }
+
+    [Theory]
+    [InlineData("a\n\nb", "jv:surround /bold<CR>")]
+    [InlineData("a\n\n\nb", "jVj:surround /h2<CR>")]
+    public void WithNothingToSurround_ItIsTold(string text, string keys)
+    {
+        var editor = Editor(text);
+        editor.Type(keys);
+        Assert.Equal(text, editor.Buffer.GetText());
+        Assert.True(editor.MessageIsError);
+        Assert.Equal(Lang.T("Nothing to surround"), editor.Message);
+    }
+
+    [Theory]
     [InlineData(":surround<CR>")]
     [InlineData(":surround /nothing<CR>")]
     [InlineData(":surround /hr<CR>")]

@@ -775,7 +775,7 @@ internal static class StartMenu
                 // The row of a choice that has gone (Recover) is cleared
                 Tools.SetCursorEx(area.Top + _shown.Length, area.Left);
                 Console.Write(new string(' ', Math.Max(0, area.Width - 1)));
-                if (Hints.Enabled) DrawHint(area);
+                _hintShown = Hints.Enabled && DrawHint(area);
             }
 
             for (var i = 0; i < _shown.Length; i++)
@@ -788,18 +788,22 @@ internal static class StartMenu
             }
         }
 
-        // The hint, in a box to the right of the menu (none if there is no room for it)
-        private void DrawHint(TabArea area)
+        private bool _hintShown; // A hint is shown: X hides the hints
+
+        // The hint, in a box to the right of the menu (none if there is no room for it). True if it is shown
+        private bool DrawHint(TabArea area)
         {
             var menu = _shown.Max(choice => TextMetrics.WidthOf((_shown.Length + " " + KeysOf(choice) + " .... " +
                                                                   TextOf(choice))));
             var left = area.Left + 3 + menu + 4;
             var width = area.Left + area.Width - 2 - left;
             var inner = width - 4;
-            if (inner < MinHintWidth) return;
+            if (inner < MinHintWidth) return false;
+            // (the next hint, the first time the page is shown after Blyant has started)
+            Hints.AdvanceOnce();
             var (text, number) = Hints.Current();
             var lines = TextMetrics.Wrap(text, inner);
-            if (lines.Count + 2 > area.Height) return;
+            if (lines.Count + 2 > area.Height) return false;
             var title = Lang.F("Hint {0} of {1}", number, Hints.All().Length);
             var hide = Lang.T("Hide hints");
             var corner = AsciiStyles.GetTopCorner();
@@ -832,6 +836,7 @@ internal static class StartMenu
             ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
             Console.Write(" " + hide + " " + bottomCorner);
             ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
+            return true;
         }
 
         // The narrowest text of a hint (a narrower window has no hint)
@@ -863,7 +868,7 @@ internal static class StartMenu
                 return Open(choice);
             }
 
-            if (key.Key == ConsoleKey.X && Hints.Enabled &&
+            if (key.Key == ConsoleKey.X && _hintShown &&
                 (key.Modifiers & (ConsoleModifiers.Control | ConsoleModifiers.Alt)) == 0)
             {
                 // The hints are hidden (Configuration, System: shown again)

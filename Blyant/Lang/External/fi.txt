@@ -2537,6 +2537,8 @@ en: "There is no completion {0} for this text"
 fi: "Tälle tekstille ei ole täydennystä {0}"
 en: "{0} has no place for the text ($0)"
 fi: "Täydennyksessä {0} ei ole paikkaa tekstille ($0)"
+en: "Nothing to surround"
+fi: "Ei mitään ympäröitävää"
 en: "A block is surrounded line by line: use a completion of one line"
 fi: "Lohko ympäröidään rivi kerrallaan: käytä yhden rivin täydennystä"
 

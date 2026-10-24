@@ -401,7 +401,12 @@ public partial class TextArea
         {
             while (!_exit)
             {
+                _handlingKey = false;
                 var key = ReadKey();
+                // While the key and what it asks for change the text, no copy is made from another thread (the
+                // terminal closing): the text may be half changed. Not while the question "Save changes?" waits for
+                // a key (see AskToSave): then the latest changes are copied
+                _handlingKey = true;
                 if (_tabLeaves && _singleLine && key.Key == ConsoleKey.Tab &&
                     (key.Modifiers & ConsoleModifiers.Shift) == 0)
                 {
@@ -431,18 +436,7 @@ public partial class TextArea
                 if (_peek is { TabCloses: true } && key.Key == ConsoleKey.Tab && _engine.Mode == EditorMode.Normal &&
                     !_engine.HasPending) break;
 
-                // While the key changes the text, no copy is made from another thread (the terminal closing). Not
-                // while a box of the request waits for a key ("Save changes?"): then the copy is made as at a pause
-                _handlingKey = true;
-                EditorRequest request;
-                try
-                {
-                    request = _engine.HandleKey(key);
-                }
-                finally
-                {
-                    _handlingKey = false;
-                }
+                var request = _engine.HandleKey(key);
 
                 if (_peek != null && request is EditorRequest.Quit or EditorRequest.ForceQuit
                         or EditorRequest.SaveAndQuit)
@@ -1459,7 +1453,11 @@ public partial class TextArea
                 Console.Write(" " + choices[i]);
             }
 
+            // (the text is not being changed while the question waits: it can be copied if the terminal closes)
+            var handling = _handlingKey;
+            _handlingKey = false;
             var key = Console.ReadKey(true);
+            _handlingKey = handling;
             if (key.Key == ConsoleKey.Escape) break;
             if (key.Key == ConsoleKey.Y) result = 1;
             if (key.Key == ConsoleKey.N) result = 2;
@@ -1673,7 +1671,19 @@ public partial class TextArea
 
         if (_commandList == null) return false;
         _commandList = null;
-        RedrawAll();
+        if (_otherPane != null)
+        {
+            RedrawAll();
+            return true;
+        }
+
+        // The rows are written again over the box (without clearing the screen first, which flickers on a slow
+        // terminal): each row whole, and the divider and the status line
+        Array.Fill(_shownRows, null);
+        Array.Fill(_shownCells, _width - 1);
+        _shownStatus = null;
+        _shownModeLabel = null;
+        Draw();
         return true;
     }
 

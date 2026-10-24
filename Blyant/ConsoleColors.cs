@@ -59,8 +59,9 @@ internal static class ConsoleColors
     /// </summary>
     internal static void SetForeground(ConsoleColor color)
     {
+        _foreground = color;
         Console.ForegroundColor = color;
-        if (EightColors && BrightCode(color, false) is { } code) Console.Write(code);
+        WriteBrightCodes();
     }
 
     /// <summary>
@@ -68,8 +69,32 @@ internal static class ConsoleColors
     /// </summary>
     internal static void SetBackground(ConsoleColor color)
     {
+        _background = color;
         Console.BackgroundColor = color;
-        if (EightColors && BrightCode(color, true) is { } code) Console.Write(code);
+        WriteBrightCodes();
+    }
+
+    // The colors set last (null after a reset: the colors of the terminal)
+    private static ConsoleColor? _foreground;
+    private static ConsoleColor? _background;
+
+    // On a terminal of 8 colors: the bright colors in use, again. .NET writes both colors each time one is set (a
+    // reset, then both, as 8 colors), so a bright code written for the other one before is gone
+    private static void WriteBrightCodes()
+    {
+        if (!EightColors) return;
+        if (_foreground is { } foreground && BrightCode(foreground, false) is { } fore) Console.Write(fore);
+        if (_background is { } background && BrightCode(background, true) is { } back) Console.Write(back);
+    }
+
+    /// <summary>
+    /// Back to the colors of the terminal (all resets are done here, so the colors set last are known)
+    /// </summary>
+    internal static void Reset()
+    {
+        _foreground = null;
+        _background = null;
+        Console.ResetColor();
     }
 
     /// <summary>
@@ -120,7 +145,7 @@ internal static class ConsoleColors
     // The colors of text on the normal background: the background of the color scheme, or that of the terminal
     private static void SetNormalBackground(ColorScheme scheme)
     {
-        Console.ResetColor();
+        Reset();
         if (scheme.Background is { } background) SetBackground(background);
     }
 
@@ -133,7 +158,7 @@ internal static class ConsoleColors
             case ColorPreset.Favorites:
             case ColorPreset.Accent:
             case ColorPreset.EditorTitle:
-                Console.ResetColor();
+                Reset();
                 SetForeground(ConsoleColor.White);
                 break;
             case ColorPreset.NormalInverted:
@@ -147,7 +172,7 @@ internal static class ConsoleColors
                 SetForeground(ConsoleColor.Black);
                 break;
             default:
-                Console.ResetColor();
+                Reset();
                 SetForeground(ConsoleColor.Gray);
                 break;
         }

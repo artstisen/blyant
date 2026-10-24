@@ -87,6 +87,22 @@ internal sealed class CommandList
     }
 
     /// <summary>
+    /// Clear the rows the box took (when the command line is closed): the page draws its own part of them again,
+    /// and nothing of the box is left where the page does not draw (around a box on top of a page)
+    /// </summary>
+    internal void Clear()
+    {
+        if (Height == 0) return;
+        ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
+        for (var row = Init.LineCount - 1 - Height; row < Init.LineCount - 1; row++)
+        {
+            if (row < 0) continue;
+            Tools.SetCursorEx(row, 0);
+            Console.Write(new string(' ', Init.LineWidth - 1));
+        }
+    }
+
+    /// <summary>
     /// Draw the box above the command line, for the text typed on it (without the ":")
     /// </summary>
     internal void Draw(string text)
@@ -121,12 +137,14 @@ internal sealed class CommandList
             {
                 foreach (var name in lines[row])
                 {
-                    used += WriteName(name, typed, column, name == whole, inner - used);
+                    // ("+12 more" is not a name)
+                    var more = !names.Contains(name);
+                    used += WriteName(name, more ? string.Empty : typed, column, name == whole, more, inner - used);
                 }
             }
-            else if (row == 0)
+            else if (row == 0 && !text.Contains(' '))
             {
-                // Nothing starts with what is typed
+                // Nothing starts with what is typed (after a space: what follows has no list, nothing is said)
                 ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
                 var none = Tools.TruncateString(Lang.T("No command starts with that"), inner, true);
                 Console.Write(none);
@@ -158,14 +176,14 @@ internal sealed class CommandList
 
     // A name in its column: the part typed in the accent color (the whole name highlighted when it is typed whole).
     // The cells written
-    private static int WriteName(string name, string typed, int column, bool whole, int room)
+    private static int WriteName(string name, string typed, int column, bool whole, bool more, int room)
     {
         var cell = Math.Min(column, room);
         if (cell <= 0) return 0;
         var shown = Tools.TruncateString(name, Math.Max(1, cell - 2), true);
-        if (whole)
+        if (whole || more)
         {
-            ConsoleColors.SetColors(ConsoleColors.ColorPreset.SelectorInverted);
+            ConsoleColors.SetColors(whole ? ConsoleColors.ColorPreset.SelectorInverted : ConsoleColors.ColorPreset.Divider);
             Console.Write(shown);
         }
         else

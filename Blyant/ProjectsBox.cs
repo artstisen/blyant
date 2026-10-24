@@ -138,7 +138,8 @@ internal static class ProjectsBox
                                     return PickListBox.KeyUse.Close;
                             }
 
-                            break;
+                            // Drawn again: the command line (and its list of commands) covered the box
+                            return PickListBox.KeyUse.Used;
                     }
 
                     if (project == null) return PickListBox.KeyUse.None;

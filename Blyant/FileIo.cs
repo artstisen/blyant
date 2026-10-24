@@ -53,13 +53,21 @@ internal static class FileIo
         var nextToProgram = Path.Combine(AppContext.BaseDirectory, DataDirectoryName);
         // (one that is there must be writable by this user: one made when Blyant was run as root, with sudo, is not
         // used by the user, whose settings, copies and trash could not be written there)
-        if (Directory.Exists(nextToProgram) ? CanWriteIn(nextToProgram) : CanWriteIn(AppContext.BaseDirectory))
+        var exists = Directory.Exists(nextToProgram);
+        if (exists ? CanWriteIn(nextToProgram) : CanWriteIn(AppContext.BaseDirectory))
         {
             return nextToProgram;
         }
 
-        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData,
+        var instead = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData,
             Environment.SpecialFolderOption.DoNotVerify), "Blyant", DataDirectoryName);
+        // (told in the log: the settings and lists of the one next to the program are not used)
+        if (exists)
+        {
+            LogFile("Data directory next to the program cannot be written: " + nextToProgram + ", using " + instead);
+        }
+
+        return instead;
     }
 
     // True if a file can be made in a directory (it is made and deleted again)
@@ -502,6 +510,11 @@ internal static class FileIo
     // True when the settings file could not be read at startup: before it is written for the first time, a copy of
     // it is kept (settings.ini.bad), so the settings in it are not lost
     private static bool _keepUnreadSettings;
+
+    /// <summary>
+    /// True when the settings file was there but could not be read: it is kept (as a copy) when it is written
+    /// </summary>
+    internal static bool SettingsUnread => _keepUnreadSettings;
 
     internal static string WriteSettingsFile(string content)
     {
