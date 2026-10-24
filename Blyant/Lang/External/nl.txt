@@ -1039,6 +1039,8 @@ en: "PANE {0}"
 nl: "PANEEL {0}"
 
 # FileIo.cs
+en: "{0} is read only: it is not written"
+nl: "{0} is alleen-lezen: het wordt niet geschreven"
 en: "bytes"
 nl: "bytes"
 
@@ -1763,6 +1765,10 @@ en: "That is a directory: type the path of a file"
 nl: "Dat is een map: typ het pad van een bestand"
 en: "Blyant uses this file: pick another for the paste bin"
 nl: "Blyant gebruikt dit bestand: kies een ander plakbestand"
+en: "Copied to the paste bin (too long for the clipboard of the terminal)"
+nl: "Gekopieerd naar het plakbestand (te lang voor het klembord van de terminal)"
+en: "Too long for the clipboard of the terminal (more than {0} KB): not copied"
+nl: "Te lang voor het klembord van de terminal (meer dan {0} KB): niet gekopieerd"
 
 # Tools.cs
 en: "(lines) {0}"
@@ -2499,6 +2505,8 @@ en: "Search took too long"
 nl: "Zoeken duurde te lang"
 en: "Unknown flags: "
 nl: "Onbekende vlaggen: "
+en: "Search took too long: nothing was replaced"
+nl: "Zoeken duurde te lang: er is niets vervangen"
 en: "{0} on {1}"
 nl: "{0} op {1}"
 en: "1 substitution"

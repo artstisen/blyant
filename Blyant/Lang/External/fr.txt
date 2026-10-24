@@ -1039,6 +1039,8 @@ en: "PANE {0}"
 fr: "VOLET {0}"
 
 # FileIo.cs
+en: "{0} is read only: it is not written"
+fr: "{0} est en lecture seule : il n'est pas écrit"
 en: "bytes"
 fr: "octets"
 
@@ -1763,6 +1765,10 @@ en: "That is a directory: type the path of a file"
 fr: "C'est un dossier : saisissez le chemin d'un fichier"
 en: "Blyant uses this file: pick another for the paste bin"
 fr: "Blyant utilise ce fichier : choisissez un autre fichier d'échange"
+en: "Copied to the paste bin (too long for the clipboard of the terminal)"
+fr: "Copié dans le fichier d'échange (trop long pour le presse-papiers du terminal)"
+en: "Too long for the clipboard of the terminal (more than {0} KB): not copied"
+fr: "Trop long pour le presse-papiers du terminal (plus de {0} Ko) : non copié"
 
 # Tools.cs
 en: "(lines) {0}"
@@ -2499,6 +2505,8 @@ en: "Search took too long"
 fr: "Recherche trop longue"
 en: "Unknown flags: "
 fr: "Options inconnues : "
+en: "Search took too long: nothing was replaced"
+fr: "Recherche trop longue : rien n'a été remplacé"
 en: "{0} on {1}"
 fr: "{0} sur {1}"
 en: "1 substitution"

@@ -22,10 +22,20 @@ public class SafeWriteTests
         return Path.Combine(directory!.FullName, "Blyant");
     }
 
-    // The ways of writing that empty a file before the new content is in it
+    // The ways of writing that empty a file before the new content is in it (also the Async ones, and those of
+    // FileInfo: info.CreateText(), info.OpenWrite())
     private static readonly Regex Unsafe = new(
-        @"\bFile\.(WriteAllText|WriteAllBytes|WriteAllLines|Create|CreateText|OpenWrite)\s*\(|" +
-        @"FileMode\.(Create|Truncate|OpenOrCreate)\b|new\s+StreamWriter\s*\(");
+        @"\bFile\.(WriteAllText|WriteAllBytes|WriteAllLines|Create|CreateText|OpenWrite)(Async)?\s*\(|" +
+        @"FileMode\.(Create|Truncate|OpenOrCreate)\b|new\s+StreamWriter\s*\(|\.(CreateText|OpenWrite)\s*\(\s*\)");
+
+    // A stream opened with a mode: the mode is named on the line (and then checked by Unsafe), or it is set in a
+    // FileStreamOptions of that name in the file (where "Mode = FileMode..." is checked by Unsafe)
+    private static readonly Regex Opened = new(@"\b(File\.Open|new\s+FileStream)\s*\(\s*[^,]+,\s*(\w+)\s*[,)]");
+
+    // File.Create with FileOptions.DeleteOnClose (FileIo.CanWriteIn tests a directory with a file that is gone
+    // when it is closed): the only use of File.Create that is allowed
+    private static bool IsAllowed(string line, Match match) =>
+        match.Value.StartsWith("File.Create(", StringComparison.Ordinal) && line.Contains("FileOptions.DeleteOnClose");
 
     [Fact]
     public void FilesAreNotEmptiedBeforeTheyAreWritten()
@@ -36,25 +46,79 @@ public class SafeWriteTests
         {
             if (path.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar) ||
                 path.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar)) continue;
-            var lines = File.ReadAllLines(path);
-            for (var i = 0; i < lines.Length; i++)
-            {
-                var line = lines[i];
-                // FileIo.CanWriteIn makes a file that is deleted when it is closed, to test the directory
-                if (line.Contains("FileOptions.DeleteOnClose")) continue;
-                if (Unsafe.IsMatch(line)) found.Add(Path.GetRelativePath(root, path) + ":" + (i + 1) + ": " + line.Trim());
-            }
+            found.AddRange(UnsafeLines(File.ReadAllText(path))
+                .Select(line => Path.GetRelativePath(root, path) + ":" + line));
         }
 
         Assert.True(found.Count == 0, "Use FileIo.WriteAllBytesSafe (or FileMode.CreateNew for a new file):\n" +
                                       string.Join("\n", found));
     }
 
+    // The lines of a source file that write in a way that empties a file first ("number: line")
+    private static List<string> UnsafeLines(string text)
+    {
+        var found = new List<string>();
+        var lines = text.Split('\n');
+        for (var i = 0; i < lines.Length; i++)
+        {
+            var line = lines[i];
+            var where = (i + 1) + ": " + line.Trim();
+            if (Unsafe.Matches(line).Any(match => !IsAllowed(line, match))) found.Add(where);
+            // A stream opened with a mode that is not named, and not set in FileStreamOptions of the file
+            if (Opened.Match(line) is { Success: true } opened && !line.Contains("FileMode.") &&
+                !Regex.IsMatch(text, @"\b" + opened.Groups[2].Value + @"\s*=\s*new\s+FileStreamOptions\b"))
+            {
+                found.Add(where + " (the mode is not seen)");
+            }
+        }
+
+        return found;
+    }
+
+    [Theory]
+    [InlineData("File.WriteAllTextAsync(path, text);")]
+    [InlineData("await File.WriteAllBytesAsync(path, bytes);")]
+    [InlineData("using var writer = info.CreateText();")]
+    [InlineData("using var stream = new FileInfo(path).OpenWrite();")]
+    [InlineData("using var stream = new FileStream(path, mode);")]
+    [InlineData("using var stream = File.Open(path, mode, FileAccess.Write);")]
+    [InlineData("var options = new FileStreamOptions { Mode = FileMode.Create };")]
+    [InlineData("using (File.Create(path)) { }")]
+    public void TheWaysOfWritingThatEmptyAFile_AreSeen(string line)
+    {
+        Assert.Single(UnsafeLines(line));
+    }
+
+    [Theory]
+    [InlineData("using var stream = new FileStream(path, FileMode.Open);")]
+    [InlineData("using (File.Create(test, 1, FileOptions.DeleteOnClose)) { }")]
+    [InlineData("var options = new FileStreamOptions { Mode = FileMode.CreateNew };\nnew FileStream(path, options);")]
+    public void TheSafeWays_AreNotSeen(string text)
+    {
+        Assert.Empty(UnsafeLines(text));
+    }
+
+    [Theory]
+    [InlineData("File.Replace(from, to, backup);")]
+    [InlineData("await File.AppendAllTextAsync(path, text);")]
+    [InlineData("using var writer = File.AppendText(path);")]
+    [InlineData("new FileInfo(path).Delete();")]
+    [InlineData("new DirectoryInfo(path).Delete(true);")]
+    [InlineData("info.IsReadOnly = false;")]
+    [InlineData("info.Attributes = FileAttributes.Normal;")]
+    public void TheOperationsThatAreNotLogged_AreSeen(string line)
+    {
+        Assert.Matches(Unlogged, line);
+    }
+
     // The ways of changing files and directories that are only used in FileIo (which logs them), in
     // FileOperations (the operations of the file browser, which logs them as a whole) and in EventLog (the log file)
+    // (also File.Replace and File.AppendText, the Async ones, and those of FileInfo and DirectoryInfo: Delete(),
+    // and setting Attributes or IsReadOnly)
     private static readonly Regex Unlogged = new(
-        @"\b(File|Directory)\.(Delete|Move|Copy|CreateDirectory|CreateSymbolicLink|AppendAllText|AppendAllLines|" +
-        @"SetAttributes)\s*\(|FileMode\.CreateNew|\.CopyTo\s*\(|\.MoveTo\s*\(");
+        @"\b(File|Directory)\.(Delete|Move|Copy|Replace|CreateDirectory|CreateSymbolicLink|AppendAllText|" +
+        @"AppendAllLines|AppendText|SetAttributes)(Async)?\s*\(|FileMode\.CreateNew|\.CopyTo\s*\(|\.MoveTo\s*\(|" +
+        @"\.Delete\s*\(\s*(true|false)?\s*\)|\.(Attributes|IsReadOnly)\s*=[^=]");
 
     private static readonly string[] LoggingFiles = { "FileIo.cs", "FileOperations.cs", "EventLog.cs" };
 

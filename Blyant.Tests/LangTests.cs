@@ -264,6 +264,9 @@ public class LangTests : IDisposable
         Assert.True(problems.Count == 0, string.Join(Environment.NewLine, problems));
     }
 
+    // A comment that says a line is English: "English" after "//"
+    private static bool IsEnglishMark(string line) => Regex.IsMatch(line, @"//.*\bEnglish\b");
+
     // Text written to the screen is given to Lang.T (or Lang.F). A line that is meant to be the same in all
     // languages is marked with a comment containing "English"
     [Fact]
@@ -271,15 +274,16 @@ public class LangTests : IDisposable
     {
         var patterns = new[]
         {
-            @"Console\.Write(Line)?\(\s*""[^""]*[A-Za-z]{3,}",
-            @"\b(Message|_message) = ""[A-Za-z]",
-            @"SetError\(""",
-            @"StatusMessage\(""",
-            @"WriteModeLabel\(""[A-Za-z]",
-            @"WriteModeLabel\([^,]+,\s*""[A-Za-z]",
-            @"new Shortcut\((?:""[^""]*""|[^,""]+),\s*""",
-            @"WriteMenuItem\(""[^""]*"",\s*""[A-Za-z]",
-            @"YesNoPrompt\([^,]+,\s*""[A-Za-z]"
+            // (a string can be interpolated or verbatim: $"...", @"...")
+            @"Console\.Write(Line)?\(\s*[$@]*""[^""]*[A-Za-z]{3,}",
+            @"\b(Message|_message) = [$@]*""[A-Za-z]",
+            @"SetError\([$@]*""",
+            @"StatusMessage\([$@]*""",
+            @"WriteModeLabel\([$@]*""[A-Za-z]",
+            @"WriteModeLabel\([^,]+,\s*[$@]*""[A-Za-z]",
+            @"new Shortcut\((?:[$@]*""[^""]*""|[^,""]+),\s*[$@]*""",
+            @"WriteMenuItem\([$@]*""[^""]*"",\s*[$@]*""[A-Za-z]",
+            @"YesNoPrompt\([^,]+,\s*[$@]*""[A-Za-z]"
         }.Select(p => new Regex(p)).ToArray();
         var problems = new List<string>();
         foreach (var path in SourceFiles())
@@ -290,7 +294,10 @@ public class LangTests : IDisposable
             for (var i = 0; i < lines.Length; i++)
             {
                 var line = lines[i];
-                if (line.TrimStart().StartsWith("//") || line.Contains("English")) continue;
+                // (the mark is a comment: on the line, or a line of comment just above it; a word "English" in the
+                // code, as Lang.English, is no mark)
+                if (line.TrimStart().StartsWith("//") || IsEnglishMark(line) ||
+                    (i > 0 && lines[i - 1].TrimStart().StartsWith("//") && IsEnglishMark(lines[i - 1]))) continue;
                 var code = Regex.Replace(line, @"Lang\.[TF]\(""(?:[^""\\]|\\.)*""", "Lang.T(x");
                 if (patterns.Any(p => p.IsMatch(code))) problems.Add(name + ":" + (i + 1) + ": " + line.Trim());
             }

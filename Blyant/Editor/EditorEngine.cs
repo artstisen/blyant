@@ -1491,7 +1491,7 @@ internal sealed partial class EditorEngine
                 }
 
                 var text = Buffer.GetText(from, to);
-                if (text.Length == 0) return;
+                if (text.Length == 0 || TooMuchToPut((long)text.Length * copies)) return;
                 Insert(to, string.Concat(Enumerable.Repeat(text, copies)));
                 Cursor = to;
                 break;
@@ -1500,6 +1500,14 @@ internal sealed partial class EditorEngine
             {
                 var (top, bottom, left, right) = _commandBlock;
                 var copyStart = BlockRange(top, left, right).End;
+                var blockLength = 0L;
+                for (var line = top; line <= bottom; line++)
+                {
+                    var (start, end) = BlockRange(line, left, right);
+                    blockLength += Math.Max(0, end - start);
+                }
+
+                if (TooMuchToPut(blockLength * copies)) return;
                 for (var line = top; line <= bottom; line++)
                 {
                     var (start, end) = BlockRange(line, left, right);
@@ -1521,6 +1529,7 @@ internal sealed partial class EditorEngine
             {
                 var lines = string.Join(TextBuffer.NewLine,
                     Enumerable.Range(first, last - first + 1).Select(line => Buffer[line]));
+                if (TooMuchToPut((long)(lines.Length + 1) * copies)) return;
                 Insert(new TextPos(last, Buffer.LineLength(last)),
                     string.Concat(Enumerable.Repeat(TextBuffer.NewLine + lines, copies)));
                 Cursor = new TextPos(last + 1, FirstNonBlank(last + 1));
@@ -1722,6 +1731,16 @@ internal sealed partial class EditorEngine
 
     private static readonly TimeSpan SearchTimeout = TimeSpan.FromSeconds(2);
 
+    // The most time a search or a replacement of many lines takes in all (each line has SearchTimeout): many slow
+    // lines would else take minutes
+    private const long CommandTimeoutMilliseconds = 10_000;
+
+    // Stop a search of many lines that has gone on too long (as a line that took too long does)
+    private static void CheckDeadline(long deadline)
+    {
+        if (Environment.TickCount64 > deadline) throw new RegexMatchTimeoutException();
+    }
+
     // Highlighting runs on every line shown, at every redraw: a pattern that is slow there turns it off quickly
     private static readonly TimeSpan HighlightTimeout = TimeSpan.FromMilliseconds(100);
     private Regex? _searchRegex;
@@ -1794,11 +1813,13 @@ internal sealed partial class EditorEngine
         _searchTimedOut = false;
         if (_searchRegex == null) return false;
         var count = Buffer.LineCount;
+        var deadline = Environment.TickCount64 + CommandTimeoutMilliseconds;
         try
         {
             // The line of the cursor is searched twice: first after the cursor and last before it
             for (var i = 0; i <= count; i++)
             {
+                CheckDeadline(deadline);
                 var lineIndex = ((forward ? from.Line + i : from.Line - i) % count + count) % count;
                 var line = Buffer[lineIndex];
                 var index = -1;
@@ -1933,11 +1954,15 @@ internal sealed partial class EditorEngine
         var substitutions = 0;
         var lines = 0;
         var cursorLine = -1;
+        var deadline = Environment.TickCount64 + CommandTimeoutMilliseconds;
+        // The lines changed, to put back if the replacing has to stop (the line, its text before, and after)
+        var done = new List<(int Line, string Before, string After)>();
         try
         {
             // From the bottom, as a replacement with a line break changes the numbers of the lines after it
             for (var i = Math.Min(lastLine, Buffer.LineCount - 1); i >= firstLine; i--)
             {
+                CheckDeadline(deadline);
                 var line = Buffer[i];
                 var matches = regex.Matches(line).Count;
                 if (matches == 0) continue;
@@ -1947,13 +1972,23 @@ internal sealed partial class EditorEngine
                 if (changed == line) continue;
                 Delete(new TextPos(i, 0), new TextPos(i, line.Length));
                 Insert(new TextPos(i, 0), changed);
+                done.Add((i, line, changed));
                 if (cursorLine < 0) cursorLine = i + changed.Count(c => c == TextBuffer.NewLine);
                 else cursorLine += changed.Count(c => c == TextBuffer.NewLine);
             }
         }
         catch (RegexMatchTimeoutException)
         {
-            SetError(Lang.T("Search took too long"));
+            // Not half done: the lines changed before it stopped are put back, the last changed (the top) first
+            for (var k = done.Count - 1; k >= 0; k--)
+            {
+                var (at, before, after) = done[k];
+                var parts = after.Split(TextBuffer.NewLine);
+                Delete(new TextPos(at, 0), new TextPos(at + parts.Length - 1, parts[^1].Length));
+                Insert(new TextPos(at, 0), before);
+            }
+
+            SetError(Lang.T("Search took too long: nothing was replaced"));
             return;
         }
 

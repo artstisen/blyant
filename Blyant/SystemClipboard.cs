@@ -90,6 +90,11 @@ internal static class SystemClipboard
     }
 
     /// <summary>
+    /// The most bytes of text sent to the clipboard of the terminal (in base64 about 100 KB)
+    /// </summary>
+    internal const int MaxOsc52Bytes = 75_000;
+
+    /// <summary>
     /// The escape sequence that puts text on the system clipboard of the terminal (OSC 52): the text in base64
     /// </summary>
     internal static string Osc52Sequence(string text)
@@ -110,11 +115,22 @@ internal static class SystemClipboard
             return asked ? (DialogText.ClipboardAllOff, true) : (string.Empty, false);
         }
 
-        if (Osc52) WriteOsc52(text);
+        // Text too long for the terminal is not sent: most terminals drop a sequence of more than about 100 KB, and
+        // writing it could hold the terminal for seconds
+        var tooLong = Osc52 && Encoding.UTF8.GetByteCount(text) > MaxOsc52Bytes;
+        if (Osc52 && !tooLong) WriteOsc52(text);
         if (PasteBin)
         {
             var result = WritePasteBin(text, PasteBinAppend);
             if (result != DialogText.Success) return (result, true);
+        }
+
+        if (tooLong)
+        {
+            return PasteBin
+                ? (Lang.T("Copied to the paste bin (too long for the clipboard of the terminal)"), false)
+                : (Lang.F("Too long for the clipboard of the terminal (more than {0} KB): not copied",
+                    MaxOsc52Bytes / 1000), true);
         }
 
         return (Osc52 && PasteBin ? DialogText.CopiedToBoth : Osc52 ? DialogText.CopiedToClipboard

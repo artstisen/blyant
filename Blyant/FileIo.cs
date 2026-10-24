@@ -247,6 +247,13 @@ internal static class FileIo
             // Saving matters more than the time and permissions
         }
 
+        // A file that may not be written (chmod -w) is not replaced: the replacing would only need the directory to
+        // be writable, so it is refused here, as Windows refuses a read-only file
+        if (mode is { } fileMode && (fileMode & UnixFileMode.UserWrite) == 0)
+        {
+            throw new UnauthorizedAccessException(Lang.F("{0} is read only: it is not written", Path.GetFileName(path)));
+        }
+
         try
         {
             var options = new FileStreamOptions

@@ -87,6 +87,7 @@ def check(code, given=None):
     for w in warnings:
         print('WARNING', w)
     print(f'{code}: {len(errors)} errors, {len(warnings)} warnings')
+    return len(errors)
 
 
 if __name__ == '__main__':
@@ -95,4 +96,5 @@ if __name__ == '__main__':
         sys.stdout.reconfigure(encoding='utf-8', errors='replace')
     if len(sys.argv) not in (2, 3):
         sys.exit(__doc__)
-    check(sys.argv[1], sys.argv[2] if len(sys.argv) == 3 else None)
+    # (the exit code is 1 when there are errors, so a script can stop on them)
+    sys.exit(1 if check(sys.argv[1], sys.argv[2] if len(sys.argv) == 3 else None) else 0)

@@ -114,7 +114,7 @@ A yanked or deleted block is pasted as a block with `p` (after the cursor) or `P
 - `*` Search for the word under the cursor
 - `Esc` or `:noh` Remove the highlighting of the matches (press `Esc` again to close the editor)
 
-The text you search for is a regular expression: `/\d+` finds numbers and `/cat|dog` finds either word. A search in lowercase ignores case; with an uppercase letter in it the search matches case. A letter after a backslash does not count: `/\Sfoo` still ignores case, as `\S`, `\W` and `\D` are classes.
+The text you search for is a regular expression: `/\d+` finds numbers and `/cat|dog` finds either word. A search that takes too long is stopped (2 seconds on a line, 10 seconds in all); a `:s` that is stopped changes nothing. A search in lowercase ignores case; with an uppercase letter in it the search matches case. A letter after a backslash does not count: `/\Sfoo` still ignores case, as `\S`, `\W` and `\D` are classes.
 
 ## Replace
 The easy way is `:replace`, which shows a box to fill in:
@@ -382,7 +382,7 @@ Text that is yanked, and lines that are deleted, are kept in the string memory (
 ## System clipboard and paste bin
 What is yanked (`y`, `yy`, `Y`, `:y` ...) is kept in the string memory of Blyant. It can also be sent out of Blyant, to be used in other programs:
 
-- **The system clipboard** through the terminal (OSC 52). This works in Windows Terminal, iTerm2, kitty, WezTerm and tmux, also over SSH (the text lands on the clipboard of the computer you sit at). It does not work in the console of a Raspberry Pi or in the Terminal of macOS; there nothing happens.
+- **The system clipboard** through the terminal (OSC 52). This works in Windows Terminal, iTerm2, kitty, WezTerm and tmux, also over SSH (the text lands on the clipboard of the computer you sit at). It does not work in the console of a Raspberry Pi or in the Terminal of macOS; there nothing happens. A yank of more than about 75 KB is not sent (most terminals drop it): the message tells, and the paste bin still gets it when it is on.
 - **The paste bin**, a text file (`paste-bin.txt` in the data directory, with the settings and the snippets, unless set otherwise: a name or a path that is not a full path is in the data directory) that other programs can read. Use it where OSC 52 does not work.
 
 Only yanks go out, never text that is deleted. By default every yank goes out. It can be set so that a yank only goes out when `"+` is typed in front of it: `"+yy` (the line), `"+yw`, or select text and type `"+y` (`"*` works as `"+`).

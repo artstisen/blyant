@@ -49,11 +49,10 @@ public class SafetyFixTests : IDisposable
         Assert.Equal(2, Recovery.All().Count);
     }
 
-    [Fact]
+    // (a file held open without sharing cannot be read on Windows; elsewhere the lock is only advisory)
+    [WindowsFact]
     public void TheListOfProjects_IsNotWritten_WhenItCouldNotBeRead()
     {
-        // (a file held open without sharing cannot be read on Windows; elsewhere the lock is only advisory)
-        if (!OperatingSystem.IsWindows()) return;
         var first = Directory.CreateDirectory(In("Novel")).FullName;
         var second = Directory.CreateDirectory(In("Essay")).FullName;
         Assert.Equal(DialogText.Success, Projects.Add(first));

@@ -1405,8 +1405,17 @@ internal sealed partial class EditorEngine
         return text;
     }
 
-    // The most characters "p" and "P" put in at once (the register times the count): more would take the memory
+    // The most characters "p" and "P" (and ":dup") put in at once (the register times the count): more would take
+    // the memory
     private const long MaxPutLength = 10_000_000;
+
+    // True (with the error shown) if text of a length is too much to put in at once
+    private bool TooMuchToPut(long length)
+    {
+        if (length <= MaxPutLength) return false;
+        SetError(Lang.T("Too much text to put in at once (use a smaller count)"));
+        return true;
+    }
 
     // The "p" and "P" commands: insert the register after or before the cursor
     private void Put(bool after, int count)
@@ -1415,11 +1424,7 @@ internal sealed partial class EditorEngine
         if (text.Length == 0) return;
         // (the cursor goes to the lines put in, which a read-only text does not get)
         if (Buffer.RefuseIfReadOnly()) return;
-        if ((long)text.Length * count > MaxPutLength)
-        {
-            SetError(Lang.T("Too much text to put in at once (use a smaller count)"));
-            return;
-        }
+        if (TooMuchToPut((long)text.Length * count)) return;
 
         if (RegisterIsBlock(text))
         {

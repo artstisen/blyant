@@ -1039,6 +1039,8 @@ en: "PANE {0}"
 nb: "RUTE {0}"
 
 # FileIo.cs
+en: "{0} is read only: it is not written"
+nb: "{0} er skrivebeskyttet: den skrives ikke"
 en: "bytes"
 nb: "byte"
 
@@ -1763,6 +1765,10 @@ en: "That is a directory: type the path of a file"
 nb: "Det er en mappe: skriv stien til en fil"
 en: "Blyant uses this file: pick another for the paste bin"
 nb: "Blyant bruker denne filen: velg en annen utklippsfil"
+en: "Copied to the paste bin (too long for the clipboard of the terminal)"
+nb: "Kopiert til utklippsfilen (for lang for terminalens utklippstavle)"
+en: "Too long for the clipboard of the terminal (more than {0} KB): not copied"
+nb: "For lang for terminalens utklippstavle (over {0} KB): ikke kopiert"
 
 # Tools.cs
 en: "(lines) {0}"
@@ -2499,6 +2505,8 @@ en: "Search took too long"
 nb: "Søket tok for lang tid"
 en: "Unknown flags: "
 nb: "Ukjente flagg: "
+en: "Search took too long: nothing was replaced"
+nb: "Søket tok for lang tid: ingenting ble erstattet"
 en: "{0} on {1}"
 nb: "{0} på {1}"
 en: "1 substitution"

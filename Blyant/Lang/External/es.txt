@@ -1039,6 +1039,8 @@ en: "PANE {0}"
 es: "PANEL {0}"
 
 # FileIo.cs
+en: "{0} is read only: it is not written"
+es: "{0} es de solo lectura: no se escribe"
 en: "bytes"
 es: "bytes"
 
@@ -1763,6 +1765,10 @@ en: "That is a directory: type the path of a file"
 es: "Es una carpeta: escriba la ruta de un archivo"
 en: "Blyant uses this file: pick another for the paste bin"
 es: "Blyant usa este archivo: elija otro archivo de traspaso"
+en: "Copied to the paste bin (too long for the clipboard of the terminal)"
+es: "Copiado al archivo de traspaso (demasiado largo para el portapapeles del terminal)"
+en: "Too long for the clipboard of the terminal (more than {0} KB): not copied"
+es: "Demasiado largo para el portapapeles del terminal (más de {0} KB): no copiado"
 
 # Tools.cs
 en: "(lines) {0}"
@@ -2499,6 +2505,8 @@ en: "Search took too long"
 es: "La búsqueda tardó demasiado"
 en: "Unknown flags: "
 es: "Opciones desconocidas: "
+en: "Search took too long: nothing was replaced"
+es: "La búsqueda tardó demasiado: no se reemplazó nada"
 en: "{0} on {1}"
 es: "{0} en {1}"
 en: "1 substitution"

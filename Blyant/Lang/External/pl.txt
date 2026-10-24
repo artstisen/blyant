@@ -1039,6 +1039,8 @@ en: "PANE {0}"
 pl: "PANEL {0}"
 
 # FileIo.cs
+en: "{0} is read only: it is not written"
+pl: "{0} jest tylko do odczytu: nie jest zapisywany"
 en: "bytes"
 pl: "B"
 
@@ -1763,6 +1765,10 @@ en: "That is a directory: type the path of a file"
 pl: "To jest folder: wpisz ścieżkę pliku"
 en: "Blyant uses this file: pick another for the paste bin"
 pl: "Blyant używa tego pliku: wybierz inny plik przechowalni"
+en: "Copied to the paste bin (too long for the clipboard of the terminal)"
+pl: "Skopiowano do przechowalni (za długie dla schowka terminala)"
+en: "Too long for the clipboard of the terminal (more than {0} KB): not copied"
+pl: "Za długie dla schowka terminala (ponad {0} KB): nie skopiowano"
 
 # Tools.cs
 en: "(lines) {0}"
@@ -2499,6 +2505,8 @@ en: "Search took too long"
 pl: "Wyszukiwanie trwało za długo"
 en: "Unknown flags: "
 pl: "Nieznane flagi: "
+en: "Search took too long: nothing was replaced"
+pl: "Wyszukiwanie trwało za długo: nic nie zastąpiono"
 en: "{0} on {1}"
 pl: "{0}; {1}"
 en: "1 substitution"

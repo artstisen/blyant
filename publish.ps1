@@ -1,3 +1,6 @@
+#Requires -Version 7.3
+# (System.Formats.Tar, which packs the versions for Linux and macOS, needs PowerShell 7.3 or later)
+
 # Builds the release versions of Blyant in the directory "publish":
 #   portable    The lightweight version for all platforms. It needs the .NET 10 runtime to be installed,
 #               and is started with:  dotnet Blyant.dll
@@ -9,10 +12,15 @@
 # Windows and the portable version (Blyant-0.1.0-win-x64.zip), and a tar.gz for Linux and macOS
 # (Blyant-0.1.0-linux-x64.tar.gz), where the program is marked as one that can be run. Each has a folder "Blyant"
 # with the files in it. The language pack is Blyant-languages-0.1.0.zip
+# The tests are run first (nothing is published when one fails), and the version must be the same in all the
+# places it is set: Version, AssemblyVersion and FileVersion in Blyant.csproj, and DialogText.ApplicationVersion.
+# The archives of a version that is published again are replaced, also those of an earlier version of Blyant
 # Usage:  ./publish.ps1                     (all versions)
 #         ./publish.ps1 portable,win-x64    (one or more versions)
+#         ./publish.ps1 -SkipTests          (without running the tests first)
 param(
-    [string[]]$Platforms = @("portable", "win-x64", "win-arm64", "linux-x64", "linux-arm64", "linux-arm", "osx-x64", "osx-arm64", "languages")
+    [string[]]$Platforms = @("portable", "win-x64", "win-arm64", "linux-x64", "linux-arm64", "linux-arm", "osx-x64", "osx-arm64", "languages"),
+    [switch]$SkipTests
 )
 
 $ErrorActionPreference = "Stop"
@@ -27,9 +35,29 @@ foreach ($platform in $Platforms) {
     if ($known -notcontains $platform) { throw "Unknown version: '$platform' (known: $($known -join ', '))" }
 }
 
-# The version of Blyant (0.1.0), for the names of the archives
+# The version of Blyant (0.1.0), for the names of the archives: the same in all four places
 [xml]$csproj = Get-Content $project
-$version = ($csproj.Project.PropertyGroup.FileVersion | Where-Object { $_ } | Select-Object -First 1) -replace '\.0$', ''
+function Get-Property([string]$name) {
+    $csproj.Project.PropertyGroup | ForEach-Object { $_.$name } | Where-Object { $_ } | Select-Object -First 1
+}
+$version = Get-Property "Version"
+$shown = [regex]::Match((Get-Content (Join-Path $PSScriptRoot "Blyant/DialogText.cs") -Raw),
+    'ApplicationVersion\s*=\s*"v([^"]+)"').Groups[1].Value
+$versions = [ordered]@{
+    "Version" = $version
+    "AssemblyVersion" = (Get-Property "AssemblyVersion") -replace '\.0$', ''
+    "FileVersion" = (Get-Property "FileVersion") -replace '\.0$', ''
+    "DialogText.ApplicationVersion" = $shown
+}
+if (-not $version -or ($versions.Values | Where-Object { $_ -ne $version })) {
+    throw "The version is not the same everywhere: $(($versions.GetEnumerator() | ForEach-Object { "$($_.Key) $($_.Value)" }) -join ', ')"
+}
+
+if (-not $SkipTests) {
+    Write-Host "Running the tests..."
+    dotnet test (Join-Path $PSScriptRoot "Blyant.sln") --nologo -v quiet
+    if ($LASTEXITCODE -ne 0) { throw "The tests failed: nothing was published" }
+}
 
 # Each folder is emptied first, so files left from earlier versions are not released. A data folder (made when a
 # version was tried there) holds settings and lists: it is never deleted, nothing is published. All folders
@@ -91,6 +119,11 @@ foreach ($platform in $Platforms) {
     Write-Host "Publishing $platform..."
     $folder = Join-Path $output $platform
     if (Test-Path $folder) { Remove-Item -Recurse -Force $folder }
+    # The archives of this version made before (also of an earlier version of Blyant), so they are not released
+    if (Test-Path $release) {
+        $old = if ($platform -eq "languages") { "Blyant-languages-*.zip" } else { "Blyant-*-$platform.*" }
+        Get-ChildItem $release -Filter $old -File | Remove-Item
+    }
     if ($platform -eq "languages") {
         # The zip is named by the version of Blyant (Blyant-languages-0.1.0.zip)
         $lang = Join-Path $PSScriptRoot "Blyant/Lang"

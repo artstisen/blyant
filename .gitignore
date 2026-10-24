@@ -14,8 +14,9 @@
 # VS Code
 .vscode/
 
-# Blyant runtime data (encrypted notes, settings, imports/exports)
+# Blyant runtime data (settings, lists, recovery copies, the trash, the log)
 data/
+# Data files of Marbles, which Blyant came from (never part of the source)
 *.mbls
 
 # OS

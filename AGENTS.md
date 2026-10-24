@@ -55,4 +55,4 @@ The files of the user, and Blyant's own files, must never be left empty or half 
 
 ## Releases
 - The version is set in `DialogText.ApplicationVersion` and in `Blyant.csproj`: `Version` (the product version, `0.1.0`), `AssemblyVersion` and `FileVersion` (`0.1.0.0`). Change all four together
-- `publish.ps1` builds the `publish` folder
+- `publish.ps1` builds the `publish` folder: it runs the tests first, and stops if the four versions differ
