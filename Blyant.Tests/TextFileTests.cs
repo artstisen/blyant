@@ -2,6 +2,7 @@
 
 namespace Blyant.Tests;
 
+[Collection("Static state")]
 public class TextFileTests
 {
     private static readonly byte[] Utf8Bom = { 0xEF, 0xBB, 0xBF };

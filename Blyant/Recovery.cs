@@ -174,17 +174,32 @@ internal static class Recovery
     /// </summary>
     internal static Copy? Find(string filePath)
     {
+        // The newest: a file can have more than one (a copy put off for later, and the one beside it)
         try
         {
-            var path = CopyPathOf(filePath);
-            if (!File.Exists(path)) return null;
-            var copy = Parse(File.ReadAllText(path, Encoding.UTF8), path);
-            return copy != null && FileOperations.SamePath(copy.FilePath, filePath) ? copy : null;
+            var full = Path.GetFullPath(filePath);
+            return All().FirstOrDefault(copy => !copy.IsUntitled && FileOperations.SamePath(copy.FilePath, full));
         }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException)
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException
+                                      or NotSupportedException)
         {
             return null;
         }
+    }
+
+    /// <summary>
+    /// A name beside a copy that is there, for another copy of the same file (with a number, as "name.code 2")
+    /// </summary>
+    internal static string FreeCopyPath(string copyPath)
+    {
+        var stem = copyPath[..^Extension.Length];
+        var path = copyPath;
+        for (var number = 2; File.Exists(path); number++)
+        {
+            path = stem + " " + number + Extension;
+        }
+
+        return path;
     }
 
     /// <summary>

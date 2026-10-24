@@ -574,6 +574,19 @@ public class EditorTests
         Assert.Equal(expected, editor.GetText());
     }
 
+    [Theory]
+    // A count given to "." takes the place of the count of the change (also one after the operator)
+    [InlineData("one two three four", "3x2.", "wo three four")]
+    [InlineData("a b c d e f", "2dw1.", "d e f")]
+    [InlineData("a b c d e f", "d2w1.", "d e f")]
+    [InlineData("a b c d e f", "d2w.", "e f")]
+    public void Repeat_WithACount_ReplacesTheCountOfTheChange(string text, string keys, string expected)
+    {
+        var editor = Editor(text);
+        editor.Type(keys);
+        Assert.Equal(expected, editor.GetText());
+    }
+
     [Fact]
     public void Repeat_WorksOnOtherLines()
     {

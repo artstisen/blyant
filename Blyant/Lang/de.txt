@@ -1758,6 +1758,12 @@ de: "Daten:"
 en: "Settings:"
 de: "Einstellungen:"
 
+# SystemClipboard.cs
+en: "That is a directory: type the path of a file"
+de: "Das ist ein Ordner: den Pfad einer Datei eingeben"
+en: "Blyant uses this file: pick another for the paste bin"
+de: "Blyant nutzt diese Datei: eine andere Ablagedatei wählen"
+
 # Tools.cs
 en: "(lines) {0}"
 de: "(Zeilen) {0}"

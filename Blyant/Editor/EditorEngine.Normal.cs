@@ -1043,6 +1043,32 @@ internal sealed partial class EditorEngine
 
     #endregion
 
+    // The keys of a change with another count: its own counts (before the command, and after an operator, as in
+    // "2d3w") are left out, and the count is put first
+    private static ConsoleKeyInfo[] WithCount(ConsoleKeyInfo[] keys, int count)
+    {
+        var at = SkipCount(keys, 0);
+        var rest = new List<ConsoleKeyInfo>();
+        if (at < keys.Length)
+        {
+            rest.Add(keys[at]);
+            at = keys[at].KeyChar is 'd' or 'c' or 'y' or '<' or '>' or '=' ? SkipCount(keys, at + 1) : at + 1;
+        }
+
+        rest.AddRange(keys.Skip(at));
+        var digits = count.ToString(System.Globalization.CultureInfo.InvariantCulture)
+            .Select(c => new ConsoleKeyInfo(c, ConsoleKey.D0 + (c - '0'), false, false, false));
+        return digits.Concat(rest).ToArray();
+    }
+
+    // After the digits of a count from a place in the keys (a count does not start with 0)
+    private static int SkipCount(ConsoleKeyInfo[] keys, int at)
+    {
+        if (at >= keys.Length || keys[at].KeyChar is < '1' or > '9') return at;
+        while (at < keys.Length && char.IsAsciiDigit(keys[at].KeyChar)) at++;
+        return at;
+    }
+
     #region Normal mode commands
 
     private void HandleCommand(char cmd, int? count)
@@ -1129,7 +1155,7 @@ internal sealed partial class EditorEngine
                 Redo(n);
                 break;
             case '.':
-                Repeat(n);
+                Repeat(count);
                 break;
 
             // Visual mode
@@ -1313,22 +1339,20 @@ internal sealed partial class EditorEngine
         }
     }
 
-    // The "." command: repeat the last change by replaying its keys
-    private void Repeat(int count)
+    // The "." command: repeat the last change by replaying its keys. A count given to "." takes the place of the
+    // count of the change (as in Vim: "3x" and then "2." deletes 2 characters)
+    private void Repeat(int? count)
     {
         if (_replaying || _lastChange.Length == 0) return;
         ResetPending();
         Buffer.EndStep(Cursor);
-        var keys = _lastChange;
+        var keys = count == null ? _lastChange : WithCount(_lastChange, count.Value);
         _replaying = true;
         try
         {
-            while (count-- > 0)
+            foreach (var key in keys)
             {
-                foreach (var key in keys)
-                {
-                    HandleKey(key);
-                }
+                HandleKey(key);
             }
         }
         finally
@@ -1389,6 +1413,8 @@ internal sealed partial class EditorEngine
     {
         var text = GetRegister(out var linewise);
         if (text.Length == 0) return;
+        // (the cursor goes to the lines put in, which a read-only text does not get)
+        if (Buffer.RefuseIfReadOnly()) return;
         if ((long)text.Length * count > MaxPutLength)
         {
             SetError(Lang.T("Too much text to put in at once (use a smaller count)"));

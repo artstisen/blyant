@@ -53,6 +53,33 @@ internal static class SystemClipboard
         return Path.GetFullPath(Path.IsPathRooted(file) ? file : Path.Combine(FileIo.GetDataDirectoryName(), file));
     }
 
+    /// <summary>
+    /// Why a path cannot be the paste bin (null if it can): it is a directory, or a file in the data directory that
+    /// Blyant uses (the settings, the lists ...), which every yank would replace. The paste bin made by Blyant
+    /// (paste-bin.txt) and files that are not there yet can be used
+    /// </summary>
+    internal static string? PasteBinProblem(string file)
+    {
+        try
+        {
+            var full = FullPath(file);
+            if (Directory.Exists(full)) return Lang.T("That is a directory: type the path of a file");
+            var dataDirectory = Path.GetFullPath(FileIo.GetDataDirectoryName());
+            var inData = FileOperations.IsInside(full, dataDirectory);
+            if (inData && File.Exists(full) &&
+                !FileOperations.SamePath(full, Path.Combine(dataDirectory, DefaultPasteBinFile)))
+            {
+                return Lang.T("Blyant uses this file: pick another for the paste bin");
+            }
+
+            return null;
+        }
+        catch (Exception e) when (e is ArgumentException or NotSupportedException or IOException)
+        {
+            return e.Message;
+        }
+    }
+
     internal static void SetDefaults()
     {
         Osc52 = true;

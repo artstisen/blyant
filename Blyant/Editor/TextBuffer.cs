@@ -181,14 +181,20 @@ internal sealed class TextBuffer
     internal TextPos Insert(TextPos at, string text)
     {
         if (string.IsNullOrEmpty(text)) return at;
-        if (ReadOnly)
-        {
-            _changeRefused = true;
-            return at;
-        }
-
+        if (RefuseIfReadOnly()) return at;
         Record(new Edit(at, string.Empty, text));
         return ApplyInsert(at, text);
+    }
+
+    /// <summary>
+    /// True if the text is read only: the change about to be made is refused (and told, as one the buffer refused).
+    /// For a change made of several steps that each depend on the one before (a line put in, then moved to)
+    /// </summary>
+    internal bool RefuseIfReadOnly()
+    {
+        if (!ReadOnly) return false;
+        _changeRefused = true;
+        return true;
     }
 
     /// <summary>

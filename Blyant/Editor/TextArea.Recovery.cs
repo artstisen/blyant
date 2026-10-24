@@ -23,6 +23,7 @@ public partial class TextArea
 
     private bool _recoveryOwned; // There is a copy of this text (written by this editor, or opened from)
     private string _recoveryCopy = string.Empty; // The file of that copy (the file edited can be renamed, or named)
+    private string _recoveryFile = string.Empty; // The file edited when that copy was written (empty: a blank page)
     private int _copiedVersion = -1; // The version of the text last copied
     private int _seenVersion = -1;
     private long _changedAt; // When the text was last changed (Environment.TickCount64)
@@ -82,11 +83,22 @@ public partial class TextArea
     {
         lock (_recoveryLock)
         {
-            var copy = CurrentCopy;
-            // Renamed in the editor (or opened from another copy): the copy goes by the new name
-            if (_recoveryOwned && _recoveryCopy.Length > 0 && !FileOperations.SamePath(_recoveryCopy, copy))
+            string copy;
+            if (_recoveryOwned && _recoveryCopy.Length > 0 &&
+                FileOperations.SamePath(_recoveryFile, FileExplorer.CurrentFilePath))
             {
-                Recovery.DeleteCopy(_recoveryCopy);
+                // The copy of this editor is written again
+                copy = _recoveryCopy;
+            }
+            else
+            {
+                // Renamed in the editor: the copy goes by the new name
+                if (_recoveryOwned && _recoveryCopy.Length > 0) Recovery.DeleteCopy(_recoveryCopy);
+                _recoveryOwned = false;
+                copy = CurrentCopy;
+                // A copy that is not this editor's is never written over: one put off with "Decide later", or one
+                // that another Blyant is writing. This text gets a copy beside it (offered by Recover unsaved text)
+                if (File.Exists(copy)) copy = Recovery.FreeCopyPath(copy);
             }
 
             // (the copy written, or why it failed, is logged by FileIo; it is tried again at the next change)
@@ -94,6 +106,7 @@ public partial class TextArea
             {
                 _recoveryOwned = true;
                 _recoveryCopy = copy;
+                _recoveryFile = FileExplorer.CurrentFilePath;
             }
 
             _copiedVersion = version;
@@ -110,6 +123,7 @@ public partial class TextArea
             Recovery.DeleteCopy(_recoveryCopy);
             _recoveryOwned = false;
             _recoveryCopy = string.Empty;
+            _recoveryFile = string.Empty;
         }
     }
 

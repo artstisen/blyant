@@ -221,7 +221,11 @@ internal static class CStyleHighlighter
                     InVerbatim => (VerbatimEnd(line, i, end, out var verbatim), verbatim),
                     InSingle => (JavaScriptHighlighter.StringEnd(line, i, end, '\'', out var single), single),
                     InDouble => (JavaScriptHighlighter.StringEnd(line, i, end, '"', out var quoted), quoted),
-                    _ => EndOf(line, i, end, language.Cpp ? ")\"" : "\"\"\"")
+                    // A raw string: C++ to )", Rust to " and its number of # (kept above StateBits), C# to """
+                    _ => EndOf(line, i, end,
+                        language.Cpp ? ")\""
+                        : language.Rust ? "\"" + new string('#', state >> StateBits)
+                        : "\"\"\"")
                 };
                 Fill(styles, i, to, state == InComment ? SyntaxStyle.Comment : SyntaxStyle.String);
                 if (closed) state = Normal;
@@ -342,8 +346,8 @@ internal static class CStyleHighlighter
                     StringComparison.Ordinal);
                 var to = close < 0 ? end : close + 1 + hashes;
                 Fill(styles, i, to, SyntaxStyle.String);
-                // Not closed on the line: it goes on (to a quote)
-                if (close < 0) state = InDouble;
+                // Not closed on the line: it goes on, to the quote and the same number of #
+                if (close < 0) state = InRaw | (Math.Min(hashes, 255) << StateBits);
                 i = to;
             }
             else if (language.Cpp && CppRawStart(line, i, end, out var delimiter, out var open))

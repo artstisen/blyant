@@ -1758,6 +1758,12 @@ it: "Dati:"
 en: "Settings:"
 it: "Impostazioni:"
 
+# SystemClipboard.cs
+en: "That is a directory: type the path of a file"
+it: "È una cartella: digitare il percorso di un file"
+en: "Blyant uses this file: pick another for the paste bin"
+it: "Blyant usa questo file: scegliere un altro file di scambio"
+
 # Tools.cs
 en: "(lines) {0}"
 it: "(righe) {0}"

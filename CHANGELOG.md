@@ -27,6 +27,16 @@
 - **The Default color scheme** highlights the tab with the focus (cyan on black), with a white corner.
 - **_Open file_ on the start page is now _File browser_**, as it does more than open files (the key is still `F`, and `:file` and `:open` still work).
 - **New file in another folder**: on the start page, `Tab` in the box of a new file (`N`, `:new`) chooses the folder: the folders of the two panes of the file browser, the folder picked last and the projects folder (`1` to `4`, or `j`/`k`, `gg`/`G` and `Enter`), or `B` to pick one in the file browser. The name typed is kept. `:new name` shows the box too, with the name filled in.
+- **Fixes from a code review**:
+  - A recovery copy put off with _Decide later_ was written over by the next change of the file. Now the new changes get a copy beside it, and both are kept
+  - `p`, `P`, `:dup` and a block put on the last line of a read-only text (a peek, a comparison) stopped the editor with an error. They are refused, as other changes are
+  - When the list of added projects (`projects.txt`) could not be read for a moment (held by a sync program), adding a project wrote a list with only that one. Now it is not changed, and you are told
+  - Saving the settings file from the editor did not tell when the write failed, and marked the text as saved
+  - The paste bin file could be one of Blyant's own files (as `settings.ini`), which every yank then replaced
+  - The data directory is chosen once: a folder `data` made later in the directory Blyant was started in no longer takes its place in the middle of a session
+  - A count given to `.` takes the place of the count of the change, as in Vim (`3x` and then `2.` deletes 2 characters, not 6)
+  - Shell scripts: a here-string (`<<<`) and a shift in arithmetic (`$((1 << n))`) are no longer read as the start of a here-document
+  - Rust: a raw string over several lines (`r#"...`) ends at its own end (`"#`), not at a quote in it
 - **A picture of h, j, k and l** in the quick guide and the editor guide shows them as the arrow keys they are, below their rows.
 - **PowerShell, batch files and shell scripts are colored**: `.ps1` (`.psm1`, `.psd1`), `.bat` and `.cmd`, and `.sh` (`.bash`, `.zsh`, `.bashrc`) files get colors in the editor: comments, strings (here-strings and here-documents over several lines), the words of the language, numbers, and as names the variables (`$name`, `%name%`, `${name}`) and the labels of batch files. A file without an extension is colored by its first line, as `#!/bin/bash`, `#!/usr/bin/env python3` or `#!/usr/bin/env pwsh` tells. `:syntax ps`, `:syntax bat` and `:syntax sh` color a text as one of them.
 - **C, C++, Rust and Python are colored**: `.c`, `.h`, `.cpp`, `.hpp` (and the other names of C++ files), `.rs`, and `.py`, `.pyw` and `.pyi` files get colors in the editor, in the colors of C#: comments, strings, the words of the language, numbers, and as names the lines of the preprocessor (C/C++), attributes and lifetimes (Rust) and decorators (Python). Macros in Rust (`println!`) are colored as words. Raw strings of C++ and Rust and strings in three quotes in Python go over several lines. `:syntax cpp` (or `c`), `:syntax rust` and `:syntax py` color a text as one of them.

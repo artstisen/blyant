@@ -291,6 +291,9 @@ public class CompletionsTests : IDisposable
     public void CompletingWords_IsOnFromTheStart()
     {
         var saved = Completions.Enabled;
+        // (the default settings are saved: to a data directory of the test, not to the one of the program)
+        var data = Path.Combine(Path.GetTempPath(), "blyant-completions-" + Guid.NewGuid().ToString("N"));
+        FileIo.DataDirectoryOverride = data;
         try
         {
             Completions.Enabled = false;
@@ -299,7 +302,9 @@ public class CompletionsTests : IDisposable
         }
         finally
         {
+            FileIo.DataDirectoryOverride = null;
             Completions.Enabled = saved;
+            if (Directory.Exists(data)) Directory.Delete(data, true);
         }
     }
 }

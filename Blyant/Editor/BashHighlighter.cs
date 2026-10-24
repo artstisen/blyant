@@ -82,6 +82,7 @@ internal static class BashHighlighter
                 i = Variable(line, i, styles);
             }
             else if (c == '<' && next == '<' && (i + 2 >= end || line[i + 2] != '<') &&
+                     (i == 0 || line[i - 1] != '<') && !InArithmetic(line, i) &&
                      HeredocMarker(line, i + 2) is var (marker, markerEnd))
             {
                 // <<EOF, <<-EOF, << 'EOF' and <<"EOF"
@@ -193,6 +194,27 @@ internal static class BashHighlighter
         }
 
         return (marker, i);
+    }
+
+    // True if a place on the line is inside "((" ... "))" (arithmetic, where "<<" is a shift: $((1 << n)))
+    private static bool InArithmetic(string line, int i)
+    {
+        var open = 0;
+        for (var at = 0; at + 1 < i; at++)
+        {
+            if (line[at] == '(' && line[at + 1] == '(')
+            {
+                open++;
+                at++;
+            }
+            else if (line[at] == ')' && line[at + 1] == ')' && open > 0)
+            {
+                open--;
+                at++;
+            }
+        }
+
+        return open > 0;
     }
 
     // The characters of a word: a command, an option, a path or a value

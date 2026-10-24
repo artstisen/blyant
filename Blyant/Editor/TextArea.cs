@@ -213,6 +213,7 @@ public partial class TextArea
         // Opened from a recovery copy: the copy goes with the changes, as one this editor wrote
         _recoveryCopy = NextRecoveredCopy ?? string.Empty;
         _recoveryOwned = _recoveryCopy.Length > 0;
+        if (_recoveryOwned) _recoveryFile = FileExplorer.CurrentFilePath;
         NextRecoveredCopy = null;
         _peek = peek;
         _top = top;
@@ -1477,8 +1478,13 @@ public partial class TextArea
         SaveWasInvoked = true;
         if (_saveMode == SaveAsSettings)
         {
-            // Save as settings
-            FileIo.WriteSettingsFile(GetText());
+            // Save as settings (a write that failed is told, and the text stays changed)
+            var written = FileIo.WriteSettingsFile(GetText());
+            if (written != DialogText.Success)
+            {
+                _engine.SetMessage(written, true);
+                return false;
+            }
         }
         else if (_saveMode == SaveAsFile)
         {

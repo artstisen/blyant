@@ -1758,6 +1758,12 @@ sv: "Data:"
 en: "Settings:"
 sv: "Inställningar:"
 
+# SystemClipboard.cs
+en: "That is a directory: type the path of a file"
+sv: "Det är en mapp: skriv sökvägen till en fil"
+en: "Blyant uses this file: pick another for the paste bin"
+sv: "Blyant använder filen: välj en annan urklippsfil"
+
 # Tools.cs
 en: "(lines) {0}"
 sv: "(rader) {0}"

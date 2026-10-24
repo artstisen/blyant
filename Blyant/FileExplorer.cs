@@ -890,7 +890,7 @@ internal static partial class FileExplorer
         if (_browsing) RememberPanes();
         _file = file;
         // Text of the file that was not saved when Blyant stopped: the user is asked what to do with it
-        var recovered = OfferRecovery(file);
+        var recovered = OfferRecovery(file, out var recoveredCopy);
         EventLog.Add(DialogText.LogFile + "Open: " + file.Path);
         AddToHistory(file.Path);
         try
@@ -913,7 +913,7 @@ internal static partial class FileExplorer
                 TextArea.NextSplit = split;
                 // The recovered text is opened as changes that are not saved yet
                 if (recovered != null) modified = true;
-                TextArea.NextRecoveredCopy = recovered != null ? Recovery.CopyPathOf(file.Path) : null;
+                TextArea.NextRecoveredCopy = recovered != null ? recoveredCopy : null;
                 var textArea = new TextArea(Console.CursorLeft, Console.CursorTop, Init.LineWidth - 1,
                     Init.LineCount - 3, recovered ?? _file?.Text ?? string.Empty, cursorIndex, false, false, false,
                     TextArea.SaveAsFile, modified);
@@ -1013,11 +1013,13 @@ internal static partial class FileExplorer
     // A file is opened that has a recovery copy (text that was not saved when Blyant stopped, see Recovery): the
     // recovered text can be opened, compared with the file, or given up. Returns the text to open, or null to open
     // the file as it is (Esc keeps the copy, to decide later). Nothing is asked when the copy has the text of the
-    // file, or another Blyant that is running is editing it
-    private static string? OfferRecovery(TextFile file)
+    // file, or another Blyant that is running is editing it. "copyPath" is the file of the copy offered (the newest)
+    private static string? OfferRecovery(TextFile file, out string copyPath)
     {
+        copyPath = string.Empty;
         var copy = Recovery.Find(file.Path);
         if (copy == null) return null;
+        copyPath = copy.CopyPath;
         if (Recovery.WrittenByOtherRunning(copy))
         {
             EventLog.Add(DialogText.LogFile + "Recovery copy: " + file.Path + " - kept (another Blyant is editing it)");
@@ -1026,7 +1028,7 @@ internal static partial class FileExplorer
 
         if (TextBuffer.Normalize(copy.Text) == TextBuffer.Normalize(file.Text))
         {
-            Recovery.Delete(file.Path);
+            Recovery.DeleteCopy(copy.CopyPath);
             return null;
         }
 
@@ -1071,7 +1073,7 @@ internal static partial class FileExplorer
                     if (ChoiceBox.ConfirmGuarded(DialogText.CaptionsRecovery, Lang.T("Delete the recovered text?"),
                             Lang.T("The file is opened as it is. This cannot be undone")))
                     {
-                        Recovery.Delete(file.Path);
+                        Recovery.DeleteCopy(copy.CopyPath);
                         EventLog.Add(DialogText.LogFile + "Recovery copy deleted: " + file.Path);
                         return null;
                     }
@@ -1242,11 +1244,11 @@ internal static partial class FileExplorer
         try
         {
             _file = TextFile.Load(path);
-            var recovered = OfferRecovery(_file);
+            var recovered = OfferRecovery(_file, out var recoveredCopy);
             EventLog.Add(DialogText.LogFile + "Open: " + _file.Path);
             Tools.ClearScreen();
             Actions.DrawEditFileMenu();
-            TextArea.NextRecoveredCopy = recovered != null ? Recovery.CopyPathOf(_file.Path) : null;
+            TextArea.NextRecoveredCopy = recovered != null ? recoveredCopy : null;
             var text = recovered ?? _file.Text;
             var textArea = new TextArea(Console.CursorLeft, Console.CursorTop, Init.LineWidth - 1,
                 Init.LineCount - 3, text, Snippets.IndexOfLine(text, line), false, false, false,

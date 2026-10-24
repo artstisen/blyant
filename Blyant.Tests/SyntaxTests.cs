@@ -351,6 +351,9 @@ public class SyntaxTests
     public void Rust_StringOverSeveralLines()
     {
         Assert.Equal(new[] { "WWW.....SSSS", "SSSS..WW" }, Styles(SyntaxType.Rust, "let s = \"one", "two\"; fn"));
+        // A raw string ends at its quote and its number of #, also on a later line: not at a quote in it
+        Assert.Equal(new[] { "WWW.....SSSS", "SSSSSSSSSSSSSSSS..WW" },
+            Styles(SyntaxType.Rust, "let s = r#\"a", "say \"hi\" there\"#; fn"));
         Assert.Equal(SyntaxType.Rust, SyntaxHighlighter.ParseType("rs"));
         Assert.Equal("Rust", SyntaxHighlighter.Name(SyntaxType.Rust));
     }
@@ -459,6 +462,10 @@ public class SyntaxTests
         Assert.Equal(new[] { "..SSSS", "SSSS.WW" }, Styles(SyntaxType.Bash, "s='one", "two' if"));
         // (1<<2 is not a here-document)
         Assert.Equal(new[] { ".....9..9..", "WWWW" }, Styles(SyntaxType.Bash, "x=$((1<<2))", "done"));
+        // (nor a shift with blank space around it, nor a here-string, <<<)
+        Assert.Equal("WWWW", Styles(SyntaxType.Bash, "echo $((1 << n))", "done")[1]);
+        Assert.Equal("WWWW", Styles(SyntaxType.Bash, "tr a-z A-Z <<<'hello'", "done")[1]);
+        Assert.Equal("WWWW", Styles(SyntaxType.Bash, "cat <<< EOF", "done")[1]);
         Assert.Equal(SyntaxType.Bash, SyntaxHighlighter.ParseType("sh"));
         Assert.Equal("Shell", SyntaxHighlighter.Name(SyntaxType.Bash));
     }

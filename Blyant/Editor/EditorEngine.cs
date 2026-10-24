@@ -1471,7 +1471,7 @@ internal sealed partial class EditorEngine
 
     private void Duplicate(int first, int last, bool fromSelection, int copies)
     {
-        if (SingleLine) return;
+        if (SingleLine || Buffer.RefuseIfReadOnly()) return;
         var mode = fromSelection ? _commandSelectionMode : EditorMode.VisualLine;
         _commandSelectionMode = EditorMode.Normal;
         switch (mode)

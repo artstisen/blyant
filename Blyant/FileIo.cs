@@ -14,9 +14,33 @@ internal static class FileIo
     /// The data directory: "data" in the directory Blyant is started in, if there is one there (as Marbles has
     /// always done), else "data" next to the program, so the same data is used wherever Blyant is started from (a
     /// terminal in another directory, a file opened with Blyant). If the program directory cannot be written to (a
-    /// program installed for all users), "Blyant/data" in the user's application data is used
+    /// program installed for all users), "Blyant/data" in the user's application data is used.
+    /// It is chosen once (for each directory Blyant runs in): a folder "data" made later in the directory Blyant
+    /// was started in (with the file browser) does not take the place of the one in use
     /// </summary>
-    private static string DataDirectory => Directory.Exists(DataDirectoryName) ? DataDirectoryName : ProgramDataDirectory;
+    private static string DataDirectory
+    {
+        get
+        {
+            if (DataDirectoryOverride != null) return DataDirectoryOverride;
+            var current = Environment.CurrentDirectory;
+            if (_chosenIn != current)
+            {
+                _localData = Directory.Exists(DataDirectoryName);
+                _chosenIn = current;
+            }
+
+            return _localData ? DataDirectoryName : ProgramDataDirectory;
+        }
+    }
+
+    private static string? _chosenIn; // The directory Blyant ran in when the data directory was chosen
+    private static bool _localData; // The data directory is "data" in that directory
+
+    /// <summary>
+    /// The data directory, for tests (so nothing is written to the data directory of the program)
+    /// </summary>
+    internal static string? DataDirectoryOverride { get; set; }
 
     private static string? _programDataDirectory;
 
@@ -545,7 +569,10 @@ internal static class FileIo
         SystemClipboard.EveryYank = Tools.TrimToLower(Get("clipboardyank")) != "plus";
         SystemClipboard.PasteBinAppend = Tools.TrimToLower(Get("pastebinappend")) == DialogText.BTrue;
         var pasteBinFile = Get("pastebinfile").Trim();
-        SystemClipboard.PasteBinFile = pasteBinFile.Length > 0 ? pasteBinFile : SystemClipboard.DefaultPasteBinFile;
+        // (one of Blyant's own files, written in the settings file by hand, is not used)
+        SystemClipboard.PasteBinFile = pasteBinFile.Length > 0 && SystemClipboard.PasteBinProblem(pasteBinFile) == null
+            ? pasteBinFile
+            : SystemClipboard.DefaultPasteBinFile;
         Snippets.Sort = Snippets.ParseSort(Get("snipsort"));
         var language = Tools.TrimToLower(Get("language"));
         Lang.Missing = null;

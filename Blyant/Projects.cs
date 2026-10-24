@@ -225,11 +225,16 @@ internal static class Projects
 
     internal static string ListPath => ListPathOverride ?? Path.Combine(FileIo.GetDataDirectoryName(), ListFileName);
 
+    // True when the list was there but could not be read the last time: then it is not written (that would leave
+    // only the projects changed in it)
+    private static bool _unreadable;
+
     /// <summary>
     /// The paths of the projects added (as they are in the list; nothing if it cannot be read)
     /// </summary>
     internal static List<string> AddedPaths()
     {
+        _unreadable = false;
         try
         {
             if (!File.Exists(ListPath)) return new List<string>();
@@ -241,12 +246,14 @@ internal static class Projects
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException)
         {
+            _unreadable = true;
             return new List<string>();
         }
     }
 
     private static string SaveAdded(IEnumerable<string> paths)
     {
+        if (_unreadable) return DialogText.ListNotRead;
         try
         {
             // English: read by people in any language

@@ -1758,6 +1758,12 @@ nb: "Data:"
 en: "Settings:"
 nb: "Innstillinger:"
 
+# SystemClipboard.cs
+en: "That is a directory: type the path of a file"
+nb: "Det er en mappe: skriv stien til en fil"
+en: "Blyant uses this file: pick another for the paste bin"
+nb: "Blyant bruker denne filen: velg en annen utklippsfil"
+
 # Tools.cs
 en: "(lines) {0}"
 nb: "(linjer) {0}"

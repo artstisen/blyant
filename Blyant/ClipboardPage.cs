@@ -153,6 +153,12 @@ internal static class ClipboardPage
                     return;
                 }
 
+                if (SystemClipboard.PasteBinProblem(path) is { } problem)
+                {
+                    ChoiceBox.Message(Lang.T("Paste bin file"), problem, path);
+                    return;
+                }
+
                 SystemClipboard.PasteBinFile = path;
                 break;
             }

@@ -1,5 +1,6 @@
 ﻿namespace Blyant.Tests;
 
+[Collection("Static state")]
 public class GuideTests
 {
     // The guides by their place in QuickGuide.All (the type of a guide is internal)

@@ -1758,6 +1758,12 @@ nl: "Data:"
 en: "Settings:"
 nl: "Instellingen:"
 
+# SystemClipboard.cs
+en: "That is a directory: type the path of a file"
+nl: "Dat is een map: typ het pad van een bestand"
+en: "Blyant uses this file: pick another for the paste bin"
+nl: "Blyant gebruikt dit bestand: kies een ander plakbestand"
+
 # Tools.cs
 en: "(lines) {0}"
 nl: "(regels) {0}"
