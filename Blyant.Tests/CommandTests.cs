@@ -205,7 +205,7 @@ public class CommandTests
         // (":s/old/new/" is found by its first letter, and ":diff", ":book", ":play", ":macro" and ":new" by a pattern,
         // as they can have something after them)
         AssertSame(CommandContext.Editor, Compared(Method("Editor/EditorEngine.cs", "ExecuteCommand")), "s", "diff",
-            "book", "play", "macro", "new");
+            "book", "play", "macro", "new", "sur");
     }
 
     [Fact]

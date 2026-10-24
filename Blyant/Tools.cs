@@ -996,6 +996,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":ol :ul", Lang.T("Numbered/Bulleted list (selected lines)"), false));
             _shortcutList.Add(new Shortcut(":dup", Lang.T("Duplicate the selection (or the line)"), false));
             _shortcutList.Add(new Shortcut(":dup 5", Lang.T("Make 5 copies of the selection (or the line)"), false));
+            _shortcutList.Add(new Shortcut(":surround /bold", Lang.T("Put a completion around the selection (Tab: the list)"), false));
             _shortcutList.Add(new Shortcut(":sort :sort!", Lang.T("Sort the selected lines (or all), !: reversed"), false));
             _shortcutList.Add(new Shortcut(":wrap", Lang.T("Wrap long lines on/off (:set wrap, :set nowrap)"), false));
             _shortcutList.Add(new Shortcut(":scrolloff", Lang.T("Keep lines around the cursor on/off (12)"), false));

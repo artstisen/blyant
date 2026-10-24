@@ -1034,6 +1034,15 @@ internal sealed partial class EditorEngine
             command = "dup";
         }
 
+        // ":surround /bold": the completion to put around the selection follows the command
+        var surroundWord = string.Empty;
+        var surround = Regex.Match(command, "^(?:surround|sur)(?: +(.*))?$");
+        if (surround.Success)
+        {
+            surroundWord = surround.Groups[1].Value.Trim();
+            command = "surround";
+        }
+
         if (range.HasValue)
         {
             var (first, last) = range.Value;
@@ -1062,6 +1071,10 @@ internal sealed partial class EditorEngine
             else if (command is "dup" or "duplicate")
             {
                 Duplicate(first, last, fromSelection, copies);
+            }
+            else if (command == "surround")
+            {
+                Surround(first, last, fromSelection, surroundWord);
             }
             else if (command is "sort" or "sort!" or "sort i" or "sort! i")
             {
@@ -1114,6 +1127,13 @@ internal sealed partial class EditorEngine
         if (command.StartsWith("spell ", StringComparison.Ordinal))
         {
             TurnSpellOn(command[6..].Trim());
+            return;
+        }
+
+        if (command == "surround")
+        {
+            // Without a selection or range: the line of the cursor
+            Surround(Cursor.Line, Cursor.Line, false, surroundWord);
             return;
         }
 

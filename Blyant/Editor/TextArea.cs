@@ -247,7 +247,11 @@ public partial class TextArea
         // Tab after ":play " and ":macro " completes the names of the macros
         CommandCompletion.Arguments["play"] = MacroFiles.Names;
         CommandCompletion.Arguments["macro"] = MacroFiles.Names;
-        if (_engine.AutoComplete) Completions.Refresh();
+        // Tab after ":surround " completes the completions that can surround text, of the kind of text edited
+        CommandCompletion.Arguments["surround"] = SurroundWords;
+        CommandCompletion.Arguments["sur"] = SurroundWords;
+        // (read also when completing while typing is off: ":surround" uses them)
+        if (!_singleLine) Completions.Refresh();
         // Files of a known kind (Markdown, HTML, CSS, JavaScript, JSON ...) are colored, unless that is turned off,
         // and so is the settings file (as INI) when it is edited from Configuration
         var fileType = peek != null ? peek.Syntax
@@ -859,6 +863,9 @@ public partial class TextArea
                 break;
         }
     }
+
+    private IEnumerable<string> SurroundWords() =>
+        Completions.SurroundWords(_engine.Syntax != SyntaxType.None ? _engine.Syntax : _engine.CompletionSyntax);
 
     // The kind of text being edited, for the snippets made for it (a file of a known kind with its colors off too)
     private SyntaxType SnippetSyntax()

@@ -390,6 +390,30 @@ internal static class Completions
         return found;
     }
 
+    /// <summary>
+    /// The completion of a word (upper and lower case alike): the one for the kind of text first, then one for all
+    /// text. Null if there is none
+    /// </summary>
+    internal static Item? Named(string word, SyntaxType syntax)
+    {
+        return List.FirstOrDefault(item => item.Syntax == syntax && syntax != SyntaxType.None &&
+                                           item.Word.Equals(word, StringComparison.OrdinalIgnoreCase)) ??
+               List.FirstOrDefault(item => item.Syntax == SyntaxType.None &&
+                                           item.Word.Equals(word, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    /// The words of the completions that can surround text (":surround"): those with a place for it ("$0"), of
+    /// the kind of text and of all text
+    /// </summary>
+    internal static IEnumerable<string> SurroundWords(SyntaxType syntax)
+    {
+        return List.Where(item => (item.Syntax == syntax && syntax != SyntaxType.None ||
+                                   item.Syntax == SyntaxType.None) &&
+                                  item.Text.Contains(Snippets.CursorMark, StringComparison.Ordinal))
+            .Select(item => item.Word).Distinct(StringComparer.OrdinalIgnoreCase);
+    }
+
     // The characters of a word, and those that can start one ("<div", "&nbsp", "@media", ".class", "#id", "</p")
     private static bool IsWordChar(char c) => char.IsLetterOrDigit(c) || c is '_' or '-' or '.';
     private static bool IsStartChar(char c) => c is '<' or '/' or '!' or '&' or '@' or '#' or ':' or '?' or '$';

@@ -1,4 +1,6 @@
-﻿namespace Blyant;
+﻿using System.Text.RegularExpressions;
+
+namespace Blyant;
 
 /// <summary>
 /// The places that have a command line, each with its own commands
@@ -77,8 +79,8 @@ internal static class Commands
         [CommandContext.Editor] = new Table(
             "write quit quit! wq help edit edit! reload reload! undo redo delete yank replace nohlsearch " +
             "spell nospell spellnext spellprev suggest spelladd syntax number nonumber timestamp " +
-            "favorite record play macro trim clear registers reglist regclear putall vsel vline block ol ul dup duplicate pb pbappend pbread pbclear clipboard path sort sort! wrap nowrap snip complete diff scrolloff info jump book bookmark yankall rename split only new projects",
-            "w q q! wq! x h e e! u red d y s rep noh set spellsuggest spellgood nu nonu ts reg sn ju jmp fav proj pro")
+            "favorite record play macro trim clear registers reglist regclear putall vsel vline block ol ul dup duplicate surround pb pbappend pbread pbclear clipboard path sort sort! wrap nowrap snip complete diff scrolloff info jump book bookmark yankall rename split only new projects",
+            "w q q! wq! x h e e! u red d y s rep noh set spellsuggest spellgood nu nonu ts reg sn ju jmp fav proj pro sur")
     };
 
     /// <summary>
@@ -181,7 +183,9 @@ internal sealed class CommandCompletion
     private bool Start(string text)
     {
         var space = text.IndexOf(' ');
-        if (space > 0 && Arguments.TryGetValue(text[..space], out var words))
+        // (the name of the command, also after the lines it works on: "'<,'>surround /b")
+        var name = space > 0 ? Regex.Match(text[..space], "[a-z!]+$").Value : string.Empty;
+        if (name.Length > 0 && Arguments.TryGetValue(name, out var words))
         {
             _before = text[..(space + 1)];
             _typed = text[(space + 1)..];
