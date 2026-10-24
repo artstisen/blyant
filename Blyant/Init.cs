@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Runtime.InteropServices;
+using System.Text;
 
 namespace Blyant;
 
@@ -212,6 +213,21 @@ internal static class Init
     internal static bool UsingDefaultSettings { get; set; }
     private static int _initLines; // The number of lines logged by the initialization that is running
 
+    private static PosixSignalRegistration? _continueSignal;
+
+    private static void WatchContinue()
+    {
+        if (_continueSignal != null || OperatingSystem.IsWindows()) return;
+        try
+        {
+            _continueSignal = PosixSignalRegistration.Create(PosixSignal.SIGCONT, _ => Tools.NoteContinued());
+        }
+        catch (Exception e) when (e is PlatformNotSupportedException or IOException)
+        {
+            // Not drawn again until a key is pressed
+        }
+    }
+
     public static void RunInitialization()
     {
         _initLines = 0;
@@ -264,12 +280,15 @@ internal static class Init
         // the terminal still copies a selection with it
         Console.CancelKeyPress += (_, e) =>
         {
-            if (e.SpecialKey != ConsoleSpecialKey.ControlC) return;
+            // Ctrl+\ (Linux, macOS) and Ctrl+Break (Windows) would stop Blyant at once, without a recovery copy:
+            // they are cancelled too
             e.Cancel = true;
-            Tools.NoteCancelKey();
+            if (e.SpecialKey == ConsoleSpecialKey.ControlC) Tools.NoteCancelKey();
         };
         // The terminal closed (or the computer shutting down): the text being edited is copied before Blyant stops
         TextArea.WatchClose();
+        // After Ctrl+Z and "fg" (Linux, macOS) the page is drawn again
+        WatchContinue();
         // Set default buffer-size
         Log(DialogText.InitDimensions, true);
         WriteProgressBar(10); // progress

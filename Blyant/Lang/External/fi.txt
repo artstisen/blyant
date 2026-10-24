@@ -1769,6 +1769,8 @@ en: "Copied to the paste bin (too long for the clipboard of the terminal)"
 fi: "Kopioitu leiketiedostoon (liian pitkä päätteen leikepöydälle)"
 en: "Too long for the clipboard of the terminal (more than {0} KB): not copied"
 fi: "Liian pitkä päätteen leikepöydälle (yli {0} kt): ei kopioitu"
+en: "This terminal may not take the clipboard: use the paste bin (:clipboard)"
+fi: "Pääte ei ehkä ota leikepöytää vastaan: käytä leiketiedostoa (:clipboard)"
 
 # Tools.cs
 en: "(lines) {0}"
@@ -2515,6 +2517,10 @@ en: "{0} substitutions"
 fi: "{0} korvausta"
 en: "1 line"
 fi: "1 rivi"
+
+# Editor/TextArea.Recovery.cs
+en: "No recovery copy could be written: {0}"
+fi: "Palautuskopiota ei voitu kirjoittaa: {0}"
 
 # Editor/TextArea.Split.cs
 en: "Tab: the other pane, :only: one pane"

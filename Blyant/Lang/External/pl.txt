@@ -1769,6 +1769,8 @@ en: "Copied to the paste bin (too long for the clipboard of the terminal)"
 pl: "Skopiowano do przechowalni (za długie dla schowka terminala)"
 en: "Too long for the clipboard of the terminal (more than {0} KB): not copied"
 pl: "Za długie dla schowka terminala (ponad {0} KB): nie skopiowano"
+en: "This terminal may not take the clipboard: use the paste bin (:clipboard)"
+pl: "Ten terminal może nie przyjmować schowka: użyj przechowalni (:clipboard)"
 
 # Tools.cs
 en: "(lines) {0}"
@@ -2515,6 +2517,10 @@ en: "{0} substitutions"
 pl: "Zamiany: {0}"
 en: "1 line"
 pl: "1 wiersz"
+
+# Editor/TextArea.Recovery.cs
+en: "No recovery copy could be written: {0}"
+pl: "Nie można zapisać kopii odzyskiwania: {0}"
 
 # Editor/TextArea.Split.cs
 en: "Tab: the other pane, :only: one pane"

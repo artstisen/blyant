@@ -1769,6 +1769,8 @@ en: "Copied to the paste bin (too long for the clipboard of the terminal)"
 fr: "Copié dans le fichier d'échange (trop long pour le presse-papiers du terminal)"
 en: "Too long for the clipboard of the terminal (more than {0} KB): not copied"
 fr: "Trop long pour le presse-papiers du terminal (plus de {0} Ko) : non copié"
+en: "This terminal may not take the clipboard: use the paste bin (:clipboard)"
+fr: "Ce terminal ne prend peut-être pas le presse-papiers : utilisez le fichier d'échange (:clipboard)"
 
 # Tools.cs
 en: "(lines) {0}"
@@ -2515,6 +2517,10 @@ en: "{0} substitutions"
 fr: "{0} remplacements"
 en: "1 line"
 fr: "1 ligne"
+
+# Editor/TextArea.Recovery.cs
+en: "No recovery copy could be written: {0}"
+fr: "Aucune copie de récupération n'a pu être écrite : {0}"
 
 # Editor/TextArea.Split.cs
 en: "Tab: the other pane, :only: one pane"

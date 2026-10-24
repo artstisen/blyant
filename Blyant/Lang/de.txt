@@ -1769,6 +1769,8 @@ en: "Copied to the paste bin (too long for the clipboard of the terminal)"
 de: "In die Ablagedatei kopiert (zu lang für die Zwischenablage des Terminals)"
 en: "Too long for the clipboard of the terminal (more than {0} KB): not copied"
 de: "Zu lang für die Zwischenablage des Terminals (über {0} KB): nicht kopiert"
+en: "This terminal may not take the clipboard: use the paste bin (:clipboard)"
+de: "Dieses Terminal nimmt die Zwischenablage evtl. nicht an: die Ablagedatei nutzen (:clipboard)"
 
 # Tools.cs
 en: "(lines) {0}"
@@ -2515,6 +2517,10 @@ en: "{0} substitutions"
 de: "{0} Ersetzungen"
 en: "1 line"
 de: "1 Zeile"
+
+# Editor/TextArea.Recovery.cs
+en: "No recovery copy could be written: {0}"
+de: "Keine Wiederherstellungskopie geschrieben: {0}"
 
 # Editor/TextArea.Split.cs
 en: "Tab: the other pane, :only: one pane"

@@ -1769,6 +1769,8 @@ en: "Copied to the paste bin (too long for the clipboard of the terminal)"
 da: "Kopieret til udklipsfilen (for lang til terminalens udklipsholder)"
 en: "Too long for the clipboard of the terminal (more than {0} KB): not copied"
 da: "For lang til terminalens udklipsholder (over {0} KB): ikke kopieret"
+en: "This terminal may not take the clipboard: use the paste bin (:clipboard)"
+da: "Denne terminal tager måske ikke udklipsholderen: brug udklipsfilen (:clipboard)"
 
 # Tools.cs
 en: "(lines) {0}"
@@ -2515,6 +2517,10 @@ en: "{0} substitutions"
 da: "{0} erstatninger"
 en: "1 line"
 da: "1 linje"
+
+# Editor/TextArea.Recovery.cs
+en: "No recovery copy could be written: {0}"
+da: "Ingen gendannelseskopi kunne skrives: {0}"
 
 # Editor/TextArea.Split.cs
 en: "Tab: the other pane, :only: one pane"

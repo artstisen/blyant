@@ -78,7 +78,8 @@ internal static class Recovery
         var full = Path.GetFullPath(filePath);
         var key = FileOperations.NamesIgnoreCase ? full.ToLowerInvariant() : full;
         var code = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(key)))[..8].ToLowerInvariant();
-        return Path.Combine(Directory, Path.GetFileName(full) + "." + code + Extension);
+        // (a name that can be made on any file system: the data directory can be on a memory stick)
+        return Path.Combine(Directory, FileOperations.StoredName(Path.GetFileName(full)) + "." + code + Extension);
     }
 
     /// <summary>

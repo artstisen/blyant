@@ -51,8 +51,37 @@ public partial class TextArea
         }
     }
 
-    // The next key. Meanwhile the editor follows the size of the window, and tells how to close it after Ctrl+C
+    // The key after Esc, when the two came at once (see ReadKey)
+    private ConsoleKeyInfo? _keyAfterEscape;
+
+    // The next key. On Linux and macOS a key typed right after Esc (Esc j, fast, or while the screen is drawn)
+    // comes from the terminal as one key with Alt: it is Esc and then the key, as in Vim (AltGr never sets Alt
+    // there, so no character typed with AltGr is split)
     private ConsoleKeyInfo ReadKey()
+    {
+        if (_keyAfterEscape is { } after)
+        {
+            _keyAfterEscape = null;
+            return after;
+        }
+
+        var key = ReadTerminalKey();
+        if (OperatingSystem.IsWindows() || !IsEscapeAndKey(key)) return key;
+        _keyAfterEscape = new ConsoleKeyInfo(key.KeyChar, key.Key, (key.Modifiers & ConsoleModifiers.Shift) != 0,
+            false, false);
+        return new ConsoleKeyInfo('\u001b', ConsoleKey.Escape, false, false, false);
+    }
+
+    /// <summary>
+    /// True for a key with Alt (and not Ctrl) that types a character: on Linux and macOS, Esc and that key
+    /// </summary>
+    internal static bool IsEscapeAndKey(ConsoleKeyInfo key) =>
+        (key.Modifiers & (ConsoleModifiers.Alt | ConsoleModifiers.Control)) == ConsoleModifiers.Alt &&
+        key.KeyChar != '\0' && !char.IsControl(key.KeyChar);
+
+    // The next key from the terminal. Meanwhile the editor follows the size of the window, and tells how to close
+    // it after Ctrl+C
+    private ConsoleKeyInfo ReadTerminalKey()
     {
         // (also between keys typed without a pause: a copy at least now and then)
         RecoveryTick();
@@ -76,6 +105,9 @@ public partial class TextArea
                 _engine.SetMessage(DialogText.CancelKeyHint, false);
                 Draw();
             }
+
+            // Back after Ctrl+Z: the shell wrote on the screen
+            if (Tools.TakeContinued()) RedrawAll();
 
             var size = WindowSize();
             if (size == _windowSize)

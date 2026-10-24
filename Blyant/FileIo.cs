@@ -26,7 +26,9 @@ internal static class FileIo
             var current = Environment.CurrentDirectory;
             if (_chosenIn != current)
             {
-                _localData = Directory.Exists(DataDirectoryName);
+                // Only Blyant's own: a folder "data" of something else (a web site, a program) in the directory
+                // Blyant is started in is not filled with its settings and lists
+                _localData = File.Exists(Path.Combine(DataDirectoryName, SettingsFileName));
                 _chosenIn = current;
             }
 
@@ -49,7 +51,13 @@ internal static class FileIo
     private static string FindProgramDataDirectory()
     {
         var nextToProgram = Path.Combine(AppContext.BaseDirectory, DataDirectoryName);
-        if (Directory.Exists(nextToProgram) || CanWriteIn(AppContext.BaseDirectory)) return nextToProgram;
+        // (one that is there must be writable by this user: one made when Blyant was run as root, with sudo, is not
+        // used by the user, whose settings, copies and trash could not be written there)
+        if (Directory.Exists(nextToProgram) ? CanWriteIn(nextToProgram) : CanWriteIn(AppContext.BaseDirectory))
+        {
+            return nextToProgram;
+        }
+
         return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData,
             Environment.SpecialFolderOption.DoNotVerify), "Blyant", DataDirectoryName);
     }
@@ -218,6 +226,28 @@ internal static class FileIo
         Logged((File.Exists(path) ? "Write: " : "New: ") + Path.GetFullPath(path), () => WriteSafe(path, content));
     }
 
+    // True if this user may write the file (Linux, macOS): it is opened for writing and closed at once, unchanged
+    private static bool MayWrite(string path)
+    {
+        try
+        {
+            using (File.OpenHandle(path, FileMode.Open, FileAccess.Write, FileShare.ReadWrite | FileShare.Delete))
+            {
+            }
+
+            return true;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return false;
+        }
+        catch (IOException)
+        {
+            // (another reason, as the file being gone: the save tells it)
+            return true;
+        }
+    }
+
     private static void WriteSafe(string path, byte[] content)
     {
         // A name of its own (in the same directory, so the file is replaced in one step): never a file of the user
@@ -247,9 +277,10 @@ internal static class FileIo
             // Saving matters more than the time and permissions
         }
 
-        // A file that may not be written (chmod -w) is not replaced: the replacing would only need the directory to
-        // be writable, so it is refused here, as Windows refuses a read-only file
-        if (mode is { } fileMode && (fileMode & UnixFileMode.UserWrite) == 0)
+        // A file that this user may not write (chmod -w, or a file of another user) is not replaced: the replacing
+        // would only need the directory to be writable, so it is refused here, as Windows refuses a read-only file.
+        // The system is asked (opening it for writing changes nothing in it), so groups and other users count too
+        if (mode != null && !MayWrite(path))
         {
             throw new UnauthorizedAccessException(Lang.F("{0} is read only: it is not written", Path.GetFileName(path)));
         }
@@ -267,8 +298,20 @@ internal static class FileIo
                 stream.Flush(true); // Make sure the content is on the disk before replacing the target file
             }
 
-            // (The umask can have taken permissions away when it was created)
-            if (mode is { } unixMode && !OperatingSystem.IsWindows()) File.SetUnixFileMode(tempPath, unixMode);
+            // (The umask can have taken permissions away when it was created.) Only where it can be: a memory stick
+            // with FAT or exFAT, and some network folders, refuse it, and the file is saved all the same
+            if (mode is { } unixMode && !OperatingSystem.IsWindows())
+            {
+                try
+                {
+                    File.SetUnixFileMode(tempPath, unixMode);
+                }
+                catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+                {
+                    // The permissions the file system gives
+                }
+            }
+
             File.Move(tempPath, path, true);
         }
         catch

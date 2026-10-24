@@ -1407,6 +1407,19 @@ internal static class Tools
     /// </summary>
     internal static bool TakeCancelKey() => Interlocked.Exchange(ref _cancelKey, 0) == 1;
 
+    // Blyant went on after it was stopped with Ctrl+Z (Linux, macOS: the signal comes on another thread: Init)
+    private static int _continued;
+
+    /// <summary>
+    /// Blyant goes on after Ctrl+Z and "fg": the screen shows what the shell wrote, so the page is drawn again
+    /// </summary>
+    internal static void NoteContinued() => Interlocked.Exchange(ref _continued, 1);
+
+    /// <summary>
+    /// True (once) if Blyant went on after Ctrl+Z since this was asked last
+    /// </summary>
+    internal static bool TakeContinued() => Interlocked.Exchange(ref _continued, 0) == 1;
+
     /// <summary>
     /// True (once) if a page could not be drawn because the terminal window was made smaller, and must be
     /// drawn again with the dimensions that are now in use

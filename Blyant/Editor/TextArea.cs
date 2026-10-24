@@ -397,9 +397,7 @@ public partial class TextArea
         {
             while (!_exit)
             {
-                _handlingKey = false;
                 var key = ReadKey();
-                _handlingKey = true;
                 if (_tabLeaves && _singleLine && key.Key == ConsoleKey.Tab &&
                     (key.Modifiers & ConsoleModifiers.Shift) == 0)
                 {
@@ -429,7 +427,19 @@ public partial class TextArea
                 if (_peek is { TabCloses: true } && key.Key == ConsoleKey.Tab && _engine.Mode == EditorMode.Normal &&
                     !_engine.HasPending) break;
 
-                var request = _engine.HandleKey(key);
+                // While the key changes the text, no copy is made from another thread (the terminal closing). Not
+                // while a box of the request waits for a key ("Save changes?"): then the copy is made as at a pause
+                _handlingKey = true;
+                EditorRequest request;
+                try
+                {
+                    request = _engine.HandleKey(key);
+                }
+                finally
+                {
+                    _handlingKey = false;
+                }
+
                 if (_peek != null && request is EditorRequest.Quit or EditorRequest.ForceQuit
                         or EditorRequest.SaveAndQuit)
                 {

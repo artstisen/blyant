@@ -58,6 +58,8 @@ backup=
     {
         Directory.CreateDirectory(Path.Combine(_workDirectory, "data"));
         Directory.SetCurrentDirectory(_workDirectory);
+        // (the data directory of the test, also before a settings file is in it)
+        FileIo.DataDirectoryOverride = Path.Combine(_workDirectory, "data");
         Init.UsingDefaultSettings = false;
     }
 
@@ -69,6 +71,7 @@ backup=
         AsciiStyles.ResetAsciiStyle();
         Projects.Directory = string.Empty;
         Projects.AskEachTime = false;
+        FileIo.DataDirectoryOverride = null;
         Directory.SetCurrentDirectory(_originalDirectory);
         Directory.Delete(_workDirectory, true);
     }

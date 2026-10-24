@@ -28,6 +28,7 @@ public partial class TextArea
     private int _seenVersion = -1;
     private long _changedAt; // When the text was last changed (Environment.TickCount64)
     private long _uncopiedSince; // When the text was first changed since the last copy (0: not changed)
+    private bool _recoveryFailTold; // A copy that could not be written was told (once, until one is written)
     private readonly object _recoveryLock = new();
 
     // Copies are made of a file in the editor, or a blank page (not of a peek, a box, the settings, or a copy)
@@ -75,11 +76,24 @@ public partial class TextArea
         if (now - _changedAt >= Recovery.PauseMilliseconds ||
             now - _uncopiedSince >= Recovery.MaxIntervalMilliseconds)
         {
-            WriteRecovery(version);
+            var status = WriteRecovery(version);
+            // A copy that cannot be written is told once (the data directory may not be writable): the text is
+            // not kept safe until it is saved
+            if (status == DialogText.Success)
+            {
+                _recoveryFailTold = false;
+            }
+            else if (!_recoveryFailTold)
+            {
+                _recoveryFailTold = true;
+                _engine.SetMessage(Lang.F("No recovery copy could be written: {0}", status), true);
+                Draw();
+            }
         }
     }
 
-    private void WriteRecovery(int version)
+    // The copy is written (DialogText.Success), or why it could not be
+    private string WriteRecovery(int version)
     {
         lock (_recoveryLock)
         {
@@ -102,7 +116,8 @@ public partial class TextArea
             }
 
             // (the copy written, or why it failed, is logged by FileIo; it is tried again at the next change)
-            if (Recovery.WriteCopy(copy, FileExplorer.CurrentFilePath, GetText()) == DialogText.Success)
+            var status = Recovery.WriteCopy(copy, FileExplorer.CurrentFilePath, GetText());
+            if (status == DialogText.Success)
             {
                 _recoveryOwned = true;
                 _recoveryCopy = copy;
@@ -111,6 +126,7 @@ public partial class TextArea
 
             _copiedVersion = version;
             _uncopiedSince = 0;
+            return status;
         }
     }
 
@@ -144,13 +160,22 @@ public partial class TextArea
         RemoveRecovery();
     }
 
-    // The terminal is closing (another thread): the latest changes are copied, unless a key is being handled (the
-    // text may be half changed: the copy written before stays)
+    // The terminal is closing (another thread): the latest changes are copied. A key being handled is waited for a
+    // moment (the text may be half changed); if it is still being handled, the copy written before stays
     private void CopyOnClose()
     {
+        var waitUntil = Environment.TickCount64 + 300;
+        while (_handlingKey && Environment.TickCount64 < waitUntil) Thread.Sleep(10);
         if (_handlingKey || !RecoveryActive || !_engine.IsModified) return;
         var version = _engine.Buffer.Version;
         if (version == _copiedVersion && _recoveryOwned) return;
-        WriteRecovery(version);
+        try
+        {
+            WriteRecovery(version);
+        }
+        catch (Exception e) when (e is InvalidOperationException or ArgumentException or IndexOutOfRangeException)
+        {
+            // The text changed while it was read (a request of a key, as a snippet put in): the copy before stays
+        }
     }
 }

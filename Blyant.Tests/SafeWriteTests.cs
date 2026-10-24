@@ -30,7 +30,7 @@ public class SafeWriteTests
 
     // A stream opened with a mode: the mode is named on the line (and then checked by Unsafe), or it is set in a
     // FileStreamOptions of that name in the file (where "Mode = FileMode..." is checked by Unsafe)
-    private static readonly Regex Opened = new(@"\b(File\.Open|new\s+FileStream)\s*\(\s*[^,]+,\s*(\w+)\s*[,)]");
+    private static readonly Regex Opened = new(@"\b(File\.Open|File\.OpenHandle|new\s+FileStream)\s*\(\s*[^,]+,\s*(\w+)\s*[,)]");
 
     // File.Create with FileOptions.DeleteOnClose (FileIo.CanWriteIn tests a directory with a file that is gone
     // when it is closed): the only use of File.Create that is allowed

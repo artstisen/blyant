@@ -27,6 +27,52 @@ internal static class ConsoleColors
     }
 
     /// <summary>
+    /// True when the terminal says it has 8 colors (TERM=linux, the text console of Linux and of a Raspberry Pi, and
+    /// a few others): .NET then shows the bright colors as the dark ones, and dark gray as black, so the bright
+    /// colors are set again here with the codes those terminals have for them (90-97, 100-107)
+    /// </summary>
+    internal static bool EightColors { get; } = !OperatingSystem.IsWindows() && HasEightColors(
+        Environment.GetEnvironmentVariable("TERM"));
+
+    // The terminals whose description (terminfo) has 8 colors
+    internal static bool HasEightColors(string? term) =>
+        term is "linux" or "xterm" or "screen" or "tmux" or "vt100" or "vt220" or "ansi" or "rxvt" or "xterm-color" ||
+        term?.StartsWith("linux", StringComparison.Ordinal) == true;
+
+    // The colors of the terminal (ANSI) in the order of ConsoleColor: black, blue, green, cyan, red, magenta,
+    // yellow, white
+    private static readonly int[] Ansi = { 0, 4, 2, 6, 1, 5, 3, 7 };
+
+    /// <summary>
+    /// The escape code that sets a bright color on a terminal of 8 colors (null for a dark color, which .NET sets
+    /// right)
+    /// </summary>
+    internal static string? BrightCode(ConsoleColor color, bool background)
+    {
+        var value = (int)color;
+        if (value < 8) return null;
+        return "\u001b[" + ((background ? 100 : 90) + Ansi[value - 8]) + "m";
+    }
+
+    /// <summary>
+    /// Set the color of the text (all colors are set here: see EightColors)
+    /// </summary>
+    internal static void SetForeground(ConsoleColor color)
+    {
+        Console.ForegroundColor = color;
+        if (EightColors && BrightCode(color, false) is { } code) Console.Write(code);
+    }
+
+    /// <summary>
+    /// Set the color of the background (all colors are set here: see EightColors)
+    /// </summary>
+    internal static void SetBackground(ConsoleColor color)
+    {
+        Console.BackgroundColor = color;
+        if (EightColors && BrightCode(color, true) is { } code) Console.Write(code);
+    }
+
+    /// <summary>
     /// The background color of the color scheme, or null to use the background of the terminal
     /// </summary>
     internal static ConsoleColor? Background => Current.Background;
@@ -75,7 +121,7 @@ internal static class ConsoleColors
     private static void SetNormalBackground(ColorScheme scheme)
     {
         Console.ResetColor();
-        if (scheme.Background is { } background) Console.BackgroundColor = background;
+        if (scheme.Background is { } background) SetBackground(background);
     }
 
     // The colors used when everything is shown in black and white
@@ -88,7 +134,7 @@ internal static class ConsoleColors
             case ColorPreset.Accent:
             case ColorPreset.EditorTitle:
                 Console.ResetColor();
-                Console.ForegroundColor = ConsoleColor.White;
+                SetForeground(ConsoleColor.White);
                 break;
             case ColorPreset.NormalInverted:
             case ColorPreset.KeyHintInverted:
@@ -97,12 +143,12 @@ internal static class ConsoleColors
             case ColorPreset.HighlightInverted:
             case ColorPreset.AttentionInverted:
             case ColorPreset.WarningInverted:
-                Console.BackgroundColor = ConsoleColor.Gray;
-                Console.ForegroundColor = ConsoleColor.Black;
+                SetBackground(ConsoleColor.Gray);
+                SetForeground(ConsoleColor.Black);
                 break;
             default:
                 Console.ResetColor();
-                Console.ForegroundColor = ConsoleColor.Gray;
+                SetForeground(ConsoleColor.Gray);
                 break;
         }
     }
@@ -167,37 +213,37 @@ internal static class ConsoleColors
         switch (preset)
         {
             case ColorPreset.NormalInverted:
-                Console.BackgroundColor = scheme.Text;
-                Console.ForegroundColor = scheme.BackgroundColor;
+                SetBackground(scheme.Text);
+                SetForeground(scheme.BackgroundColor);
                 return;
             case ColorPreset.KeyHintInverted:
-                Console.BackgroundColor = scheme.KeyHintsColor;
-                Console.ForegroundColor = scheme.BackgroundColor;
+                SetBackground(scheme.KeyHintsColor);
+                SetForeground(scheme.BackgroundColor);
                 return;
             case ColorPreset.UnsavedInverted:
-                Console.BackgroundColor = scheme.UnsavedColor;
-                Console.ForegroundColor = scheme.UnsavedTextColor;
+                SetBackground(scheme.UnsavedColor);
+                SetForeground(scheme.UnsavedTextColor);
                 return;
             case ColorPreset.SelectorInverted:
-                Console.BackgroundColor = scheme.SelectorColor;
-                Console.ForegroundColor = scheme.SelectorTextColor;
+                SetBackground(scheme.SelectorColor);
+                SetForeground(scheme.SelectorTextColor);
                 return;
             case ColorPreset.HighlightInverted:
-                Console.BackgroundColor = scheme.Highlight;
-                Console.ForegroundColor = scheme.HighlightText;
+                SetBackground(scheme.Highlight);
+                SetForeground(scheme.HighlightText);
                 return;
             case ColorPreset.AttentionInverted:
-                Console.BackgroundColor = scheme.Attention;
-                Console.ForegroundColor = scheme.AttentionText;
+                SetBackground(scheme.Attention);
+                SetForeground(scheme.AttentionText);
                 return;
             case ColorPreset.WarningInverted:
-                Console.BackgroundColor = scheme.Warning;
-                Console.ForegroundColor = scheme.WarningText;
+                SetBackground(scheme.Warning);
+                SetForeground(scheme.WarningText);
                 return;
         }
 
         SetNormalBackground(scheme);
-        Console.ForegroundColor = preset switch
+        SetForeground(preset switch
         {
             ColorPreset.HeaderColor => scheme.Logo,
             ColorPreset.Divider => scheme.Dividers,
@@ -214,7 +260,7 @@ internal static class ConsoleColors
             ColorPreset.CurrentLineNumber => scheme.CurrentLineNumberColor,
             ColorPreset.FrameText => scheme.FrameTextColor,
             _ => scheme.Text
-        };
+        });
     }
 
     /// <summary>
@@ -227,11 +273,11 @@ internal static class ConsoleColors
         if (Monochrome)
         {
             // No colors: text with a color of its own is shown brighter
-            Console.ForegroundColor = ConsoleColor.White;
+            SetForeground(ConsoleColor.White);
         }
         else if (!IsBackgroundColor(color))
         {
-            Console.ForegroundColor = color;
+            SetForeground(color);
         }
     }
 
@@ -244,7 +290,7 @@ internal static class ConsoleColors
         if (preview)
         {
             SetStyle(Preview, ColorPreset.Normal);
-            Console.ForegroundColor = Preview.SyntaxColor(number);
+            SetForeground(Preview.SyntaxColor(number));
             return;
         }
 
@@ -273,8 +319,8 @@ internal static class ConsoleColors
             return;
         }
 
-        Console.BackgroundColor = scheme.TabColor;
-        Console.ForegroundColor = scheme.TabTextColor;
+        SetBackground(scheme.TabColor);
+        SetForeground(scheme.TabTextColor);
     }
 
     #endregion

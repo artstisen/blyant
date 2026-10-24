@@ -1769,6 +1769,8 @@ en: "Copied to the paste bin (too long for the clipboard of the terminal)"
 es: "Copiado al archivo de traspaso (demasiado largo para el portapapeles del terminal)"
 en: "Too long for the clipboard of the terminal (more than {0} KB): not copied"
 es: "Demasiado largo para el portapapeles del terminal (más de {0} KB): no copiado"
+en: "This terminal may not take the clipboard: use the paste bin (:clipboard)"
+es: "Este terminal quizá no admita el portapapeles: use el archivo de traspaso (:clipboard)"
 
 # Tools.cs
 en: "(lines) {0}"
@@ -2515,6 +2517,10 @@ en: "{0} substitutions"
 es: "{0} reemplazos"
 en: "1 line"
 es: "1 línea"
+
+# Editor/TextArea.Recovery.cs
+en: "No recovery copy could be written: {0}"
+es: "No se pudo escribir una copia de recuperación: {0}"
 
 # Editor/TextArea.Split.cs
 en: "Tab: the other pane, :only: one pane"

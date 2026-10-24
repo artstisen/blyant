@@ -490,6 +490,37 @@ internal static class FileOperations
     /// <param name="trashedPath">Where it is in the trash</param>
     /// <param name="progress">Called with the name of each file when the files have to be copied (the trash is
     /// on another drive). Returns false to cancel</param>
+    // The part of a directory copied before the copying stopped
+    private static void RemovePartialCopy(string target)
+    {
+        try
+        {
+            if (Directory.Exists(target)) Directory.Delete(target, true);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            // Left in the trash: it can be deleted there
+        }
+    }
+
+    /// <summary>
+    /// A name for a file Blyant keeps of a file of the user (in the trash, a recovery copy): one that can be made on
+    /// every file system, also FAT and exFAT on a memory stick (no : ? * " &lt; &gt; | \ / or control
+    /// characters, no blank space or dot at the end), and short enough to have a time or a code added. The real
+    /// name is kept in the list of the trash, and in the copy
+    /// </summary>
+    internal static string StoredName(string name, int maxLength = 200)
+    {
+        var chars = name.Select(c => c is ':' or '?' or '*' or '"' or '<' or '>' or '|' or '\\' or '/' ||
+                                     char.IsControl(c)
+            ? '_'
+            : c).ToArray();
+        var stored = new string(chars);
+        if (stored.Length > maxLength) stored = stored[..maxLength];
+        stored = stored.TrimEnd(' ', '.');
+        return stored.Length > 0 ? stored : "_";
+    }
+
     internal static string MoveToTrash(string path, string trashDirectory, out string trashedPath,
         Func<string, bool>? progress = null)
     {
@@ -499,7 +530,7 @@ internal static class FileOperations
         if (!CanTrash(path, trashDirectory)) return DialogText.TrashNotPossible;
         var deleted = DateTime.Now;
         var name = deleted.ToString("yyyy-MM-dd HH.mm.ss ", System.Globalization.CultureInfo.InvariantCulture) +
-                   Path.GetFileName(Trimmed(path));
+                   StoredName(Path.GetFileName(Trimmed(path)));
         try
         {
             FileIo.CreateDirectory(trashDirectory);
@@ -518,10 +549,22 @@ internal static class FileOperations
                 catch (IOException e) when (!IsLink(path) && !Directory.Exists(target) &&
                                             IsOtherDrive(e, path, trashDirectory))
                 {
-                    // As when it is moved to another drive: the original is removed when all of it is copied
-                    if (!CopyDirectory(path, target, progress))
+                    // As when it is moved to another drive: the original is removed when all of it is copied. A
+                    // copy that stops (a file that cannot be read, a full disk) is removed again: the original stays
+                    bool copied;
+                    try
                     {
-                        Directory.Delete(target, true);
+                        copied = CopyDirectory(path, target, progress);
+                    }
+                    catch
+                    {
+                        RemovePartialCopy(target);
+                        throw;
+                    }
+
+                    if (!copied)
+                    {
+                        RemovePartialCopy(target);
                         return DialogText.FileCanceled;
                     }
 

@@ -796,7 +796,8 @@ internal static partial class FileExplorer
                 var colors = (Console.ForegroundColor, Console.BackgroundColor);
                 ConsoleColors.SetColors(ConsoleColors.ColorPreset.AttentionInverted);
                 Console.Write("+");
-                (Console.ForegroundColor, Console.BackgroundColor) = colors;
+                ConsoleColors.SetForeground(colors.ForegroundColor);
+                ConsoleColors.SetBackground(colors.BackgroundColor);
                 Console.Write(name);
             }
             else

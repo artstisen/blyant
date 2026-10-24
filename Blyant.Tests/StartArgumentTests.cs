@@ -58,11 +58,17 @@ public class StartArgumentTests : IDisposable
     }
 
     [Fact]
-    public void StartedInADirectoryWithADataDirectory_ThatOneIsUsed()
+    public void StartedInADirectoryWithADataDirectory_ThatOneIsUsed_WhenItIsBlyants()
     {
+        // A folder "data" of something else (a web site) is not used
         Directory.CreateDirectory(Path.Combine(_root, "data"));
         Directory.SetCurrentDirectory(_root);
-        Assert.Equal(Path.Combine(_root, "data"), Path.GetFullPath(FileIo.GetDataDirectoryName()));
+        Assert.NotEqual(Path.Combine(_root, "data"), Path.GetFullPath(FileIo.GetDataDirectoryName()));
+        // One with Blyant's settings is (chosen again in another directory, as when Blyant is started there)
+        Directory.CreateDirectory(Path.Combine(_root, "notes", "data"));
+        File.WriteAllText(Path.Combine(_root, "notes", "data", FileIo.SettingsFileName), "[SETTINGS]");
+        Directory.SetCurrentDirectory(Path.Combine(_root, "notes"));
+        Assert.Equal(Path.Combine(_root, "notes", "data"), Path.GetFullPath(FileIo.GetDataDirectoryName()));
     }
 
     [Fact]

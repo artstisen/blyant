@@ -47,6 +47,20 @@
   - `B` in the Jump menu no longer forgets the bookmark that `u` could put back
   - The languages are picked with `1` to `9` and then letters: with 10 or more, typing `1` picked the first at once
   - Texts cut for the screen count terminal cells (wide characters take two), and a text that fits exactly is no longer cut
+- **Linux, macOS and the Raspberry Pi** (from a review for those systems):
+  - On a terminal of 8 colors (the text console of Linux and of a Raspberry Pi, `TERM=linux`) the bright colors are shown: dark gray was black there, so dividers, frames, borders and line numbers could not be seen, and white looked as gray
+  - `Esc` and a key typed quickly after it (or while the screen was drawn) came from the terminal as one key with Alt, and the key was typed into the text: they are two keys again
+  - `Ctrl+\` (and `Ctrl+Break` on Windows) no longer stops Blyant at once, without a recovery copy
+  - After `Ctrl+Z` and `fg`, the editor is drawn again by itself
+  - A yank in a terminal that drops the clipboard sequence (the text console, LXTerminal and other VTE terminals, the Terminal of macOS) no longer says "Copied to the clipboard": it says to use the paste bin
+  - A folder `data` in the directory Blyant is started in is used only when it is Blyant's own (it has `settings.ini`): the `data` folder of a web site or a program is no longer filled with Blyant's settings, copies and trash
+  - A `data` folder next to the program that this user cannot write to (made when Blyant was run with `sudo`) is not used: the one in the user's application data is
+  - A recovery copy that cannot be written is told once in the editor, instead of failing without a word
+  - When the terminal is closed while a box waits for a key (as "Save changes?"), the last changes are copied too
+  - Saving checks with the system whether this user may write the file (also a file of another user), and a file system that cannot keep the permissions (FAT on a memory stick) no longer stops the save
+  - The names of recovery copies and of files in the trash can be made on every file system (FAT and exFAT too): `: ? * " < > | \ /` become `_`, and long names are shortened (the real name is kept in the copy and in the list of the trash)
+  - A folder moved to the trash on another drive that cannot be copied whole (a full disk) is removed from the trash again, and the original stays
+- **The installation guide** gave the smallest window as 80 columns and 23 rows: it is 81 by 24
 - **An empty line is yanked as a line**: `yy`, `dd`, `cc` and `V` `y` on an empty line put it in the register, as in Vim. Before, the register kept what was in it, so `p` put that back instead of the empty line.
 - **Speed and limits** (from the code review):
   - Changes inside lines no longer move the layout of all the lines after them: `:%s` on 100 000 lines takes a tenth of the time, and undoing it is at once

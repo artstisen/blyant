@@ -133,9 +133,26 @@ internal static class SystemClipboard
                     MaxOsc52Bytes / 1000), true);
         }
 
+        // (a terminal that is known to drop it is not told as "copied": the paste bin works everywhere)
+        if (Osc52 && !PasteBin && TerminalWithoutClipboard)
+        {
+            return (Lang.T("This terminal may not take the clipboard: use the paste bin (:clipboard)"), false);
+        }
+
         return (Osc52 && PasteBin ? DialogText.CopiedToBoth : Osc52 ? DialogText.CopiedToClipboard
             : DialogText.CopiedToPasteBin, false);
     }
+
+    /// <summary>
+    /// True in a terminal that is known to drop the clipboard sequence (OSC 52): the text console of Linux (and of
+    /// a Raspberry Pi), the terminals made with VTE (LXTerminal, GNOME Terminal) and the Terminal of macOS
+    /// </summary>
+    internal static bool TerminalWithoutClipboard { get; } = !OperatingSystem.IsWindows() && WithoutClipboard(
+        Environment.GetEnvironmentVariable("TERM"), Environment.GetEnvironmentVariable("VTE_VERSION"),
+        Environment.GetEnvironmentVariable("TERM_PROGRAM"));
+
+    internal static bool WithoutClipboard(string? term, string? vteVersion, string? termProgram) =>
+        term == "linux" || !string.IsNullOrEmpty(vteVersion) || termProgram == "Apple_Terminal";
 
     /// <summary>
     /// Copy a name or a path (":name", ":path"): to the string memory, as the current string, so "p" and CTRL+R in
