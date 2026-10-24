@@ -254,7 +254,7 @@ public partial class TextArea
                 // (a blank page is of the kind of new files: Markdown, unless another is set)
                 ? FileExplorer.IsUntitled
                     ? SyntaxHighlighter.TypeOfFile(FileOperations.DefaultExtension)
-                    : SyntaxHighlighter.TypeOfFile(FileExplorer.CurrentFileName)
+                    : SyntaxHighlighter.TypeOfFile(FileExplorer.CurrentFileName, text)
                 : saveMode == SaveAsSettings && !_singleLine && !readOnly
                     ? SyntaxType.Ini
                     : SyntaxType.None;
@@ -835,8 +835,7 @@ public partial class TextArea
                 break;
             case EditorRequest.SyntaxChanged:
                 // Colors on or off is remembered for the files that are colored when they are opened
-                if (_saveMode == SaveAsFile &&
-                    SyntaxHighlighter.TypeOfFile(FileExplorer.CurrentFileName) != SyntaxType.None)
+                if (_saveMode == SaveAsFile && FileSyntax() != SyntaxType.None)
                 {
                     SyntaxHighlighter.ColorFiles = _engine.Syntax != SyntaxType.None;
                     FileIo.SaveSettings();
@@ -855,10 +854,16 @@ public partial class TextArea
     {
         if (_engine.Syntax != SyntaxType.None) return _engine.Syntax;
         if (_saveMode != SaveAsFile) return SyntaxType.None;
-        return SyntaxHighlighter.TypeOfFile(FileExplorer.IsUntitled
-            ? FileOperations.DefaultExtension
-            : FileExplorer.CurrentFileName);
+        return FileExplorer.IsUntitled
+            ? SyntaxHighlighter.TypeOfFile(FileOperations.DefaultExtension)
+            : FileSyntax();
     }
+
+    // The kind of the file being edited: from its name, or from its first line ("#!/bin/bash") when the name has no
+    // extension
+    private SyntaxType FileSyntax() =>
+        SyntaxHighlighter.TypeOfFile(FileExplorer.CurrentFileName,
+            _engine.Buffer.LineCount > 0 ? _engine.Buffer[0] : null);
 
     // ":snip edit": close the editor to open the file of snippets (at a line). The caller opens it, and this text
     // again when it is closed. Changes that are not saved are asked about first
@@ -1129,7 +1134,7 @@ public partial class TextArea
                 status = FileExplorer.RenameCurrentFile(_engine.RenameText);
                 if (status != DialogText.Success) break;
                 // The colors follow the kind of file the new name tells
-                var type = SyntaxHighlighter.TypeOfFile(FileExplorer.CurrentFileName);
+                var type = FileSyntax();
                 _engine.SyntaxDefault = type;
                 if (SyntaxHighlighter.ColorFiles) _engine.Syntax = type;
                 _engine.SetMessage(Lang.F("Renamed to {0}", FileExplorer.CurrentFileName), false);
@@ -1487,7 +1492,7 @@ public partial class TextArea
                 if (!FileExplorer.IsUntitled)
                 {
                     // Named: colored as the kind of file its name tells (Markdown without an extension)
-                    var type = SyntaxHighlighter.TypeOfFile(FileExplorer.CurrentFileName);
+                    var type = FileSyntax();
                     _engine.SyntaxDefault = type;
                     _engine.CompletionSyntax = type;
                     _engine.Syntax = SyntaxHighlighter.ColorFiles ? type : SyntaxType.None;

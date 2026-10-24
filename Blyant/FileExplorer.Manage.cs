@@ -665,7 +665,10 @@ internal static partial class FileExplorer
         // Read only: the text is drawn, and no key is read
         _ = new TextArea(left, ListTop, width, PageSize, PeekText(file.Text), 0, false, true, false,
             TextArea.SaveAsFile, false,
-            new TextArea.PeekOptions(SyntaxHighlighter.TypeOfFile(item.Name), () => Draw(true)) { NoWrap = true });
+            new TextArea.PeekOptions(SyntaxHighlighter.TypeOfFile(item.Name, file.Text), () => Draw(true))
+            {
+                NoWrap = true
+            });
         Tools.HideCursor();
     }
 
@@ -704,7 +707,7 @@ internal static partial class FileExplorer
             DrawPaneHeader(0);
             DrawPaneHeader(1);
             var (left, width) = PaneArea(1 - _active);
-            var syntax = SyntaxHighlighter.TypeOfFile(item.Name);
+            var syntax = SyntaxHighlighter.TypeOfFile(item.Name, file.Text);
             var textArea = new TextArea(left, ListTop, width, PageSize, PeekText(file.Text), 0, false, false, false,
                 TextArea.SaveAsFile, false, new TextArea.PeekOptions(syntax, () => Draw(true))
                 {

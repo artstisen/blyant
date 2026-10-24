@@ -308,11 +308,11 @@ A number of lines (12 from the start) are kept above and below the cursor: the t
 - The choice is remembered (`scrolloff` and `scrolllines` in the settings file), and it can be turned on and off on the Configuration page of the start page
 
 ## Colors
-The editor can color the parts of a text by what they are, for Markdown, HTML, CSS, JavaScript, JSON, XML, C#, PHP and settings files (INI). The text itself is shown as it is written: it is coloring, not a preview, and nothing is checked for errors.
+The editor can color the parts of a text by what they are, for Markdown, HTML, CSS, JavaScript, JSON, XML, C#, PHP, settings files (INI), C and C++, Rust, Python, PowerShell, batch files and shell scripts. The text itself is shown as it is written: it is coloring, not a preview, and nothing is checked for errors.
 
-- Files named `.md`, `.html`/`.htm`, `.css`, `.js`/`.mjs`, `.json`, `.cs`, `.php` and `.xml` (also `.svg`, `.xsd`, `.xsl`, `.xaml`, `.rss`, `.csproj` and other XML files), and `.ini`, `.cfg`, `.conf` and `.editorconfig` (settings files) are colored when they are opened from the file browser. So is Blyant's own `settings.ini`, also when it is edited from the System page of Configuration
+- Files named `.md`, `.html`/`.htm`, `.css`, `.js`/`.mjs`, `.json`, `.cs`, `.php` and `.xml` (also `.svg`, `.xsd`, `.xsl`, `.xaml`, `.rss`, `.csproj` and other XML files), `.ini`, `.cfg`, `.conf` and `.editorconfig` (settings files), `.c`, `.h`, `.cpp`, `.cc`, `.cxx`, `.hpp`, `.hh` and `.hxx` (C and C++), `.rs` (Rust), `.py`, `.pyw` and `.pyi` (Python), `.ps1`, `.psm1` and `.psd1` (PowerShell), `.bat` and `.cmd` (batch files), and `.sh`, `.bash`, `.zsh` and `.bashrc` (shell scripts) are colored when they are opened from the file browser. A file whose name has no extension is colored by its first line, when that tells the program that runs it: `#!/bin/bash` or `#!/bin/sh` (a shell script), `#!/usr/bin/env python3` (Python) or `#!/usr/bin/env pwsh` (PowerShell). Blyant's own `settings.ini` is colored too, also when it is edited from the System page of Configuration
 - `:syntax` Turn the colors on or off (`:syntax on` and `:syntax off` do one of the two). When you turn them off in one of these files, that is remembered (`syntaxcolors` in the settings file), so files are opened without colors until you turn them on again
-- `:syntax md`, `:syntax html`, `:syntax css`, `:syntax js`, `:syntax json`, `:syntax xml`, `:syntax cs`, `:syntax php`, `:syntax ini`, `:syntax diff` Color the text as that kind, whatever the name of the file is. (for this time: the next time the file is colored by its name again). `:syntax off` removes it
+- `:syntax md`, `:syntax html`, `:syntax css`, `:syntax js`, `:syntax json`, `:syntax xml`, `:syntax cs`, `:syntax php`, `:syntax ini`, `:syntax cpp` (also `:syntax c`), `:syntax rust`, `:syntax py`, `:syntax ps`, `:syntax bat`, `:syntax sh`, `:syntax diff` Color the text as that kind, whatever the name of the file is. (for this time: the next time the file is colored by its name again). `:syntax off` removes it
 
 Selected text, search matches and misspelled words are shown on top of the colors. With _Black and white_ on, the colored parts are shown brighter than the text.
 
@@ -329,14 +329,14 @@ Selected text, search matches and misspelled words are shown on top of the color
 
 The reading of Markdown is simple: emphasis inside emphasis is shown as the outer one, emphasis that continues on the next line is not found, and tables are not colored.
 
-### HTML, CSS, JavaScript, JSON, XML, C# and PHP
+### HTML, CSS, JavaScript, JSON, XML, C#, PHP, C/C++, Rust, Python and scripts
 
 | | |
 |---|---|
 | Comments | The color of dividers |
 | Strings (text in quotes), and the values of attributes in HTML | The color of favorites |
-| The words of JavaScript, C# and PHP (`const`, `function`, `class`, `return` ...), the marks `<?php` and `?>`, HTML tags, CSS selectors and words like `@media` and `!important` | The color of the logo and labels |
-| The names of attributes in HTML, of properties in CSS and of values in JSON, the lines of the C# preprocessor (`#region`, `#if` ...), and `$variables` and `#[attributes]` in PHP | The color of the preview title |
+| The words of JavaScript, C#, PHP, C/C++, Rust, Python, PowerShell, batch files and shell scripts (`const`, `function`, `class`, `return` ...), macros in Rust (`println!`, `vec!`), operators in PowerShell (`-eq`, `-and`), the marks `<?php` and `?>`, HTML tags, CSS selectors and words like `@media` and `!important` | The color of the logo and labels |
+| The names of attributes in HTML, of properties in CSS and of values in JSON, the lines of the preprocessor in C# and C/C++ (`#region`, `#include` ...), `$variables` and `#[attributes]` in PHP, `#[attributes]` and lifetimes (`'a`) in Rust, `@decorators` in Python, variables in PowerShell, batch files and shell scripts (`$name`, `%name%`, `${name}`), and labels in batch files (`:loop`) | The color of the preview title |
 | Numbers (also with units, like `12px`), CSS colors like `#fff`, and character entities like `&amp;` | Magenta |
 
 In an HTML file, what is between `<style>` and `</style>` is colored as CSS, and what is between `<script>` and `</script>` as JavaScript. XML is colored like HTML (tags, attributes, comments and entities), without the CSS and JavaScript, and the text of a `<![CDATA[ ... ]]>` section is left uncolored.
@@ -356,6 +356,18 @@ This too is a simple reading. Regular expressions written between slashes in Jav
 C# is read the same way as JavaScript, with the words of C#: strings in quotes, `@"verbatim strings"` and `"""raw strings"""` (also over several lines), and `$"..."` strings, where the code inside `{...}` is shown as part of the string. A name written with `@` in front (`@class`) is not a word of the language. Names of your own (classes, methods) are not colored.
 
 PHP is colored as it is in a PHP file: the HTML as HTML, and the code from `<?php` (or `<?=`) to `?>` as PHP, also over several lines; a file that starts with `<?php` and has no `?>` is PHP to its end (and text before `<?php` is read as HTML). The words of PHP are colored in any letter case (`IF`, `Function`), but not after `->` (`$a->list`). Strings in quotes can go over several lines, and so can heredoc and nowdoc text (`<<<EOT`): it ends at the line that starts with its own marker (as `EOT;` or `EOT, $x);`). A block of PHP inside the value of an attribute or in a `<script>` or `<style>` is colored when it ends on the same line.
+
+C and C++ are colored alike, with the words of both. A `'` between the digits of a number (`1'000'000`) does not start a string, and raw strings (`R"(text)"`) can go over several lines, to `)"`.
+
+In Rust, `'x'` is a character, but `'a` is a lifetime (or a label, `'outer:`) and is colored as a name. Strings can go over several lines, and so can raw strings (`r"..."` and `r#"..."#`). A word followed by `!` is a macro, and is colored as a word of the language. A comment inside a block comment is not looked for: the comment ends at the first `*/`.
+
+In Python, `#` starts a comment, and strings can have a prefix (`r"..."`, `f"..."`, `b'...'`), which is colored with the string; strings in three quotes (`"""..."""` and `'''...'''`) go on over several lines. The code inside `{...}` in an f-string is shown as part of the string.
+
+In PowerShell, `#` starts a comment and `<# ... #>` is a comment over several lines. Strings in `'...'` and `"..."` can go over several lines, and here-strings (`@"` to a line that starts with `"@`, and `@'` to `'@`) are colored to their end. The words of the language and the operators (`-eq`, `-like`) are colored in any letter case; the names of commands (`Get-ChildItem`) and their parameters (`-Path`) are not. A variable inside a string is shown as part of the string.
+
+In a batch file, `REM` and `::` start a comment, a line starting with `:` is a label, and `%name%`, `%1`, `%%i`, `%~dp0` and `!name!` are variables (also inside a string). The words are colored in any letter case. Each line is read by itself.
+
+In a shell script, `#` starts a comment where it starts a word (not in `a#b` or `${#x}`). Strings in `'...'` and `"..."` can go over several lines, and a here-document (`<<EOF`, `<<-EOF`, `<<'EOF'`) is colored from the next line to the line that is its marker. A word of the language is colored only as a word by itself (not in `/usr/bin/test` or `--if`). The commands inside `$(...)` are colored as code, but a variable inside a string is shown as part of the string.
 
 ## String memory
 Text that is yanked, and lines that are deleted, are kept in the string memory (up to 64 strings). The memory is kept until Blyant is closed, so text can be copied from one file to another. The status line shows `mem 3/11`: the selected string (the one `p` and `P` put) and how many strings there are. A new string is added last and selected, so the two numbers are the same until another is selected with `CTRL+P` `CTRL+N`.

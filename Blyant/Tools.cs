@@ -1020,6 +1020,8 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":complete edit", Lang.T("Edit the file of completions (completions.txt)"), false));
             _shortcutList.Add(new Shortcut(":syntax", Lang.T("Colors on/off (on in the files of a known kind)"), false));
             _shortcutList.Add(new Shortcut(":syntax html", Lang.T("Color as html (or md css js json xml cs php ini)"), false));
+            _shortcutList.Add(new Shortcut(":syntax cpp", Lang.T("Color as C/C++ (or rust py)"), false));
+            _shortcutList.Add(new Shortcut(":syntax ps", Lang.T("Color as PowerShell (or bat sh)"), false));
             _shortcutList.Add(new Shortcut(":number :nu", Lang.T("Line numbers on/off"), false));
             _shortcutList.Add(new Shortcut(":split", Lang.T("Two panes on/off (Tab: go to the other)"), false));
             _shortcutList.Add(new Shortcut("Tab Shift+Tab", Lang.T("Split: go to the other pane (Normal mode)"), false));

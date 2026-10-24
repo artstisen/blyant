@@ -16,11 +16,18 @@ internal enum SyntaxType
     Macro, // A macro of the editor (.macro files, see MacroLanguage)
     CSharp,
     Php, // HTML with PHP in it (and PHP alone, from "<?php")
-    Ini // Settings files: [sections], names = values and comments (settings.ini)
+    Ini, // Settings files: [sections], names = values and comments (settings.ini)
+    Cpp, // C++, and C
+    Rust,
+    Python,
+    PowerShell,
+    Batch, // Windows batch files (.bat, .cmd)
+    Bash // Shell scripts (.sh, and files without an extension that start with "#!/bin/bash" ...)
 }
 
 /// <summary>
-/// The coloring of text in the editor by what it is: Markdown, HTML, CSS, JavaScript, JSON, XML, C#, PHP or INI.
+/// The coloring of text in the editor by what it is: Markdown, HTML, CSS, JavaScript, JSON, XML, C#, PHP, INI,
+/// C/C++, Rust, Python, PowerShell, batch files or shell scripts.
 /// Each kind has a class of its own that finds the styles of a line (MarkdownHighlighter, HtmlHighlighter ...).
 /// This class picks the one to use, and tells what kind a file is from its name.
 ///
@@ -34,6 +41,46 @@ internal static class SyntaxHighlighter
     /// True to color files of a known kind when they are opened in the editor (setting "syntaxcolors")
     /// </summary>
     internal static bool ColorFiles { get; set; } = true;
+
+    /// <summary>
+    /// The kind of text in a file, from the extension of its name, or for a name without an extension from the
+    /// program on its first line ("#!/bin/bash", "#!/usr/bin/env python3")
+    /// </summary>
+    /// <param name="fileName">The name of the file</param>
+    /// <param name="text">The text of the file (only its first line is read), or its first line</param>
+    internal static SyntaxType TypeOfFile(string fileName, string? text)
+    {
+        var type = TypeOfFile(fileName);
+        if (type != SyntaxType.None || text == null || Path.GetExtension(fileName).Length > 0) return type;
+        return TypeOfScript(text);
+    }
+
+    /// <summary>
+    /// The kind of a script from its first line: "#!" and the program that runs it (sh, bash, python, pwsh ...),
+    /// also after "env". None if there is none
+    /// </summary>
+    internal static SyntaxType TypeOfScript(string text)
+    {
+        if (!text.StartsWith("#!", StringComparison.Ordinal)) return SyntaxType.None;
+        var newline = text.IndexOfAny(['\r', '\n']);
+        var words = text[2..(newline < 0 ? text.Length : newline)]
+            .Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries);
+        if (words.Length == 0) return SyntaxType.None;
+        var program = words[0][(words[0].LastIndexOf('/') + 1)..];
+        if (program == "env")
+        {
+            // #!/usr/bin/env bash, #!/usr/bin/env -S python3 -u
+            program = words.Skip(1).FirstOrDefault(word => !word.StartsWith('-')) ?? string.Empty;
+        }
+
+        if (program.StartsWith("python", StringComparison.Ordinal)) return SyntaxType.Python;
+        return program switch
+        {
+            "sh" or "bash" or "zsh" or "ksh" or "dash" or "ash" => SyntaxType.Bash,
+            "pwsh" or "powershell" => SyntaxType.PowerShell,
+            _ => SyntaxType.None
+        };
+    }
 
     /// <summary>
     /// The kind of text in a file, from the extension of its name
@@ -54,6 +101,13 @@ internal static class SyntaxHighlighter
             ".diff" or ".patch" => SyntaxType.Diff,
             ".macro" => SyntaxType.Macro,
             ".ini" or ".cfg" or ".conf" or ".editorconfig" => SyntaxType.Ini,
+            ".cpp" or ".cc" or ".cxx" or ".c++" or ".hpp" or ".hh" or ".hxx" or ".c" or ".h" => SyntaxType.Cpp,
+            ".rs" => SyntaxType.Rust,
+            ".py" or ".pyw" or ".pyi" => SyntaxType.Python,
+            ".ps1" or ".psm1" or ".psd1" => SyntaxType.PowerShell,
+            ".bat" or ".cmd" => SyntaxType.Batch,
+            ".sh" or ".bash" or ".zsh" or ".ksh" or ".bashrc" or ".bash_profile" or ".profile" or ".zshrc"
+                => SyntaxType.Bash,
             _ => SyntaxType.None
         };
     }
@@ -76,6 +130,12 @@ internal static class SyntaxHighlighter
             "diff" or "patch" => SyntaxType.Diff,
             "macro" => SyntaxType.Macro,
             "ini" => SyntaxType.Ini,
+            "cpp" or "c++" or "c" => SyntaxType.Cpp,
+            "rust" or "rs" => SyntaxType.Rust,
+            "python" or "py" => SyntaxType.Python,
+            "powershell" or "ps" or "ps1" => SyntaxType.PowerShell,
+            "bat" or "batch" or "cmd" => SyntaxType.Batch,
+            "sh" or "bash" or "shell" => SyntaxType.Bash,
             _ => SyntaxType.None
         };
     }
@@ -95,6 +155,12 @@ internal static class SyntaxHighlighter
             SyntaxType.Diff => "Diff",
             SyntaxType.Macro => "Macro",
             SyntaxType.Ini => "INI",
+            SyntaxType.Cpp => "C/C++",
+            SyntaxType.Rust => "Rust",
+            SyntaxType.Python => "Python",
+            SyntaxType.PowerShell => "PowerShell",
+            SyntaxType.Batch => "Batch",
+            SyntaxType.Bash => "Shell",
             _ => string.Empty
         };
     }
@@ -150,6 +216,24 @@ internal static class SyntaxHighlighter
                 break;
             case SyntaxType.Ini:
                 ScanIni(line, styles);
+                break;
+            case SyntaxType.Cpp:
+                nextState = CStyleHighlighter.Scan(CStyleHighlighter.Cpp, line, 0, line.Length, state, styles);
+                break;
+            case SyntaxType.Rust:
+                nextState = CStyleHighlighter.Scan(CStyleHighlighter.Rust, line, 0, line.Length, state, styles);
+                break;
+            case SyntaxType.Python:
+                nextState = PythonHighlighter.Scan(line, state, styles);
+                break;
+            case SyntaxType.PowerShell:
+                nextState = PowerShellHighlighter.Scan(line, state, styles);
+                break;
+            case SyntaxType.Batch:
+                BatchHighlighter.Scan(line, styles);
+                break;
+            case SyntaxType.Bash:
+                nextState = BashHighlighter.Scan(line, state, styles);
                 break;
         }
 

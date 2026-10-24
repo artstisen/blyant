@@ -29,6 +29,18 @@ internal sealed class CStyleLanguage
     internal bool DollarInNames { get; init; }
 
     /// <summary>
+    /// The rules of C and C++: ' between the digits of a number (1'000'000), and raw strings R"(text)" (also over
+    /// several lines, to )")
+    /// </summary>
+    internal bool Cpp { get; init; }
+
+    /// <summary>
+    /// The rules of Rust: 'x' is a character and 'a a lifetime (colored as a name), raw strings r"text" and
+    /// r#"text"#, strings over several lines, #[attributes] colored as names, and macros (println!) as keywords
+    /// </summary>
+    internal bool Rust { get; init; }
+
+    /// <summary>
     /// The rules of PHP: $variables colored as names, # comments and #[attributes], strings in ' and " over several
     /// lines, heredoc and nowdoc (&lt;&lt;&lt;EOT), "->" before a member, and "?&gt;" ending the code (the HTML
     /// around it is read by HtmlHighlighter)
@@ -91,6 +103,44 @@ internal static class CStyleHighlighter
         },
         VerbatimStrings = true,
         Preprocessor = true
+    };
+
+    internal static readonly CStyleLanguage Cpp = new()
+    {
+        // C++, and the words of C (C is colored as C++)
+        Keywords = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "alignas", "alignof", "and", "asm", "auto", "bool", "break", "case", "catch", "char", "char8_t",
+            "char16_t", "char32_t", "class", "concept", "const", "consteval", "constexpr", "constinit", "const_cast",
+            "continue", "co_await", "co_return", "co_yield", "decltype", "default", "delete", "do", "double",
+            "dynamic_cast", "else", "enum", "explicit", "export", "extern", "false", "final", "float", "for",
+            "friend", "goto", "if", "inline", "int", "long", "mutable", "namespace", "new", "noexcept", "not",
+            "nullptr", "operator", "or", "override", "private", "protected", "public", "register",
+            "reinterpret_cast", "requires", "return", "short", "signed", "sizeof", "static", "static_assert",
+            "static_cast", "struct", "switch", "template", "this", "thread_local", "throw", "true", "try", "typedef",
+            "typeid", "typename", "union", "unsigned", "using", "virtual", "void", "volatile", "wchar_t", "while",
+            "xor",
+            // C
+            "restrict", "_Bool", "_Complex", "_Imaginary", "_Alignas", "_Alignof", "_Atomic", "_Generic",
+            "_Noreturn", "_Static_assert", "_Thread_local", "NULL"
+        },
+        Preprocessor = true,
+        Cpp = true
+    };
+
+    internal static readonly CStyleLanguage Rust = new()
+    {
+        Keywords = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "as", "async", "await", "break", "const", "continue", "crate", "dyn", "else", "enum", "extern", "false",
+            "fn", "for", "if", "impl", "in", "let", "loop", "match", "mod", "move", "mut", "pub", "ref", "return",
+            "self", "Self", "static", "struct", "super", "trait", "true", "type", "union", "unsafe", "use", "where",
+            "while", "yield",
+            // The types that are built in
+            "bool", "char", "str", "i8", "i16", "i32", "i64", "i128", "isize", "u8", "u16", "u32", "u64", "u128",
+            "usize", "f32", "f64"
+        },
+        Rust = true
     };
 
     internal static readonly CStyleLanguage Php = new()
@@ -171,7 +221,7 @@ internal static class CStyleHighlighter
                     InVerbatim => (VerbatimEnd(line, i, end, out var verbatim), verbatim),
                     InSingle => (JavaScriptHighlighter.StringEnd(line, i, end, '\'', out var single), single),
                     InDouble => (JavaScriptHighlighter.StringEnd(line, i, end, '"', out var quoted), quoted),
-                    _ => EndOf(line, i, end, "\"\"\"")
+                    _ => EndOf(line, i, end, language.Cpp ? ")\"" : "\"\"\"")
                 };
                 Fill(styles, i, to, state == InComment ? SyntaxStyle.Comment : SyntaxStyle.String);
                 if (closed) state = Normal;
@@ -198,9 +248,9 @@ internal static class CStyleHighlighter
                 return state;
             }
 
-            if (language.Php && c == '#')
+            if ((language.Php && c == '#') || (language.Rust && c == '#' && next is '[' or '!'))
             {
-                // #[Attribute]
+                // #[Attribute] (Rust: also #![attribute])
                 var close = line.IndexOf(']', i, end - i);
                 var to = close < 0 ? end : close + 1;
                 Fill(styles, i, to, SyntaxStyle.Name);
@@ -265,13 +315,55 @@ internal static class CStyleHighlighter
                 state = InRaw;
                 i += 3;
             }
+            else if (language.Rust && c == '\'')
+            {
+                // 'x' and '\n' are characters, 'a (and 'outer:) a lifetime or a label
+                if (next == '\\' || (i + 2 < end && line[i + 2] == '\''))
+                {
+                    var to = JavaScriptHighlighter.StringEnd(line, i + 1, end, '\'', out _);
+                    Fill(styles, i, to, SyntaxStyle.String);
+                    i = to;
+                }
+                else if (IsNameStart(language, next))
+                {
+                    var to = NameEnd(language, line, i + 1, end);
+                    Fill(styles, i, to, SyntaxStyle.Name);
+                    i = to;
+                }
+                else
+                {
+                    i++;
+                }
+            }
+            else if (language.Rust && RustRawStart(line, i, end, out var hashes, out var rawQuote))
+            {
+                // r"text", r#"text"# (and br"..."): to the quote and the same number of #
+                var close = line.IndexOf("\"" + new string('#', hashes), rawQuote + 1, end - rawQuote - 1,
+                    StringComparison.Ordinal);
+                var to = close < 0 ? end : close + 1 + hashes;
+                Fill(styles, i, to, SyntaxStyle.String);
+                // Not closed on the line: it goes on (to a quote)
+                if (close < 0) state = InDouble;
+                i = to;
+            }
+            else if (language.Cpp && CppRawStart(line, i, end, out var delimiter, out var open))
+            {
+                // R"(text)", R"x(text)x" (and u8R, LR, uR, UR): to ) and the same delimiter and "
+                var close = line.IndexOf(")" + delimiter + "\"", open + 1, end - open - 1, StringComparison.Ordinal);
+                var to = close < 0 ? end : close + delimiter.Length + 2;
+                Fill(styles, i, to, SyntaxStyle.String);
+                // Not closed on the line: it goes on, to )" (a delimiter on a later line is not looked for)
+                if (close < 0) state = InRaw;
+                i = to;
+            }
             else if (c is '"' or '\'')
             {
                 // A string ends at its quote, or at the end of the line
                 var to = JavaScriptHighlighter.StringEnd(line, i + 1, end, c, out var closed);
                 Fill(styles, i, to, SyntaxStyle.String);
-                // In PHP a string goes on to the next line
+                // In PHP a string goes on to the next line (in Rust a "string" does)
                 if (!closed && language.Php) state = c == '"' ? InDouble : InSingle;
+                if (!closed && language.Rust && c == '"') state = InDouble;
                 i = to;
             }
             else if (language.TemplateStrings && c == '`')
@@ -283,7 +375,14 @@ internal static class CStyleHighlighter
             else if (char.IsAsciiDigit(c) || (c == '.' && char.IsAsciiDigit(next)))
             {
                 var to = i + 1;
-                while (to < end && (char.IsLetterOrDigit(line[to]) || line[to] is '.' or '_')) to++;
+                while (to < end && (char.IsLetterOrDigit(line[to]) || line[to] is '.' or '_' ||
+                                    // 1'000'000 in C++
+                                    (language.Cpp && line[to] == '\'' && to + 1 < end &&
+                                     char.IsAsciiHexDigit(line[to + 1]))))
+                {
+                    to++;
+                }
+
                 Fill(styles, i, to, SyntaxStyle.Number);
                 i = to;
             }
@@ -296,6 +395,12 @@ internal static class CStyleHighlighter
                 if (!member && language.Keywords.Contains(line[i..to]))
                 {
                     Fill(styles, i, to, SyntaxStyle.Keyword);
+                }
+                else if (language.Rust && to < end && line[to] == '!' && (to + 1 >= end || line[to + 1] != '='))
+                {
+                    // A macro: println!, vec! (not "a != b")
+                    Fill(styles, i, to + 1, SyntaxStyle.Keyword);
+                    to++;
                 }
 
                 i = to;
@@ -326,7 +431,7 @@ internal static class CStyleHighlighter
     // The line that ends a heredoc: its marker first (after blank space), not followed by a letter, digit or "_"
     // (as "EOT;" or "EOT, $x);"). Where the marker ends, or -1 if this is a line of the text. Only a hash of the
     // marker is in the state (a number): a word with the same hash would end it too, which is very unlikely
-    private static int HeredocMarkerEnd(string line, int start, int end, int hash)
+    internal static int HeredocMarkerEnd(string line, int start, int end, int hash)
     {
         var i = start;
         while (i < end && char.IsWhiteSpace(line[i])) i++;
@@ -339,7 +444,7 @@ internal static class CStyleHighlighter
     private static bool IsMarkerChar(char c) => char.IsAsciiLetterOrDigit(c) || c == '_';
 
     // A hash of the marker of a heredoc that fits in the state (FNV-1a, MarkerHashBits bits)
-    private static int MarkerHash(string marker)
+    internal static int MarkerHash(string marker)
     {
         var hash = 2166136261;
         foreach (var c in marker)
@@ -365,6 +470,42 @@ internal static class CStyleHighlighter
         var stop = i;
         while (stop < end && stop - i < 3 && line[stop] is '@' or '$') stop++;
         return stop;
+    }
+
+    // A raw string of Rust: r" or r#" (with any number of #), also br; where its quote is, and the number of #.
+    // Only where a name starts (not "bar" in "foobar")
+    private static bool RustRawStart(string line, int i, int end, out int hashes, out int quote)
+    {
+        hashes = 0;
+        quote = -1;
+        if (i > 0 && (char.IsLetterOrDigit(line[i - 1]) || line[i - 1] == '_')) return false;
+        var at = i;
+        if (at < end && line[at] == 'b') at++;
+        if (at >= end || line[at] != 'r') return false;
+        at++;
+        while (at < end && line[at] == '#') at++;
+        if (at >= end || line[at] != '"') return false;
+        hashes = at - i - (line[i] == 'b' ? 2 : 1);
+        quote = at;
+        return true;
+    }
+
+    // A raw string of C++: R"delimiter( (also u8R, LR, uR, UR); its delimiter, and where its ( is. Only where a name
+    // starts
+    private static bool CppRawStart(string line, int i, int end, out string delimiter, out int open)
+    {
+        delimiter = string.Empty;
+        open = -1;
+        if (i > 0 && (char.IsLetterOrDigit(line[i - 1]) || line[i - 1] == '_')) return false;
+        var at = i;
+        if (at + 1 < end && line[at] == 'u' && line[at + 1] == '8') at += 2;
+        else if (at < end && line[at] is 'L' or 'u' or 'U') at++;
+        if (at + 1 >= end || line[at] != 'R' || line[at + 1] != '"') return false;
+        var paren = line.IndexOf('(', at + 2, end - at - 2);
+        if (paren < 0 || paren - at - 2 > 16) return false;
+        delimiter = line[(at + 2)..paren];
+        open = paren;
+        return true;
     }
 
     private static bool IsRawStart(string line, int i, int end) =>

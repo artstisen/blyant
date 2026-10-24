@@ -307,6 +307,178 @@ public class SyntaxTests
 
     #endregion
 
+    #region C and C++
+
+    [Theory]
+    [InlineData("int n = 1'000'000;", "WWW.....999999999.")]
+    [InlineData("char c = 'x';", "WWWW.....SSS.")]
+    [InlineData("#include <vector>", "NNNNNNNNNNNNNNNNN")]
+    [InlineData("auto s = R\"(a \"b\")\";", "WWWW.....SSSSSSSSSS.")]
+    [InlineData("nullptr; // c", "WWWWWWW..####")]
+    public void Cpp_Lines(string line, string expected)
+    {
+        Assert.Equal(expected, Style(SyntaxType.Cpp, line));
+    }
+
+    [Fact]
+    public void Cpp_RawStringOverSeveralLines_AndTheNamesOfC()
+    {
+        Assert.Equal(new[] { "....SSSSSS", "SSSSS..WWW" }, Styles(SyntaxType.Cpp, "s = R\"(one", "two)\"; int"));
+        Assert.Equal(SyntaxType.Cpp, SyntaxHighlighter.ParseType("cpp"));
+        Assert.Equal(SyntaxType.Cpp, SyntaxHighlighter.ParseType("C++"));
+        Assert.Equal(SyntaxType.Cpp, SyntaxHighlighter.ParseType("c"));
+        Assert.Equal("C/C++", SyntaxHighlighter.Name(SyntaxType.Cpp));
+    }
+
+    #endregion
+
+    #region Rust
+
+    [Theory]
+    [InlineData("let mut v = vec![1, 2];", "WWW.WWW.....WWWW.9..9..")]
+    [InlineData("fn f<'a>(x: &'a str)", "WW...NN......NN.WWW.")]
+    [InlineData("let c = '\\n';", "WWW.....SSSS.")]
+    [InlineData("#[derive(Debug)]", "NNNNNNNNNNNNNNNN")]
+    [InlineData("let s = r#\"a \"b\"\"#;", "WWW.....SSSSSSSSSS.")]
+    [InlineData("if a != b { 'outer: loop {} }", "WW..........NNNNNN..WWWW.....")]
+    [InlineData("println!(\"{}\", x); // c", "WWWWWWWW.SSSS......####")]
+    public void Rust_Lines(string line, string expected)
+    {
+        Assert.Equal(expected, Style(SyntaxType.Rust, line));
+    }
+
+    [Fact]
+    public void Rust_StringOverSeveralLines()
+    {
+        Assert.Equal(new[] { "WWW.....SSSS", "SSSS..WW" }, Styles(SyntaxType.Rust, "let s = \"one", "two\"; fn"));
+        Assert.Equal(SyntaxType.Rust, SyntaxHighlighter.ParseType("rs"));
+        Assert.Equal("Rust", SyntaxHighlighter.Name(SyntaxType.Rust));
+    }
+
+    #endregion
+
+    #region Python
+
+    [Theory]
+    [InlineData("def f(x=1): # c", "WWW.....9...###")]
+    [InlineData("s = r\"C:\\dir\" + f'{x}'", "....SSSSSSSSS...SSSSSS")]
+    [InlineData("  @property", "..NNNNNNNNN")]
+    [InlineData("x.match = None", "..........WWWW")]
+    [InlineData("a = b\"x\" if True else 0", "....SSSS.WW.WWWW.WWWW.9")]
+    public void Python_Lines(string line, string expected)
+    {
+        Assert.Equal(expected, Style(SyntaxType.Python, line));
+    }
+
+    [Fact]
+    public void Python_StringsInThreeQuotes_GoOnOverSeveralLines()
+    {
+        Assert.Equal(new[] { "....SSSSSS", "SSSSSSS", "SSS...9" },
+            Styles(SyntaxType.Python, "s = \"\"\"one", "two 'x'", "\"\"\" + 1"));
+        // A "#" inside the string is not a comment
+        Assert.Equal(new[] { "....SSSSSSSS", "SSS" }, Styles(SyntaxType.Python, "x = '''a # b", "'''"));
+        Assert.Equal(SyntaxType.Python, SyntaxHighlighter.ParseType("py"));
+        Assert.Equal("Python", SyntaxHighlighter.Name(SyntaxType.Python));
+    }
+
+    #endregion
+
+    #region PowerShell
+
+    [Theory]
+    [InlineData("$files = Get-ChildItem -Path $dir", "NNNNNN.......................NNNN")]
+    [InlineData("if ($a -eq 1) { return }", "WW..NN.WWW.9....WWWWWW..")]
+    [InlineData("Write-Host \"Hi $name\" # c", "...........SSSSSSSSSS.###")]
+    [InlineData("$env:PATH += ';x'", "NNNNNNNNN....SSSS")]
+    [InlineData("FUNCTION Get-Thing {", "WWWWWWWW............")]
+    [InlineData("'it''s' + 0x1F", "SSSSSSS...9999")]
+    public void PowerShell_Lines(string line, string expected)
+    {
+        Assert.Equal(expected, Style(SyntaxType.PowerShell, line));
+    }
+
+    [Fact]
+    public void PowerShell_BlockCommentsAndHereStrings_GoOnOverSeveralLines()
+    {
+        Assert.Equal(new[] { "######", "######.NN" }, Styles(SyntaxType.PowerShell, "<# one", "two #> $x"));
+        Assert.Equal(new[] { "NN...SS", "SSSSSSSS", "SS...9" },
+            Styles(SyntaxType.PowerShell, "$t = @\"", "text \"q\"", "\"@ + 1"));
+        Assert.Equal(SyntaxType.PowerShell, SyntaxHighlighter.ParseType("ps1"));
+        Assert.Equal("PowerShell", SyntaxHighlighter.Name(SyntaxType.PowerShell));
+    }
+
+    #endregion
+
+    #region Batch files
+
+    [Theory]
+    [InlineData("@echo off", "WWWWW.WWW")]
+    [InlineData("REM a note", "##########")]
+    [InlineData(":: note", "#######")]
+    [InlineData(":loop", "NNNNN")]
+    [InlineData("set x=%~dp0", "WWW...NNNNN")]
+    [InlineData("for %%i in (*.txt) do echo %%i", "WWW.NNN.WW.........WW.WWWW.NNN")]
+    [InlineData("if \"%name%\"==\"\" goto end & rem done", "WW.SNNNNNNS..SS.WWWW.......########")]
+    [InlineData("exit /b 1", "WWWW....9")]
+    [InlineData("echo !count!", "WWWW.NNNNNNN")]
+    public void Batch_Lines(string line, string expected)
+    {
+        Assert.Equal(expected, Style(SyntaxType.Batch, line));
+    }
+
+    [Fact]
+    public void Batch_IsAKindOfText_ForTheSyntaxCommand()
+    {
+        Assert.Equal(SyntaxType.Batch, SyntaxHighlighter.ParseType("bat"));
+        Assert.Equal(SyntaxType.Batch, SyntaxHighlighter.ParseType("cmd"));
+        Assert.Equal("Batch", SyntaxHighlighter.Name(SyntaxType.Batch));
+    }
+
+    #endregion
+
+    #region Shell scripts
+
+    [Theory]
+    [InlineData("#!/bin/bash", "###########")]
+    [InlineData("for f in *.txt; do", "WWW...WW........WW")]
+    [InlineData("echo \"$HOME/x\" # c", ".....SSSSSSSSS.###")]
+    [InlineData("x=${1:-5} # n", "..NNNNNNN.###")]
+    [InlineData("if [ $? -ne 0 ]; then exit 1; fi", "WW...NN.....9....WWWW.WWWW.9..WW")]
+    [InlineData("a#b", "...")]
+    [InlineData("echo 'it\\'", ".....SSSSS")]
+    public void Bash_Lines(string line, string expected)
+    {
+        Assert.Equal(expected, Style(SyntaxType.Bash, line));
+    }
+
+    [Fact]
+    public void Bash_StringsAndHereDocuments_GoOnOverSeveralLines()
+    {
+        Assert.Equal(new[] { "....SSSSSS......", "SSSSSSS", "SSSS", "WWWW" },
+            Styles(SyntaxType.Bash, "cat <<-EOF > out", "text $x", "\tEOF", "done"));
+        Assert.Equal(new[] { "..SSSS", "SSSS.WW" }, Styles(SyntaxType.Bash, "s='one", "two' if"));
+        // (1<<2 is not a here-document)
+        Assert.Equal(new[] { ".....9..9..", "WWWW" }, Styles(SyntaxType.Bash, "x=$((1<<2))", "done"));
+        Assert.Equal(SyntaxType.Bash, SyntaxHighlighter.ParseType("sh"));
+        Assert.Equal("Shell", SyntaxHighlighter.Name(SyntaxType.Bash));
+    }
+
+    [Theory]
+    [InlineData("deploy", "#!/bin/bash\necho", nameof(SyntaxType.Bash))]
+    [InlineData("build", "#!/bin/sh", nameof(SyntaxType.Bash))]
+    [InlineData("tool", "#!/usr/bin/env python3\r\nimport os", nameof(SyntaxType.Python))]
+    [InlineData("run", "#!/usr/bin/env -S pwsh -NoProfile", nameof(SyntaxType.PowerShell))]
+    [InlineData("notes.txt", "#!/bin/sh", nameof(SyntaxType.None))]
+    [InlineData("README", "# Title", nameof(SyntaxType.None))]
+    [InlineData("deploy", null, nameof(SyntaxType.None))]
+    [InlineData("site.sh", "", nameof(SyntaxType.Bash))]
+    public void AFileWithoutAnExtension_IsToldByItsFirstLine(string name, string? text, string expected)
+    {
+        Assert.Equal(expected, SyntaxHighlighter.TypeOfFile(name, text).ToString());
+    }
+
+    #endregion
+
     #region Kinds of text
 
     [Theory]
@@ -326,6 +498,17 @@ public class SyntaxTests
     [InlineData("settings.ini", nameof(SyntaxType.Ini))]
     [InlineData("app.CFG", nameof(SyntaxType.Ini))]
     [InlineData(".editorconfig", nameof(SyntaxType.Ini))]
+    [InlineData("main.cpp", nameof(SyntaxType.Cpp))]
+    [InlineData("util.H", nameof(SyntaxType.Cpp))]
+    [InlineData("lib.c", nameof(SyntaxType.Cpp))]
+    [InlineData("main.rs", nameof(SyntaxType.Rust))]
+    [InlineData("app.py", nameof(SyntaxType.Python))]
+    [InlineData("gui.PYW", nameof(SyntaxType.Python))]
+    [InlineData("setup.ps1", nameof(SyntaxType.PowerShell))]
+    [InlineData("build.bat", nameof(SyntaxType.Batch))]
+    [InlineData("run.CMD", nameof(SyntaxType.Batch))]
+    [InlineData("install.sh", nameof(SyntaxType.Bash))]
+    [InlineData(".bashrc", nameof(SyntaxType.Bash))]
     [InlineData("notes.txt", nameof(SyntaxType.None))]
     [InlineData("json", nameof(SyntaxType.None))]
     public void TheKindOfAFile_IsToldByItsName(string name, string expected)
