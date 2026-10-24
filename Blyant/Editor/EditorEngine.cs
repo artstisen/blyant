@@ -1732,12 +1732,13 @@ internal sealed partial class EditorEngine
 
     /// <summary>
     /// Create the regular expression for a search pattern. Like Vim's "smartcase" the search ignores case
-    /// unless the pattern has uppercase letters. A pattern that is not a valid expression is searched for as text.
+    /// unless the pattern has uppercase letters (not counting a letter after a backslash: \S, \W and \D are
+    /// classes). A pattern that is not a valid expression is searched for as text.
     /// </summary>
     private static Regex CreateRegex(string pattern, bool? ignoreCase = null, TimeSpan? timeout = null)
     {
         var options = RegexOptions.CultureInvariant;
-        if (ignoreCase ?? !pattern.Any(char.IsUpper)) options |= RegexOptions.IgnoreCase;
+        if (ignoreCase ?? !HasUpperCase(pattern)) options |= RegexOptions.IgnoreCase;
         try
         {
             return new Regex(pattern, options, timeout ?? SearchTimeout);
@@ -1746,6 +1747,18 @@ internal sealed partial class EditorEngine
         {
             return new Regex(Regex.Escape(pattern), options, timeout ?? SearchTimeout);
         }
+    }
+
+    // An uppercase letter in a pattern, where it is a letter to find (not the one after a backslash)
+    private static bool HasUpperCase(string pattern)
+    {
+        for (var i = 0; i < pattern.Length; i++)
+        {
+            if (pattern[i] == '\\') i++;
+            else if (char.IsUpper(pattern[i])) return true;
+        }
+
+        return false;
     }
 
     private void SetSearch(string pattern)

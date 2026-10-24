@@ -401,9 +401,10 @@ internal static class JumpMenu
                     break;
                 case 'b':
                 case 'B':
-                    // Keep the selected place as a bookmark (the list is read again: the marks are left)
+                    // Keep the selected place as a bookmark (to the list read when the menu was opened, so a
+                    // bookmark removed can still be put back with u; the marks are left)
                     if (rows.Count == 0 || rows[selected].IsFolder) break;
-                    _message = Bookmarks.AddWithMessage(rows[selected].Target);
+                    _message = Bookmarks.AddWithMessage(rows[selected].Target, false);
                     Marks.Clear();
                     break;
                 case ':':

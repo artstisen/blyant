@@ -114,7 +114,7 @@ A yanked or deleted block is pasted as a block with `p` (after the cursor) or `P
 - `*` Search for the word under the cursor
 - `Esc` or `:noh` Remove the highlighting of the matches (press `Esc` again to close the editor)
 
-The text you search for is a regular expression: `/\d+` finds numbers and `/cat|dog` finds either word. A search in lowercase ignores case; with an uppercase letter in it the search matches case.
+The text you search for is a regular expression: `/\d+` finds numbers and `/cat|dog` finds either word. A search in lowercase ignores case; with an uppercase letter in it the search matches case. A letter after a backslash does not count: `/\Sfoo` still ignores case, as `\S`, `\W` and `\D` are classes.
 
 ## Replace
 The easy way is `:replace`, which shows a box to fill in:
@@ -323,7 +323,7 @@ Selected text, search matches and misspelled words are shown on top of the color
 | `# Heading 1` to `###### Heading 6` | Red, magenta, yellow, cyan, green and blue |
 | `**bold**` `__bold__` and list markers (`-` `*` `+` `1.` `[x]`) | The color of the logo and labels in your color scheme |
 | `*italic*` `_italic_` | The color of the preview title |
-| `` `code` `` and blocks of code between lines starting with ```` ``` ```` | The color of favorites |
+| `` `code` `` and blocks of code between lines starting with ```` ``` ```` or `~~~` (a block ends at a fence of the same kind, at least as long) | The color of favorites |
 | `[link text]` | The color of the editor title |
 | `(address)` of a link, web addresses, `> quotes` and rules (`---`) | The color of dividers |
 

@@ -15,7 +15,11 @@ internal static class Actions
         Lang.Refresh();
         var languages = Lang.Available;
         var choices = languages.Select(LanguageChoice).ToArray();
-        var keys = Enumerable.Range(1, languages.Length).Select(n => n.ToString()).ToArray();
+        // A key is one character: 1 to 9, then letters (not those that move in the box: g h j k l q)
+        const string more = "ABCDEFIMNOPRSTUVWXYZ";
+        var keys = Enumerable.Range(0, languages.Length)
+            .Select(n => n < 9 ? (n + 1).ToString() : n - 9 < more.Length ? more[n - 9].ToString() : string.Empty)
+            .ToArray();
         var picked = ChoiceBox.Pick(DialogText.PickLanguageCaption, DialogText.PickLanguageQuestion, string.Empty,
             choices, keys, Math.Max(0, Array.FindIndex(languages, language => language.Code == Lang.Current)), false);
         if (picked < 0) return;

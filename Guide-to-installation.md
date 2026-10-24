@@ -49,9 +49,11 @@ Give a file or a directory when you start Blyant, and it is opened at once, with
 blyant notes.md                Open notes.md in the editor (the file browser is in its directory behind it)
 blyant ~/projects/site         Show the directory in the file browser
 blyant .                       Show the directory you are in, in the file browser
+blyant --help                  Show how Blyant is started (also -h)
+blyant --version               Show the version (also -v)
 ```
 
-A path that is not a full path is taken from the directory you are in. Closing the editor (`:q`) shows the file browser in the directory of the file, and closing the file browser the start page, as after a jump from the [Jump menu](Guide-to-jump-menu.md#jump-menu); `:exit` leaves Blyant. A file that is not there yet (in a directory that is) is made if you want that: Blyant asks first.
+A path that is not a full path is taken from the directory you are in. Closing the editor (`:q`) shows the file browser in the directory of the file, and closing the file browser the start page, as after a jump from the [Jump menu](Guide-to-jump-menu.md#jump-menu); `:exit` leaves Blyant. A file that is not there yet (in a directory that is) is made if you want that: Blyant asks first. A word starting with `-` is an option, not a file to make (unless a file or directory of that name is there): an option Blyant does not know is told, with the usage.
 
 (On Windows the program is `Blyant.exe`, and the portable version is started with `dotnet Blyant.dll notes.md`.)
 

@@ -37,6 +37,16 @@
   - A count given to `.` takes the place of the count of the change, as in Vim (`3x` and then `2.` deletes 2 characters, not 6)
   - Shell scripts: a here-string (`<<<`) and a shift in arithmetic (`$((1 << n))`) are no longer read as the start of a here-document
   - Rust: a raw string over several lines (`r#"...`) ends at its own end (`"#`), not at a quote in it
+- **More fixes from the code review**:
+  - The bottom line of the editor no longer runs past the edge when all that is at its right (spelling, recording, the kind of file ...) is wider than the window: only the line and column are kept
+  - C and C++: a comment on a line of the preprocessor (`#include "a.h" /* ...`) is colored as a comment, and goes on to the next lines
+  - Markdown: a block of code ends only at a fence of the same kind (```` ``` ```` or `~~~`), at least as long, with nothing after it
+  - `gU`, `gu` and `~` change case the same way whatever the language of the computer is (on a Turkish system `i` became `İ`)
+  - Smartcase: a letter after a backslash (`\S`) no longer makes a search match case
+  - `blyant --help` and `blyant --version` (also `-h`, `-v`) are answered in the terminal; before, `--help` was offered as a file to make
+  - `B` in the Jump menu no longer forgets the bookmark that `u` could put back
+  - The languages are picked with `1` to `9` and then letters: with 10 or more, typing `1` picked the first at once
+  - Texts cut for the screen count terminal cells (wide characters take two), and a text that fits exactly is no longer cut
 - **A picture of h, j, k and l** in the quick guide and the editor guide shows them as the arrow keys they are, below their rows.
 - **PowerShell, batch files and shell scripts are colored**: `.ps1` (`.psm1`, `.psd1`), `.bat` and `.cmd`, and `.sh` (`.bash`, `.zsh`, `.bashrc`) files get colors in the editor: comments, strings (here-strings and here-documents over several lines), the words of the language, numbers, and as names the variables (`$name`, `%name%`, `${name}`) and the labels of batch files. A file without an extension is colored by its first line, as `#!/bin/bash`, `#!/usr/bin/env python3` or `#!/usr/bin/env pwsh` tells. `:syntax ps`, `:syntax bat` and `:syntax sh` color a text as one of them.
 - **C, C++, Rust and Python are colored**: `.c`, `.h`, `.cpp`, `.hpp` (and the other names of C++ files), `.rs`, and `.py`, `.pyw` and `.pyi` files get colors in the editor, in the colors of C#: comments, strings, the words of the language, numbers, and as names the lines of the preprocessor (C/C++), attributes and lifetimes (Rust) and decorators (Python). Macros in Rust (`println!`) are colored as words. Raw strings of C++ and Rust and strings in three quotes in Python go over several lines. `:syntax cpp` (or `c`), `:syntax rust` and `:syntax py` color a text as one of them.

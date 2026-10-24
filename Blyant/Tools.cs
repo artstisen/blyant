@@ -10,15 +10,15 @@ internal static class Tools
     /// A text cut to a length, for the screen: control characters (as an escape code in a file name) are blank
     /// spaces, so they are never sent to the terminal
     /// </summary>
+    /// <param name="s">The text</param>
+    /// <param name="length">The number of terminal cells it may take (a wide character takes two)</param>
+    /// <param name="dots">True to end a text that was cut with "..."</param>
     public static string TruncateString(string s, int length, bool dots)
     {
-        if (!IsValid(s)) return string.Empty;
-        if (s.Length >= length)
-        {
-            s = dots ? string.Concat(s.AsSpan(0, (length - 3)), "...") : s[..length];
-        }
-
-        return TextMetrics.Printable(s);
+        if (!IsValid(s) || length <= 0) return string.Empty;
+        s = TextMetrics.Printable(s);
+        if (TextMetrics.WidthOf(s) <= length) return s;
+        return dots && length > 3 ? TextMetrics.StartPart(s, length - 3) + "..." : TextMetrics.StartPart(s, length);
     }
 
 

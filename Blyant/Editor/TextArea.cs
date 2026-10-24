@@ -2060,6 +2060,10 @@ public partial class TextArea
         // A message comes before what is at the right (it is shown until the next key): if it does not fit, only
         // the line and column are kept, and else nothing
         var room = width - label.Length - gap.Length;
+        // (all that is at the right can be wider than the line too, in a narrow window or a long language: then
+        // the line and column are kept, as with a message)
+        if (TextMetrics.WidthOf(right) > room) right = " " + (cursor.Line + 1) + ":" + column + " ";
+        if (TextMetrics.WidthOf(right) > room) right = string.Empty;
         if (text.Length > 0 && TextMetrics.WidthOf(text) > room - right.Length)
         {
             right = " " + (cursor.Line + 1) + ":" + column + " ";

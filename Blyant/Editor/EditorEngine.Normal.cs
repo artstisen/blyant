@@ -643,9 +643,9 @@ internal sealed partial class EditorEngine
         var text = Buffer.GetText(from, to);
         var changed = op switch
         {
-            'u' => text.ToLower(),
-            'U' => text.ToUpper(),
-            _ => string.Concat(text.Select(c => char.IsUpper(c) ? char.ToLower(c) : char.ToUpper(c)))
+            'u' => text.ToLowerInvariant(),
+            'U' => text.ToUpperInvariant(),
+            _ => string.Concat(text.Select(c => char.IsUpper(c) ? char.ToLowerInvariant(c) : char.ToUpperInvariant(c)))
         };
         // Leave the text alone if the change of case alters its length (possible for a few special characters)
         if (changed == text || changed.Length != text.Length) return;

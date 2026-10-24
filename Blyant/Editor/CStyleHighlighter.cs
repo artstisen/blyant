@@ -199,13 +199,34 @@ internal static class CStyleHighlighter
 
         if (state == Normal && language.Preprocessor)
         {
-            // A line of the preprocessor: all of it
+            // A line of the preprocessor: all of it, up to a comment (#include "a.h" /* ... or // ...), which is
+            // read as a comment (and can go on to the next lines)
             var first = start;
             while (first < end && char.IsWhiteSpace(line[first])) first++;
             if (first < end && line[first] == '#')
             {
-                Fill(styles, first, end, SyntaxStyle.Name);
-                return state;
+                var to = first;
+                var quote = '\0';
+                for (; to < end; to++)
+                {
+                    var c = line[to];
+                    if (quote != '\0')
+                    {
+                        if (c == quote) quote = '\0';
+                    }
+                    else if (c is '"' or '\'')
+                    {
+                        quote = c;
+                    }
+                    else if (c == '/' && to + 1 < end && line[to + 1] is '/' or '*')
+                    {
+                        break;
+                    }
+                }
+
+                Fill(styles, first, to, SyntaxStyle.Name);
+                if (to >= end) return state;
+                i = to;
             }
         }
 

@@ -442,10 +442,13 @@ internal static class Bookmarks
     /// <summary>
     /// Add a place to the bookmarks (as they are in the file) and save them
     /// </summary>
+    /// <param name="target">The place</param>
+    /// <param name="reload">False in the Jump menu, which has read the list already: what can be undone there (a
+    /// bookmark removed) is kept</param>
     /// <returns>The message that tells what happened</returns>
-    internal static string AddWithMessage(JumpTarget target)
+    internal static string AddWithMessage(JumpTarget target, bool reload = true)
     {
-        Load();
+        if (reload) Load();
         var result = Add(target);
         if (result == AddResult.AlreadyThere) return Lang.F("Already bookmarked: {0}", target.Name);
         if (result == AddResult.NotKept) return Lang.T("A path with a tab or a line break is not kept");
