@@ -263,6 +263,8 @@ internal static class Init
         Projects.Directory = string.Empty;
         Projects.AskEachTime = false;
         FileOperations.DeleteToTrash = true;
+        FileExplorer.FavoritePanes = true;
+        FileExplorer.FavoritePeek = true;
         Recovery.Enabled = true;
         ConsoleColors.Monochrome = false;
         SyntaxHighlighter.ColorFiles = true;

@@ -15,7 +15,8 @@ namespace Blyant;
 /// The list is kept in the file "bookmarks.txt" in the data directory, one bookmark on each line: the kind ("file",
 /// "dir" or "page", as in jump.txt), a tab character, the place, and after other tab characters the name it was
 /// given and its color (if any). A folder has its name in brackets ("[Work]"), its color and "collapsed" if it is
-/// closed; the bookmarks in a folder are the lines after it that start with a blank space. (The lines of data files,
+/// closed; the bookmarks in a folder are the lines after it that start with a blank space. A folder line that starts
+/// with a blank space in a folder is a subfolder, and the bookmarks in it start with two. (The lines of data files,
 /// kept by Marbles, are left out.)
 ///
 /// This class does not touch the console: the list is shown by JumpMenu.
@@ -57,8 +58,17 @@ internal static class Bookmarks
         internal ConsoleColor? Color { get; set; }
 
         public bool IsFolder { get; init; }
-        public bool InFolder { get; set; }
+        public int Level { get; set; }
         public bool Collapsed { get; set; }
+
+        /// <summary>
+        /// A bookmark in a folder (or a subfolder in a folder)
+        /// </summary>
+        internal bool InFolder
+        {
+            get => Level > 0;
+            init => Level = value ? 1 : 0;
+        }
 
         /// <summary>
         /// The name shown: the one given, or the name of the place (a folder: its name)
@@ -124,25 +134,32 @@ internal static class Bookmarks
         List.Clear();
         // What was removed before is not put back into a list read again
         Folders.ForgetRemoved();
-        var hasFolder = false;
+        var levels = new FolderList<Entry>.LevelReader();
         foreach (var rawLine in text.Split('\n'))
         {
             var line = rawLine.TrimEnd('\r');
-            var inFolder = hasFolder && line.StartsWith(' ');
+            var spaces = FolderList<Entry>.LevelReader.Spaces(line);
             line = line.TrimStart(' ');
             var parts = line.Split('\t');
             var close = parts[0].IndexOf(']');
             if (parts[0].StartsWith('[') && close > 1)
             {
-                // A folder: its name, color, and if it is closed
+                // A folder (or a subfolder): its name, color, and if it is closed
                 var name = parts[0][1..close].Trim();
-                if (!IsValidFolderName(name)) continue;
+                if (!IsValidFolderName(name))
+                {
+                    // Left out, and what follows it is not put in the folder above it
+                    levels.Add(0, false);
+                    continue;
+                }
+
                 var folder = Entry.Folder(name);
+                folder.Level = levels.LevelOf(spaces, true);
+                levels.Add(folder.Level, true);
                 folder.Color = parts.Length > 1 ? ParseColor(parts[1]) : null;
                 folder.Collapsed = parts.Skip(2)
                     .Any(part => part.Trim().Equals(CollapsedMark, StringComparison.OrdinalIgnoreCase));
                 List.Add(folder);
-                hasFolder = true;
                 continue;
             }
 
@@ -152,11 +169,12 @@ internal static class Bookmarks
             var target = new JumpTarget(kind, place);
             if (Contains(target)) continue;
             // The bookmarks of a folder follow it directly
-            if (!inFolder) hasFolder = false;
+            var level = levels.LevelOf(spaces, false);
+            levels.Add(level, false);
             List.Add(new Entry(target, parts.Length > 2 ? parts[2].Trim() : string.Empty)
             {
                 Color = parts.Length > 3 ? ParseColor(parts[3]) : null,
-                InFolder = inFolder
+                Level = level
             });
         }
     }
@@ -166,7 +184,7 @@ internal static class Bookmarks
         var text = new StringBuilder();
         foreach (var entry in List)
         {
-            if (entry.InFolder) text.Append(' ');
+            text.Append(' ', entry.Level);
             var color = entry.Color?.ToString() ?? string.Empty;
             if (entry.IsFolder)
             {
@@ -232,9 +250,10 @@ internal static class Bookmarks
 
     /// <summary>
     /// Copy the favorites of the file browser into the bookmarks: a file as a bookmark of a file, a directory of a
-    /// directory, a folder as a folder (with its color, and closed if it is), in their order, after the bookmarks
-    /// there are. A place that is a bookmark already is left out, and a folder with the name of a bookmark folder
-    /// is added to it (at its end). The favorites stay as they are; one whose file is gone is copied too
+    /// directory, a folder as a folder and a subfolder as a subfolder (with its color, and closed if it is), in their
+    /// order, after the bookmarks there are. A place that is a bookmark already is left out, and a folder with the
+    /// name of a bookmark folder is added to it (at its end), as is a subfolder with the name of a subfolder of that
+    /// folder. The favorites stay as they are; one whose file is gone is copied too (the notes are not copied)
     /// </summary>
     /// <param name="favorites">The favorites, in their order (a folder followed by those in it)</param>
     /// <param name="apply">False to only count what would be done</param>
@@ -244,28 +263,56 @@ internal static class Bookmarks
         var list = apply ? List : List.Select(Copy).ToList();
         int added = 0, skipped = 0, newFolders = 0, merged = 0;
         Entry? folder = null; // The bookmark folder the favorites of the folder go to
+        Entry? subfolder = null; // And the subfolder those of a subfolder go to
         var seen = new List<JumpTarget>();
+
+        // The end of a folder of the list (its last item, with its subfolders)
+        int End(Entry of)
+        {
+            var end = list.IndexOf(of);
+            while (end + 1 < list.Count && list[end + 1].Level > of.Level) end++;
+            return end;
+        }
+
         foreach (var favorite in favorites)
         {
             if (favorite.IsFolder)
             {
-                folder = list.FirstOrDefault(entry => entry.IsFolder &&
-                                                      entry.Name.Equals(favorite.Name, StringComparison.OrdinalIgnoreCase));
-                if (folder != null)
+                var sub = favorite.Level > 0 && folder != null;
+                var start = sub ? list.IndexOf(folder!) + 1 : 0;
+                var end = sub ? End(folder!) + 1 : list.Count;
+                var same = list.GetRange(start, end - start).FirstOrDefault(entry =>
+                    entry.IsFolder && entry.Level == (sub ? 1 : 0) &&
+                    entry.Name.Equals(favorite.Name, StringComparison.OrdinalIgnoreCase));
+                if (same == null)
+                {
+                    same = Entry.Folder(favorite.Name);
+                    same.Color = favorite.Color;
+                    same.Collapsed = favorite.Collapsed;
+                    same.Level = sub ? 1 : 0;
+                    list.Insert(end, same);
+                    newFolders++;
+                }
+                else
                 {
                     merged++;
-                    continue;
                 }
 
-                folder = Entry.Folder(favorite.Name);
-                folder.Color = favorite.Color;
-                folder.Collapsed = favorite.Collapsed;
-                list.Add(folder);
-                newFolders++;
+                if (sub)
+                {
+                    subfolder = same;
+                }
+                else
+                {
+                    folder = same;
+                    subfolder = null;
+                }
+
                 continue;
             }
 
-            if (!favorite.InFolder) folder = null;
+            if (favorite.Level < 2) subfolder = null;
+            if (favorite.Level == 0) folder = null;
             var path = Path.GetFullPath(favorite.Path);
             // A favorite that is gone keeps its kind as far as it can be told: a name without an extension is
             // taken for a directory only when it is there
@@ -278,17 +325,16 @@ internal static class Bookmarks
             }
 
             seen.Add(target);
-            var bookmark = new Entry(target) { Color = favorite.Color, InFolder = folder != null };
-            if (folder == null)
+            var into = subfolder ?? folder;
+            var bookmark = new Entry(target) { Color = favorite.Color, Level = into == null ? 0 : into.Level + 1 };
+            if (into == null)
             {
                 list.Add(bookmark);
             }
             else
             {
                 // Last in its folder
-                var at = list.IndexOf(folder) + 1;
-                while (at < list.Count && list[at].InFolder) at++;
-                list.Insert(at, bookmark);
+                list.Insert(End(into) + 1, bookmark);
             }
 
             added++;
@@ -299,8 +345,9 @@ internal static class Bookmarks
 
     private static Entry Copy(Entry entry) =>
         entry.IsFolder
-            ? new Entry(entry.Target, entry.Name) { IsFolder = true, Color = entry.Color, Collapsed = entry.Collapsed }
-            : new Entry(entry.Target, entry.Name) { Color = entry.Color, InFolder = entry.InFolder };
+            ? new Entry(entry.Target, entry.Name)
+                { IsFolder = true, Color = entry.Color, Collapsed = entry.Collapsed, Level = entry.Level }
+            : new Entry(entry.Target, entry.Name) { Color = entry.Color, Level = entry.Level };
 
     /// <summary>
     /// Add a place at the end of the list, outside the folders (a place that is there already stays where it is)
@@ -401,13 +448,46 @@ internal static class Bookmarks
     }
 
     /// <summary>
+    /// Add a subfolder to the folder of an item: first in it when the item is the folder, else in front of the item
+    /// (or of the subfolder it is in)
+    /// </summary>
+    /// <returns>The place of the subfolder in the list, -1 if the name cannot be used, or -2 if the item is not a
+    /// folder or in one</returns>
+    internal static int AddSubfolder(string name, int at)
+    {
+        if (!IsValidFolderName(name)) return -1;
+        var index = Folders.AddSubfolder(Entry.Folder(name.Trim()), at);
+        return index < 0 ? -2 : index;
+    }
+
+    /// <summary>
+    /// The folder or subfolder an item is directly in (-1: none)
+    /// </summary>
+    internal static int Parent(int index) => Folders.Parent(index);
+
+    /// <summary>
+    /// Open the folders an item is in, so that it is shown
+    /// </summary>
+    internal static void Reveal(int index) => Folders.Reveal(index);
+
+    /// <summary>
+    /// An item is shown: none of the folders it is in is closed
+    /// </summary>
+    internal static bool IsShown(int index) => Folders.IsShown(index);
+
+    /// <summary>
+    /// The number of subfolders in a folder
+    /// </summary>
+    internal static int SubfolderCount(int index) => Folders.SubfolderCount(index);
+
+    /// <summary>
     /// Open or close all the folders
     /// </summary>
     /// <returns>The number of folders</returns>
     internal static int SetAllCollapsed(bool collapsed) => Folders.SetAllCollapsed(collapsed);
 
     /// <summary>
-    /// The number of bookmarks in a folder
+    /// The number of bookmarks in a folder, with those in its subfolders
     /// </summary>
     internal static int FolderCount(int index) => Folders.FolderCount(index);
 

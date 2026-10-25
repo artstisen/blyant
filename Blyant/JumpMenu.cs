@@ -188,31 +188,30 @@ internal static class JumpMenu
     private static List<Row> BookmarkRows(string filter)
     {
         var rows = new List<Row>();
-        var closed = false; // In a closed folder
-        foreach (var entry in Bookmarks.Items)
+        for (var index = 0; index < Bookmarks.Items.Count; index++)
         {
+            var entry = Bookmarks.Items[index];
+            // Two blank spaces in for each folder it is in
+            var indent = new string(' ', 2 * entry.Level);
             if (entry.IsFolder)
             {
-                closed = entry.Collapsed;
-                if (filter.Length > 0) continue;
-                var start = Bookmarks.Items.ToList().IndexOf(entry);
-                var count = Bookmarks.FolderCount(start);
+                if (filter.Length > 0 || !Bookmarks.IsShown(index)) continue;
+                var count = Bookmarks.FolderCount(index);
                 rows.Add(new Row(entry.Target, DateTime.MinValue)
                 {
                     Bookmark = entry,
-                    Label = (entry.Collapsed ? "[+] " : "[-] ") + entry.Name + " (" + count + ")",
+                    Label = indent + (entry.Collapsed ? "[+] " : "[-] ") + entry.Name + " (" + count + ")",
                     Color = entry.Color
                 });
                 continue;
             }
 
-            if (!entry.InFolder) closed = false;
             if (filter.Length > 0 && !entry.Shown.Contains(filter, StringComparison.OrdinalIgnoreCase)) continue;
-            if (filter.Length == 0 && entry.InFolder && closed) continue;
+            if (filter.Length == 0 && !Bookmarks.IsShown(index)) continue;
             rows.Add(new Row(entry.Target, DateTime.MinValue)
             {
                 Bookmark = entry,
-                Label = (filter.Length == 0 && entry.InFolder ? "  " : string.Empty) + entry.Shown,
+                Label = (filter.Length == 0 ? indent : string.Empty) + entry.Shown,
                 Color = entry.Color ?? FavoriteColor(entry.Target)
             });
         }
@@ -452,6 +451,10 @@ internal static class JumpMenu
                 case 'a':
                 case 'A':
                     if (current == Tab.Bookmarks) NewBookmarkFolder(rows, selected, filter, string.Empty);
+                    break;
+                case 's':
+                case 'S':
+                    if (current == Tab.Bookmarks) NewBookmarkSubfolder(rows, selected, filter, string.Empty);
                     break;
                 case 'x':
                 case 'X':
@@ -695,21 +698,27 @@ internal static class JumpMenu
 
     // The bookmarks (and folders) shown, in their order, and if they are in a folder: a move is seen when one of them
     // changes place among them or goes into or out of a folder
-    private static List<(Bookmarks.Entry Entry, bool InFolder)> ShownOrder() => BookmarkRows(string.Empty)
-        .Select(row => (row.Bookmark!, row.Bookmark!.InFolder)).ToList();
+    private static List<(Bookmarks.Entry Entry, int Level)> ShownOrder() => BookmarkRows(string.Empty)
+        .Select(row => (row.Bookmark!, row.Bookmark!.Level)).ToList();
 
     // j k while moving: one place up or down among the rows shown, into and out of folders. Bookmarks that are not
     // shown (of a mode that is not used, or in a closed folder) are passed over
     private static void MoveBookmark(Bookmarks.Entry entry, bool up)
     {
-        // A folder moves closed (Move closes it): closed before the rows are compared, so its first step is seen
+        // A folder moves closed (Move closes it): closed before the rows are compared, so its first step is seen. It
+        // stays open if it cannot move
+        var collapsed = entry.Collapsed;
         if (entry.IsFolder) entry.Collapsed = true;
         var before = ShownOrder();
+        var moved = false;
         for (var step = 0; step < Bookmarks.Items.Count + 2; step++)
         {
-            if (!Bookmarks.Move(IndexOf(entry), up) || !ShownOrder().SequenceEqual(before)) break;
+            if (!Bookmarks.Move(IndexOf(entry), up)) break;
+            moved = true;
+            if (!ShownOrder().SequenceEqual(before)) break;
         }
 
+        if (!moved) entry.Collapsed = collapsed;
         SaveBookmarks();
     }
 
@@ -735,7 +744,8 @@ internal static class JumpMenu
 
         var folders = Bookmarks.Items.Where(item => item.IsFolder).ToList();
         var choices = new List<string> { DialogText.FavoriteNewFolder + "...", DialogText.FavoriteNoFolder };
-        choices.AddRange(folders.Select(folder => "[" + folder.Name + "]"));
+        // A subfolder below its folder, further in
+        choices.AddRange(folders.Select(folder => new string(' ', 3 * folder.Level) + "[" + folder.Name + "]"));
         var caption = items.Count == 1 ? DialogText.FavoriteMoveOne : Lang.F("Move {0} bookmarks to folder", items.Count);
         ChoiceBox.Forget();
         var choice = FileExplorer.PickFromList(caption, choices, folders.Count > 0 ? 2 : 0);
@@ -816,6 +826,42 @@ internal static class JumpMenu
         SaveBookmarks();
     }
 
+    // S or ":subfolder name": a new subfolder in the folder of the selected bookmark (first in it when the folder is
+    // selected, else in front of the bookmark or of its subfolder)
+    private static void NewBookmarkSubfolder(List<Row> rows, int selected, string filter, string name)
+    {
+        if (filter.Length > 0)
+        {
+            _message = DialogText.BookmarkMoveFiltered;
+            return;
+        }
+
+        if (rows.Count == 0 || rows[selected].Bookmark is not { } entry || entry is { IsFolder: false, Level: 0 })
+        {
+            _message = Lang.T("Select a folder (or a bookmark in one) to add a subfolder to it");
+            return;
+        }
+
+        if (name.Length == 0)
+        {
+            ChoiceBox.Forget();
+            var asked = ChoiceBox.AskText(Lang.T("New subfolder"), DialogText.TypeNameAndPressEnter,
+                DialogText.NameColon, string.Empty);
+            if (asked == null) return;
+            name = asked;
+        }
+
+        var index = Bookmarks.AddSubfolder(name, IndexOf(entry));
+        if (index < 0)
+        {
+            _message = DialogText.FavoriteFolderName;
+            return;
+        }
+
+        _select = Bookmarks.Items[index];
+        SaveBookmarks();
+    }
+
     // X or ":rename name": the name the bookmark is shown with (empty: the name of the place), or the name of a
     // folder
     private static void RenameBookmark(Row row, string name)
@@ -883,10 +929,14 @@ internal static class JumpMenu
         if (entry.IsFolder)
         {
             var count = Bookmarks.FolderCount(index);
+            var subfolders = Bookmarks.SubfolderCount(index);
             ChoiceBox.Forget();
-            if (count > 0 && !ChoiceBox.Confirm(DialogText.FavoriteDeleteFolder,
+            if ((count > 0 || subfolders > 0) && !ChoiceBox.Confirm(DialogText.FavoriteDeleteFolder,
                     DialogText.DeleteNamed.Replace("{0}", Tools.TruncateString(entry.Name, 40, true)),
-                    count == 1 ? Lang.T("The bookmark in it is removed from the list too (the place stays)")
+                    subfolders > 0
+                        ? Lang.F("In it: {0} bookmarks and {1} subfolders, removed from the list too (the places stay)",
+                            count, subfolders)
+                        : count == 1 ? Lang.T("The bookmark in it is removed from the list too (the place stays)")
                         : Lang.F("The {0} bookmarks in it are removed from the list too (the places stay)", count),
                     true))
             {
@@ -915,6 +965,8 @@ internal static class JumpMenu
         }
 
         var entry = Bookmarks.Items[index];
+        // Shown, also when it is in a closed folder
+        Bookmarks.Reveal(index);
         _select = entry;
         SaveBookmarks();
         _message = Lang.F("Back in the bookmarks: {0}", entry.Shown);
@@ -1015,7 +1067,7 @@ internal static class JumpMenu
         var command = CommandLine.Read(CommandContext.Jump);
         if (command == null) return false;
         // A name can follow the command
-        if (CommandLine.Name(command) is "folder" or "rename" or "import") command = CommandLine.Name(command);
+        if (CommandLine.Name(command) is "folder" or "subfolder" or "rename" or "import") command = CommandLine.Name(command);
         if (command is "q" or "quit" or "close") return true;
         if (command is "h" or "help")
         {
@@ -1054,6 +1106,9 @@ internal static class JumpMenu
         {
             case "folder":
                 NewBookmarkFolder(rows, selected, filter, CommandLine.LastArgument);
+                break;
+            case "subfolder":
+                NewBookmarkSubfolder(rows, selected, filter, CommandLine.LastArgument);
                 break;
             case "rename":
                 if (row != null) RenameBookmark(row, CommandLine.LastArgument);

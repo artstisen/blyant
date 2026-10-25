@@ -1217,12 +1217,14 @@ internal static partial class FileExplorer
         if (items.Count == 0) return;
         if (items.Count == 1)
         {
+            if (!ConfirmNotesRemoved(new[] { items[0].Path })) return;
             _message = FileFavorites.Toggle(items[0].Path) ? DialogText.FavoriteAdded : DialogText.FavoriteRemoved;
         }
         else
         {
             // All become favorites, or none if they all are
             var add = !items.All(item => FileFavorites.Contains(item.Path));
+            if (!add && !ConfirmNotesRemoved(items.Select(item => item.Path))) return;
             foreach (var item in items.Where(item => FileFavorites.Contains(item.Path) != add))
             {
                 FileFavorites.Toggle(item.Path);

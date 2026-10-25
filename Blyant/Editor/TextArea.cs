@@ -711,8 +711,12 @@ public partial class TextArea
                 CompareWithSaved();
                 break;
             case EditorRequest.Bookmark:
-                // The file being edited
-                if (_saveMode == SaveAsFile && FileExplorer.CurrentFilePath.Length > 0)
+                // The file being edited (not the file a note of the favorites is written in)
+                if (FileExplorer.EditingFavoriteNote)
+                {
+                    _engine.ShowMessage(DialogText.FavoriteNoteNotAFile, true);
+                }
+                else if (_saveMode == SaveAsFile && FileExplorer.CurrentFilePath.Length > 0)
                 {
                     _engine.ShowMessage(Bookmarks.AddWithMessage(
                         new JumpTarget(JumpKind.File, FileExplorer.CurrentFilePath)), false);
@@ -724,10 +728,22 @@ public partial class TextArea
 
                 break;
             case EditorRequest.Favorite:
-                // A file: in or out of the favorites of the file browser
-                if (_saveMode == SaveAsFile && FileExplorer.CurrentFilePath.Length > 0)
+                // A file: in or out of the favorites of the file browser (not the file a note is written in)
+                if (FileExplorer.EditingFavoriteNote)
+                {
+                    _engine.ShowMessage(DialogText.FavoriteNoteNotAFile, true);
+                }
+                else if (_saveMode == SaveAsFile && FileExplorer.CurrentFilePath.Length > 0)
                 {
                     FileFavorites.Load();
+                    if (FileFavorites.NoteOf(FileExplorer.CurrentFilePath).Length > 0)
+                    {
+                        Tools.HideCursor();
+                        var remove = FileExplorer.ConfirmNotesRemoved(new[] { FileExplorer.CurrentFilePath });
+                        RedrawAll();
+                        if (!remove) break;
+                    }
+
                     var added = FileFavorites.Toggle(FileExplorer.CurrentFilePath);
                     var status = FileFavorites.Save();
                     if (status == DialogText.Success)

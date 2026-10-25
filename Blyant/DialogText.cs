@@ -70,6 +70,7 @@ internal static class DialogText
     public static string New => Lang.T("New");
     public static string NewFile => Lang.T("New file");
     public static string BookmarkFileOnly => Lang.T("Only a file is bookmarked from the editor");
+    public static string FavoriteNoteNotAFile => Lang.T("This is a note of the favorites, kept in the list (not a file)");
     public static string RenameFile => Lang.T("Rename file");
     public static string DeleteFile => Lang.T("Delete file");
     public static string Transfer => Lang.T("Transfer");
@@ -462,7 +463,7 @@ internal static class DialogText
     public static string FavoritesExpanded => Lang.T("All folders are open");
     public static string FavoritesCollapsed => Lang.T("All folders are closed");
     public static string FavoritesNoFolders => Lang.T("There are no folders");
-    public static string FavoritesKeys => Lang.T("Enter Open | B Show | A Folder | V Move | C Color | P Remove | Esc Close");
+    public static string FavoritesKeys => Lang.T("B Show | A Folder | S Subfolder | N Note | V Move | C Color | D Remove");
     public static string FavoriteAdded => Lang.T("Added to the favorites");
     public static string FavoriteRemoved => Lang.T("Removed from the favorites");
     public static string FavoriteMissing => Lang.T("(missing)");
@@ -477,14 +478,11 @@ internal static class DialogText
     public static string FavoritesMarkedKeys => Lang.T("Space Mark | M To folder | T/E Top/End | D Remove | Esc Clear the marks");
     public static string FavoriteRemoveCaption => Lang.T("Remove favorites");
     public static string FavoriteRemoveMany => Lang.T("Remove the {0} marked favorites from the list?");
-    public static string FavoriteRemoveNote => Lang.T("The files stay where they are");
     public static string FavoriteRemovedMany => Lang.T("{0} removed from the favorites (u: Undo)");
     public static string FavoriteRenameFolder => Lang.T("Rename folder");
     public static string FavoriteDeleteFolder => Lang.T("Remove folder");
-    public static string FavoriteDeleteFolderNote => Lang.T("The {0} favorites in it are removed from the list too (the files stay)");
     public static string FavoriteFolderRemoved => Lang.T("Removed the folder: ");
     public static string FavoriteFolderName => Lang.T("The name cannot be used for a folder");
-    public static string FavoriteDeleteFolderNoteOne => Lang.T("The favorite in it is removed from the list too (the file stays)");
     public static string FavoriteNothingToUndo => Lang.T("Nothing to undo");
     public static string FavoriteRestored => Lang.T("Put back in the favorites");
     public static string FavoriteRenameFile => Lang.T("Only folders are renamed here. B shows the file, where X renames it");

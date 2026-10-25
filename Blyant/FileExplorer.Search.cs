@@ -341,7 +341,7 @@ internal static partial class FileExplorer
 
     private static void ToggleFoundFavorite(FileSearch.Result? result)
     {
-        if (result == null || !FoundExists(result)) return;
+        if (result == null || !FoundExists(result) || !ConfirmNotesRemoved(new[] { result.Path })) return;
         _foundMessage = FileFavorites.Toggle(result.Path) ? DialogText.FavoriteAdded : DialogText.FavoriteRemoved;
         var saved = FileFavorites.Save();
         if (saved != DialogText.Success) _foundMessage = saved;

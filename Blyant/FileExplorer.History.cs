@@ -262,7 +262,7 @@ internal static partial class FileExplorer
     private static void ToggleHistoryFavorite(int number)
     {
         var path = HistoryPath(number);
-        if (path == null) return;
+        if (path == null || !ConfirmNotesRemoved(new[] { path })) return;
         _historyMessage = FileFavorites.Toggle(path) ? DialogText.FavoriteAdded : DialogText.FavoriteRemoved;
         var saved = FileFavorites.Save();
         if (saved != DialogText.Success) _historyMessage = saved;

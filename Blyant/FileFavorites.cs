@@ -4,17 +4,22 @@ namespace Blyant;
 
 /// <summary>
 /// The favorites of the file browser: files and directories marked by the user, in an order and with text
-/// colors set by the user. Favorites can be grouped in folders, which only exist in the list (not on disk).
+/// colors set by the user. Favorites can be grouped in folders, and folders hold subfolders (one level of them),
+/// which only exist in the list (not on disk). A favorite or a folder can have a note, which is kept in the list
+/// too (never next to the files, which may be in a repository).
 ///
 /// The list is kept in the file "favorites.txt" in the data directory, with one line for each favorite:
 /// the color (or nothing), a tab character and the path. A folder has its name in brackets instead of a
 /// path ("[Work]", followed by a tab character and "collapsed" if it is closed), and the favorites in a
-/// folder are the lines after it that start with a blank space.
+/// folder are the lines after it that start with a blank space. A folder line that starts with a blank space in a
+/// folder is a subfolder, and the favorites in it start with two. A note is on the line after its favorite or
+/// folder, after a "#" (the line breaks in it written as \n, a backslash as \\ and a tab as \t).
 /// </summary>
 internal static class FileFavorites
 {
     internal const string FileName = "favorites.txt";
     private const string CollapsedMark = "collapsed";
+    private const char NoteMark = '#';
 
     internal sealed class Favorite : IFolderItem
     {
@@ -23,7 +28,16 @@ internal static class FileFavorites
         public bool IsFolder { get; init; }
         internal string Name = string.Empty; // The name of a folder
         public bool Collapsed { get; set; } // A folder that is closed: the favorites in it are not shown
-        public bool InFolder { get; set; } // A favorite in the folder above it in the list
+        public int Level { get; set; } // 0: not in a folder, 1: in a folder (a subfolder), 2: in a subfolder
+
+        // A favorite in a folder (or a subfolder in a folder)
+        internal bool InFolder
+        {
+            get => Level > 0;
+            init => Level = value ? 1 : 0;
+        }
+
+        internal string Note = string.Empty; // The note of the favorite or folder (empty: none)
         internal int Line; // Where the cursor was when the file was closed in the editor (from 1; 0: not known)
         internal int Column;
         internal string Split = string.Empty; // The other pane of a split, as written ("|40:1"; empty: not split)
@@ -73,12 +87,20 @@ internal static class FileFavorites
     {
         List.Clear();
         Folders.ForgetRemoved();
-        var hasFolder = false;
+        var levels = new FolderList<Favorite>.LevelReader();
+        Favorite? last = null; // The favorite or folder a note is of
         foreach (var rawLine in text.Split('\n'))
         {
             var line = rawLine.TrimEnd('\r');
-            var inFolder = hasFolder && line.StartsWith(' ');
+            var spaces = FolderList<Favorite>.LevelReader.Spaces(line);
             line = line.TrimStart(' ');
+            if (line.StartsWith(NoteMark))
+            {
+                if (last != null) last.Note = UnescapeNote(line[1..]);
+                continue;
+            }
+
+            last = null;
             var tab = line.IndexOf('\t');
             var written = tab < 0 ? line : line[(tab + 1)..];
             var rest = written.Trim();
@@ -93,13 +115,15 @@ internal static class FileFavorites
             var close = rest.IndexOf(']');
             if (rest[0] == '[' && close > 1)
             {
-                // A folder
-                List.Add(new Favorite
+                // A folder, or a subfolder
+                var level = levels.LevelOf(spaces, true);
+                levels.Add(level, true);
+                last = new Favorite
                 {
-                    IsFolder = true, Name = rest[1..close].Trim(), Color = color,
+                    IsFolder = true, Name = rest[1..close].Trim(), Color = color, Level = level,
                     Collapsed = rest[(close + 1)..].Contains(CollapsedMark, StringComparison.OrdinalIgnoreCase)
-                });
-                hasFolder = true;
+                };
+                List.Add(last);
                 continue;
             }
 
@@ -108,12 +132,13 @@ internal static class FileFavorites
             rest = FileOperations.ListedPath(written);
             if (rest.Length == 0 || Contains(rest)) continue;
             // The favorites of a folder follow it directly
-            if (!inFolder) hasFolder = false;
-            List.Add(new Favorite
+            var at = levels.LevelOf(spaces, false);
+            levels.Add(at, false);
+            last = new Favorite
             {
-                Path = rest, Color = color, InFolder = inFolder, Line = caretLine, Column = caretColumn,
-                Split = split
-            });
+                Path = rest, Color = color, Level = at, Line = caretLine, Column = caretColumn, Split = split
+            };
+            List.Add(last);
         }
     }
 
@@ -122,7 +147,7 @@ internal static class FileFavorites
         var text = new StringBuilder();
         foreach (var favorite in List)
         {
-            if (favorite.InFolder) text.Append(' ');
+            text.Append(' ', favorite.Level);
             text.Append(favorite.Color?.ToString() ?? string.Empty).Append('\t');
             if (favorite.IsFolder)
             {
@@ -135,9 +160,50 @@ internal static class FileFavorites
             }
 
             text.Append('\n');
+            if (favorite.Note.Length > 0)
+            {
+                text.Append(' ', favorite.Level).Append(NoteMark).Append(EscapeNote(favorite.Note)).Append('\n');
+            }
         }
 
         return text.ToString();
+    }
+
+    // A note on one line: the line breaks as \n, a backslash as \\ and a tab as \t
+    internal static string EscapeNote(string note) =>
+        note.Replace("\r\n", "\n").Replace('\r', '\n').Replace("\\", "\\\\").Replace("\n", "\\n")
+            .Replace("\t", "\\t");
+
+    internal static string UnescapeNote(string written)
+    {
+        var note = new StringBuilder();
+        for (var i = 0; i < written.Length; i++)
+        {
+            if (written[i] != '\\' || i + 1 == written.Length)
+            {
+                note.Append(written[i]);
+                continue;
+            }
+
+            i++;
+            note.Append(written[i] switch
+            {
+                'n' => '\n',
+                't' => '\t',
+                _ => written[i]
+            });
+        }
+
+        return note.ToString();
+    }
+
+    /// <summary>
+    /// Give a favorite or folder a note (blank: no note). Blank lines at its end are left out
+    /// </summary>
+    internal static void SetNote(Favorite favorite, string note)
+    {
+        note = note.Replace("\r\n", "\n").Replace('\r', '\n');
+        favorite.Note = note.Trim().Length == 0 ? string.Empty : note.TrimEnd();
     }
 
     /// <summary>
@@ -166,6 +232,15 @@ internal static class FileFavorites
     }
 
     internal static bool Contains(string path) => IndexOf(path) >= 0;
+
+    /// <summary>
+    /// The note of a favorite file or directory (empty: none, or not a favorite)
+    /// </summary>
+    internal static string NoteOf(string path)
+    {
+        var index = IndexOf(path);
+        return index >= 0 ? List[index].Note : string.Empty;
+    }
 
     /// <summary>
     /// The text color of a favorite file or directory (null: none, or not a favorite)
@@ -278,6 +353,48 @@ internal static class FileFavorites
         return Folders.AddFolder(new Favorite { IsFolder = true, Name = name.Trim() }, before);
     }
 
+    /// <summary>
+    /// Add a subfolder to the folder of an item: first in it when the item is the folder, else in front of the item
+    /// (or of the subfolder it is in)
+    /// </summary>
+    /// <returns>The place of the subfolder in the list, -1 if the name cannot be used, or -2 if the item is not a
+    /// folder or in one</returns>
+    internal static int AddSubfolder(string name, int at)
+    {
+        if (!IsValidFolderName(name)) return -1;
+        var index = Folders.AddSubfolder(new Favorite { IsFolder = true, Name = name.Trim() }, at);
+        return index < 0 ? -2 : index;
+    }
+
+    /// <summary>
+    /// The folder or subfolder an item is directly in (-1: none)
+    /// </summary>
+    internal static int Parent(int index) => Folders.Parent(index);
+
+    /// <summary>
+    /// Open the folders an item is in, so that it is shown
+    /// </summary>
+    internal static void Reveal(int index) => Folders.Reveal(index);
+
+    /// <summary>
+    /// An item is shown: none of the folders it is in is closed
+    /// </summary>
+    internal static bool IsShown(int index) => Folders.IsShown(index);
+
+    /// <summary>
+    /// The number of subfolders in a folder
+    /// </summary>
+    internal static int SubfolderCount(int index) => Folders.SubfolderCount(index);
+
+    /// <summary>
+    /// The favorites and subfolders in a folder (or subfolder), in their order
+    /// </summary>
+    internal static List<Favorite> InFolder(int index)
+    {
+        if (index < 0 || index >= List.Count || !List[index].IsFolder) return new List<Favorite>();
+        return List.GetRange(index + 1, Folders.FolderEnd(index) - index);
+    }
+
     internal static bool RenameFolder(int index, string name)
     {
         if (index < 0 || index >= List.Count || !List[index].IsFolder || !IsValidFolderName(name)) return false;
@@ -297,7 +414,7 @@ internal static class FileFavorites
     internal static int FolderOf(int index) => Folders.FolderOf(index);
 
     /// <summary>
-    /// The number of favorites in a folder
+    /// The number of favorites in a folder, with those in its subfolders
     /// </summary>
     internal static int FolderCount(int index) => Folders.FolderCount(index);
 

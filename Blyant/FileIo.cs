@@ -426,6 +426,9 @@ internal static class FileIo
         _tempSettings += "projectsask=" + (Projects.AskEachTime ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // Deleting in the file browser moves to the trash ("trash" in the data directory); false: deleted for good
         _tempSettings += "deletetotrash=" + (FileOperations.DeleteToTrash ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        // Below the list of favorites: the panes with the note and the peek of the selected item, and the peek in them
+        _tempSettings += "favoritepanes=" + (FileExplorer.FavoritePanes ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        _tempSettings += "favoritepeek=" + (FileExplorer.FavoritePeek ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // The commands of the place in a box above the command line while a command is typed
         _tempSettings += "commandlist=" + (CommandList.Enabled ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // The hints on the start page, and the one shown (the next each time Blyant starts, while they are shown)
@@ -630,6 +633,9 @@ internal static class FileIo
         Projects.AskEachTime = !Projects.HasFolder && Tools.TrimToLower(Get("projectsask")) == DialogText.BTrue;
         // Deleting to the trash: on unless turned off
         FileOperations.DeleteToTrash = Tools.TrimToLower(Get("deletetotrash")) != DialogText.BFalse;
+        // The note and the peek below the favorites: on unless turned off
+        FileExplorer.FavoritePanes = Tools.TrimToLower(Get("favoritepanes")) != DialogText.BFalse;
+        FileExplorer.FavoritePeek = Tools.TrimToLower(Get("favoritepeek")) != DialogText.BFalse;
         CommandList.Enabled = Tools.TrimToLower(Get("commandlist")) != DialogText.BFalse;
         Hints.Enabled = Tools.TrimToLower(Get("hints")) != DialogText.BFalse;
         Hints.Index = int.TryParse(Get("hintindex").Trim(), out var hint) && hint >= -1 ? hint : -1;

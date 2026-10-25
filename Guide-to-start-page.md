@@ -254,10 +254,12 @@ The files found are shown in a list with three columns, as the favorites: _Name_
 ### Favorites
 Files and directories you use often can be marked as favorites:
 
-- `P` or `:fav` Add the selected file or directory to the favorites, or remove it. Favorites are marked with a `*`
+- `P` or `:fav` Add the selected file or directory to the favorites, or remove it (one with a note: after asking). Favorites are marked with a `*`
 - `F` or `:favorites` Show the list of favorites
 
 The list has three columns, with lines between them and their labels at the top: _Name_ (the name of the file or directory), _Path_ (the directory it is in; the end of a long path is shown) and _Info_ (the size of a file, `<DIR>` for a directory, _(missing)_ for one that is gone, and the number of favorites in a favorites folder).
+
+Below the list are two panes for the selected item, **Note** and **Peek**: its note, and the top of the file (what is in a directory, or in a folder of favorites). They follow the selection; nothing in them can be selected or scrolled, and the peek only reads the start of the file, never writes it. `:panes` hides them (and shows them again), and `:peek` hides the peek, so the note takes the whole width. Both are kept in the settings (`favoritepanes`, `favoritepeek`). In a window that is too low, the panes are not shown.
 
 In the list of favorites:
 
@@ -266,30 +268,34 @@ In the list of favorites:
 - `B` or `:goto` Show the file in the browser: its directory is opened with the file selected, where it can be renamed, copied, moved or deleted
 - `V` Move the selected favorite or folder: it is marked `<>` and highlighted, and follows `j` `k` up and down the list until you press `Esc` (or `Enter`, `V`)
 - `C` or `:color` Pick a text color for the favorite from the list of 16 colors
-- `P`, `D` or `:remove` Remove it from the favorites (the file itself stays where it is)
+- `P`, `D` or `:remove` Remove it from the favorites, after asking (the file itself stays where it is)
 - `u` or `:undo` Put back the favorite, or the folder with its favorites, that was removed last
-- `A` or `:folder name` Create a folder (see below)
-- `/text` Only show the paths containing "text". `Esc` shows all again
+- `A` or `:folder name` Create a folder, and `S` or `:subfolder name` a subfolder (see below)
+- `N` or `:note` Write the note of the favorite or folder (see below)
+- `/text` Only show the favorites and folders whose path, name or note contains "text". `Esc` shows all again
 - `?` Help
 - `Esc`, `Q`, `F`, `h` or `-` Return to the browser
 
 **Folders:** Favorites can be grouped in folders. A folder only exists in the list of favorites; nothing is created on disk and no files are moved.
 
-- `A` or `:folder name` Create a folder in front of the selected item. It is shown as `[-] Name` when open and `[+] Name` when closed, with the number of favorites in it
-- `l` or `Enter` on a folder: Open or close it. The favorites in an open folder are shown below it, two spaces in
+- `A` or `:folder name` Create a folder in front of the selected item. It is shown as `[-] Name` when open and `[+] Name` when closed, with the number of favorites in it (with those in its subfolders)
+- `S` or `:subfolder name` Create a subfolder in a folder: first in the folder when the folder is selected, else in front of the selected favorite (or of the subfolder it is in). A folder can hold subfolders and favorites, and a subfolder holds favorites (there are no subfolders in subfolders), as _Article_ with _Pending_ and _Done_. A subfolder has a color, is opened and closed, renamed, moved and removed as a folder
+- `l` or `Enter` on a folder: Open or close it. The favorites in an open folder are shown below it, two spaces in (and those in a subfolder four)
 - `:expand` Open all the folders, `:collapse` Close all the folders
 - **Several at once:** Mark the favorites with `Space` (it marks or unmarks the selected favorite and goes to the next; a marked favorite has a `+` in front, and the number of marked is shown at the bottom right). Then press `M` and pick where they go from the list: one of your folders, _New folder..._ (you are asked for its name, and it is placed where the first of the favorites is) or _(No folder)_. Without marks, `M` moves the selected favorite. With marks, `D` removes all the marked favorites (you are asked first), and `u` puts them back. `Esc` clears the marks
 - **To the top or the end:** `T` (or `:top`) moves the marked favorites to the top of the list, and `E` (or `:bottom`) to the end, in the order they have. Without marks it moves the selected favorite, or the selected folder with its favorites. A favorite in a folder goes to the top or the end of its folder (`M` moves it out of the folder)
-- **Into a folder:** Move a favorite (`V`, then `j` `k`) onto the folder. Moving down onto a folder puts it first in the folder, moving up from below puts it last. A closed folder opens
-- **Out of a folder:** Move the favorite on, past the first or the last favorite in the folder
-- A folder is moved like a favorite. It is closed first, and moves with its favorites past the favorite or folder next to it
+- **Into a folder:** Move a favorite (`V`, then `j` `k`) onto the folder. Moving down onto a folder puts it first in the folder, moving up from below puts it last. A closed folder opens. In a folder, a favorite goes into a subfolder the same way. `M` lists the subfolders below their folders
+- **Out of a folder:** Move the favorite on, past the first or the last favorite in the folder (from a subfolder: into its folder, and then out of the folder)
+- A folder is moved like a favorite. It is closed first, and moves with its favorites and subfolders past the favorite or folder next to it. A subfolder moves among the favorites and subfolders of its folder, and past the first or last of them into the folder above or below (it stays in a folder)
 - `X` or `:rename name` Rename the folder
 - `C` Pick a color for the folder
-- `P`, `D` or `:remove` Remove the folder. If there are favorites in it you are asked first, as they are removed from the list with it (the files stay)
+- `P`, `D` or `:remove` Remove the folder, with the favorites and subfolders in it, after asking (the files stay)
 
-While the list is filtered with `/text` the favorites found are shown without the folders, and nothing can be moved.
+**Notes:** A favorite or a folder can have a note, for what a file is waiting for, a reference or a link. `N` (or `:note`) opens the note in the editor, where it can have as many lines as you like; save it (`:w`) and close the editor, and the note is shown in the Note pane below the list. A note left empty is removed. The notes are kept in `favorites.txt` with the list, never next to your files, so nothing is added to a folder that is synced or in a Git repository (for the editor, the note is written in a file of its own in the data directory, `favorite-note-` and a code for the favorite, which is removed when the editor is closed; a jump from the editor with `Ctrl+O` or `:book` keeps the note too, if you saved it). While a note is written, `:fav` and `:bookmark` in the editor are refused, as the note is not a file of yours. A note goes with its favorite when it is moved, when its file is renamed in the browser, and when it is removed and put back with `u`. Taking a favorite with a note out of the favorites with `P` (or `:fav`) in the file browser, the history, the search results or the editor asks first, as the note goes with it. The notes are not copied to the bookmarks by `:import favorites`.
 
-The list is kept in the file `favorites.txt` in the data directory (one line per favorite: the color, a tab character and the path; a folder has its name in brackets instead of a path, and the favorites in it start with a blank space). A file that has been closed in the editor has the line and column of the cursor before its path (`3:12` and a tab character). Favorites follow when you rename or move a file or directory in the browser, and are removed when you delete it. A favorite whose file is gone is shown as _(missing)_.
+While the list is filtered with `/text` the favorites and folders found are shown without the folders they are in, and nothing can be moved.
+
+The list is kept in the file `favorites.txt` in the data directory (one line per favorite: the color, a tab character and the path; a folder has its name in brackets instead of a path, and the favorites in it start with a blank space; a folder line with a blank space in front, in a folder, is a subfolder, and the favorites in it start with two). A note is on the line after its favorite or folder, after a `#`, with its line breaks written as `\n` (a backslash as `\\`, a tab as `\t`). A file that has been closed in the editor has the line and column of the cursor before its path (`3:12` and a tab character). Favorites follow when you rename or move a file or directory in the browser, and are removed when you delete it. A favorite whose file is gone is shown as _(missing)_.
 
 ### File history
 The list has three columns, as the favorites: _Name_, _Path_ (the directory the file is in) and _Opened_ (when it was opened last, or _(missing)_ for a file that is gone).

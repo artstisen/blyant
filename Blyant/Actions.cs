@@ -222,6 +222,8 @@ internal static class Actions
         Projects.Directory = string.Empty;
         Projects.AskEachTime = false;
         FileOperations.DeleteToTrash = true;
+        FileExplorer.FavoritePanes = true;
+        FileExplorer.FavoritePeek = true;
         CommandList.Enabled = true;
         Hints.Enabled = true;
         Recovery.Enabled = true;

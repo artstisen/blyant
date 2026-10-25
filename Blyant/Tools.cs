@@ -736,6 +736,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("B :goto", Lang.T("Show the file in the file browser"), false));
             _shortcutList.Add(new Shortcut("V", Lang.T("Move the favorite or folder (j k, then Esc)"), false));
             _shortcutList.Add(new Shortcut("A :folder name", Lang.T("New folder (a group of favorites)"), false));
+            _shortcutList.Add(new Shortcut("S :subfolder name", Lang.T("New subfolder in the folder (one level of them)"), false));
             _shortcutList.Add(new Shortcut("l Enter", Lang.T("On a folder: Open/Close it"), false));
             _shortcutList.Add(new Shortcut(":expand", Lang.T("Open all the folders"), false));
             _shortcutList.Add(new Shortcut(":collapse", Lang.T("Close all the folders"), false));
@@ -749,10 +750,14 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("  " + Lang.T("Into a folder"), Lang.T("M, or move the favorite onto the folder"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Out of a folder"), Lang.T("Move it past the first or last in it"), false));
             _shortcutList.Add(new Shortcut("C :color", Lang.T("Pick the text color of the favorite"), false));
+            _shortcutList.Add(new Shortcut("N :note", Lang.T("Write the note of the favorite or folder"), false));
+            _shortcutList.Add(new Shortcut("  " + Lang.T("Notes"), Lang.T("Kept in favorites.txt, never next to the files"), false));
+            _shortcutList.Add(new Shortcut(":panes", Lang.T("Show/Hide the note and the peek below the list"), false));
+            _shortcutList.Add(new Shortcut(":peek", Lang.T("Show/Hide the peek (the top of the file)"), false));
             _shortcutList.Add(new Shortcut(":path :name", Lang.T("Copy the path/the name shown (also p in the editor)"), false));
             _shortcutList.Add(new Shortcut("I :info", Lang.T("Show type, size, dates and path"), false));
-            _shortcutList.Add(new Shortcut("P D :remove", Lang.T("Remove the favorite or folder (files stay)"), false));
-            _shortcutList.Add(new Shortcut("/text", Lang.T("Only show paths containing \"text\" (Esc: all)"), false));
+            _shortcutList.Add(new Shortcut("P D :remove", Lang.T("Remove the favorite or folder (asks; files stay)"), false));
+            _shortcutList.Add(new Shortcut("/text", Lang.T("Only show paths or notes with \"text\" (Esc: all)"), false));
             _shortcutList.Add(new Shortcut("u :undo", Lang.T("Put back what was removed last"), false));
             _shortcutList.Add(new Shortcut(":", Lang.T("Command line (Tab completes the command)"), false));
             _shortcutList.Add(new Shortcut("  Up Down", Lang.T("Earlier commands of this page"), false));
@@ -831,6 +836,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("X", Lang.T("Bookmarks: the name shown (the place keeps its own)"), false));
             _shortcutList.Add(new Shortcut("C :color", Lang.T("Bookmarks: text color (used before a favorite's)"), false));
             _shortcutList.Add(new Shortcut("A :folder", Lang.T("Bookmarks: new folder (Enter opens/closes it)"), false));
+            _shortcutList.Add(new Shortcut("S :subfolder", Lang.T("Bookmarks: new subfolder in the folder"), false));
             _shortcutList.Add(new Shortcut("Space M", Lang.T("Bookmarks: mark several/move them to a folder"), false));
             _shortcutList.Add(new Shortcut(":expand :collapse", Lang.T("Bookmarks: open/close all the folders"), false));
             _shortcutList.Add(new Shortcut("u :clearbook", Lang.T("Bookmarks: put back the removed/clear (asks first)"), false));

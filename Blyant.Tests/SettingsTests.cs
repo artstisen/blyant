@@ -207,6 +207,26 @@ backup=
     }
 
     [Fact]
+    public void TheNoteAndPeekBelowTheFavorites_AreOnUnlessTurnedOff_AndSaved()
+    {
+        File.WriteAllText(SettingsFile, LegacySettings);
+        Assert.True(FileIo.LoadSettings());
+        Assert.True(FileExplorer.FavoritePanes);
+        Assert.True(FileExplorer.FavoritePeek);
+        File.WriteAllText(SettingsFile, LegacySettings + "\nfavoritepanes=false\nfavoritepeek=false\n");
+        Assert.True(FileIo.LoadSettings());
+        Assert.False(FileExplorer.FavoritePanes);
+        Assert.False(FileExplorer.FavoritePeek);
+        FileIo.SaveSettings();
+        var saved = FileIo.ParseSettings(File.ReadAllText(SettingsFile));
+        Assert.Equal("false", saved["favoritepanes"]);
+        Assert.Equal("false", saved["favoritepeek"]);
+        Actions.ApplyDefaultSettings();
+        Assert.True(FileExplorer.FavoritePanes);
+        Assert.True(FileExplorer.FavoritePeek);
+    }
+
+    [Fact]
     public void DeleteToTrash_IsOnUnlessTurnedOff_AndSaved()
     {
         File.WriteAllText(SettingsFile, LegacySettings);
@@ -305,13 +325,15 @@ backup=
         Assert.False(settings.ContainsKey("onlymode"));
         Assert.False(settings.ContainsKey("clipboardnotes"));
         Assert.False(settings.ContainsKey("stayloggedin"));
-        Assert.Equal(39, settings.Count);
+        Assert.Equal(41, settings.Count);
         Assert.Equal("md", settings["filetype"]);
         Assert.Equal(string.Empty, settings["pickdir"]);
         Assert.Equal("false", settings["projectsask"]);
         Assert.Equal("true", settings["recovery"]);
         Assert.Equal(string.Empty, settings["projectsdir"]);
         Assert.Equal("true", settings["deletetotrash"]);
+        Assert.Equal("true", settings["favoritepanes"]);
+        Assert.Equal("true", settings["favoritepeek"]);
         Assert.Equal("true", settings["commandlist"]);
         Assert.Equal("true", settings["hints"]);
         Assert.Equal("fast", settings["logoanim"]);
