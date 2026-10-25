@@ -888,6 +888,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("E", Lang.T("Back to the colors of the scheme in use"), false));
             _shortcutList.Add(new Shortcut("S", Lang.T("Save as a scheme of your own (asks for a name)"), false));
             _shortcutList.Add(new Shortcut("Esc Q", Lang.T("Close (asks to save changes)"), false));
+            _shortcutList.Add(new Shortcut("Ctrl+O", Lang.T("The Jump menu (asks to save changes before leaving)"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Open"), Lang.T(":scheme, or Configuration: Color scheme"), false));
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionLogos, true));
             _shortcutList.Add(new Shortcut("Tab", Lang.T("Logos, Editor, Colors"), false));
@@ -907,6 +908,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("v", Lang.T("Select a rectangle to paint or clear (Esc: cancel)"), false));
             _shortcutList.Add(new Shortcut("S", Lang.T("Save as a logo of your own (asks for a name)"), false));
             _shortcutList.Add(new Shortcut("Esc Q", Lang.T("Close (asks to save changes)"), false));
+            _shortcutList.Add(new Shortcut("Ctrl+O", Lang.T("The Jump menu (asks to save changes before leaving)"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Open"), Lang.T(":logo, or Configuration: Logo"), false));
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionEditor, true));
             _shortcutList.Add(new Shortcut(":jump Ctrl+O", Lang.T("The Jump menu: files, directories and pages"), false));

@@ -93,6 +93,25 @@ internal static class SchemeEditor
     /// </summary>
     internal static void Show()
     {
+        // Already open (a jump to this page from the Jump menu opened in it, or from the logos opened in it): it
+        // stays as it is
+        if (_open) return;
+        _open = true;
+        try
+        {
+            ShowFrame();
+        }
+        finally
+        {
+            _open = false;
+        }
+    }
+
+    // The page is open (it is not opened again on top of itself)
+    private static bool _open;
+
+    private static void ShowFrame()
+    {
         ConsoleColors.Preview = ConsoleColors.Current.Clone();
         _changed = false;
         var frame = new TabFrame(TabRow, () =>
@@ -102,7 +121,11 @@ internal static class SchemeEditor
             },
             new TabItem(() => Lang.T("Schemes"), new SchemesPage()),
             new TabItem(() => Lang.T("Colors"), new ColorsPage(0), new ColorsPage(1), new ColorsPage(2)),
-            new TabItem(() => Lang.T("Preview"), new PreviewPage()));
+            new TabItem(() => Lang.T("Preview"), new PreviewPage()))
+        {
+            // Ctrl+O: the Jump menu, on every tab (a jump that leaves the page asks about changes first)
+            OnJumpKey = () => Jump.Open(LeaveForJump)
+        };
         frame.Run();
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
         Tools.ClearScreen();
@@ -135,6 +158,10 @@ internal static class SchemeEditor
         FileIo.SaveSettings();
         _selectInUse = true;
     }
+
+    // A jump from the Jump menu that leaves the page: changes that are not saved are asked about first, as by Esc
+    // (Cancel, or a save that did not succeed, stays)
+    private static bool LeaveForJump() => !_changed || Close() == TabResult.Close;
 
     // Esc or Q: changes that are not saved are asked about
     private static TabResult Close()

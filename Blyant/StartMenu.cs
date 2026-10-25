@@ -104,7 +104,12 @@ internal static class StartMenu
             new TabItem(() => DialogText.StartTab, start),
             new TabItem(() => DialogText.StartConfiguration, new SettingsPage(0), new SettingsPage(1),
                 new SettingsPage(2), new SettingsPage(3)),
-            new TabItem(() => Lang.T("Help"), new HelpPage())) { Commands = ReadCommand };
+            new TabItem(() => Lang.T("Help"), new HelpPage()))
+        {
+            Commands = ReadCommand,
+            // Ctrl+O: the Jump menu, on every tab and sub-tab
+            OnJumpKey = () => Blyant.Jump.Open()
+        };
         if (_showConfiguration >= 0) frame.Selected = 1 + _showConfiguration;
         _showConfiguration = -1;
         // The page has nothing that closes it: it is left by a jump or by exiting
@@ -857,8 +862,6 @@ internal static class StartMenu
         {
             var count = _shown.Length;
             _selected = Math.Clamp(_selected, 0, count - 1);
-            // Ctrl+O: the Jump menu, as on the other pages
-            if (Blyant.Jump.IsKey(key)) return Open(Choice.Jump);
             if (key.Key is ConsoleKey.Enter or ConsoleKey.L or ConsoleKey.RightArrow) return Open(_shown[_selected]);
             // The keys of the choices open them at once
             var direct = key.Key switch

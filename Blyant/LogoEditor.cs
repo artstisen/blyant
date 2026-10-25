@@ -26,6 +26,25 @@ internal static class LogoEditor
     /// </summary>
     internal static void Show()
     {
+        // Already open (a jump to this page from the Jump menu opened in it, or from the color schemes opened in
+        // it): it stays as it is
+        if (_open) return;
+        _open = true;
+        try
+        {
+            ShowFrame();
+        }
+        finally
+        {
+            _open = false;
+        }
+    }
+
+    // The page is open (it is not opened again on top of itself)
+    private static bool _open;
+
+    private static void ShowFrame()
+    {
         _editing = Logo.Current.Clone();
         _changed = false;
         Undo.Clear();
@@ -36,7 +55,11 @@ internal static class LogoEditor
             },
             new TabItem(() => Lang.T("Logos"), new ListPage()),
             new TabItem(() => Lang.T("Editor"), new EditorPage()),
-            new TabItem(() => Lang.T("Colors"), new ColorsPage(), new CellsPage()));
+            new TabItem(() => Lang.T("Colors"), new ColorsPage(), new CellsPage()))
+        {
+            // Ctrl+O: the Jump menu, on every tab (a jump that leaves the page asks about changes first)
+            OnJumpKey = () => Jump.Open(LeaveForJump)
+        };
         frame.Run();
         Tools.HideCursor();
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
@@ -62,6 +85,10 @@ internal static class LogoEditor
         FileIo.SaveSettings();
         _selectInUse = true;
     }
+
+    // A jump from the Jump menu that leaves the page: changes that are not saved are asked about first, as by Esc
+    // (Cancel, or a save that did not succeed, stays)
+    private static bool LeaveForJump() => !_changed || Close() == TabResult.Close;
 
     // Esc or Q: changes that are not saved are asked about
     private static TabResult Close()

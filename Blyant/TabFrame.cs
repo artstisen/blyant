@@ -124,6 +124,11 @@ internal sealed class TabFrame
     /// </summary>
     internal Func<TabResult>? Commands { get; init; }
 
+    /// <summary>
+    /// Run when Ctrl+O (the Jump menu) is pressed on any page of the frame (null: the key goes to the page)
+    /// </summary>
+    internal Action? OnJumpKey { get; init; }
+
     internal ITabPage Page => _pages[Selected].Page;
 
     private TabArea _area;
@@ -202,6 +207,14 @@ internal sealed class TabFrame
             {
                 var result = Commands();
                 if (result == TabResult.Close) return;
+                full = true;
+                continue;
+            }
+
+            if (OnJumpKey != null && Jump.IsKey(key) && !page.CapturesKeys)
+            {
+                // The Jump menu, on every tab and sub-tab (a place opened on top of the page returns here)
+                OnJumpKey();
                 full = true;
                 continue;
             }

@@ -121,6 +121,7 @@ The colors of Blyant are chosen and edited on a page of their own, _COLOR SCHEME
 **Preview** shows the colors being edited on a small screen on their background, with a frame with tabs, a box, and two lines of the editor with line numbers and colored text.
 
 - `Esc` (or `Q`) Close. If something was changed and not saved, you are asked in a box whether to save it (`Y`, `N`, or `Esc` to stay)
+- `Ctrl+O` The [Jump menu](#jump-menu), on every tab. A jump that leaves the page asks the same about changes that are not saved; a page that opens on top (Help, the logos) comes back here, and a jump to Color schemes keeps this page as it is
 - `?` Show the help of the page
 
 **Schemes of your own** are kept as text files in the directory `colorschemes` in the data directory (the name of the scheme and `.txt`), with a line for each color (`text=Gray`, `tabframes=default`, `tabhighlight=true`). They can be copied to another computer, or edited by hand: the colors are Black, DarkBlue, DarkGreen, DarkCyan, DarkRed, DarkMagenta, DarkYellow, Gray, DarkGray, Blue, Green, Cyan, Red, Magenta, Yellow and White, and `default` for the colors that can have it. If the scheme in use is missing when Blyant starts, the default scheme is used. _Reset all settings_ goes back to the default scheme.
@@ -155,6 +156,7 @@ The logo of the start page can be one of your own. The logos are chosen and draw
 - `i` or `R` go to **REPLACE** mode, `a` after the cursor: what you type is drawn over the grid and the cursor moves on. `Backspace` clears the character before the cursor, `Enter` goes to the start of the next row, the arrow keys move, and `Esc` goes back to NORMAL
 - `S` Save the logo as one of your own: type a name for it and press `Enter` (a logo of your own is suggested by its name; _Blyant_ cannot be used, and another logo of yours with the name is replaced if you want that). The logo is then the one in use
 - `Esc` (or `Q`) in NORMAL mode closes the page. If something was changed and not saved, you are asked in a box whether to save it (`Y`, `N`, or `Esc` to stay)
+- `Ctrl+O` The [Jump menu](#jump-menu), on every tab (not in REPLACE mode). A jump that leaves the page asks the same about changes that are not saved; a page that opens on top (Help, the color schemes) comes back here, and a jump to Logos keeps this page as it is
 
 **Colors** has the sub-tabs _Rows_ and _Cells_. **Rows** shows the logo at the top and the color of each of its rows below it. `j` `k` select a row and `Enter` (or `Space`) picks its color from the list of colors; `[Default]` is the color of _Logo and labels_ of the color scheme. **All rows** gives all four rows the color picked, or with `[Default]` sets them all back to the color of the logo. The colors are saved with the logo (`S`), as a line `colors=` after its rows in the file (`colors=Cyan,Cyan,Blue,default`). In black and white the logo is white.
 
