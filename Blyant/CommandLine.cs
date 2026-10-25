@@ -190,17 +190,6 @@ internal static class CommandLine
         return space < 0 ? string.Empty : command[(space + 1)..].Trim();
     }
 
-    /// <summary>
-    /// Show a message on the bottom line and wait for a key press
-    /// </summary>
-    internal static void ShowMessage(string message)
-    {
-        WriteLine(" " + message + " ", ConsoleColors.ColorPreset.AttentionInverted, false);
-        Console.Write(" ");
-        Keyboard.AwaitAnyKey();
-        WriteLine(string.Empty, ConsoleColors.ColorPreset.Normal, false);
-    }
-
     // Clear the bottom line and write a text on it
     private static void WriteLine(string text, ConsoleColors.ColorPreset preset, bool fillLine)
     {

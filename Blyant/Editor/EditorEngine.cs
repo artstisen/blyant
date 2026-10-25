@@ -570,7 +570,6 @@ internal sealed partial class EditorEngine
 
     #region Editing helpers
 
-    private string Line(int line) => Buffer[line];
     private string CurrentLine => Buffer[Cursor.Line];
 
     private TextPos Insert(TextPos at, string text)

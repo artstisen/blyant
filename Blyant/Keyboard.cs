@@ -6,15 +6,6 @@ internal static class Keyboard
 
     #region Navigation keys
 
-    /// <summary>
-    /// Read a key where h, j, k and l work as the Left, Down, Up and Right arrow keys.
-    /// Used where these letters have no other meaning (selecting from lists and changing values).
-    /// </summary>
-    public static ConsoleKeyInfo ReadNavigationKey()
-    {
-        return ToNavigationKey(Console.ReadKey(true));
-    }
-
     public static ConsoleKeyInfo ToNavigationKey(ConsoleKeyInfo key)
     {
         var arrow = key.KeyChar switch
@@ -144,14 +135,6 @@ class Shortcut
         _isHeadline = isHeadline;
     }
 
-    public Shortcut(string key, string description, bool isHeadline, int width)
-    {
-        _key = key;
-        _description = description;
-        _divider = new string('.', Math.Max(1, width - key.Length));
-        _isHeadline = isHeadline;
-    }
-
     public bool IsHeadline => _isHeadline;
 
     /// <summary>
@@ -163,11 +146,6 @@ class Shortcut
     /// The key and description as one text (for searching)
     /// </summary>
     public string Text => _key + " " + _description;
-
-    public int GetLength()
-    {
-        return _key.Length + _description.Length + _divider.Length;
-    }
 
     public string GetDescription()
     {

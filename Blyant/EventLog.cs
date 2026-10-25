@@ -41,11 +41,6 @@ internal static class EventLog
     internal static IReadOnlyList<string> All => Lines;
 
     /// <summary>
-    /// The file the log is written to (null if none)
-    /// </summary>
-    internal static string? FilePath => _filePath;
-
-    /// <summary>
     /// Add a line to the log (with the time)
     /// </summary>
     internal static void Add(string text)

@@ -72,7 +72,6 @@ public partial class TextArea
     private int _height; // Changed when the terminal window is resized (TextArea.Resize.cs)
     private readonly bool _singleLine;
     private readonly bool _readOnly;
-    internal const int SaveNone = 0; // Not saved: a field of a box, or a text shown read only
     internal const int SaveAsSettings = 1;
     internal const int SaveAsFile = 2; // A plain text file opened from the file browser
 

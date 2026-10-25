@@ -98,11 +98,6 @@ internal static class ConsoleColors
     }
 
     /// <summary>
-    /// The background color of the color scheme, or null to use the background of the terminal
-    /// </summary>
-    internal static ConsoleColor? Background => Current.Background;
-
-    /// <summary>
     /// True if text in this color cannot be seen on the background of the color scheme in use
     /// </summary>
     internal static bool IsBackgroundColor(ConsoleColor color) => color == Current.BackgroundColor;

@@ -551,8 +551,6 @@ internal static class FileIo
     }
 
 
-    internal static string LoadSettingsErrorMessage = "";
-
     /// <summary>
     /// Load the settings file. The settings are read by name, so they can be in any order.
     /// Missing or invalid settings get their default value and unknown settings (as those
@@ -569,7 +567,6 @@ internal static class FileIo
                 var content = ReadSettingsFile();
                 if (content == DialogText.ErrorReadingFile)
                 {
-                    LoadSettingsErrorMessage = content;
                     _keepUnreadSettings = true;
                     return false;
                 }
@@ -583,7 +580,8 @@ internal static class FileIo
             }
             catch (Exception e)
             {
-                LoadSettingsErrorMessage = e.Message;
+                // Why it could not be read is in the log
+                EventLog.Add(DialogText.LogFile + "Settings not read: " + e.Message);
                 _keepUnreadSettings = true;
                 return false;
             }

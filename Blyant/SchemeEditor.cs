@@ -131,19 +131,6 @@ internal static class SchemeEditor
         Tools.ClearScreen();
     }
 
-    /// <summary>
-    /// Use a color scheme by its name (":scheme Name")
-    /// </summary>
-    /// <returns>False if there is no scheme with the name</returns>
-    internal static bool UseByName(string name)
-    {
-        var scheme = ColorSchemes.Load(name);
-        if (scheme == null) return false;
-        UseLogoOf(scheme);
-        Use(scheme);
-        return true;
-    }
-
     // A scheme was selected: the logo that goes with it (if it has one, and the logo is there) is used too
     private static void UseLogoOf(ColorScheme scheme)
     {

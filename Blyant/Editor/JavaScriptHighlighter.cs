@@ -8,9 +8,7 @@
 internal static class JavaScriptHighlighter
 {
     // The state a line starts in: inside something that began on an earlier line
-    internal const int Normal = CStyleHighlighter.Normal;
     internal const int InComment = CStyleHighlighter.InComment; // A /* comment */
-    internal const int InTemplate = CStyleHighlighter.InTemplate; // A `template string`
 
     /// <summary>
     /// Find the styles of a part of a line of JavaScript

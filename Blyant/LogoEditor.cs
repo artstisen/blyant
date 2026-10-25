@@ -66,18 +66,6 @@ internal static class LogoEditor
         Tools.ClearScreen();
     }
 
-    /// <summary>
-    /// Use a logo by its name (":logo Name")
-    /// </summary>
-    /// <returns>False if there is no logo with the name</returns>
-    internal static bool UseByName(string name)
-    {
-        var logo = Logos.Load(name);
-        if (logo == null) return false;
-        Use(logo);
-        return true;
-    }
-
     // Use a logo: it is shown at once, and its name is saved in the settings
     private static void Use(LogoArt logo)
     {

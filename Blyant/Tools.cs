@@ -41,23 +41,6 @@ internal static class Tools
         }
     }
 
-    public static List<string> SplitStringOnNewLine(string input)
-    {
-        if (IsValid(input))
-        {
-            var tempList = new List<string>();
-            tempList.AddRange(input.Split(
-                new[] {"\r\n", "\r", "\n"},
-                StringSplitOptions.None));
-
-            return tempList;
-        }
-        else
-        {
-            return new List<string>();
-        }
-    }
-
     public static string RemoveNewLineChars(string input)
     {
         if (IsValid(input))
@@ -202,17 +185,6 @@ internal static class Tools
     }
 
 
-    private static string _tempCenterScreenText = string.Empty;
-
-    public static void WriteCenterScreen(string text)
-    {
-        _tempCenterScreenText = text;
-        Tools.CursorTopLeft();
-        Tools.CursorRight((Init.LineWidth / 2) - (_tempCenterScreenText.Length / 2));
-        Tools.CursorDown(Init.LineCount / 2);
-        Console.Write(_tempCenterScreenText);
-    }
-
     public static void WriteCenterScreen(string[] text)
     {
         var lineWidth = Init.LineWidth / 2;
@@ -244,46 +216,6 @@ internal static class Tools
         // Cleanup
         textArea.ClearUndoRedoCache();
         return textArea.SaveWasInvoked;
-    }
-
-    /// <summary>
-    /// Read a line typed at the cursor (as Console.ReadLine), which Esc cancels
-    /// </summary>
-    /// <param name="maxLength">The most characters that can be typed</param>
-    /// <returns>The text, or null if canceled</returns>
-    internal static string? ReadLineOrEscape(int maxLength)
-    {
-        var text = string.Empty;
-        ShowCursor();
-        try
-        {
-            while (true)
-            {
-                var key = Console.ReadKey(intercept: true);
-                if (key.Key == ConsoleKey.Escape) return null;
-                if (key.Key == ConsoleKey.Enter) return text;
-                if (key.Key == ConsoleKey.Backspace)
-                {
-                    if (text.Length == 0) continue;
-                    var length = TextMetrics.PreviousElementLength(text, text.Length);
-                    var cells = TextMetrics.WidthOf(text[^length..]);
-                    text = text[..^length];
-                    SetCursorEx(Console.CursorTop, Math.Max(0, Console.CursorLeft - cells));
-                    Console.Write(new string(' ', cells));
-                    SetCursorEx(Console.CursorTop, Math.Max(0, Console.CursorLeft - cells));
-                }
-                else if (!char.IsControl(key.KeyChar) &&
-                         text.Length + (char.IsHighSurrogate(key.KeyChar) ? 2 : 1) <= maxLength)
-                {
-                    text += key.KeyChar;
-                    Console.Write(key.KeyChar);
-                }
-            }
-        }
-        finally
-        {
-            HideCursor();
-        }
     }
 
 

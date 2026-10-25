@@ -65,26 +65,17 @@ internal static class DialogText
     public static string ColorCaption => Lang.T("Color");
     public static string TextColorCaption => Lang.T("Text color");
     public static string BackgroundCaption => Lang.T("Background");
-    public static string Favorites => Lang.T("Favorites");
-    public static string Session => Lang.T("Session");
-    public static string New => Lang.T("New");
     public static string NewFile => Lang.T("New file");
     public static string BookmarkFileOnly => Lang.T("Only a file is bookmarked from the editor");
     public static string FavoriteNoteNotAFile => Lang.T("This is a note, kept in its list (not a file)");
     public static string RenameFile => Lang.T("Rename file");
     public static string DeleteFile => Lang.T("Delete file");
-    public static string Transfer => Lang.T("Transfer");
     public static string FileInfo => Lang.T("Info");
     public static string Save => Lang.T("Save");
     public static string Restart => Lang.T("Restart");
-    public static string Log => Lang.T("Log");
-    public static string Refresh => Lang.T("Refresh");
     public static string Exit => Lang.T("Exit");
-    public static string Title => Lang.T("Title");
-    public static string Select => Lang.T("Select");
     public static string CaptionsKeyError => Lang.T("Keyboard");
 
-    public const string Spacebar = "Spacebar";
 
     public static string InitNoData => Lang.T("No data");
     public static string NotAvailable => Lang.T("N/A");
@@ -174,7 +165,6 @@ internal static class DialogText
     public const string DirectoryCreated = "Directory created";
     public const string DefaultSettings = "Default settings";
 
-    public static string Summary => Lang.T("Summary");
 
     public static string InvalidFileName => Lang.T("Invalid file name");
     // What is wrong with a new name of a file or directory (Tools.FileNameProblem)
@@ -186,10 +176,7 @@ internal static class DialogText
     public static string NameCharacter(char c) => Lang.F("A name cannot contain the character {0}", c.ToString());
     public static string NameReserved(string name) => Lang.F("{0} is a name kept by Windows and cannot be used", name);
     public static string FileDeleted => Lang.T("File deleted");
-    public static string Saving => Lang.T("Saving...");
 
-    public static string Loading => Lang.T("Loading...");
-    public static string Reading => Lang.T("Reading...");
 
     // File browser
     public static string CaptionsFiles => Lang.T("Files");

@@ -238,11 +238,6 @@ internal static class Init
         }
     }
 
-    internal static string GetOutputDimensions()
-    {
-        return "(" + LineWidth + "x" + LineCount + ")";
-    }
-
     #endregion
 
 
@@ -432,14 +427,6 @@ internal static class Init
         {
             Console.WriteLine(Tools.TruncateString(line, 75, true));
         }
-    }
-
-    /// <summary>
-    /// Show the log
-    /// </summary>
-    internal static void WriteLog()
-    {
-        EventLog.Show();
     }
 
     private static void WriteProgressBar(int value)

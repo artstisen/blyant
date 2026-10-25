@@ -596,8 +596,6 @@ internal static class StartMenu
             : Lang.F("Spell checker: {0}", SpellChecker.Languages);
     }
 
-    private const int PageCount = 4;
-
     // The settings are shown on four pages: General, Layout, Editor and System
     private static int PageOf(Setting setting)
     {
