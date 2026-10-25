@@ -10,13 +10,14 @@ internal static class Init
     // Standard line count (row count)
     internal const byte MinLineCount = 23; // Default
     private const byte MaxLineCount = 255; // Default
-    // Standard line width (column count)
-    internal const byte MinLineWidth = 80; // Default
+    // Standard line width (column count): 79, so a window of 80x24 (the size of a classic terminal) is enough, as
+    // one column and one row of the window are not used (ApplyAutoSize)
+    internal const byte MinLineWidth = 79; // Default
     private const byte MaxLineWidth = 255; // Default
     internal static byte LineWidth { get; private set; }
     internal static byte LineCount { get; private set; }
 
-    // Set "artificial buffer size" according to general guidelines (80x23)
+    // Set "artificial buffer size" according to general guidelines (79x23: a window of 80x24)
     // -the actual console buffer is not touched but must be set manually by the user (cross platform compat)
     // -this buffer is used to calculate the output width and height across the entire application.
     internal static void SetDefaultOutputDimensions()
@@ -39,7 +40,7 @@ internal static class Init
     /// <returns>True if the dimensions were changed</returns>
     internal static bool ApplyAutoSize()
     {
-        if (!AutoSize) return false;
+        if (!AutoSize) return CheckFixedSize();
         int width, height;
         try
         {
@@ -57,6 +58,46 @@ internal static class Init
         if (width == LineWidth && height == LineCount) return false;
         LineWidth = (byte)width;
         LineCount = (byte)height;
+        return true;
+    }
+
+    // The size of the window when the user chose to keep dimensions that do not fit it (it is not asked again
+    // until the window has another size), and the question is being asked
+    private static (int Width, int Height)? _keptForWindow;
+    private static bool _askingSize;
+
+    /// <summary>
+    /// Dimensions of their own (automatic size off) that do not fit the window, with its last column and row
+    /// unused (a window of 80 columns and dimensions of 80), are told about before the page is drawn, and the user
+    /// can let them follow the window (Tools.WindowTooSmall). Once for a size of the window
+    /// </summary>
+    /// <returns>True if the question was asked (the page is drawn again)</returns>
+    private static bool CheckFixedSize()
+    {
+        if (_askingSize || !Tools.IsWindowTooSmall()) return false;
+        (int, int) window;
+        try
+        {
+            window = (Console.WindowWidth, Console.WindowHeight);
+        }
+        catch
+        {
+            return false;
+        }
+
+        if (_keptForWindow == window) return false;
+        _askingSize = true;
+        try
+        {
+            Tools.WindowTooSmall();
+        }
+        finally
+        {
+            _askingSize = false;
+        }
+
+        // Kept as they are (the window was not made larger, and automatic size was not chosen)
+        if (!AutoSize && Tools.IsWindowTooSmall()) _keptForWindow = window;
         return true;
     }
 

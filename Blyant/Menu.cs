@@ -190,8 +190,9 @@ internal static class Menu
     internal static void WriteKeyHints(string hints)
     {
         Console.Write(" ");
-        // The hints that fit on the line are shown (a longer text in another language can need more room)
-        var room = Init.LineWidth - 1 - Console.CursorLeft;
+        // The hints that fit on the line are shown (a longer text in another language can need more room). They can
+        // take the line to its end: the last column of the window is not part of it (Init.ApplyAutoSize)
+        var room = Init.LineWidth - Console.CursorLeft;
         foreach (var hint in hints.Split(" | "))
         {
             var space = hint.IndexOf(' ');

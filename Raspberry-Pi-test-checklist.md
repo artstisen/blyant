@@ -13,8 +13,8 @@ Write down what differs, and copy `data/log.txt` afterwards: it tells what Blyan
 - [ ] `tar -xzf Blyant-0.1.0-linux-arm64.tar.gz`, then `cd Blyant` and `./Blyant --version`: prints `Blyant v0.1.0`
 - [ ] `./Blyant --help | less`: the usage, also through a pipe
 - [ ] `./Blyant`: the start page. The `data` folder is made next to the program (`ls`)
-- [ ] The window must be at least **81 columns and 24 rows**. LXTerminal opens at 80x24, which is one column too small: Blyant says so. Make it wider, and it goes on
-- [ ] In the text console the size comes from the screen: at 1920x1080 it is large; at 640x480 it is 80 columns, which is too small
+- [ ] The window must be at least **80 columns and 24 rows**. LXTerminal opens at 80x24, which is enough: every page fits, and nothing is drawn in the last column or on the last row
+- [ ] In the text console the size comes from the screen: at 1920x1080 it is large; at 640x480 it is 80 columns, which is enough
 
 ## 2. Colors (text console)
 
@@ -36,7 +36,7 @@ Write down what differs, and copy `data/log.txt` afterwards: it tells what Blyan
 
 ## 4. The window
 
-- [ ] Make the desktop terminal smaller than 81 columns: a box asks to make it larger, and nothing is drawn past the edge (on every page, not only the editor)
+- [ ] Make the desktop terminal smaller than 80 columns: a box asks to make it larger, and nothing is drawn past the edge (on every page, not only the editor)
 - [ ] Make it larger again: the page follows
 
 ## 5. Files (SD card, and a USB stick)
