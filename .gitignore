@@ -10,6 +10,8 @@
 # JetBrains Rider
 .idea/
 *.DotSettings.user
+# The report of an inspection of the code
+rider-report.xml
 
 # VS Code
 .vscode/
