@@ -234,6 +234,11 @@ internal static class FileFavorites
     internal static bool Contains(string path) => IndexOf(path) >= 0;
 
     /// <summary>
+    /// The place of a favorite or folder in the list (-1: not in it)
+    /// </summary>
+    internal static int IndexOf(Favorite favorite) => List.IndexOf(favorite);
+
+    /// <summary>
     /// The note of a favorite file or directory (empty: none, or not a favorite)
     /// </summary>
     internal static string NoteOf(string path)

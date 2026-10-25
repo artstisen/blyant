@@ -9,6 +9,9 @@
 internal static partial class FileExplorer
 {
     private const int ListTop = 3; // The first row of the list
+
+    // A count typed in front of a key in the file browser and its lists (favorites, history, hotlist, search results)
+    private static readonly ListCount _listCount = new();
     private const string ParentName = "..";
     private const string CopyNameSuffix = "-utf8";
 
@@ -362,6 +365,21 @@ internal static partial class FileExplorer
             var redraw = true;
             var hadMessage = _message.Length > 0;
             _message = string.Empty;
+            // A count in front of a key, in the pane with the focus: 5j 5k (5 rows), 5gg 5G (row 5), shown below the
+            // pane. Esc only drops it. Other keys do what they do once
+            if (_listCount.Add(key))
+            {
+                Draw(hadMessage);
+                continue;
+            }
+
+            var count = _listCount.Take();
+            if (count != null && key.Key == ConsoleKey.Escape)
+            {
+                Draw(hadMessage);
+                continue;
+            }
+
             // A key that uses the other pane (copy, move, compare ...) ends the peek first
             if (_peeking && !KeepsPeek(key)) StopPeek();
             if (_mode == BrowseMode.Edit && _pending == null && Jump.IsKey(key))
@@ -528,12 +546,12 @@ internal static partial class FileExplorer
             }
             else if (key.KeyChar == 'G')
             {
-                ActivePane.Index = ActivePane.Items.Count - 1;
+                ActivePane.Index = ListCount.Row(count, ActivePane.Items.Count, false);
                 redraw = false;
             }
             else if (key.KeyChar == 'g')
             {
-                if (Console.ReadKey(true).KeyChar == 'g') ActivePane.Index = 0;
+                if (Console.ReadKey(true).KeyChar == 'g') ActivePane.Index = ListCount.Row(count, ActivePane.Items.Count, true);
                 redraw = false;
             }
             else if (key.Key is ConsoleKey.Escape or ConsoleKey.Q)
@@ -555,12 +573,12 @@ internal static partial class FileExplorer
             }
             else if (key.Key is ConsoleKey.J or ConsoleKey.DownArrow)
             {
-                ActivePane.Index++;
+                ActivePane.Index = Math.Min(ActivePane.Index + (count ?? 1), Math.Max(0, ActivePane.Items.Count - 1));
                 redraw = false;
             }
             else if (key.Key is ConsoleKey.K or ConsoleKey.UpArrow)
             {
-                ActivePane.Index--;
+                ActivePane.Index = Math.Max(0, ActivePane.Index - (count ?? 1));
                 redraw = false;
             }
             else if (key.Key == ConsoleKey.PageDown || Keyboard.IsControl(key, ConsoleKey.D) ||
@@ -1696,6 +1714,8 @@ internal static partial class FileExplorer
             if (IsPeekPane(number)) continue;
             var status = " " + (pane.Items.Count == 0 ? 0 : pane.Index + 1) + "/" + pane.Items.Count + " ";
             if (pane.Filter.Length > 0) status += "/" + pane.Filter + " ";
+            // A count being typed (5j), below the pane it moves in
+            if (pane == ActivePane && _listCount.Shown.Length > 0) status = " " + _listCount.Shown + status;
             if (pane.Marks.Count > 0) status = " " + Lang.F("{0} marked", pane.Marks.Count) + " -" + status;
             status = Tools.TruncateString(status, Math.Max(4, width - 6), true);
             Tools.SetCursorEx(Init.LineCount - 2, left + width - status.Length - 2);

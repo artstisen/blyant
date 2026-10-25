@@ -74,6 +74,9 @@ internal static class JumpMenu
 
     // The bookmarks: j k move the selected one while this is on (V)
     private static bool _moving;
+
+    // A count typed in front of a key (5j, 5gg)
+    private static readonly ListCount Count = new();
     private static string _message = string.Empty;
 
     // The bookmarks marked with Space (several are moved to a folder, to the top or the end, or removed at once)
@@ -294,15 +297,24 @@ internal static class JumpMenu
             var visible = Draw(tabs, tab, filter, rows, selected, ref scroll);
             _message = _moving ? DialogText.Moving : string.Empty;
             var key = Keyboard.ReadKey();
+            // A count in front of a key: 5j 5k (5 rows), 5gg 5G (row 5), shown next to the filter. Esc only drops it
+            if (Count.Add(key))
+            {
+                _message = Count.Shown;
+                continue;
+            }
+
+            var count = Count.Take();
+            if (count != null && key.Key == ConsoleKey.Escape) continue;
             var navigation = Keyboard.ToNavigationKey(key).Key;
             if (_moving)
             {
-                // Moving the selected bookmark or folder: j k move it (into and out of folders), and Esc, Enter or V
-                // end it
+                // Moving the selected bookmark or folder: j k move it (into and out of folders; with a count, that
+                // many steps), and Esc, Enter or V end it
                 if (navigation is ConsoleKey.DownArrow or ConsoleKey.UpArrow && rows.Count > 0 &&
                     rows[selected].Bookmark is { } moved)
                 {
-                    MoveBookmark(moved, navigation == ConsoleKey.UpArrow);
+                    for (var step = 0; step < (count ?? 1); step++) MoveBookmark(moved, navigation == ConsoleKey.UpArrow);
                     _select = moved;
                 }
                 else if (key.Key is ConsoleKey.Escape or ConsoleKey.Enter or ConsoleKey.V)
@@ -364,10 +376,10 @@ internal static class JumpMenu
             switch (navigation)
             {
                 case ConsoleKey.DownArrow:
-                    selected = Math.Min(selected + 1, Math.Max(0, rows.Count - 1));
+                    selected = Math.Min(selected + (count ?? 1), Math.Max(0, rows.Count - 1));
                     continue;
                 case ConsoleKey.UpArrow:
-                    selected = Math.Max(selected - 1, 0);
+                    selected = Math.Max(selected - (count ?? 1), 0);
                     continue;
                 case ConsoleKey.RightArrow:
                     tab = TabLayout.Next(tab, tabs.Count, false);
@@ -386,10 +398,10 @@ internal static class JumpMenu
             switch (key.KeyChar)
             {
                 case 'G':
-                    selected = Math.Max(0, rows.Count - 1);
+                    selected = ListCount.Row(count, rows.Count, false);
                     break;
                 case 'g':
-                    if (Console.ReadKey(true).KeyChar == 'g') selected = 0;
+                    if (Console.ReadKey(true).KeyChar == 'g') selected = ListCount.Row(count, rows.Count, true);
                     break;
                 case '/':
                     // Only show the places with a text in their names

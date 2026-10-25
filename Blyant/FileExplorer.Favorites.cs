@@ -115,6 +115,20 @@ internal static partial class FileExplorer
                 continue;
             }
 
+            // A count in front of a key: 5j 5k (5 rows), 5gg 5G (row 5). Esc only drops it
+            if (_listCount.Add(key))
+            {
+                redraw = hadMessage;
+                continue;
+            }
+
+            var count = _listCount.Take();
+            if (count != null && key.Key == ConsoleKey.Escape)
+            {
+                redraw = hadMessage;
+                continue;
+            }
+
             var navigation = Keyboard.ToNavigationKey(key).Key;
 
             if (_favoriteMoving)
@@ -124,7 +138,10 @@ internal static partial class FileExplorer
                 {
                     var up = navigation is ConsoleKey.UpArrow or ConsoleKey.K;
                     var moved = FileFavorites.Items[selected];
-                    if (FileFavorites.Move(selected, up))
+                    // With a count: that many steps (each can go into or out of a folder)
+                    var steps = 0;
+                    while (steps < (count ?? 1) && FileFavorites.Move(FileFavorites.IndexOf(moved), up)) steps++;
+                    if (steps > 0)
                     {
                         // The selection follows it (a folder it has moved into is opened)
                         FilterFavorites();
@@ -256,12 +273,12 @@ internal static partial class FileExplorer
             }
             else if (key.KeyChar == 'G')
             {
-                _favoriteIndex = _favorites.Count - 1;
+                _favoriteIndex = ListCount.Row(key.KeyChar == 'G' ? count : null, _favorites.Count, false);
                 redraw = hadMessage;
             }
             else if (key.KeyChar == 'g')
             {
-                if (Console.ReadKey(true).KeyChar == 'g') _favoriteIndex = 0;
+                if (Console.ReadKey(true).KeyChar == 'g') _favoriteIndex = ListCount.Row(count, _favorites.Count, true);
                 redraw = hadMessage;
             }
             else if (key.Key is ConsoleKey.Escape or ConsoleKey.Q or ConsoleKey.F or ConsoleKey.Backspace ||
@@ -283,12 +300,12 @@ internal static partial class FileExplorer
             }
             else if (navigation == ConsoleKey.DownArrow)
             {
-                _favoriteIndex++;
+                _favoriteIndex += count ?? 1;
                 redraw = hadMessage;
             }
             else if (navigation == ConsoleKey.UpArrow)
             {
-                _favoriteIndex--;
+                _favoriteIndex = Math.Max(0, _favoriteIndex - (count ?? 1));
                 redraw = hadMessage;
             }
             else if (key.Key == ConsoleKey.PageDown)
@@ -1096,6 +1113,7 @@ internal static partial class FileExplorer
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
 
         var status = " " + (_favorites.Count == 0 ? 0 : _favoriteIndex + 1) + "/" + _favorites.Count + " ";
+        if (_listCount.Shown.Length > 0) status = " " + _listCount.Shown + status;
         if (_favoriteFilter.Length > 0) status += "/" + _favoriteFilter + " ";
         if (_favoriteMarks.Count > 0) status = " " + Lang.F("{0} marked", _favoriteMarks.Count) + " -" + status;
         Tools.SetCursorEx(Init.LineCount - 2, Init.LineWidth - status.Length - 2);

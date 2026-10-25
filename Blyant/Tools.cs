@@ -662,6 +662,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":jump Ctrl+O", Lang.T("The Jump menu: files, directories and pages"), false));
             _shortcutList.Add(new Shortcut(":book 3", Lang.T("Jump to bookmark 3 (:book alone: the bookmarks)"), false));
             _shortcutList.Add(new Shortcut("j k", Lang.T("Select (as Down/Up)"), false));
+            _shortcutList.Add(new Shortcut("5j 5k 5gg 5G", Lang.T("With a count: 5 rows down/up, to row 5"), false));
             _shortcutList.Add(new Shortcut("gg G", Lang.T("First/Last"), false));
             _shortcutList.Add(new Shortcut("PgUp PgDn", Lang.T("One page up/down"), false));
             _shortcutList.Add(new Shortcut("l Enter", Lang.T("Open the directory or file"), false));
@@ -719,6 +720,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("  " + Lang.T("Text in files"), Lang.T("Text files containing the text"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Regular expr."), Lang.T("Name and text are regular expressions"), false));
             _shortcutList.Add(new Shortcut("j k gg G", Lang.T("Select in the list of files found"), false));
+            _shortcutList.Add(new Shortcut("5j 5k 5gg 5G", Lang.T("With a count: 5 rows down/up, to row 5"), false));
             _shortcutList.Add(new Shortcut("l Enter", Lang.T("Open the file (at the line found)"), false));
             _shortcutList.Add(new Shortcut("B :goto", Lang.T("Show the file in the file browser"), false));
             _shortcutList.Add(new Shortcut("I :info", Lang.T("Show type, size, dates and path"), false));
@@ -732,6 +734,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":jump Ctrl+O", Lang.T("The Jump menu: files, directories and pages"), false));
             _shortcutList.Add(new Shortcut(":book 3", Lang.T("Jump to bookmark 3 (:book alone: the bookmarks)"), false));
             _shortcutList.Add(new Shortcut("j k gg G", Lang.T("Select"), false));
+            _shortcutList.Add(new Shortcut("5j 5k 5gg 5G", Lang.T("With a count: 5 rows down/up, to row 5"), false));
             _shortcutList.Add(new Shortcut("l Enter", Lang.T("Open the file (a directory: go to it)"), false));
             _shortcutList.Add(new Shortcut("B :goto", Lang.T("Show the file in the file browser"), false));
             _shortcutList.Add(new Shortcut("V", Lang.T("Move the favorite or folder (j k, then Esc)"), false));
@@ -769,6 +772,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":jump Ctrl+O", Lang.T("The Jump menu: files, directories and pages"), false));
             _shortcutList.Add(new Shortcut(":book 3", Lang.T("Jump to bookmark 3 (:book alone: the bookmarks)"), false));
             _shortcutList.Add(new Shortcut("j k gg G", Lang.T("Select"), false));
+            _shortcutList.Add(new Shortcut("5j 5k 5gg 5G", Lang.T("With a count: 5 rows down/up, to row 5"), false));
             _shortcutList.Add(new Shortcut("l Enter", Lang.T("Open the file in the editor"), false));
             _shortcutList.Add(new Shortcut("B :goto", Lang.T("Show the file in the file browser"), false));
             _shortcutList.Add(new Shortcut("P :fav", Lang.T("Add to/Remove from the favorites (*)"), false));
@@ -785,6 +789,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":jump Ctrl+O", Lang.T("The Jump menu: files, directories and pages"), false));
             _shortcutList.Add(new Shortcut(":book 3", Lang.T("Jump to bookmark 3 (:book alone: the bookmarks)"), false));
             _shortcutList.Add(new Shortcut("j k gg G", Lang.T("Select"), false));
+            _shortcutList.Add(new Shortcut("5j 5k 5gg 5G", Lang.T("With a count: 5 rows down/up, to row 5"), false));
             _shortcutList.Add(new Shortcut("l Enter", Lang.T("Go to the directory (in the pane with the focus)"), false));
             _shortcutList.Add(new Shortcut("V :move", Lang.T("Move the directory (j k, then Esc)"), false));
             _shortcutList.Add(new Shortcut("T :top", Lang.T("Move the directory to the top"), false));
@@ -823,6 +828,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("  " + Lang.T("Tabs"), Lang.T("Bookmarks, Recent, Projects, File browser, Blyant"), false));
             _shortcutList.Add(new Shortcut("  " + DialogText.CaptionsFiles, Lang.T("Its lists: History, Favorites, Hotlist"), false));
             _shortcutList.Add(new Shortcut("j k gg G", Lang.T("Select a place"), false));
+            _shortcutList.Add(new Shortcut("5j 5k 5gg 5G", Lang.T("With a count: 5 rows down/up, to row 5"), false));
             _shortcutList.Add(new Shortcut("h l", Lang.T("The list before/after (through all the lists)"), false));
             _shortcutList.Add(new Shortcut("Tab Shift+Tab", Lang.T("The next/previous tab"), false));
             _shortcutList.Add(new Shortcut("Enter", Lang.T("Jump: open the file, directory or page"), false));

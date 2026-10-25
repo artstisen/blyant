@@ -39,6 +39,20 @@ internal static partial class FileExplorer
                 continue;
             }
 
+            // A count in front of a key: 5j 5k (5 rows), 5gg 5G (row 5). Esc only drops it
+            if (_listCount.Add(key))
+            {
+                redraw = hadMessage;
+                continue;
+            }
+
+            var count = _listCount.Take();
+            if (count != null && key.Key == ConsoleKey.Escape)
+            {
+                redraw = hadMessage;
+                continue;
+            }
+
             var navigation = Keyboard.ToNavigationKey(key).Key;
             if (key.KeyChar == ':')
             {
@@ -112,12 +126,12 @@ internal static partial class FileExplorer
             }
             else if (key.KeyChar == 'G' || key.Key == ConsoleKey.End)
             {
-                _historyIndex = _historyShown.Count - 1;
+                _historyIndex = ListCount.Row(key.KeyChar == 'G' ? count : null, _historyShown.Count, false);
                 redraw = hadMessage;
             }
             else if (key.KeyChar == 'g')
             {
-                if (Console.ReadKey(true).KeyChar == 'g') _historyIndex = 0;
+                if (Console.ReadKey(true).KeyChar == 'g') _historyIndex = ListCount.Row(count, _historyShown.Count, true);
                 redraw = hadMessage;
             }
             else if (key.Key is ConsoleKey.Escape or ConsoleKey.Q or ConsoleKey.O or ConsoleKey.Backspace ||
@@ -135,12 +149,12 @@ internal static partial class FileExplorer
             }
             else if (navigation == ConsoleKey.DownArrow)
             {
-                _historyIndex++;
+                _historyIndex += count ?? 1;
                 redraw = hadMessage;
             }
             else if (navigation == ConsoleKey.UpArrow)
             {
-                _historyIndex--;
+                _historyIndex = Math.Max(0, _historyIndex - (count ?? 1));
                 redraw = hadMessage;
             }
             else if (key.Key == ConsoleKey.PageDown)
@@ -442,6 +456,7 @@ internal static partial class FileExplorer
         DrawColumnEnds(Init.LineCount - 2, _historyLines);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
         var status = " " + (_historyShown.Count == 0 ? 0 : _historyIndex + 1) + "/" + _historyShown.Count + " ";
+        if (_listCount.Shown.Length > 0) status = " " + _listCount.Shown + status;
         if (_historyFilter.Length > 0) status += "/" + _historyFilter + " ";
         Tools.SetCursorEx(Init.LineCount - 2, Init.LineWidth - status.Length - 2);
         Console.Write(status);

@@ -31,7 +31,7 @@ In a language where the names of the tabs do not fit in a row, _File browser_ is
 
 The list has columns, with lines between them and their names in the line above the list (as the lists of the file browser): **Name**, then on the Bookmarks tab **Command** (the command that jumps to the bookmark), or **When** on Recent and History, then **Path** (the directory the file or directory is in; a page has none) and **Type** (the kind of place: `FILE`, `DIR` or `PAGE`) at the right. The name column is as wide as the longest name (at most half the menu), so the command is right after the name also in a wide window, and the path takes the room that is left. A long name is shortened with `...` in the middle, so its start and its extension are seen, and a long path from its start, so its end is seen. In a window too narrow for the path, it is left out. A place that is gone (a file deleted or moved) is shown dimmed with _(missing)_.
 
-- `j` `k` (or `Down`/`Up`, `gg` `G`, `PgUp` `PgDn`) Select a place
+- `j` `k` (or `Down`/`Up`, `gg` `G`, `PgUp` `PgDn`) Select a place. With a count: `5j` `5k` move 5 rows down/up and `5gg` (or `5G`) goes to row 5 of the list (a row, not bookmark 5: the folders are rows too); the count is shown next to _/ Filter_ while you type it, and `Esc` drops it. While a bookmark is moved (`V`), `3j` moves it 3 steps
 - `h` `l` (or `Left`/`Right`) The list before/after: through all the lists in a row, the sub-tabs of the file browser too
 - `Tab` `Shift+Tab` The next/previous tab (on the file browser: its first list)
 - `/` Filter the places of the tab: only the ones with the text in their names are shown. `Esc` shows all again
