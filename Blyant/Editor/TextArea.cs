@@ -784,7 +784,7 @@ public partial class TextArea
             case EditorRequest.Jump:
                 Tools.HideCursor();
                 // Leaving the text asks about changes that are not saved
-                Jump.Open(LeaveForJump);
+                Jump.Open(LeaveForJump, () => _engine.IsModified);
                 RedrawAll();
                 break;
             case EditorRequest.Projects:
@@ -801,7 +801,7 @@ public partial class TextArea
                 break;
             case EditorRequest.JumpToBookmark:
                 Tools.HideCursor();
-                Jump.ToBookmark(_engine.BookArgument, LeaveForJump);
+                Jump.ToBookmark(_engine.BookArgument, LeaveForJump, () => _engine.IsModified);
                 RedrawAll();
                 break;
             case EditorRequest.Rename:

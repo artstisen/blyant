@@ -136,6 +136,24 @@ internal static partial class FileExplorer
     /// <returns>An error message, or null</returns>
     internal static string? EditListNote(string note, string fileName, string caption, Action<string> keep)
     {
+        // The same note in the editor again (from the Jump menu opened in its editor): its file is in use
+        if (!OpenListNotes.Add(fileName)) return Lang.T("This note is being written already");
+        try
+        {
+            return EditListNoteFile(note, fileName, caption, keep);
+        }
+        finally
+        {
+            OpenListNotes.Remove(fileName);
+        }
+    }
+
+    // The notes being written in the editor (by their files), one inside another when the Jump menu was opened in
+    // the editor of a note
+    private static readonly HashSet<string> OpenListNotes = new(StringComparer.OrdinalIgnoreCase);
+
+    private static string? EditListNoteFile(string note, string fileName, string caption, Action<string> keep)
+    {
         var directory = FileIo.GetDataDirectoryName();
         var path = System.IO.Path.Combine(directory, fileName);
         string written;
@@ -144,6 +162,8 @@ internal static partial class FileExplorer
         {
             FileIo.CreateDirectory(directory);
             FileIo.WriteAllBytesSafe(path, new UTF8Encoding(false).GetBytes(note));
+            // (as it was after: a note can be written inside the editor of another note)
+            var editingBefore = EditingListNote;
             EditingListNote = true;
             try
             {
@@ -156,7 +176,7 @@ internal static partial class FileExplorer
             }
             finally
             {
-                EditingListNote = false;
+                EditingListNote = editingBefore;
             }
 
             written = File.ReadAllText(path, Encoding.UTF8);

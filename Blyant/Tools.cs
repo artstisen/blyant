@@ -1360,7 +1360,10 @@ internal static class Tools
     {
         try
         {
-            return Console.WindowWidth - 1 < Init.LineWidth || Console.WindowHeight - 1 < Init.LineCount;
+            var width = Console.WindowWidth;
+            var height = Console.WindowHeight;
+            // (a terminal that does not tell its size gives 0)
+            return width > 0 && height > 0 && (width - 1 < Init.LineWidth || height - 1 < Init.LineCount);
         }
         catch
         {

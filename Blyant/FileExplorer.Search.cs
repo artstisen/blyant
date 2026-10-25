@@ -128,7 +128,8 @@ internal static partial class FileExplorer
             var key = Keyboard.ReadKey();
             if (Jump.IsKey(key))
             {
-                // The Jump menu
+                // The Jump menu (a count typed before it is dropped)
+                _listCount.Take();
                 Jump.Open();
                 continue;
             }

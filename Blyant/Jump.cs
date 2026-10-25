@@ -314,19 +314,20 @@ internal static class Jump
     /// </summary>
     /// <param name="beforeLeaving">Asked before the page is left (as about changes that are not saved): false
     /// to stay</param>
-    internal static void Open(Func<bool>? beforeLeaving = null)
+    /// <param name="hasChanges">Tells if the page has changes that are not saved, while a page opened on top of it
+    /// (Color schemes ...) is shown: a jump from there that leaves is not made then (null: it has none)</param>
+    internal static void Open(Func<bool>? beforeLeaving = null, Func<bool>? hasChanges = null)
     {
         var target = JumpMenu.Pick();
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
         if (target == null) return;
         if (OpensInPlace(target))
         {
-            Remember(target);
-            OpenInPlace(target.Target);
+            OpenOnTop(target, hasChanges);
             return;
         }
 
-        if (beforeLeaving != null && !beforeLeaving()) return;
+        if (!MayLeave(beforeLeaving)) return;
         Remember(target);
         Pending = target;
         Navigation.Wait();
@@ -340,13 +341,14 @@ internal static class Jump
     /// <param name="argument">What follows ":book"</param>
     /// <param name="beforeLeaving">Asked before the page is left (the editor asks about changes that are not saved);
     /// false stays</param>
-    internal static void ToBookmark(string argument, Func<bool>? beforeLeaving = null)
+    /// <param name="hasChanges">As for Open</param>
+    internal static void ToBookmark(string argument, Func<bool>? beforeLeaving = null, Func<bool>? hasChanges = null)
     {
         argument = argument.Trim();
         if (argument.Length == 0)
         {
             JumpMenu.ShowNextOn(JumpMenu.Tab.Bookmarks);
-            Open(beforeLeaving);
+            Open(beforeLeaving, hasChanges);
             return;
         }
 
@@ -372,12 +374,11 @@ internal static class Jump
 
         if (OpensInPlace(target))
         {
-            Remember(target);
-            OpenInPlace(target.Target);
+            OpenOnTop(target, hasChanges);
             return;
         }
 
-        if (beforeLeaving != null && !beforeLeaving()) return;
+        if (!MayLeave(beforeLeaving)) return;
         Remember(target);
         Pending = target;
         Navigation.Wait();
@@ -389,9 +390,46 @@ internal static class Jump
     /// </summary>
     internal static void ToPlace(JumpTarget target, Func<bool>? beforeLeaving = null)
     {
-        if (beforeLeaving != null && !beforeLeaving()) return;
+        if (!MayLeave(beforeLeaving)) return;
         Pending = target;
         Navigation.Wait();
+    }
+
+    // The pages that pages were opened on top of from the Jump menu (the editor below Color schemes ...), each with
+    // what tells if it has changes that are not saved. A page below cannot be asked to save from the page on top
+    // (the editor saves to the file being edited, and a page on top can be another file of Blyant)
+    private static readonly List<Func<bool>> PagesBelow = new();
+
+    // A page shown on top of the page the jump was made from, which is one of the pages below while it is shown
+    private static void OpenOnTop(JumpTarget target, Func<bool>? hasChanges)
+    {
+        Remember(target);
+        PagesBelow.Add(hasChanges ?? (() => false));
+        try
+        {
+            OpenInPlace(target.Target);
+        }
+        finally
+        {
+            PagesBelow.RemoveAt(PagesBelow.Count - 1);
+        }
+    }
+
+    /// <summary>
+    /// A jump may leave the page: no page below it has changes that are not saved (else it is told, and the jump is
+    /// not made), and the page itself agrees (beforeLeaving asks about its own changes)
+    /// </summary>
+    private static bool MayLeave(Func<bool>? beforeLeaving)
+    {
+        if (PagesBelow.Any(hasChanges => hasChanges()))
+        {
+            ChoiceBox.Forget();
+            ChoiceBox.Message(DialogText.CaptionsJump, Lang.T("A page below this one has changes that are not saved"),
+                Lang.T("Close this page, and save or discard them there first."));
+            return false;
+        }
+
+        return beforeLeaving == null || beforeLeaving();
     }
 
     // Keep a jump in the jump history

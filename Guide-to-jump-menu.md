@@ -81,7 +81,7 @@ Where a jump goes:
 - **A file** is opened in the editor (where the cursor was the last time), with the file browser in its directory behind it. Closing the browser shows the start page
 - **A directory** is shown in the file browser
 - **A page of Configuration** (on the Blyant tab) opens the start page on that page
-- **Color schemes, Logos, Clipboard, Snippet editor, Completions editor, Help and About** open on top of the page you jumped from; closing them returns there
+- **Color schemes, Logos, Clipboard, Snippet editor, Completions editor, Help and About** open on top of the page you jumped from; closing them returns there. A jump from one of them that would leave it is not made while the page below has changes that are not saved (as text in the editor): you are told, and close the page on top to save or discard them first
 
 When you jump from the editor and the text has changes that are not saved, you are asked whether to save them first (`Esc` stays in the editor).
 

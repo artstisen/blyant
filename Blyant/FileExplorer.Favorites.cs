@@ -109,7 +109,8 @@ internal static partial class FileExplorer
             var key = Keyboard.ReadKey();
             if (Jump.IsKey(key))
             {
-                // The Jump menu
+                // The Jump menu (a count typed before it is dropped)
+                _listCount.Take();
                 Jump.Open();
                 FindFavoriteMarks();
                 continue;
@@ -336,7 +337,8 @@ internal static partial class FileExplorer
             {
                 NewFavoriteSubfolder(selected, string.Empty);
             }
-            else if (key.Key == ConsoleKey.W)
+            else if (key.Key == ConsoleKey.W &&
+                     (key.Modifiers & (ConsoleModifiers.Control | ConsoleModifiers.Alt)) == 0)
             {
                 if (NewFavoriteFile(selected, string.Empty) is not { } made) continue;
                 path = made;

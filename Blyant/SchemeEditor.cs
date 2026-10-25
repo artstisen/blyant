@@ -124,7 +124,7 @@ internal static class SchemeEditor
             new TabItem(() => Lang.T("Preview"), new PreviewPage()))
         {
             // Ctrl+O: the Jump menu, on every tab (a jump that leaves the page asks about changes first)
-            OnJumpKey = () => Jump.Open(LeaveForJump)
+            OnJumpKey = () => Jump.Open(LeaveForJump, () => _changed)
         };
         frame.Run();
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);

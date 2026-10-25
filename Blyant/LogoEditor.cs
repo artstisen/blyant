@@ -58,7 +58,7 @@ internal static class LogoEditor
             new TabItem(() => Lang.T("Colors"), new ColorsPage(), new CellsPage()))
         {
             // Ctrl+O: the Jump menu, on every tab (a jump that leaves the page asks about changes first)
-            OnJumpKey = () => Jump.Open(LeaveForJump)
+            OnJumpKey = () => Jump.Open(LeaveForJump, () => _changed)
         };
         frame.Run();
         Tools.HideCursor();

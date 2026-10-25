@@ -319,6 +319,8 @@ internal static class JumpMenu
             }
 
             selected = Math.Clamp(selected, 0, Math.Max(0, rows.Count - 1));
+            // Follow the size of the terminal window (all is drawn again when it has changed)
+            if (Init.ApplyAutoSize()) full = true;
             var visible = Draw(tabs, tab, filter, rows, selected, ref scroll, full);
             // (the keys that only move the selection set it to false)
             full = true;
@@ -347,7 +349,9 @@ internal static class JumpMenu
                 if (navigation is ConsoleKey.DownArrow or ConsoleKey.UpArrow && rows.Count > 0 &&
                     rows[selected].Bookmark is { } moved)
                 {
-                    for (var step = 0; step < (count ?? 1); step++) MoveBookmark(moved, navigation == ConsoleKey.UpArrow);
+                    var steps = 0;
+                    while (steps < (count ?? 1) && MoveBookmark(moved, navigation == ConsoleKey.UpArrow)) steps++;
+                    if (steps > 0) SaveBookmarks();
                     _select = moved;
                 }
                 else if (key.Key is ConsoleKey.Escape or ConsoleKey.Enter or ConsoleKey.V)
@@ -981,6 +985,12 @@ internal static class JumpMenu
         var path = StartMenu.AskNewFile(DialogText.NewFile, name, FolderForNewFile(entry));
         ChoiceBox.Forget();
         if (path == null) return null;
+        if (path.IndexOfAny(new[] { '\t', '\r', '\n' }) >= 0)
+        {
+            // (it could not be kept in bookmarks.txt)
+            _message = Lang.T("A path with a tab or a line break is not kept");
+            return null;
+        }
         try
         {
             // Only a new file: one that was made in the meantime is not emptied (it is logged, or why it failed)
@@ -1006,7 +1016,8 @@ internal static class JumpMenu
 
     // j k while moving: one place up or down among the rows shown, into and out of folders. Bookmarks that are not
     // shown (of a mode that is not used, or in a closed folder) are passed over
-    private static void MoveBookmark(Bookmarks.Entry entry, bool up)
+    // Returns false if it could not move (it is saved by the caller)
+    private static bool MoveBookmark(Bookmarks.Entry entry, bool up)
     {
         // A folder moves closed (Move closes it): closed before the rows are compared, so its first step is seen. It
         // stays open if it cannot move
@@ -1022,7 +1033,7 @@ internal static class JumpMenu
         }
 
         if (!moved) entry.Collapsed = collapsed;
-        SaveBookmarks();
+        return moved;
     }
 
     // The marked bookmarks, or the selected one (not a folder)
@@ -1353,11 +1364,13 @@ internal static class JumpMenu
 
         ChoiceBox.Forget();
         // What will be done, a sentence for each that there is
-        var note = Lang.F("{0} files and directories are added.", plan.Added);
-        if (plan.NewFolders > 0) note += " " + Lang.F("New folders: {0}.", plan.NewFolders);
-        if (plan.MergedFolders > 0) note += " " + Lang.F("Added to folders of the same name: {0}.", plan.MergedFolders);
-        if (plan.Skipped > 0) note += " " + Lang.F("{0} are bookmarks already, and are left out.", plan.Skipped);
-        if (plan.Notes > 0) note += " " + Lang.F("Notes copied: {0} (a note a bookmark has is kept).", plan.Notes);
+        var sentences = new List<string>();
+        if (plan.Added > 0) sentences.Add(Lang.F("{0} files and directories are added.", plan.Added));
+        if (plan.NewFolders > 0) sentences.Add(Lang.F("New folders: {0}.", plan.NewFolders));
+        if (plan.MergedFolders > 0) sentences.Add(Lang.F("Added to folders of the same name: {0}.", plan.MergedFolders));
+        if (plan.Skipped > 0) sentences.Add(Lang.F("{0} are bookmarks already, and are left out.", plan.Skipped));
+        if (plan.Notes > 0) sentences.Add(Lang.F("Notes copied: {0} (a note a bookmark has is kept).", plan.Notes));
+        var note = string.Join(" ", sentences);
         if (!ChoiceBox.Confirm(Lang.T("Bookmarks"), Lang.T("Copy the favorites to the bookmarks?"), note, false)) return;
         var done = Bookmarks.ImportFavorites(favorites, true);
         Marks.Clear();
