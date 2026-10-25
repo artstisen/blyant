@@ -36,6 +36,8 @@ internal static partial class QuickGuide
         (Kind.Item, "V  j  k  Esc", Lang.T("Bookmarks: move the selected one")),
         (Kind.Item, "A", Lang.T("Bookmarks: new folder (Enter opens/closes it)")),
         (Kind.Item, "S", Lang.T("Bookmarks: new subfolder in the folder")),
+        (Kind.Item, "W", Lang.T("Bookmarks: new file, bookmarked below, opened")),
+        (Kind.Item, "N", Lang.T("Bookmarks: write the note of the bookmark")),
         (Kind.Item, "C", Lang.T("Bookmarks: text color (used before a favorite's)")),
         (Kind.Item, ":path  :name", Lang.T("Copy the path/the name of the file (all tabs)")),
         (Kind.Text, "", ""),

@@ -302,9 +302,9 @@ public class FavoriteSubfoldersTests : IDisposable
     [Fact]
     public void TheNoteInAPane_IsWrapped_AndCut()
     {
-        Assert.Equal(new[] { "(no note)" }, FileExplorer.NoteLines(string.Empty, 20, 5));
-        Assert.Equal(new[] { "one two", "three", "", "four" }, FileExplorer.NoteLines("one two three\n\nfour", 8, 5));
-        Assert.Equal(new[] { "a", "..." }, FileExplorer.NoteLines("a\nb\nc", 10, 2));
+        Assert.Equal(new[] { "(no note)" }, NotePanes.NoteLines(string.Empty, 20, 5));
+        Assert.Equal(new[] { "one two", "three", "", "four" }, NotePanes.NoteLines("one two three\n\nfour", 8, 5));
+        Assert.Equal(new[] { "a", "..." }, NotePanes.NoteLines("a\nb\nc", 10, 2));
     }
 
     [Fact]
@@ -313,13 +313,13 @@ public class FavoriteSubfoldersTests : IDisposable
         var path = In("long.md");
         File.WriteAllText(path, "﻿# Title\r\n\tindented\n" + string.Join("\n", Enumerable.Range(0, 100000)));
         var written = File.GetLastWriteTimeUtc(path);
-        var lines = FileExplorer.PeekLines(path, 3);
+        var lines = NotePanes.PeekLines(path, 3);
         Assert.Equal(new[] { "# Title", "    indented", "0" }, lines);
         Assert.Equal(written, File.GetLastWriteTimeUtc(path));
         File.WriteAllBytes(In("binary.bin"), new byte[] { 1, 0, 2 });
-        Assert.Equal(new[] { "(not a text file)" }, FileExplorer.PeekLines(In("binary.bin"), 3));
+        Assert.Equal(new[] { "(not a text file)" }, NotePanes.PeekLines(In("binary.bin"), 3));
         File.WriteAllText(In("empty.md"), string.Empty);
-        Assert.Equal(new[] { "(empty)" }, FileExplorer.PeekLines(In("empty.md"), 3));
+        Assert.Equal(new[] { "(empty)" }, NotePanes.PeekLines(In("empty.md"), 3));
     }
 
     [Fact]
@@ -336,7 +336,7 @@ public class FavoriteSubfoldersTests : IDisposable
         // A subfolder of the favorites: a subfolder of the bookmark folder (merged with one of the same name)
         FileFavorites.Parse("\t[work]\n \t[sub]\n  \t/x/d\n \t[Other]\n  \t/x/e\n \t/x/f\n\t/x/g\n");
         var result = Bookmarks.ImportFavorites(FileFavorites.Items, true);
-        Assert.Equal(new Bookmarks.ImportResult(4, 0, 1, 2), result);
+        Assert.Equal(new Bookmarks.ImportResult(4, 0, 1, 2, 0), result);
         Assert.Equal("[Work] .a .[Sub] ..b ..d .c .[Other] ..e .f g", string.Join(" ", Bookmarks.Items.Select(entry =>
             new string('.', entry.Level) + (entry.IsFolder ? "[" + entry.Name + "]" : entry.Target.Name))));
     }

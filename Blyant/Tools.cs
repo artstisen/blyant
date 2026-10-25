@@ -846,6 +846,9 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("C :color", Lang.T("Bookmarks: text color (used before a favorite's)"), false));
             _shortcutList.Add(new Shortcut("A :folder", Lang.T("Bookmarks: new folder (Enter opens/closes it)"), false));
             _shortcutList.Add(new Shortcut("S :subfolder", Lang.T("Bookmarks: new subfolder in the folder"), false));
+            _shortcutList.Add(new Shortcut("W :new name", Lang.T("Bookmarks: new file, bookmarked below, opened"), false));
+            _shortcutList.Add(new Shortcut("N :note", Lang.T("Bookmarks: write the note of the bookmark"), false));
+            _shortcutList.Add(new Shortcut(":panes :peek", Lang.T("Bookmarks: show/hide the note and the peek"), false));
             _shortcutList.Add(new Shortcut("Space M", Lang.T("Bookmarks: mark several/move them to a folder"), false));
             _shortcutList.Add(new Shortcut(":expand :collapse", Lang.T("Bookmarks: open/close all the folders"), false));
             _shortcutList.Add(new Shortcut("u :clearbook", Lang.T("Bookmarks: put back the removed/clear (asks first)"), false));

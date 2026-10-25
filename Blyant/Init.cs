@@ -265,6 +265,8 @@ internal static class Init
         FileOperations.DeleteToTrash = true;
         FileExplorer.FavoritePanes = true;
         FileExplorer.FavoritePeek = true;
+        JumpMenu.BookmarkPanes = true;
+        JumpMenu.BookmarkPeek = true;
         Recovery.Enabled = true;
         ConsoleColors.Monochrome = false;
         SyntaxHighlighter.ColorFiles = true;

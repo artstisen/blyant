@@ -711,8 +711,8 @@ public partial class TextArea
                 CompareWithSaved();
                 break;
             case EditorRequest.Bookmark:
-                // The file being edited (not the file a note of the favorites is written in)
-                if (FileExplorer.EditingFavoriteNote)
+                // The file being edited (not the file a note of a list is written in)
+                if (FileExplorer.EditingListNote)
                 {
                     _engine.ShowMessage(DialogText.FavoriteNoteNotAFile, true);
                 }
@@ -728,8 +728,8 @@ public partial class TextArea
 
                 break;
             case EditorRequest.Favorite:
-                // A file: in or out of the favorites of the file browser (not the file a note is written in)
-                if (FileExplorer.EditingFavoriteNote)
+                // A file: in or out of the favorites of the file browser (not the file a note of a list is written in)
+                if (FileExplorer.EditingListNote)
                 {
                     _engine.ShowMessage(DialogText.FavoriteNoteNotAFile, true);
                 }

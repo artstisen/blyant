@@ -19,7 +19,6 @@ internal static class FileFavorites
 {
     internal const string FileName = "favorites.txt";
     private const string CollapsedMark = "collapsed";
-    private const char NoteMark = '#';
 
     internal sealed class Favorite : IFolderItem
     {
@@ -94,9 +93,9 @@ internal static class FileFavorites
             var line = rawLine.TrimEnd('\r');
             var spaces = FolderList<Favorite>.LevelReader.Spaces(line);
             line = line.TrimStart(' ');
-            if (line.StartsWith(NoteMark))
+            if (Notes.IsNote(line, out var note))
             {
-                if (last != null) last.Note = UnescapeNote(line[1..]);
+                if (last != null) last.Note = note;
                 continue;
             }
 
@@ -160,41 +159,10 @@ internal static class FileFavorites
             }
 
             text.Append('\n');
-            if (favorite.Note.Length > 0)
-            {
-                text.Append(' ', favorite.Level).Append(NoteMark).Append(EscapeNote(favorite.Note)).Append('\n');
-            }
+            if (favorite.Note.Length > 0) text.Append(Notes.Line(favorite.Level, favorite.Note));
         }
 
         return text.ToString();
-    }
-
-    // A note on one line: the line breaks as \n, a backslash as \\ and a tab as \t
-    internal static string EscapeNote(string note) =>
-        note.Replace("\r\n", "\n").Replace('\r', '\n').Replace("\\", "\\\\").Replace("\n", "\\n")
-            .Replace("\t", "\\t");
-
-    internal static string UnescapeNote(string written)
-    {
-        var note = new StringBuilder();
-        for (var i = 0; i < written.Length; i++)
-        {
-            if (written[i] != '\\' || i + 1 == written.Length)
-            {
-                note.Append(written[i]);
-                continue;
-            }
-
-            i++;
-            note.Append(written[i] switch
-            {
-                'n' => '\n',
-                't' => '\t',
-                _ => written[i]
-            });
-        }
-
-        return note.ToString();
     }
 
     /// <summary>
@@ -202,8 +170,7 @@ internal static class FileFavorites
     /// </summary>
     internal static void SetNote(Favorite favorite, string note)
     {
-        note = note.Replace("\r\n", "\n").Replace('\r', '\n');
-        favorite.Note = note.Trim().Length == 0 ? string.Empty : note.TrimEnd();
+        favorite.Note = Notes.Clean(note);
     }
 
     /// <summary>

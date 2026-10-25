@@ -49,7 +49,7 @@ public class BookmarksTests : IDisposable
 
         // Counted first, without changing the list
         var plan = Bookmarks.ImportFavorites(favorites, false);
-        Assert.Equal(new Bookmarks.ImportResult(5, 1, 1, 1), plan);
+        Assert.Equal(new Bookmarks.ImportResult(5, 1, 1, 1, 0), plan);
         Assert.Equal(before, Bookmarks.Items.Count);
 
         Assert.Equal(plan, Bookmarks.ImportFavorites(favorites, true));

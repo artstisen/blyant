@@ -16,8 +16,9 @@ namespace Blyant;
 /// "dir" or "page", as in jump.txt), a tab character, the place, and after other tab characters the name it was
 /// given and its color (if any). A folder has its name in brackets ("[Work]"), its color and "collapsed" if it is
 /// closed; the bookmarks in a folder are the lines after it that start with a blank space. A folder line that starts
-/// with a blank space in a folder is a subfolder, and the bookmarks in it start with two. (The lines of data files,
-/// kept by Marbles, are left out.)
+/// with a blank space in a folder is a subfolder, and the bookmarks in it start with two. A note of a bookmark or a
+/// folder is on the line after it, after a "#" (Notes; an older Blyant leaves these lines out). (The lines of data
+/// files, kept by Marbles, are left out.)
 ///
 /// This class does not touch the console: the list is shown by JumpMenu.
 /// </summary>
@@ -69,6 +70,11 @@ internal static class Bookmarks
             get => Level > 0;
             init => Level = value ? 1 : 0;
         }
+
+        /// <summary>
+        /// The note of the bookmark or folder (empty: none)
+        /// </summary>
+        internal string Note { get; set; } = string.Empty;
 
         /// <summary>
         /// The name shown: the one given, or the name of the place (a folder: its name)
@@ -135,11 +141,19 @@ internal static class Bookmarks
         // What was removed before is not put back into a list read again
         Folders.ForgetRemoved();
         var levels = new FolderList<Entry>.LevelReader();
+        Entry? last = null; // The bookmark or folder a note is of
         foreach (var rawLine in text.Split('\n'))
         {
             var line = rawLine.TrimEnd('\r');
             var spaces = FolderList<Entry>.LevelReader.Spaces(line);
             line = line.TrimStart(' ');
+            if (Notes.IsNote(line, out var note))
+            {
+                if (last != null) last.Note = note;
+                continue;
+            }
+
+            last = null;
             var parts = line.Split('\t');
             var close = parts[0].IndexOf(']');
             if (parts[0].StartsWith('[') && close > 1)
@@ -160,6 +174,7 @@ internal static class Bookmarks
                 folder.Collapsed = parts.Skip(2)
                     .Any(part => part.Trim().Equals(CollapsedMark, StringComparison.OrdinalIgnoreCase));
                 List.Add(folder);
+                last = folder;
                 continue;
             }
 
@@ -171,11 +186,12 @@ internal static class Bookmarks
             // The bookmarks of a folder follow it directly
             var level = levels.LevelOf(spaces, false);
             levels.Add(level, false);
-            List.Add(new Entry(target, parts.Length > 2 ? parts[2].Trim() : string.Empty)
+            last = new Entry(target, parts.Length > 2 ? parts[2].Trim() : string.Empty)
             {
                 Color = parts.Length > 3 ? ParseColor(parts[3]) : null,
                 Level = level
-            });
+            };
+            List.Add(last);
         }
     }
 
@@ -199,6 +215,7 @@ internal static class Bookmarks
             }
 
             text.Append('\n');
+            if (entry.Note.Length > 0) text.Append(Notes.Line(entry.Level, entry.Note));
         }
 
         return text.ToString();
@@ -246,14 +263,17 @@ internal static class Bookmarks
     /// <param name="Skipped">The places that were bookmarks already (left where they are)</param>
     /// <param name="NewFolders">The folders made</param>
     /// <param name="MergedFolders">The folders of the favorites added to a bookmark folder of the same name</param>
-    internal sealed record ImportResult(int Added, int Skipped, int NewFolders, int MergedFolders);
+    /// <param name="Notes">The notes copied (with the places and folders added, and to the bookmarks and folders that
+    /// were there without a note)</param>
+    internal sealed record ImportResult(int Added, int Skipped, int NewFolders, int MergedFolders, int Notes);
 
     /// <summary>
     /// Copy the favorites of the file browser into the bookmarks: a file as a bookmark of a file, a directory of a
     /// directory, a folder as a folder and a subfolder as a subfolder (with its color, and closed if it is), in their
     /// order, after the bookmarks there are. A place that is a bookmark already is left out, and a folder with the
     /// name of a bookmark folder is added to it (at its end), as is a subfolder with the name of a subfolder of that
-    /// folder. The favorites stay as they are; one whose file is gone is copied too (the notes are not copied)
+    /// folder. The notes are copied too, also to a bookmark or folder that is there without a note (a note it has is
+    /// kept). The favorites stay as they are; one whose file is gone is copied too
     /// </summary>
     /// <param name="favorites">The favorites, in their order (a folder followed by those in it)</param>
     /// <param name="apply">False to only count what would be done</param>
@@ -261,7 +281,15 @@ internal static class Bookmarks
     {
         // The list is changed on a copy when only counting
         var list = apply ? List : List.Select(Copy).ToList();
-        int added = 0, skipped = 0, newFolders = 0, merged = 0;
+        int added = 0, skipped = 0, newFolders = 0, merged = 0, notes = 0;
+
+        // The note of a favorite, to a bookmark or folder that has none
+        void CopyNote(FileFavorites.Favorite from, Entry to)
+        {
+            if (from.Note.Length == 0 || to.Note.Length > 0) return;
+            to.Note = from.Note;
+            notes++;
+        }
         Entry? folder = null; // The bookmark folder the favorites of the folder go to
         Entry? subfolder = null; // And the subfolder those of a subfolder go to
         var seen = new List<JumpTarget>();
@@ -298,6 +326,7 @@ internal static class Bookmarks
                     merged++;
                 }
 
+                CopyNote(favorite, same);
                 if (sub)
                 {
                     subfolder = same;
@@ -317,9 +346,10 @@ internal static class Bookmarks
             // A favorite that is gone keeps its kind as far as it can be told: a name without an extension is
             // taken for a directory only when it is there
             var target = new JumpTarget(Directory.Exists(path) ? JumpKind.Directory : JumpKind.File, path);
-            if (list.Exists(entry => !entry.IsFolder && entry.Target.SameAs(target)) ||
-                seen.Exists(other => other.SameAs(target)) || path.IndexOfAny(LineBreaking) >= 0)
+            var there = list.Find(entry => !entry.IsFolder && entry.Target.SameAs(target));
+            if (there != null || seen.Exists(other => other.SameAs(target)) || path.IndexOfAny(LineBreaking) >= 0)
             {
+                if (there != null) CopyNote(favorite, there);
                 skipped++;
                 continue;
             }
@@ -327,6 +357,7 @@ internal static class Bookmarks
             seen.Add(target);
             var into = subfolder ?? folder;
             var bookmark = new Entry(target) { Color = favorite.Color, Level = into == null ? 0 : into.Level + 1 };
+            CopyNote(favorite, bookmark);
             if (into == null)
             {
                 list.Add(bookmark);
@@ -340,14 +371,14 @@ internal static class Bookmarks
             added++;
         }
 
-        return new ImportResult(added, skipped, newFolders, merged);
+        return new ImportResult(added, skipped, newFolders, merged, notes);
     }
 
     private static Entry Copy(Entry entry) =>
         entry.IsFolder
             ? new Entry(entry.Target, entry.Name)
-                { IsFolder = true, Color = entry.Color, Collapsed = entry.Collapsed, Level = entry.Level }
-            : new Entry(entry.Target, entry.Name) { Color = entry.Color, Level = entry.Level };
+                { IsFolder = true, Color = entry.Color, Collapsed = entry.Collapsed, Level = entry.Level, Note = entry.Note }
+            : new Entry(entry.Target, entry.Name) { Color = entry.Color, Level = entry.Level, Note = entry.Note };
 
     /// <summary>
     /// Add a place at the end of the list, outside the folders (a place that is there already stays where it is)
@@ -368,6 +399,39 @@ internal static class Bookmarks
 
         List.Add(new Entry(target));
         return AddResult.Added;
+    }
+
+    /// <summary>
+    /// Add a place below an item of the list: first in it when the item is a folder, else after it, in its folder (-1:
+    /// at the end of the list)
+    /// </summary>
+    /// <returns>The place of the bookmark in the list, or -1 if it is a bookmark already (or cannot be kept)</returns>
+    internal static int AddBelow(JumpTarget target, int at)
+    {
+        if (target.Kind is JumpKind.File or JumpKind.Directory)
+        {
+            target = target with { Target = Path.GetFullPath(target.Target) };
+        }
+
+        if (Contains(target) || target.Target.IndexOfAny(LineBreaking) >= 0) return -1;
+        return Folders.AddBelow(new Entry(target), at);
+    }
+
+    /// <summary>
+    /// Give a bookmark or folder a note (blank: no note)
+    /// </summary>
+    internal static void SetNote(Entry entry, string note)
+    {
+        entry.Note = Notes.Clean(note);
+    }
+
+    /// <summary>
+    /// The bookmarks and subfolders in a folder (or subfolder), in their order
+    /// </summary>
+    internal static List<Entry> InFolder(int index)
+    {
+        if (index < 0 || index >= List.Count || !List[index].IsFolder) return new List<Entry>();
+        return List.GetRange(index + 1, Folders.FolderEnd(index) - index);
     }
 
     /// <summary>

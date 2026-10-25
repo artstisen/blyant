@@ -2,11 +2,10 @@
 
 namespace Blyant;
 
-// The panes below the list of favorites: the note of the selected favorite or folder, and a peek at it (the top of
-// the file, what is in the directory, or what is in the folder). They follow the selection, and only show: nothing
-// in them can be selected or scrolled. ":panes" turns them off and on, ":peek" the peek (the settings
-// "favoritepanes" and "favoritepeek"). The notes are kept in the list of favorites (never next to the files, which
-// may be in a repository): N writes the note in the editor.
+// The panes below the list of favorites (NotePanes): the note of the selected favorite or folder, and a peek at it
+// (the top of the file, what is in the directory, or what is in the folder). ":panes" turns them off and on, ":peek"
+// the peek (the settings "favoritepanes" and "favoritepeek"). The notes are kept in the list of favorites (never next
+// to the files, which may be in a repository): N writes the note in the editor (EditListNote, also for the bookmarks).
 internal static partial class FileExplorer
 {
     /// <summary>
@@ -19,19 +18,15 @@ internal static partial class FileExplorer
     /// </summary>
     internal static bool FavoritePeek { get; set; } = true;
 
-    // How much of a file the peek reads: the top of it
-    private const int FavoritePeekBytes = 16 * 1024;
-
-    // The start of the name of the file of Blyant a note is written in, in the editor (in the data directory,
-    // removed after)
+    // The start of the name of the file of Blyant a note of a favorite is written in, in the editor (in the data
+    // directory, removed after)
     private const string FavoriteNoteFile = "favorite-note"; // English: the name of a file
 
     // The rows below the title, for the list and the panes
     private static int FavoriteRows => Init.LineCount - ListTop - 2;
 
     // The rows of text of the panes (0: not shown, also when the window is too low for them)
-    private static int FavoritePaneRows =>
-        FavoritePanes && FavoriteRows >= 14 ? Math.Min(10, FavoriteRows / 3) : 0;
+    private static int FavoritePaneRows => NotePanes.Rows(FavoritePanes, FavoriteRows);
 
     private static int FavoritePageSize => FavoriteRows - (FavoritePaneRows > 0 ? FavoritePaneRows + 1 : 0);
 
@@ -42,21 +37,35 @@ internal static partial class FileExplorer
     private static int[] FavoriteBottomLines => FavoritePaneRows == 0 ? _favoriteLines
         : FavoritePeek ? new[] { FavoritePaneLine } : Array.Empty<int>();
 
-    // ":panes" and ":peek": the panes, or the peek in them, on or off (kept in the settings)
-    private static void ToggleFavoritePanes(bool peek)
+    /// <summary>
+    /// ":panes" and ":peek" in a list with panes: the panes, or the peek in them, on or off (the peek on shows the
+    /// panes too)
+    /// </summary>
+    /// <param name="peek">True for ":peek"</param>
+    /// <param name="panes">The panes are shown</param>
+    /// <param name="peeking">The peek is shown</param>
+    /// <returns>What is told</returns>
+    internal static string TogglePanes(bool peek, ref bool panes, ref bool peeking)
     {
         if (peek)
         {
-            FavoritePeek = !FavoritePeek;
-            _favoriteMessage = FavoritePeek ? Lang.T("Peek on") : Lang.T("Peek off");
-            if (FavoritePeek && !FavoritePanes) FavoritePanes = true;
-        }
-        else
-        {
-            FavoritePanes = !FavoritePanes;
-            _favoriteMessage = FavoritePanes ? Lang.T("Note and peek shown") : Lang.T("Note and peek hidden");
+            peeking = !peeking;
+            if (peeking) panes = true;
+            return peeking ? Lang.T("Peek on") : Lang.T("Peek off");
         }
 
+        panes = !panes;
+        return panes ? Lang.T("Note and peek shown") : Lang.T("Note and peek hidden");
+    }
+
+    // ":panes" and ":peek" in the favorites (kept in the settings)
+    private static void ToggleFavoritePanes(bool peek)
+    {
+        var panes = FavoritePanes;
+        var peeking = FavoritePeek;
+        _favoriteMessage = TogglePanes(peek, ref panes, ref peeking);
+        FavoritePanes = panes;
+        FavoritePeek = peeking;
         if (FavoritePanes && FavoritePaneRows == 0) _favoriteMessage = Lang.T("The window is too low for the panes");
         FileIo.SaveSettings();
     }
@@ -66,127 +75,21 @@ internal static partial class FileExplorer
     {
         var rows = FavoritePaneRows;
         if (rows == 0) return;
-        var top = ListTop + FavoritePageSize;
         var selected = _favorites.Count > 0 ? _favorites[_favoriteIndex] : -1;
         var favorite = selected >= 0 ? FileFavorites.Items[selected] : null;
-        var peek = FavoritePeek;
-        var line = FavoritePaneLine;
-        Tools.SetCursorEx(top, 0);
-        ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
-        Console.Write(new string('-', Init.LineWidth));
-        // Where the lines of the list end, and the line between the panes starts
-        DrawColumnEnds(top, peek ? _favoriteLines.Append(line).ToArray() : _favoriteLines);
-        DrawColumnLabels(top, peek
-            ? new[] { (0, Lang.T("Note")), (line, Lang.T("Peek")) }
-            : new[] { (0, Lang.T("Note")) }, Array.Empty<int>());
-
-        var noteWidth = (peek ? line : Init.LineWidth) - 3;
-        var peekWidth = Init.LineWidth - line - 3;
-        var notes = favorite == null ? new List<string>() : NoteLines(favorite.Note, noteWidth, rows);
-        var peeks = favorite == null || !peek ? new List<string>() : PeekOf(selected, rows);
-        for (var row = 0; row < rows; row++)
-        {
-            var y = top + 1 + row;
-            Tools.SetCursorEx(y, 0);
-            ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
-            Console.Write(new string(' ', Init.LineWidth - 1));
-            if (row < notes.Count)
-            {
-                ConsoleColors.SetColors(favorite!.Note.Length == 0
-                    ? ConsoleColors.ColorPreset.Divider
-                    : ConsoleColors.ColorPreset.Normal);
-                Tools.SetCursorEx(y, 1);
-                Console.Write(Tools.TruncateString(notes[row], noteWidth, false));
-            }
-
-            if (!peek) continue;
-            DrawColumnLine(y, line);
-            if (row >= peeks.Count) continue;
-            ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
-            Tools.SetCursorEx(y, line + 2);
-            Console.Write(Tools.TruncateString(peeks[row], peekWidth, false));
-        }
-
-        ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
-    }
-
-    /// <summary>
-    /// The lines of a note in a pane: wrapped to its width, at the most a number of rows (the last "..." if there is
-    /// more), or "(no note)"
-    /// </summary>
-    internal static List<string> NoteLines(string note, int width, int rows)
-    {
-        if (note.Length == 0) return new List<string> { Lang.T("(no note)") };
-        var lines = new List<string>();
-        foreach (var line in note.Split('\n'))
-        {
-            lines.AddRange(ChoiceBox.Wrap(line.Replace("\t", "    "), Math.Max(1, width)));
-            if (lines.Count > rows) break;
-        }
-
-        if (lines.Count <= rows) return lines;
-        lines = lines.Take(rows).ToList();
-        lines[^1] = "...";
-        return lines;
+        NotePanes.Draw(ListTop + FavoritePageSize, 0, Init.LineWidth, rows, _favoriteLines, favorite?.Note,
+            FavoritePeek ? favorite == null ? new List<string>() : PeekOf(selected, rows) : null);
     }
 
     // What the peek shows of an item of the list: the top of a file, what is in a directory, or what is in a folder
     private static List<string> PeekOf(int number, int rows)
     {
         var favorite = FileFavorites.Items[number];
-        if (favorite.IsFolder)
-        {
-            var items = FileFavorites.InFolder(number);
-            if (items.Count == 0) return new List<string> { Lang.T("(empty)") };
-            var lines = items.Take(rows).Select(item =>
-                new string(' ', 2 * (item.Level - favorite.Level - 1)) +
-                (item.IsFolder ? "[" + item.Name + "]"
-                    : FavoriteName(item.Path) + (Directory.Exists(item.Path) ? "/" : ""))).ToList();
-            if (items.Count > rows) lines[^1] = Lang.F("... and {0} more", items.Count - rows + 1);
-            return lines;
-        }
-
-        if (Directory.Exists(favorite.Path)) return Projects.Contents(favorite.Path, rows).Split('\n').ToList();
-        if (!File.Exists(favorite.Path)) return new List<string> { DialogText.FavoriteMissing };
-        return PeekLines(favorite.Path, rows);
-    }
-
-    /// <summary>
-    /// The top of a file for the peek below the favorites: its first lines (tabs as blank spaces). Only the start of
-    /// the file is read, and nothing is written. A file that is not text is told. A file of size 0 is not opened: on
-    /// Linux and macOS a named pipe or a device has size 0, and reading one could wait for ever
-    /// </summary>
-    internal static List<string> PeekLines(string path, int rows)
-    {
-        try
-        {
-            if (new FileInfo(path).Length == 0) return new List<string> { Lang.T("(empty)") };
-            byte[] head;
-            using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read,
-                       FileShare.ReadWrite | FileShare.Delete))
-            {
-                head = new byte[(int)Math.Min(FavoritePeekBytes, stream.Length)];
-                var read = 0;
-                while (read < head.Length)
-                {
-                    var count = stream.Read(head, read, head.Length - read);
-                    if (count == 0) break;
-                    read += count;
-                }
-
-                Array.Resize(ref head, read);
-            }
-
-            if (head.Length == 0) return new List<string> { Lang.T("(empty)") };
-            if (Array.IndexOf(head, (byte)0) >= 0) return new List<string> { Lang.T("(not a text file)") };
-            var text = new UTF8Encoding(false).GetString(head).TrimStart('﻿');
-            return text.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n').Take(rows)
-                .Select(line => line.Replace("\t", "    ")).ToList();
-        }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
-        {
-            return new List<string> { e.Message };
-        }
+        if (!favorite.IsFolder) return NotePanes.PeekPlace(favorite.Path, rows);
+        return NotePanes.PeekFolder(FileFavorites.InFolder(number).Select(item =>
+            new string(' ', 2 * (item.Level - favorite.Level - 1)) +
+            (item.IsFolder ? "[" + item.Name + "]"
+                : FavoriteName(item.Path) + (Directory.Exists(item.Path) ? "/" : ""))).ToList(), rows);
     }
 
     /// <summary>
@@ -207,44 +110,44 @@ internal static partial class FileExplorer
     }
 
     /// <summary>
-    /// The note of a favorite or folder is being written in the editor (the file of it is not a favorite or a bookmark)
+    /// A note of a list (a favorite, a bookmark or a folder) is being written in the editor: the file of it is not a
+    /// favorite or a bookmark
     /// </summary>
-    internal static bool EditingFavoriteNote { get; private set; }
+    internal static bool EditingListNote { get; private set; }
 
     /// <summary>
-    /// The file a note is written in, in the data directory: one for each favorite or folder (by its path, or by the
-    /// folder it is in and its name), so a recovery copy of a note is only offered for the note it was made of
+    /// The file a note of a favorite is written in (NotePanes.NoteFileName): by its path, or by the folder it is in
+    /// and its name
     /// </summary>
-    internal static string FavoriteNoteFileName(FileFavorites.Favorite favorite, string parentName)
-    {
-        var key = favorite.IsFolder
+    internal static string FavoriteNoteFileName(FileFavorites.Favorite favorite, string parentName) =>
+        NotePanes.NoteFileName(FavoriteNoteFile, favorite.IsFolder
             ? "[" + parentName + "]" + favorite.Level + "[" + favorite.Name + "]"
-            : favorite.Path;
-        var hash = System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(key));
-        return FavoriteNoteFile + "-" + Convert.ToHexString(hash, 0, 6).ToLowerInvariant() + ".md";
-    }
+            : favorite.Path);
 
-    // N or ":note": the note of the selected favorite or folder, written in the editor. The note is kept in the list
-    // of favorites: it is written in a file of Blyant (in the data directory) for the editor, and read back from it,
-    // also when the editor is left by a jump (Ctrl+O, :book)
-    private static void EditFavoriteNote(int number)
+    /// <summary>
+    /// Write a note of a list in the editor: it is written in a file of Blyant (in the data directory) for the editor,
+    /// read back from it and given to keep, also when the editor is left by a jump (Ctrl+O, :book; the jump goes on
+    /// after). The file is removed after
+    /// </summary>
+    /// <param name="note">The note as it is</param>
+    /// <param name="fileName">The file of the note (NotePanes.NoteFileName)</param>
+    /// <param name="caption">The caption of a box telling a file could not be opened</param>
+    /// <param name="keep">Given the text of the note as it was left in the editor</param>
+    /// <returns>An error message, or null</returns>
+    internal static string? EditListNote(string note, string fileName, string caption, Action<string> keep)
     {
-        if (number < 0) return;
-        var favorite = FileFavorites.Items[number];
-        var parent = FileFavorites.Parent(number);
-        var parentName = parent < 0 ? string.Empty : FileFavorites.Items[parent].Name;
         var directory = FileIo.GetDataDirectoryName();
-        var path = System.IO.Path.Combine(directory, FavoriteNoteFileName(favorite, parentName));
+        var path = System.IO.Path.Combine(directory, fileName);
         string written;
         NavigationException? leaving = null;
         try
         {
             FileIo.CreateDirectory(directory);
-            FileIo.WriteAllBytesSafe(path, new UTF8Encoding(false).GetBytes(favorite.Note));
-            EditingFavoriteNote = true;
+            FileIo.WriteAllBytesSafe(path, new UTF8Encoding(false).GetBytes(note));
+            EditingListNote = true;
             try
             {
-                EditBlyantFile(path, DialogText.CaptionsFileFavorites, 0);
+                EditBlyantFile(path, caption, 0);
             }
             catch (NavigationException e)
             {
@@ -253,16 +156,15 @@ internal static partial class FileExplorer
             }
             finally
             {
-                EditingFavoriteNote = false;
+                EditingListNote = false;
             }
 
             written = File.ReadAllText(path, Encoding.UTF8);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
-            _favoriteMessage = e.Message;
             if (leaving != null) System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw(leaving);
-            return;
+            return e.Message;
         }
         finally
         {
@@ -276,8 +178,21 @@ internal static partial class FileExplorer
             }
         }
 
-        KeepFavoriteNote(favorite, number, parentName, written);
+        keep(written);
         if (leaving != null) System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw(leaving);
+        return null;
+    }
+
+    // N or ":note": the note of the selected favorite or folder, written in the editor
+    private static void EditFavoriteNote(int number)
+    {
+        if (number < 0) return;
+        var favorite = FileFavorites.Items[number];
+        var parent = FileFavorites.Parent(number);
+        var parentName = parent < 0 ? string.Empty : FileFavorites.Items[parent].Name;
+        var error = EditListNote(favorite.Note, FavoriteNoteFileName(favorite, parentName),
+            DialogText.CaptionsFileFavorites, written => KeepFavoriteNote(favorite, number, parentName, written));
+        if (error != null) _favoriteMessage = error;
     }
 
     // The note written in the editor, given to its favorite or folder and saved

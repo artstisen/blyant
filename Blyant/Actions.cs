@@ -224,6 +224,8 @@ internal static class Actions
         FileOperations.DeleteToTrash = true;
         FileExplorer.FavoritePanes = true;
         FileExplorer.FavoritePeek = true;
+        JumpMenu.BookmarkPanes = true;
+        JumpMenu.BookmarkPeek = true;
         CommandList.Enabled = true;
         Hints.Enabled = true;
         Recovery.Enabled = true;

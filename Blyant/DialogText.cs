@@ -70,7 +70,7 @@ internal static class DialogText
     public static string New => Lang.T("New");
     public static string NewFile => Lang.T("New file");
     public static string BookmarkFileOnly => Lang.T("Only a file is bookmarked from the editor");
-    public static string FavoriteNoteNotAFile => Lang.T("This is a note of the favorites, kept in the list (not a file)");
+    public static string FavoriteNoteNotAFile => Lang.T("This is a note, kept in its list (not a file)");
     public static string RenameFile => Lang.T("Rename file");
     public static string DeleteFile => Lang.T("Delete file");
     public static string Transfer => Lang.T("Transfer");
@@ -384,7 +384,7 @@ internal static class DialogText
     public static string CaptionsJumpInfo => Lang.T("Jump info");
     public static string HelpSectionJump => Lang.T("Jump menu");
     public static string JumpBookmarkKeys =>
-        Lang.T("Enter Jump | V Move | A Folder | C Color | X Rename | D Remove | : Command");
+        Lang.T("Enter Jump | W New | A Folder | S Subfolder | N Note | V Move | C Color");
     public static string BookmarkMoveFiltered => Lang.T("Remove the filter (Esc) to move bookmarks and add folders");
     public static string BookmarkMarkFolder => Lang.T("Only bookmarks can be marked and moved to a folder (not folders)");
     public static string BookNumbersNote => Lang.T("The numbers are on the Bookmarks tab of the Jump menu.");
