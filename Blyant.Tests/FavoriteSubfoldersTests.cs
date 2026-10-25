@@ -266,6 +266,40 @@ public class FavoriteSubfoldersTests : IDisposable
     }
 
     [Fact]
+    public void ANewFile_BecomesAFavoriteBelowTheSelectedItem()
+    {
+        FileFavorites.Parse("\t[A]\tcollapsed\n \t[S]\tcollapsed\n  \t/x/s\n \t/x/b\n\t/x/c\n");
+        // A folder selected: first in it (opened)
+        Assert.Equal(2, FileFavorites.AddBelow("/x/n1", Find("S")));
+        Assert.Equal("[A] .[S] ..n1 ..s .b c", Show());
+        // A favorite selected: after it, in its folder
+        Assert.Equal(Find("s") + 1, FileFavorites.AddBelow("/x/n2", Find("s")));
+        Assert.Equal("[A] .[S] ..n1 ..s ..n2 .b c", Show());
+        FileFavorites.AddBelow("/x/n3", Find("c"));
+        Assert.Equal("[A] .[S] ..n1 ..s ..n2 .b c n3", Show());
+        // Nothing selected: at the end. A favorite already: not again
+        FileFavorites.AddBelow("/x/n4", -1);
+        Assert.EndsWith(" n4", Show());
+        Assert.Equal(-1, FileFavorites.AddBelow("/x/c", 0));
+    }
+
+    [Fact]
+    public void ANewFile_StartsInTheFolderOfTheSelectedFavorite()
+    {
+        Directory.CreateDirectory(In("docs"));
+        File.WriteAllText(In("docs/a.md"), "x");
+        FileFavorites.Parse("\t[Empty]\n\t[Docs]\n \t" + In("docs/a.md") + "\n\t" + In("docs") + "\n\t" + In("gone.md") + "\n");
+        Assert.Null(FileExplorer.FavoriteFolderForNewFile(0));
+        Assert.Equal(In("docs"), FileExplorer.FavoriteFolderForNewFile(1));
+        Assert.Equal(In("docs"), FileExplorer.FavoriteFolderForNewFile(2));
+        Assert.Equal(In("docs"), FileExplorer.FavoriteFolderForNewFile(3));
+        Assert.Null(FileExplorer.FavoriteFolderForNewFile(4));
+        Assert.Null(FileExplorer.FavoriteFolderForNewFile(-1));
+        // It is the first of the places Tab shows
+        Assert.Equal(In("docs"), StartMenu.NewFilePlaces(In("docs"))[0].Directory);
+    }
+
+    [Fact]
     public void TheNoteInAPane_IsWrapped_AndCut()
     {
         Assert.Equal(new[] { "(no note)" }, FileExplorer.NoteLines(string.Empty, 20, 5));

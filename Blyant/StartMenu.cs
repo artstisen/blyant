@@ -320,20 +320,24 @@ internal static class StartMenu
     /// </summary>
     /// <param name="caption">The title of the box</param>
     /// <param name="name">The name to start with (can be empty)</param>
+    /// <param name="suggested">The folder to start with instead of the one the file browser was in last (the
+    /// folder of the favorite selected), or null. It is one of the places Tab shows too</param>
     /// <returns>The full path of the file to make (it is not made), or null if canceled</returns>
-    internal static string? AskNewFile(string caption, string name)
+    internal static string? AskNewFile(string caption, string name, string? suggested = null)
     {
-        var directory = FileExplorer.LastDirectory;
+        if (suggested != null && !Directory.Exists(suggested)) suggested = null;
+        var directory = suggested ?? FileExplorer.LastDirectory;
         name = name.Trim();
         while (true)
         {
-            var asked = ChoiceBox.AskTextOrTab(caption, Lang.F("The file is made in {0}", directory),
+            var asked = ChoiceBox.AskTextOrTab(caption,
+                Lang.F("The file is made in {0}", directory) + "\n" + Lang.T("Tab: choose another folder"),
                 DialogText.FileNameColon, name, Lang.T("Enter OK | Tab Another folder | Esc Cancel"), out var tab);
             if (tab)
             {
                 // Tab: another folder (the name typed is kept)
                 name = asked ?? string.Empty;
-                if (PickNewFileFolder(directory) is { } other) directory = other;
+                if (PickNewFileFolder(directory, suggested) is { } other) directory = other;
                 Tools.ClearScreen();
                 ChoiceBox.Forget();
                 continue;
@@ -356,10 +360,10 @@ internal static class StartMenu
 
     /// <summary>
     /// The places a new file can be made in, besides one picked: the directories of the two panes of the file
-    /// browser, the folder picked last, and the projects folder. Each once, only those that are there, in this
-    /// order
+    /// browser, the folder picked last, and the projects folder (and first, the folder of the favorite selected,
+    /// when the file is made from the favorites). Each once, only those that are there, in this order
     /// </summary>
-    internal static List<(string Directory, string Label)> NewFilePlaces()
+    internal static List<(string Directory, string Label)> NewFilePlaces(string? favorite = null)
     {
         var places = new List<(string Directory, string Label)>();
 
@@ -371,6 +375,7 @@ internal static class StartMenu
             places.Add((directory, label));
         }
 
+        if (favorite != null) Add(favorite, Lang.T("favorite"));
         Add(FileExplorer.StartDirectory, Lang.T("pane 1"));
         Add(FileExplorer.StartDirectory2, Lang.T("pane 2"));
         // The folder picked (or, ending with a separator, the one the picking was canceled in)
@@ -382,9 +387,9 @@ internal static class StartMenu
 
     // Tab in the box of a new file: the places saved in a list (1-9, j/k gg G and Enter), or B to pick one in the
     // file browser. With one place or none, the file browser at once. Returns the directory, or null (Esc: back)
-    private static string? PickNewFileFolder(string current)
+    private static string? PickNewFileFolder(string current, string? favorite)
     {
-        var places = NewFilePlaces();
+        var places = NewFilePlaces(favorite);
         if (places.Count > 1)
         {
             // (it covers the box of the name, which is drawn again after it)

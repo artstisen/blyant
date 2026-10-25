@@ -196,6 +196,35 @@ internal sealed class FolderList<T> where T : class, IFolderItem
     }
 
     /// <summary>
+    /// Add an item below another: first in it when that is a folder, else after it, in the folder it is in. With no
+    /// item (-1), at the end of the list, outside the folders
+    /// </summary>
+    /// <returns>The place of the item in the list</returns>
+    internal int AddBelow(T item, int at)
+    {
+        if (at < 0 || at >= Items.Count)
+        {
+            item.Level = 0;
+            Items.Add(item);
+            return Items.Count - 1;
+        }
+
+        if (Items[at].IsFolder)
+        {
+            Open(at);
+            item.Level = Items[at].Level + 1;
+        }
+        else
+        {
+            Open(Parent(at));
+            item.Level = Items[at].Level;
+        }
+
+        Items.Insert(at + 1, item);
+        return at + 1;
+    }
+
+    /// <summary>
     /// Add a subfolder to the folder of an item: first in the folder when the item is the folder, else in front of
     /// the item (in front of its subfolder, if it is in one)
     /// </summary>

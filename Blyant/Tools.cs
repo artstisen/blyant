@@ -735,6 +735,8 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("l Enter", Lang.T("Open the file (a directory: go to it)"), false));
             _shortcutList.Add(new Shortcut("B :goto", Lang.T("Show the file in the file browser"), false));
             _shortcutList.Add(new Shortcut("V", Lang.T("Move the favorite or folder (j k, then Esc)"), false));
+            _shortcutList.Add(new Shortcut("W :new name", Lang.T("New file, in the folder of the selected favorite"), false));
+            _shortcutList.Add(new Shortcut("  " + Lang.T("New file"), Lang.T("Tab: another folder. Added below the selected"), false));
             _shortcutList.Add(new Shortcut("A :folder name", Lang.T("New folder (a group of favorites)"), false));
             _shortcutList.Add(new Shortcut("S :subfolder name", Lang.T("New subfolder in the folder (one level of them)"), false));
             _shortcutList.Add(new Shortcut("l Enter", Lang.T("On a folder: Open/Close it"), false));

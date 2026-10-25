@@ -463,7 +463,7 @@ internal static class DialogText
     public static string FavoritesExpanded => Lang.T("All folders are open");
     public static string FavoritesCollapsed => Lang.T("All folders are closed");
     public static string FavoritesNoFolders => Lang.T("There are no folders");
-    public static string FavoritesKeys => Lang.T("B Show | A Folder | S Subfolder | N Note | V Move | C Color | D Remove");
+    public static string FavoritesKeys => Lang.T("B Show | W New | A Folder | S Subfolder | N Note | V Move | C Color");
     public static string FavoriteAdded => Lang.T("Added to the favorites");
     public static string FavoriteRemoved => Lang.T("Removed from the favorites");
     public static string FavoriteMissing => Lang.T("(missing)");

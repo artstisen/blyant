@@ -269,12 +269,14 @@ internal static class ChoiceBox
         return textArea.Canceled || typed.Length == 0 ? null : typed;
     }
 
-    // A box with a line telling what to do and a label for a field. Returns where the field is
+    // A box with a line telling what to do (a "\n" in it starts a new line) and a label for a field. Returns where the
+    // field is
     private static (int Top, int Left, int Width) DrawField(string caption, string prompt, string label,
         string? hints = null)
     {
-        var inner = Math.Clamp(Math.Max(TextMetrics.WidthOf(prompt) + 4, 64), 10, Init.LineWidth - 6);
-        var promptLines = Wrap(prompt, inner - 4);
+        var parts = prompt.Split('\n');
+        var inner = Math.Clamp(Math.Max(parts.Max(TextMetrics.WidthOf) + 4, 64), 10, Init.LineWidth - 6);
+        var promptLines = parts.SelectMany(part => Wrap(part, inner - 4)).ToList();
         // A blank row, the prompt, a blank row, the field and a blank row
         var fieldRow = promptLines.Count + 2;
         var (top, left, width, _) = DrawFrame(caption, inner, fieldRow + 2);

@@ -161,7 +161,7 @@ internal static partial class FileExplorer
                 }
 
                 // A name can follow the command
-                if (command != null && CommandLine.Name(command) is "folder" or "subfolder" or "rename")
+                if (command != null && CommandLine.Name(command) is "folder" or "subfolder" or "rename" or "new")
                 {
                     command = CommandLine.Name(command);
                 }
@@ -207,6 +207,10 @@ internal static partial class FileExplorer
                     case "note":
                         EditFavoriteNote(selected);
                         break;
+                    case "new":
+                        if (NewFavoriteFile(selected, CommandLine.LastArgument) is not { } made) break;
+                        path = made;
+                        return FavoriteAction.Open;
                     case "panes":
                     case "peek":
                         ToggleFavoritePanes(command == "peek");
@@ -314,6 +318,12 @@ internal static partial class FileExplorer
             else if (key.Key == ConsoleKey.S)
             {
                 NewFavoriteSubfolder(selected, string.Empty);
+            }
+            else if (key.Key == ConsoleKey.W)
+            {
+                if (NewFavoriteFile(selected, string.Empty) is not { } made) continue;
+                path = made;
+                return FavoriteAction.Open;
             }
             else if (key.Key == ConsoleKey.U &&
                      (key.Modifiers & (ConsoleModifiers.Control | ConsoleModifiers.Alt)) == 0)
@@ -454,6 +464,57 @@ internal static partial class FileExplorer
         FilterFavorites();
         _favoriteIndex = Math.Max(0, _favorites.IndexOf(index));
         SaveFavoriteList();
+    }
+
+    // W or ":new name": a new file, made with the box of the start page (the name, with ":new name" filled in, and
+    // Tab for another folder), in the folder of the selected favorite to start with. It becomes a favorite below the
+    // selected item (first in a folder that is selected) and is opened in the editor, and the list comes back after.
+    // Returns the path of the file, or null
+    private static string? NewFavoriteFile(int selected, string name)
+    {
+        ChoiceBox.Forget();
+        var path = StartMenu.AskNewFile(DialogText.NewFile, name, FavoriteFolderForNewFile(selected));
+        Tools.ClearScreen();
+        if (path == null) return null;
+        try
+        {
+            // Only a new file: one that was made in the meantime is not emptied (it is logged, or why it failed)
+            FileIo.CreateNewFile(path);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or NotSupportedException)
+        {
+            _favoriteMessage = e.Message;
+            return null;
+        }
+
+        // Shown and selected, also when the list was filtered
+        var index = FileFavorites.AddBelow(path, selected);
+        _favoriteFilter = string.Empty;
+        _favoriteMarks.Clear();
+        SaveFavoriteList();
+        FilterFavorites();
+        if (index >= 0) _favoriteIndex = Math.Max(0, _favorites.IndexOf(index));
+        return path;
+    }
+
+    /// <summary>
+    /// The folder a new file made from the favorites starts in: the directory of the selected file, the selected
+    /// directory, or for a folder of favorites the one of the first file or directory in it (null: none, or it is not
+    /// there; the folder the file browser was in last is used)
+    /// </summary>
+    internal static string? FavoriteFolderForNewFile(int selected)
+    {
+        if (selected < 0 || selected >= FileFavorites.Items.Count) return null;
+        var item = FileFavorites.Items[selected];
+        if (item.IsFolder)
+        {
+            item = FileFavorites.InFolder(selected).FirstOrDefault(favorite => !favorite.IsFolder);
+            if (item == null) return null;
+        }
+
+        if (Directory.Exists(item.Path)) return item.Path;
+        var directory = System.IO.Path.GetDirectoryName(item.Path);
+        return File.Exists(item.Path) && directory != null && Directory.Exists(directory) ? directory : null;
     }
 
     // S or ":subfolder name": ask for the name of a new subfolder (if it is not given) and add it to the folder of the

@@ -9,7 +9,7 @@ Blyant is a text editor for writing: files, and projects of files. When it start
 ### Start
 Each choice has a number and a key, shown in front of it. The number selects the choice (then `Enter` opens it), and the key opens it at once. The keys are the same in all languages.
 
-- `1` `N` **New file**: Make a new, empty file and open it in the editor, with the [file browser](#file-browser) behind it. You are asked for its name; a name without an extension gets the extension of the kind set for new files (Markdown, `.md`, from the start: `chapter 1` is `chapter 1.md`; see _New files and blank pages_ in [Configuration](#configuration)). The file is made in the directory the file browser was in last (shown in the box). `Tab` in the box chooses another folder, and the name you typed is kept:
+- `1` `N` **New file**: Make a new, empty file and open it in the editor, with the [file browser](#file-browser) behind it. You are asked for its name; a name without an extension gets the extension of the kind set for new files (Markdown, `.md`, from the start: `chapter 1` is `chapter 1.md`; see _New files and blank pages_ in [Configuration](#configuration)). The file is made in the directory the file browser was in last (shown in the box, with a line telling that `Tab` chooses another folder). `Tab` in the box chooses another folder, and the name you typed is kept:
 
     - `1` to `4`: the folder of pane 1 and pane 2 of the file browser, the folder picked last (when adding a project, for instance), and the projects folder. Only those that are there, each once, with the end of the path and what the place is after it. `j`/`k` (and `gg`/`G`) select, `Enter` chooses
     - `B` **Browse...**: pick the folder in the file browser (it opens where a folder was picked last)
@@ -270,6 +270,7 @@ In the list of favorites:
 - `C` or `:color` Pick a text color for the favorite from the list of 16 colors
 - `P`, `D` or `:remove` Remove it from the favorites, after asking (the file itself stays where it is)
 - `u` or `:undo` Put back the favorite, or the folder with its favorites, that was removed last
+- `W` or `:new` (`:new name` fills in the name) Make a new file, in the same box as _New file_ on the start page. It starts in the folder of the selected favorite: the directory of a file, the selected directory, or for a folder of favorites the directory of the first file in it (else the folder the file browser was in last). `Tab` chooses another folder, where the folder of the favorite is one of the places. The new file is opened in the editor, and becomes a favorite below the selected item (first in a folder that is selected), so the list shows it when the editor is closed
 - `A` or `:folder name` Create a folder, and `S` or `:subfolder name` a subfolder (see below)
 - `N` or `:note` Write the note of the favorite or folder (see below)
 - `/text` Only show the favorites and folders whose path, name or note contains "text". `Esc` shows all again

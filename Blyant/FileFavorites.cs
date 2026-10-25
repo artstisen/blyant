@@ -295,6 +295,18 @@ internal static class FileFavorites
     }
 
     /// <summary>
+    /// Add a file or directory to the favorites below an item of the list: first in it when the item is a folder, else
+    /// after it, in its folder (-1: at the end of the list)
+    /// </summary>
+    /// <returns>The place of the favorite in the list, or -1 if it is a favorite already (or its path has a line
+    /// break)</returns>
+    internal static int AddBelow(string path, int at)
+    {
+        if (Contains(path) || path.IndexOfAny(new[] { '\r', '\n' }) >= 0) return -1;
+        return Folders.AddBelow(new Favorite { Path = Path.GetFullPath(path) }, at);
+    }
+
+    /// <summary>
     /// Remove a favorite, or a folder with the favorites in it
     /// </summary>
     internal static void RemoveAt(int index) => Folders.RemoveAt(index);
