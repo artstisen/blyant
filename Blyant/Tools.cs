@@ -628,6 +628,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":blank", Lang.T("Blank page: write first, the name and folder when saved"), false));
             _shortcutList.Add(new Shortcut(":recover", Lang.T("Recover unsaved text (shown when there is some)"), false));
             _shortcutList.Add(new Shortcut(":file :open", Lang.T("File browser: open, make and manage files"), false));
+            _shortcutList.Add(new Shortcut(":favorites :favs", Lang.T("The favorites of the file browser at once"), false));
             _shortcutList.Add(new Shortcut(":project name", Lang.T("New project (asks for the name if not given)"), false));
             _shortcutList.Add(new Shortcut(":projects :pro", Lang.T("Open project: the list of projects"), false));
             _shortcutList.Add(new Shortcut(":start :config", Lang.T("The Start tab/Configuration (General)"), false));

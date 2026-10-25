@@ -124,7 +124,7 @@ The settings are on four pages. `j` `k` (and `gg` `G`) select a setting on the p
 On every tab of the start page (Start, the pages of Configuration, Help), `:` opens the command line on the bottom line. `Tab` completes the command you are typing, from the commands of this page, and `Up`/`Down` bring back the commands given here before:
 
 - `:blank` A blank page, as `B`; `:recover` Recover unsaved text, as `R`
-- `:new` (or `:new name`) New file, as `N` (with `:new name`, the box is shown with the name filled in, so the folder can be changed: `Enter` makes it); `:file` (or `:open`, `:browse`) The file browser, as _File browser_
+- `:new` (or `:new name`) New file, as `N` (with `:new name`, the box is shown with the name filled in, so the folder can be changed: `Enter` makes it); `:file` (or `:open`, `:browse`) The file browser, as _File browser_; `:favorites` (or `:favs`) The [favorites](#favorites) of the file browser at once (closing them shows the file browser, and closing that the start page)
 - `:project` (or `:project name`, `:newproject`) New project, as `P`; `:projects` (`:pro`, `:proj`) The list of projects, as _Open project_
 - `:start` The Start tab; `:config` (or `:general`), `:layout`, `:editor` and `:system` The pages of the Configuration tab (`:editor` is the Editor page of Configuration, not the text editor)
 - `:jump` (or `:ju`, `:jmp`) The [Jump menu](Guide-to-jump-menu.md#jump-menu); `:book 3` Jump to bookmark 3

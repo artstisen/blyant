@@ -145,6 +145,12 @@ internal static class StartMenu
             case "open":
                 FileExplorer.Run();
                 break;
+            case "favorites":
+            case "favs":
+                // The favorites of the file browser at once (closing them shows the file browser, as when it starts in
+                // them)
+                FileExplorer.Run(true);
+                break;
             case "project":
             case "newproject":
                 // ":project name": a new project
