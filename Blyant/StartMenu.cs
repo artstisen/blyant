@@ -371,7 +371,7 @@ internal static class StartMenu
 
     /// <summary>
     /// The places a new file can be made in, besides one picked: the directories of the two panes of the file
-    /// browser, the folder picked last, and the projects folder (and first, the folder of the favorite selected,
+    /// browser and the folder picked last (and first, the folder of the favorite selected,
     /// when the file is made from the favorites). Each once, only those that are there, in this order
     /// </summary>
     internal static List<(string Directory, string Label)> NewFilePlaces(string? favorite = null)
@@ -392,7 +392,6 @@ internal static class StartMenu
         // The folder picked (or, ending with a separator, the one the picking was canceled in)
         var picked = FileExplorer.PickPlace;
         if (picked.Length > 0) Add(Path.TrimEndingDirectorySeparator(picked), Lang.T("picked last"));
-        if (Projects.HasFolder) Add(Projects.Directory, Lang.T("projects folder"));
         return places;
     }
 
@@ -421,12 +420,11 @@ internal static class StartMenu
         return FileExplorer.PickDirectory(Lang.T("Where to make the file"));
     }
 
-    // New project: a directory made in the projects folder, or where the user picks when there is none (the first
-    // time, the user is asked where the projects go; the name is asked for if it is not given), shown in the file
-    // browser
+    // New project: a directory made where the user picks (the name is asked for if it is not given), shown in the
+    // file browser
     private static void NewProject(string name)
     {
-        if (ProjectsBox.NewProject(name, ProjectsBox.Place.Default) is { } path) FileExplorer.RunAtDirectory(path);
+        if (ProjectsBox.NewProject(name) is { } path) FileExplorer.RunAtDirectory(path);
     }
 
     // Open project: the projects in a list (with what each holds), the one picked shown in the file browser
@@ -452,19 +450,6 @@ internal static class StartMenu
         FileIo.SaveSettings();
     }
 
-    // The projects folder: the one in Documents, another picked in the file browser, or none (saved by the box)
-    private static void PickProjectsDirectory()
-    {
-        ProjectsBox.AskProjectsFolder();
-    }
-
-    // The projects folder as Configuration shows it
-    private static string ProjectsFolderText()
-    {
-        if (Projects.HasFolder) return Projects.Directory;
-        return Projects.AskEachTime ? Lang.T("(ask each time)") : Lang.T("(not set)");
-    }
-
     private enum Setting
     {
         StartSelect,
@@ -472,7 +457,6 @@ internal static class StartMenu
         StartFavorites, // Shown below StartEditor when it is chosen
         StartBlank,
         FileType,
-        ProjectsDirectory,
         DeleteToTrash,
         CommandList,
         Monochrome,
@@ -504,12 +488,11 @@ internal static class StartMenu
     // The settings shown, in the order of the pages: some are only shown when they can be used
     private static List<Setting> Settings()
     {
-        // General: what happens at startup, the projects directory and the language
+        // General: what happens at startup, new files, deleting and the language
         var settings = new List<Setting> { Setting.StartSelect, Setting.StartEditor };
         if (Mode == StartMode.Editor) settings.Add(Setting.StartFavorites);
         settings.Add(Setting.StartBlank);
         settings.Add(Setting.FileType);
-        settings.Add(Setting.ProjectsDirectory);
         settings.Add(Setting.DeleteToTrash);
         settings.Add(Setting.CommandList);
         settings.Add(Setting.Language);
@@ -555,7 +538,6 @@ internal static class StartMenu
             Setting.FileType => indent + Lang.F("New files and blank pages: {0} (Enter: Change)",
                 FileOperations.FileTypeName(FileOperations.DefaultExtension) + " (" + FileOperations.DefaultExtension + ")"),
             Setting.StartFavorites => indent + Check(StartInFavorites) + Lang.T("Open the favorites list first"),
-            Setting.ProjectsDirectory => indent + Lang.F("Projects folder: {0} (Enter: Change)", ProjectsFolderText()),
             Setting.DeleteToTrash => Check(FileOperations.DeleteToTrash) + Lang.T("Delete to trash (:trash in the file browser)"),
             Setting.CommandList => Check(Blyant.CommandList.Enabled) + Lang.T("List the commands above the command line"),
             Setting.Hints => Check(Blyant.Hints.Enabled) + Lang.T("Show hints on the start page"),
@@ -602,8 +584,7 @@ internal static class StartMenu
         return setting switch
         {
             Setting.StartSelect or Setting.StartEditor or Setting.StartFavorites or Setting.StartBlank
-                or Setting.FileType or Setting.ProjectsDirectory
-                or Setting.DeleteToTrash or Setting.CommandList or Setting.Language => 0,
+                or Setting.FileType or Setting.DeleteToTrash or Setting.CommandList or Setting.Language => 0,
             Setting.AutoSize or Setting.Size or Setting.Monochrome or Setting.ColorScheme or Setting.Logo
                 or Setting.LogoAnimation or Setting.Corners => 1,
             Setting.LineNumbers or Setting.WordWrap or Setting.ScrollOff or Setting.Clipboard
@@ -626,7 +607,7 @@ internal static class StartMenu
     }
 
     // A blank row is shown above these settings when there is room: they start a group of their page
-    private static bool StartsGroup(Setting setting) => setting is Setting.ProjectsDirectory;
+    private static bool StartsGroup(Setting setting) => setting is Setting.DeleteToTrash;
 
     // Pick the languages of the spell checker from the ones there is a spell file for: Enter turns one on or
     // off, until the box is closed with Esc
@@ -1188,10 +1169,6 @@ internal static class StartMenu
             case Setting.StartFavorites:
                 StartInFavorites = !StartInFavorites;
                 break;
-            case Setting.ProjectsDirectory:
-                // Saves the settings itself
-                PickProjectsDirectory();
-                return;
             case Setting.DeleteToTrash:
                 FileOperations.DeleteToTrash = !FileOperations.DeleteToTrash;
                 break;

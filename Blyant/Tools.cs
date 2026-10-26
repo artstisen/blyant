@@ -543,7 +543,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("  B", Lang.T("Blank page: write first, the name and folder when saved"), false));
             _shortcutList.Add(new Shortcut("  R", Lang.T("Recover unsaved text (shown when there is some)"), false));
             _shortcutList.Add(new Shortcut("  F", Lang.T("File browser: open, make and manage files"), false));
-            _shortcutList.Add(new Shortcut("  P", Lang.T("New project: a folder in the projects folder"), false));
+            _shortcutList.Add(new Shortcut("  P", Lang.T("New project: a folder where you pick"), false));
             _shortcutList.Add(new Shortcut("  O", Lang.T("Open project: pick one in the list of projects"), false));
             _shortcutList.Add(new Shortcut("      C", Lang.T("In the list: the color of the project"), false));
             _shortcutList.Add(new Shortcut("      N", Lang.T("In the list: the note of the project, in the editor"), false));
@@ -577,7 +577,6 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("j k 1-9", Lang.T("Select a setting (or the number of its row)"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Startup"), Lang.T("The start page, the file browser or a blank page"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("New files"), Lang.T("Their kind (Markdown, plain text, HTML ...): Enter"), false));
-            _shortcutList.Add(new Shortcut("  " + Lang.T("Projects folder"), Lang.T("Enter: in Documents, another, or none"), false));
             _shortcutList.Add(new Shortcut("Enter Space", Lang.T("Change the selected setting"), false));
             _shortcutList.Add(new Shortcut("l h", Lang.T("Configuration: the next/previous page"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Spell checker"), Lang.T("Enter: turn languages on or off in a list"), false));
@@ -633,7 +632,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":diff -w", Lang.T("Compare, blank space does not count"), false));
             _shortcutList.Add(new Shortcut("R :refresh", Lang.T("Refresh"), false));
             _shortcutList.Add(new Shortcut(":cd path", Lang.T("Go to a directory"), false));
-            _shortcutList.Add(new Shortcut(":home", Lang.T("Go to the projects folder (or the home directory)"), false));
+            _shortcutList.Add(new Shortcut(":home", Lang.T("Go to the home directory"), false));
             _shortcutList.Add(new Shortcut(":data", Lang.T("Go to the data directory (settings, snippets ...)"), false));
             _shortcutList.Add(new Shortcut(":trash", Lang.T("Go to the trash (what was deleted)"), false));
             _shortcutList.Add(new Shortcut(":recovery", Lang.T("Go to the recovery copies of unsaved text"), false));
@@ -743,10 +742,9 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("O :projects :pro", Lang.T("Open project (start page; E in the file browser)"), false));
             _shortcutList.Add(new Shortcut("j k gg G", Lang.T("Select a project"), false));
             _shortcutList.Add(new Shortcut("Enter l", Lang.T("Show the project in the file browser"), false));
-            _shortcutList.Add(new Shortcut("Tab", Lang.T("Tabs: All, Added, Projects folder (when both kinds)"), false));
-            _shortcutList.Add(new Shortcut("P :new", Lang.T("New project (Added tab: in a folder you pick)"), false));
+            _shortcutList.Add(new Shortcut("P :new", Lang.T("New project, in a folder you pick"), false));
             _shortcutList.Add(new Shortcut("A :add", Lang.T("Add an existing folder to the projects"), false));
-            _shortcutList.Add(new Shortcut("D :remove", Lang.T("Take an added project off the list (asks first)"), false));
+            _shortcutList.Add(new Shortcut("D :remove", Lang.T("Take the project off the list (asks first)"), false));
             _shortcutList.Add(new Shortcut("C :color", Lang.T("The color of the project in the lists"), false));
             _shortcutList.Add(new Shortcut("N :note", Lang.T("The note of the project, in the editor"), false));
             _shortcutList.Add(new Shortcut("I :info", Lang.T("Information about the project folder"), false));

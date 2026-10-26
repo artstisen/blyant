@@ -731,11 +731,9 @@ internal static partial class FileExplorer
         }
     }
 
-    // Where the browser starts when it has no directory of its own (":home"): the projects folder if one is set
-    // and there, else the home directory of the user
+    // Where the browser starts when it has no directory of its own (":home"): the home directory of the user
     private static string HomeDirectory()
     {
-        if (Projects.HasFolder && Directory.Exists(Projects.Directory)) return System.IO.Path.GetFullPath(Projects.Directory);
         var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         return home.Length > 0 && Directory.Exists(home) ? home : System.IO.Path.GetFullPath(FileIo.GetDataDirectoryName());
     }

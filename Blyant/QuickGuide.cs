@@ -81,7 +81,7 @@ internal static partial class QuickGuide
                                    "Manage files and organize favorites there.")),
         (Kind.Item, "B", Lang.T("Blank page: write first, the name and folder when saved")),
         (Kind.Item, "P  O", Lang.T("New project/Open project: a project is a folder with the files of a piece of " +
-                                   "writing, in the projects folder or added from anywhere.")),
+                                   "writing, wherever you choose to keep it.")),
         (Kind.Text, "", ""),
         (Kind.Heading, "", Lang.T("Moving around (the same keys everywhere)")),
         (Kind.Item, "j  k", Lang.T("Down/Up. The arrow keys work too")),

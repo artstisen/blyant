@@ -2,53 +2,17 @@
 
 /// <summary>
 /// The list of the projects in a box on top of the page, to pick one from: Open project on the start page, E (or
-/// ":projects") in the file browser and ":projects" in the editor. With projects both in the projects folder and
-/// added from elsewhere, the list has three tabs (Tab goes between them): All, Added and Projects folder. Below the
-/// list is where the selected project is and what it holds, and to the right of it the start of its note. P makes
-/// a new project, A adds a folder, D takes an added one off the list, C picks the color, N opens the note in the
-/// editor, I shows information, "/" filters the list, ":" is the command line, "?" the help, Enter picks and Esc
-/// closes. This is also where new projects are made from (New project on the start page), and where the user is
-/// asked where the projects go, the first time
+/// ":projects") in the file browser and ":projects" in the editor. Below the list is where the selected project is
+/// and what it holds, and to the right of it the start of its note. P makes a new project (in a folder the user
+/// picks), A adds a folder, D takes one off the list, C picks the color, N opens the note in the editor, I shows
+/// information, "/" filters the list, ":" is the command line, "?" the help, Enter picks and Esc closes. This is
+/// also where new projects are made from (New project on the start page)
 /// </summary>
 internal static class ProjectsBox
 {
-    private enum Tab
-    {
-        All,
-        Added,
-        Folder
-    }
-
-    // The tab shown last (the list opens on it again)
-    private static Tab _tab = Tab.All;
-
-    private static string TabName(Tab tab) => tab switch
-    {
-        Tab.Added => Lang.T("Added"),
-        Tab.Folder => Lang.T("Projects folder"),
-        _ => Lang.T("All")
-    };
-
-    // The tabs: all three when there are projects both in the projects folder and added, else one (not shown)
-    private static List<Tab> Tabs()
-    {
-        var added = Projects.AddedPaths().Count > 0;
-        if (Projects.HasFolder && added) return new List<Tab> { Tab.All, Tab.Added, Tab.Folder };
-        if (Projects.HasFolder) return new List<Tab> { Tab.Folder };
-        return new List<Tab> { added ? Tab.Added : Tab.All };
-    }
-
-    private static List<Projects.Project> ProjectsOf(Tab tab) => tab switch
-    {
-        Tab.Added => Projects.Added(),
-        Tab.Folder => Projects.InFolder(),
-        _ => Projects.All()
-    };
-
-    // The key hints of the list (with tabs: Tab too)
-    private static string Keys(bool tabs) => tabs
-        ? Lang.T("j/k Select | Enter Open | Tab Next tab | P New | A Add | D Remove | ? Help")
-        : Lang.T("j/k Select | Enter Open | P New | A Add | D Remove | C Color | N Note | ? Help");
+    // The key hints of the list
+    private static string Keys() =>
+        Lang.T("j/k Select | Enter Open | P New | A Add | D Remove | C Color | N Note | ? Help");
 
     /// <summary>
     /// Show the projects and let the user pick one (or make one, or add one)
@@ -60,16 +24,8 @@ internal static class ProjectsBox
         while (true)
         {
             ChoiceBox.Forget();
-            var tabs = Tabs();
-            if (!tabs.Contains(_tab)) _tab = tabs[0];
-            var projects = ProjectsOf(_tab);
+            var projects = Projects.All();
             var names = Projects.DisplayNames(projects);
-            // In All: the added ones are told
-            if (_tab == Tab.All && tabs.Count > 1)
-            {
-                names = names.Select((name, i) => projects[i].Added ? Lang.F("{0} (added)", name) : name).ToList();
-            }
-
             // A missing one is told
             names = names.Select((name, i) => projects[i].Missing ? Lang.F("{0} (missing)", name) : name).ToList();
             // The colors and notes, read once (and again when one is changed)
@@ -79,8 +35,6 @@ internal static class ProjectsBox
             {
                 RowColor = i => info[i].Color,
                 Side = i => info[i].Note,
-                Tabs = tabs.Count > 1 ? tabs.Select(TabName).ToList() : null,
-                ActiveTab = Math.Max(0, tabs.IndexOf(_tab)),
                 EmptyText = Lang.T("No projects yet: P makes a new one, A adds a folder"),
                 // Below the list: where the project is and what it holds, and the start of its note
                 PreviewLabel = Lang.T("Files"),
@@ -88,29 +42,15 @@ internal static class ProjectsBox
                 Key = (key, i) =>
                 {
                     var project = i >= 0 ? projects[i] : null;
-                    if (key.Key == ConsoleKey.Tab && tabs.Count > 1)
-                    {
-                        var back = (key.Modifiers & ConsoleModifiers.Shift) != 0;
-                        _tab = tabs[(tabs.IndexOf(_tab) + (back ? tabs.Count - 1 : 1)) % tabs.Count];
-                        select = project?.Path;
-                        return PickListBox.KeyUse.Reload;
-                    }
-
                     switch (char.ToUpperInvariant(key.KeyChar))
                     {
                         case 'P':
-                            result = NewProject(string.Empty, _tab switch
-                            {
-                                Tab.Added => Place.Elsewhere,
-                                Tab.Folder => Place.Folder,
-                                _ => Place.Default
-                            });
+                            result = NewProject(string.Empty);
                             return result != null ? PickListBox.KeyUse.Close : PickListBox.KeyUse.Used;
                         case 'A':
                             if (AddFolder() is { } added)
                             {
                                 select = added;
-                                if (_tab == Tab.Folder) _tab = Tab.Added;
                                 return PickListBox.KeyUse.Reload;
                             }
 
@@ -166,8 +106,7 @@ internal static class ProjectsBox
             };
             var caption = Lang.F("Projects ({0})", projects.Count);
             var selected = select == null ? 0 : Math.Max(0, projects.FindIndex(p => FileOperations.SamePath(p.Path, select)));
-            var picked = PickListBox.Show(caption, names, i => Preview(projects[i]), selected, Keys(tabs.Count > 1),
-                extras);
+            var picked = PickListBox.Show(caption, names, i => Preview(projects[i]), selected, Keys(), extras);
             if (result != null) return result;
             if (picked == PickListBox.Reload) continue;
             if (picked < 0) return null;
@@ -189,92 +128,19 @@ internal static class ProjectsBox
     private static (ConsoleColor? Color, string Note) Info(string project) =>
         (Projects.ColorOf(project), Projects.NoteSnippet(project));
 
-    #region The projects folder
-
-    /// <summary>
-    /// Where the projects go: the projects folder suggested (in Documents), another one picked in the file
-    /// browser, or none (the place of each new project is asked for). Asked the first time a project is made, and
-    /// in Configuration. The settings are saved
-    /// </summary>
-    /// <returns>True if the user decided (false: canceled)</returns>
-    internal static bool AskProjectsFolder()
-    {
-        ChoiceBox.Forget();
-        var current = Projects.HasFolder ? Projects.Directory : Projects.AskEachTime ? Lang.T("(ask each time)") : Lang.T("(not set)");
-        var choice = ChoiceBox.Pick(Lang.T("Projects folder"), Lang.T("Where should your projects be kept?"),
-            Lang.F("Now: {0}", current),
-            new[]
-            {
-                Lang.F("In Documents: {0}", Projects.DefaultDirectory), Lang.T("Choose another folder..."),
-                Lang.T("No projects folder: ask where each time"), DialogText.ConvertCancel
-            },
-            new[] { "1", "2", "3", "Esc" }, Projects.HasFolder ? 1 : 0, false);
-        switch (choice)
-        {
-            case 0:
-                Projects.Directory = Projects.DefaultDirectory;
-                Projects.AskEachTime = false;
-                break;
-            case 1:
-                ChoiceBox.Forget();
-                var picked = FileExplorer.PickDirectory(Lang.T("Projects folder"));
-                Tools.ClearScreen();
-                if (picked == null) return false;
-                Projects.Directory = picked;
-                Projects.AskEachTime = false;
-                break;
-            case 2:
-                Projects.Directory = string.Empty;
-                Projects.AskEachTime = true;
-                break;
-            default:
-                return false;
-        }
-
-        EventLog.Add(DialogText.LogFile + "Projects folder: " +
-                     (Projects.HasFolder ? Projects.Directory : "(none: asked each time)"));
-        FileIo.SaveSettings();
-        return true;
-    }
-
-    #endregion
-
     #region New and added projects
 
     /// <summary>
-    /// Where a new project is made
-    /// </summary>
-    internal enum Place
-    {
-        Default, // In the projects folder, or where the user picks if there is none (asked first, the first time)
-        Folder, // In the projects folder
-        Elsewhere // Where the user picks (it is added to the projects)
-    }
-
-    /// <summary>
-    /// Make a new project: its folder, in the projects folder or where the user picks. The name is asked for if it
-    /// is not given. The first time, the user is asked where the projects go
+    /// Make a new project: its folder, in a folder the user picks in the file browser (it starts where a folder was
+    /// picked last). The name is asked for if it is not given
     /// </summary>
     /// <returns>The full path of the project made, or null</returns>
-    internal static string? NewProject(string name, Place place)
+    internal static string? NewProject(string name)
     {
         ChoiceBox.Forget();
-        if (place == Place.Default && !Projects.IsDecided && !AskProjectsFolder()) return null;
-        if (place == Place.Folder && !Projects.HasFolder) place = Place.Default;
-        string parent;
-        if (place != Place.Elsewhere && Projects.HasFolder)
-        {
-            parent = Projects.Directory;
-        }
-        else
-        {
-            ChoiceBox.Forget();
-            var picked = FileExplorer.PickDirectory(Lang.T("Where to make the project"));
-            Tools.ClearScreen();
-            if (picked == null) return null;
-            parent = picked;
-        }
-
+        var parent = FileExplorer.PickDirectory(Lang.T("Where to make the project"));
+        Tools.ClearScreen();
+        if (parent == null) return null;
         ChoiceBox.Forget();
         name = name.Trim();
         if (name.Length == 0)
@@ -323,18 +189,10 @@ internal static class ProjectsBox
         return null;
     }
 
-    // D: an added project off the list (asked first; the folder itself stays). One in the projects folder is not
-    // removed here. Returns true if the list changed
+    // D: a project off the list (asked first; the folder itself stays). Returns true if the list changed
     private static bool RemoveProject(Projects.Project project)
     {
         ChoiceBox.Forget();
-        if (!project.Added)
-        {
-            ChoiceBox.Message(DialogText.OpenProject, Lang.T("This project is in the projects folder"),
-                Lang.T("It is deleted in the file browser, as other folders are"));
-            return false;
-        }
-
         if (!ChoiceBox.ConfirmGuarded(Lang.T("Remove from the projects"),
                 Lang.F("Take \"{0}\" off the list of projects?", Tools.TruncateString(project.Name, 40, true)),
                 Lang.T("The folder and its files stay as they are")))
@@ -408,7 +266,7 @@ internal static class ProjectsBox
                 ShowHelp();
                 return CommandResult.None;
             case "new":
-                _commandResult = NewProject(argument, Place.Default);
+                _commandResult = NewProject(argument);
                 return _commandResult != null ? CommandResult.Opened : CommandResult.None;
             case "add":
                 return AddFolder() != null ? CommandResult.Reload : CommandResult.None;
@@ -463,8 +321,7 @@ internal static class ProjectsBox
         Tools.ClearScreen();
     }
 
-    // I or ":info": the project folder (as the info of a directory in the file browser), with its color and note,
-    // and whether it was added or is in the projects folder
+    // I or ":info": the project folder (as the info of a directory in the file browser), with its color and note
     private static void ShowInfo(Projects.Project project)
     {
         ChoiceBox.Forget();
@@ -484,8 +341,6 @@ internal static class ProjectsBox
         var note = Projects.NoteSnippet(project.Path);
         rows.Insert(rows.Count - 1, (Lang.T("Color:"), color == null ? DialogText.ColorDefault : ColorPicker.Name(color.Value)));
         rows.Insert(rows.Count - 1, (Lang.T("Note:"), note.Length == 0 ? Lang.T("(none)") : Tools.TruncateString(note, 160, true)));
-        rows.Insert(rows.Count - 1, (Lang.T("Project:"),
-            project.Added ? Lang.T("Added (from anywhere)") : Lang.T("In the projects folder")));
         ChoiceBox.ShowRows(DialogText.ProjectInfo, rows);
     }
 

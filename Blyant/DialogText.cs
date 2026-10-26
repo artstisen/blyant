@@ -16,7 +16,7 @@ internal static class DialogText
         "kind of text. It is written in C# and uses UTF-8 console I/O encoding.\n\n" +
         "Your settings, favorites, bookmarks, snippets and macros are stored in the\n" +
         "\"data\" directory alongside the Blyant program files, and your projects in\n" +
-        "the projects folder (Configuration). You can copy them to any backup,\n" +
+        "the folders you choose for them. You can copy them to any backup,\n" +
         "portable or cloud medium.\n\n" +
         "This application is cross-platform software that can run on different\n" +
         "systems. Due to the difference between terminal programs and their\n" +
@@ -196,7 +196,6 @@ internal static class DialogText
     public static string SaveFirst => Lang.T("Save the text first (:w)");
     public static string RecoverUnsaved => Lang.T("Recover unsaved text");
     public static string ProjectAlready => Lang.T("This folder is a project already");
-    public static string ProjectIsTheFolder => Lang.T("This is the projects folder: its folders are the projects");
     public static string ProjectMissing => Lang.T("The folder is not there (moved, renamed or deleted)");
     public static string HelpSectionProjects => Lang.T("List of projects");
     public static string NoProjectsYet => Lang.T("No projects yet: New project makes one, Open project adds a folder");
@@ -257,7 +256,7 @@ internal static class DialogText
     public static string DeleteDirectory => Lang.T("Delete directory");
     public static string DeleteNamed => Lang.T("Delete \"{0}\"?");
     public static string DeleteMarkedCaption => Lang.T("Delete files and directories");
-    // Deleting to the trash (a directory in the projects folder)
+    // Deleting to the trash ("trash" in the data directory)
     public static string TrashNamed => Lang.T("Move \"{0}\" to the trash?");
     public static string TrashFileNote => Lang.T("It can be found again with :trash");
     public static string TrashNotPossible => Lang.T("It cannot be moved to the trash");

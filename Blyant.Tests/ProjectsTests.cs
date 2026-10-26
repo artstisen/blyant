@@ -1,37 +1,34 @@
 ﻿namespace Blyant.Tests;
 
 /// <summary>
-/// The projects (folders in the projects folder, and folders added from anywhere), the name of a new file
-/// (Markdown without an extension), and ":projects" in the editor
+/// The projects (folders anywhere, kept in a list), the name of a new file (Markdown without an extension), and
+/// ":projects" in the editor
 /// </summary>
 [Collection("Static state")]
 public class ProjectsTests : IDisposable
 {
     private readonly string _directory = Path.Combine(Path.GetTempPath(), "blyant-projects-" + Guid.NewGuid().ToString("N"));
-    private readonly string _saved = Projects.Directory;
-    private readonly bool _savedAsk = Projects.AskEachTime;
 
     public ProjectsTests()
     {
-        Projects.Directory = Path.Combine(_directory, "Projects");
-        Projects.AskEachTime = false;
         Projects.ListPathOverride = Path.Combine(_directory, "data", Projects.ListFileName);
     }
 
     public void Dispose()
     {
-        Projects.Directory = _saved;
-        Projects.AskEachTime = _savedAsk;
         Projects.ListPathOverride = null;
         if (Directory.Exists(_directory)) Directory.Delete(_directory, true);
     }
 
     private string In(params string[] parts) => Path.Combine(new[] { _directory }.Concat(parts).ToArray());
 
-    // A project made in the projects folder
-    private static string Make(string name)
+    // The folder the projects of a test are made in (as one the user picks)
+    private string Writing => In("Writing");
+
+    // A project made in the folder Writing
+    private string Make(string name)
     {
-        Assert.Equal(DialogText.Success, Projects.Create(Projects.Directory, name, out var path));
+        Assert.Equal(DialogText.Success, Projects.Create(Writing, name, out var path));
         return path;
     }
 
@@ -74,78 +71,54 @@ public class ProjectsTests : IDisposable
     }
 
     [Fact]
-    public void AProject_IsMadeInTheProjectsFolder_WhichIsMadeToo()
+    public void ANewProject_IsMadeInTheFolderPicked_WhichIsMadeToo_AndIsOnTheList()
     {
         Assert.Empty(Projects.All());
-        Assert.Equal(DialogText.Success, Projects.Create(Projects.Directory, " Novel ", out var path));
-        Assert.Equal(Path.Combine(Projects.Directory, "Novel"), path);
+        Assert.Equal(DialogText.Success, Projects.Create(Writing, " Novel ", out var path));
+        Assert.Equal(Path.Combine(Writing, "Novel"), path);
         Assert.True(Directory.Exists(path));
-        // In the folder: not added to the list
-        Assert.Empty(Projects.AddedPaths());
+        Assert.Equal(new[] { path }, Projects.AddedPaths());
         // Not twice, and not with a name that cannot be used
-        Assert.Equal(DialogText.NameExists, Projects.Create(Projects.Directory, "Novel", out _));
-        Assert.NotEqual(DialogText.Success, Projects.Create(Projects.Directory, "a/b", out _));
-        Assert.Null(Projects.NameProblem(Projects.Directory, "Short stories"));
+        Assert.Equal(DialogText.NameExists, Projects.Create(Writing, "Novel", out _));
+        Assert.NotEqual(DialogText.Success, Projects.Create(Writing, "a/b", out _));
+        Assert.Null(Projects.NameProblem(Writing, "Short stories"));
+        // Made somewhere else: on the list too
+        Assert.Equal(DialogText.Success, Projects.Create(In("Poetry"), "Songs", out var songs));
+        Assert.Equal(new[] { path, songs }, Projects.AddedPaths());
     }
 
     [Fact]
-    public void TheProjectsFolder_IsNotSet_UntilTheUserDecides()
+    public void TheProjects_AreInAlphabeticalOrder_WhereverTheyAre()
     {
-        Projects.Directory = string.Empty;
-        Assert.False(Projects.HasFolder);
-        Assert.False(Projects.IsDecided);
-        Assert.Empty(Projects.InFolder());
-        Projects.AskEachTime = true;
-        Assert.True(Projects.IsDecided);
-        Assert.Equal("Blyant-Projects", Path.GetFileName(Projects.DefaultDirectory));
+        foreach (var path in new[] { In("x", "b"), In("y", "A"), In("z", "c") })
+        {
+            Directory.CreateDirectory(path);
+            Assert.Equal(DialogText.Success, Projects.Add(path));
+        }
+
+        Assert.Equal(new[] { "A", "b", "c" }, NamesOf(Projects.All()));
     }
 
     [Fact]
-    public void TheProjects_AreTheFoldersInTheProjectsFolder_InAlphabeticalOrder()
-    {
-        foreach (var name in new[] { "b", "A", ".hidden", "c" }) Directory.CreateDirectory(Path.Combine(Projects.Directory, name));
-        File.WriteAllText(Path.Combine(Projects.Directory, "a file.md"), "x");
-        Assert.Equal(new[] { "A", "b", "c" }, NamesOf(Projects.InFolder()));
-        Assert.All(Projects.InFolder(), project => Assert.False(project.Added));
-    }
-
-    [Fact]
-    public void AFolderFromAnywhere_IsAdded_AndShownWithTheOthers()
+    public void AFolderThatIsThere_IsAdded_AndTakenOffTheListAgain()
     {
         Make("Novel");
         var essays = In("Elsewhere", "Essays");
         Directory.CreateDirectory(essays);
         Assert.Equal(DialogText.Success, Projects.Add(essays));
-        Assert.Equal(new[] { essays }, Projects.AddedPaths());
-        Assert.True(Projects.Added().Single().Added);
         Assert.Equal(new[] { "Essays", "Novel" }, NamesOf(Projects.All()));
-        // Not twice, not the projects folder, not one in it, and not a folder that is not there
+        // Not twice, and not a folder that is not there
         Assert.Equal(DialogText.ProjectAlready, Projects.Add(essays + Path.DirectorySeparatorChar));
-        Assert.Equal(DialogText.ProjectIsTheFolder, Projects.Add(Projects.Directory));
-        Assert.Equal(DialogText.ProjectAlready, Projects.Add(Path.Combine(Projects.Directory, "Novel")));
+        Assert.Equal(DialogText.ProjectAlready, Projects.Add(Path.Combine(Writing, "Novel")));
         Assert.Equal(DialogText.DirectoryNotFound, Projects.Add(In("nowhere")));
         // Taken off the list: the folder stays
         Assert.Equal(DialogText.Success, Projects.Remove(essays));
-        Assert.Empty(Projects.Added());
+        Assert.Equal(new[] { "Novel" }, NamesOf(Projects.All()));
         Assert.True(Directory.Exists(essays));
     }
 
     [Fact]
-    public void ANewProject_OutsideTheProjectsFolder_IsAdded()
-    {
-        var parent = In("Writing");
-        Assert.Equal(DialogText.Success, Projects.Create(parent, "Poems", out var path));
-        Assert.True(Directory.Exists(path));
-        Assert.Equal(new[] { path }, Projects.AddedPaths());
-        // Without a projects folder too
-        Projects.Directory = string.Empty;
-        Assert.Equal(DialogText.Success, Projects.Create(parent, "Songs", out var songs));
-        Assert.Equal(new[] { path, songs }, Projects.AddedPaths());
-        Assert.Equal(new[] { "Poems", "Songs" }, NamesOf(Projects.All()));
-    }
-
-    [Fact]
-    public void AddedProjects_FollowTheirFolder_AndOneThatIsGoneIsMissing()
+    public void Projects_FollowTheirFolder_AndOneThatIsGoneIsMissing()
     {
         var essays = In("Elsewhere", "Essays");
         Directory.CreateDirectory(essays);
@@ -157,7 +130,7 @@ public class ProjectsTests : IDisposable
         Projects.PathChanged(In("Moved", "Essays"), In("Moved", "Articles"));
         Assert.Equal(new[] { In("Moved", "Articles") }, Projects.AddedPaths());
         // Not there: missing, but still on the list
-        Assert.True(Projects.Added().Single().Missing);
+        Assert.True(Projects.All().Single().Missing);
     }
 
     [Fact]
@@ -168,11 +141,11 @@ public class ProjectsTests : IDisposable
         Directory.CreateDirectory(other);
         Projects.Add(other);
         var all = Projects.All();
-        Assert.Equal(new[] { "Novel (Old)", "Novel (Projects)" }, Projects.DisplayNames(all).OrderBy(n => n));
+        Assert.Equal(new[] { "Novel (Old)", "Novel (Writing)" }, Projects.DisplayNames(all).OrderBy(n => n));
     }
 
     [Fact]
-    public void TheListOfAddedProjects_IsAFileOfPaths()
+    public void TheListOfProjects_IsAFileOfPaths()
     {
         var a = In("a");
         Directory.CreateDirectory(a);
@@ -268,9 +241,9 @@ public class ProjectsTests : IDisposable
     {
         // On Linux both could be made, but not where the folder may be synced to (Windows, macOS)
         Make("Novel");
-        Assert.Equal(DialogText.NameExists, Projects.NameProblem(Projects.Directory, "novel"));
-        Assert.Equal(DialogText.NameExists, Projects.NameProblem(Projects.Directory, "NOVEL"));
-        Assert.Null(Projects.NameProblem(Projects.Directory, "Novels"));
+        Assert.Equal(DialogText.NameExists, Projects.NameProblem(Writing, "novel"));
+        Assert.Equal(DialogText.NameExists, Projects.NameProblem(Writing, "NOVEL"));
+        Assert.Null(Projects.NameProblem(Writing, "Novels"));
     }
 
     [Fact]
@@ -282,16 +255,14 @@ public class ProjectsTests : IDisposable
             var one = In("One");
             var two = In("Two");
             var picked = In("Picked", "Essays");
-            foreach (var directory in new[] { one, two, picked, Projects.Directory }) Directory.CreateDirectory(directory);
+            foreach (var directory in new[] { one, two, picked }) Directory.CreateDirectory(directory);
             FileExplorer.StartDirectory = one;
             FileExplorer.StartDirectory2 = two;
             FileExplorer.PickPlace = picked;
-            Assert.Equal(new[] { one, two, picked, Projects.Directory },
-                StartMenu.NewFilePlaces().Select(place => place.Directory));
+            Assert.Equal(new[] { one, two, picked }, StartMenu.NewFilePlaces().Select(place => place.Directory));
             // The same place twice is there once, and a folder that is not there is left out
             FileExplorer.StartDirectory2 = one + Path.DirectorySeparatorChar;
             FileExplorer.PickPlace = In("Gone");
-            Projects.Directory = string.Empty;
             Assert.Equal(new[] { one }, StartMenu.NewFilePlaces().Select(place => place.Directory));
             // Where the picking was canceled (ending with a separator): that directory
             FileExplorer.PickPlace = two + Path.DirectorySeparatorChar;
@@ -301,18 +272,5 @@ public class ProjectsTests : IDisposable
         {
             (FileExplorer.StartDirectory, FileExplorer.StartDirectory2, FileExplorer.PickPlace) = saved;
         }
-    }
-
-    [Fact]
-    public void TheProjectsFolderOfTheSettings_IsAFullPathOfThisSystem()
-    {
-        var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        Assert.Equal(home, Projects.DirectoryFromSetting("~"));
-        Assert.Equal(Path.Combine(home, "Writing"), Projects.DirectoryFromSetting(" ~/Writing "));
-        Assert.Equal(_directory, Projects.DirectoryFromSetting(_directory));
-        Assert.Null(Projects.DirectoryFromSetting(""));
-        Assert.Null(Projects.DirectoryFromSetting("Writing"));
-        // Written on another system
-        Assert.Null(Projects.DirectoryFromSetting(OperatingSystem.IsWindows() ? "/home/me/Writing" : @"C:\Users\me\Writing"));
     }
 }

@@ -11,7 +11,7 @@ Each choice has a number and a key, shown in front of it. The number selects the
 
 - `1` `N` **New file**: Make a new, empty file and open it in the editor, with the [file browser](#file-browser) behind it. You are asked for its name; a name without an extension gets the extension of the kind set for new files (Markdown, `.md`, from the start: `chapter 1` is `chapter 1.md`; see _New files and blank pages_ in [Configuration](#configuration)). The file is made in the directory the file browser was in last (shown in the box, with a line telling that `Tab` chooses another folder). `Tab` in the box chooses another folder, and the name you typed is kept:
 
-    - `1` to `4`: the folder of pane 1 and pane 2 of the file browser, the folder picked last (when adding a project, for instance), and the projects folder. Only those that are there, each once, with the end of the path and what the place is after it. `j`/`k` (and `gg`/`G`) select, `Enter` chooses
+    - `1` to `3`: the folder of pane 1 and pane 2 of the file browser, and the folder picked last (when adding a project, for instance). Only those that are there, each once, with the end of the path and what the place is after it. `j`/`k` (and `gg`/`G`) select, `Enter` chooses
     - `B` **Browse...**: pick the folder in the file browser (it opens where a folder was picked last)
     - `Esc` Back to the name, in the same folder
 
@@ -19,7 +19,7 @@ Each choice has a number and a key, shown in front of it. The number selects the
 - `2` `B` **Blank page**: Open the editor at once on an empty page, to write first and decide later what and where to save it as. It is of the kind set for new files (Markdown from the start), and colored as that kind. When you save it (`:w`, `:wq`, `:x`), you are asked for the name and the folder in the same box as for a new file (with `Tab` for another folder), and from then on it is an ordinary file. `:w name` saves it with that name in the box. `:q` asks what to do with the text (an empty page closes at once). Until it is saved, `:e`, `:rename`, `:new`, `:path` and `:snip edit` tell you to save it first. While you write, a recovery copy is kept, as for a file (see below)
 - `3` `R` **Recover unsaved text**: Shown only when there are [recovery copies](Guide-to-editor.md#recovery-copies) of text that was not saved (the choices below it then have a number more). It lists them, the newest first, with the start of the text below the list: blank pages that were not saved, and files. `Enter` opens one: a blank page as a blank page with its text, a file in the editor, where you are asked what to do with the copy (a file that is gone is opened as a blank page with the text). `D` deletes a copy, after asking. Blyant stopped while a blank page had text in it (the terminal closed, the computer turned off): this is where you find it
 - `3` `F` **File browser**: Open the [file browser](#file-browser), where `Enter` opens a file in the editor, and files and folders are made, renamed, copied, moved and deleted. Closing the file browser returns here
-- `4` `P` **New project**: Make a new [project](#projects): you are asked for its name, a folder of that name is made in the projects folder, and it is shown in the file browser
+- `4` `P` **New project**: Make a new [project](#projects): you pick the folder it goes in, you are asked for its name, a folder of that name is made there, and it is shown in the file browser
 - `5` `O` **Open project**: The [projects](#projects) in a list to pick from, with what each holds below the list and the start of its note to the right of that. `Enter` shows the project picked in the file browser, `C` picks the color of the project, `N` opens its note in the editor, `I` shows information about it, `/` filters the list, `:` is its command line, `?` shows its keys and `Esc` closes it
 - `6` `M` **Jump menu**: Open the [Jump menu](Guide-to-jump-menu.md#jump-menu), to go straight to a file, a directory or a page of Blyant (also with `Ctrl+O`, on every tab and page of the start page: Start, the pages of Configuration and Help). Pages such as Color schemes and Help open on top of the start page
 - `7` `U` **Quick guide**: A short introduction to Blyant: files and projects, the keys for moving around, and the modes of the editor. `Esc` closes it, and `?` shows the help with all the keys
@@ -30,43 +30,36 @@ To the right of the menu a **hint** tells about one of the features of Blyant: t
 Move the selection with `j`/`k` (or the arrow keys) or the number, and press `Enter`. `?` shows the help, and `Q` (or `Esc`) exits Blyant after asking in a box on top of the page (`Y`/`N`, or `j`/`k` and `Enter`; `Esc` cancels).
 
 ### Projects
-A project is a folder with the files of a piece of writing in it: the chapters of a book, the parts of an article, notes and drafts. The projects are the folders in the **projects folder**, and the folders you **add** from anywhere on your computer.
+A project is a folder with the files of a piece of writing in it: the chapters of a book, the parts of an article, notes and drafts. It can be anywhere on your computer: a new project is made in a folder you pick, and a folder you already have can be **added**.
 
-No projects folder is set from the start, and nothing is made until you make your first project. Then you are asked where your projects should be kept:
+When you make a new project, you pick the folder it goes in, in the file browser (go to it and press `S`), and then you are asked for its name. A folder of that name is made there, and it is added to the projects.
 
-- `1` **In Documents**: the folder `Blyant-Projects` in your Documents folder (`Documents` in your home directory on macOS, and on Linux the documents folder of your desktop, `XDG_DOCUMENTS_DIR`, or else `~/Documents`). It is made with the first project
-- `2` **Choose another folder**: pick it in the file browser (go to it and press `S`)
-- `3` **No projects folder**: you pick where each new project is made, and it is added to the projects
-- `Esc` Cancel: you are asked again the next time
+A folder you already have (a book you started in another program, a folder in a synced folder) is **added** to the projects with `A` in the list of projects, or with `:project add` in the file browser (the directory shown in the pane with the focus). The projects are kept in `projects.txt` in the data directory, a folder on each line. A project stays where it is: renaming or moving it in the file browser updates the list, and one that is gone (moved, renamed or deleted outside Blyant) is shown as _(missing)_ until you take it off the list.
 
-This can be changed later with _Projects folder_ on the General page of Configuration (saved as `projectsdir` in the settings file, and `projectsask` for "no projects folder"; `~/Writing` is `Writing` in your home directory). A folder in the settings file that is not a full path on the system Blyant runs on (`C:\Users\...` on Linux, when the settings file is shared between computers) is not used: you are asked again.
-
-A folder you already have (a book you started in another program, a folder in a synced folder) is **added** to the projects with `A` in the list of projects, or with `:project add` in the file browser (the directory shown in the pane with the focus). The added folders are kept in `projects.txt` in the data directory, a folder on each line. An added folder stays where it is: renaming or moving it in the file browser updates the list, and one that is gone (moved, renamed or deleted outside Blyant) is shown as _(missing)_ until you take it off the list.
-
-When a folder is picked in the file browser (a folder to add, where to make a project, the projects folder), the browser opens where the last folder was picked, with that folder selected, so the folders next to it are near. If you cancel with `Esc`, the next one opens where you were. This place is kept in the settings file (`pickdir`), apart from the places of the two panes of the file browser.
+When a folder is picked in the file browser (a folder to add, or where to make a project), the browser opens where the last folder was picked, with that folder selected, so the folders next to it are near. If you cancel with `Esc`, the next one opens where you were. This place is kept in the settings file (`pickdir`), apart from the places of the two panes of the file browser.
 
 A project can be made on Windows, macOS and Linux alike, and synced between them: its name may not have the characters `\ / : * ? " < > |` in it, and may not be the name of another project in other upper or lower case (`novel` when there is `Novel`).
 
-_Open project_ lists the projects, in alphabetical order (not the hidden folders of the projects folder). With projects both in the projects folder and added, the list has three tabs, and `Tab` (`Shift+Tab`) goes between them: **All**, **Added** and **Projects folder**; the list opens on the tab you used last. In _All_, an added project has _(added)_ after its name, and two projects of the same name have the name of the folder they are in after it. Below the list, under _Files_, is where the selected project is and what it holds, and to the right of it, under _Note_, the start of its note.
+_Open project_ lists the projects, in alphabetical order. Two projects of the same name have the name of the folder they are in after it. Below the list, under _Files_, is where the selected project is and what it holds, and to the right of it, under _Note_, the start of its note.
 
-- `P` (`:new`) makes a **new project**: in the projects folder, or on the _Added_ tab (or without a projects folder) in a folder you pick in the file browser, and then it is added to the list
-- `A` (`:add`) **adds** a folder you pick in the file browser. A folder that is a project already, or the projects folder itself, is not added
-- `D` (`:remove`) takes an added project **off the list**, after asking. The folder and its files stay as they are. A project in the projects folder is not removed here: it is deleted in the file browser, as other folders are
+- `P` (`:new`) makes a **new project**, in a folder you pick in the file browser
+- `A` (`:add`) **adds** a folder you pick in the file browser. A folder that is a project already is not added
+- `D` (`:remove`) takes a project **off the list**, after asking. The folder and its files stay as they are
 
- A project is worked on in the file browser: `N` makes a file in it (a Markdown file when the name has no extension), `A` a folder, and `Enter` opens a file in the editor. In the file browser, `:home` goes to the projects folder.
+A project is worked on in the file browser: `N` makes a file in it (a Markdown file when the name has no extension), `A` a folder, and `Enter` opens a file in the editor.
 
-In the list of projects, each project can have a color and a note (an added project too):
+In the list of projects, each project can have a color and a note:
 - `C` picks the **color** of the name of the project in the list (_[Default]_ takes it away). It is kept in the file `.blyant` in the project
 - `N` opens the **note** of the project in the editor: what to do next, an idea, where you are. It is the Markdown file `.blyant-note.md` in the project, and the start of it is shown to the right of what the project holds (with `...` where there is more). `:wq` saves it and goes back to the list; a note left empty is removed
 
 Both files are in the folder of the project, so they go with it when it is copied, moved or synced. They start with a dot, so they are not shown with what the project holds.
 
-`I` in the list of projects shows information about the selected project, in a box as `I` in the Jump menu: its name, what the folder holds, when it was made and changed, its color, the start of its note, whether it was added or is in the projects folder, and its path. The list has a command line of its own (`:`, with `Tab` completing the command and `Up`/`Down` bringing back the commands given before), with commands on the selected project:
+`I` in the list of projects shows information about the selected project, in a box as `I` in the Jump menu: its name, what the folder holds, when it was made and changed, its color, the start of its note, and its path. The list has a command line of its own (`:`, with `Tab` completing the command and `Up`/`Down` bringing back the commands given before), with commands on the selected project:
 
 - `:info` Information about the project, as `I`
 - `:path` and `:name` Copy the full path of the project folder, or its name, to the clipboard (and the string memory, as set in the clipboard settings)
 - `:color` and `:note` The color and the note, as `C` and `N`
-- `:new name`, `:add` and `:remove` A new project, a folder added, and an added project off the list, as `P`, `A` and `D`
+- `:new name`, `:add` and `:remove` A new project, a folder added, and a project off the list, as `P`, `A` and `D`
 - `:help` (or `?`) The keys of the list
 - `:q` (`:quit`, `:close`) Close the list, as `Esc`
 
@@ -83,7 +76,6 @@ The settings are on four pages. `j` `k` (and `gg` `G`) select a setting on the p
 - **Start on a blank page**: Go directly to a [blank page](#start), to write at once. When it is closed, the start page is shown
   - The choice is saved as `startmode` (`select`, `editor` or `blank`) in the settings file
 - **New files and blank pages**: The assumed file type of a new file whose name has no extension, and of a [blank page](#start) (the name it is saved with decides in the end): `Enter` picks it in a list (`1` to `9` and `0`, or `j`/`k` and `Enter`): Markdown (`.md`, the default), plain text (`.txt`), HTML, CSS, JavaScript, JSON, XML, C#, PHP or INI. A blank page is colored as that kind, and saved with its extension when the name has none. Saved as `filetype` (`md`, `txt` ...) in the settings file
-- **Projects folder**: Where the [projects](#projects) are kept: _(not set)_ until you make your first project. `Enter` asks as then: the folder `Blyant-Projects` in Documents, another folder (picked in the file browser: go to it and press `S`), or none (you pick where each new project is made)
 - **Delete to trash**: Deleting in the file browser moves to the [trash](#the-trash) (on from the start). Off: deleted files cannot be recovered
 - **List the commands above the command line**: While a command is typed (after `:`), a box above the command line lists the commands of the page, narrowed while you type, with what the command typed does (on from the start). Setting `commandlist`
 - **Language**: The language of the menus, help and messages. English and Deutsch (German) are built in; Dansk (Danish), Norsk bokmål (Norwegian), Svenska (Swedish), Español (Spanish), Français (French), Italiano (Italian), Polski (Polish), Nederlands (Dutch) and Suomi (Finnish) are language files in the folder `lang` next to Blyant (see [Language files](Guide-to-installation.md#language-files)). `Enter` shows the languages in a box to pick from (with the keys `1` to `9`, and then letters); a language from a file shows how much of it is translated (`Polski (pl)  98%`), and `(lang)` after a built-in language means a file in a folder `lang` is used instead of it. Commands, keys and the names of the editor modes (NORMAL, INSERT, VISUAL ...) are English in all languages, so they can be talked about the same way everywhere. The guides, the settings file and the log are in English
@@ -152,7 +144,7 @@ The browser shows two panes side by side, each with its own directory. The pane 
 
 The type column shows the extension of a file in capitals (`MD`, `TXT`), and for a name that starts with a dot and has no other, the name itself: `.blyant` is `BLYANT`, as in the information of `I`. In a pane that is narrow, as when the window is 80 columns wide, the type column is left out and long names are shortened. With one pane, or a wide window, all columns are shown.
 
-The browser starts in the projects folder (or your home directory, if there is no projects folder yet) and remembers the directories of both panes, the file or directory selected in each, the pane that had the focus and whether one or two panes were shown (`browsedir1`, `browsedir2`, `browsesel1`, `browsesel2`, `browsepane` and `browsedual` in the settings file). Picking a folder (for the projects) has a place of its own (`pickdir`), and does not change these. They are saved however the browser is left (closed, a jump to another page, or exiting Blyant), and also when a file is opened in the editor. The selection is remembered by name: if the file is gone, the first row is selected.
+The browser starts in your home directory the first time, and remembers the directories of both panes, the file or directory selected in each, the pane that had the focus and whether one or two panes were shown (`browsedir1`, `browsedir2`, `browsesel1`, `browsesel2`, `browsepane` and `browsedual` in the settings file). Picking a folder (for the projects) has a place of its own (`pickdir`), and does not change these. They are saved however the browser is left (closed, a jump to another page, or exiting Blyant), and also when a file is opened in the editor. The selection is remembered by name: if the file is gone, the first row is selected.
 
 - `j` `k` Select, `gg` `G` First/Last, `PgUp` `PgDn` One page up/down. With a count, in the pane with the focus: `5j` `5k` move 5 rows down/up, `5gg` (or `5G`) goes to row 5 (as numbered below the pane, `..` is row 1); the count shows below the pane while you type it, and `Esc` drops it. A peek shows the file the selection lands on. Other keys do what they do once with a count (`3D` is one delete, asked about as always)
 - `l` or `Enter` Open the selected directory or file. A file is opened in the editor where the cursor was when you closed it the last time (see [Where the cursor was](#where-the-cursor-was))
@@ -172,7 +164,7 @@ The browser starts in the projects folder (or your home directory, if there is n
 - `:name` Copy the name of the selected file or directory (on `..`: of the directory shown) in the same way: `notes.md`, not the whole path
 - `:path` and `:name` also put the path or name in the [string memory](Guide-to-editor.md#string-memory) of the editor, as the current string: `p` in the editor (or `CTRL+R` in Insert mode) puts it in the text. This works also when the clipboard and the paste bin are turned off
 - `:match` With two panes: the other pane shows the directory of the pane with the focus (with the same file or directory selected). The focus stays where it is
-- `:cd path` Go to a directory. `:home` Go to the projects folder (or your home directory, if there is no projects folder yet)
+- `:cd path` Go to a directory. `:home` Go to your home directory
 - `:trash` Go to the [trash](#the-trash), with what was deleted
 - `:recovery` Go to the [recovery copies](Guide-to-editor.md#recovery-copies) of text that was not saved
 - `:project add` Add the directory shown to the [projects](#projects)
@@ -346,7 +338,7 @@ When a file is closed in the editor, the line and column of the cursor are kept:
 ## The log
 The log lists what has happened since Blyant was started: the startup, commands, and the file operations of the file browser and the start page (new, open, rename, copy, move and delete, with the reason if one failed). It is shown from the System page of Configuration (_View log_), or with `:log`. A deletion tells whether it went to the trash, and where.
 
-All that Blyant does with files by itself is logged too, with the path: `New:` (a file made), `Write:` (a file saved: your text with `:w`, the settings, the lists, the recovery copies), `Append:` (added to the end: the paste bin, the words added to the spell checker, `trash.txt`), `New directory:` (the data directory, the projects folder, a project, `trash`, `recovery` ...), `Rename:`, `Copy:` and `Delete:`. One that failed has ` - FAILED:` and the reason after it. What is written in the files is never logged.
+All that Blyant does with files by itself is logged too, with the path: `New:` (a file made), `Write:` (a file saved: your text with `:w`, the settings, the lists, the recovery copies), `Append:` (added to the end: the paste bin, the words added to the spell checker, `trash.txt`), `New directory:` (the data directory, a project, `trash`, `recovery` ...), `Rename:`, `Copy:` and `Delete:`. One that failed has ` - FAILED:` and the reason after it. What is written in the files is never logged.
 
 - The log opens at the end, with the latest lines
 - `h` `l` Previous/Next page, `j` `k` One line, `gg` `G` First/Last
@@ -361,4 +353,4 @@ As the log can be read by anyone at the screen, commands are logged by name only
 The logo is drawn with a sweep when Blyant starts. Any key ends the sweep. Its speed is set with _Logo animation_ on the Layout page of the Configuration tab, where it can also be turned off.
 
 ## Directories
-Blyant keeps its settings and lists in the directory `data`: in the directory it is started from, if there is one there, else next to the program (and where the program directory cannot be written to, `Blyant/data` in the application data of the user). The data directory holds `settings.ini`, the lists of the file browser and the Jump menu, the snippets, the completions, the macros, the color schemes and the logos of your own, the log (`log.txt`), the recovery copies of text that was not saved (`recovery`) and the [trash](#the-trash) (`trash`). Your projects are not kept there, but in the [projects folder](#projects).
+Blyant keeps its settings and lists in the directory `data`: in the directory it is started from, if there is one there, else next to the program (and where the program directory cannot be written to, `Blyant/data` in the application data of the user). The data directory holds `settings.ini`, the lists of the file browser and the Jump menu, the snippets, the completions, the macros, the color schemes and the logos of your own, the log (`log.txt`), the recovery copies of text that was not saved (`recovery`) and the [trash](#the-trash) (`trash`). Your projects are not kept there, but wherever you choose: only the list of [projects](#projects) (`projects.txt`) is.

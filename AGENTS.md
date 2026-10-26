@@ -3,7 +3,7 @@
 For anyone changing the code, people and coding agents alike.
 
 ## Blyant and Marbles
-Blyant starts from the code of Marbles v1.5.3, which goes on as a program of its own (in its own repository). Blyant is a Markdown-focused tool for writing and for managing projects and their files: the encrypted data files of Marbles (`.mbls`), its login page and Note Management are not part of it. A project is a folder in the projects folder (`Projects`, setting `projectsdir`). Lines that Marbles wrote in the lists for its data files (`data` in `jump.txt` and `bookmarks.txt`) are skipped when read, and comments that tell what Marbles did name Marbles on purpose.
+Blyant starts from the code of Marbles v1.5.3, which goes on as a program of its own (in its own repository). Blyant is a Markdown-focused tool for writing and for managing projects and their files: the encrypted data files of Marbles (`.mbls`), its login page and Note Management are not part of it. A project is a folder anywhere, kept in the list of projects (`projects.txt` in the data directory). Lines that Marbles wrote in the lists for its data files (`data` in `jump.txt` and `bookmarks.txt`) are skipped when read, and comments that tell what Marbles did name Marbles on purpose.
 
 ## Commands
 Every place with a command line (start page, file browser, favorites, history, hotlist, search results, Jump menu, editor) has a table of its commands in `Blyant/Commands.cs`. `Tab` completes from these tables, and the log uses them to tell a command from other text.

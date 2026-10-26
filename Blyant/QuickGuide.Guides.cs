@@ -142,11 +142,11 @@ internal static partial class QuickGuide
         (Kind.Title, "", Title(Guide.Projects)),
         (Kind.Text, "", ""),
         (Kind.Text, "", Lang.T("A project is a folder with the files of a piece of writing in it: the chapters of a " +
-                               "book, the parts of an article, notes and drafts. The projects are the folders in " +
-                               "the projects folder, and the folders you add from anywhere.")),
+                               "book, the parts of an article, notes and drafts. You pick where each new project " +
+                               "goes, and a folder you have already can be added to the projects.")),
         (Kind.Text, "", ""),
         (Kind.Heading, "", Lang.T("On the start page")),
-        (Kind.Item, "P  :project", Lang.T("New project (the first time: where the projects go)")),
+        (Kind.Item, "P  :project", Lang.T("New project, in a folder you pick")),
         (Kind.Item, "O  :projects", Lang.T("Open project: pick one in the list of projects")),
         (Kind.Item, "  C", Lang.T("In the list: the color of the project")),
         (Kind.Item, "  N", Lang.T("In the list: the note of the project, in the editor")),
@@ -159,12 +159,8 @@ internal static partial class QuickGuide
                                "closes the browser and goes back to the start page. In the editor, :projects opens " +
                                "another project.")),
         (Kind.Item, "E  :projects", Lang.T("The projects: Enter shows one in this pane")),
-        (Kind.Item, ":home", Lang.T("Go to the projects folder (or the home directory)")),
+        (Kind.Item, ":home", Lang.T("Go to the home directory")),
         (Kind.Item, ":bookmark", Lang.T("Bookmark the selected file or directory (Jump menu)")),
-        (Kind.Text, "", ""),
-        (Kind.Heading, "", Lang.T("The projects folder")),
-        (Kind.Text, "", Lang.T("By default the folder Blyant in your Documents folder. It is made when the first " +
-                               "project is. Another folder is set in Configuration (General): Projects folder.")),
         (Kind.Text, "", ""),
         (Kind.Text, "", Lang.T("There is more: press ? here or on the page to see all its keys."))
     };

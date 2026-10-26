@@ -219,8 +219,6 @@ internal static class Actions
         StartMenu.Mode = StartMenu.StartMode.Select;
         FileOperations.DefaultExtension = FileOperations.MarkdownExtension;
         StartMenu.StartInFavorites = false;
-        Projects.Directory = string.Empty;
-        Projects.AskEachTime = false;
         FileOperations.DeleteToTrash = true;
         FileExplorer.FavoritePanes = true;
         FileExplorer.FavoritePeek = true;

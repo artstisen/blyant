@@ -42,16 +42,6 @@ internal static class PickListBox
         internal Func<ConsoleKeyInfo, int, KeyUse>? Key { get; init; }
 
         /// <summary>
-        /// The tabs of the list, shown at the right of the filter line (none: no tabs)
-        /// </summary>
-        internal IReadOnlyList<string>? Tabs { get; init; }
-
-        /// <summary>
-        /// The tab shown
-        /// </summary>
-        internal int ActiveTab { get; init; }
-
-        /// <summary>
         /// Shown in the list when it has no rows (what to do to get some)
         /// </summary>
         internal string? EmptyText { get; init; }
@@ -313,10 +303,7 @@ internal static class PickListBox
     private static void DrawFilter(string filter, bool filtering)
     {
         var text = filtering || filter.Length > 0 ? FilterText(filter) : string.Empty;
-        // The tabs at the right of the line, the tab shown highlighted ("All | Added | Projects folder")
-        var tabs = _extras?.Tabs is { Count: > 0 } names ? names : null;
-        var tabsWidth = tabs == null ? 0 : tabs.Sum(name => TextMetrics.WidthOf(name) + 2) + tabs.Count - 1;
-        var room = Math.Max(10, _inner - 4 - (tabsWidth > 0 ? tabsWidth + 2 : 0));
+        var room = Math.Max(10, _inner - 4);
         Tools.SetCursorEx(_top + 2, _left + 3);
         if (_message.Length > 0 && !filtering)
         {
@@ -334,24 +321,6 @@ internal static class PickListBox
             Console.Write(shown + new string(' ', Math.Max(0, room - TextMetrics.WidthOf(shown))));
             ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
         }
-
-        if (tabs == null || tabsWidth > _inner - 14) return;
-        Tools.SetCursorEx(_top + 2, _left + _inner - 1 - tabsWidth);
-        for (var i = 0; i < tabs.Count; i++)
-        {
-            if (i > 0)
-            {
-                ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
-                Console.Write("|");
-            }
-
-            ConsoleColors.SetColors(i == _extras!.ActiveTab
-                ? ConsoleColors.ColorPreset.SelectorInverted
-                : ConsoleColors.ColorPreset.Normal);
-            Console.Write(" " + tabs[i] + " ");
-        }
-
-        ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
     }
 
     private static void DrawList(IReadOnlyList<string> rows, List<int> view, int scroll, string filter)

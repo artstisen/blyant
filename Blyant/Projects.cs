@@ -3,68 +3,22 @@
 namespace Blyant;
 
 /// <summary>
-/// The projects: a project is a directory with the files of a piece of writing in it. The projects are the
-/// directories in the projects folder (setting "projectsdir"), and the directories added from anywhere (kept in
-/// projects.txt in the data directory). No projects folder is set until the user decides at the first new project:
-/// the suggested one ("Blyant-Projects" in the Documents folder), another one, or none (setting "projectsask": the
-/// place of each new project is asked for). A project is known by its full path.
+/// The projects: a project is a directory with the files of a piece of writing in it, anywhere. The projects are kept
+/// in a list, projects.txt in the data directory: a new project is made where the user picks, and a directory that is
+/// there already can be added. A project is known by its full path.
 /// This class does not touch the console, so it can be tested.
 /// </summary>
 internal static class Projects
 {
-    // Not "Blyant": that is the name a folder for the program gets, and the program and its data do not belong
-    // with the writing
-    private const string DefaultName = "Blyant-Projects"; // English: the name of a directory
-
     /// <summary>
-    /// The projects folder suggested when it is set the first time: "Blyant-Projects" in the Documents folder (or
-    /// the home directory)
+    /// A project: the full path of its directory
     /// </summary>
-    internal static string DefaultDirectory
-    {
-        get
-        {
-            var documents = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments,
-                Environment.SpecialFolderOption.DoNotVerify);
-            if (documents.Length == 0)
-            {
-                documents = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile,
-                    Environment.SpecialFolderOption.DoNotVerify);
-            }
-
-            return Path.Combine(documents.Length > 0 ? documents : AppContext.BaseDirectory, DefaultName);
-        }
-    }
-
-    /// <summary>
-    /// The projects folder (setting "projectsdir"), empty if none is set. It is made when the first project is
-    /// </summary>
-    internal static string Directory { get; set; } = string.Empty;
-
-    /// <summary>
-    /// No projects folder: the place of each new project is asked for (setting "projectsask")
-    /// </summary>
-    internal static bool AskEachTime { get; set; }
-
-    /// <summary>
-    /// A projects folder is set
-    /// </summary>
-    internal static bool HasFolder => Directory.Length > 0;
-
-    /// <summary>
-    /// The user has decided where new projects go: a projects folder, or asked each time
-    /// </summary>
-    internal static bool IsDecided => HasFolder || AskEachTime;
-
-    /// <summary>
-    /// A project: its full path, and whether it was added (from anywhere) or is in the projects folder
-    /// </summary>
-    internal sealed record Project(string Path, bool Added)
+    internal sealed record Project(string Path)
     {
         internal string Name => System.IO.Path.GetFileName(System.IO.Path.TrimEndingDirectorySeparator(Path));
 
         /// <summary>
-        /// The directory is not there (an added one that was moved, renamed or deleted elsewhere)
+        /// The directory is not there (moved, renamed or deleted elsewhere)
         /// </summary>
         internal bool Missing => !System.IO.Directory.Exists(Path);
     }
@@ -72,46 +26,12 @@ internal static class Projects
     private static readonly StringComparer NameOrder = StringComparer.CurrentCultureIgnoreCase;
 
     /// <summary>
-    /// The projects in the projects folder: its directories (not the hidden ones), in alphabetical order. None if
-    /// no folder is set, or it is not there (or cannot be read)
-    /// </summary>
-    internal static List<Project> InFolder()
-    {
-        try
-        {
-            if (!HasFolder || !System.IO.Directory.Exists(Directory)) return new List<Project>();
-            return new DirectoryInfo(Directory).EnumerateDirectories()
-                .Where(directory => !directory.Name.StartsWith('.') &&
-                                    (directory.Attributes & FileAttributes.Hidden) == 0)
-                .Select(directory => new Project(directory.FullName, false))
-                .OrderBy(project => project.Name, NameOrder)
-                .ToList();
-        }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
-        {
-            return new List<Project>();
-        }
-    }
-
-    /// <summary>
-    /// The projects added from anywhere, in alphabetical order (also those that are missing)
-    /// </summary>
-    internal static List<Project> Added()
-    {
-        return AddedPaths().Select(path => new Project(path, true)).OrderBy(project => project.Name, NameOrder)
-            .ThenBy(project => project.Path, NameOrder).ToList();
-    }
-
-    /// <summary>
-    /// All the projects, in alphabetical order. A directory added that is also in the projects folder is there
-    /// once (as one in the folder)
+    /// The projects, in alphabetical order (also those that are missing)
     /// </summary>
     internal static List<Project> All()
     {
-        var inFolder = InFolder();
-        return inFolder.Concat(Added().Where(added => !inFolder.Any(project =>
-                FileOperations.SamePath(project.Path, added.Path))))
-            .OrderBy(project => project.Name, NameOrder).ThenBy(project => project.Path, NameOrder).ToList();
+        return AddedPaths().Select(path => new Project(path)).OrderBy(project => project.Name, NameOrder)
+            .ThenBy(project => project.Path, NameOrder).ToList();
     }
 
     /// <summary>
@@ -162,32 +82,9 @@ internal static class Projects
     }
 
     /// <summary>
-    /// The projects folder of the setting "projectsdir": "~" is the home directory, and a path that is not a
-    /// full path on this system (one written on another system: "C:\Users\..." on Linux) is not used
+    /// Make a new project: its directory in a directory (made too, if it is not there), added to the projects
     /// </summary>
-    /// <returns>The directory, or null for none</returns>
-    internal static string? DirectoryFromSetting(string setting)
-    {
-        setting = setting.Trim();
-        if (setting == "~" || setting.StartsWith("~/", StringComparison.Ordinal) ||
-            setting.StartsWith("~\\", StringComparison.Ordinal))
-        {
-            var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile,
-                Environment.SpecialFolderOption.DoNotVerify);
-            if (home.Length == 0) return null;
-            setting = setting.Length <= 2 ? home : Path.Combine(home, setting[2..]);
-        }
-
-        return setting.Length > 0 && Tools.IsValidPath(setting) && Path.IsPathFullyQualified(setting)
-            ? setting
-            : null;
-    }
-
-    /// <summary>
-    /// Make a new project: its directory in a directory (made too, if it is not there). One made outside the
-    /// projects folder is added to the projects
-    /// </summary>
-    /// <param name="parent">The directory to make it in (the projects folder, or another)</param>
+    /// <param name="parent">The directory to make it in</param>
     /// <param name="name">The name of the project</param>
     /// <param name="path">The full path of the project made</param>
     /// <returns>DialogText.Success or an error message</returns>
@@ -207,14 +104,13 @@ internal static class Projects
             return e.Message;
         }
 
-        if (HasFolder && FileOperations.SamePath(parent, Directory)) return DialogText.Success;
         return Add(path);
     }
 
-    #region Added projects
+    #region The list of the projects
 
     /// <summary>
-    /// The list of the projects added from anywhere: a path on each line (in the data directory)
+    /// The list of the projects: a path on each line (in the data directory)
     /// </summary>
     internal const string ListFileName = "projects.txt"; // English: the name of a file
 
@@ -230,7 +126,7 @@ internal static class Projects
     private static bool _unreadable;
 
     /// <summary>
-    /// The paths of the projects added (as they are in the list; nothing if it cannot be read)
+    /// The paths of the projects (as they are in the list; nothing if it cannot be read)
     /// </summary>
     internal static List<string> AddedPaths()
     {
@@ -257,7 +153,7 @@ internal static class Projects
         try
         {
             // English: read by people in any language
-            var text = "# Blyant: the projects added from anywhere (a folder on each line)\n" +
+            var text = "# Blyant: the projects (a folder on each line)\n" +
                        string.Concat(paths.Select(path => path + "\n"));
             var directory = Path.GetDirectoryName(ListPath);
             if (directory != null) FileIo.CreateDirectory(directory);
@@ -271,15 +167,12 @@ internal static class Projects
     }
 
     /// <summary>
-    /// Why a directory cannot be added to the projects, or null if it can: it is not there, it is the projects
-    /// folder, or it is a project already (added, or in the projects folder)
+    /// Why a directory cannot be added to the projects, or null if it can: it is not there, or it is a project
+    /// already
     /// </summary>
     internal static string? AddProblem(string path)
     {
         if (!System.IO.Directory.Exists(path)) return DialogText.DirectoryNotFound;
-        if (HasFolder && FileOperations.SamePath(path, Directory)) return DialogText.ProjectIsTheFolder;
-        var parent = Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(Path.GetFullPath(path)));
-        if (HasFolder && parent != null && FileOperations.SamePath(parent, Directory)) return DialogText.ProjectAlready;
         return AddedPaths().Any(added => FileOperations.SamePath(added, path)) ? DialogText.ProjectAlready : null;
     }
 
@@ -296,7 +189,7 @@ internal static class Projects
     }
 
     /// <summary>
-    /// Take an added project off the list (the directory itself stays as it is)
+    /// Take a project off the list (the directory itself stays as it is)
     /// </summary>
     /// <returns>DialogText.Success or an error message</returns>
     internal static string Remove(string path)
@@ -307,8 +200,8 @@ internal static class Projects
     }
 
     /// <summary>
-    /// A directory has a new path (renamed or moved in the file browser): the added projects follow it, also
-    /// those inside it
+    /// A directory has a new path (renamed or moved in the file browser): the projects follow it, also those
+    /// inside it
     /// </summary>
     internal static void PathChanged(string oldPath, string newPath)
     {

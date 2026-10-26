@@ -419,11 +419,6 @@ internal static class FileIo
         // Starting in the file browser: open the favorites list first
         _tempSettings += "startfavorites=" + (StartMenu.StartInFavorites ? DialogText.BTrue : DialogText.BFalse) +
                          '\n';
-        // The directory the projects are made in (New project) and listed from (Open project)
-        _tempSettings += "projectsdir=" + Projects.Directory + '\n';
-        // No projects folder: the place of each new project is asked for (with an empty projectsdir and false: not
-        // decided yet, asked at the first new project)
-        _tempSettings += "projectsask=" + (Projects.AskEachTime ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // Deleting in the file browser moves to the trash ("trash" in the data directory); false: deleted for good
         _tempSettings += "deletetotrash=" + (FileOperations.DeleteToTrash ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // Below the list of favorites: the panes with the note and the peek of the selected item, and the peek in them
@@ -629,9 +624,6 @@ internal static class FileIo
         // The kind of new files and blank pages (Markdown unless another of the list is set)
         FileOperations.DefaultExtension = FileOperations.ParseFileType(Get("filetype")) ?? FileOperations.MarkdownExtension;
         StartMenu.StartInFavorites = Tools.TrimToLower(Get("startfavorites")) == DialogText.BTrue;
-        // None until the user decides (at the first new project)
-        Projects.Directory = Projects.DirectoryFromSetting(Get("projectsdir")) ?? string.Empty;
-        Projects.AskEachTime = !Projects.HasFolder && Tools.TrimToLower(Get("projectsask")) == DialogText.BTrue;
         // Deleting to the trash: on unless turned off
         FileOperations.DeleteToTrash = Tools.TrimToLower(Get("deletetotrash")) != DialogText.BFalse;
         // The note and the peek below the favorites: on unless turned off

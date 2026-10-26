@@ -2,7 +2,7 @@
 
 /// <summary>
 /// The Jump menu: a box on top of the page with the tabs Bookmarks (places kept with B or ":bookmark"), Recent (the
-/// jump history), Projects (the folders in the projects folder), File browser (with its lists History, Favorites and Hotlist as sub-tabs) and Blyant (the pages
+/// jump history), Projects (the list of projects), File browser (with its lists History, Favorites and Hotlist as sub-tabs) and Blyant (the pages
 /// of Blyant). Tab and Shift+Tab go from tab to tab, h and l through all the lists in a row (the
 /// sub-tabs too); B bookmarks the selected place, and the Bookmarks tab has keys to arrange, rename and remove them. A place is picked with the
 /// selection arrow (j/k, gg/G) and Enter; h/l go from tab to tab, "/" filters the list of the tab, I shows
@@ -16,7 +16,7 @@ internal static class JumpMenu
     {
         Bookmarks,
         Jumps, // Recent: the jump history
-        Projects, // The projects: the folders in the projects folder
+        Projects, // The projects
         History, // The file history of the file browser
         Favorites,
         Hotlist,
@@ -172,7 +172,6 @@ internal static class JumpMenu
                 return JumpHistory.Items.Select(entry => new Row(entry.Target, entry.Jumped)).ToList();
             case Tab.Projects:
                 // In the color of the project (else of a favorite)
-                // (all of them: in the projects folder and added)
                 return Projects.All().Select(project =>
                 {
                     var target = new JumpTarget(JumpKind.Directory, project.Path);
