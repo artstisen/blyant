@@ -13,7 +13,8 @@ Blyant is a sister application of [Marbles](https://github.com/artstisen/marbles
 **A Vim-style editor**
 - Normal, Insert and Visual modes (also block selection), counts, text objects, registers and undo
 - Split view: the same text in two panes side by side, remembered when you open it again
-- Syntax highlighting (Markdown, HTML, PHP, CSS, JavaScript, C#, JSON, XML), spell checking and word completion
+- Syntax highlighting for Markdown, HTML, PHP, CSS, JavaScript, JSON, XML, C#, C and C++, Rust, Python, PowerShell, shell scripts, Windows batch files, settings files (INI) and diffs ([which files](Guide-to-editor.md#colors))
+- Spell checking and word completion
 - Search and replace with regular expressions, file comparison (diff), snippets, and a macro recorder whose macros can be edited as text
 - A command line with `Tab` completion and command history on every page
 
