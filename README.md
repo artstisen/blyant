@@ -1,7 +1,10 @@
 # Blyant
 A free, open-source, cross-platform, Vim-style modal text editor for writing in any terminal program on Windows, Linux and macOS. _Blyant_ is Danish for _pencil_.
 
-Blyant is a sister application of [Marbles](https://github.com/artstisen/marbles), the Vim-style editor for encrypted notes, and starts from its code base (Marbles v1.5.3). Where Marbles is about private notes kept in an encrypted data file, Blyant is about writing: Markdown files, organised in projects.
+This project began in 2022, with the application architecture and codebase written by hand. In later versions, I’ve used agentic tools to refine, rewrite, test, and conduct code reviews. Blyant is derived from my encryption editor [Marbles](https://github.com/artstisen/marbles), but there are many differences, as Blyant is designed for writing, programming, organizing files, planning projects, etc.
+
+Blyant has several features inspired by popular Neovim plugins for text navigation, commands, and much more. I use Blyant in my professional work as a technical writer and localization specialist, where my tasks include writing software and API documentation in Markdown and HTML, developing CSS and JavaScript widgets as well as .NET productivity and conversion tools, writing JSON, and editing XML.
+
 
 ## Key features
 
@@ -51,16 +54,12 @@ When Blyant starts, the start page offers New file, File browser, New project an
 
 Blyant is operated in the style of Vim: the editor has Normal, Insert and Visual modes, and the menus and lists use the same keys for moving around (`h` `j` `k` `l`), searching (`/`), help (`?`) and commands (`:`).
 
-## Windows Terminal
-See the [guide to installing the Windows Terminal CRT mod](Guide-to-windows-terminal-crt.md).
-
 ## Guides
 - [Download and installation](Guide-to-installation.md)
 - [Start page, projects and the file browser](Guide-to-start-page.md)
 - [Jump menu, color schemes and logos](Guide-to-jump-menu.md)
 - [Editor](Guide-to-editor.md)
 - [Changes](CHANGELOG.md)
-- [PowerShell scripting tips](Guide-to-windows-terminal-crt.md)
 
 Inside Blyant, press `?` for the list of keys.
 
@@ -91,7 +90,9 @@ dotnet run --project Blyant
 `AGENTS.md` has the rules for working on the code (for people and for coding agents).
 
 ## Tools used
-- Code editor: Marbles and Blyant
+- Written in C#, a single binary file, no dependencies, runs in the terminal you already use
+- CLI tools: JetBrains Command Line Tools, .NET CLI compiler, PowerShell, and GitHub CLI
+- Agentic tools: Claude Opus 5.5 (scripting/testing/code review)
+- Code editor: Blyant with syntax highlighting, code completion, and code snippets
 - Programming language: C# 14
 - Framework: .NET 10
-- Claude Opus 5.5: Scripting/testing/code review
