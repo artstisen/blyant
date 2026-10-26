@@ -147,8 +147,12 @@ internal static class SystemClipboard
     /// True in a terminal that is known to drop the clipboard sequence (OSC 52): the text console of Linux (and of
     /// a Raspberry Pi), the terminals made with VTE (LXTerminal, GNOME Terminal) and the Terminal of macOS
     /// </summary>
-    internal static bool TerminalWithoutClipboard { get; } =
-        !OperatingSystem.IsWindows() && WithoutClipboard(Environment.GetEnvironmentVariable);
+    internal static bool TerminalWithoutClipboard =>
+        _terminalWithoutClipboard ??= !OperatingSystem.IsWindows() && WithoutClipboard(Environment.GetEnvironmentVariable);
+
+    // Found the first time it is asked for. Not in a static initializer: those run in the order they are written,
+    // before the lists below are set, and on Linux and macOS that stopped Blyant at startup (in a VTE terminal)
+    private static bool? _terminalWithoutClipboard;
 
     // The terminals that take the clipboard sequence, by their TERM, and the variables they set of their own
     private static readonly string[] ClipboardTerms = { "xterm-kitty", "wezterm", "alacritty", "foot", "contour" };

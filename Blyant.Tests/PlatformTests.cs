@@ -96,4 +96,45 @@ public class PlatformTests
             .ToDictionary(pair => pair[0], pair => pair[1]);
         Assert.Equal(expected, SystemClipboard.WithoutClipboard(name => variables.GetValueOrDefault(name)));
     }
+
+    // A static field or property set by a call to a method of its own class: the static initializers run in the
+    // order they are written, so the method can see the fields below it still unset (null). That stopped Blyant at
+    // startup on Linux, where SystemClipboard.TerminalWithoutClipboard was set so; on Windows the call was skipped,
+    // so only reading the source finds it here
+    private static readonly System.Text.RegularExpressions.Regex StaticInitializer = new(
+        @"\bstatic\b[^=;(]*?(\{\s*get;\s*\}\s*=|\breadonly\b[^=;(]*=)(?!>)([^;]*);",
+        System.Text.RegularExpressions.RegexOptions.Singleline);
+
+    private static readonly System.Text.RegularExpressions.Regex OwnCall =
+        new(@"(?<![\.\w]|new\s)\b([A-Z]\w*)\s*\(");
+
+    // The strings and comments of the code, which are not looked in for calls
+    private static readonly System.Text.RegularExpressions.Regex StringOrComment =
+        new(@"@?""(?:\\.|""""|[^""\\])*""|'(?:\\.|[^'\\])'|//[^\n]*");
+
+    [Fact]
+    public void StaticInitializers_DoNotCallAMethodOfTheirOwnClass()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory != null && !File.Exists(Path.Combine(directory.FullName, "Blyant.sln"))) directory = directory.Parent;
+        Assert.NotNull(directory);
+        var root = Path.Combine(directory!.FullName, "Blyant");
+        var found = new List<string>();
+        foreach (var path in Directory.EnumerateFiles(root, "*.cs", SearchOption.AllDirectories))
+        {
+            if (path.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar) ||
+                path.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar)) continue;
+            foreach (System.Text.RegularExpressions.Match match in StaticInitializer.Matches(File.ReadAllText(path)))
+            {
+                if (OwnCall.Match(StringOrComment.Replace(match.Groups[2].Value, "\"\"")) is { Success: true } call)
+                {
+                    found.Add(Path.GetRelativePath(root, path) + ": " + call.Groups[1].Value + "(...) in " +
+                              match.Value.Split('\n')[0].Trim());
+                }
+            }
+        }
+
+        Assert.True(found.Count == 0, "Find the value when it is first asked for (a property with ??=):\n" +
+                                      string.Join("\n", found));
+    }
 }
