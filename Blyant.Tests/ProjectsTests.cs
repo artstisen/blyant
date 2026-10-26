@@ -77,14 +77,14 @@ public class ProjectsTests : IDisposable
         Assert.Equal(DialogText.Success, Projects.Create(Writing, " Novel ", out var path));
         Assert.Equal(Path.Combine(Writing, "Novel"), path);
         Assert.True(Directory.Exists(path));
-        Assert.Equal(new[] { path }, Projects.AddedPaths());
+        Assert.Equal(new[] { path }, Projects.ListedPaths());
         // Not twice, and not with a name that cannot be used
         Assert.Equal(DialogText.NameExists, Projects.Create(Writing, "Novel", out _));
         Assert.NotEqual(DialogText.Success, Projects.Create(Writing, "a/b", out _));
         Assert.Null(Projects.NameProblem(Writing, "Short stories"));
         // Made somewhere else: on the list too
         Assert.Equal(DialogText.Success, Projects.Create(In("Poetry"), "Songs", out var songs));
-        Assert.Equal(new[] { path, songs }, Projects.AddedPaths());
+        Assert.Equal(new[] { path, songs }, Projects.ListedPaths());
     }
 
     [Fact]
@@ -125,10 +125,10 @@ public class ProjectsTests : IDisposable
         Projects.Add(essays);
         // The folder it is in is renamed
         Projects.PathChanged(In("Elsewhere"), In("Moved"));
-        Assert.Equal(new[] { In("Moved", "Essays") }, Projects.AddedPaths());
+        Assert.Equal(new[] { In("Moved", "Essays") }, Projects.ListedPaths());
         // It is renamed itself
         Projects.PathChanged(In("Moved", "Essays"), In("Moved", "Articles"));
-        Assert.Equal(new[] { In("Moved", "Articles") }, Projects.AddedPaths());
+        Assert.Equal(new[] { In("Moved", "Articles") }, Projects.ListedPaths());
         // Not there: missing, but still on the list
         Assert.True(Projects.All().Single().Missing);
     }
@@ -155,7 +155,7 @@ public class ProjectsTests : IDisposable
         Assert.Contains("\n" + a + "\n", text);
         // Lines written by hand: blank lines and comments are skipped, and a path that is not a full path
         File.WriteAllText(Projects.ListPath, "# mine\r\n\r\n" + a + "\r\nrelative\\path\r\n");
-        Assert.Equal(new[] { a }, Projects.AddedPaths());
+        Assert.Equal(new[] { a }, Projects.ListedPaths());
     }
 
     [Fact]

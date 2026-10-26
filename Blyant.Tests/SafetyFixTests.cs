@@ -1,7 +1,7 @@
 ﻿namespace Blyant.Tests;
 
 /// <summary>
-/// Files that must not be written over or lost: a recovery copy put off for later, the list of added projects
+/// Files that must not be written over or lost: a recovery copy put off for later, the list of projects
 /// that could not be read, Blyant's own files as the paste bin, and the data directory, which is chosen once
 /// </summary>
 [Collection("Static state")]
@@ -65,7 +65,7 @@ public class SafetyFixTests : IDisposable
 
         Assert.Equal(before, File.ReadAllText(Projects.ListPath));
         Assert.Equal(DialogText.Success, Projects.Add(second));
-        Assert.Equal(2, Projects.AddedPaths().Count);
+        Assert.Equal(2, Projects.ListedPaths().Count);
     }
 
     [Fact]

@@ -1,4 +1,6 @@
-﻿namespace Blyant.Tests;
+﻿using System.Text.RegularExpressions;
+
+namespace Blyant.Tests;
 
 /// <summary>
 /// What Blyant does for Linux and macOS terminals, tested where it can be on any system: the bright colors on a
@@ -100,16 +102,17 @@ public class PlatformTests
     // A static field or property set by a call to a method of its own class: the static initializers run in the
     // order they are written, so the method can see the fields below it still unset (null). That stopped Blyant at
     // startup on Linux, where SystemClipboard.TerminalWithoutClipboard was set so; on Windows the call was skipped,
-    // so only reading the source finds it here
-    private static readonly System.Text.RegularExpressions.Regex StaticInitializer = new(
-        @"\bstatic\b[^=;(]*?(\{\s*get;\s*\}\s*=|\breadonly\b[^=;(]*=)(?!>)([^;]*);",
-        System.Text.RegularExpressions.RegexOptions.Singleline);
+    // so only reading the source finds it here. Every kind: a field (readonly or not) and a property with an
+    // initializer (get, set, init), not a property computed each time ("=>")
+    private static readonly Regex StaticInitializer = new(
+        @"\bstatic\b[^=;(){}]*?(\{\s*get;[^}]*\}\s*=|\s=)(?![=>])([^;]*);",
+        RegexOptions.Singleline);
 
-    private static readonly System.Text.RegularExpressions.Regex OwnCall =
+    private static readonly Regex OwnCall =
         new(@"(?<![\.\w]|new\s)\b([A-Z]\w*)\s*\(");
 
     // The strings and comments of the code, which are not looked in for calls
-    private static readonly System.Text.RegularExpressions.Regex StringOrComment =
+    private static readonly Regex StringOrComment =
         new(@"@?""(?:\\.|""""|[^""\\])*""|'(?:\\.|[^'\\])'|//[^\n]*");
 
     [Fact]
@@ -124,7 +127,7 @@ public class PlatformTests
         {
             if (path.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar) ||
                 path.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar)) continue;
-            foreach (System.Text.RegularExpressions.Match match in StaticInitializer.Matches(File.ReadAllText(path)))
+            foreach (Match match in StaticInitializer.Matches(File.ReadAllText(path)))
             {
                 if (OwnCall.Match(StringOrComment.Replace(match.Groups[2].Value, "\"\"")) is { Success: true } call)
                 {

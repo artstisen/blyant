@@ -128,7 +128,7 @@ internal static class ProjectsBox
     private static (ConsoleColor? Color, string Note) Info(string project) =>
         (Projects.ColorOf(project), Projects.NoteSnippet(project));
 
-    #region New and added projects
+    #region Making, adding and removing projects
 
     /// <summary>
     /// Make a new project: its folder, in a folder the user picks in the file browser (it starts where a folder was

@@ -30,7 +30,7 @@ internal static class Projects
     /// </summary>
     internal static List<Project> All()
     {
-        return AddedPaths().Select(path => new Project(path)).OrderBy(project => project.Name, NameOrder)
+        return ListedPaths().Select(path => new Project(path)).OrderBy(project => project.Name, NameOrder)
             .ThenBy(project => project.Path, NameOrder).ToList();
     }
 
@@ -128,7 +128,7 @@ internal static class Projects
     /// <summary>
     /// The paths of the projects (as they are in the list; nothing if it cannot be read)
     /// </summary>
-    internal static List<string> AddedPaths()
+    internal static List<string> ListedPaths()
     {
         _unreadable = false;
         try
@@ -147,7 +147,7 @@ internal static class Projects
         }
     }
 
-    private static string SaveAdded(IEnumerable<string> paths)
+    private static string SaveList(IEnumerable<string> paths)
     {
         if (_unreadable) return DialogText.ListNotRead;
         try
@@ -173,7 +173,7 @@ internal static class Projects
     internal static string? AddProblem(string path)
     {
         if (!System.IO.Directory.Exists(path)) return DialogText.DirectoryNotFound;
-        return AddedPaths().Any(added => FileOperations.SamePath(added, path)) ? DialogText.ProjectAlready : null;
+        return ListedPaths().Any(listed => FileOperations.SamePath(listed, path)) ? DialogText.ProjectAlready : null;
     }
 
     /// <summary>
@@ -183,9 +183,9 @@ internal static class Projects
     internal static string Add(string path)
     {
         if (AddProblem(path) is { } problem) return problem;
-        var paths = AddedPaths();
+        var paths = ListedPaths();
         paths.Add(Path.TrimEndingDirectorySeparator(Path.GetFullPath(path)));
-        return SaveAdded(paths);
+        return SaveList(paths);
     }
 
     /// <summary>
@@ -194,9 +194,9 @@ internal static class Projects
     /// <returns>DialogText.Success or an error message</returns>
     internal static string Remove(string path)
     {
-        var paths = AddedPaths();
-        var kept = paths.Where(added => !FileOperations.SamePath(added, path)).ToList();
-        return kept.Count == paths.Count ? DialogText.Success : SaveAdded(kept);
+        var paths = ListedPaths();
+        var kept = paths.Where(listed => !FileOperations.SamePath(listed, path)).ToList();
+        return kept.Count == paths.Count ? DialogText.Success : SaveList(kept);
     }
 
     /// <summary>
@@ -206,7 +206,7 @@ internal static class Projects
     internal static void PathChanged(string oldPath, string newPath)
     {
         var changed = false;
-        var paths = AddedPaths().Select(path =>
+        var paths = ListedPaths().Select(path =>
         {
             if (FileOperations.SamePath(path, oldPath))
             {
@@ -218,7 +218,7 @@ internal static class Projects
             changed = true;
             return Path.Combine(newPath, Path.GetRelativePath(oldPath, path));
         }).ToList();
-        if (changed) SaveAdded(paths);
+        if (changed) SaveList(paths);
     }
 
     #endregion
