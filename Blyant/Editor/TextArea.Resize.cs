@@ -1,26 +1,15 @@
-﻿using System.Runtime.InteropServices;
-
-namespace Blyant;
+﻿namespace Blyant;
 
 /// <summary>
 /// The editor follows the size of the terminal window while it waits for a key: when the size has stayed the same
 /// for a moment (a window dragged larger passes many sizes), the editor takes the dimensions now in use (they follow
 /// the window with automatic size, else the user is asked when the window is too small) and is drawn again. Keys
-/// that are waiting (typing, pasting) are read at once. On Windows the input of the console is waited for (a key
-/// ends the wait at once), and the size is asked for some times a second; elsewhere there is a short pause between
-/// the questions (they take no time there: .NET keeps the size, and is told when it changes). Ctrl+C (cancelled in Init) is told about here: it does not close the editor. Only the editor of a file
+/// that are waiting (typing, pasting) are read at once. The wait between the questions is that of the pages
+/// (Keyboard.WaitForInput), which follow the window the same way. Ctrl+C (cancelled in Init) is told about here: it does not close the editor. Only the editor of a file
 /// or of the settings follows the window: a peek and a field of a box are drawn again by the page they are on
 /// </summary>
 public partial class TextArea
 {
-    // How long to wait between the questions for a key and the size of the window (on Windows: at most, as a key
-    // ends the wait)
-    private const int KeyWaitMilliseconds = 15;
-    private const int WindowsWaitMilliseconds = 100;
-
-    // How long the window keeps its new size before the editor follows it
-    private const int SettleMilliseconds = 150;
-
     // The dimensions the editor is laid out for (Init.LineWidth, Init.LineCount), and the size of the window then
     private int _lineWidth;
     private int _lineCount;
@@ -39,17 +28,7 @@ public partial class TextArea
     }
 
     // The size of the terminal window (the last one seen, if it is not known)
-    private (int Width, int Height) WindowSize()
-    {
-        try
-        {
-            return (Console.WindowWidth, Console.WindowHeight);
-        }
-        catch
-        {
-            return _windowSize;
-        }
-    }
+    private (int Width, int Height) WindowSize() => Keyboard.WindowSize(_windowSize);
 
     // The key after Esc, when the two came at once (see ReadKey)
     private ConsoleKeyInfo? _keyAfterEscape;
@@ -122,7 +101,7 @@ public partial class TextArea
                 seen = size;
                 seenAt = Environment.TickCount64;
             }
-            else if (Environment.TickCount64 - seenAt >= SettleMilliseconds)
+            else if (Environment.TickCount64 - seenAt >= Keyboard.SettleMilliseconds)
             {
                 seenAt = 0;
                 FitToWindow();
@@ -130,36 +109,11 @@ public partial class TextArea
 
             // A recovery copy when a pause has come after a change
             RecoveryTick();
-            WaitForInput();
+            Keyboard.WaitForInput();
         }
 
         return Console.ReadKey(true);
     }
-
-    // Until input may have come, or a while has passed
-    private static void WaitForInput()
-    {
-        if (OperatingSystem.IsWindows())
-        {
-            var input = GetStdHandle(StdInputHandle);
-            if (input != IntPtr.Zero && input != new IntPtr(-1) &&
-                WaitForSingleObject(input, WindowsWaitMilliseconds) != WaitFailed)
-            {
-                return;
-            }
-        }
-
-        Thread.Sleep(KeyWaitMilliseconds);
-    }
-
-    private const int StdInputHandle = -10;
-    private const uint WaitFailed = 0xFFFFFFFF;
-
-    [DllImport("kernel32.dll", SetLastError = true)]
-    private static extern IntPtr GetStdHandle(int handle);
-
-    [DllImport("kernel32.dll", SetLastError = true)]
-    private static extern uint WaitForSingleObject(IntPtr handle, uint milliseconds);
 
     // Ctrl+C read as a key (not as the signal)
     private static bool IsCancelKey(ConsoleKeyInfo key) =>

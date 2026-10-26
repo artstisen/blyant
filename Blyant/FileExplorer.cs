@@ -361,6 +361,16 @@ internal static partial class FileExplorer
                 ? new ConsoleKeyInfo('F', ConsoleKey.F, true, false, false)
                 : Keyboard.ReadKey();
             _openFavorites = false;
+            // The window was resized (or Blyant went on after Ctrl+Z): all is drawn again, with the message
+            if (Keyboard.IsRedraw(key))
+            {
+                Init.ApplyAutoSize();
+                if (IsDual) Reload(OtherPane);
+                Draw(true);
+                if (Tools.TakeRedrawRequest()) Draw(true);
+                continue;
+            }
+
             // Moving the selection only redraws the selection pointer (unless the list has to scroll)
             var redraw = true;
             var hadMessage = _message.Length > 0;

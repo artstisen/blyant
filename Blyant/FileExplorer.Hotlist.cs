@@ -64,10 +64,18 @@ internal static partial class FileExplorer
             DrawHotlist(redraw);
             if (Tools.TakeRedrawRequest()) DrawHotlist(true);
             redraw = true;
-            var hadMessage = _hotlistMessage.Length > 0;
+            var message = _hotlistMessage;
+            var hadMessage = message.Length > 0;
             _hotlistMessage = string.Empty;
             var selected = _hotlistShown.Count > 0 ? _hotlistShown[_hotlistIndex] : -1;
             var key = Keyboard.ReadKey();
+            // The window was resized (or Blyant went on after Ctrl+Z): all is drawn again, with the message
+            if (Keyboard.IsRedraw(key))
+            {
+                _hotlistMessage = message;
+                continue;
+            }
+
             // A count in front of a key: 5j 5k (5 rows), 5gg 5G (row 5). Esc only drops it
             if (_listCount.Add(key))
             {

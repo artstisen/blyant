@@ -319,13 +319,26 @@ internal static class JumpMenu
             }
 
             selected = Math.Clamp(selected, 0, Math.Max(0, rows.Count - 1));
-            // Follow the size of the terminal window (all is drawn again when it has changed)
-            if (Init.ApplyAutoSize()) full = true;
+            // Follow the size of the terminal window (all is drawn again when it has changed). The page below the
+            // menu was drawn for the size before: the screen is cleared, and the page is drawn when the menu closes
+            if (Init.ApplyAutoSize())
+            {
+                Tools.ClearScreen();
+                full = true;
+            }
             var visible = Draw(tabs, tab, filter, rows, selected, ref scroll, full);
             // (the keys that only move the selection set it to false)
             full = true;
+            var message = _message;
             _message = _moving ? DialogText.Moving : string.Empty;
             var key = Keyboard.ReadKey();
+            // The window was resized (or Blyant went on after Ctrl+Z): all is drawn again, with the message
+            if (Keyboard.IsRedraw(key))
+            {
+                _message = message;
+                continue;
+            }
+
             // A count in front of a key: 5j 5k (5 rows), 5gg 5G (row 5), shown next to the filter. Esc only drops it
             if (Count.Add(key))
             {

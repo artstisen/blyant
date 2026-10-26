@@ -103,10 +103,18 @@ internal static partial class FileExplorer
             DrawFavorites(redraw);
             if (Tools.TakeRedrawRequest()) DrawFavorites(true);
             redraw = true;
-            var hadMessage = _favoriteMessage.Length > 0;
+            var message = _favoriteMessage;
+            var hadMessage = message.Length > 0;
             _favoriteMessage = string.Empty;
             var selected = _favorites.Count > 0 ? _favorites[_favoriteIndex] : -1;
             var key = Keyboard.ReadKey();
+            // The window was resized (or Blyant went on after Ctrl+Z): all is drawn again, with the message
+            if (Keyboard.IsRedraw(key))
+            {
+                _favoriteMessage = message;
+                continue;
+            }
+
             if (Jump.IsKey(key))
             {
                 // The Jump menu (a count typed before it is dropped)

@@ -28,10 +28,18 @@ internal static partial class FileExplorer
             DrawHistory(redraw);
             if (Tools.TakeRedrawRequest()) DrawHistory(true);
             redraw = true;
-            var hadMessage = _historyMessage.Length > 0;
+            var message = _historyMessage;
+            var hadMessage = message.Length > 0;
             _historyMessage = string.Empty;
             var selected = _historyShown.Count > 0 ? _historyShown[_historyIndex] : -1;
             var key = Keyboard.ReadKey();
+            // The window was resized (or Blyant went on after Ctrl+Z): all is drawn again, with the message
+            if (Keyboard.IsRedraw(key))
+            {
+                _historyMessage = message;
+                continue;
+            }
+
             if (Jump.IsKey(key))
             {
                 // The Jump menu (a count typed before it is dropped)

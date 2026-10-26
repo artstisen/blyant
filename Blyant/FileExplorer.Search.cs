@@ -122,10 +122,18 @@ internal static partial class FileExplorer
             DrawFound(redraw);
             if (Tools.TakeRedrawRequest()) DrawFound(true);
             redraw = true;
-            var hadMessage = _foundMessage.Length > 0;
+            var message = _foundMessage;
+            var hadMessage = message.Length > 0;
             _foundMessage = string.Empty;
             var selected = _foundShown.Count > 0 ? _found[_foundShown[_foundIndex]] : null;
             var key = Keyboard.ReadKey();
+            // The window was resized (or Blyant went on after Ctrl+Z): all is drawn again, with the message
+            if (Keyboard.IsRedraw(key))
+            {
+                _foundMessage = message;
+                continue;
+            }
+
             if (Jump.IsKey(key))
             {
                 // The Jump menu (a count typed before it is dropped)
