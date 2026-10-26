@@ -312,6 +312,8 @@ internal sealed partial class EditorEngine
                     if (FindChar(prefix, typed, TakeCount() ?? 1, false, out var motion))
                     {
                         if (_operator == NoKey) ShowFound(typed);
+                        // A block selected with "$" no longer goes to the end of each line (as with ";" ",")
+                        _blockToEnd = false;
                         RunMotion(motion);
                         return;
                     }

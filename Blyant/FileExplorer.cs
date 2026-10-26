@@ -361,11 +361,11 @@ internal static partial class FileExplorer
                 ? new ConsoleKeyInfo('F', ConsoleKey.F, true, false, false)
                 : Keyboard.ReadKey();
             _openFavorites = false;
-            // The window was resized (or Blyant went on after Ctrl+Z): all is drawn again, with the message
+            // The window was resized (or Blyant went on after Ctrl+Z): all is drawn again, with the message (nothing
+            // on the disk changed: the panes are not read again)
             if (Keyboard.IsRedraw(key))
             {
                 Init.ApplyAutoSize();
-                if (IsDual) Reload(OtherPane);
                 Draw(true);
                 if (Tools.TakeRedrawRequest()) Draw(true);
                 continue;

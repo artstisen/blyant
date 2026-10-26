@@ -81,7 +81,7 @@ internal sealed partial class EditorEngine
 
         if (spots.Count == 1)
         {
-            RunMotion(new Motion(spots[0]));
+            JumpTo(spots[0]);
             return;
         }
 
@@ -130,36 +130,53 @@ internal sealed partial class EditorEngine
         if (target is { } pos)
         {
             EndJump();
-            RunMotion(new Motion(pos));
+            JumpTo(pos);
             return;
         }
 
         ShowJumpHint();
     }
 
+    // The cursor to a word. A block selected with "$" no longer goes to the end of each line (the cursor moved
+    // sideways)
+    private void JumpTo(TextPos pos)
+    {
+        _blockToEnd = false;
+        RunMotion(new Motion(pos));
+    }
+
     // The starts of the words on the rows shown, from the top (not the one under the cursor). Without word wrap, only
-    // those in the part of the lines shown
+    // those in the part of the lines shown. The rows are gone through once, from the top row on, and the cells of a
+    // line are counted as it is gone through (a line can be very long: a minified file)
     private List<TextPos> JumpSpots()
     {
         var spots = new List<TextPos>();
-        var rows = Math.Min(TopRow + Height, Layout.TotalRows());
-        for (var row = TopRow; row < rows; row++)
+        var (line, segment) = Layout.LineAtRow(TopRow);
+        for (var row = 0; row < Height && line < Buffer.LineCount; row++)
         {
-            var (line, segment) = Layout.LineAtRow(row);
             var text = Buffer[line];
             var end = Layout.SegmentEnd(line, segment);
-            for (var col = Layout.SegmentStart(line, segment); col < end;
-                 col += Math.Max(1, TextMetrics.ElementLength(text, col)))
+            var cell = 0; // Without word wrap: the cell of the char in the line
+            for (var col = Layout.SegmentStart(line, segment); col < end;)
             {
-                if (!IsWordStart(text, col)) continue;
-                if (!Wrap)
+                var length = Math.Max(1, TextMetrics.ElementLength(text, col));
+                // (the part of the line after the one shown is not looked at)
+                if (!Wrap && cell >= LeftCell + Layout.Width) break;
+                if ((Wrap || cell >= LeftCell) && IsWordStart(text, col))
                 {
-                    var cell = TextMetrics.WidthOfRange(text, 0, col);
-                    if (cell < LeftCell || cell >= LeftCell + Layout.Width) continue;
+                    var pos = new TextPos(line, col);
+                    if (pos != Cursor) spots.Add(pos);
                 }
 
-                var pos = new TextPos(line, col);
-                if (pos != Cursor) spots.Add(pos);
+                if (!Wrap) cell += TextMetrics.WidthOfRange(text, col, col + length);
+                col += length;
+            }
+
+            // The next row: the next segment of the line, or the next line
+            if (++segment >= Layout.RowCount(line))
+            {
+                line++;
+                segment = 0;
             }
         }
 

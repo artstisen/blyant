@@ -378,6 +378,49 @@ public class EditorTests
     }
 
     [Fact]
+    public void OnAVeryLongLineWithoutWrap_OnlyThePartShownHasSpots_AndTheyAreFoundAtOnce()
+    {
+        // About 240,000 chars on one line (as a minified file), scrolled to its end
+        var text = string.Join(" ", Enumerable.Range(0, 40000).Select(i => "w" + i));
+        var editor = new EditorEngine(text, 76, 20, false);
+        editor.Type(":nowrap<CR>$");
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        editor.Type("<CR>");
+        watch.Stop();
+        // It took 51 seconds when the cells were counted from the start of the line for each word
+        Assert.True(watch.ElapsedMilliseconds < 3000, watch.ElapsedMilliseconds + " ms");
+        var spots = editor.JumpLabels(0).ToList();
+        Assert.NotEmpty(spots);
+        Assert.All(spots, spot =>
+        {
+            var cell = TextMetrics.WidthOfRange(text, 0, spot.Col);
+            Assert.InRange(cell, editor.LeftCell, editor.LeftCell + 75);
+        });
+    }
+
+    [Fact]
+    public void WhenTheViewIsScrolledDown_TheSpotsAreOnTheRowsShown()
+    {
+        var editor = Editor(string.Join("\n", Enumerable.Range(0, 30).Select(i => "line " + i)), 40, 5);
+        editor.Type("G<CR>");
+        Assert.True(editor.TopRow > 0);
+        // Two words on each of the five lines shown, less the one under the cursor
+        var shown = Enumerable.Range(0, 30).Where(line => editor.JumpLabels(line).Any()).ToList();
+        Assert.Equal(Enumerable.Range(editor.TopRow, 5), shown);
+        Assert.Equal(9, shown.Sum(line => editor.JumpLabels(line).Count()));
+    }
+
+    [Theory]
+    [InlineData("Qj$<CR>bd", "wo three\nfour five six")] // The jump: to "two"
+    [InlineData("Qj$Ftd", "hree\nfour five six")] // F: to the "t" of "three"
+    public void ABlockSelectedToTheEnd_StopsAtTheCursor_AfterAJumpOrFind(string keys, string text)
+    {
+        var editor = Editor("one two three\nfour five six");
+        editor.Type(keys);
+        Assert.Equal(text, editor.GetText());
+    }
+
+    [Fact]
     public void TheCharacterFound_IsNotShown_AfterAnOperator()
     {
         var editor = Editor("a-b-c");
