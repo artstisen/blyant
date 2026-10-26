@@ -1699,9 +1699,10 @@ public partial class TextArea
         }
 
         // The rows are written again over the box (without clearing the screen first, which flickers on a slow
-        // terminal): each row whole, and the divider and the status line
+        // terminal): each row whole, with the last column of the area that the text never uses (the right edge of
+        // the box is there), and the divider and the status line
         Array.Fill(_shownRows, null);
-        Array.Fill(_shownCells, _width - 1);
+        Array.Fill(_shownCells, _width);
         _shownStatus = null;
         _shownModeLabel = null;
         Draw();
