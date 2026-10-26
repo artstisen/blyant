@@ -31,7 +31,8 @@ internal sealed partial class EditorEngine
     // A selection: where it was started, where the cursor was, the kind of selection, and "$" in Visual Block mode
     private sealed record Selected(TextPos Anchor, TextPos Cursor, EditorMode Mode, bool ToEnd);
 
-    internal bool HasPending => _count.Length > 0 || _opCount.Length > 0 || _operator != NoKey || _prefix != NoKey;
+    internal bool HasPending => _count.Length > 0 || _opCount.Length > 0 || _operator != NoKey || _prefix != NoKey ||
+                                IsJumping;
 
     private void ResetPending()
     {
@@ -40,6 +41,7 @@ internal sealed partial class EditorEngine
         _operator = NoKey;
         _prefix = NoKey;
         _pendingHigh = NoKey;
+        EndJump();
     }
 
     // The first half of a character outside the Basic Multilingual Plane (an emoji), typed after f, F, t, T or r:
@@ -206,6 +208,25 @@ internal sealed partial class EditorEngine
         {
             JumpToChange(cmd == 'n', TakeCount() ?? 1);
             ResetPending();
+            return;
+        }
+
+        // Enter: jump to a word on the screen (with a count, after an operator and in a macro it goes down to the first
+        // character of a line)
+        if (cmd == '\r' && !operatorPending && _count.Length == 0 && !SingleLine && !IsPlayingMacro)
+        {
+            ResetPending();
+            if (IsRecording)
+            {
+                SetError(Lang.T("The jump to a word is not used while recording"));
+                // Not a step of the macro
+                _macroCommandLeftOut = true;
+            }
+            else
+            {
+                StartJump();
+            }
+
             return;
         }
 

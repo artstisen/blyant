@@ -112,6 +112,7 @@ internal static partial class QuickGuide
         (Kind.Item, "0  _  $", Lang.T("Line start/First character/Line end")),
         (Kind.Item, "gg  G", Lang.T("Document top/Document end")),
         (Kind.Item, "5G  :5", Lang.T("Go to line 5")),
+        (Kind.Item, "Enter", Lang.T("Jump to a word on the screen: type its letters")),
         (Kind.Text, "", ""),
         (Kind.Heading, "", Lang.T("Editing (Normal mode)")),
         (Kind.Item, "x  X", Lang.T("Delete character under/before the cursor")),

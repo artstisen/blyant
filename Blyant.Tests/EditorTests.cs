@@ -263,6 +263,121 @@ public class EditorTests
     }
 
     [Fact]
+    public void JumpLabels_AreSpreadEvenly_AndSharedLettersGetASecond()
+    {
+        Assert.Equal(new[] { "aaa", "aab", "ab", "ac", "ba", "bb", "bc", "ca", "cb", "cc" },
+            EditorEngine.JumpLabelsFor(10, "abc"));
+        Assert.Equal(new[] { "a", "b", "c" }, EditorEngine.JumpLabelsFor(3, "abc"));
+        Assert.Equal(new[] { string.Empty }, EditorEngine.JumpLabelsFor(1, "abc"));
+        // A screen full of words: two letters at the most
+        var labels = EditorEngine.JumpLabelsFor(676);
+        Assert.All(labels, label => Assert.Equal(2, label.Length));
+        Assert.Equal(676, labels.Distinct().Count());
+        // 30 spots: a b c d are shared by two each, e to z have one
+        var thirty = EditorEngine.JumpLabelsFor(30);
+        Assert.Equal(new[] { "aa", "ab", "ba", "bb", "ca", "cb", "da", "db", "e" }, thirty.Take(9));
+        Assert.Equal("z", thirty[^1]);
+    }
+
+    [Theory]
+    [InlineData("one two", 0, true)]
+    [InlineData("one two", 4, true)]
+    [InlineData("one two", 1, false)]
+    [InlineData("foo.bar", 4, true)] // After punctuation
+    [InlineData("(boo)", 1, true)]
+    [InlineData("don't", 4, false)] // An apostrophe between letters is in the word
+    [InlineData("'quoted'", 1, true)]
+    [InlineData("# Heading", 0, false)]
+    [InlineData("v2 is 2nd", 1, false)]
+    [InlineData("v2 is 2nd", 6, true)]
+    public void AWord_StartsAtALetterOrDigitThatDoesNotFollowOne(string text, int col, bool start)
+    {
+        Assert.Equal(start, EditorEngine.IsWordStart(text, col));
+    }
+
+    [Fact]
+    public void Enter_ShowsTheLabels_AndALetterJumpsToTheWord()
+    {
+        var editor = Editor("one two three\nfour five");
+        editor.Type("<CR>");
+        Assert.True(editor.IsJumping);
+        // The word under the cursor is left out
+        Assert.Equal(new[] { (4, "a"), (8, "b") }, editor.JumpLabels(0));
+        Assert.Equal(new[] { (0, "c"), (5, "d") }, editor.JumpLabels(1));
+        editor.Type("c");
+        Assert.False(editor.IsJumping);
+        Assert.Equal(new TextPos(1, 0), editor.Cursor);
+        // A capital letter is the same letter (from "four": one two three five)
+        editor.Type("<CR>B");
+        Assert.Equal(new TextPos(0, 4), editor.Cursor);
+    }
+
+    [Fact]
+    public void AJump_TakesTwoLetters_WhenThereAreMoreWordsThanLetters()
+    {
+        // 31 words: 30 spots, the first four letters are shared by two words each
+        var editor = Editor(string.Join(" ", Enumerable.Range(0, 31).Select(i => "w" + i)), 40, 10);
+        editor.Type("<CR>b");
+        Assert.True(editor.IsJumping);
+        Assert.Equal(new[] { (9, "a"), (12, "b") }, editor.JumpLabels(0));
+        editor.Type("b");
+        Assert.Equal(new TextPos(0, 12), editor.Cursor); // w4
+        // A letter of one spot jumps at once
+        editor.Type("0<CR>e");
+        Assert.Equal(new TextPos(0, 27), editor.Cursor); // w9
+    }
+
+    [Fact]
+    public void AJump_IsCanceledWithEsc_AndOtherKeysDoNothing()
+    {
+        var editor = Editor("one two three");
+        editor.Type("<CR>?1");
+        Assert.True(editor.IsJumping);
+        // Esc cancels the jump, and does not close the editor
+        Assert.Equal(EditorRequest.None, editor.Type("<Esc>"));
+        Assert.False(editor.IsJumping);
+        Assert.Equal(new TextPos(0, 0), editor.Cursor);
+        // Enter goes to the first word
+        editor.Type("<CR><CR>");
+        Assert.Equal(new TextPos(0, 4), editor.Cursor);
+    }
+
+    [Fact]
+    public void Enter_WithACountOrAnOperator_StillGoesDownALine()
+    {
+        var editor = Editor("one\n  two\nthree\nfour");
+        editor.Type("2<CR>");
+        Assert.False(editor.IsJumping);
+        Assert.Equal(new TextPos(2, 0), editor.Cursor);
+        editor.Type("gg");
+        editor.Type("d<CR>");
+        Assert.Equal("three\nfour", editor.GetText());
+    }
+
+    [Fact]
+    public void AJump_InVisualMode_ExtendsTheSelection_AndASingleWordIsJumpedToAtOnce()
+    {
+        var editor = Editor("one two three");
+        editor.Type("v<CR>b");
+        Assert.Equal(EditorMode.Visual, editor.Mode);
+        Assert.Equal(new TextPos(0, 8), editor.Cursor);
+        editor = Editor("one two");
+        editor.Type("<CR>");
+        Assert.False(editor.IsJumping);
+        Assert.Equal(new TextPos(0, 4), editor.Cursor);
+    }
+
+    [Fact]
+    public void OnlyTheWordsOnTheScreen_AreSpots()
+    {
+        // Height 2: the third line is not shown
+        var editor = Editor("one two\nthree\nfour five", 40, 2);
+        editor.Type("<CR>");
+        Assert.Equal(2, editor.JumpLabels(0).Count() + editor.JumpLabels(1).Count());
+        Assert.Empty(editor.JumpLabels(2));
+    }
+
+    [Fact]
     public void TheCharacterFound_IsNotShown_AfterAnOperator()
     {
         var editor = Editor("a-b-c");

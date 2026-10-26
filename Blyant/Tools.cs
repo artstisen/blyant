@@ -877,6 +877,8 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("f. t.", Lang.T("To/Before next \".\", on any line (F T: backwards)"), false));
             _shortcutList.Add(new Shortcut("  f. t.", Lang.T("Every \".\" is highlighted until another key"), false));
             _shortcutList.Add(new Shortcut("; ,", Lang.T("Repeat f/t forwards/backwards"), false));
+            _shortcutList.Add(new Shortcut("Enter", Lang.T("Jump to a word on the screen: type its letters"), false));
+            _shortcutList.Add(new Shortcut("  Enter", Lang.T("Esc cancels. With a count: that many lines down"), false));
             _shortcutList.Add(new Shortcut("PgUp PgDn", Lang.T("Move one page up/down"), false));
             _shortcutList.Add(new Shortcut("CTRL+U CTRL+D", Lang.T("Move half a page up/down"), false));
             _shortcutList.Add(new Shortcut("gm gM", Lang.T("Move half the screen width right/left"), false));

@@ -46,6 +46,7 @@ internal static class DialogText
     public static string DividerNavigate => Lang.T("NAVIGATE");
     public static string DividerSelect => Lang.T("SELECT");
     public static string DividerCommand => Lang.T("COMMAND");
+    public static string DividerJump => Lang.T("JUMP");
     public static string CaptionsEditor => Lang.T("Editor");
     public static string CaptionsStringMemory => Lang.T("String memory");
     public static string ColorDefault => Lang.T("[Default]");

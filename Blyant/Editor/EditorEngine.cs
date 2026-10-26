@@ -433,6 +433,16 @@ internal sealed partial class EditorEngine
         _keepDesiredCell = false;
         if (!Buffer.IsStepOpen) _stepCursor = Cursor;
 
+        // The letters of a jump to a word (not a command of their own: not repeated or recorded)
+        if (IsJumping)
+        {
+            HandleJumpKey(key);
+            ClampCursor();
+            _desiredCell = -1;
+            EnsureCursorVisible();
+            return _request;
+        }
+
         // Record the keys of each command for repeating with "."
         var startsCommand = Mode == EditorMode.Normal && !HasPending;
         if (!_replaying)

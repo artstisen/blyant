@@ -36,6 +36,8 @@ public partial class TextArea
     private const int StyleLineNumber = 4;
     private const int StyleCurrentLineNumber = 5; // The number of the line the cursor is on
     private const int StyleFound = 6; // The character found by f, F, t or T
+    private const int StyleJumpLabel = 7; // The letter to type to jump to a word
+    private const int StyleJumpNext = 8; // The letter to type after it
     private const int StyleMarkdown = 10; // The styles of Markdown follow from this number
 
     /// <summary>
@@ -1753,7 +1755,7 @@ public partial class TextArea
             return;
         }
 
-        var label = _engine.Mode switch
+        var label = _engine.IsJumping ? DialogText.DividerJump : _engine.Mode switch
         {
             EditorMode.Insert => DialogText.CaptionsEdit,
             EditorMode.Visual or EditorMode.VisualLine or EditorMode.VisualBlock => DialogText.DividerSelect,
@@ -1920,10 +1922,13 @@ public partial class TextArea
             break;
         }
 
+        // While a jump to a word is made: its letters, shown in place of the first characters of the word
+        var labels = JumpLabelsOf(line, s);
+
         // The common case is a row in a single color
         var misspelled = _engine.Misspelled(line);
         var markdown = _engine.SyntaxStyles(line);
-        if (selection == null && !hasMatches && misspelled.Count == 0 && markdown == null)
+        if (selection == null && !hasMatches && misspelled.Count == 0 && markdown == null && labels == null)
         {
             row.Append(TextMetrics.Printable(s, start, end));
             return cells;
@@ -1971,6 +1976,18 @@ public partial class TextArea
             }
         }
 
+        if (labels != null)
+        {
+            foreach (var (at, (_, next)) in labels)
+            {
+                var length = Math.Max(1, TextMetrics.ElementLength(s, at));
+                for (var i = Math.Max(start, at); i < Math.Min(end, at + length); i++)
+                {
+                    styles[i - start] = next ? StyleJumpNext : StyleJumpLabel;
+                }
+            }
+        }
+
         var runStart = start;
         for (var i = start; i <= end; i++)
         {
@@ -1978,7 +1995,7 @@ public partial class TextArea
             if (i > runStart)
             {
                 row.Append(StyleMarker).Append((char)('0' + styles[runStart - start]));
-                row.Append(TextMetrics.Printable(s, runStart, i));
+                AppendShown(row, s, runStart, i, labels);
             }
 
             runStart = i;
@@ -1995,6 +2012,52 @@ public partial class TextArea
         return cells;
     }
 
+    // The letters of the jump to a word on a line, by the char index of the character they are shown in place of
+    // (Next: the letter to type after the first). Null when there are none. The second letter is shown over the
+    // character after the first, when that is on the line and not a tab
+    private Dictionary<int, (char Letter, bool Next)>? JumpLabelsOf(int line, string s)
+    {
+        Dictionary<int, (char, bool)>? labels = null;
+        foreach (var (col, label) in _engine.JumpLabels(line))
+        {
+            if (label.Length == 0 || col >= s.Length) continue;
+            labels ??= new Dictionary<int, (char, bool)>();
+            labels[col] = (label[0], false);
+            var after = col + Math.Max(1, TextMetrics.ElementLength(s, col));
+            if (label.Length > 1 && after < s.Length && s[after] != '\t' &&
+                TextMetrics.WidthOfRange(s, after, after + Math.Max(1, TextMetrics.ElementLength(s, after))) > 0)
+            {
+                labels[after] = (label[1], true);
+            }
+        }
+
+        return labels;
+    }
+
+    // A part of a line as shown, with the letters of a jump in place of the characters they cover (a wide character
+    // keeps its width: the letter and a blank space)
+    private static void AppendShown(StringBuilder row, string s, int start, int end,
+        Dictionary<int, (char Letter, bool Next)>? labels)
+    {
+        if (labels == null)
+        {
+            row.Append(TextMetrics.Printable(s, start, end));
+            return;
+        }
+
+        var from = start;
+        for (var i = start; i < end; i += Math.Max(1, TextMetrics.ElementLength(s, i)))
+        {
+            if (!labels.TryGetValue(i, out var label)) continue;
+            if (i > from) row.Append(TextMetrics.Printable(s, from, i));
+            var after = i + Math.Max(1, TextMetrics.ElementLength(s, i));
+            row.Append(label.Letter).Append(' ', Math.Max(0, TextMetrics.WidthOfRange(s, i, after) - 1));
+            from = after;
+        }
+
+        if (end > from) row.Append(TextMetrics.Printable(s, from, end));
+    }
+
     // The colors of a part of a row
     private static void SetStyleColors(int style)
     {
@@ -2005,6 +2068,8 @@ public partial class TextArea
                 StyleSelection => ConsoleColors.ColorPreset.HighlightInverted,
                 StyleSearchMatch => ConsoleColors.ColorPreset.AttentionInverted,
                 StyleFound => ConsoleColors.ColorPreset.SelectorInverted,
+                StyleJumpLabel => ConsoleColors.ColorPreset.KeyHintInverted,
+                StyleJumpNext => ConsoleColors.ColorPreset.Accent,
                 StyleMisspelled => ConsoleColors.ColorPreset.WarningInverted,
                 StyleLineNumber => ConsoleColors.ColorPreset.LineNumber,
                 StyleCurrentLineNumber => ConsoleColors.ColorPreset.CurrentLineNumber,
