@@ -336,7 +336,7 @@ public class FavoriteSubfoldersTests : IDisposable
         // A subfolder of the favorites: a subfolder of the bookmark folder (merged with one of the same name)
         FileFavorites.Parse("\t[work]\n \t[sub]\n  \t/x/d\n \t[Other]\n  \t/x/e\n \t/x/f\n\t/x/g\n");
         var result = Bookmarks.ImportFavorites(FileFavorites.Items, true);
-        Assert.Equal(new Bookmarks.ImportResult(4, 0, 1, 2, 0), result);
+        Assert.Equal(new ImportResult(4, 0, 1, 2, 0), result);
         Assert.Equal("[Work] .a .[Sub] ..b ..d .c .[Other] ..e .f g", string.Join(" ", Bookmarks.Items.Select(entry =>
             new string('.', entry.Level) + (entry.IsFolder ? "[" + entry.Name + "]" : entry.Target.Name))));
     }

@@ -187,7 +187,7 @@ internal static partial class FileExplorer
                 }
 
                 // A name can follow the command
-                if (command != null && CommandLine.Name(command) is "folder" or "subfolder" or "rename" or "new")
+                if (command != null && CommandLine.Name(command) is "folder" or "subfolder" or "rename" or "new" or "import")
                 {
                     command = CommandLine.Name(command);
                 }
@@ -260,6 +260,9 @@ internal static partial class FileExplorer
                         _favoriteMessage = FileFavorites.Items[selected].IsFolder
                             ? DialogText.FavoriteFolderNoPath
                             : CopyOfList(FileFavorites.Items[selected].Path);
+                        break;
+                    case "import":
+                        ImportBookmarks(CommandLine.LastArgument);
                         break;
                     case "goto":
                         if (selected < 0 || FileFavorites.Items[selected].IsFolder) break;
@@ -463,6 +466,65 @@ internal static partial class FileExplorer
     {
         var result = FileFavorites.Save();
         if (result != DialogText.Success) _favoriteMessage = result;
+    }
+
+    // ":import bookmarks": the bookmarks of the Jump menu copied into the favorites, after asking with what it will
+    // do (the bookmarks stay; places that are favorites already are left out, folders of the same name merged, and
+    // the bookmarks of pages of Blyant left out, as a favorite is a file or a directory)
+    private static void ImportBookmarks(string argument)
+    {
+        if (!argument.Trim().Equals("bookmarks", StringComparison.OrdinalIgnoreCase))
+        {
+            _favoriteMessage = Lang.T(":import bookmarks  copies the bookmarks of the Jump menu here");
+            return;
+        }
+
+        Bookmarks.Load();
+        var bookmarks = Bookmarks.Items;
+        if (!bookmarks.Any(bookmark => !bookmark.IsFolder))
+        {
+            _favoriteMessage = Lang.T("There are no bookmarks to copy");
+            return;
+        }
+
+        var plan = FileFavorites.ImportBookmarks(bookmarks, false);
+        if (plan.Added == 0 && plan.Notes == 0)
+        {
+            _favoriteMessage = plan.Skipped == 0
+                ? Lang.T("Only bookmarks of pages: a favorite is a file or a directory")
+                : Lang.T("All the bookmarks are favorites already");
+            return;
+        }
+
+        ChoiceBox.Forget();
+        // What will be done, a sentence for each that there is
+        var sentences = new List<string>();
+        if (plan.Added > 0) sentences.Add(Lang.F("{0} files and directories are added.", plan.Added));
+        if (plan.NewFolders > 0) sentences.Add(Lang.F("New folders: {0}.", plan.NewFolders));
+        if (plan.MergedFolders > 0) sentences.Add(Lang.F("Added to folders of the same name: {0}.", plan.MergedFolders));
+        if (plan.Skipped > 0) sentences.Add(Lang.F("{0} are favorites already, and are left out.", plan.Skipped));
+        if (plan.LeftOut > 0) sentences.Add(Lang.F("Bookmarks of pages left out: {0}.", plan.LeftOut));
+        if (plan.Notes > 0) sentences.Add(Lang.F("Notes copied: {0} (a note a favorite has is kept).", plan.Notes));
+        // A favorite shows the name of its file
+        if (bookmarks.Any(bookmark => !bookmark.IsFolder && bookmark.Name.Length > 0 &&
+                                      bookmark.Target.Kind is JumpKind.File or JumpKind.Directory &&
+                                      !FileFavorites.Contains(bookmark.Target.Target)))
+        {
+            sentences.Add(Lang.T("The names given to bookmarks are not copied."));
+        }
+
+        var note = string.Join(" ", sentences);
+        if (!ChoiceBox.Confirm(DialogText.CaptionsFileFavorites, Lang.T("Copy the bookmarks to the favorites?"), note,
+                false))
+        {
+            return;
+        }
+
+        var done = FileFavorites.ImportBookmarks(bookmarks, true);
+        SaveFavoriteList();
+        EventLog.Add(DialogText.LogFile + "Bookmarks copied to the favorites: " + done.Added + " added, " +
+                     done.Skipped + " left out, " + done.LeftOut + " pages");
+        if (_favoriteMessage.Length == 0) _favoriteMessage = Lang.F("{0} bookmarks copied to the favorites", done.Added);
     }
 
     // Ask for the name of a new folder (if it is not given) and add it in front of the selected item

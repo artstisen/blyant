@@ -692,6 +692,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("  " + Lang.T("Notes"), Lang.T("Kept in favorites.txt, never next to the files"), false));
             _shortcutList.Add(new Shortcut(":panes", Lang.T("Show/Hide the note and the peek below the list"), false));
             _shortcutList.Add(new Shortcut(":peek", Lang.T("Show/Hide the peek (the top of the file)"), false));
+            _shortcutList.Add(new Shortcut(":import bookmarks", Lang.T("Copy the bookmarks of the Jump menu here"), false));
             _shortcutList.Add(new Shortcut(":path :name", Lang.T("Copy the path/the name shown (also p in the editor)"), false));
             _shortcutList.Add(new Shortcut("I :info", Lang.T("Show type, size, dates and path"), false));
             _shortcutList.Add(new Shortcut("P D :remove", Lang.T("Remove the favorite or folder (asks; files stay)"), false));

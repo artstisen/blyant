@@ -7,7 +7,8 @@ namespace Blyant;
 /// added with B on any list of the Jump menu, or with ":bookmark" in the editor and the file browser. They are in
 /// the order they were added, which can be changed on the Bookmarks tab. A bookmark can be given a name and a text
 /// color of its own, and bookmarks can be grouped in folders (as the favorites of the file browser). The list has
-/// no limit; ":import favorites" copies the favorites of the file browser into it (ImportFavorites).
+/// no limit; ":import favorites" copies the favorites of the file browser into it (ImportFavorites), and
+/// ":import bookmarks" in the favorites copies it there (FileFavorites.ImportBookmarks).
 ///
 /// The bookmarks are numbered 1, 2, 3 ... in the order of the list (folders are not counted, and the bookmarks in a
 /// closed folder are): ":book 3" jumps to the third.
@@ -51,12 +52,12 @@ internal static class Bookmarks
         /// <summary>
         /// The name given to a bookmark (empty: the name of the place is shown), or the name of a folder
         /// </summary>
-        internal string Name { get; set; }
+        public string Name { get; set; }
 
         /// <summary>
         /// The text color of the bookmark or folder (null: none of its own)
         /// </summary>
-        internal ConsoleColor? Color { get; set; }
+        public ConsoleColor? Color { get; set; }
 
         public bool IsFolder { get; init; }
         public int Level { get; set; }
@@ -74,7 +75,7 @@ internal static class Bookmarks
         /// <summary>
         /// The note of the bookmark or folder (empty: none)
         /// </summary>
-        internal string Note { get; set; } = string.Empty;
+        public string Note { get; set; } = string.Empty;
 
         /// <summary>
         /// The name shown: the one given, or the name of the place (a folder: its name)
@@ -257,128 +258,21 @@ internal static class Bookmarks
     private static readonly char[] LineBreaking = { '\t', '\r', '\n' };
 
     /// <summary>
-    /// What copying the favorites into the bookmarks did (or would do: ImportFavorites with apply false)
-    /// </summary>
-    /// <param name="Added">The places added</param>
-    /// <param name="Skipped">The places that were bookmarks already (left where they are)</param>
-    /// <param name="NewFolders">The folders made</param>
-    /// <param name="MergedFolders">The folders of the favorites added to a bookmark folder of the same name</param>
-    /// <param name="Notes">The notes copied (with the places and folders added, and to the bookmarks and folders that
-    /// were there without a note)</param>
-    internal sealed record ImportResult(int Added, int Skipped, int NewFolders, int MergedFolders, int Notes);
-
-    /// <summary>
     /// Copy the favorites of the file browser into the bookmarks: a file as a bookmark of a file, a directory of a
-    /// directory, a folder as a folder and a subfolder as a subfolder (with its color, and closed if it is), in their
-    /// order, after the bookmarks there are. A place that is a bookmark already is left out, and a folder with the
-    /// name of a bookmark folder is added to it (at its end), as is a subfolder with the name of a subfolder of that
-    /// folder. The notes are copied too, also to a bookmark or folder that is there without a note (a note it has is
-    /// kept). The favorites stay as they are; one whose file is gone is copied too
+    /// directory, with their folders, colors and notes (see FolderList.Import). The favorites stay as they are; one
+    /// whose file is gone is copied too
     /// </summary>
     /// <param name="favorites">The favorites, in their order (a folder followed by those in it)</param>
     /// <param name="apply">False to only count what would be done</param>
-    internal static ImportResult ImportFavorites(IReadOnlyList<FileFavorites.Favorite> favorites, bool apply)
-    {
-        // The list is changed on a copy when only counting
-        var list = apply ? List : List.Select(Copy).ToList();
-        int added = 0, skipped = 0, newFolders = 0, merged = 0, notes = 0;
-
-        // The note of a favorite, to a bookmark or folder that has none
-        void CopyNote(FileFavorites.Favorite from, Entry to)
+    internal static ImportResult ImportFavorites(IReadOnlyList<FileFavorites.Favorite> favorites, bool apply) =>
+        Folders.Import(favorites, apply, favorite =>
         {
-            if (from.Note.Length == 0 || to.Note.Length > 0) return;
-            to.Note = from.Note;
-            notes++;
-        }
-        Entry? folder = null; // The bookmark folder the favorites of the folder go to
-        Entry? subfolder = null; // And the subfolder those of a subfolder go to
-        var seen = new List<JumpTarget>();
-
-        // The end of a folder of the list (its last item, with its subfolders)
-        int End(Entry of)
-        {
-            var end = list.IndexOf(of);
-            while (end + 1 < list.Count && list[end + 1].Level > of.Level) end++;
-            return end;
-        }
-
-        foreach (var favorite in favorites)
-        {
-            if (favorite.IsFolder)
-            {
-                var sub = favorite.Level > 0 && folder != null;
-                var start = sub ? list.IndexOf(folder!) + 1 : 0;
-                var end = sub ? End(folder!) + 1 : list.Count;
-                var same = list.GetRange(start, end - start).FirstOrDefault(entry =>
-                    entry.IsFolder && entry.Level == (sub ? 1 : 0) &&
-                    entry.Name.Equals(favorite.Name, StringComparison.OrdinalIgnoreCase));
-                if (same == null)
-                {
-                    same = Entry.Folder(favorite.Name);
-                    same.Color = favorite.Color;
-                    same.Collapsed = favorite.Collapsed;
-                    same.Level = sub ? 1 : 0;
-                    list.Insert(end, same);
-                    newFolders++;
-                }
-                else
-                {
-                    merged++;
-                }
-
-                CopyNote(favorite, same);
-                if (sub)
-                {
-                    subfolder = same;
-                }
-                else
-                {
-                    folder = same;
-                    subfolder = null;
-                }
-
-                continue;
-            }
-
-            if (favorite.Level < 2) subfolder = null;
-            if (favorite.Level == 0) folder = null;
             var path = Path.GetFullPath(favorite.Path);
+            if (path.IndexOfAny(LineBreaking) >= 0) return null;
             // A favorite that is gone keeps its kind as far as it can be told: a name without an extension is
             // taken for a directory only when it is there
-            var target = new JumpTarget(Directory.Exists(path) ? JumpKind.Directory : JumpKind.File, path);
-            var there = list.Find(entry => !entry.IsFolder && entry.Target.SameAs(target));
-            if (there != null || seen.Exists(other => other.SameAs(target)) || path.IndexOfAny(LineBreaking) >= 0)
-            {
-                if (there != null) CopyNote(favorite, there);
-                skipped++;
-                continue;
-            }
-
-            seen.Add(target);
-            var into = subfolder ?? folder;
-            var bookmark = new Entry(target) { Color = favorite.Color, Level = into == null ? 0 : into.Level + 1 };
-            CopyNote(favorite, bookmark);
-            if (into == null)
-            {
-                list.Add(bookmark);
-            }
-            else
-            {
-                // Last in its folder
-                list.Insert(End(into) + 1, bookmark);
-            }
-
-            added++;
-        }
-
-        return new ImportResult(added, skipped, newFolders, merged, notes);
-    }
-
-    private static Entry Copy(Entry entry) =>
-        entry.IsFolder
-            ? new Entry(entry.Target, entry.Name)
-                { IsFolder = true, Color = entry.Color, Collapsed = entry.Collapsed, Level = entry.Level, Note = entry.Note }
-            : new Entry(entry.Target, entry.Name) { Color = entry.Color, Level = entry.Level, Note = entry.Note };
+            return new Entry(new JumpTarget(Directory.Exists(path) ? JumpKind.Directory : JumpKind.File, path));
+        }, Entry.Folder, (one, other) => one.Target.SameAs(other.Target));
 
     /// <summary>
     /// Add a place at the end of the list, outside the folders (a place that is there already stays where it is)

@@ -61,7 +61,7 @@ public class BookmarkNotesTests : IDisposable
         Bookmarks.SetNote(Bookmarks.Items[1], "My own note");
         var plan = Bookmarks.ImportFavorites(FileFavorites.Items, false);
         // a is added with its note, the folder is new with its note, b gets the note it did not have, c keeps its own
-        Assert.Equal(new Bookmarks.ImportResult(1, 2, 1, 0, 3), plan);
+        Assert.Equal(new ImportResult(1, 2, 1, 0, 3), plan);
         Assert.Equal(string.Empty, Bookmarks.Items[0].Note);
         Assert.Equal(plan, Bookmarks.ImportFavorites(FileFavorites.Items, true));
         Assert.Equal("Note of b", Bookmarks.Items[0].Note);
@@ -70,7 +70,7 @@ public class BookmarkNotesTests : IDisposable
         Assert.Equal("Folder note", work.Note);
         Assert.Equal("Note of a", Bookmarks.Items.Single(entry => entry.Target.Target == In("a.md")).Note);
         // Again: nothing to do
-        Assert.Equal(new Bookmarks.ImportResult(0, 3, 0, 1, 0), Bookmarks.ImportFavorites(FileFavorites.Items, false));
+        Assert.Equal(new ImportResult(0, 3, 0, 1, 0), Bookmarks.ImportFavorites(FileFavorites.Items, false));
     }
 
     [Fact]

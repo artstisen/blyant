@@ -49,7 +49,7 @@ public class BookmarksTests : IDisposable
 
         // Counted first, without changing the list
         var plan = Bookmarks.ImportFavorites(favorites, false);
-        Assert.Equal(new Bookmarks.ImportResult(5, 1, 1, 1, 0), plan);
+        Assert.Equal(new ImportResult(5, 1, 1, 1, 0), plan);
         Assert.Equal(before, Bookmarks.Items.Count);
 
         Assert.Equal(plan, Bookmarks.ImportFavorites(favorites, true));
@@ -72,6 +72,52 @@ public class BookmarksTests : IDisposable
         Assert.False(items.Single(entry => entry.Target.Target == In("last.md")).InFolder);
         // Again: all are there
         Assert.Equal(0, Bookmarks.ImportFavorites(favorites, true).Added);
+    }
+
+    [Fact]
+    public void TheBookmarks_AreCopiedIntoTheFavorites_WithoutThePagesAndTheNames()
+    {
+        Directory.CreateDirectory(In("Novel"));
+        // A favorite already, and a folder of the same name (in other case)
+        FileFavorites.Parse("\t" + In("plan.md") + "\n\t[ideas]\n");
+        Bookmarks.Parse("file\t" + In("notes.md") + "\tMy notes\tGreen\n" +
+                        "dir\t" + In("Novel") + "\n" +
+                        "page\tclipboard\n" +
+                        "file\t" + In("plan.md") + "\n" +
+                        "[Ideas]\tCyan\tcollapsed\n" +
+                        "#Folder note\n" +
+                        " file\t" + In("idea.md") + "\n" +
+                        " page\tlog\n");
+        try
+        {
+            // Counted first, without changing the favorites
+            var plan = FileFavorites.ImportBookmarks(Bookmarks.Items, false);
+            Assert.Equal(new ImportResult(3, 1, 0, 1, 1, 2), plan);
+            Assert.Equal(2, FileFavorites.Items.Count);
+            Assert.Equal(string.Empty, FileFavorites.Items[1].Note);
+
+            Assert.Equal(plan, FileFavorites.ImportBookmarks(Bookmarks.Items, true));
+            var items = FileFavorites.Items.ToList();
+            // The name given to the bookmark is not copied, its color is
+            var notes = items.Single(item => item.Path == In("notes.md"));
+            Assert.Equal(string.Empty, notes.Name);
+            Assert.Equal(ConsoleColor.Green, notes.Color);
+            Assert.Contains(items, item => item.Path == In("Novel"));
+            // Merged into the folder there was, with the note it did not have
+            var ideas = items.Single(item => item.IsFolder);
+            Assert.Equal("Folder note", ideas.Note);
+            Assert.Equal(In("idea.md"), items[items.IndexOf(ideas) + 1].Path);
+            Assert.True(items[items.IndexOf(ideas) + 1].InFolder);
+            // No page became a favorite, and the bookmarks stay
+            Assert.Equal(5, items.Count);
+            Assert.Equal(7, Bookmarks.Items.Count);
+            // Again: all are there
+            Assert.Equal(new ImportResult(0, 4, 0, 1, 0, 2), FileFavorites.ImportBookmarks(Bookmarks.Items, false));
+        }
+        finally
+        {
+            FileFavorites.Parse(string.Empty);
+        }
     }
 
     [Fact]

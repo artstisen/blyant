@@ -23,9 +23,9 @@ internal static class FileFavorites
     internal sealed class Favorite : IFolderItem
     {
         internal string Path = string.Empty;
-        internal ConsoleColor? Color;
+        public ConsoleColor? Color { get; set; }
         public bool IsFolder { get; init; }
-        internal string Name = string.Empty; // The name of a folder
+        public string Name { get; set; } = string.Empty; // The name of a folder
         public bool Collapsed { get; set; } // A folder that is closed: the favorites in it are not shown
         public int Level { get; set; } // 0: not in a folder, 1: in a folder (a subfolder), 2: in a subfolder
 
@@ -36,7 +36,7 @@ internal static class FileFavorites
             init => Level = value ? 1 : 0;
         }
 
-        internal string Note = string.Empty; // The note of the favorite or folder (empty: none)
+        public string Note { get; set; } = string.Empty; // The note of the favorite or folder (empty: none)
         internal int Line; // Where the cursor was when the file was closed in the editor (from 1; 0: not known)
         internal int Column;
         internal string Split = string.Empty; // The other pane of a split, as written ("|40:1"; empty: not split)
@@ -277,6 +277,23 @@ internal static class FileFavorites
         if (Contains(path) || path.IndexOfAny(new[] { '\r', '\n' }) >= 0) return -1;
         return Folders.AddBelow(new Favorite { Path = Path.GetFullPath(path) }, at);
     }
+
+    /// <summary>
+    /// Copy the bookmarks of the Jump menu into the favorites: the bookmarks of files and directories, with their
+    /// folders, colors and notes (see FolderList.Import). A bookmark of a page of Blyant is left out (a favorite is a
+    /// file or a directory), and the name given to a bookmark is not copied (a favorite shows the name of its file).
+    /// The bookmarks stay as they are
+    /// </summary>
+    /// <param name="bookmarks">The bookmarks, in their order (a folder followed by those in it)</param>
+    /// <param name="apply">False to only count what would be done</param>
+    internal static ImportResult ImportBookmarks(IReadOnlyList<Bookmarks.Entry> bookmarks, bool apply) =>
+        Folders.Import(bookmarks, apply,
+            bookmark => bookmark.Target.Kind is JumpKind.File or JumpKind.Directory &&
+                        bookmark.Target.Target.IndexOfAny(new[] { '\r', '\n' }) < 0
+                ? new Favorite { Path = Path.GetFullPath(bookmark.Target.Target) }
+                : null,
+            name => new Favorite { IsFolder = true, Name = name },
+            (one, other) => FileOperations.SamePath(one.Path, other.Path));
 
     /// <summary>
     /// Remove a favorite, or a folder with the favorites in it

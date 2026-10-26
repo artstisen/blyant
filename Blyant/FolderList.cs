@@ -16,7 +16,34 @@ internal interface IFolderItem
     /// A folder that is closed: the items in it are not shown
     /// </summary>
     bool Collapsed { get; set; }
+
+    /// <summary>
+    /// The name of a folder
+    /// </summary>
+    string Name { get; }
+
+    /// <summary>
+    /// The text color (null: none of its own)
+    /// </summary>
+    ConsoleColor? Color { get; set; }
+
+    /// <summary>
+    /// The note (empty: none)
+    /// </summary>
+    string Note { get; set; }
 }
+
+/// <summary>
+/// What copying one list with folders into another did (or would do: FolderList.Import with apply false)
+/// </summary>
+/// <param name="Added">The places added</param>
+/// <param name="Skipped">The places that were in the list already (left where they are)</param>
+/// <param name="NewFolders">The folders made</param>
+/// <param name="MergedFolders">The folders added to a folder of the same name</param>
+/// <param name="Notes">The notes copied (with the places and folders added, and to the places and folders that were
+/// there without a note)</param>
+/// <param name="LeftOut">The places the list cannot hold (a bookmark of a page of Blyant in the favorites)</param>
+internal sealed record ImportResult(int Added, int Skipped, int NewFolders, int MergedFolders, int Notes, int LeftOut = 0);
 
 /// <summary>
 /// A list in the order set by the user, with folders: the items of a folder follow it in the list, at a level one
@@ -341,6 +368,124 @@ internal sealed class FolderList<T> where T : class, IFolderItem
         var end = index;
         while (end + 1 < Items.Count && Items[end + 1].Level > level) end++;
         return end;
+    }
+
+    /// <summary>
+    /// Copy the items of another list with folders into this one (the favorites into the bookmarks, and back): a
+    /// place as a place, a folder as a folder and a subfolder as a subfolder (with its color, and closed if it is),
+    /// in their order, after the items there are. A place that is in the list already is left out, and a folder with
+    /// the name of a folder of the list is added to it (at its end), as is a subfolder with the name of a subfolder of
+    /// that folder. The notes are copied too, also to a place or folder that is there without a note (a note it has is
+    /// kept). The other list stays as it is
+    /// </summary>
+    /// <param name="from">The items of the other list, in their order (a folder followed by those in it)</param>
+    /// <param name="apply">False to only count what would be done (nothing in the list is changed)</param>
+    /// <param name="newPlace">A new item for a place of the other list, without its color, level and note (null:
+    /// this list cannot hold it)</param>
+    /// <param name="newFolder">A new folder with a name</param>
+    /// <param name="samePlace">True if two items of this list are of the same place</param>
+    internal ImportResult Import<TFrom>(IReadOnlyList<TFrom> from, bool apply, Func<TFrom, T?> newPlace,
+        Func<string, T> newFolder, Func<T, T, bool> samePlace) where TFrom : IFolderItem
+    {
+        // When only counting, the items are put in a copy of the list, and the notes that would be copied are
+        // counted without changing the items
+        var list = apply ? Items : new List<T>(Items);
+        var noted = new HashSet<T>();
+        int added = 0, skipped = 0, newFolders = 0, merged = 0, notes = 0, leftOut = 0;
+
+        // The note of an item of the other list, to an item that has none
+        void CopyNote(TFrom source, T to)
+        {
+            if (source.Note.Length == 0 || to.Note.Length > 0 || noted.Contains(to)) return;
+            if (apply) to.Note = source.Note;
+            else noted.Add(to);
+            notes++;
+        }
+
+        T? folder = null; // The folder the items of the folder go to
+        T? subfolder = null; // And the subfolder those of a subfolder go to
+
+        // The end of a folder of the list (its last item, with its subfolders)
+        int End(T of)
+        {
+            var end = list.IndexOf(of);
+            while (end + 1 < list.Count && list[end + 1].Level > of.Level) end++;
+            return end;
+        }
+
+        foreach (var source in from)
+        {
+            if (source.IsFolder)
+            {
+                var sub = source.Level > 0 && folder != null;
+                var start = sub ? list.IndexOf(folder!) + 1 : 0;
+                var end = sub ? End(folder!) + 1 : list.Count;
+                var same = list.GetRange(start, end - start).FirstOrDefault(item =>
+                    item.IsFolder && item.Level == (sub ? 1 : 0) &&
+                    item.Name.Equals(source.Name, StringComparison.OrdinalIgnoreCase));
+                if (same == null)
+                {
+                    same = newFolder(source.Name);
+                    same.Color = source.Color;
+                    same.Collapsed = source.Collapsed;
+                    same.Level = sub ? 1 : 0;
+                    list.Insert(end, same);
+                    newFolders++;
+                }
+                else
+                {
+                    merged++;
+                }
+
+                CopyNote(source, same);
+                if (sub)
+                {
+                    subfolder = same;
+                }
+                else
+                {
+                    folder = same;
+                    subfolder = null;
+                }
+
+                continue;
+            }
+
+            if (source.Level < 2) subfolder = null;
+            if (source.Level == 0) folder = null;
+            if (newPlace(source) is not { } place)
+            {
+                leftOut++;
+                continue;
+            }
+
+            // (also one added before: a place that is twice in the other list is added once)
+            var there = list.Find(item => !item.IsFolder && samePlace(item, place));
+            if (there != null)
+            {
+                CopyNote(source, there);
+                skipped++;
+                continue;
+            }
+
+            var into = subfolder ?? folder;
+            place.Color = source.Color;
+            place.Level = into == null ? 0 : into.Level + 1;
+            CopyNote(source, place);
+            if (into == null)
+            {
+                list.Add(place);
+            }
+            else
+            {
+                // Last in its folder
+                list.Insert(End(into) + 1, place);
+            }
+
+            added++;
+        }
+
+        return new ImportResult(added, skipped, newFolders, merged, notes, leftOut);
     }
 
     /// <summary>
