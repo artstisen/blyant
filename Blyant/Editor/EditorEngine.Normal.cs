@@ -107,6 +107,10 @@ internal sealed partial class EditorEngine
             {
                 Mode = EditorMode.Normal;
             }
+            else if (_found != null)
+            {
+                // (hidden as after any other key)
+            }
             else if (HighlightSearch && _searchRegex != null)
             {
                 HighlightSearch = false;
@@ -286,6 +290,7 @@ internal sealed partial class EditorEngine
                     _lastFindChar = typed;
                     if (FindChar(prefix, typed, TakeCount() ?? 1, false, out var motion))
                     {
+                        if (_operator == NoKey) ShowFound(typed);
                         RunMotion(motion);
                         return;
                     }

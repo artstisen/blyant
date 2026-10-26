@@ -51,7 +51,7 @@ In Insert mode: `Tab` inserts 4 blank spaces (or completes a word, see [Completi
 - `gg` `G` Top/End of the text
 - `5G` or `:5` Go to line 5
 - `{` `}` Previous/Next blank line
-- `f.` `t.` To/Before the next `.` on the line (`F` `T`: backwards), repeated with `;` and `,`. Also with an emoji: `f😀`
+- `f.` `t.` To/Before the next `.`, on the line or on a line below (`F` `T`: backwards, on the line or above), repeated with `;` and `,`. `t` before a `.` that starts a line goes to the end of the line above (`T` after one that ends a line: to the start of the line below). With an operator it reaches the other lines too (`dfx`, `ct.`). Every `.` in the text is highlighted until you press a key other than `;`, `,`, a count or another `f` `t` `F` `T`; `Esc` only takes the highlight away (the next `Esc` closes the editor). Also with an emoji: `f😀`
 - `PgUp` `PgDn` One page up/down, `CTRL+U` `CTRL+D` Half a page up/down
 - `gm` `gM` Half the width of the screen to the right/left on the line
 - `zt` `zz` `zb` Scroll the row of the cursor to the top/center/bottom

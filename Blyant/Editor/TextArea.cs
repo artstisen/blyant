@@ -35,6 +35,7 @@ public partial class TextArea
     private const int StyleMisspelled = 3;
     private const int StyleLineNumber = 4;
     private const int StyleCurrentLineNumber = 5; // The number of the line the cursor is on
+    private const int StyleFound = 6; // The character found by f, F, t or T
     private const int StyleMarkdown = 10; // The styles of Markdown follow from this number
 
     /// <summary>
@@ -1913,7 +1914,7 @@ public partial class TextArea
         var cells = TextMetrics.WidthOfRange(s, start, end);
         var selection = _engine.Selection(line);
         var hasMatches = false;
-        foreach (var _ in _engine.SearchMatches(line))
+        foreach (var _ in _engine.SearchMatches(line).Concat(_engine.FoundMatches(line)))
         {
             hasMatches = true;
             break;
@@ -1951,6 +1952,14 @@ public partial class TextArea
             for (var i = Math.Max(start, matchStart); i < Math.Min(end, matchEnd); i++)
             {
                 styles[i - start] = StyleSearchMatch;
+            }
+        }
+
+        foreach (var (matchStart, matchEnd) in _engine.FoundMatches(line))
+        {
+            for (var i = Math.Max(start, matchStart); i < Math.Min(end, matchEnd); i++)
+            {
+                styles[i - start] = StyleFound;
             }
         }
 
@@ -1995,6 +2004,7 @@ public partial class TextArea
             {
                 StyleSelection => ConsoleColors.ColorPreset.HighlightInverted,
                 StyleSearchMatch => ConsoleColors.ColorPreset.AttentionInverted,
+                StyleFound => ConsoleColors.ColorPreset.SelectorInverted,
                 StyleMisspelled => ConsoleColors.ColorPreset.WarningInverted,
                 StyleLineNumber => ConsoleColors.ColorPreset.LineNumber,
                 StyleCurrentLineNumber => ConsoleColors.ColorPreset.CurrentLineNumber,

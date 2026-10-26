@@ -465,6 +465,7 @@ internal sealed partial class EditorEngine
         // The selection is remembered when Visual mode is left, for "gv"
         var selectionBefore = IsVisual ? CurrentSelection() : null;
         var insertKey = Mode == EditorMode.Insert;
+        _foundShown = false;
         switch (Mode)
         {
             case EditorMode.Insert:
@@ -486,6 +487,13 @@ internal sealed partial class EditorEngine
         }
 
         if (Mode != EditorMode.Insert) ClearCompletions();
+
+        // The character found stays shown through ";" "," and a new "f" (or a count) being typed
+        if (!_foundShown && !((Mode == EditorMode.Normal || IsVisual) && _operator == NoKey &&
+                              (_prefix is 'f' or 'F' or 't' or 'T' || _prefix == NoKey && _count.Length > 0)))
+        {
+            _found = null;
+        }
 
         if (selectionBefore != null && !IsVisual) _lastSelection = selectionBefore;
 
@@ -1880,6 +1888,36 @@ internal sealed partial class EditorEngine
         }
 
         return false;
+    }
+
+    // The character found by "f", "F", "t" or "T" (and ";" ","): shown on all the lines until a key other than these,
+    // a count or Esc is used (null: none). Not with an operator ("dfx"), which changes the text
+    private string? _found;
+    private bool _foundShown; // Set while a key is handled, when it keeps the character shown
+
+    private void ShowFound(string character)
+    {
+        _found = character;
+        _foundShown = true;
+    }
+
+    /// <summary>
+    /// True while the character found by "f", "F", "t" or "T" is shown
+    /// </summary>
+    internal bool IsFoundShown => _found != null;
+
+    /// <summary>
+    /// The places on a line (start and end char index) of the character found by "f", "F", "t" or "T"
+    /// </summary>
+    internal IEnumerable<(int Start, int End)> FoundMatches(int line)
+    {
+        if (_found == null) yield break;
+        var text = Buffer[line];
+        for (var at = text.IndexOf(_found, StringComparison.Ordinal); at >= 0;
+             at = text.IndexOf(_found, at + _found.Length, StringComparison.Ordinal))
+        {
+            yield return (at, at + _found.Length);
+        }
     }
 
     /// <summary>

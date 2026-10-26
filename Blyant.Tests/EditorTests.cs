@@ -201,6 +201,77 @@ public class EditorTests
         Assert.Equal(new TextPos(line, col), editor.Cursor);
     }
 
+    [Theory]
+    [InlineData("fa", 1, 1)]
+    [InlineData("fz", 2, 2)]
+    [InlineData("fa;", 2, 1)]
+    [InlineData("fa;,", 1, 1)]
+    [InlineData("2fa", 2, 1)]
+    [InlineData("fq", 0, 0)] // Not in the text: the cursor stays
+    [InlineData("tb", 0, 2)] // The first of the next line: to the end of the line above
+    [InlineData("tb;", 1, 2)]
+    [InlineData("G$Fo", 0, 2)]
+    [InlineData("GTo", 1, 0)] // The last of the line above: to the start of the next line
+    [InlineData("GTo;", 0, 2)]
+    [InlineData("G$Ta", 2, 2)] // Past an empty line
+    [InlineData("jjtb", 4, 3)]
+    public void FindChar_GoesOnToTheOtherLines(string keys, int line, int col)
+    {
+        var editor = Editor("foo\nbar\nbaz\n\nend b");
+        editor.Type(keys);
+        Assert.Equal(new TextPos(line, col), editor.Cursor);
+    }
+
+    [Theory]
+    [InlineData("dfa", "r\nbaz")]
+    [InlineData("dta", "ar\nbaz")]
+    [InlineData("jdfz", "foo\n")]
+    [InlineData("G$dFr", "foo\nbaz")]
+    public void FindChar_WithAnOperator_ChangesAcrossLines(string keys, string text)
+    {
+        var editor = Editor("foo\nbar\nbaz");
+        editor.Type(keys);
+        Assert.Equal(text, editor.GetText());
+    }
+
+    [Fact]
+    public void TheCharacterFound_IsShownOnAllLines_UntilAnotherKey()
+    {
+        var editor = Editor("a-b\nc-d-e\nf");
+        editor.Type("f-");
+        Assert.True(editor.IsFoundShown);
+        Assert.Equal(new[] { (1, 2) }, editor.FoundMatches(0));
+        Assert.Equal(new[] { (1, 2), (3, 4) }, editor.FoundMatches(1));
+        Assert.Empty(editor.FoundMatches(2));
+        // ";" "," a count and a new "f" keep it
+        editor.Type(";,2;");
+        Assert.Equal(new TextPos(1, 3), editor.Cursor);
+        Assert.True(editor.IsFoundShown);
+        // ";" with nothing more to find
+        editor.Type(";");
+        Assert.True(editor.IsFoundShown);
+        editor.Type("Fd");
+        Assert.Equal(new[] { (2, 3) }, editor.FoundMatches(1));
+        // Another key hides it
+        editor.Type("l");
+        Assert.False(editor.IsFoundShown);
+        // Esc hides it, and only then closes the editor
+        editor.Type("gg");
+        Assert.Equal(EditorRequest.None, editor.Type("f-<Esc>"));
+        Assert.False(editor.IsFoundShown);
+        Assert.Equal(EditorRequest.Quit, editor.Type("<Esc>"));
+    }
+
+    [Fact]
+    public void TheCharacterFound_IsNotShown_AfterAnOperator()
+    {
+        var editor = Editor("a-b-c");
+        editor.Type("df-");
+        Assert.False(editor.IsFoundShown);
+        editor.Type("f-d;");
+        Assert.False(editor.IsFoundShown);
+    }
+
     [Fact]
     public void WordMotions_CrossLinesAndStopAtEmptyLines()
     {
