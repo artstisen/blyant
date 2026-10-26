@@ -3,8 +3,6 @@ A free, open-source, cross-platform, Vim-style modal text editor for writing in 
 
 Blyant is a sister application of [Marbles](https://github.com/artstisen/marbles), the Vim-style editor for encrypted notes, and starts from its code base (Marbles v1.5.3). Where Marbles is about private notes kept in an encrypted data file, Blyant is about writing: Markdown files, organised in projects.
 
-> **Status: in progress.** The encrypted notes of Marbles are gone, and Blyant starts with files and projects. A project is a folder of files for now; a page for managing the files of a project is planned.
-
 ## Key features
 
 **Files and projects**
