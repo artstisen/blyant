@@ -43,6 +43,17 @@ internal static partial class FileExplorer
     /// </summary>
     internal static bool DualPane { get; set; } = true;
 
+    /// <summary>
+    /// The rows of the panes are numbered, as 12gg counts them ("..": 1). Settings "filenumbers", "historynumbers",
+    /// "hotlistnumbers" and "searchnumbers" for the panes, the history, the hotlist and the search results (the
+    /// history and the hotlist also in the Jump menu), off unless turned on
+    /// </summary>
+    internal static bool FileNumbers { get; set; }
+
+    internal static bool HistoryNumbers { get; set; }
+    internal static bool HotlistNumbers { get; set; }
+    internal static bool SearchNumbers { get; set; }
+
     // A list of the content of a directory
     private sealed class Pane
     {
@@ -537,6 +548,13 @@ internal static partial class FileExplorer
                 else if (name is "h" or "help")
                 {
                     Tools.WriteEditorHelp(Tools.HelpTopic.Files);
+                }
+                else if (name is "number" or "nonumber")
+                {
+                    // The numbers of the rows of the panes on or off (kept in the settings)
+                    FileNumbers = name == "number";
+                    _message = FileNumbers ? DialogText.LineNumbersOn : DialogText.LineNumbersOff;
+                    FileIo.SaveSettings();
                 }
                 else if (name == "cd" && command != null)
                 {
@@ -1820,7 +1838,7 @@ internal static partial class FileExplorer
         var typeColumn = sizeEnd - 1 - SizeColumnWidth - TypeColumnWidth;
         var nameEnd = showType ? typeColumn - 1 : sizeEnd - SizeColumnWidth - 1;
         var name = Tools.TruncateString(item.Name + (item.IsDirectory && item.Name != ParentName ? "/" : ""),
-            Math.Max(4, nameEnd - (left + 3) - 2), true);
+            Math.Max(4, nameEnd - (left + 3) - 2 - ListNumbers.Width(FileNumbers, pane.Items.Count)), true);
         var nameColors = item.IsDirectory ? ConsoleColors.ColorPreset.HeaderColor : ConsoleColors.ColorPreset.Normal;
         if (item.Path.Length > 0 && pane.Marks.Contains(item.Path))
         {
@@ -1870,14 +1888,16 @@ internal static partial class FileExplorer
         return Tools.TruncateString(extension[1..].ToUpperInvariant(), TypeColumnWidth, true);
     }
 
-    // Draw (or remove) the selection pointer in front of an item of a pane, leaving the cursor after it.
-    // In the pane without the focus the pointer is not highlighted
+    // Draw (or remove) the selection pointer in front of an item of a pane, leaving the cursor after it (and before
+    // it the number of the row, when the numbers are on). In the pane without the focus the pointer is not highlighted,
+    // nor its number
     private static void DrawPointer(int number, int index, bool selected)
     {
         var pane = ShownPane(number);
         var row = index - pane.Top;
         if (row < 0 || row >= PageSize || index >= pane.Items.Count) return;
         Tools.SetCursorEx(ListTop + row, PaneArea(number).Left);
+        ListNumbers.Write(index, ListNumbers.Width(FileNumbers, pane.Items.Count), selected && HasFocus(number));
         ConsoleColors.SetColors(!selected ? ConsoleColors.ColorPreset.Normal :
             HasFocus(number) ? ConsoleColors.ColorPreset.SelectorInverted : ConsoleColors.ColorPreset.Divider);
         Console.Write(selected ? "->" : "  ");

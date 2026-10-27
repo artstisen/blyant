@@ -303,6 +303,10 @@ internal static class Init
         JumpMenu.BookmarkPeek = true;
         FileExplorer.FavoriteNumbers = false;
         JumpMenu.BookmarkNumbers = false;
+        FileExplorer.FileNumbers = false;
+        FileExplorer.HistoryNumbers = false;
+        FileExplorer.HotlistNumbers = false;
+        FileExplorer.SearchNumbers = false;
         Recovery.Enabled = true;
         ConsoleColors.Monochrome = false;
         SyntaxHighlighter.ColorFiles = true;

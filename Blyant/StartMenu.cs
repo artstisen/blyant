@@ -481,7 +481,11 @@ internal static class StartMenu
         AutoComplete,
         Completions,
         Recovery,
+        FileNumbers,
         FavoriteNumbers,
+        HistoryNumbers,
+        HotlistNumbers,
+        SearchNumbers,
         FavoritePanes,
         FavoritePeek, // Below FavoritePanes: it is in the panes
         BookmarkNumbers,
@@ -527,11 +531,16 @@ internal static class StartMenu
         settings.Add(Setting.AutoComplete);
         settings.Add(Setting.Completions);
         settings.Add(Setting.Recovery);
-        // Lists: the favorites of the file browser and the bookmarks of the Jump menu
+        // Lists: the numbers of the rows of each list, in the order of the lists, then the panes of the favorites of
+        // the file browser and of the bookmarks of the Jump menu
+        settings.Add(Setting.FileNumbers);
         settings.Add(Setting.FavoriteNumbers);
+        settings.Add(Setting.HistoryNumbers);
+        settings.Add(Setting.HotlistNumbers);
+        settings.Add(Setting.SearchNumbers);
+        settings.Add(Setting.BookmarkNumbers);
         settings.Add(Setting.FavoritePanes);
         settings.Add(Setting.FavoritePeek);
-        settings.Add(Setting.BookmarkNumbers);
         settings.Add(Setting.BookmarkPanes);
         settings.Add(Setting.BookmarkPeek);
         // System
@@ -589,7 +598,11 @@ internal static class StartMenu
             Setting.AutoComplete => Check(Blyant.Completions.Enabled) + Lang.T("Complete words while typing"),
             Setting.Completions => indent + Lang.T("Completions editor (Enter: Open)"),
             Setting.Recovery => Check(Blyant.Recovery.Enabled) + Lang.T("Recovery copies of unsaved text (:recovery)"),
+            Setting.FileNumbers => Check(FileExplorer.FileNumbers) + Lang.T("Line numbers in file browser"),
             Setting.FavoriteNumbers => Check(FileExplorer.FavoriteNumbers) + Lang.T("Line numbers in Favorites"),
+            Setting.HistoryNumbers => Check(FileExplorer.HistoryNumbers) + Lang.T("Line numbers in History"),
+            Setting.HotlistNumbers => Check(FileExplorer.HotlistNumbers) + Lang.T("Line numbers in Hotlist"),
+            Setting.SearchNumbers => Check(FileExplorer.SearchNumbers) + Lang.T("Line numbers in Search results"),
             Setting.FavoritePanes => Check(FileExplorer.FavoritePanes) + Lang.T("Panes in Favorites (note and peek)"),
             Setting.FavoritePeek => indent + Check(FileExplorer.FavoritePeek) + Lang.T("Peek in Favorites"),
             Setting.BookmarkNumbers => Check(JumpMenu.BookmarkNumbers) + Lang.T("Line numbers in Bookmarks"),
@@ -624,7 +637,8 @@ internal static class StartMenu
             Setting.LineNumbers or Setting.WordWrap or Setting.Whitespace or Setting.ScrollOff or Setting.Clipboard
                 or Setting.SyntaxColors or Setting.Spell or Setting.Snippets or Setting.AutoComplete
                 or Setting.Completions or Setting.Recovery => 2,
-            Setting.FavoriteNumbers or Setting.FavoritePanes or Setting.FavoritePeek or Setting.BookmarkNumbers
+            Setting.FileNumbers or Setting.FavoriteNumbers or Setting.HistoryNumbers or Setting.HotlistNumbers
+                or Setting.SearchNumbers or Setting.BookmarkNumbers or Setting.FavoritePanes or Setting.FavoritePeek
                 or Setting.BookmarkPanes or Setting.BookmarkPeek => 3,
             _ => 4
         };
@@ -644,7 +658,8 @@ internal static class StartMenu
     }
 
     // A blank row is shown above these settings when there is room: they start a group of their page
-    private static bool StartsGroup(Setting setting) => setting is Setting.DeleteToTrash or Setting.BookmarkNumbers;
+    private static bool StartsGroup(Setting setting) =>
+        setting is Setting.DeleteToTrash or Setting.FavoritePanes or Setting.BookmarkPanes;
 
     // A setting that has no effect as the settings are now (the peek, while its panes are off): shown dimmed
     private static bool IsDimmed(Setting setting) =>
@@ -1285,8 +1300,20 @@ internal static class StartMenu
             case Setting.Recovery:
                 Blyant.Recovery.Enabled = !Blyant.Recovery.Enabled;
                 break;
+            case Setting.FileNumbers:
+                FileExplorer.FileNumbers = !FileExplorer.FileNumbers;
+                break;
             case Setting.FavoriteNumbers:
                 FileExplorer.FavoriteNumbers = !FileExplorer.FavoriteNumbers;
+                break;
+            case Setting.HistoryNumbers:
+                FileExplorer.HistoryNumbers = !FileExplorer.HistoryNumbers;
+                break;
+            case Setting.HotlistNumbers:
+                FileExplorer.HotlistNumbers = !FileExplorer.HotlistNumbers;
+                break;
+            case Setting.SearchNumbers:
+                FileExplorer.SearchNumbers = !FileExplorer.SearchNumbers;
                 break;
             case Setting.FavoritePanes:
                 FileExplorer.FavoritePanes = !FileExplorer.FavoritePanes;

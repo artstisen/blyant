@@ -228,6 +228,10 @@ internal static class Actions
         JumpMenu.BookmarkPeek = true;
         FileExplorer.FavoriteNumbers = false;
         JumpMenu.BookmarkNumbers = false;
+        FileExplorer.FileNumbers = false;
+        FileExplorer.HistoryNumbers = false;
+        FileExplorer.HotlistNumbers = false;
+        FileExplorer.SearchNumbers = false;
         CommandList.Enabled = true;
         Hints.Enabled = true;
         Recovery.Enabled = true;

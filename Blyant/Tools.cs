@@ -640,6 +640,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":recovery", Lang.T("Go to the recovery copies of unsaved text"), false));
             _shortcutList.Add(new Shortcut(":project add", Lang.T("Add the directory shown to the projects"), false));
             _shortcutList.Add(new Shortcut(":protect off on", Lang.T("Lift/restore the protection of Blyant's files (this session)"), false));
+            _shortcutList.Add(new Shortcut(":number :nonumber", Lang.T("Number the rows (as 12gg counts them), or not"), false));
             _shortcutList.Add(new Shortcut(":", Lang.T("Command line (Tab completes the command)"), false));
             _shortcutList.Add(new Shortcut("  Up Down", Lang.T("Earlier commands of this page"), false));
             _shortcutList.Add(new Shortcut("Esc Q :q", Lang.T("Close the file browser"), false));
@@ -661,6 +662,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("P :fav", Lang.T("Add to/Remove from the favorites (*)"), false));
             _shortcutList.Add(new Shortcut("/text", Lang.T("Only show the files with \"text\" (Esc: all)"), false));
             _shortcutList.Add(new Shortcut("S :find", Lang.T("Search again"), false));
+            _shortcutList.Add(new Shortcut(":number :nonumber", Lang.T("Number the rows (as 12gg counts them), or not"), false));
             _shortcutList.Add(new Shortcut(":", Lang.T("Command line (Tab completes the command)"), false));
             _shortcutList.Add(new Shortcut("  Up Down", Lang.T("Earlier commands of this page"), false));
             _shortcutList.Add(new Shortcut("Esc Q h -", Lang.T("Back to the file browser"), false));
@@ -715,6 +717,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("I :info", Lang.T("Show type, size, dates and path"), false));
             _shortcutList.Add(new Shortcut("D :remove", Lang.T("Take the file out of the history (it stays)"), false));
             _shortcutList.Add(new Shortcut("X :clear", Lang.T("Clear the file history (asks first)"), false));
+            _shortcutList.Add(new Shortcut(":number :nonumber", Lang.T("Number the rows (as 12gg counts them), or not"), false));
             _shortcutList.Add(new Shortcut(":path :name", Lang.T("Copy the path/the name shown (also p in the editor)"), false));
             _shortcutList.Add(new Shortcut("/text", Lang.T("Only show paths containing \"text\" (Esc: all)"), false));
             _shortcutList.Add(new Shortcut(":", Lang.T("Command line (Tab completes the command)"), false));
@@ -735,6 +738,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("D :remove", Lang.T("Take it out of the hotlist (the directory stays)"), false));
             _shortcutList.Add(new Shortcut("u :undo", Lang.T("Put back what was removed last"), false));
             _shortcutList.Add(new Shortcut(":clear", Lang.T("Clear the hotlist (asks first)"), false));
+            _shortcutList.Add(new Shortcut(":number :nonumber", Lang.T("Number the rows (as 12gg counts them), or not"), false));
             _shortcutList.Add(new Shortcut(":path :name", Lang.T("Copy the path/the name shown (also p in the editor)"), false));
             _shortcutList.Add(new Shortcut("/text", Lang.T("Only show paths containing \"text\" (Esc: all)"), false));
             _shortcutList.Add(new Shortcut(":", Lang.T("Command line (Tab completes the command)"), false));
@@ -783,7 +787,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("W :new name", Lang.T("Bookmarks: new file, bookmarked below, opened"), false));
             _shortcutList.Add(new Shortcut("N :note", Lang.T("Bookmarks: write the note of the bookmark"), false));
             _shortcutList.Add(new Shortcut(":panes :peek", Lang.T("Bookmarks: show/hide the note and the peek"), false));
-            _shortcutList.Add(new Shortcut(":number", Lang.T("Bookmarks: number the rows (:nonumber: not)"), false));
+            _shortcutList.Add(new Shortcut(":number", Lang.T("Number the rows of the tab (:nonumber: not)"), false));
             _shortcutList.Add(new Shortcut("Space M", Lang.T("Bookmarks: mark several/move them to a folder"), false));
             _shortcutList.Add(new Shortcut(":expand :collapse", Lang.T("Bookmarks: open/close all the folders"), false));
             _shortcutList.Add(new Shortcut("u :clearbook", Lang.T("Bookmarks: put back the removed/clear (asks first)"), false));

@@ -1188,21 +1188,15 @@ internal static partial class FileExplorer
     }
 
     // The width of the numbers of the rows (when they are on): the largest number, and a blank space
-    private static int FavoriteNumberWidth =>
-        FavoriteNumbers && _favorites.Count > 0 ? _favorites.Count.ToString().Length + 1 : 0;
+    private static int FavoriteNumberWidth => ListNumbers.Width(FavoriteNumbers, _favorites.Count);
 
-    // The selection pointer of a row (and before it the number of the row, dimmed, when the numbers are on)
+    // The selection pointer of a row (and before it the number of the row, when the numbers are on)
     private static void DrawFavoritePointer(int index, bool selected)
     {
         var row = index - _favoriteTop;
         if (row < 0 || row >= FavoritePageSize || index >= _favorites.Count) return;
-        var numbers = FavoriteNumberWidth;
         Tools.SetCursorEx(ListTop + row, 0);
-        if (numbers > 0)
-        {
-            ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
-            Console.Write((index + 1).ToString().PadLeft(numbers - 1) + " ");
-        }
+        ListNumbers.Write(index, FavoriteNumberWidth, selected);
 
         ConsoleColors.SetColors(selected
             ? ConsoleColors.ColorPreset.SelectorInverted

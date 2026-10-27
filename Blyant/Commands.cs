@@ -49,23 +49,23 @@ internal static class Commands
     private static readonly Dictionary<CommandContext, Table> Tables = new()
     {
         [CommandContext.Files] = new Table(
-            "quit close exit home data help jump book peek diff cd new info mkdir rename copy duplicate move delete favorite favorites history hotlist hotadd bookmark refresh panes match path name find projects trash recovery project protect",
+            "quit close exit home data help jump book peek diff cd new info mkdir rename copy duplicate move delete favorite favorites history hotlist hotadd bookmark refresh panes match path name find projects trash recovery project protect number nonumber",
             "q h fav favs hist hot ju jmp proj pro"),
         [CommandContext.FilePicker] = new Table(
-            "quit close home data help cd",
+            "quit close home data help cd number nonumber",
             "q h"),
         [CommandContext.Favorites] = new Table(
             "quit close help jump book new color info remove move top bottom undo folder subfolder note panes peek number nonumber expand collapse rename import goto " +
             "path name",
             "q h u ju jmp"),
         [CommandContext.History] = new Table(
-            "quit close help jump book info goto favorite remove clear path name",
+            "quit close help jump book info goto favorite remove clear path name number nonumber",
             "q h fav ju jmp"),
         [CommandContext.Hotlist] = new Table(
-            "quit close help jump book info remove undo top bottom move rename clear path name",
+            "quit close help jump book info remove undo top bottom move rename clear path name number nonumber",
             "q h u ju jmp"),
         [CommandContext.Search] = new Table(
-            "quit close help jump book find info goto favorite",
+            "quit close help jump book find info goto favorite number nonumber",
             "q h fav ju jmp"),
         [CommandContext.Start] = new Table(
             "new blank recover file open favorites project projects start config general layout editor lists system jump book help about " +

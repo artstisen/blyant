@@ -95,6 +95,32 @@ internal static class JumpMenu
     /// </summary>
     internal static bool BookmarkNumbers { get; set; }
 
+    // The rows of a tab are numbered: the bookmarks, and the history, the favorites and the hotlist as in the file
+    // browser (the same settings)
+    private static bool NumbersOn(Tab tab) => tab switch
+    {
+        Tab.Bookmarks => BookmarkNumbers,
+        Tab.History => FileExplorer.HistoryNumbers,
+        Tab.Favorites => FileExplorer.FavoriteNumbers,
+        Tab.Hotlist => FileExplorer.HotlistNumbers,
+        _ => false
+    };
+
+    // ":number" and ":nonumber" on a tab: false on a tab without numbers
+    private static bool SetNumbers(Tab tab, bool on)
+    {
+        switch (tab)
+        {
+            case Tab.Bookmarks: BookmarkNumbers = on; break;
+            case Tab.History: FileExplorer.HistoryNumbers = on; break;
+            case Tab.Favorites: FileExplorer.FavoriteNumbers = on; break;
+            case Tab.Hotlist: FileExplorer.HotlistNumbers = on; break;
+            default: return false;
+        }
+
+        return true;
+    }
+
     // The start of the name of the file a note of a bookmark is written in, in the editor (in the data directory,
     // removed after)
     private const string BookmarkNoteFile = "bookmark-note"; // English: the name of a file
@@ -717,11 +743,9 @@ internal static class JumpMenu
         var lasts = rows.Select(row => tabs[tab] == Tab.Bookmarks ? BookCommand(row) : When(row.Time)).ToList();
         var typeLabel = Lang.T("Type");
         var markWidth = Math.Max(MarkWidth, TextMetrics.WidthOf(typeLabel));
-        // The numbers of the rows (Bookmarks, when they are on): right-aligned, as wide as the largest, and a blank
-        // space; the pointer and the names follow
-        var numbers = tabs[tab] == Tab.Bookmarks && BookmarkNumbers && rows.Count > 0
-            ? rows.Count.ToString().Length + 1
-            : 0;
+        // The numbers of the rows (when they are on for the list of the tab): right-aligned, as wide as the largest,
+        // and a blank space; the pointer and the names follow
+        var numbers = ListNumbers.Width(NumbersOn(tabs[tab]), rows.Count);
         var nameColumn = left + 4 + numbers;
         var nameWidth = Math.Clamp(rows.Count == 0 ? 0 : rows.Max(row => TextMetrics.WidthOf(RowName(row))),
             TextMetrics.WidthOf(DialogText.ColumnName) + 2, Math.Max(10, width / 2 - 8 - numbers));
@@ -782,10 +806,9 @@ internal static class JumpMenu
             if (partial && index != selected && index != before!.Selected) continue;
             if (numbers > 0)
             {
-                // The number of the row, dimmed (as 12gg counts the rows)
+                // The number of the row (as 12gg counts the rows)
                 Tools.SetCursorEx(first + line, left + 1);
-                ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
-                Console.Write((index + 1).ToString().PadLeft(numbers - 1) + " ");
+                ListNumbers.Write(index, numbers, index == selected);
             }
 
             Tools.SetCursorEx(first + line, left + 1 + numbers);
@@ -1468,6 +1491,23 @@ internal static class JumpMenu
             return false;
         }
 
+        if (command is "number" or "nonumber")
+        {
+            // The numbers of the rows of the list of the tab on or off (kept in the settings, and the same in the
+            // file browser)
+            if (SetNumbers(current, command == "number"))
+            {
+                _message = NumbersOn(current) ? DialogText.LineNumbersOn : DialogText.LineNumbersOff;
+                FileIo.SaveSettings();
+            }
+            else
+            {
+                _message = Lang.T("Line numbers: Bookmarks, History, Favorites, Hotlist");
+            }
+
+            return false;
+        }
+
         if (current != Tab.Bookmarks)
         {
             _message = Lang.T("This command is used on the Bookmarks tab");
@@ -1493,13 +1533,6 @@ internal static class JumpMenu
             case "panes":
             case "peek":
                 ToggleBookmarkPanes(command == "peek");
-                break;
-            case "number":
-            case "nonumber":
-                // The numbers of the rows on or off (kept in the settings)
-                BookmarkNumbers = command == "number";
-                _message = BookmarkNumbers ? DialogText.LineNumbersOn : DialogText.LineNumbersOff;
-                FileIo.SaveSettings();
                 break;
             case "rename":
                 if (row != null) RenameBookmark(row, CommandLine.LastArgument);

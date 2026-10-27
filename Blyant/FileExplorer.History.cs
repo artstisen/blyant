@@ -118,6 +118,13 @@ internal static partial class FileExplorer
                     case "clear":
                         ClearHistory();
                         break;
+                    case "number":
+                    case "nonumber":
+                        // The numbers of the rows on or off (kept in the settings)
+                        HistoryNumbers = command == "number";
+                        _historyMessage = HistoryNumbers ? DialogText.LineNumbersOn : DialogText.LineNumbersOff;
+                        FileIo.SaveSettings();
+                        break;
                     default:
                         CommandLine.ShowUnknown(command);
                         break;
@@ -386,17 +393,18 @@ internal static partial class FileExplorer
             nameWidth = Math.Max(nameWidth, System.IO.Path.GetFileName(FileHistory.Items[number].Path).Length);
         }
 
-        nameWidth = Math.Min(nameWidth, Init.LineWidth / 2 - 8);
+        nameWidth = Math.Min(nameWidth, Init.LineWidth / 2 - 8 - HistoryNumberWidth);
         var infoWidth = Math.Max(HistoryTimeWidth, Math.Max(TextMetrics.WidthOf(DialogText.FavoriteMissing),
             TextMetrics.WidthOf(DialogText.ColumnOpened) + 2));
-        var nameLine = 3 + nameWidth + 4;
+        var nameLine = 3 + HistoryNumberWidth + nameWidth + 4;
         var infoLine = Init.LineWidth - 2 - infoWidth - 1;
         _historyLines = _historyShown.Count > 0 ? new[] { nameLine, infoLine } : Array.Empty<int>();
         if (_historyShown.Count > 0)
         {
             DrawColumnLabels(2, new[]
             {
-                (1, DialogText.ColumnName), (nameLine, DialogText.ColumnPath), (infoLine, DialogText.ColumnOpened)
+                (1 + HistoryNumberWidth, DialogText.ColumnName), (nameLine, DialogText.ColumnPath),
+                (infoLine, DialogText.ColumnOpened)
             }, _historyLines);
             for (var row = 0; row < HistoryPageSize; row++)
             {
@@ -444,11 +452,16 @@ internal static partial class FileExplorer
         DrawHistoryStatus();
     }
 
+    // The width of the numbers of the rows (when they are on)
+    private static int HistoryNumberWidth => ListNumbers.Width(HistoryNumbers, _historyShown.Count);
+
+    // The selection pointer of a row (and before it the number of the row, when the numbers are on)
     private static void DrawHistoryPointer(int index, bool selected)
     {
         var row = index - _historyTop;
         if (row < 0 || row >= HistoryPageSize || index >= _historyShown.Count) return;
         Tools.SetCursorEx(ListTop + row, 0);
+        ListNumbers.Write(index, HistoryNumberWidth, selected);
         ConsoleColors.SetColors(selected
             ? ConsoleColors.ColorPreset.SelectorInverted
             : ConsoleColors.ColorPreset.Normal);

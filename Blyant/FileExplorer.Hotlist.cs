@@ -179,6 +179,13 @@ internal static partial class FileExplorer
                     case "clear":
                         ClearHotlist();
                         break;
+                    case "number":
+                    case "nonumber":
+                        // The numbers of the rows on or off (kept in the settings)
+                        HotlistNumbers = command == "number";
+                        _hotlistMessage = HotlistNumbers ? DialogText.LineNumbersOn : DialogText.LineNumbersOff;
+                        FileIo.SaveSettings();
+                        break;
                     default:
                         CommandLine.ShowUnknown(command);
                         break;
@@ -478,12 +485,12 @@ internal static partial class FileExplorer
             nameWidth = Math.Max(nameWidth, TextMetrics.WidthOf(DirectoryHotlist.Items[number].Shown));
         }
 
-        nameWidth = Math.Min(nameWidth, Init.LineWidth / 2 - 8);
-        var nameLine = 3 + nameWidth + 2;
+        nameWidth = Math.Min(nameWidth, Init.LineWidth / 2 - 8 - HotlistNumberWidth);
+        var nameLine = 3 + HotlistNumberWidth + nameWidth + 2;
         _hotlistLines = _hotlistShown.Count > 0 ? new[] { nameLine } : Array.Empty<int>();
         if (_hotlistShown.Count > 0)
         {
-            DrawColumnLabels(2, new[] { (1, DialogText.ColumnName), (nameLine, DialogText.ColumnPath) },
+            DrawColumnLabels(2, new[] { (1 + HotlistNumberWidth, DialogText.ColumnName), (nameLine, DialogText.ColumnPath) },
                 _hotlistLines);
             for (var row = 0; row < HistoryPageSize; row++) DrawColumnLine(ListTop + row, nameLine);
         }
@@ -528,11 +535,16 @@ internal static partial class FileExplorer
         DrawHotlistStatus();
     }
 
+    // The width of the numbers of the rows (when they are on)
+    private static int HotlistNumberWidth => ListNumbers.Width(HotlistNumbers, _hotlistShown.Count);
+
+    // The selection pointer of a row (and before it the number of the row, when the numbers are on)
     private static void DrawHotlistPointer(int index, bool selected)
     {
         var row = index - _hotlistTop;
         if (row < 0 || row >= HistoryPageSize || index >= _hotlistShown.Count) return;
         Tools.SetCursorEx(ListTop + row, 0);
+        ListNumbers.Write(index, HotlistNumberWidth, selected);
         ConsoleColors.SetColors(selected
             ? ConsoleColors.ColorPreset.SelectorInverted
             : ConsoleColors.ColorPreset.Normal);

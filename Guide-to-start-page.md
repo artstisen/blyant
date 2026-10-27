@@ -108,12 +108,12 @@ The settings are on five pages. `j` `k` (and `gg` `G`) select a setting on the p
 
 **Lists**
 
-The settings of the [favorites](#favorites) of the file browser and of the [bookmarks](Guide-to-jump-menu.md#bookmarks) of the Jump menu. The commands of the lists (`:number`, `:panes`, `:peek`) change the same settings.
+The settings of the lists of the file browser and of the [bookmarks](Guide-to-jump-menu.md#bookmarks) of the Jump menu. The commands of the lists (`:number`, `:panes`, `:peek`) change the same settings.
 
-- **Line numbers in Favorites**: Number the rows of the favorites, as `12gg` and `5j` count them (off from the start). Setting `favoritenumbers`
+- **Line numbers in file browser**, **Favorites**, **History**, **Hotlist**, **Search results**, **Bookmarks**: Number the rows of the list, as `12gg` and `5j` count them, in the colors of the line numbers of the editor (the selected row in the color of the current line number). All off from the start. The panes of the file browser count `..` as row 1; the History, Favorites and Hotlist tabs of the Jump menu follow the settings of their lists. Settings `filenumbers`, `favoritenumbers`, `historynumbers`, `hotlistnumbers`, `searchnumbers`, `bookmarknumbers`
 - **Panes in Favorites (note and peek)**: The Note and Peek panes below the favorites (on from the start). Setting `favoritepanes`
 - **Peek in Favorites**: The Peek pane, next to the Note pane (on from the start; dimmed while the panes are off). Setting `favoritepeek`
-- **Line numbers in Bookmarks**, **Panes in Bookmarks (note and peek)**, **Peek in Bookmarks**: The same for the Bookmarks tab of the Jump menu. Settings `bookmarknumbers`, `bookmarkpanes`, `bookmarkpeek`
+- **Panes in Bookmarks (note and peek)**, **Peek in Bookmarks**: The same for the Bookmarks tab of the Jump menu. Settings `bookmarkpanes`, `bookmarkpeek`
 
 **System**
 
@@ -158,7 +158,7 @@ The type column shows the extension of a file in capitals (`MD`, `TXT`), and for
 
 The browser starts in your home directory the first time, and remembers the directories of both panes, the file or directory selected in each, the pane that had the focus and whether one or two panes were shown (`browsedir1`, `browsedir2`, `browsesel1`, `browsesel2`, `browsepane` and `browsedual` in the settings file). Picking a folder (for the projects) has a place of its own (`pickdir`), and does not change these. They are saved however the browser is left (closed, a jump to another page, or exiting Blyant), and also when a file is opened in the editor. The selection is remembered by name: if the file is gone, the first row is selected.
 
-- `j` `k` Select, `gg` `G` First/Last, `PgUp` `PgDn` One page up/down. With a count, in the pane with the focus: `5j` `5k` move 5 rows down/up, `5gg` (or `5G`) goes to row 5 (as numbered below the pane, `..` is row 1); the count shows below the pane while you type it, and `Esc` drops it. A peek shows the file the selection lands on. Other keys do what they do once with a count (`3D` is one delete, asked about as always)
+- `j` `k` Select, `gg` `G` First/Last, `PgUp` `PgDn` One page up/down. With a count, in the pane with the focus: `5j` `5k` move 5 rows down/up, `5gg` (or `5G`) goes to row 5 (as numbered below the pane, `..` is row 1); the count shows below the pane while you type it, and `Esc` drops it. A peek shows the file the selection lands on. Other keys do what they do once with a count (`3D` is one delete, asked about as always). `:number` numbers the rows of the panes, in the colors of the line numbers of the editor (the selected row in the color of the current line number), with `..` as row 1, and `:nonumber` takes the numbers away. Off from the start; kept in the setting `filenumbers`, also on the Lists page of Configuration
 - `l` or `Enter` Open the selected directory or file. A file is opened in the editor where the cursor was when you closed it the last time (see [Where the cursor was](#where-the-cursor-was))
 - `h`, `-` or `Backspace` Go to the directory above (above the root of a drive on Windows: the list of drives)
 - `/text` Only show the names containing "text". `Esc` shows all again
@@ -246,7 +246,7 @@ While it searches, the bottom line shows the directory being read and the number
 
 The files found are shown in a list with three columns, as the favorites: _Name_, _Path_ (the directory they are in, from the directory searched) and _Info_ (the size, or `<DIR>`). When you searched for a text, the middle column is _Line_: the first line containing it, with its line number.
 
-- `j` `k` Select, `gg` `G` First/Last. With a count: `5j` `5k` move 5 rows down/up, `5gg` (or `5G`) goes to row 5 (the rows shown, as numbered at the bottom right); the count shows there while you type it, and `Esc` drops it
+- `j` `k` Select, `gg` `G` First/Last. With a count: `5j` `5k` move 5 rows down/up, `5gg` (or `5G`) goes to row 5 (the rows shown, as numbered at the bottom right); the count shows there while you type it, and `Esc` drops it. `:number` numbers the rows, in the colors of the line numbers of the editor (the selected row in the color of the current line number), and `:nonumber` takes them away (setting `searchnumbers`, off from the start, also on the Lists page of Configuration)
 - `l` or `Enter` Open the file in the editor, at the line that was found. Closing the editor returns to the list
 - `B` or `:goto` Show the file in the browser: its directory is opened in the pane with the focus, with the file selected
 - `I` or `:info` Show information about the file
@@ -265,7 +265,7 @@ The list has three columns, with lines between them and their labels at the top:
 
 Below the list are two panes for the selected item, **Note** and **Peek**: its note, and the top of the file (what is in a directory, or in a folder of favorites). They follow the selection; nothing in them can be selected or scrolled, and the peek only reads the start of the file, never writes it. `:panes` hides them (and shows them again), and `:peek` hides the peek, so the note takes the whole width. Both are kept in the settings (`favoritepanes`, `favoritepeek`). In a window that is too low, the panes are not shown.
 
-`:number` numbers the rows of the list, dimmed at the left, as `12gg` and `5j` count them (the rows shown: not those in a closed folder; with a filter, the rows found), and `:nonumber` takes the numbers away. Off from the start; kept in the setting `favoritenumbers`, also on the Lists page of Configuration.
+`:number` numbers the rows of the list, at the left in the colors of the line numbers of the editor (the selected row in the color of the current line number), as `12gg` and `5j` count them (the rows shown: not those in a closed folder; with a filter, the rows found), and `:nonumber` takes the numbers away. Off from the start; kept in the setting `favoritenumbers`, also on the Lists page of Configuration. The Favorites tab of the Jump menu follows it.
 
 In the list of favorites:
 
@@ -311,7 +311,7 @@ The list has three columns, as the favorites: _Name_, _Path_ (the directory the 
 The file history lists the files you have opened in the editor from the file browser (also from the favorites, the search and the history itself), the last opened first, with the time each was opened. A file opened again moves to the top. It is practical when you work on many files over several days.
 
 - `O` or `:history` (in the file browser) Show the file history
-- `j` `k` Select, `gg` `G` First/Last, `PgUp` `PgDn` One page up/down. With a count: `5j` `5k` move 5 rows down/up, `5gg` (or `5G`) goes to row 5 (the rows shown, as numbered at the bottom right); the count shows there while you type it, and `Esc` drops it
+- `j` `k` Select, `gg` `G` First/Last, `PgUp` `PgDn` One page up/down. With a count: `5j` `5k` move 5 rows down/up, `5gg` (or `5G`) goes to row 5 (the rows shown, as numbered at the bottom right); the count shows there while you type it, and `Esc` drops it. `:number` numbers the rows, in the colors of the line numbers of the editor (the selected row in the color of the current line number), and `:nonumber` takes them away (setting `historynumbers`, off from the start, also on the Lists page of Configuration; the History tab of the Jump menu follows it)
 - `l` or `Enter` Open the file in the editor (`:q` returns to the history)
 - `B` or `:goto` Show the file in the file browser: its directory, with the file selected
 - `P` or `:fav` Add the file to the favorites, or remove it. A favorite has a `*` after its name
@@ -331,7 +331,7 @@ The list has two columns, as the favorites: _Name_ (the name of the directory, o
 The directory hotlist keeps directories you want to go back to. `B` (or `:hotadd`) in the file browser adds the directory shown in the pane with the focus, whatever file or directory is selected in it, at the end of the list. A directory that is in the list already stays where it is. Taking directories out is done on the page of the list.
 
 - `W` or `:hotlist` (or `:hot`) in the file browser: Show the hotlist. Each row has the name of the directory (or the name you gave it), and its path after it. The hotlist is also a tab of the [Jump menu](Guide-to-jump-menu.md#jump-menu)
-- `j` `k` Select, `gg` `G` First/Last, `PgUp` `PgDn` One page up/down. With a count: `5j` `5k` move 5 rows down/up, `5gg` (or `5G`) goes to row 5 (the rows shown, as numbered at the bottom right); the count shows there while you type it, and `Esc` drops it
+- `j` `k` Select, `gg` `G` First/Last, `PgUp` `PgDn` One page up/down. With a count: `5j` `5k` move 5 rows down/up, `5gg` (or `5G`) goes to row 5 (the rows shown, as numbered at the bottom right); the count shows there while you type it, and `Esc` drops it. `:number` numbers the rows, in the colors of the line numbers of the editor (the selected row in the color of the current line number), and `:nonumber` takes them away (setting `hotlistnumbers`, off from the start, also on the Lists page of Configuration; the Hotlist tab of the Jump menu follows it)
 - `l` or `Enter` Go to the directory, in the pane with the focus (the hotlist closes)
 - `V` (or `:move`) Move the directory in the list: it is marked `<>` and highlighted, `j` `k` move it, and `Esc` (or `Enter`, `V`) ends the moving. Not while a filter shows only some of the list
 - `T` or `:top` Move the directory to the top, `E` or `:bottom` to the end
