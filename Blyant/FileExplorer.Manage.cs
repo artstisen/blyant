@@ -542,7 +542,8 @@ internal static partial class FileExplorer
     // Peek (V or ":peek"): the selected file is shown read-only in the other pane (two panes are shown for it, if
     // one is shown), and the focus stays in the list: the peek follows the selection, so files are gone through
     // with j and k. Tab goes into the peek (to scroll and search in it; Tab or Esc goes back to the list, Enter opens
-    // the file in the editor where the cursor is). V or Esc ends the peek, and so do the keys that use the other pane
+    // the file in the editor where the cursor is). A directory (also "..") is shown as the names in it, and Tab
+    // opens it in the other pane instead. V or Esc ends the peek, and so do the keys that use the other pane
     private static bool _peeking;
     private static bool _peekWasDual;
 
@@ -561,8 +562,7 @@ internal static partial class FileExplorer
             return;
         }
 
-        var item = SelectedItem();
-        if (item == null || item.IsDirectory)
+        if (SelectedItem() == null && PeekedDirectory() == null)
         {
             _message = DialogText.PeekSelectFile;
             return;
@@ -595,13 +595,26 @@ internal static partial class FileExplorer
         Keyboard.IsControl(key, ConsoleKey.D) || Keyboard.IsControl(key, ConsoleKey.F) ||
         Keyboard.IsControl(key, ConsoleKey.U) || Keyboard.IsControl(key, ConsoleKey.B);
 
+    /// <summary>
+    /// The directory the peek shows: the selected directory, or on ".." the directory above (null: a file is
+    /// selected, or a drive, or ".." at the root of a drive)
+    /// </summary>
+    private static string? PeekedDirectory()
+    {
+        if (ActivePane.Directory.Length == 0 || ActivePane.Items.Count == 0) return null;
+        var item = ActivePane.Items[ActivePane.Index];
+        if (item.Name == ParentName) return Directory.GetParent(ActivePane.Directory)?.FullName;
+        return item.IsDirectory ? item.Path : null;
+    }
+
     // The peek of the selected file, in the other pane (when the selection has changed, or all is drawn again). A
-    // directory, or a file that is not text, is told about there
+    // directory is shown as the names in it; a file that is not text is told about
     private static void DrawPeek(bool all)
     {
         if (!_peeking || _peekFocused) return;
         var item = SelectedItem();
-        var path = item?.Path ?? string.Empty;
+        var directory = PeekedDirectory();
+        var path = directory ?? item?.Path ?? string.Empty;
         if (!all && path == _peekShownPath) return;
         try
         {
@@ -623,6 +636,13 @@ internal static partial class FileExplorer
         var (left, width) = PaneArea(1 - _active);
         string? note = null;
         TextFile? file = null;
+        if (directory != null)
+        {
+            // What is in it: directories first (ending in "/"), then the files, as the peek of the favorites
+            DrawPeekLines(left, width, Projects.Contents(directory, PageSize).Split('\n'), false);
+            return;
+        }
+
         if (item == null || item.IsDirectory)
         {
             note = DialogText.PeekSelectFile;
@@ -648,17 +668,7 @@ internal static partial class FileExplorer
         if (file == null || item == null)
         {
             // The pane is cleared, with the note on its first row
-            ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
-            for (var row = 0; row < PageSize; row++)
-            {
-                Tools.SetCursorEx(ListTop + row, left);
-                Console.Write(new string(' ', width));
-            }
-
-            Tools.SetCursorEx(ListTop, left + 1);
-            ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
-            Console.Write(Tools.TruncateString(note ?? string.Empty, width - 2, true));
-            ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
+            DrawPeekLines(left, width, new[] { note ?? string.Empty }, true);
             return;
         }
 
@@ -672,10 +682,35 @@ internal static partial class FileExplorer
         Tools.HideCursor();
     }
 
+    // Lines in the pane of the peek, from its first row (the rest of the pane is cleared): a note is dimmed
+    private static void DrawPeekLines(int left, int width, IReadOnlyList<string> lines, bool dimmed)
+    {
+        for (var row = 0; row < PageSize; row++)
+        {
+            Tools.SetCursorEx(ListTop + row, left);
+            ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
+            Console.Write(new string(' ', width));
+            if (row >= lines.Count) continue;
+            Tools.SetCursorEx(ListTop + row, left + 1);
+            if (dimmed) ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
+            Console.Write(Tools.TruncateString(lines[row], width - 2, true));
+        }
+
+        ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
+    }
+
     // Tab while peeking: the focus goes into the peek, to scroll and search in it (as in the editor). Tab or Esc goes
-    // back to the list, Enter opens the file in the editor where the cursor is
+    // back to the list, Enter opens the file in the editor where the cursor is. The peek of a directory is not gone
+    // into: the directory is opened in the other pane instead, with the focus there
     private static void FocusPeek()
     {
+        var directory = PeekedDirectory();
+        if (directory != null)
+        {
+            OpenPeekedDirectory(directory);
+            return;
+        }
+
         var item = SelectedItem();
         if (item == null || item.IsDirectory)
         {
@@ -731,6 +766,33 @@ internal static partial class FileExplorer
             _peekFocused = false;
             _peekShownPath = null;
         }
+    }
+
+    // The directory of the peek in the other pane, with its first item selected and the focus there. The peek ends,
+    // and two panes stay shown (":panes" shows one again). A directory that cannot be read is told about, and the peek
+    // goes on
+    private static void OpenPeekedDirectory(string directory)
+    {
+        var pane = OtherPane;
+        var (previous, filter) = (pane.Directory, pane.Filter);
+        pane.Directory = directory;
+        pane.Filter = string.Empty;
+        if (!LoadItems(pane, null))
+        {
+            (pane.Directory, pane.Filter) = (previous, filter);
+            var message = _message;
+            LoadItems(pane, null);
+            _message = message;
+            return;
+        }
+
+        // The first file or directory, below ".."
+        if (pane.Items.Count > 1 && pane.Items[0].Name == ParentName) pane.Index = 1;
+        pane.ShownTop = -1;
+        _peeking = false;
+        _peekShownPath = null;
+        DualPane = true;
+        _active = 1 - _active;
     }
 
     // ":path": the full path of the selected file or directory (on ".." the directory shown) to the clipboard and/or

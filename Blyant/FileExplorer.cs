@@ -1716,13 +1716,13 @@ internal static partial class FileExplorer
     {
         var pane = ShownPane(number);
         var (left, width) = PaneArea(number);
-        // The pane with the peek is labeled so, with the name of the file it shows (else the directory). The focus is
-        // in the peek while Tab has gone into it
+        // The pane with the peek is labeled so, with the name of the file it shows, or the path of the directory. The
+        // focus is in the peek while Tab has gone into it
         var peek = IsPeekPane(number);
         var focused = peek ? _peekFocused : HasFocus(number) && !_peekFocused;
         // The directory (the end of a long path is shown)
         var room = width - 2;
-        var path = peek ? SelectedItem() is { IsDirectory: false } item ? item.Name : string.Empty
+        var path = peek ? PeekedDirectory() ?? (SelectedItem() is { IsDirectory: false } item ? item.Name : string.Empty)
             : pane.Directory.Length == 0 ? DialogText.Drives : pane.Directory;
         path = TextMetrics.KeepEnd(path, room);
         Tools.SetCursorEx(1, left);

@@ -613,6 +613,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("Space", Lang.T("Mark/Unmark: Y C M P D work on the marked"), false));
             _shortcutList.Add(new Shortcut("V :peek", Lang.T("Peek on/off: the file in the other pane, j/k the next"), false));
             _shortcutList.Add(new Shortcut("  Tab", Lang.T("Peeking: into the peek, to scroll (Tab: back)"), false));
+            _shortcutList.Add(new Shortcut("  Tab", Lang.T("Peeking at a directory: open it in other pane"), false));
             _shortcutList.Add(new Shortcut("Y :duplicate", Lang.T("Make a copy in the same directory"), false));
             _shortcutList.Add(new Shortcut("C :copy", Lang.T("Copy: go to the directory, then S (Esc cancels)"), false));
             _shortcutList.Add(new Shortcut("M :move", Lang.T("Move: go to the directory, then S (Esc cancels)"), false));
