@@ -652,6 +652,7 @@ internal static class MacroBoxes
     /// The Esc that would close the editor, while recording: go on, stop and save, stop and edit the steps before
     /// saving them, or stop and discard
     /// </summary>
+    /// <param name="engine">The editor that is recording</param>
     /// <param name="drawBehind">Draws the editor behind the boxes again</param>
     internal static void Stop(EditorEngine engine, Action drawBehind)
     {
@@ -806,6 +807,7 @@ internal static class MacroBoxes
     /// <summary>
     /// ":macro": the macros in a list, with the text of the selected one below it; Enter plays it, E edits it
     /// </summary>
+    /// <param name="engine">The editor the macro is played in</param>
     /// <param name="drawBehind">Draws the editor behind the box again</param>
     internal static void Pick(EditorEngine engine, Action drawBehind)
     {
