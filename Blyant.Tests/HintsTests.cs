@@ -29,7 +29,7 @@ public class HintsTests : IDisposable
     [Fact]
     public void ThereAreNineHints_AndTheFirstIsShownBeforeBlyantHasStarted()
     {
-        Assert.Equal(9, Hints.All().Length);
+        Assert.Equal(10, Hints.All().Length);
         Assert.All(Hints.All(), hint => Assert.True(hint.Length > 40));
         Hints.Index = -1;
         Assert.Equal(1, Hints.Current().Number);
@@ -48,7 +48,7 @@ public class HintsTests : IDisposable
         Hints.Advance();
         Assert.Equal(2, Hints.Current().Number);
         // After the last, the first again
-        Hints.Index = 8;
+        Hints.Index = Hints.All().Length - 1;
         Hints.Advance();
         Assert.Equal(1, Hints.Current().Number);
     }

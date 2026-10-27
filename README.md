@@ -28,6 +28,7 @@ Blyant has several features inspired by popular Neovim plugins for text navigati
 
 **Quick to get around**
 - The Jump menu (`Ctrl+O`): bookmarks, recent places, files, directories and pages in a few keys
+- Use bookmarks to create custom jump locations and call them from anywhere in Blyant using the `:book number` command
 - The same keys everywhere: `h` `j` `k` `l` to move, `/` to search, `?` for help and `:` for commands
 - Built-in guides: a quick guide and short guides to each part of Blyant
 

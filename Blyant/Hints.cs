@@ -26,7 +26,9 @@ internal static class Hints
         Lang.T("Type : on any page to see its commands, narrowed as you type. Tab completes them, and ? shows " +
                "all the keys of the page."),
         Lang.T("Ctrl+O opens the Jump menu from anywhere: bookmarks, recent places, projects, the lists of the " +
-               "file browser and the pages of Blyant. :book 3 jumps straight to bookmark 3."),
+               "file browser and the pages of Blyant."),
+        Lang.T("B in the Jump menu bookmarks the selected place, and :bookmark does it in the editor and the file " +
+               "browser. Then :book 3 jumps to bookmark 3 from almost any page."),
         Lang.T("In the file browser, P keeps a file or folder as a favorite, and F shows them. Group them in " +
                "folders and give them colors; :import favorites in the Jump menu copies them to the bookmarks."),
         Lang.T("In a Markdown file, type /bold, /link or /h2 and press Tab. Select text and type :surround /bold " +
