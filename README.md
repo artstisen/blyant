@@ -3,7 +3,9 @@ A free, open-source, cross-platform, Vim-style modal text editor for writing in 
 
 This project began in 2022, with the application architecture and codebase written by hand. In later versions, I’ve used agentic tools to refine, rewrite, test, and conduct code reviews. Blyant is derived from my encryption editor [Marbles](https://github.com/artstisen/marbles), but there are many differences, as Blyant is designed for writing, programming, organizing files, planning projects, etc.
 
-Blyant has several features inspired by popular Neovim plugins for text navigation, commands, and much more. I use Blyant in my professional work as a technical writer and localization specialist, where my tasks include writing software and API documentation in Markdown and HTML, developing CSS and JavaScript widgets as well as .NET productivity and conversion tools, writing JSON, and editing XML.
+Blyant has several features inspired by popular Neovim plugins for text navigation, commands, and much more. I use Blyant in my professional work, writing software and API documentation in Markdown and HTML, developing CSS and JavaScript widgets as well as .NET productivity and conversion tools, and editing JSON and XML.
+
+**My favorite feature? – Using bookmarks to create custom jump points and open them from anywhere via the command line.**
 
 
 ## Key features
@@ -28,7 +30,7 @@ Blyant has several features inspired by popular Neovim plugins for text navigati
 
 **Quick to get around**
 - The Jump menu (`Ctrl+O`): bookmarks, recent places, files, directories and pages in a few keys
-- Use bookmarks to create custom jump locations and call them from anywhere in Blyant using the `:book number` command
+- Use bookmarks to create custom jump points in files, folders, projects, pages, and settings, and open them from anywhere using the command `:book number`
 - The same keys everywhere: `h` `j` `k` `l` to move, `/` to search, `?` for help and `:` for commands
 - Built-in guides: a quick guide and short guides to each part of Blyant
 

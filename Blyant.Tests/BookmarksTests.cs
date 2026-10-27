@@ -243,9 +243,52 @@ public class BookmarksTests : IDisposable
     [Fact]
     public void AddWithMessage_SavesAndTells()
     {
-        Assert.Equal(Lang.F("Bookmarked: {0}", "a.md"), Bookmarks.AddWithMessage(FileAt("a.md")));
-        Assert.Equal(Lang.F("Already bookmarked: {0}", "a.md"), Bookmarks.AddWithMessage(FileAt("a.md")));
+        Assert.Equal(Lang.F("Bookmarked ({0}): {1}", 1, "a.md"), Bookmarks.AddWithMessage(FileAt("a.md")));
+        Assert.Equal(Lang.F("Already bookmarked ({0}): {1}", 1, "a.md"), Bookmarks.AddWithMessage(FileAt("a.md")));
         Assert.Contains("a.md", File.ReadAllText(Bookmarks.FilePath));
+        // The number is the one ":book" takes
+        Assert.Equal(Lang.F("Bookmarked ({0}): {1}", 2, "b.md"), Bookmarks.AddWithMessage(FileAt("b.md")));
+    }
+
+    [Fact]
+    public void ABookmarkMadeInTheEditor_KeepsItsLineAndColumn()
+    {
+        var chapter = FileAt("chapter.md");
+        Assert.Equal(Lang.F("Bookmarked ({0}): {1}", 1, "chapter.md:120"),
+            Bookmarks.AddWithMessage(chapter with { At = (120, 5) }));
+        // Another line of the same file, and the file itself, are other bookmarks; the same line is not
+        Assert.Equal(Lang.F("Bookmarked ({0}): {1}", 2, "chapter.md:3"),
+            Bookmarks.AddWithMessage(chapter with { At = (3, 1) }));
+        Assert.Equal(Lang.F("Bookmarked ({0}): {1}", 3, "chapter.md"), Bookmarks.AddWithMessage(chapter));
+        Assert.Equal(Lang.F("Already bookmarked ({0}): {1}", 1, "chapter.md:120"),
+            Bookmarks.AddWithMessage(chapter with { At = (120, 9) }));
+
+        // Kept in the file after the name and color, and read again
+        var text = File.ReadAllText(Bookmarks.FilePath);
+        Assert.Contains("file\t" + In("chapter.md") + "\t\t\t120:5\n", text);
+        Bookmarks.Load();
+        Assert.Equal(3, Bookmarks.Places.Count);
+        Assert.Equal((120, 5), Bookmarks.Places[0].Target.At);
+        Assert.Null(Bookmarks.Places[2].Target.At);
+        // With a name and a color
+        Assert.True(Bookmarks.Rename(0, "Chapter 3"));
+        Bookmarks.Parse(Bookmarks.Serialize());
+        Assert.Equal("Chapter 3", Bookmarks.Places[0].Shown);
+        Assert.Equal((120, 5), Bookmarks.Places[0].Target.At);
+        // A place that cannot be read is a bookmark of the file
+        Bookmarks.Parse("file\t" + In("x.md") + "\t\t\tnone\n");
+        Assert.Null(Bookmarks.Places[0].Target.At);
+    }
+
+    [Fact]
+    public void ThePeekOfABookmark_StartsAtItsLine()
+    {
+        var path = In("long.md");
+        File.WriteAllText(path, string.Join("\n", Enumerable.Range(1, 50).Select(i => "line " + i)));
+        Assert.Equal(new[] { "line 20", "line 21", "line 22" }, NotePanes.PeekPlace(path, 3, 20));
+        Assert.Equal(new[] { "line 1", "line 2" }, NotePanes.PeekPlace(path, 2));
+        // Past the end: the last lines
+        Assert.Equal(new[] { "line 49", "line 50" }, NotePanes.PeekPlace(path, 2, 80));
     }
 
     [Fact]

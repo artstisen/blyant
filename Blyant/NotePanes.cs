@@ -98,13 +98,60 @@ internal static class NotePanes
     }
 
     /// <summary>
-    /// What the peek shows of a file or directory: the top of the file, or what is in the directory
+    /// What the peek shows of a file or directory: the top of the file (or from a line: a bookmark made in the
+    /// editor), or what is in the directory
     /// </summary>
-    internal static List<string> PeekPlace(string path, int rows)
+    internal static List<string> PeekPlace(string path, int rows, int fromLine = 1)
     {
         if (Directory.Exists(path)) return Projects.Contents(path, rows).Split('\n').ToList();
         if (!File.Exists(path)) return new List<string> { DialogText.FavoriteMissing };
-        return PeekLines(path, rows);
+        var top = PeekLines(path, rows);
+        // (a file that is empty or not text is told about as from the top)
+        if (fromLine <= 1 || top.Count == 1 && (top[0] == Lang.T("(empty)") || top[0] == Lang.T("(not a text file)")))
+        {
+            return top;
+        }
+
+        return PeekFrom(path, rows, fromLine) ?? top;
+    }
+
+    // The most that is read of a file to show the peek from a line further down
+    private const int PeekFromBytes = 4 * 1024 * 1024;
+
+    // A file that is text, from a line (from 1): its lines up to "rows" (tabs as blank spaces), or null when it cannot
+    // be read. Past the end of the file, or of what is read: the last lines
+    private static List<string>? PeekFrom(string path, int rows, int fromLine)
+    {
+        try
+        {
+            using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            using var reader = new StreamReader(stream, new UTF8Encoding(false));
+            var lines = new List<string>();
+            var read = 0L;
+            var number = 0;
+            while (reader.ReadLine() is { } line && read < PeekFromBytes)
+            {
+                read += line.Length + 1;
+                number++;
+                if (number < fromLine)
+                {
+                    // The last lines before it, should the line not be there any more
+                    lines.Add(line);
+                    if (lines.Count > rows) lines.RemoveAt(0);
+                    continue;
+                }
+
+                if (number == fromLine) lines.Clear();
+                lines.Add(line);
+                if (lines.Count == rows) break;
+            }
+
+            return lines.Select(line => line.TrimStart('\uFEFF').Replace("\t", "    ")).ToList();
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return null;
+        }
     }
 
     /// <summary>

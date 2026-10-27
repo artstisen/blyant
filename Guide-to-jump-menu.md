@@ -44,7 +44,9 @@ The list has columns, with lines between them and their names in the line above 
 - `Esc` (or `Q`, `Ctrl+O`) Close the menu; `?` shows its keys. The menu opens on the tab it was on the last time (while Blyant runs), so jumping between files from the Files or Favorites tab goes on there
 
 ### Bookmarks
-Bookmarks are places you keep to jump to: a file, a directory (a project) or a page of Blyant. `B` on any list of the Jump menu adds the selected place, and `:bookmark` in the editor adds the file being edited (in the file browser: the selected file or directory, on `..` the directory shown). A place is bookmarked once, and at the end of the list. On the Bookmarks tab:
+Bookmarks are places you keep to jump to: a file, a directory (a project) or a page of Blyant. `B` on any list of the Jump menu adds the selected place, and `:bookmark` in the editor adds the place of the cursor in the file being edited (in the file browser: the selected file or directory, on `..` the directory shown). The message tells the number of the bookmark, for `:book`: `Bookmarked (14): chapter.md:120`. A place is bookmarked once, and at the end of the list.
+
+**A place in a file:** a bookmark made with `:bookmark` in the editor keeps the line and column of the cursor, and is shown with its line (`chapter.md:120`). Jumping to it opens the file there, not where it was left; when the file is the one being edited, the cursor just moves there, and its changes stay as they are. The peek below the bookmarks starts at the line. A file can have bookmarks at several lines, and a bookmark of the file itself (`B` here, or `:bookmark` in the file browser), which opens it where it was left. The line is a number, so lines added or removed above it move the text away from it. In `bookmarks.txt` the line and column follow the name and the color (`120:5`). On the Bookmarks tab:
 
 - `Enter` Jump to the bookmark (on a folder: open or close it)
 - `V` Move the selected bookmark or folder: it is marked `<>` and highlighted, `j` `k` move it, and `Esc` (or `Enter`, `V`) ends the moving. Not while a filter shows only some of them

@@ -915,8 +915,8 @@ internal static class JumpMenu
     // The place of a bookmark or folder in the whole list
     private static int IndexOf(Bookmarks.Entry entry) => Bookmarks.Items.ToList().IndexOf(entry);
 
-    // What the peek shows of a bookmark or folder: the top of a file, what is in a directory or a folder, or what a
-    // page of Blyant is
+    // What the peek shows of a bookmark or folder: the top of a file (a bookmark made in the editor: from its line),
+    // what is in a directory or a folder, or what a page of Blyant is
     private static List<string> PeekOf(Bookmarks.Entry entry, int rows)
     {
         if (entry.IsFolder)
@@ -929,7 +929,7 @@ internal static class JumpMenu
 
         return entry.Target.Kind == JumpKind.Page
             ? new List<string> { Lang.T("A page of Blyant: Enter opens it") }
-            : NotePanes.PeekPlace(entry.Target.FullPath, rows);
+            : NotePanes.PeekPlace(entry.Target.FullPath, rows, entry.Target.At?.Line ?? 1);
     }
 
     // ":panes" and ":peek": the panes below the bookmarks, or the peek in them, on or off (kept in the settings)

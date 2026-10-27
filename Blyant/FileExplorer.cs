@@ -132,14 +132,20 @@ internal static partial class FileExplorer
     // A jump: the directory to show, and the file to open in the editor when the browser is shown
     private static string? _jumpDirectory;
     private static string? _jumpFile;
+    private static (int Line, int Column)? _jumpAt; // Where in the file (a bookmark made in the editor)
+
+    // The file is opened at this line and column (not where it was left)
+    private static (int Line, int Column)? _openAtCaret;
 
     /// <summary>
-    /// Open the file browser in the directory of a file, and the file in the editor (a jump)
+    /// Open the file browser in the directory of a file, and the file in the editor (a jump), at a line and column
+    /// (null: where the cursor was left)
     /// </summary>
-    internal static void RunAtFile(string path)
+    internal static void RunAtFile(string path, (int Line, int Column)? at = null)
     {
         _jumpDirectory = System.IO.Path.GetDirectoryName(path);
         _jumpFile = path;
+        _jumpAt = at;
         Run();
     }
 
@@ -255,6 +261,7 @@ internal static partial class FileExplorer
 
         // A jump: the directory of the jump, and the file opened in the editor
         var jumpFile = _jumpFile;
+        var jumpAt = _jumpAt;
         if (mode == BrowseMode.Edit && _jumpDirectory != null && System.IO.Directory.Exists(_jumpDirectory))
         {
             StartPaneIn(ActivePane, _jumpDirectory);
@@ -262,13 +269,14 @@ internal static partial class FileExplorer
 
         _jumpDirectory = null;
         _jumpFile = null;
+        _jumpAt = null;
         // The places of the panes are saved however the browser is left: closed, a jump (to another page), or
         // exiting Blyant (Tools.ExitApplication)
         _browsing = mode == BrowseMode.Edit;
         string? result = null;
         try
         {
-            result = BrowseLoop(mode, jumpFile);
+            result = BrowseLoop(mode, jumpFile, jumpAt);
             return result;
         }
         finally
@@ -373,7 +381,7 @@ internal static partial class FileExplorer
         return pane.Items[pane.Index].Name;
     }
 
-    private static string? BrowseLoop(BrowseMode mode, string? jumpFile)
+    private static string? BrowseLoop(BrowseMode mode, string? jumpFile, (int Line, int Column)? jumpAt)
     {
         Init.ApplyAutoSize();
         Draw(true);
@@ -381,7 +389,10 @@ internal static partial class FileExplorer
         if (mode == BrowseMode.Edit && jumpFile != null && File.Exists(jumpFile))
         {
             var info = new FileInfo(jumpFile);
-            if (Open(new Item(info.Name, info.FullName, false, info.Length))) return _picked;
+            _openAtCaret = jumpAt;
+            var close = Open(new Item(info.Name, info.FullName, false, info.Length));
+            _openAtCaret = null;
+            if (close) return _picked;
             LoadItems(info.Name);
             Draw(true);
         }
@@ -1001,7 +1012,12 @@ internal static partial class FileExplorer
             // favorite first, then the history)
             var cursorIndex = _openAtIndex;
             (int Index, bool OtherLeft)? split = null;
-            if (!_openAtFound && CaretOfFile(file.Path) is { } caret)
+            if (_openAtCaret is { } at)
+            {
+                // A bookmark made in the editor: where it was made
+                cursorIndex = CaretPosition.IndexOf(recovered ?? _file?.Text ?? string.Empty, at.Line, at.Column);
+            }
+            else if (!_openAtFound && CaretOfFile(file.Path) is { } caret)
             {
                 cursorIndex = CaretPosition.IndexOf(recovered ?? _file?.Text ?? string.Empty, caret.Line, caret.Column);
                 // Closed in a split: opened split again

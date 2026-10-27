@@ -37,6 +37,12 @@ internal sealed record JumpTarget(JumpKind Kind, string Target)
     internal string FullPath => Kind is JumpKind.File or JumpKind.Directory ? Target : string.Empty;
 
     /// <summary>
+    /// The line and column (from 1) a bookmark of a file was made at in the editor (":bookmark"): the file is opened
+    /// there. Null: where the cursor was left
+    /// </summary>
+    internal (int Line, int Column)? At { get; init; }
+
+    /// <summary>
     /// True if what it goes to is there (a page always is)
     /// </summary>
     internal bool Exists => Kind switch
@@ -319,11 +325,20 @@ internal static class Jump
     /// to stay</param>
     /// <param name="hasChanges">Tells if the page has changes that are not saved, while a page opened on top of it
     /// (Color schemes ...) is shown: a jump from there that leaves is not made then (null: it has none)</param>
-    internal static void Open(Func<bool>? beforeLeaving = null, Func<bool>? hasChanges = null)
+    /// <param name="here">Shows the place on the page itself, without leaving it (the editor, at a bookmarked place
+    /// in the file it has): true when it did</param>
+    internal static void Open(Func<bool>? beforeLeaving = null, Func<bool>? hasChanges = null,
+        Func<JumpTarget, bool>? here = null)
     {
         var target = JumpMenu.Pick();
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
         if (target == null) return;
+        if (here != null && here(target))
+        {
+            Remember(target);
+            return;
+        }
+
         if (OpensInPlace(target))
         {
             OpenOnTop(target, hasChanges);
@@ -345,13 +360,15 @@ internal static class Jump
     /// <param name="beforeLeaving">Asked before the page is left (the editor asks about changes that are not saved);
     /// false stays</param>
     /// <param name="hasChanges">As for Open</param>
-    internal static void ToBookmark(string argument, Func<bool>? beforeLeaving = null, Func<bool>? hasChanges = null)
+    /// <param name="here">As for Open</param>
+    internal static void ToBookmark(string argument, Func<bool>? beforeLeaving = null, Func<bool>? hasChanges = null,
+        Func<JumpTarget, bool>? here = null)
     {
         argument = argument.Trim();
         if (argument.Length == 0)
         {
             JumpMenu.ShowNextOn(JumpMenu.Tab.Bookmarks);
-            Open(beforeLeaving, hasChanges);
+            Open(beforeLeaving, hasChanges, here);
             return;
         }
 
@@ -372,6 +389,12 @@ internal static class Jump
         if (!target.Exists)
         {
             ChoiceBox.Message(Lang.T("Bookmarks"), DialogText.FileNotFound, target.FullPath);
+            return;
+        }
+
+        if (here != null && here(target))
+        {
+            Remember(target);
             return;
         }
 
@@ -439,7 +462,7 @@ internal static class Jump
     private static void Remember(JumpTarget target)
     {
         JumpHistory.Load();
-        JumpHistory.Add(target, DateTime.Now);
+        JumpHistory.Add(target with { At = null }, DateTime.Now);
         var status = JumpHistory.Save();
         if (status != DialogText.Success) EventLog.Add(DialogText.LogFile + "Jumps: " + status);
     }
@@ -501,7 +524,7 @@ internal static class Jump
 
                 // The file browser, in the directory of the file (which is opened in the editor), or in the
                 // directory. Closing it shows the start page, as when it is closed there
-                if (target.Kind == JumpKind.File) FileExplorer.RunAtFile(target.FullPath);
+                if (target.Kind == JumpKind.File) FileExplorer.RunAtFile(target.FullPath, target.At);
                 else FileExplorer.RunAtDirectory(target.FullPath);
                 StartMenu.Open();
                 break;

@@ -15,7 +15,7 @@ namespace Blyant;
 ///
 /// The list is kept in the file "bookmarks.txt" in the data directory, one bookmark on each line: the kind ("file",
 /// "dir" or "page", as in jump.txt), a tab character, the place, and after other tab characters the name it was
-/// given and its color (if any). A folder has its name in brackets ("[Work]"), its color and "collapsed" if it is
+/// given and its color (if any), and the line and column of a bookmark made in the editor ("120:5"). A folder has its name in brackets ("[Work]"), its color and "collapsed" if it is
 /// closed; the bookmarks in a folder are the lines after it that start with a blank space. A folder line that starts
 /// with a blank space in a folder is a subfolder, and the bookmarks in it start with two. A note of a bookmark or a
 /// folder is on the line after it, after a "#" (Notes; an older Blyant leaves these lines out). (The lines of data
@@ -78,9 +78,12 @@ internal static class Bookmarks
         public string Note { get; set; } = string.Empty;
 
         /// <summary>
-        /// The name shown: the one given, or the name of the place (a folder: its name)
+        /// The name shown: the one given, or the name of the place, with the line of a bookmark made in the editor
+        /// ("chapter.md:120"; a folder: its name)
         /// </summary>
-        internal string Shown => IsFolder || Name.Length > 0 ? Name : Target.Name;
+        internal string Shown => IsFolder || Name.Length > 0 ? Name
+            : Target.At is { } at ? Target.Name + ":" + at.Line
+            : Target.Name;
     }
 
     // The list, with its folders (moving, removing and putting back are done by it)
@@ -136,6 +139,16 @@ internal static class Bookmarks
     private static ConsoleColor? ParseColor(string text) =>
         Enum.TryParse<ConsoleColor>(text.Trim(), true, out var color) && Enum.IsDefined(color) ? color : null;
 
+    // The line and column of a bookmark made in the editor ("120:5"), or null
+    private static (int Line, int Column)? ParseAt(string text)
+    {
+        var parts = text.Trim().Split(':');
+        return parts.Length == 2 && int.TryParse(parts[0], out var line) && int.TryParse(parts[1], out var column) &&
+               line > 0 && column > 0
+            ? (line, column)
+            : null;
+    }
+
     internal static void Parse(string text)
     {
         List.Clear();
@@ -182,7 +195,7 @@ internal static class Bookmarks
             if (parts.Length < 2 || JumpHistory.ParseKind(parts[0]) is not { } kind) continue;
             var place = kind is JumpKind.File or JumpKind.Directory ? FileOperations.ListedPath(parts[1]) : parts[1].Trim();
             if (place.Length == 0) continue;
-            var target = new JumpTarget(kind, place);
+            var target = new JumpTarget(kind, place) { At = kind == JumpKind.File && parts.Length > 4 ? ParseAt(parts[4]) : null };
             if (Contains(target)) continue;
             // The bookmarks of a folder follow it directly
             var level = levels.LevelOf(spaces, false);
@@ -211,8 +224,10 @@ internal static class Bookmarks
             else
             {
                 text.Append(JumpHistory.KindName(entry.Target.Kind)).Append('\t').Append(entry.Target.Target);
-                if (entry.Name.Length > 0 || color.Length > 0) text.Append('\t').Append(entry.Name);
-                if (color.Length > 0) text.Append('\t').Append(color);
+                var at = entry.Target.At is { } place ? place.Line + ":" + place.Column : string.Empty;
+                if (entry.Name.Length > 0 || color.Length > 0 || at.Length > 0) text.Append('\t').Append(entry.Name);
+                if (color.Length > 0 || at.Length > 0) text.Append('\t').Append(color);
+                if (at.Length > 0) text.Append('\t').Append(at);
             }
 
             text.Append('\n');
@@ -243,7 +258,16 @@ internal static class Bookmarks
     }
 
     internal static bool Contains(JumpTarget target) =>
-        List.Exists(entry => !entry.IsFolder && entry.Target.SameAs(target));
+        List.Exists(entry => !entry.IsFolder && SameBookmark(entry.Target, target));
+
+    // The same bookmark: the same place, and the same line in a file (a bookmark of a file, and bookmarks at other
+    // lines of it, are others)
+    private static bool SameBookmark(JumpTarget one, JumpTarget other) =>
+        one.SameAs(other) && one.At?.Line == other.At?.Line;
+
+    // The bookmark of a place, or null
+    private static Entry? Find(JumpTarget target) =>
+        List.Find(entry => !entry.IsFolder && SameBookmark(entry.Target, target));
 
     /// <summary>
     /// What adding a place did
@@ -272,7 +296,7 @@ internal static class Bookmarks
             // A favorite that is gone keeps its kind as far as it can be told: a name without an extension is
             // taken for a directory only when it is there
             return new Entry(new JumpTarget(Directory.Exists(path) ? JumpKind.Directory : JumpKind.File, path));
-        }, Entry.Folder, (one, other) => one.Target.SameAs(other.Target));
+        }, Entry.Folder, (one, other) => SameBookmark(one.Target, other.Target));
 
     /// <summary>
     /// Add a place at the end of the list, outside the folders (a place that is there already stays where it is)
@@ -488,10 +512,17 @@ internal static class Bookmarks
     {
         if (reload) Load();
         var result = Add(target);
-        if (result == AddResult.AlreadyThere) return Lang.F("Already bookmarked: {0}", target.Name);
         if (result == AddResult.NotKept) return Lang.T("A path with a tab or a line break is not kept");
+        // With its number, for ":book 14", and its name as the Jump menu shows it
+        var entry = Find(target with
+        {
+            Target = target.Kind == JumpKind.Page ? target.Target : Path.GetFullPath(target.Target)
+        });
+        var number = entry == null ? 0 : NumberOf(entry);
+        var name = entry?.Shown ?? target.Name;
+        if (result == AddResult.AlreadyThere) return Lang.F("Already bookmarked ({0}): {1}", number, name);
         var status = Save();
-        return status == DialogText.Success ? Lang.F("Bookmarked: {0}", target.Name) : status;
+        return status == DialogText.Success ? Lang.F("Bookmarked ({0}): {1}", number, name) : status;
     }
 
     /// <summary>

@@ -750,8 +750,12 @@ public partial class TextArea
                 }
                 else if (_saveMode == SaveAsFile && FileExplorer.CurrentFilePath.Length > 0)
                 {
+                    // Where the cursor is: ":book" and the Jump menu open the file there
                     _engine.ShowMessage(Bookmarks.AddWithMessage(
-                        new JumpTarget(JumpKind.File, FileExplorer.CurrentFilePath)), false);
+                        new JumpTarget(JumpKind.File, FileExplorer.CurrentFilePath)
+                        {
+                            At = CaretPosition.Of(GetText(), GetCursorIndex())
+                        }), false);
                 }
                 else
                 {
@@ -821,7 +825,7 @@ public partial class TextArea
             case EditorRequest.Jump:
                 Tools.HideCursor();
                 // Leaving the text asks about changes that are not saved
-                Jump.Open(LeaveForJump, () => _engine.IsModified);
+                Jump.Open(LeaveForJump, () => _engine.IsModified, MoveToBookmark);
                 RedrawAll();
                 break;
             case EditorRequest.Projects:
@@ -838,7 +842,7 @@ public partial class TextArea
                 break;
             case EditorRequest.JumpToBookmark:
                 Tools.HideCursor();
-                Jump.ToBookmark(_engine.BookArgument, LeaveForJump, () => _engine.IsModified);
+                Jump.ToBookmark(_engine.BookArgument, LeaveForJump, () => _engine.IsModified, MoveToBookmark);
                 RedrawAll();
                 break;
             case EditorRequest.Rename:
@@ -1671,6 +1675,21 @@ public partial class TextArea
         }
 
         _engine.MarkSaved();
+        return true;
+    }
+
+    // A bookmark of a place in the file being edited: the cursor goes there, and the file is not opened again (its
+    // changes stay as they are). False for any other place
+    private bool MoveToBookmark(JumpTarget target)
+    {
+        if (target is not { Kind: JumpKind.File, At: { } at } || _saveMode != SaveAsFile ||
+            FileExplorer.EditingListNote || FileExplorer.CurrentFilePath.Length == 0 ||
+            !FileOperations.SamePath(FileExplorer.CurrentFilePath, target.FullPath))
+        {
+            return false;
+        }
+
+        _engine.SetCursorIndex(CaretPosition.IndexOf(GetText(), at.Line, at.Column));
         return true;
     }
 

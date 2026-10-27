@@ -1024,7 +1024,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":yankall", Lang.T("Yank all the text (as gg V G y; the clipboard as y)"), false));
             _shortcutList.Add(new Shortcut(":new name", Lang.T("New file next to this one"), false));
             _shortcutList.Add(new Shortcut(":projects :pro", Lang.T("Open a project in the file browser"), false));
-            _shortcutList.Add(new Shortcut(":bookmark", Lang.T("Bookmark the file being edited (Jump menu)"), false));
+            _shortcutList.Add(new Shortcut(":bookmark", Lang.T("Bookmark the place of the cursor (Jump menu)"), false));
             _shortcutList.Add(new Shortcut(":favorite :fav", Lang.T("Add/remove the file as a favorite"), false));
             _shortcutList.Add(new Shortcut(":diff :diff -w", Lang.T("Compare with the saved text (-w: not blank space)"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Comparison"), Lang.T("n N ]c [c: the next/previous change"), false));
