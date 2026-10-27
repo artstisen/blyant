@@ -1,4 +1,5 @@
 # Guide to the editor
+![Editing Markdown](docs/screenshots/editor.svg)
 
 The editor works in the style of Vim. It is always in one of these modes, shown at the left of the bottom line:
 
@@ -11,6 +12,8 @@ The line above the text also tells what the keys do: **NAVIGATE** in Normal mode
 When a text file is edited (from the file browser), the bottom line shows its type, encoding and line endings, like `HTML UTF-8 (BOM) CRLF` or `TXT Windows-1252 LF` (a file in another encoding than UTF-8 becomes UTF-8 when it is saved; the line endings are kept: `CRLF` as used by Windows, `LF` as used by Linux and macOS; `:lineendings lf` or `:lineendings crlf` changes them, see [Line endings](#line-endings)). The bottom line also shows messages, the current memory string, the cursor position as `line:column` and how far into the text the cursor is. Inside Blyant, `:help` shows the list of keys.
 
 ## Save and close
+![Split view, and the commands listed while one is typed](docs/screenshots/split-view.svg)
+
 Typed on the command line: press `:`, type the command and press `Enter`. A box above the command line lists the commands while you type, narrowed to those that start with what is typed, and tells what the one typed whole does (see the [guide to the Jump menu](Guide-to-jump-menu.md), at the top). `Tab` completes the command you are typing (`:spelln` and `Tab` gives `:spellnext`), `Tab` again gives the next command that starts the same and `Shift+Tab` the previous. With nothing typed, `Tab` goes through all the commands of the editor. Lines typed in front of a command are kept (`:%d` and `Tab` gives `:%delete`). `Up` and `Down` bring back the commands given in the editor before, the newest first (with the start of a command typed: only those that start with it). They are kept in memory only and forgotten at logout; a macro being recorded gets each command line as it was given (also one brought back with `Up` or completed with `Tab`), not the keys.
 
 - `:w` Save (a [blank page](Guide-to-start-page.md#start) asks for its name and folder first; `:w name` with the name filled in)
@@ -162,6 +165,8 @@ Blyant reads spell files from a directory named `spell`, next to the `data` dire
 The words you add are saved as plain text, one word per line, in `spell/<language>.utf-8.add` (for the first of the languages). This is the format of Neovim's word list, so an existing list can be copied to the directory as well.
 
 ## Comparing
+![Comparing with the saved file](docs/screenshots/compare.svg)
+
 `:diff` compares the text you are editing with the file as it is saved on disk, so you can see what you have changed before you save it. Two files are compared in the [file browser](Guide-to-start-page.md#file-browser), with `:diff` there.
 
 The comparison is shown read only, as a unified diff (as `git diff` shows one): the lines that differ, with three unchanged lines around them. A line removed starts with `-` (colored as heading 1, red in the Default scheme), a line added with `+` (heading 5, green), and each part of the comparison starts with a line like `@@ -12,7 +12,8 @@`: where it is in the old text (line 12, 7 lines) and in the new one. The line at the top tells how many changes there are, and how many lines were added and removed.

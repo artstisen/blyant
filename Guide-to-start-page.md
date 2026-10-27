@@ -1,6 +1,8 @@
 # Guide to the start page and the file browser
 
 ## Start page
+![The start page](docs/screenshots/start-page.svg)
+
 Blyant is a text editor for writing: files, and projects of files. When it starts, the start page is shown in a frame with three tabs at its top: **Start**, where you make or open a file or a project, **Configuration**, with the settings, and **Help**, with the help, the guides and the about page. The settings are on five pages, shown as the sub-tabs **General**, **Layout**, **Editor**, **Lists** and **System** in a row at the top of the frame. The tab and sub-tab shown are highlighted in the color of the frame. The start page is shown again when the file browser is closed.
 
 `Tab` goes to the next tab (Start, Configuration, Help, and round to Start again), and `Shift+Tab` the other way. `h` and `l` (or `Left`/`Right`) go to the previous and the next sub-tab of the tab shown, going round, so in Configuration they go through General, Layout, Editor and System. The keys are shown at the right ends of the two rows: `Tab` after the tabs and `h/l` after the sub-tabs, in the color of the frame. A tab opens with the sub-tab it showed last. This is the same in all the frames with tabs (the color schemes, the logos).
@@ -147,6 +149,8 @@ The command names are the same in all languages.
 Select with `j`/`k` or the number and press `Enter`. `Esc` goes back to the Start tab.
 
 ## File browser
+![The file browser with two panes](docs/screenshots/file-browser.svg)
+
 The file browser (_File browser_, `F` on the start page) is where files and projects are worked on: text files (.md, .txt, .html ...) are opened in the Blyant editor, and files and directories are made, renamed, copied, moved and deleted.
 
 The browser shows two panes side by side, each with its own directory. The pane with the focus has a highlighted label (`PANE 1` or `PANE 2`) in the line above its list, and all keys work on that pane.
@@ -256,6 +260,8 @@ The files found are shown in a list with three columns, as the favorites: _Name_
 - `Esc`, `Q`, `h` or `-` Return to the browser
 
 ### Favorites
+![Favorites in colored folders, with a note and a peek](docs/screenshots/favorites.svg)
+
 Files and directories you use often can be marked as favorites:
 
 - `P` or `:fav` Add the selected file or directory to the favorites, or remove it (one with a note: after asking). Favorites are marked with a `*`

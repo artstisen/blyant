@@ -1,0 +1,158 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="868" height="572" viewBox="0 0 868 572">
+<title>Blyant: color schemes, the colors of the command line</title>
+<style>text{font-family:"Cascadia Mono","Cascadia Code",Consolas,"DejaVu Sans Mono",Menlo,monospace;font-size:14px;white-space:pre}</style>
+<rect width="100%" height="100%" rx="10" fill="#0C0C0C"/>
+<rect width="100%" height="34" rx="10" fill="#2B2B2B"/>
+<rect y="24" width="100%" height="10" fill="#2B2B2B"/>
+<circle cx="20" cy="17" r="6" fill="#FF5F57"/>
+<circle cx="40" cy="17" r="6" fill="#FEBC2E"/>
+<circle cx="60" cy="17" r="6" fill="#28C840"/>
+<text x="434.0" y="22" fill="#A0A0A0" text-anchor="middle">Blyant: color schemes, the colors of the command line</text>
+<rect x="14.0" y="48" width="126.0" height="17" fill="#3B78FF"/>
+<rect x="140.0" y="48" width="714.0" height="17" fill="#0037DA"/>
+<text x="14.0" y="60.8" fill="#61D6D6" textLength="117.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> COLOR SCHEMES</text>
+<text x="392.0" y="60.8" fill="#61D6D6" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Blyant</text>
+<rect x="14.0" y="65" width="840.0" height="17" fill="#0037DA"/>
+<rect x="14.0" y="82" width="840.0" height="17" fill="#0037DA"/>
+<text x="22.4" y="94.8" fill="#61D6D6" textLength="100.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> .---------.</text>
+<text x="131.6" y="94.8" fill="#F2F2F2" textLength="75.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">.--------</text>
+<text x="207.2" y="94.8" fill="#61D6D6" textLength="109.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">. .---------.</text>
+<rect x="14.0" y="99" width="126.0" height="17" fill="#0037DA"/>
+<rect x="140.0" y="99" width="67.2" height="17" fill="#3B78FF"/>
+<rect x="207.2" y="99" width="646.8" height="17" fill="#0037DA"/>
+<text x="22.4" y="111.8" fill="#61D6D6" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> |</text>
+<text x="39.2" y="111.8" fill="#CCCCCC" textLength="67.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Schemes</text>
+<text x="114.8" y="111.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="131.6" y="111.8" fill="#F2F2F2" textLength="67.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">| Colors</text>
+<text x="207.2" y="111.8" fill="#61D6D6" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">| |</text>
+<text x="232.4" y="111.8" fill="#CCCCCC" textLength="67.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Preview</text>
+<text x="308.0" y="111.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="803.6" y="111.8" fill="#61D6D6" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Tab</text>
+<rect x="14.0" y="116" width="840.0" height="17" fill="#0037DA"/>
+<text x="22.4" y="128.8" fill="#61D6D6" textLength="814.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">.&#x27;---------&#x27;-&#x27;        &#x27;-&#x27;---------&#x27;-------------------------------------------------------------.</text>
+<rect x="14.0" y="133" width="193.2" height="17" fill="#0037DA"/>
+<rect x="207.2" y="133" width="67.2" height="17" fill="#3B78FF"/>
+<rect x="274.4" y="133" width="579.6" height="17" fill="#0037DA"/>
+<text x="22.4" y="145.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="30.8" y="145.8" fill="#CCCCCC" textLength="151.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  Page 1    Page 2</text>
+<text x="207.2" y="145.8" fill="#F2F2F2" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Page 3</text>
+<text x="274.4" y="145.8" fill="#CCCCCC" textLength="75.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">   Page 4</text>
+<text x="795.2" y="145.8" fill="#61D6D6" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">h/l</text>
+<text x="828.8" y="145.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<rect x="14.0" y="150" width="840.0" height="17" fill="#0037DA"/>
+<text x="22.4" y="162.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="39.2" y="162.8" fill="#61D6D6" textLength="781.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">---------------------------------------------------------------------------------------------</text>
+<text x="828.8" y="162.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<rect x="14.0" y="167" width="840.0" height="17" fill="#0037DA"/>
+<text x="22.4" y="179.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="30.8" y="179.8" fill="#CCCCCC" textLength="226.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">    Color scheme: Deep Blue</text>
+<text x="828.8" y="179.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<rect x="14.0" y="184" width="840.0" height="17" fill="#0037DA"/>
+<text x="22.4" y="196.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="828.8" y="196.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<rect x="14.0" y="201" width="25.2" height="17" fill="#0037DA"/>
+<rect x="39.2" y="201" width="16.8" height="17" fill="#3B78FF"/>
+<rect x="56.0" y="201" width="184.8" height="17" fill="#0037DA"/>
+<rect x="240.8" y="201" width="67.2" height="17" fill="#3B78FF"/>
+<rect x="308.0" y="201" width="546.0" height="17" fill="#0037DA"/>
+<text x="22.4" y="213.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="39.2" y="213.8" fill="#F2F2F2" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">-&gt;</text>
+<text x="56.0" y="213.8" fill="#CCCCCC" textLength="109.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Command line</text>
+<text x="240.8" y="213.8" fill="#61D6D6" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Sample</text>
+<text x="308.0" y="213.8" fill="#CCCCCC" textLength="193.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  Cyan, background Blue</text>
+<text x="828.8" y="213.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<rect x="14.0" y="218" width="840.0" height="17" fill="#0037DA"/>
+<text x="22.4" y="230.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="30.8" y="230.8" fill="#CCCCCC" textLength="193.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">    Command box borders</text>
+<text x="240.8" y="230.8" fill="#61D6D6" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Sample</text>
+<text x="308.0" y="230.8" fill="#CCCCCC" textLength="50.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  Cyan</text>
+<text x="828.8" y="230.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<rect x="14.0" y="235" width="840.0" height="17" fill="#0037DA"/>
+<text x="22.4" y="247.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="30.8" y="247.8" fill="#CCCCCC" textLength="512.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">    Command box           Sample   Gray, background Dark Blue</text>
+<text x="828.8" y="247.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<rect x="14.0" y="252" width="840.0" height="17" fill="#0037DA"/>
+<text x="22.4" y="264.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="30.8" y="264.8" fill="#CCCCCC" textLength="117.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">    Typed part</text>
+<text x="240.8" y="264.8" fill="#B4009E" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Sample</text>
+<text x="308.0" y="264.8" fill="#CCCCCC" textLength="75.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  Magenta</text>
+<text x="828.8" y="264.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<rect x="14.0" y="269" width="226.8" height="17" fill="#0037DA"/>
+<rect x="240.8" y="269" width="67.2" height="17" fill="#3B78FF"/>
+<rect x="308.0" y="269" width="546.0" height="17" fill="#0037DA"/>
+<text x="22.4" y="281.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="30.8" y="281.8" fill="#CCCCCC" textLength="142.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">    Whole command</text>
+<text x="240.8" y="281.8" fill="#F2F2F2" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Sample</text>
+<text x="308.0" y="281.8" fill="#CCCCCC" textLength="201.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  White, background Blue</text>
+<text x="828.8" y="281.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<rect x="14.0" y="286" width="840.0" height="17" fill="#0037DA"/>
+<text x="22.4" y="298.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="30.8" y="298.8" fill="#CCCCCC" textLength="142.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">    Command hints</text>
+<text x="240.8" y="298.8" fill="#61D6D6" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Sample</text>
+<text x="308.0" y="298.8" fill="#CCCCCC" textLength="50.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  Cyan</text>
+<text x="828.8" y="298.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<rect x="14.0" y="303" width="226.8" height="17" fill="#0037DA"/>
+<rect x="240.8" y="303" width="67.2" height="17" fill="#F9F1A5"/>
+<rect x="308.0" y="303" width="546.0" height="17" fill="#0037DA"/>
+<text x="22.4" y="315.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="30.8" y="315.8" fill="#CCCCCC" textLength="142.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">    Command error</text>
+<text x="240.8" y="315.8" fill="#0C0C0C" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Sample</text>
+<text x="308.0" y="315.8" fill="#CCCCCC" textLength="218.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  Black, background Yellow</text>
+<text x="828.8" y="315.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<rect x="14.0" y="320" width="840.0" height="17" fill="#0037DA"/>
+<text x="22.4" y="332.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="828.8" y="332.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<rect x="14.0" y="337" width="840.0" height="17" fill="#0037DA"/>
+<text x="22.4" y="349.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="64.4" y="349.8" fill="#61D6D6" textLength="470.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">.-- Commands ------------------------------------------.</text>
+<text x="828.8" y="349.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<rect x="14.0" y="354" width="67.2" height="17" fill="#0037DA"/>
+<rect x="81.2" y="354" width="33.6" height="17" fill="#3B78FF"/>
+<rect x="114.8" y="354" width="739.2" height="17" fill="#0037DA"/>
+<text x="22.4" y="366.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="64.4" y="366.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="81.2" y="366.8" fill="#F2F2F2" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">copy</text>
+<text x="131.6" y="366.8" fill="#B4009E" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">co</text>
+<text x="148.4" y="366.8" fill="#CCCCCC" textLength="50.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">llapse</text>
+<text x="215.6" y="366.8" fill="#B4009E" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">co</text>
+<text x="232.4" y="366.8" fill="#CCCCCC" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">lor</text>
+<text x="274.4" y="366.8" fill="#61D6D6" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">+2 more</text>
+<text x="518.0" y="366.8" fill="#61D6D6" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> |</text>
+<text x="828.8" y="366.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<rect x="14.0" y="371" width="840.0" height="17" fill="#0037DA"/>
+<text x="22.4" y="383.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="64.4" y="383.8" fill="#61D6D6" textLength="470.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&#x27;------------------------------------------------------&#x27;</text>
+<text x="828.8" y="383.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<rect x="14.0" y="388" width="50.4" height="17" fill="#0037DA"/>
+<rect x="64.4" y="388" width="285.6" height="17" fill="#3B78FF"/>
+<rect x="350.0" y="388" width="16.8" height="17" fill="#0037DA"/>
+<rect x="366.8" y="388" width="168.0" height="17" fill="#F9F1A5"/>
+<rect x="534.8" y="388" width="319.2" height="17" fill="#0037DA"/>
+<text x="22.4" y="400.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="64.4" y="400.8" fill="#61D6D6" textLength="100.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">COMMAND:copy</text>
+<text x="366.8" y="400.8" fill="#0C0C0C" textLength="159.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Not a command: cpy</text>
+<text x="828.8" y="400.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<rect x="14.0" y="405" width="840.0" height="17" fill="#0037DA"/>
+<text x="22.4" y="417.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="828.8" y="417.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<rect x="14.0" y="422" width="840.0" height="17" fill="#0037DA"/>
+<text x="22.4" y="434.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="828.8" y="434.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<rect x="14.0" y="439" width="840.0" height="17" fill="#0037DA"/>
+<text x="22.4" y="451.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="828.8" y="451.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<rect x="14.0" y="456" width="840.0" height="17" fill="#0037DA"/>
+<text x="22.4" y="468.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="828.8" y="468.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<rect x="14.0" y="473" width="840.0" height="17" fill="#0037DA"/>
+<text x="22.4" y="485.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="828.8" y="485.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<rect x="14.0" y="490" width="840.0" height="17" fill="#0037DA"/>
+<text x="22.4" y="502.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="828.8" y="502.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<rect x="14.0" y="507" width="840.0" height="17" fill="#0037DA"/>
+<text x="22.4" y="519.8" fill="#61D6D6" textLength="814.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&#x27;-----------------------------------------------------------------------------------------------&#x27;</text>
+<rect x="14.0" y="524" width="840.0" height="17" fill="#0037DA"/>
+<text x="14.0" y="536.8" fill="#CCCCCC" textLength="630.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> j/k Select | Enter Pick | T Text | E Reset | S Save | h/l Page | Esc Close</text>
+<rect x="14.0" y="541" width="840.0" height="17" fill="#0037DA"/>
+</svg>

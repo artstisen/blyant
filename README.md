@@ -7,6 +7,8 @@ Blyant has several features inspired by popular Neovim plugins for text navigati
 
 **My favorite feature? – Using bookmarks to create custom jump points and open them from anywhere via the command line.**
 
+![The editor in split view, with the commands listed while one is typed](docs/screenshots/split-view.svg)
+
 
 ## Key features
 
@@ -39,6 +41,20 @@ Blyant has several features inspired by popular Neovim plugins for text navigati
 - Color schemes and logos, which you can edit and make your own
 - English and German built in, and nine more languages as files that can be changed or added to
 - Runs on Windows, Linux (also Raspberry Pi) and macOS, as a single file with nothing else to install
+
+## Screenshots
+The screenshots are of the real program, made with [tools/screenshots.py](tools/screenshots.py) from a made-up writing project, in the color schemes Default, Deep Blue and Tasty Bytes.
+
+| | |
+|---|---|
+| ![The start page](docs/screenshots/start-page.svg) | ![The file browser with two panes](docs/screenshots/file-browser.svg) |
+| The start page, with a hint about a feature | The file browser: two panes, line numbers and favorites (`*`) |
+| ![Editing Markdown](docs/screenshots/editor.svg) | ![Favorites in colored folders](docs/screenshots/favorites.svg) |
+| Editing Markdown: colored text, line numbers, a search with its count | Favorites in colored folders, with a note and a peek |
+| ![The Jump menu](docs/screenshots/jump-menu.svg) | ![Comparing with the saved file](docs/screenshots/compare.svg) |
+| The Jump menu: bookmarks of places in files, `:book 1` from anywhere | `:diff`: what you changed since the file was saved |
+| ![The color schemes](docs/screenshots/color-schemes.svg) | ![Split view](docs/screenshots/split-view.svg) |
+| Color schemes: the colors of the command line, with a sample | Split view, and the commands listed while one is typed |
 
 ## Getting started
 1. Download the build for your platform from the [releases page](https://github.com/artstisen/blyant/releases), and unzip it into a directory of your choice.

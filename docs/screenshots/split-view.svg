@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="868" height="572" viewBox="0 0 868 572">
+<title>Blyant: split view, and the commands while typing</title>
+<style>text{font-family:"Cascadia Mono","Cascadia Code",Consolas,"DejaVu Sans Mono",Menlo,monospace;font-size:14px;white-space:pre}</style>
+<rect width="100%" height="100%" rx="10" fill="#0C0C0C"/>
+<rect width="100%" height="34" rx="10" fill="#2B2B2B"/>
+<rect y="24" width="100%" height="10" fill="#2B2B2B"/>
+<circle cx="20" cy="17" r="6" fill="#FF5F57"/>
+<circle cx="40" cy="17" r="6" fill="#FEBC2E"/>
+<circle cx="60" cy="17" r="6" fill="#28C840"/>
+<text x="434.0" y="22" fill="#A0A0A0" text-anchor="middle">Blyant: split view, and the commands while typing</text>
+<rect x="14.0" y="48" width="67.2" height="17" fill="#61D6D6"/>
+<text x="14.0" y="60.8" fill="#0C0C0C" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> EDITOR</text>
+<text x="81.2" y="60.8" fill="#CCCCCC" textLength="117.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> chapter-03.md</text>
+<text x="14.0" y="77.8" fill="#767676" textLength="579.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">---------------------------------------------------------------------</text>
+<text x="593.6" y="77.8" fill="#16C60C" textLength="67.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> COMMAND</text>
+<text x="669.2" y="77.8" fill="#767676" textLength="176.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">---------------------</text>
+<text x="14.0" y="94.8" fill="#F2F2F2" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  1</text>
+<text x="56.0" y="94.8" fill="#E74856" textLength="201.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve"># Chapter 3: The Logbook</text>
+<text x="417.2" y="94.8" fill="#767676" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">| 51</text>
+<text x="14.0" y="111.8" fill="#767676" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  2</text>
+<text x="417.2" y="111.8" fill="#767676" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">| 52</text>
+<text x="467.6" y="111.8" fill="#CCCCCC" textLength="352.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Steady green. Red, every four seconds. And</text>
+<text x="14.0" y="128.8" fill="#767676" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  3</text>
+<text x="56.0" y="128.8" fill="#CCCCCC" textLength="352.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">The logbook was in the drawer of the chart</text>
+<text x="417.2" y="128.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="467.6" y="128.8" fill="#CCCCCC" textLength="285.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">out past the north pier, where the</text>
+<text x="56.0" y="145.8" fill="#CCCCCC" textLength="285.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> table, under a tin of matches and</text>
+<text x="417.2" y="145.8" fill="#767676" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">| 53</text>
+<text x="467.6" y="145.8" fill="#CCCCCC" textLength="352.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">chart showed nothing but broken water, two</text>
+<text x="14.0" y="162.8" fill="#767676" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  4</text>
+<text x="56.0" y="162.8" fill="#CCCCCC" textLength="319.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">a pair of reading glasses with one arm</text>
+<text x="417.2" y="162.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="467.6" y="162.8" fill="#CCCCCC" textLength="210.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">white flashes, then dark.</text>
+<text x="56.0" y="179.8" fill="#CCCCCC" textLength="126.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">mended in wire.</text>
+<text x="417.2" y="179.8" fill="#767676" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">| 54</text>
+<text x="14.0" y="196.8" fill="#767676" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  5</text>
+<text x="417.2" y="196.8" fill="#767676" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">| 55</text>
+<text x="467.6" y="196.8" fill="#CCCCCC" textLength="277.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">She wrote the time in the margin:</text>
+<text x="14.0" y="213.8" fill="#767676" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  6</text>
+<text x="56.0" y="213.8" fill="#CCCCCC" textLength="310.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Maren opened it at the last page. The</text>
+<text x="417.2" y="213.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="467.6" y="213.8" fill="#61D6D6" textLength="75.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">**04:39**</text>
+<text x="543.2" y="213.8" fill="#CCCCCC" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">.</text>
+<text x="56.0" y="230.8" fill="#CCCCCC" textLength="151.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">entries stopped in</text>
+<text x="215.6" y="230.8" fill="#61D6D6" textLength="75.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">**March**</text>
+<text x="291.2" y="230.8" fill="#CCCCCC" textLength="67.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">, in the</text>
+<text x="417.2" y="230.8" fill="#767676" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">| 56</text>
+<text x="14.0" y="247.8" fill="#767676" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  7</text>
+<text x="56.0" y="247.8" fill="#CCCCCC" textLength="310.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">middle of a sentence, and the harbour</text>
+<text x="417.2" y="247.8" fill="#767676" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">| 57</text>
+<text x="467.6" y="247.8" fill="#B4009E" textLength="84.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">## Night 4</text>
+<text x="56.0" y="264.8" fill="#CCCCCC" textLength="319.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">lights were listed one by one down the</text>
+<text x="417.2" y="264.8" fill="#767676" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">| 58</text>
+<text x="14.0" y="281.8" fill="#767676" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  8</text>
+<text x="56.0" y="281.8" fill="#CCCCCC" textLength="294.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">margin, each with a tick beside it.</text>
+<text x="417.2" y="281.8" fill="#767676" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">| 59</text>
+<text x="467.6" y="281.8" fill="#CCCCCC" textLength="310.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">The wind came round to the east after</text>
+<text x="14.0" y="298.8" fill="#767676" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  9</text>
+<text x="417.2" y="298.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="467.6" y="298.8" fill="#CCCCCC" textLength="302.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">midnight and the windows of the lamp</text>
+<text x="14.0" y="315.8" fill="#767676" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 10</text>
+<text x="56.0" y="315.8" fill="#B4009E" textLength="117.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">## The entries</text>
+<text x="417.2" y="315.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="425.6" y="315.8" fill="#F2F2F2" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 60</text>
+<text x="467.6" y="315.8" fill="#CCCCCC" textLength="352.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">room hummed like a glass rubbed with a wet</text>
+<text x="14.0" y="332.8" fill="#767676" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 11</text>
+<text x="417.2" y="332.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="467.6" y="332.8" fill="#CCCCCC" textLength="243.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">finger. Maren sat on the iron</text>
+<text x="14.0" y="349.8" fill="#767676" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 12</text>
+<text x="56.0" y="349.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">-</text>
+<text x="72.8" y="349.8" fill="#F9F1A5" textLength="134.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">*Harbour mouth:*</text>
+<text x="207.2" y="349.8" fill="#CCCCCC" textLength="201.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> steady green, all night</text>
+<text x="417.2" y="349.8" fill="#767676" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">| 61</text>
+<text x="467.6" y="349.8" fill="#CCCCCC" textLength="327.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">steps with the logbook on her knees and</text>
+<text x="14.0" y="366.8" fill="#767676" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 13</text>
+<text x="56.0" y="366.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">-</text>
+<text x="72.8" y="366.8" fill="#F9F1A5" textLength="109.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">*North pier:*</text>
+<text x="182.0" y="366.8" fill="#CCCCCC" textLength="210.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> red, flashing every four</text>
+<text x="417.2" y="366.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="467.6" y="366.8" fill="#CCCCCC" textLength="226.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">watched the harbour lights.</text>
+<text x="56.0" y="383.8" fill="#CCCCCC" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">seconds</text>
+<text x="417.2" y="383.8" fill="#767676" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">| 62</text>
+<text x="14.0" y="400.8" fill="#767676" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 14</text>
+<text x="56.0" y="400.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">-</text>
+<text x="72.8" y="400.8" fill="#F9F1A5" textLength="100.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">*The Teeth:*</text>
+<text x="173.6" y="400.8" fill="#CCCCCC" textLength="210.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> white, two flashes, then</text>
+<text x="417.2" y="400.8" fill="#767676" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">| 63</text>
+<text x="467.6" y="400.8" fill="#CCCCCC" textLength="352.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Steady green. Red, every four seconds. And</text>
+<text x="14.0" y="417.8" fill="#F2F2F2" textLength="823.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">.-- Commands ------------------------------------------------------------------------------------.</text>
+<text x="14.0" y="434.8" fill="#F2F2F2" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="30.8" y="434.8" fill="#F9F1A5" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">sp</text>
+<text x="47.6" y="434.8" fill="#CCCCCC" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">ell</text>
+<text x="140.0" y="434.8" fill="#F9F1A5" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">sp</text>
+<text x="156.8" y="434.8" fill="#CCCCCC" textLength="50.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">elladd</text>
+<text x="249.2" y="434.8" fill="#F9F1A5" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">sp</text>
+<text x="266.0" y="434.8" fill="#CCCCCC" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">ellnext</text>
+<text x="358.4" y="434.8" fill="#F9F1A5" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">sp</text>
+<text x="375.2" y="434.8" fill="#CCCCCC" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">ellprev</text>
+<text x="467.6" y="434.8" fill="#F9F1A5" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">sp</text>
+<text x="484.4" y="434.8" fill="#CCCCCC" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">lit</text>
+<text x="820.4" y="434.8" fill="#F2F2F2" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> |</text>
+<text x="14.0" y="451.8" fill="#F2F2F2" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="820.4" y="451.8" fill="#F2F2F2" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> |</text>
+<text x="14.0" y="468.8" fill="#F2F2F2" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="820.4" y="468.8" fill="#F2F2F2" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> |</text>
+<text x="14.0" y="485.8" fill="#F2F2F2" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="820.4" y="485.8" fill="#F2F2F2" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> |</text>
+<text x="14.0" y="502.8" fill="#F2F2F2" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="820.4" y="502.8" fill="#F2F2F2" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> |</text>
+<text x="14.0" y="519.8" fill="#F2F2F2" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="30.8" y="519.8" fill="#767676" textLength="319.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Tab completes, Enter runs, Esc cancels</text>
+<text x="820.4" y="519.8" fill="#F2F2F2" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> |</text>
+<rect x="14.0" y="524" width="84.0" height="17" fill="#61D6D6"/>
+<rect x="98.0" y="524" width="8.4" height="17" fill="#CCCCCC"/>
+<rect x="106.4" y="524" width="730.8" height="17" fill="#61D6D6"/>
+<text x="14.0" y="536.8" fill="#0C0C0C" textLength="84.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">COMMAND:sp</text>
+<text x="837.2" y="536.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">-</text>
+</svg>

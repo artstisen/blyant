@@ -44,6 +44,8 @@ The list has columns, with lines between them and their names in the line above 
 - `Esc` (or `Q`, `Ctrl+O`) Close the menu; `?` shows its keys. The menu opens on the tab it was on the last time (while Blyant runs), so jumping between files from the Files or Favorites tab goes on there
 
 ### Bookmarks
+![The Jump menu with bookmarks](docs/screenshots/jump-menu.svg)
+
 Bookmarks are places you keep to jump to: a file, a directory (a project) or a page of Blyant. `B` on any list of the Jump menu adds the selected place, and `:bookmark` in the editor adds the place of the cursor in the file being edited (in the file browser: the selected file or directory, on `..` the directory shown). The message tells the number of the bookmark, for `:book`: `Bookmarked (14): chapter.md:120`. A place is bookmarked once, and at the end of the list.
 
 **A place in a file:** a bookmark made with `:bookmark` in the editor keeps the line and column of the cursor, and is shown with its line (`chapter.md:120`). Jumping to it opens the file there, not where it was left; when the file is the one being edited, the cursor just moves there, and its changes stay as they are. The peek below the bookmarks starts at the line. A file can have bookmarks at several lines, and a bookmark of the file itself (`B` here, or `:bookmark` in the file browser), which opens it where it was left. The line is a number, so lines added or removed above it move the text away from it. In `bookmarks.txt` the line and column follow the name and the color (`120:5`). On the Bookmarks tab:
@@ -92,6 +94,8 @@ When you jump from the editor and the text has changes that are not saved, you a
 The jumps are kept in the file `jump.txt` in the data directory, one line for each place (at most 100): the time, a tab character, the kind (`file`, `dir` or `page`), a tab character and the place (the path of a file or directory, or the name of a page such as `config/editor`). The lines of data files that Marbles kept in these files (`data`) are left out.
 
 ## Color schemes
+![The color schemes, the colors of the command line](docs/screenshots/color-schemes.svg)
+
 The colors of Blyant are chosen and edited on a page of their own, _COLOR SCHEMES_, opened with `:scheme` on the start page or from its Configuration tab (select _Color scheme_ on the Layout page and press `Enter`). It is a frame with three tabs, as the start page: **Schemes**, **Colors** (with the sub-tabs _Page 1_ to _Page 4_) and **Preview**. `Tab` goes from tab to tab, and `Shift+Tab` the other way. `h` and `l` (or `Left`/`Right`) go through the pages of Colors.
 
 **Schemes** lists the color schemes: the nine built-in ones (Default, Deep Blue, Blyant Quest, Tasty Bytes, Yellow Monochrome, Green Monochrome, Ice Warp, Gray Box and Bright Typist, black text on a white background, as on paper), and below them the ones you have saved yourself. The one in use is marked `[x]`. A scheme can have a logo that goes with it: _Default_, _Deep Blue_ and _Gray Box_ have the logo _Blyant_, and _Blyant Quest_ and _Tasty Bytes_ the logo _Reflections_, which is used too when the scheme is selected (in a scheme file this is the line `uselogo=Reflections`, with the name of a logo; the logo can be changed afterwards as usual).
