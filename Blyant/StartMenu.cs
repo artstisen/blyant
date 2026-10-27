@@ -74,11 +74,11 @@ internal static class StartMenu
     /// Show a tab the next time the page is shown
     /// </summary>
     /// <param name="configurationPage">Show a page of the Configuration tab first (0 General, 1 Layout, 2 Editor,
-    /// 3 System), or -1 for the Start tab</param>
+    /// 3 Lists, 4 System), or -1 for the Start tab</param>
     internal static void Open(int configurationPage = -1)
     {
         _starting = false;
-        _showConfiguration = Math.Clamp(configurationPage, -1, 3);
+        _showConfiguration = Math.Clamp(configurationPage, -1, 4);
     }
 
     /// <summary>
@@ -103,7 +103,7 @@ internal static class StartMenu
             },
             new TabItem(() => DialogText.StartTab, start),
             new TabItem(() => DialogText.StartConfiguration, new SettingsPage(0), new SettingsPage(1),
-                new SettingsPage(2), new SettingsPage(3)),
+                new SettingsPage(2), new SettingsPage(3), new SettingsPage(4)),
             new TabItem(() => Lang.T("Help"), new HelpPage()))
         {
             Commands = ReadCommand,
@@ -179,8 +179,11 @@ internal static class StartMenu
             case "editor":
                 ShowPage(3);
                 break;
-            case "system":
+            case "lists":
                 ShowPage(4);
+                break;
+            case "system":
+                ShowPage(5);
                 break;
             case "jump":
             case "ju":
@@ -477,6 +480,12 @@ internal static class StartMenu
         AutoComplete,
         Completions,
         Recovery,
+        FavoriteNumbers,
+        FavoritePanes,
+        FavoritePeek, // Below FavoritePanes: it is in the panes
+        BookmarkNumbers,
+        BookmarkPanes,
+        BookmarkPeek, // Below BookmarkPanes
         Hints,
         Reset,
         EditSettings,
@@ -515,6 +524,13 @@ internal static class StartMenu
         settings.Add(Setting.AutoComplete);
         settings.Add(Setting.Completions);
         settings.Add(Setting.Recovery);
+        // Lists: the favorites of the file browser and the bookmarks of the Jump menu
+        settings.Add(Setting.FavoriteNumbers);
+        settings.Add(Setting.FavoritePanes);
+        settings.Add(Setting.FavoritePeek);
+        settings.Add(Setting.BookmarkNumbers);
+        settings.Add(Setting.BookmarkPanes);
+        settings.Add(Setting.BookmarkPeek);
         // System
         settings.Add(Setting.Hints);
         settings.Add(Setting.Reset);
@@ -562,6 +578,12 @@ internal static class StartMenu
             Setting.AutoComplete => Check(Blyant.Completions.Enabled) + Lang.T("Complete words while typing"),
             Setting.Completions => indent + Lang.T("Completions editor (Enter: Open)"),
             Setting.Recovery => Check(Blyant.Recovery.Enabled) + Lang.T("Recovery copies of unsaved text (:recovery)"),
+            Setting.FavoriteNumbers => Check(FileExplorer.FavoriteNumbers) + Lang.T("Line numbers in Favorites"),
+            Setting.FavoritePanes => Check(FileExplorer.FavoritePanes) + Lang.T("Panes in Favorites (note and peek)"),
+            Setting.FavoritePeek => indent + Check(FileExplorer.FavoritePeek) + Lang.T("Peek in Favorites"),
+            Setting.BookmarkNumbers => Check(JumpMenu.BookmarkNumbers) + Lang.T("Line numbers in Bookmarks"),
+            Setting.BookmarkPanes => Check(JumpMenu.BookmarkPanes) + Lang.T("Panes in Bookmarks (note and peek)"),
+            Setting.BookmarkPeek => indent + Check(JumpMenu.BookmarkPeek) + Lang.T("Peek in Bookmarks"),
             Setting.Info => indent + DialogText.FileInfo,
             Setting.EditSettings => indent + Lang.F("Edit {0}", FileIo.SettingsFileName),
             Setting.Restart => indent + DialogText.ConfigRestart,
@@ -578,7 +600,7 @@ internal static class StartMenu
             : Lang.F("Spell checker: {0}", SpellChecker.Languages);
     }
 
-    // The settings are shown on four pages: General, Layout, Editor and System
+    // The settings are shown on five pages: General, Layout, Editor, Lists and System
     private static int PageOf(Setting setting)
     {
         return setting switch
@@ -590,7 +612,9 @@ internal static class StartMenu
             Setting.LineNumbers or Setting.WordWrap or Setting.ScrollOff or Setting.Clipboard
                 or Setting.SyntaxColors or Setting.Spell or Setting.Snippets or Setting.AutoComplete
                 or Setting.Completions or Setting.Recovery => 2,
-            _ => 3
+            Setting.FavoriteNumbers or Setting.FavoritePanes or Setting.FavoritePeek or Setting.BookmarkNumbers
+                or Setting.BookmarkPanes or Setting.BookmarkPeek => 3,
+            _ => 4
         };
     }
 
@@ -602,12 +626,18 @@ internal static class StartMenu
             0 => Lang.T("General"),
             1 => Lang.T("Layout"),
             2 => Lang.T("Editor"),
+            3 => Lang.T("Lists"),
             _ => Lang.T("System")
         };
     }
 
     // A blank row is shown above these settings when there is room: they start a group of their page
-    private static bool StartsGroup(Setting setting) => setting is Setting.DeleteToTrash;
+    private static bool StartsGroup(Setting setting) => setting is Setting.DeleteToTrash or Setting.BookmarkNumbers;
+
+    // A setting that has no effect as the settings are now (the peek, while its panes are off): shown dimmed
+    private static bool IsDimmed(Setting setting) =>
+        setting == Setting.FavoritePeek && !FileExplorer.FavoritePanes ||
+        setting == Setting.BookmarkPeek && !JumpMenu.BookmarkPanes;
 
     // Pick the languages of the spell checker from the ones there is a spell file for: Enter turns one on or
     // off, until the box is closed with Esc
@@ -1071,7 +1101,9 @@ internal static class StartMenu
                 {
                     Tools.SetCursorEx(Row(i), area.Left + 2);
                     var text = checkBoxes ? texts[i] : texts[i].TrimStart();
+                    if (IsDimmed(settings[i])) ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
                     Console.Write(" " + Tools.TruncateString(text, area.Width - 4, true));
+                    ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
                 }
             }
 
@@ -1180,6 +1212,24 @@ internal static class StartMenu
                 break;
             case Setting.Recovery:
                 Blyant.Recovery.Enabled = !Blyant.Recovery.Enabled;
+                break;
+            case Setting.FavoriteNumbers:
+                FileExplorer.FavoriteNumbers = !FileExplorer.FavoriteNumbers;
+                break;
+            case Setting.FavoritePanes:
+                FileExplorer.FavoritePanes = !FileExplorer.FavoritePanes;
+                break;
+            case Setting.FavoritePeek:
+                FileExplorer.FavoritePeek = !FileExplorer.FavoritePeek;
+                break;
+            case Setting.BookmarkNumbers:
+                JumpMenu.BookmarkNumbers = !JumpMenu.BookmarkNumbers;
+                break;
+            case Setting.BookmarkPanes:
+                JumpMenu.BookmarkPanes = !JumpMenu.BookmarkPanes;
+                break;
+            case Setting.BookmarkPeek:
+                JumpMenu.BookmarkPeek = !JumpMenu.BookmarkPeek;
                 break;
             case Setting.Monochrome:
                 ConsoleColors.Monochrome = !ConsoleColors.Monochrome;

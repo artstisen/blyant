@@ -424,9 +424,12 @@ internal static class FileIo
         // Below the list of favorites: the panes with the note and the peek of the selected item, and the peek in them
         _tempSettings += "favoritepanes=" + (FileExplorer.FavoritePanes ? DialogText.BTrue : DialogText.BFalse) + '\n';
         _tempSettings += "favoritepeek=" + (FileExplorer.FavoritePeek ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        // The rows of the favorites numbered (and below, of the bookmarks)
+        _tempSettings += "favoritenumbers=" + (FileExplorer.FavoriteNumbers ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // The same below the bookmarks of the Jump menu
         _tempSettings += "bookmarkpanes=" + (JumpMenu.BookmarkPanes ? DialogText.BTrue : DialogText.BFalse) + '\n';
         _tempSettings += "bookmarkpeek=" + (JumpMenu.BookmarkPeek ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        _tempSettings += "bookmarknumbers=" + (JumpMenu.BookmarkNumbers ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // The commands of the place in a box above the command line while a command is typed
         _tempSettings += "commandlist=" + (CommandList.Enabled ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // The hints on the start page, and the one shown (the next each time Blyant starts, while they are shown)
@@ -631,6 +634,9 @@ internal static class FileIo
         FileExplorer.FavoritePeek = Tools.TrimToLower(Get("favoritepeek")) != DialogText.BFalse;
         JumpMenu.BookmarkPanes = Tools.TrimToLower(Get("bookmarkpanes")) != DialogText.BFalse;
         JumpMenu.BookmarkPeek = Tools.TrimToLower(Get("bookmarkpeek")) != DialogText.BFalse;
+        // The numbers of the rows of the favorites and the bookmarks: off unless turned on
+        FileExplorer.FavoriteNumbers = Tools.TrimToLower(Get("favoritenumbers")) == DialogText.BTrue;
+        JumpMenu.BookmarkNumbers = Tools.TrimToLower(Get("bookmarknumbers")) == DialogText.BTrue;
         CommandList.Enabled = Tools.TrimToLower(Get("commandlist")) != DialogText.BFalse;
         Hints.Enabled = Tools.TrimToLower(Get("hints")) != DialogText.BFalse;
         Hints.Index = int.TryParse(Get("hintindex").Trim(), out var hint) && hint >= -1 ? hint : -1;

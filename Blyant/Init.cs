@@ -301,6 +301,8 @@ internal static class Init
         FileExplorer.FavoritePeek = true;
         JumpMenu.BookmarkPanes = true;
         JumpMenu.BookmarkPeek = true;
+        FileExplorer.FavoriteNumbers = false;
+        JumpMenu.BookmarkNumbers = false;
         Recovery.Enabled = true;
         ConsoleColors.Monochrome = false;
         SyntaxHighlighter.ColorFiles = true;

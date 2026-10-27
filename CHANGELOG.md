@@ -1,6 +1,7 @@
 # Changes
 
 ## Unreleased
+- **Line numbers in the favorites and the bookmarks, and a Lists page in Configuration**: `:number` (and `:nonumber`) numbers the rows of the favorites, or of the Bookmarks tab of the Jump menu, dimmed at the left, as `12gg` and `5j` count them; the pointer and the names move to the right of the numbers, which are as wide as the largest. Off from the start (settings `favoritenumbers`, `bookmarknumbers`). The new **Lists** page of Configuration (between Editor and System, `:lists`) has the line numbers, the panes and the peek of both lists; the peek is dimmed while its panes are off, and all six go back to their defaults when the settings are reset.
 - **Save a copy, and save as**: `:w name` in the editor saves a copy of the text as a new file next to the file (with the file's extension if the name has none, and its encoding and line endings), and the file stays open as it is; `:saveas name` does the same and edits the new file from then on (`:saveas` alone asks for the name). A file of that name is replaced only after asking. When the file is a favorite, you are asked whether the new file goes below it in the favorites (copies of the same favorite keep the order they were made in). Back in the file browser or the favorites, the last file written is selected. (`:w name` saved only a comparison before.)
 
 ## v1.0.0 (2026-10-26)

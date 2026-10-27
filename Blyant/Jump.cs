@@ -73,19 +73,21 @@ internal static class JumpPages
 {
     internal static readonly IReadOnlyList<string> Ids = new[]
     {
-        "config/general", "config/layout", "config/editor", "config/system", "schemes", "logos", "clipboard",
+        "config/general", "config/layout", "config/editor", "config/lists", "config/system", "schemes", "logos",
+        "clipboard",
         "snippets", "completions", "help", "about"
     };
 
     /// <summary>
-    /// The page of the Configuration tab (0 to 3) of a page, or -1 if it is not one
+    /// The page of the Configuration tab (0 to 4) of a page, or -1 if it is not one
     /// </summary>
     internal static int ConfigurationPage(string id) => id switch
     {
         "config/general" => 0,
         "config/layout" => 1,
         "config/editor" => 2,
-        "config/system" => 3,
+        "config/lists" => 3,
+        "config/system" => 4,
         _ => -1
     };
 
@@ -99,6 +101,7 @@ internal static class JumpPages
             "config/general" => Lang.F("{0}: {1}", DialogText.StartConfiguration, Lang.T("General")),
             "config/layout" => Lang.F("{0}: {1}", DialogText.StartConfiguration, Lang.T("Layout")),
             "config/editor" => Lang.F("{0}: {1}", DialogText.StartConfiguration, Lang.T("Editor")),
+            "config/lists" => Lang.F("{0}: {1}", DialogText.StartConfiguration, Lang.T("Lists")),
             "config/system" => Lang.F("{0}: {1}", DialogText.StartConfiguration, Lang.T("System")),
             "schemes" => DialogText.CaptionsColorScheme,
             "logos" => DialogText.CaptionsLogos,

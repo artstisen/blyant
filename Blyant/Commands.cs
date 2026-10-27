@@ -55,7 +55,8 @@ internal static class Commands
             "quit close home data help cd",
             "q h"),
         [CommandContext.Favorites] = new Table(
-            "quit close help jump book new color info remove move top bottom undo folder subfolder note panes peek expand collapse rename import goto path name",
+            "quit close help jump book new color info remove move top bottom undo folder subfolder note panes peek number nonumber expand collapse rename import goto " +
+            "path name",
             "q h u ju jmp"),
         [CommandContext.History] = new Table(
             "quit close help jump book info goto favorite remove clear path name",
@@ -67,12 +68,12 @@ internal static class Commands
             "quit close help jump book find info goto favorite",
             "q h fav ju jmp"),
         [CommandContext.Start] = new Table(
-            "new blank recover file open favorites project projects start config general layout editor system jump book help about quick " +
-            "scheme logo snippet completions clipboard log restart reset quit exit",
+            "new blank recover file open favorites project projects start config general layout editor lists system jump book help about " +
+            "quick scheme logo snippet completions clipboard log restart reset quit exit",
             "browse favs newproject proj pro ju jmp h guide snip comp q"),
         [CommandContext.Jump] = new Table(
-            "quit close help info book new note panes peek folder subfolder expand collapse rename color remove move top bottom undo " +
-            "clearbook import path name",
+            "quit close help info book new note panes peek number nonumber folder subfolder expand collapse rename color remove move " +
+            "top bottom undo clearbook import path name",
             "q h u"),
         [CommandContext.Projects] = new Table(
             "quit close help info path name color note new add remove",

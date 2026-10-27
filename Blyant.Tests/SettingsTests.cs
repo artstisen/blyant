@@ -199,6 +199,26 @@ backup=
     }
 
     [Fact]
+    public void TheLineNumbersOfTheFavoritesAndBookmarks_AreOffUnlessTurnedOn_AndSaved()
+    {
+        File.WriteAllText(SettingsFile, LegacySettings);
+        Assert.True(FileIo.LoadSettings());
+        Assert.False(FileExplorer.FavoriteNumbers);
+        Assert.False(JumpMenu.BookmarkNumbers);
+        File.WriteAllText(SettingsFile, LegacySettings + "\nfavoritenumbers=true\nbookmarknumbers=true\n");
+        Assert.True(FileIo.LoadSettings());
+        Assert.True(FileExplorer.FavoriteNumbers);
+        Assert.True(JumpMenu.BookmarkNumbers);
+        FileIo.SaveSettings();
+        var saved = FileIo.ParseSettings(File.ReadAllText(SettingsFile));
+        Assert.Equal("true", saved["favoritenumbers"]);
+        Assert.Equal("true", saved["bookmarknumbers"]);
+        Actions.ApplyDefaultSettings();
+        Assert.False(FileExplorer.FavoriteNumbers);
+        Assert.False(JumpMenu.BookmarkNumbers);
+    }
+
+    [Fact]
     public void TheNoteAndPeekBelowTheBookmarks_AreSettingsOfTheirOwn()
     {
         File.WriteAllText(SettingsFile, LegacySettings + "\nbookmarkpanes=false\nbookmarkpeek=false\n");
@@ -317,7 +337,7 @@ backup=
         Assert.False(settings.ContainsKey("stayloggedin"));
         Assert.False(settings.ContainsKey("projectsdir"));
         Assert.False(settings.ContainsKey("projectsask"));
-        Assert.Equal(41, settings.Count);
+        Assert.Equal(43, settings.Count);
         Assert.Equal("md", settings["filetype"]);
         Assert.Equal(string.Empty, settings["pickdir"]);
         Assert.Equal("true", settings["recovery"]);
@@ -326,6 +346,8 @@ backup=
         Assert.Equal("true", settings["favoritepeek"]);
         Assert.Equal("true", settings["bookmarkpanes"]);
         Assert.Equal("true", settings["bookmarkpeek"]);
+        Assert.Equal("false", settings["favoritenumbers"]);
+        Assert.Equal("false", settings["bookmarknumbers"]);
         Assert.Equal("true", settings["commandlist"]);
         Assert.Equal("true", settings["hints"]);
         Assert.Equal("fast", settings["logoanim"]);

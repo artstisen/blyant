@@ -256,6 +256,13 @@ internal static partial class FileExplorer
                     case "peek":
                         ToggleFavoritePanes(command == "peek");
                         break;
+                    case "number":
+                    case "nonumber":
+                        // The numbers of the rows on or off (kept in the settings)
+                        FavoriteNumbers = command == "number";
+                        _favoriteMessage = FavoriteNumbers ? DialogText.LineNumbersOn : DialogText.LineNumbersOff;
+                        FileIo.SaveSettings();
+                        break;
                     case "expand":
                     case "collapse":
                         SetFavoriteFolders(selected, command == "collapse");
@@ -996,12 +1003,12 @@ internal static partial class FileExplorer
             nameWidth = Math.Max(nameWidth, FavoriteLabel(number).Length);
         }
 
-        nameWidth = Math.Min(nameWidth, Init.LineWidth / 2 - 6);
+        nameWidth = Math.Min(nameWidth, Init.LineWidth / 2 - 6 - FavoriteNumberWidth);
         var infos = _favorites.Select(FavoriteInfo).ToList();
         var infoWidth = Math.Max(TextMetrics.WidthOf(DialogText.ColumnInfo) + 2,
             infos.Count == 0 ? 0 : infos.Max(info => TextMetrics.WidthOf(info.Text)));
         // The lines between the columns: after the name, and before the info
-        var nameLine = 3 + nameWidth + 2;
+        var nameLine = 3 + FavoriteNumberWidth + nameWidth + 2;
         var infoLine = Init.LineWidth - 2 - infoWidth - 1;
         var columns = _favorites.Count > 0;
         _favoriteLines = columns ? new[] { nameLine, infoLine } : Array.Empty<int>();
@@ -1010,7 +1017,7 @@ internal static partial class FileExplorer
         Console.Write(new string('-', Init.LineWidth));
         if (columns)
         {
-            DrawColumnLabels(2, new[] { (1, DialogText.ColumnName), (nameLine, DialogText.ColumnPath), (infoLine, DialogText.ColumnInfo) },
+            DrawColumnLabels(2, new[] { (1 + FavoriteNumberWidth, DialogText.ColumnName), (nameLine, DialogText.ColumnPath), (infoLine, DialogText.ColumnInfo) },
                 new[] { nameLine, infoLine });
             for (var row = 0; row < FavoritePageSize; row++)
             {
@@ -1177,11 +1184,23 @@ internal static partial class FileExplorer
         return name.Length > 0 ? name : path;
     }
 
+    // The width of the numbers of the rows (when they are on): the largest number, and a blank space
+    private static int FavoriteNumberWidth =>
+        FavoriteNumbers && _favorites.Count > 0 ? _favorites.Count.ToString().Length + 1 : 0;
+
+    // The selection pointer of a row (and before it the number of the row, dimmed, when the numbers are on)
     private static void DrawFavoritePointer(int index, bool selected)
     {
         var row = index - _favoriteTop;
         if (row < 0 || row >= FavoritePageSize || index >= _favorites.Count) return;
+        var numbers = FavoriteNumberWidth;
         Tools.SetCursorEx(ListTop + row, 0);
+        if (numbers > 0)
+        {
+            ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
+            Console.Write((index + 1).ToString().PadLeft(numbers - 1) + " ");
+        }
+
         ConsoleColors.SetColors(selected
             ? ConsoleColors.ColorPreset.SelectorInverted
             : ConsoleColors.ColorPreset.Normal);

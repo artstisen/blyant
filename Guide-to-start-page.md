@@ -1,7 +1,7 @@
 # Guide to the start page and the file browser
 
 ## Start page
-Blyant is a text editor for writing: files, and projects of files. When it starts, the start page is shown in a frame with three tabs at its top: **Start**, where you make or open a file or a project, **Configuration**, with the settings, and **Help**, with the help, the guides and the about page. The settings are on four pages, shown as the sub-tabs **General**, **Layout**, **Editor** and **System** in a row at the top of the frame. The tab and sub-tab shown are highlighted in the color of the frame. The start page is shown again when the file browser is closed.
+Blyant is a text editor for writing: files, and projects of files. When it starts, the start page is shown in a frame with three tabs at its top: **Start**, where you make or open a file or a project, **Configuration**, with the settings, and **Help**, with the help, the guides and the about page. The settings are on five pages, shown as the sub-tabs **General**, **Layout**, **Editor**, **Lists** and **System** in a row at the top of the frame. The tab and sub-tab shown are highlighted in the color of the frame. The start page is shown again when the file browser is closed.
 
 `Tab` goes to the next tab (Start, Configuration, Help, and round to Start again), and `Shift+Tab` the other way. `h` and `l` (or `Left`/`Right`) go to the previous and the next sub-tab of the tab shown, going round, so in Configuration they go through General, Layout, Editor and System. The keys are shown at the right ends of the two rows: `Tab` after the tabs and `h/l` after the sub-tabs, in the color of the frame. A tab opens with the sub-tab it showed last. This is the same in all the frames with tabs (the color schemes, the logos).
 
@@ -66,7 +66,7 @@ Both files are in the folder of the project, so they go with it when it is copie
 The list of projects can also be opened from the file browser (`E` or `:projects`, `:pro`: the project picked is shown in the pane with the focus) and from the editor (`:projects`, `:pro`: the project picked is shown in the file browser, as a jump, after asking about changes that are not saved).
 
 ### Configuration
-The settings are on four pages. `j` `k` (and `gg` `G`) select a setting on the page, and the number of a row selects it. `Enter` or `Space` changes it. `Esc` or `Q` goes back to the Start tab. Changes are saved at once.
+The settings are on five pages. `j` `k` (and `gg` `G`) select a setting on the page, and the number of a row selects it. `Enter` or `Space` changes it. `Esc` or `Q` goes back to the Start tab. Changes are saved at once.
 
 **General**
 
@@ -103,6 +103,15 @@ The settings are on four pages. `j` `k` (and `gg` `G`) select a setting on the p
 - **Completions editor**: Open the file of completions, `completions.txt`, in the editor. If there is no file yet, it is made with lists to start with. Closing the editor returns to this page
 - **Recovery copies of unsaved text**: While a file has changes that are not saved, a copy of the text is kept in `recovery` in the data directory, and offered when the file is opened again (see [Recovery copies](Guide-to-editor.md#recovery-copies)). On from the start. It is the setting `recovery`
 
+**Lists**
+
+The settings of the [favorites](#favorites) of the file browser and of the [bookmarks](Guide-to-jump-menu.md#bookmarks) of the Jump menu. The commands of the lists (`:number`, `:panes`, `:peek`) change the same settings.
+
+- **Line numbers in Favorites**: Number the rows of the favorites, as `12gg` and `5j` count them (off from the start). Setting `favoritenumbers`
+- **Panes in Favorites (note and peek)**: The Note and Peek panes below the favorites (on from the start). Setting `favoritepanes`
+- **Peek in Favorites**: The Peek pane, next to the Note pane (on from the start; dimmed while the panes are off). Setting `favoritepeek`
+- **Line numbers in Bookmarks**, **Panes in Bookmarks (note and peek)**, **Peek in Bookmarks**: The same for the Bookmarks tab of the Jump menu. Settings `bookmarknumbers`, `bookmarkpanes`, `bookmarkpeek`
+
 **System**
 
 - **Show hints on the start page**: A hint about a feature of Blyant to the right of the menu of the Start tab, the next one each time Blyant starts (on from the start; `X` on the Start tab hides them). Setting `hints`
@@ -118,7 +127,7 @@ On every tab of the start page (Start, the pages of Configuration, Help), `:` op
 - `:blank` A blank page, as `B`; `:recover` Recover unsaved text, as `R`
 - `:new` (or `:new name`) New file, as `N` (with `:new name`, the box is shown with the name filled in, so the folder can be changed: `Enter` makes it); `:file` (or `:open`, `:browse`) The file browser, as _File browser_; `:favorites` (or `:favs`) The [favorites](#favorites) of the file browser at once (closing them shows the file browser, and closing that the start page)
 - `:project` (or `:project name`, `:newproject`) New project, as `P`; `:projects` (`:pro`, `:proj`) The list of projects, as _Open project_
-- `:start` The Start tab; `:config` (or `:general`), `:layout`, `:editor` and `:system` The pages of the Configuration tab (`:editor` is the Editor page of Configuration, not the text editor)
+- `:start` The Start tab; `:config` (or `:general`), `:layout`, `:editor`, `:lists` and `:system` The pages of the Configuration tab (`:editor` is the Editor page of Configuration, not the text editor)
 - `:jump` (or `:ju`, `:jmp`) The [Jump menu](Guide-to-jump-menu.md#jump-menu); `:book 3` Jump to bookmark 3
 - `:help` (or `:h`) The help of the start page, as `?`; `:about` The about page; `:quick` (or `:guide`) The quick guide
 - `:scheme` The color schemes; `:logo` The logos; `:snippet` (or `:snip`) The snippet editor; `:completions` (or `:comp`) The completions editor; `:clipboard` The clipboard settings; `:log` The log
@@ -252,6 +261,8 @@ Files and directories you use often can be marked as favorites:
 The list has three columns, with lines between them and their labels at the top: _Name_ (the name of the file or directory), _Path_ (the directory it is in; the end of a long path is shown) and _Info_ (the size of a file, `<DIR>` for a directory, _(missing)_ for one that is gone, and the number of favorites in a favorites folder).
 
 Below the list are two panes for the selected item, **Note** and **Peek**: its note, and the top of the file (what is in a directory, or in a folder of favorites). They follow the selection; nothing in them can be selected or scrolled, and the peek only reads the start of the file, never writes it. `:panes` hides them (and shows them again), and `:peek` hides the peek, so the note takes the whole width. Both are kept in the settings (`favoritepanes`, `favoritepeek`). In a window that is too low, the panes are not shown.
+
+`:number` numbers the rows of the list, dimmed at the left, as `12gg` and `5j` count them (the rows shown: not those in a closed folder; with a filter, the rows found), and `:nonumber` takes the numbers away. Off from the start; kept in the setting `favoritenumbers`, also on the Lists page of Configuration.
 
 In the list of favorites:
 

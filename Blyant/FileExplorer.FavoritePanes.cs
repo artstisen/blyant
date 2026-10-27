@@ -18,6 +18,12 @@ internal static partial class FileExplorer
     /// </summary>
     internal static bool FavoritePeek { get; set; } = true;
 
+    /// <summary>
+    /// The rows of the list of favorites are numbered, as 12gg counts them (setting "favoritenumbers", off unless
+    /// turned on)
+    /// </summary>
+    internal static bool FavoriteNumbers { get; set; }
+
     // The start of the name of the file of Blyant a note of a favorite is written in, in the editor (in the data
     // directory, removed after)
     private const string FavoriteNoteFile = "favorite-note"; // English: the name of a file

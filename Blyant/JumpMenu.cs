@@ -89,6 +89,12 @@ internal static class JumpMenu
     /// </summary>
     internal static bool BookmarkPeek { get; set; } = true;
 
+    /// <summary>
+    /// The rows of the Bookmarks tab are numbered, as 12gg counts them (setting "bookmarknumbers", off unless turned
+    /// on)
+    /// </summary>
+    internal static bool BookmarkNumbers { get; set; }
+
     // The start of the name of the file a note of a bookmark is written in, in the editor (in the data directory,
     // removed after)
     private const string BookmarkNoteFile = "bookmark-note"; // English: the name of a file
@@ -711,9 +717,14 @@ internal static class JumpMenu
         var lasts = rows.Select(row => tabs[tab] == Tab.Bookmarks ? BookCommand(row) : When(row.Time)).ToList();
         var typeLabel = Lang.T("Type");
         var markWidth = Math.Max(MarkWidth, TextMetrics.WidthOf(typeLabel));
-        var nameColumn = left + 4;
+        // The numbers of the rows (Bookmarks, when they are on): right-aligned, as wide as the largest, and a blank
+        // space; the pointer and the names follow
+        var numbers = tabs[tab] == Tab.Bookmarks && BookmarkNumbers && rows.Count > 0
+            ? rows.Count.ToString().Length + 1
+            : 0;
+        var nameColumn = left + 4 + numbers;
         var nameWidth = Math.Clamp(rows.Count == 0 ? 0 : rows.Max(row => TextMetrics.WidthOf(RowName(row))),
-            TextMetrics.WidthOf(DialogText.ColumnName) + 2, Math.Max(10, width / 2 - 8));
+            TextMetrics.WidthOf(DialogText.ColumnName) + 2, Math.Max(10, width / 2 - 8 - numbers));
         var nameLine = nameColumn + nameWidth + 1;
         var lastWidth = lastLabel.Length == 0 ? 0
             : Math.Max(TextMetrics.WidthOf(lastLabel) + 2, lasts.Count == 0 ? 0 : lasts.Max(TextMetrics.WidthOf));
@@ -769,7 +780,15 @@ internal static class JumpMenu
             var index = scroll + line;
             // Only the rows the selection moved from and to
             if (partial && index != selected && index != before!.Selected) continue;
-            Tools.SetCursorEx(first + line, left + 1);
+            if (numbers > 0)
+            {
+                // The number of the row, dimmed (as 12gg counts the rows)
+                Tools.SetCursorEx(first + line, left + 1);
+                ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
+                Console.Write((index + 1).ToString().PadLeft(numbers - 1) + " ");
+            }
+
+            Tools.SetCursorEx(first + line, left + 1 + numbers);
             if (index == selected) ConsoleColors.SetColors(ConsoleColors.ColorPreset.SelectorInverted);
             else ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
             Console.Write(index == selected ? (_moving ? "<>" : "->") : "  ");
@@ -777,7 +796,7 @@ internal static class JumpMenu
             // A marked bookmark has a "+" in front
             if (row.Bookmark != null && Marks.Contains(row.Bookmark))
             {
-                Tools.SetCursorEx(first + line, left + 3);
+                Tools.SetCursorEx(first + line, left + 3 + numbers);
                 ConsoleColors.SetColors(ConsoleColors.ColorPreset.AttentionInverted);
                 Console.Write("+");
             }
@@ -791,7 +810,7 @@ internal static class JumpMenu
             if (_moving && index == selected)
             {
                 ConsoleColors.SetColors(ConsoleColors.ColorPreset.HighlightInverted);
-                Tools.SetCursorEx(first + line, left + 3);
+                Tools.SetCursorEx(first + line, left + 3 + numbers);
                 Console.Write(" ");
             }
             else if (row.IsFolder && row.Color == null) ConsoleColors.SetColors(ConsoleColors.ColorPreset.HeaderColor);
@@ -1474,6 +1493,13 @@ internal static class JumpMenu
             case "panes":
             case "peek":
                 ToggleBookmarkPanes(command == "peek");
+                break;
+            case "number":
+            case "nonumber":
+                // The numbers of the rows on or off (kept in the settings)
+                BookmarkNumbers = command == "number";
+                _message = BookmarkNumbers ? DialogText.LineNumbersOn : DialogText.LineNumbersOff;
+                FileIo.SaveSettings();
                 break;
             case "rename":
                 if (row != null) RenameBookmark(row, CommandLine.LastArgument);

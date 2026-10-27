@@ -96,8 +96,9 @@ public class JumpTests : IDisposable
     [Fact]
     public void ThePages_OfTheConfigurationTab_AreLeft_TheOthersOpenOnTop()
     {
-        Assert.Equal(new[] { 0, 1, 2, 3 }, new[] { "config/general", "config/layout", "config/editor", "config/system" }
-            .Select(JumpPages.ConfigurationPage));
+        Assert.Equal(new[] { 0, 1, 2, 3, 4 },
+            new[] { "config/general", "config/layout", "config/editor", "config/lists", "config/system" }
+                .Select(JumpPages.ConfigurationPage));
         Assert.Equal(-1, JumpPages.ConfigurationPage("schemes"));
         foreach (var page in new[] { "schemes", "logos", "clipboard", "snippets", "completions", "help", "about" })
         {
@@ -106,7 +107,7 @@ public class JumpTests : IDisposable
 
         Assert.False(Jump.OpensInPlace(new JumpTarget(JumpKind.Page, "config/system")));
         Assert.False(Jump.OpensInPlace(new JumpTarget(JumpKind.File, In("a.md"))));
-        Assert.Equal(11, JumpPages.Ids.Count);
+        Assert.Equal(12, JumpPages.Ids.Count);
         Assert.All(JumpPages.Ids, id => Assert.NotEqual(id, JumpPages.Label(id)));
     }
 

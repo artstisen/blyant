@@ -564,7 +564,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":project name", Lang.T("New project (asks for the name if not given)"), false));
             _shortcutList.Add(new Shortcut(":projects :pro", Lang.T("Open project: the list of projects"), false));
             _shortcutList.Add(new Shortcut(":start :config", Lang.T("The Start tab/Configuration (General)"), false));
-            _shortcutList.Add(new Shortcut(":layout :editor", Lang.T("The pages of Configuration (and :system)"), false));
+            _shortcutList.Add(new Shortcut(":layout :editor", Lang.T("The pages of Configuration (and :lists, :system)"), false));
             _shortcutList.Add(new Shortcut(":jump :help", Lang.T("The Jump menu/The help (this list)"), false));
             _shortcutList.Add(new Shortcut(":about :quick", Lang.T("About/The quick guide"), false));
             _shortcutList.Add(new Shortcut(":scheme :logo", Lang.T("Color schemes/Logos"), false));
@@ -691,6 +691,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("  " + Lang.T("Notes"), Lang.T("Kept in favorites.txt, never next to the files"), false));
             _shortcutList.Add(new Shortcut(":panes", Lang.T("Show/Hide the note and the peek below the list"), false));
             _shortcutList.Add(new Shortcut(":peek", Lang.T("Show/Hide the peek (the top of the file)"), false));
+            _shortcutList.Add(new Shortcut(":number :nonumber", Lang.T("Number the rows (as 12gg counts them), or not"), false));
             _shortcutList.Add(new Shortcut(":import bookmarks", Lang.T("Copy the bookmarks of the Jump menu here"), false));
             _shortcutList.Add(new Shortcut(":path :name", Lang.T("Copy the path/the name shown (also p in the editor)"), false));
             _shortcutList.Add(new Shortcut("I :info", Lang.T("Show type, size, dates and path"), false));
@@ -780,6 +781,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("W :new name", Lang.T("Bookmarks: new file, bookmarked below, opened"), false));
             _shortcutList.Add(new Shortcut("N :note", Lang.T("Bookmarks: write the note of the bookmark"), false));
             _shortcutList.Add(new Shortcut(":panes :peek", Lang.T("Bookmarks: show/hide the note and the peek"), false));
+            _shortcutList.Add(new Shortcut(":number", Lang.T("Bookmarks: number the rows (:nonumber: not)"), false));
             _shortcutList.Add(new Shortcut("Space M", Lang.T("Bookmarks: mark several/move them to a folder"), false));
             _shortcutList.Add(new Shortcut(":expand :collapse", Lang.T("Bookmarks: open/close all the folders"), false));
             _shortcutList.Add(new Shortcut("u :clearbook", Lang.T("Bookmarks: put back the removed/clear (asks first)"), false));
