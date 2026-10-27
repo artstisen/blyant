@@ -638,8 +638,8 @@ internal static partial class FileExplorer
         TextFile? file = null;
         if (directory != null)
         {
-            // What is in it: directories first (ending in "/"), then the files, as the peek of the favorites
-            DrawPeekLines(left, width, Projects.Contents(directory, PageSize).Split('\n'), false);
+            // What is in it, as the pane will show it when Tab opens it there: directories first (ending in "/")
+            DrawPeekLines(left, width, PeekContents(directory, PageSize), false);
             return;
         }
 

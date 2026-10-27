@@ -1298,6 +1298,43 @@ public class EditorTests
         Assert.Equal(string.Empty, editor.LineEndingsArgument);
         Assert.Equal(EditorRequest.WhitespaceToggle, editor.Type(":whitespace<CR>"));
     }
+
+    [Fact]
+    public void TheSpacesOfAMarkdownLineBreak_AreKnown_AsTrimKeepsThem()
+    {
+        var editor = new EditorEngine("Roses  \nViolets  \n\nEnd \t", 40, 10, false)
+            { CompletionSyntax = SyntaxType.Markdown };
+        Assert.True(editor.IsLineBreakSpace(0));
+        // Before an empty line, at the end of the text, or with a tab: no line break
+        Assert.False(editor.IsLineBreakSpace(1));
+        Assert.False(editor.IsLineBreakSpace(3));
+        Assert.False(editor.IsLineBreakSpace(9));
+        // The line after it emptied: no longer one
+        editor.Type("jdd");
+        Assert.False(editor.IsLineBreakSpace(0));
+        // Not Markdown
+        Assert.False(Editor("Roses  \nViolets").IsLineBreakSpace(0));
+    }
+
+    [Fact]
+    public void AnUnknownCommand_IsACommandError_AndOtherErrorsAreNot()
+    {
+        var editor = Editor("text");
+        editor.Type(":xyz<CR>");
+        Assert.True(editor.MessageIsError);
+        Assert.True(editor.MessageIsCommandError);
+        // The next key clears it
+        editor.Type("l");
+        Assert.False(editor.MessageIsError);
+        Assert.False(editor.MessageIsCommandError);
+        // An error that is not about the command typed
+        editor.Type("/zzz<CR>");
+        Assert.True(editor.MessageIsError);
+        Assert.False(editor.MessageIsCommandError);
+        // A command that is known, after an unknown one
+        editor.Type(":xyz<CR>:trim<CR>");
+        Assert.False(editor.MessageIsCommandError);
+    }
 }
 
 public class TextBufferTests

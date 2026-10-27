@@ -834,7 +834,15 @@ internal static class MacroBoxes
                     }
 
                     var name = names[i];
-                    EditInBox(() => Lang.F("Macro: {0}", name), MacroFiles.Load(name) ?? string.Empty, false,
+                    // A macro that cannot be read (gone, or kept from it) is not edited as an empty text, which
+                    // ":w" would save in its place
+                    if (MacroFiles.Load(name) is not { } macro)
+                    {
+                        PickListBox.ShowMessage(Lang.T("The macro could not be read"));
+                        return PickListBox.KeyUse.Used;
+                    }
+
+                    EditInBox(() => Lang.F("Macro: {0}", name), macro, false,
                         text => Check(text) ?? (MacroFiles.SaveText(name, text) is var status &&
                                                 status != DialogText.Success ? status : null), drawBehind);
                     drawBehind();

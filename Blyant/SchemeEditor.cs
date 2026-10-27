@@ -769,12 +769,11 @@ internal static class SchemeEditor
             if (Preview.Get(item) is { } color) return ColorPicker.Name(color);
             return item switch
             {
-                ColorItem.TabFrames or ColorItem.BoxBorders or ColorItem.LineNumbers =>
+                ColorItem.TabFrames or ColorItem.BoxBorders or ColorItem.LineNumbers or ColorItem.CommandHints =>
                     Lang.T("[Default]: the dividers"),
                 ColorItem.TabCorner => Lang.T("[Default]: the tab frames"),
                 ColorItem.TabShown or ColorItem.OtherTabs or ColorItem.KeyHints or ColorItem.CurrentLineNumber
                     or ColorItem.FrameText or ColorItem.CommandBoxText => Lang.T("[Default]: the text"),
-                ColorItem.CommandHints => Lang.T("[Default]: the dividers"),
                 ColorItem.CommandBorders => Lang.T("[Default]: the box borders"),
                 ColorItem.CommandBox => DialogText.ColorDefault,
                 ColorItem.CommandTyped => Lang.T("[Default]: the accent"),
@@ -834,7 +833,7 @@ internal static class SchemeEditor
         var title = "-- " + Lang.T("Commands") + " ";
         Tools.SetCursorEx(top, left);
         Part(ConsoleColors.ColorPreset.CommandBorder, AsciiStyles.GetTopCorner() + title +
-                                                      new string('-', Math.Max(0, boxWidth - 2 - title.Length)) +
+                                                      new string('-', Math.Max(0, boxWidth - 2 - TextMetrics.WidthOf(title))) +
                                                       AsciiStyles.GetTopCorner());
         // The names: "copy" typed whole, "co" typed of the others (English: commands are not translated)
         Tools.SetCursorEx(top + 1, left);

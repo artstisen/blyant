@@ -845,6 +845,33 @@ internal static partial class FileExplorer
         return true;
     }
 
+    // The names in a directory for the peek, as a pane would show them (LoadItems, without a filter): directories
+    // first (ending in "/"), then the files, both sorted by name, at most "count" lines. When it cannot be read: why
+    private static List<string> PeekContents(string directory, int count)
+    {
+        try
+        {
+            var info = new DirectoryInfo(directory);
+            var names = info.EnumerateDirectories().Where(d => IsShown(d, string.Empty))
+                .OrderBy(d => d.Name, StringComparer.OrdinalIgnoreCase).Select(d => d.Name + "/").ToList();
+            if (_mode != BrowseMode.PickDirectory)
+            {
+                names.AddRange(info.EnumerateFiles().Where(f => IsShown(f, string.Empty))
+                    .OrderBy(f => f.Name, StringComparer.OrdinalIgnoreCase).Select(f => f.Name));
+            }
+
+            if (names.Count == 0) return new List<string> { Lang.T("(empty)") };
+            if (names.Count <= count) return names;
+            var shown = names.Take(count).ToList();
+            shown[^1] = Lang.F("... and {0} more", names.Count - count + 1);
+            return shown;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return new List<string> { e.Message };
+        }
+    }
+
     private static bool IsShown(FileSystemInfo info, string filter)
     {
         if ((info.Attributes & (FileAttributes.Hidden | FileAttributes.System)) != 0) return false;

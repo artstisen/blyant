@@ -1560,6 +1560,17 @@ internal sealed partial class EditorEngine
                lineIndex + 1 < Buffer.LineCount && Buffer[lineIndex + 1].Trim().Length > 0;
     }
 
+    /// <summary>
+    /// The blank space at the end of a line is a line break of Markdown, which ":trim" keeps (in a Markdown file
+    /// or a blank page)
+    /// </summary>
+    internal bool IsLineBreakSpace(int lineIndex)
+    {
+        if (CompletionSyntax != SyntaxType.Markdown || lineIndex >= Buffer.LineCount) return false;
+        var line = Buffer[lineIndex];
+        return IsMarkdownLineBreak(line, TrailingBlankStart(line), lineIndex);
+    }
+
     // The start of a line in a Markdown list: "- ", "* ", "+ ", "1. " or "1) " (after the indentation)
     private static readonly Regex ListMarker = new(@"^(\s*)(?:[-*+]|\d{1,9}[.)])\s+");
 

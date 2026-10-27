@@ -2136,8 +2136,9 @@ public partial class TextArea
 
         if (blank)
         {
-            // Dimmed, and highlighted at the end of the line (below the other marks)
-            var trailing = EditorEngine.TrailingBlankStart(s);
+            // Dimmed, and highlighted at the end of the line (below the other marks). The spaces of a line break of
+            // Markdown, which ":trim" keeps, are only dimmed
+            var trailing = _engine.IsLineBreakSpace(line) ? s.Length : EditorEngine.TrailingBlankStart(s);
             for (var i = start; i < end; i++)
             {
                 if (s[i] is ' ' or '\t') styles[i - start] = i >= trailing ? StyleTrailingSpace : StyleWhitespace;

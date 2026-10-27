@@ -123,7 +123,7 @@ internal sealed class CommandList
         Tools.SetCursorEx(top, 0);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.CommandBorder);
         var title = "-- " + Lang.T("Commands") + " ";
-        Console.Write(AsciiStyles.GetTopCorner() + title + new string('-', Math.Max(0, width - 2 - title.Length)) +
+        Console.Write(AsciiStyles.GetTopCorner() + title + new string('-', Math.Max(0, width - 2 - TextMetrics.WidthOf(title))) +
                       AsciiStyles.GetTopCorner());
         var lines = Layout(names, column, inner, _rows);
         var whole = names.FirstOrDefault(name => name.Equals(typed, StringComparison.OrdinalIgnoreCase));
