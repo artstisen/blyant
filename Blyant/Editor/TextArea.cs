@@ -114,11 +114,21 @@ public partial class TextArea
         /// Tab in Normal mode closes it, as Esc does (the peek of the file browser, which Tab went into)
         /// </summary>
         internal bool TabCloses { get; init; }
+
+        /// <summary>
+        /// The text can be changed (a macro edited in its box), and ":w" gives it to this, which returns null when
+        /// it was saved, or why not (the text then stays as it is). Esc and ":q" ask about changes that are not
+        /// saved, as in the editor. What would leave the text or open another page is refused (ReadOnlyText)
+        /// </summary>
+        internal Func<string, string?>? SaveText { get; init; }
     }
 
     // Set for a peek: there is no title or mode divider above the text, it is read only, Esc closes it and Enter
-    // asks for the file to be opened in the editor
+    // asks for the file to be opened in the editor (unless it can be changed: PeekOptions.SaveText)
     private readonly PeekOptions? _peek;
+
+    // A peek whose text can be changed and saved (a macro in its box)
+    private bool EditablePeek => _peek?.SaveText != null;
 
     /// <summary>
     /// A peek was closed with Enter: the file is to be opened in the editor (at the cursor)
@@ -275,7 +285,7 @@ public partial class TextArea
         // Yanks go to the clipboard as set (every yank, or only with "+ in front)
         _engine.ClipboardEveryYank = SystemClipboard.EveryYank;
 
-        if (peek != null)
+        if (peek is { SaveText: null })
         {
             // A peek only shows the file
             _engine.ReadOnly = true;
@@ -424,7 +434,7 @@ public partial class TextArea
                     continue;
                 }
 
-                if (_peek != null && key.Key == ConsoleKey.Enter && _engine.Mode == EditorMode.Normal)
+                if (_peek != null && !EditablePeek && key.Key == ConsoleKey.Enter && _engine.Mode == EditorMode.Normal)
                 {
                     // Enter in a peek: the file in the editor
                     OpenRequested = true;
@@ -433,14 +443,16 @@ public partial class TextArea
 
                 // Esc closes a peek, also when a search is highlighted (a key typed before it is only cancelled). In a
                 // comparison it removes the highlighting first, so "n" "N" go to the changes again
-                if (_peek != null && key.Key == ConsoleKey.Escape && _engine.Mode == EditorMode.Normal &&
-                    !_engine.HasPending && !(_peek.Changes != null && _engine.IsSearchHighlighted)) break;
+                // (one that can be changed closes as the editor does: Esc asks about changes that are not saved)
+                if (_peek != null && !EditablePeek && key.Key == ConsoleKey.Escape &&
+                    _engine.Mode == EditorMode.Normal && !_engine.HasPending &&
+                    !(_peek.Changes != null && _engine.IsSearchHighlighted)) break;
                 if (_peek is { TabCloses: true } && key.Key == ConsoleKey.Tab && _engine.Mode == EditorMode.Normal &&
                     !_engine.HasPending) break;
 
                 var request = _engine.HandleKey(key);
 
-                if (_peek != null && request is EditorRequest.Quit or EditorRequest.ForceQuit
+                if (_peek != null && !EditablePeek && request is EditorRequest.Quit or EditorRequest.ForceQuit
                         or EditorRequest.SaveAndQuit)
                 {
                     // Esc or :q closes a peek (nothing was changed)
@@ -457,7 +469,10 @@ public partial class TextArea
 
                 if (_peek != null && request is not (EditorRequest.None or EditorRequest.Clipboard
                         or EditorRequest.PasteBinWrite or EditorRequest.Help or EditorRequest.SyntaxChanged
-                        or EditorRequest.WrapChanged or EditorRequest.ScrollOffChanged))
+                        or EditorRequest.WrapChanged or EditorRequest.ScrollOffChanged) &&
+                    !(EditablePeek && request is EditorRequest.Save or EditorRequest.SaveAndQuit
+                        or EditorRequest.Quit or EditorRequest.ForceQuit or EditorRequest.PasteBinRead
+                        or EditorRequest.StringMemory or EditorRequest.ReplaceDialog or EditorRequest.ClearRegisters))
                 {
                     // What changes the text, saves it, or opens another page is not done in a peek
                     _engine.SetMessage(_peek.ReadOnlyText ?? DialogText.PeekReadOnly, true);
@@ -667,13 +682,13 @@ public partial class TextArea
                 break;
             case EditorRequest.MacroStop:
                 Tools.HideCursor();
-                MacroBoxes.Stop(_engine);
+                MacroBoxes.Stop(_engine, RedrawAll);
                 RedrawAll();
                 break;
             case EditorRequest.MacroList:
                 Tools.HideCursor();
                 DrawStatusLine();
-                MacroBoxes.Pick(_engine);
+                MacroBoxes.Pick(_engine, RedrawAll);
                 RedrawAll();
                 break;
             case EditorRequest.StringMemory:
@@ -1558,6 +1573,8 @@ public partial class TextArea
     /// <returns>False if the text could not be saved (the reason is shown as a message)</returns>
     private bool Save()
     {
+        // A peek that can be changed is saved by the one that showed it
+        if (_peek?.SaveText is { } saveText) return SaveEditablePeek(saveText);
         // A peek is never saved: it shows another file than the one the editor saves to, and maybe only the start
         // of it (it is read only, so this only guards against a request let through by mistake)
         if (_peek != null) return true;
@@ -1614,6 +1631,24 @@ public partial class TextArea
         return true;
     }
 
+    // The text of a peek that can be changed, to the one that showed it (which can ask for a name in a box: all is
+    // drawn again after it)
+    private bool SaveEditablePeek(Func<string, string?> saveText)
+    {
+        if (!_engine.IsModified) return true;
+        Tools.HideCursor();
+        var problem = saveText(GetText());
+        RedrawAll();
+        if (problem != null)
+        {
+            _engine.SetMessage(problem, true);
+            return false;
+        }
+
+        _engine.MarkSaved();
+        return true;
+    }
+
     // Show or remove the "unsaved" indicator when the state changes
     // The label "Read only" at the top right, where the label "Unsaved" is shown for a text with changes
     private void DrawReadOnlyLabel()
@@ -1632,7 +1667,8 @@ public partial class TextArea
         var modified = _engine.IsModified;
         if (modified == DocumentInfo.HasChanged) return;
         DocumentInfo.HasChanged = modified;
-        if (_singleLine) return;
+        // (a peek is in a pane or a box: the label at the top is of the page behind it)
+        if (_singleLine || _peek != null) return;
         if (modified)
         {
             Menu.IndicateChanges(true);

@@ -997,8 +997,10 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("  $0 (css)", Lang.T("Snippets: the cursor goes to $0, (css) first in css"), false));
             _shortcutList.Add(new Shortcut(string.Empty, Lang.T("Macros"), true));
             _shortcutList.Add(new Shortcut(":record", Lang.T("Record a macro (Esc in NORMAL mode stops it)"), false));
+            _shortcutList.Add(new Shortcut("  E", Lang.T("When it stops: edit the steps, then save"), false));
             _shortcutList.Add(new Shortcut(":play name 3", Lang.T("Play a macro (3 times); Tab completes the name"), false));
             _shortcutList.Add(new Shortcut(":macro", Lang.T("The macros in a list: Enter plays one"), false));
+            _shortcutList.Add(new Shortcut("  E", Lang.T("In the list: edit the macro (:w saves, Esc closes)"), false));
             _shortcutList.Add(new Shortcut("  macros/*.macro", Lang.T("A file for each macro, which can be edited"), false));
             _shortcutList.Add(new Shortcut(":complete", Lang.T("Complete words while typing on/off"), false));
             _shortcutList.Add(new Shortcut(":complete on/off", Lang.T("Turn completing on/off"), false));
