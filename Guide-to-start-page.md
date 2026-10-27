@@ -25,7 +25,7 @@ Each choice has a number and a key, shown in front of it. The number selects the
 - `7` `U` **Quick guide**: A short introduction to Blyant: files and projects, the keys for moving around, and the modes of the editor. `Esc` closes it, and `?` shows the help with all the keys
 - `8` **Exit**: Close Blyant at once (`Enter` on it). `Q` exits too, after asking
 
-To the right of the menu a **hint** tells about one of the features of Blyant: the command line, the Jump menu, favorites, writing Markdown with completions and `:surround`, recovery copies, the trash, splitting and comparing, peeking at files and the notes of projects. Each time Blyant starts the next one is shown, nine in all, and then the first again (setting `hintindex`). `X` hides them; **Show hints on the start page** in Configuration (System) shows them again, and they go on where they were (while they are hidden, the hint does not change). In a window too narrow for it, no hint is shown.
+To the right of the menu a **hint** tells about one of the features of Blyant: the command line, the Jump menu, favorites, writing Markdown with completions and `:surround`, recovery copies, the trash, splitting and comparing, peeking at files and the notes of projects. Each time Blyant starts the next one is shown, nine in all, and then the first again (setting `hintindex`). `X` hides them; **Show hints on start page** in Configuration (System) shows them again, and they go on where they were (while they are hidden, the hint does not change). In a window too narrow for it, no hint is shown.
 
 Move the selection with `j`/`k` (or the arrow keys) or the number, and press `Enter`. `?` shows the help, and `Q` (or `Esc`) exits Blyant after asking in a box on top of the page (`Y`/`N`, or `j`/`k` and `Enter`; `Esc` cancels).
 
@@ -70,14 +70,14 @@ The settings are on five pages. `j` `k` (and `gg` `G`) select a setting on the p
 
 **General**
 
-- **Show the start page on startup** (the default)
-- **Start in the file browser**: Go directly to the file browser
-  - **Open the favorites list first** (shown when starting in the file browser): Start in the [favorites](#favorites) of the file browser. Closing the list shows the file browser. Saved as `startfavorites` in the settings file
+- **Show start page on startup** (the default)
+- **Start in file browser**: Go directly to the file browser
+  - **Open favorites list first** (shown when starting in the file browser): Start in the [favorites](#favorites) of the file browser. Closing the list shows the file browser. Saved as `startfavorites` in the settings file
 - **Start on a blank page**: Go directly to a [blank page](#start), to write at once. When it is closed, the start page is shown
   - The choice is saved as `startmode` (`select`, `editor` or `blank`) in the settings file
 - **New files and blank pages**: The assumed file type of a new file whose name has no extension, and of a [blank page](#start) (the name it is saved with decides in the end): `Enter` picks it in a list (`1` to `9` and `0`, or `j`/`k` and `Enter`): Markdown (`.md`, the default), plain text (`.txt`), HTML, CSS, JavaScript, JSON, XML, C#, PHP or INI. A blank page is colored as that kind, and saved with its extension when the name has none. Saved as `filetype` (`md`, `txt` ...) in the settings file
 - **Delete to trash**: Deleting in the file browser moves to the [trash](#the-trash) (on from the start). Off: deleted files cannot be recovered
-- **List the commands above the command line**: While a command is typed (after `:`), a box above the command line lists the commands of the page, narrowed while you type, with what the command typed does (on from the start). Setting `commandlist`
+- **List commands above command line**: While a command is typed (after `:`), a box above the command line lists the commands of the page, narrowed while you type, with what the command typed does (on from the start). Setting `commandlist`
 - **Language**: The language of the menus, help and messages. English and Deutsch (German) are built in; Dansk (Danish), Norsk bokmål (Norwegian), Svenska (Swedish), Español (Spanish), Français (French), Italiano (Italian), Polski (Polish), Nederlands (Dutch) and Suomi (Finnish) are language files in the folder `lang` next to Blyant (see [Language files](Guide-to-installation.md#language-files)). `Enter` shows the languages in a box to pick from (with the keys `1` to `9`, and then letters); a language from a file shows how much of it is translated (`Polski (pl)  98%`), and `(lang)` after a built-in language means a file in a folder `lang` is used instead of it. Commands, keys and the names of the editor modes (NORMAL, INSERT, VISUAL ...) are English in all languages, so they can be talked about the same way everywhere. The guides, the settings file and the log are in English
 
 **Layout**
@@ -94,7 +94,7 @@ The settings are on five pages. `j` `k` (and `gg` `G`) select a setting on the p
 
 - **Line numbers**: Show line numbers to the left of the text (off from the start)
 - **Wrap long lines**: Long lines go on to the next rows (on from the start). When off, the view scrolls sideways (see [the guide to the editor](Guide-to-editor.md#long-lines))
-- **Keep 12 lines around the cursor**: When the cursor comes within 12 lines of the top or the bottom of the editor, the text scrolls, so you see what comes next (on from the start). The number is set with `:scrolloff 8` in the editor (see [the guide to the editor](Guide-to-editor.md#scrolling))
+- **Keep 12 lines around cursor**: When the cursor comes within 12 lines of the top or the bottom of the editor, the text scrolls, so you see what comes next (on from the start). The number is set with `:scrolloff 8` in the editor (see [the guide to the editor](Guide-to-editor.md#scrolling))
 - **Clipboard and paste bin**: `Enter` opens the clipboard settings: where yanked text goes out of Blyant (see [the guide to the editor](Guide-to-editor.md#system-clipboard-and-paste-bin))
 - **Syntax highlighting**: Color the text of the kinds of files the editor knows (Markdown, HTML, CSS, JavaScript, JSON, XML, C#, PHP), on from the start. It is the setting `syntaxcolors`, which `:syntax off` and `:syntax on` in the editor also change
 - **Spell checker**: The languages used when spell checking is turned on in the editor with `:spell` (it is not turned on here). `Enter` shows the languages there is a spell file for in a box, where `Enter` turns a language on or off (several can be on, and the last one stays on) and `Esc` closes. Saved as `spelllang` (`en` or `da,en`). The spell files are in the directory `spell`; without any, the row says so
@@ -114,7 +114,7 @@ The settings of the [favorites](#favorites) of the file browser and of the [book
 
 **System**
 
-- **Show hints on the start page**: A hint about a feature of Blyant to the right of the menu of the Start tab, the next one each time Blyant starts (on from the start; `X` on the Start tab hides them). Setting `hints`
+- **Show hints on start page**: A hint about a feature of Blyant to the right of the menu of the Start tab, the next one each time Blyant starts (on from the start; `X` on the Start tab hides them). Setting `hints`
 - **Reset all settings**: Set all settings back to their defaults (you are asked first, in a box where _No_ is selected first)
 - **Edit settings.ini**: Open the settings file in the editor (it can also be edited from the file system). When the file is saved, Blyant starts over and reads the settings again; closing it without saving returns to the page
 - **Restart Blyant**: Start Blyant over: the settings are read again and the start page is shown as at startup (you are asked first, in a box)

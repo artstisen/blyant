@@ -207,13 +207,13 @@ internal static class DialogText
     public static string StartJump => Lang.T("Jump menu");
     public static string QuickGuideKeys => Lang.T("| h/l Page | j/k Line | ? All keys | Esc Close");
     public static string GuideKeys => Lang.T("| h/l Page | j/k Line | ? Keys | Esc Close");
-    public static string StartConfigSelect => Lang.T("Show the start page on startup");
-    public static string StartConfigEditor => Lang.T("Start in the file browser");
+    public static string StartConfigSelect => Lang.T("Show start page on startup");
+    public static string StartConfigEditor => Lang.T("Start in file browser");
     public static string StartKeys => Lang.T("j/k 1-7 Select | Enter Open | Tab Configuration | ? Help | Q Exit");
     public static string StartHelpKeys => Lang.T("j/k Select | Enter Open | Tab Start | ? Help | Esc Back");
     public static string StartConfigKeys => Lang.T("j/k Select | Enter/Space Change | h/l Page | Tab Next tab | Esc Back");
     public static string ConfigMonochrome => Lang.T("Black and white (no colors)");
-    public static string ConfigAutoSize => Lang.T("Automatic size (follow the terminal window)");
+    public static string ConfigAutoSize => Lang.T("Automatic size (follow terminal window)");
     public static string ConfigSize => Lang.T("Size: ");
     public static string ConfigSizeNote => Lang.T(" (Enter: Change)");
     public static string ConfigLineNumbers => Lang.T("Line numbers");
