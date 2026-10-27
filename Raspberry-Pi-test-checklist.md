@@ -9,8 +9,8 @@ Write down what differs, and copy `data/log.txt` afterwards: it tells what Blyan
 
 ## 1. Which build, and starting
 
-- [ ] `uname -m`: `aarch64` is the 64-bit Pi OS (use `Blyant-1.0.0-linux-arm64.tar.gz`), `armv7l` the 32-bit one (`linux-arm`)
-- [ ] `tar -xzf Blyant-1.0.0-linux-arm64.tar.gz`, then `cd Blyant` and `./Blyant --version`: prints `Blyant v1.0.0`
+- [ ] `uname -m`: `aarch64` is the 64-bit Pi OS (use `Blyant-1.0.1-linux-arm64.tar.gz`), `armv7l` the 32-bit one (`linux-arm`)
+- [ ] `tar -xzf Blyant-1.0.1-linux-arm64.tar.gz`, then `cd Blyant` and `./Blyant --version`: prints `Blyant v1.0.1`
 - [ ] `./Blyant --help | less`: the usage, also through a pipe
 - [ ] `./Blyant`: the start page. The `data` folder is made next to the program (`ls`)
 - [ ] The window must be at least **80 columns and 24 rows**. LXTerminal opens at 80x24, which is enough: every page fits, and nothing is drawn in the last column or on the last row
