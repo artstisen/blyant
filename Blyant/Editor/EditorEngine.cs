@@ -1911,6 +1911,81 @@ internal sealed partial class EditorEngine
         return false;
     }
 
+    /// <summary>
+    /// The most matches counted for the status line: above it, only "more" is told
+    /// </summary>
+    internal const int SearchCountLimit = 9999;
+
+    // Counting all the matches of a search stops after this long (the count is not shown then)
+    private const long SearchCountMilliseconds = 200;
+
+    // The matches of the search, counted once for a text and a search (not at every redraw): where they start, in
+    // the order of the text (at most SearchCountLimit + 1), the text and its version and the search counted
+    private readonly List<TextPos> _countedMatches = new();
+    private TextBuffer? _countedBuffer;
+    private int _countedVersion;
+    private Regex? _countedRegex;
+
+    // Positions in the order of the text
+    private static readonly Comparer<TextPos> TextOrder = Comparer<TextPos>.Create((a, b) =>
+        a.Line != b.Line ? a.Line.CompareTo(b.Line) : a.Col.CompareTo(b.Col));
+
+    // The search took too long to count: it is not counted again (that would take as long after every change)
+    private Regex? _countTimedOut;
+
+    /// <summary>
+    /// The matches of the search being highlighted, for the status line: the number of the match the cursor is on
+    /// (0 when it is on none) and how many there are (above SearchCountLimit: more than that). False when no
+    /// search is highlighted, or counting took too long
+    /// </summary>
+    internal bool GetSearchCount(out int current, out int total)
+    {
+        current = 0;
+        total = 0;
+        if (!IsSearchHighlighted || _searchRegex == null || _countTimedOut == _searchRegex) return false;
+        if (_countedRegex != _searchRegex || _countedBuffer != Buffer || _countedVersion != Buffer.Version)
+        {
+            if (!CountMatches()) return false;
+        }
+
+        total = _countedMatches.Count;
+        // (a match that the cursor is on starts where it is)
+        var index = _countedMatches.BinarySearch(Cursor, TextOrder);
+        if (index >= 0 && index < SearchCountLimit) current = index + 1;
+        return true;
+    }
+
+    // Count the matches of the search in the whole text (false when it took too long)
+    private bool CountMatches()
+    {
+        _countedMatches.Clear();
+        _countedRegex = null;
+        var deadline = Environment.TickCount64 + SearchCountMilliseconds;
+        try
+        {
+            for (var line = 0; line < Buffer.LineCount && _countedMatches.Count <= SearchCountLimit; line++)
+            {
+                CheckDeadline(deadline);
+                foreach (Match match in _searchRegex!.Matches(Buffer[line]))
+                {
+                    _countedMatches.Add(new TextPos(line, match.Index));
+                    if (_countedMatches.Count > SearchCountLimit) break;
+                }
+            }
+        }
+        catch (RegexMatchTimeoutException)
+        {
+            _countedMatches.Clear();
+            _countTimedOut = _searchRegex;
+            return false;
+        }
+
+        _countedRegex = _searchRegex;
+        _countedBuffer = Buffer;
+        _countedVersion = Buffer.Version;
+        return true;
+    }
+
     // The character found by "f", "F", "t" or "T" (and ";" ","): shown on all the lines until a key other than these,
     // a count or Esc is used (null: none). Not with an operator ("dfx"), which changes the text
     private string? _found;

@@ -2243,6 +2243,15 @@ public partial class TextArea
         if (_engine.PendingKeys.Length > 0) right += _engine.PendingKeys + " | ";
         // A macro is being recorded (English, as the names of the modes)
         if (_engine.IsRecording) right += "REC | ";
+        // The match of the search the cursor is on, and how many there are: "[2/12]", "[-/12]" when it is on none
+        // (English, as Vim shows it)
+        if (_engine.GetSearchCount(out var current, out var total))
+        {
+            right += (total > EditorEngine.SearchCountLimit
+                ? "[>" + EditorEngine.SearchCountLimit + "]"
+                : "[" + (current > 0 ? current.ToString() : "-") + "/" + total + "]") + " | ";
+        }
+
         if (Tools.HasLineMemory()) right += DialogText.EditorMemory + " " + Tools.GetLineMemoryPosition() + " | ";
         if (_engine.IsSpellOn) right += DialogText.SpellStatus + " " + _engine.SpellLanguages + " | ";
         // A text file: its type and encoding

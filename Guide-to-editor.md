@@ -118,6 +118,8 @@ A yanked or deleted block is pasted as a block with `p` (after the cursor) or `P
 - `*` Search for the word under the cursor
 - `Esc` or `:noh` Remove the highlighting of the matches (press `Esc` again to close the editor)
 
+While the matches are highlighted, the status line shows which match the cursor is on and how many there are: `[2/12]`, or `[-/12]` when the cursor is not at the start of a match. The matches are counted again when the text changes, up to 9999 (`[>9999]` above that); when counting them takes too long, the count is not shown.
+
 The text you search for is a regular expression: `/\d+` finds numbers and `/cat|dog` finds either word. A search that takes too long is stopped (2 seconds on a line, 10 seconds in all); a `:s` that is stopped changes nothing. A search in lowercase ignores case; with an uppercase letter in it the search matches case. A letter after a backslash does not count: `/\Sfoo` still ignores case, as `\S`, `\W` and `\D` are classes.
 
 ## Replace

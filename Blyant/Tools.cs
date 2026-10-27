@@ -896,6 +896,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("/Text", Lang.T("Uppercase letters make the search match case"), false));
             _shortcutList.Add(new Shortcut("n N", Lang.T("Next/Previous match"), false));
             _shortcutList.Add(new Shortcut("*", Lang.T("Search for the word under the cursor"), false));
+            _shortcutList.Add(new Shortcut("[2/12]", Lang.T("Status line: the match of the cursor/how many there are"), false));
             _shortcutList.Add(new Shortcut("Esc :noh", Lang.T("Remove search highlighting (Esc again closes)"), false));
             _shortcutList.Add(new Shortcut(string.Empty, Lang.T("Spell checking"), true));
             _shortcutList.Add(new Shortcut(":spell", Lang.T("Mark the misspelled words (again: remove the marks)"), false));
