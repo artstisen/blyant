@@ -995,9 +995,22 @@ internal static partial class FileExplorer
         return copy;
     }
 
+    // Where the file being opened is opened (a line found, a peek, a bookmark), taken for this file only: the places
+    // are cleared at once, as a jump away from the editor leaves through Navigation.Wait, past the code that would
+    // clear them after Open, and the next file opened would get them
+    private static (int Index, bool Found, (int Line, int Column)? Caret) TakeOpenPlace()
+    {
+        var place = (_openAtIndex, _openAtFound, _openAtCaret);
+        _openAtIndex = 0;
+        _openAtFound = false;
+        _openAtCaret = null;
+        return place;
+    }
+
     // Open a text file in the editor
     private static void Edit(TextFile file, bool modified)
     {
+        var openPlace = TakeOpenPlace();
         // The places of the browser are saved before the editor is opened, should Blyant not be closed as usual
         if (_browsing) RememberPanes();
         _file = file;
@@ -1010,14 +1023,14 @@ internal static partial class FileExplorer
         {
             // The line found by a search, or else where the cursor was when the file was closed last time (a
             // favorite first, then the history)
-            var cursorIndex = _openAtIndex;
+            var (cursorIndex, openAtFound, openAtCaret) = openPlace;
             (int Index, bool OtherLeft)? split = null;
-            if (_openAtCaret is { } at)
+            if (openAtCaret is { } at)
             {
                 // A bookmark made in the editor: where it was made
                 cursorIndex = CaretPosition.IndexOf(recovered ?? _file?.Text ?? string.Empty, at.Line, at.Column);
             }
-            else if (!_openAtFound && CaretOfFile(file.Path) is { } caret)
+            else if (!openAtFound && CaretOfFile(file.Path) is { } caret)
             {
                 cursorIndex = CaretPosition.IndexOf(recovered ?? _file?.Text ?? string.Empty, caret.Line, caret.Column);
                 // Closed in a split: opened split again

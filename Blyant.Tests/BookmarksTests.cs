@@ -271,6 +271,9 @@ public class BookmarksTests : IDisposable
         Assert.Equal((120, 5), Bookmarks.Places[0].Target.At);
         Assert.Null(Bookmarks.Places[2].Target.At);
         // With a name and a color
+        // The name offered when renaming (with the line), kept as it is: no name of its own
+        Assert.True(Bookmarks.Rename(0, "chapter.md:120"));
+        Assert.Equal(string.Empty, Bookmarks.Places[0].Name);
         Assert.True(Bookmarks.Rename(0, "Chapter 3"));
         Bookmarks.Parse(Bookmarks.Serialize());
         Assert.Equal("Chapter 3", Bookmarks.Places[0].Shown);

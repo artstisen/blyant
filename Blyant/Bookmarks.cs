@@ -81,9 +81,12 @@ internal static class Bookmarks
         /// The name shown: the one given, or the name of the place, with the line of a bookmark made in the editor
         /// ("chapter.md:120"; a folder: its name)
         /// </summary>
-        internal string Shown => IsFolder || Name.Length > 0 ? Name
-            : Target.At is { } at ? Target.Name + ":" + at.Line
-            : Target.Name;
+        internal string Shown => IsFolder || Name.Length > 0 ? Name : PlaceName;
+
+        /// <summary>
+        /// The name of the place, with the line of a bookmark made in the editor ("chapter.md:120")
+        /// </summary>
+        internal string PlaceName => Target.At is { } at ? Target.Name + ":" + at.Line : Target.Name;
     }
 
     // The list, with its folders (moving, removing and putting back are done by it)
@@ -403,7 +406,8 @@ internal static class Bookmarks
             return true;
         }
 
-        entry.Name = name == entry.Target.Name ? string.Empty : name;
+        // The name of the place (as offered when renaming), with or without the line: no name of its own
+        entry.Name = name == entry.Target.Name || name == entry.PlaceName ? string.Empty : name;
         return true;
     }
 
