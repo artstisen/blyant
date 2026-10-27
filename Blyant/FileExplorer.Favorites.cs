@@ -31,7 +31,8 @@ internal static partial class FileExplorer
         while (true)
         {
             var action = ShowFavorites(out var path);
-            if (action == FavoriteAction.Close) return KeyResult.Handled;
+            // Shown alone (from the start page): closed back there
+            if (action == FavoriteAction.Close) return _favoritesOnly ? KeyResult.Close : KeyResult.Handled;
             var isDirectory = Directory.Exists(path);
             if (!isDirectory && !File.Exists(path))
             {
@@ -52,6 +53,8 @@ internal static partial class FileExplorer
                 }
 
                 ChangeDirectory(parent, isDirectory && action == FavoriteAction.Open ? null : path);
+                // The file browser is shown now, and closed as usual
+                _favoritesOnly = false;
                 return KeyResult.Handled;
             }
 

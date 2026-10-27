@@ -97,6 +97,27 @@ internal static partial class FileExplorer
         Browse(BrowseMode.Edit, DialogText.CaptionsFiles);
     }
 
+    /// <summary>
+    /// Show the favorites of the file browser (Favorites on the start page, ":favorites"): closing them returns to
+    /// where they were opened from. A file or directory shown from them (B, a directory opened) shows the file
+    /// browser, which is then closed as usual
+    /// </summary>
+    internal static void RunFavorites()
+    {
+        _favoritesOnly = true;
+        try
+        {
+            Run(true);
+        }
+        finally
+        {
+            _favoritesOnly = false;
+        }
+    }
+
+    // The favorites are shown alone (RunFavorites): closing them closes the file browser too
+    private static bool _favoritesOnly;
+
     // A jump: the directory to show, and the file to open in the editor when the browser is shown
     private static string? _jumpDirectory;
     private static string? _jumpFile;

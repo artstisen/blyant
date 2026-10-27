@@ -152,9 +152,8 @@ internal static class StartMenu
                 break;
             case "favorites":
             case "favs":
-                // The favorites of the file browser at once (closing them shows the file browser, as when it starts in
-                // them)
-                FileExplorer.Run(true);
+                // The favorites of the file browser at once (closing them returns here, as Favorites does)
+                FileExplorer.RunFavorites();
                 break;
             case "project":
             case "newproject":
@@ -727,6 +726,7 @@ internal static class StartMenu
             FileBrowser,
             NewProject,
             OpenProject,
+            Favorites,
             Jump,
             QuickGuide,
             Exit
@@ -753,6 +753,7 @@ internal static class StartMenu
             Choice.FileBrowser => "F",
             Choice.NewProject => "P",
             Choice.OpenProject => "O",
+            Choice.Favorites => "V",
             Choice.Jump => "M",
             Choice.QuickGuide => "U",
             _ => "Q"
@@ -767,6 +768,7 @@ internal static class StartMenu
             Choice.FileBrowser => DialogText.FileBrowser,
             Choice.NewProject => DialogText.NewProject,
             Choice.OpenProject => DialogText.OpenProject,
+            Choice.Favorites => Lang.T("Favorites"),
             Choice.Jump => DialogText.StartJump,
             Choice.QuickGuide => DialogText.QuickGuide,
             _ => DialogText.StartExit
@@ -793,7 +795,8 @@ internal static class StartMenu
                 {
                     // The number, the key that opens the choice at once, and the choice
                     Tools.SetCursorEx(area.Top + i, area.Left + 3);
-                    Console.Write(Tools.TruncateString((i + 1) + " " + KeysOf(_shown[i]) + " .... " +
+                    // (the tenth is 0)
+                    Console.Write(Tools.TruncateString((i + 1) % 10 + " " + KeysOf(_shown[i]) + " .... " +
                                                        TextOf(_shown[i]), area.Width - 4, true));
                 }
 
@@ -881,6 +884,7 @@ internal static class StartMenu
                 ConsoleKey.F => Choice.FileBrowser,
                 ConsoleKey.P => Choice.NewProject,
                 ConsoleKey.O => Choice.OpenProject,
+                ConsoleKey.V => Choice.Favorites,
                 ConsoleKey.M => Choice.Jump,
                 ConsoleKey.U => Choice.QuickGuide,
                 _ => (Choice?)null
@@ -922,6 +926,11 @@ internal static class StartMenu
             {
                 _selected = key.KeyChar - '1';
             }
+            else if (key.KeyChar == '0' && count >= 10)
+            {
+                // The tenth (Exit, when Recover is shown)
+                _selected = 9;
+            }
             else if (key.KeyChar == 'G' || key.Key == ConsoleKey.End)
             {
                 _selected = count - 1;
@@ -956,6 +965,10 @@ internal static class StartMenu
                     break;
                 case Choice.OpenProject:
                     OpenProject();
+                    break;
+                case Choice.Favorites:
+                    // Closing them returns here
+                    FileExplorer.RunFavorites();
                     break;
                 case Choice.Jump:
                     // A place that is opened on top of the page returns here; the others leave it

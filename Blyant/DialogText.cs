@@ -209,7 +209,7 @@ internal static class DialogText
     public static string GuideKeys => Lang.T("| h/l Page | j/k Line | ? Keys | Esc Close");
     public static string StartConfigSelect => Lang.T("Show start page on startup");
     public static string StartConfigEditor => Lang.T("Start in file browser");
-    public static string StartKeys => Lang.T("j/k 1-7 Select | Enter Open | Tab Configuration | ? Help | Q Exit");
+    public static string StartKeys => Lang.T("j/k 1-9 Select | Enter Open | Tab Configuration | ? Help | Q Exit");
     public static string StartHelpKeys => Lang.T("j/k Select | Enter Open | Tab Start | ? Help | Esc Back");
     public static string StartConfigKeys => Lang.T("j/k Select | Enter/Space Change | h/l Page | Tab Next tab | Esc Back");
     public static string ConfigMonochrome => Lang.T("Black and white (no colors)");

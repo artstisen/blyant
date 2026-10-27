@@ -152,6 +152,7 @@ internal static partial class QuickGuide
         (Kind.Item, "  N", Lang.T("In the list: the note of the project, in the editor")),
         (Kind.Item, "N  :new", Lang.T("New file (Tab in the box: another folder)")),
         (Kind.Item, "F  :file", Lang.T("File browser: open, make and manage files")),
+        (Kind.Item, "V  :favs", Lang.T("Favorites: files and folders you use most")),
         (Kind.Text, "", ""),
         (Kind.Heading, "", Lang.T("In a project")),
         (Kind.Text, "", Lang.T("A project is shown in the file browser: N makes a file in it (a Markdown file when " +
