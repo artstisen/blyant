@@ -2449,7 +2449,8 @@ public partial class TextArea
         }
 
         var filler = new string(commandLine ? ' ' : '-', Math.Max(0, available - TextMetrics.WidthOf(text)));
-        var status = label + gap + StyleMarker + text + StyleMarker + filler + right + _engine.MessageIsError;
+        var status = label + gap + StyleMarker + text + StyleMarker + filler + right + _engine.MessageIsError +
+                     _engine.MessageIsCommandError;
         if (status == _shownStatus) return;
         _shownStatus = status;
 
@@ -2466,10 +2467,12 @@ public partial class TextArea
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
         Console.Write(gap);
         ConsoleColors.SetColors(commandLine
-            ? ConsoleColors.ColorPreset.HighlightInverted
-            : _engine.MessageIsError
-                ? ConsoleColors.ColorPreset.AttentionInverted
-                : ConsoleColors.ColorPreset.Normal);
+            ? ConsoleColors.ColorPreset.CommandLineInverted
+            : _engine.MessageIsCommandError
+                ? ConsoleColors.ColorPreset.CommandErrorInverted
+                : _engine.MessageIsError
+                    ? ConsoleColors.ColorPreset.AttentionInverted
+                    : ConsoleColors.ColorPreset.Normal);
         Console.Write(text);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
         Console.Write(filler + right);

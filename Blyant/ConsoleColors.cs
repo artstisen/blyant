@@ -137,7 +137,14 @@ internal static class ConsoleColors
         LineNumber, // The line numbers of the editor
         CurrentLineNumber, // The number of the line the cursor is on
         SelectorInverted, // The selection arrow "->" of lists, menus and settings
-        FrameText // The text in frames with tabs and in boxes
+        FrameText, // The text in frames with tabs and in boxes
+        CommandLineInverted, // The command line, and the "/" of the filters
+        CommandBorder, // The borders of the box of commands above the command line
+        CommandText, // The names of the commands in the box (and the background of the box)
+        CommandTyped, // The part of the names that is typed
+        CommandWholeInverted, // A name typed whole
+        CommandHint, // The keys of the box, and what it says when no command fits
+        CommandErrorInverted // "Not a command"
     }
 
     // The colors of text on the normal background: the background of the color scheme, or that of the terminal
@@ -156,6 +163,7 @@ internal static class ConsoleColors
             case ColorPreset.Favorites:
             case ColorPreset.Accent:
             case ColorPreset.EditorTitle:
+            case ColorPreset.CommandTyped:
                 Reset();
                 SetForeground(ConsoleColor.White);
                 break;
@@ -166,6 +174,9 @@ internal static class ConsoleColors
             case ColorPreset.HighlightInverted:
             case ColorPreset.AttentionInverted:
             case ColorPreset.WarningInverted:
+            case ColorPreset.CommandLineInverted:
+            case ColorPreset.CommandWholeInverted:
+            case ColorPreset.CommandErrorInverted:
                 SetBackground(ConsoleColor.Gray);
                 SetForeground(ConsoleColor.Black);
                 break;
@@ -262,6 +273,39 @@ internal static class ConsoleColors
             case ColorPreset.WarningInverted:
                 SetBackground(scheme.Warning);
                 SetForeground(scheme.WarningText);
+                return;
+            case ColorPreset.CommandLineInverted:
+                SetBackground(scheme.CommandLineColor);
+                SetForeground(scheme.CommandLineTextColor);
+                return;
+            case ColorPreset.CommandWholeInverted:
+                SetBackground(scheme.CommandWholeColor);
+                SetForeground(scheme.CommandWholeTextColor);
+                return;
+            case ColorPreset.CommandErrorInverted:
+                SetBackground(scheme.CommandErrorColor);
+                SetForeground(scheme.CommandErrorTextColor);
+                return;
+            case ColorPreset.CommandBorder or ColorPreset.CommandText or ColorPreset.CommandTyped
+                or ColorPreset.CommandHint:
+                // On the background of the box of commands
+                if (scheme.CommandBox is { } box)
+                {
+                    Reset();
+                    SetBackground(box);
+                }
+                else
+                {
+                    SetNormalBackground(scheme);
+                }
+
+                SetForeground(preset switch
+                {
+                    ColorPreset.CommandBorder => scheme.CommandBorderColor,
+                    ColorPreset.CommandTyped => scheme.CommandTypedColor,
+                    ColorPreset.CommandHint => scheme.CommandHintsColor,
+                    _ => scheme.CommandBoxTextColor
+                });
                 return;
         }
 

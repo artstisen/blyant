@@ -3,7 +3,7 @@
 /// <summary>
 /// The color schemes: a page of their own, opened from the Configuration page and with ":scheme" in the main
 /// menu. It is a frame with three tabs (TabFrame): Schemes, where a scheme is selected and used (the built-in
-/// ones and the ones saved by the user), Colors, where the colors of the scheme are picked (on two pages), and
+/// ones and the ones saved by the user), Colors, where the colors of the scheme are picked (on four pages), and
 /// Preview, a small screen in the colors being edited. Edited colors are only used when they are saved, as a
 /// scheme of the user's own (a file in the directory "colorschemes"), which is then the scheme in use.
 /// </summary>
@@ -15,10 +15,10 @@ internal static class SchemeEditor
     private sealed record Group(string Name, ColorItem Color, ColorItem? Text, ConsoleColors.ColorPreset Style,
         int Syntax = -1, string Sample = "");
 
-    private const int ColorPages = 3;
+    private const int ColorPages = 4;
 
-    // The groups on the pages of the Colors tab: the text and the editor, the highlights and tabs, and the
-    // colors of colored text
+    // The groups on the pages of the Colors tab: the text and the editor, the highlights and tabs, the command
+    // line and its box, and the colors of colored text
     private static Group[] GroupsOf(int page)
     {
         switch (page)
@@ -62,6 +62,24 @@ internal static class SchemeEditor
                         ConsoleColors.ColorPreset.Normal),
                     new Group(Lang.T("Tab focus"), ColorItem.TabShown, null, ConsoleColors.ColorPreset.TabShown),
                     new Group(Lang.T("Other tabs"), ColorItem.OtherTabs, null, ConsoleColors.ColorPreset.OtherTabs)
+                };
+            case 2:
+                return new[]
+                {
+                    new Group(Lang.T("Command line"), ColorItem.CommandLine, ColorItem.CommandLineText,
+                        ConsoleColors.ColorPreset.CommandLineInverted),
+                    new Group(Lang.T("Command box borders"), ColorItem.CommandBorders, null,
+                        ConsoleColors.ColorPreset.CommandBorder),
+                    new Group(Lang.T("Command box"), ColorItem.CommandBox, ColorItem.CommandBoxText,
+                        ConsoleColors.ColorPreset.CommandText),
+                    new Group(Lang.T("Typed part"), ColorItem.CommandTyped, null,
+                        ConsoleColors.ColorPreset.CommandTyped),
+                    new Group(Lang.T("Whole command"), ColorItem.CommandWhole, ColorItem.CommandWholeText,
+                        ConsoleColors.ColorPreset.CommandWholeInverted),
+                    new Group(Lang.T("Command hints"), ColorItem.CommandHints, null,
+                        ConsoleColors.ColorPreset.CommandHint),
+                    new Group(Lang.T("Command error"), ColorItem.CommandError, ColorItem.CommandErrorText,
+                        ConsoleColors.ColorPreset.CommandErrorInverted)
                 };
             default:
             {
@@ -120,7 +138,8 @@ internal static class SchemeEditor
                 Menu.WriteNameInTopBar();
             },
             new TabItem(() => Lang.T("Schemes"), new SchemesPage()),
-            new TabItem(() => Lang.T("Colors"), new ColorsPage(0), new ColorsPage(1), new ColorsPage(2)),
+            new TabItem(() => Lang.T("Colors"),
+                Enumerable.Range(0, ColorPages).Select(page => (ITabPage)new ColorsPage(page)).ToArray()),
             new TabItem(() => Lang.T("Preview"), new PreviewPage()))
         {
             // Ctrl+O: the Jump menu, on every tab (a jump that leaves the page asks about changes first)
@@ -544,6 +563,10 @@ internal static class SchemeEditor
                     Console.Write((Preview.TabHighlight ? "[x] " : "[ ] ") + Lang.T("Highlight focused tabs"));
                 }
 
+                // The command line and its box, as they look
+                if (_page == 2) DrawCommandSample(area.Left + 3, RowOf(area, groups.Length + 1), area.Width - 3,
+                    area.Top + area.Height - (ConsoleColors.Monochrome ? 1 : 0));
+
                 if (ConsoleColors.Monochrome && area.Height > Count + 3)
                 {
                     Tools.SetCursorEx(area.Top + area.Height - 1, area.Left + 3);
@@ -656,9 +679,10 @@ internal static class SchemeEditor
     {
         var caption = item switch
         {
-            ColorItem.Background => DialogText.BackgroundCaption,
+            ColorItem.Background or ColorItem.CommandBox => DialogText.BackgroundCaption,
             ColorItem.HighlightText or ColorItem.AttentionText or ColorItem.WarningText or ColorItem.TabText
-                or ColorItem.UnsavedText or ColorItem.SelectorText =>
+                or ColorItem.UnsavedText or ColorItem.SelectorText or ColorItem.CommandLineText
+                or ColorItem.CommandBoxText or ColorItem.CommandWholeText or ColorItem.CommandErrorText =>
                 DialogText.TextColorCaption,
             _ => DialogText.ColorCaption
         };
@@ -698,6 +722,27 @@ internal static class SchemeEditor
                     ConsoleColors.SetBackground(color);
                     ConsoleColors.SetForeground(scheme.Text);
                     break;
+                case ColorItem.CommandLine or ColorItem.CommandLineText:
+                    ConsoleColors.SetBackground(scheme.CommandLineColor);
+                    ConsoleColors.SetForeground(scheme.CommandLineTextColor);
+                    break;
+                case ColorItem.CommandWhole or ColorItem.CommandWholeText:
+                    ConsoleColors.SetBackground(scheme.CommandWholeColor);
+                    ConsoleColors.SetForeground(scheme.CommandWholeTextColor);
+                    break;
+                case ColorItem.CommandError or ColorItem.CommandErrorText:
+                    ConsoleColors.SetBackground(scheme.CommandErrorColor);
+                    ConsoleColors.SetForeground(scheme.CommandErrorTextColor);
+                    break;
+                case ColorItem.CommandBox:
+                    ConsoleColors.SetBackground(color);
+                    ConsoleColors.SetForeground(scheme.CommandBoxTextColor);
+                    break;
+                case ColorItem.CommandBorders or ColorItem.CommandBoxText or ColorItem.CommandTyped
+                    or ColorItem.CommandHints:
+                    ConsoleColors.SetBackground(scheme.CommandBoxColor);
+                    ConsoleColors.SetForeground(color);
+                    break;
                 default:
                     ConsoleColors.SetBackground(scheme.BackgroundColor);
                     ConsoleColors.SetForeground(color);
@@ -728,7 +773,14 @@ internal static class SchemeEditor
                     Lang.T("[Default]: the dividers"),
                 ColorItem.TabCorner => Lang.T("[Default]: the tab frames"),
                 ColorItem.TabShown or ColorItem.OtherTabs or ColorItem.KeyHints or ColorItem.CurrentLineNumber
-                    or ColorItem.FrameText => Lang.T("[Default]: the text"),
+                    or ColorItem.FrameText or ColorItem.CommandBoxText => Lang.T("[Default]: the text"),
+                ColorItem.CommandHints => Lang.T("[Default]: the dividers"),
+                ColorItem.CommandBorders => Lang.T("[Default]: the box borders"),
+                ColorItem.CommandBox => DialogText.ColorDefault,
+                ColorItem.CommandTyped => Lang.T("[Default]: the accent"),
+                // One of a pair, when the other has a color of its own: the color it has
+                >= ColorItem.CommandLine and <= ColorItem.CommandErrorText =>
+                    Lang.F("[Default]: {0}", ColorPicker.Name(Preview.Shown(item))),
                 >= ColorItem.Syntax1 and <= ColorItem.Syntax12 =>
                     Lang.F("[Default]: {0}", ColorPicker.Name(Preview.Shown(item))),
                 _ => DialogText.ColorDefault
@@ -745,9 +797,76 @@ internal static class SchemeEditor
             return Lang.T("[Default]: Tab focus on the tab frames");
         }
 
+        // The pairs of the command line that have no colors of their own: what they follow
+        if (group.Text is { } pairText && ColorScheme.IsCommand(group.Color) && Preview.Get(group.Color) == null &&
+            Preview.Get(pairText) == null)
+        {
+            switch (group.Color)
+            {
+                case ColorItem.CommandLine: return Lang.T("[Default]: the highlight");
+                case ColorItem.CommandBox: return Lang.T("[Default]: the text on the background");
+                case ColorItem.CommandWhole: return Lang.T("[Default]: the selector");
+                case ColorItem.CommandError: return Lang.T("[Default]: attention");
+            }
+        }
+
         return group.Text is { } text
             ? Lang.F("{0}, background {1}", Name(text), Name(group.Color))
             : Name(group.Color);
+    }
+
+    // The command line and the box of commands above it in the colors being edited: a box with names (one typed
+    // whole, the typed part of the others, how many more), and below it the command line with a command error
+    // beside it. Only when there is room above the bottom row
+    private static void DrawCommandSample(int left, int top, int width, int bottom)
+    {
+        const int rows = 4;
+        var boxWidth = Math.Min(width - 1, 56);
+        if (top + rows > bottom || boxWidth < 30) return;
+        var inner = boxWidth - 4;
+
+        void Part(ConsoleColors.ColorPreset style, string text)
+        {
+            ConsoleColors.SetColorsFromPreview(style);
+            Console.Write(text);
+        }
+
+        var title = "-- " + Lang.T("Commands") + " ";
+        Tools.SetCursorEx(top, left);
+        Part(ConsoleColors.ColorPreset.CommandBorder, AsciiStyles.GetTopCorner() + title +
+                                                      new string('-', Math.Max(0, boxWidth - 2 - title.Length)) +
+                                                      AsciiStyles.GetTopCorner());
+        // The names: "copy" typed whole, "co" typed of the others (English: commands are not translated)
+        Tools.SetCursorEx(top + 1, left);
+        Part(ConsoleColors.ColorPreset.CommandBorder, "| ");
+        var used = 0;
+        Part(ConsoleColors.ColorPreset.CommandWholeInverted, "copy"); // English
+        Part(ConsoleColors.ColorPreset.CommandText, "  ");
+        used += 6;
+        foreach (var name in new[] { "collapse", "color" }) // English
+        {
+            Part(ConsoleColors.ColorPreset.CommandTyped, name[..2]);
+            Part(ConsoleColors.ColorPreset.CommandText, name[2..] + "  ");
+            used += name.Length + 2;
+        }
+
+        var more = Tools.TruncateString(Lang.F("+{0} more", 2), Math.Max(0, inner - used), true);
+        Part(ConsoleColors.ColorPreset.CommandHint, more);
+        used += TextMetrics.WidthOf(more);
+        Part(ConsoleColors.ColorPreset.CommandText, new string(' ', Math.Max(0, inner - used)));
+        Part(ConsoleColors.ColorPreset.CommandBorder, " |");
+        Tools.SetCursorEx(top + 2, left);
+        Part(ConsoleColors.ColorPreset.CommandBorder,
+            AsciiStyles.GetBottomCorner() + new string('-', boxWidth - 2) + AsciiStyles.GetBottomCorner());
+        // The command line, and a command that is not known
+        var error = " " + DialogText.NotACommand("cpy") + " "; // English: the command
+        var lineWidth = Math.Max(14, boxWidth - TextMetrics.WidthOf(error) - 2);
+        Tools.SetCursorEx(top + 3, left);
+        Part(ConsoleColors.ColorPreset.CommandLineInverted, (DialogText.CommandPrompt + "copy").PadRight(lineWidth)); // English
+        Part(ConsoleColors.ColorPreset.Normal, "  ");
+        Part(ConsoleColors.ColorPreset.CommandErrorInverted,
+            Tools.TruncateString(error, Math.Max(0, boxWidth - lineWidth - 2), true));
+        ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
     }
 
     // A small screen in the colors being edited, on their background: the colors of the groups, a frame with

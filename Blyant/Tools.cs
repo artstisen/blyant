@@ -808,7 +808,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("  " + Lang.T("Paste bin"), Lang.T("For terminals without OSC 52 (Raspberry Pi)"), false));
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionColorScheme, true));
             _shortcutList.Add(new Shortcut("Tab", Lang.T("Next tab: Schemes, Colors, Preview"), false));
-            _shortcutList.Add(new Shortcut("l h", Lang.T("Colors: the next/previous page (Page 1 to 3)"), false));
+            _shortcutList.Add(new Shortcut("l h", Lang.T("Colors: the next/previous page (Page 1 to 4)"), false));
             _shortcutList.Add(new Shortcut("j k gg G", Lang.T("Select a scheme or a group of colors"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Schemes"), Lang.T("Enter use, Y duplicate, R rename, D delete"), false));
             _shortcutList.Add(new Shortcut("Enter Space", Lang.T("On a group: pick its color from a list"), false));
@@ -819,7 +819,8 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("  " + Lang.T("Tab corner"), Lang.T("The left side, corner and top of the tab shown"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Selector"), Lang.T("The arrow -> of lists, menus and settings"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Tab text"), Lang.T("The text in frames with tabs and in boxes"), false));
-            _shortcutList.Add(new Shortcut("  " + Lang.F("Page {0}", 3), Lang.T("Syntax 1-12: the colors of colored text"), false));
+            _shortcutList.Add(new Shortcut("  " + Lang.F("Page {0}", 3), Lang.T("Command line, its box of commands, errors"), false));
+            _shortcutList.Add(new Shortcut("  " + Lang.F("Page {0}", 4), Lang.T("Syntax 1-12: the colors of colored text"), false));
             _shortcutList.Add(new Shortcut("E", Lang.T("Back to the colors of the scheme in use"), false));
             _shortcutList.Add(new Shortcut("S", Lang.T("Save as a scheme of your own (asks for a name)"), false));
             _shortcutList.Add(new Shortcut("Esc Q", Lang.T("Close (asks to save changes)"), false));
