@@ -976,7 +976,10 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":regclear", Lang.T("Clear string memory"), false));
             _shortcutList.Add(new Shortcut(string.Empty, Lang.T("Other commands"), true));
             _shortcutList.Add(new Shortcut(":ts", Lang.T("Insert ISO timestamp (YYYY-MM-DD HH:MM:SS)"), false));
-            _shortcutList.Add(new Shortcut(":trim", Lang.T("Trim blank space (line start/end)"), false));
+            _shortcutList.Add(new Shortcut(":trim", Lang.T("Remove blank space at line ends (selection or all)"), false));
+            _shortcutList.Add(new Shortcut(":trim!", Lang.T("Also the two spaces of Markdown line breaks"), false));
+            _shortcutList.Add(new Shortcut(":lineendings lf", Lang.T("Line endings of the file: lf or crlf (alone: tell)"), false));
+            _shortcutList.Add(new Shortcut(":whitespace", Lang.T("Show blank space as . > $ (again: hide it)"), false));
             _shortcutList.Add(new Shortcut(":ol :ul", Lang.T("Numbered/Bulleted list (selected lines)"), false));
             _shortcutList.Add(new Shortcut(":dup", Lang.T("Duplicate the selection (or the line)"), false));
             _shortcutList.Add(new Shortcut(":dup 5", Lang.T("Make 5 copies of the selection (or the line)"), false));

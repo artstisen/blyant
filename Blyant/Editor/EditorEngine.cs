@@ -67,6 +67,8 @@ internal enum EditorRequest
     ClosePane, // ":q" in a split: close this pane (the other shows the text)
     OnlyPane, // ":only": close the other pane of a split
     NewDocument, // ":new name": a new file next to this one, opened in its place
+    LineEndings, // ":lineendings lf": the line endings of the file (LineEndingsArgument: lf, crlf, or empty to tell)
+    WhitespaceToggle, // ":whitespace": blank space shown as . > $, or not
     Favorite // ":favorite": the file a favorite of the file browser (or not)
 }
 
@@ -395,6 +397,11 @@ internal sealed partial class EditorEngine
     /// ":new name": the name of the new file, as typed (empty: it is asked for)
     /// </summary>
     internal string NewName { get; private set; } = string.Empty;
+
+    /// <summary>
+    /// ":lineendings lf": what follows the command (lowercase), for the host
+    /// </summary>
+    internal string LineEndingsArgument { get; private set; } = string.Empty;
 
     /// <summary>
     /// The text cannot be changed (a peek, a comparison): commands that would change it are refused with
@@ -1017,6 +1024,15 @@ internal sealed partial class EditorEngine
             return;
         }
 
+        // ":lineendings lf" (or crlf): the host changes the line endings of the file; alone: it tells them
+        var lineEndings = Regex.Match(command, "^lineendings(?: +(.*))?$");
+        if (lineEndings.Success)
+        {
+            LineEndingsArgument = lineEndings.Groups[1].Value.Trim().ToLowerInvariant();
+            if (!SingleLine) _request = EditorRequest.LineEndings;
+            return;
+        }
+
         // ":new name": the host makes the file and opens it in place of this text
         var newDocument = Regex.Match(command, "^new(?: +(.*))?$");
         if (newDocument.Success)
@@ -1103,6 +1119,10 @@ internal sealed partial class EditorEngine
             else if (command == "surround")
             {
                 Surround(first, last, fromSelection, surroundWord);
+            }
+            else if (command is "trim" or "trim!")
+            {
+                TrimLines(first, last, command == "trim!");
             }
             else if (command is "sort" or "sort!" or "sort i" or "sort! i")
             {
@@ -1272,7 +1292,12 @@ internal sealed partial class EditorEngine
                 InsertAtCursor(IsoDateTime.GetDateTimeNow());
                 break;
             case "trim":
-                TrimLines();
+            case "trim!":
+                // Without a selection: all the lines
+                TrimLines(0, Buffer.LineCount - 1, command == "trim!");
+                break;
+            case "whitespace":
+                if (!SingleLine) _request = EditorRequest.WhitespaceToggle;
                 break;
             case "dup":
             case "duplicate":
@@ -1476,18 +1501,48 @@ internal sealed partial class EditorEngine
     }
 
     // Remove blank space at the start and end of all lines
-    private void TrimLines()
+    // ":trim": the blank space (spaces and tabs) at the end of the lines is removed. In Markdown, two spaces or more
+    // at the end of a line of text followed by another is a line break: it is kept, unless "all" (":trim!")
+    private void TrimLines(int first, int last, bool all)
     {
-        for (var i = 0; i < Buffer.LineCount; i++)
+        // (a Markdown file or a blank page: the kind of text the completions are of)
+        var markdown = !all && CompletionSyntax == SyntaxType.Markdown;
+        var trimmed = 0;
+        var kept = 0;
+        for (var i = first; i <= last; i++)
         {
             var line = Buffer[i];
-            var trimmed = line.Trim();
-            if (trimmed.Length == line.Length) continue;
-            Delete(new TextPos(i, 0), new TextPos(i, line.Length));
-            Insert(new TextPos(i, 0), trimmed);
+            var end = TrailingBlankStart(line);
+            if (end == line.Length) continue;
+            if (markdown && IsMarkdownLineBreak(line, end, i)) kept++;
+            else
+            {
+                Delete(new TextPos(i, end), new TextPos(i, line.Length));
+                trimmed++;
+            }
         }
 
-        Cursor = Cursor with { Col = 0 };
+        ClampCursor();
+        Message = trimmed == 0 && kept == 0 ? Lang.T("No blank space at line ends")
+            : kept == 0 ? Lang.F("{0} lines trimmed", trimmed)
+            : Lang.F("{0} lines trimmed, {1} Markdown line breaks kept (:trim! removes them)", trimmed, kept);
+    }
+
+    /// <summary>
+    /// Where the blank space (spaces and tabs) at the end of a line starts (the length of the line if there is none)
+    /// </summary>
+    internal static int TrailingBlankStart(string line)
+    {
+        var end = line.Length;
+        while (end > 0 && line[end - 1] is ' ' or '\t') end--;
+        return end;
+    }
+
+    // Two spaces or more (no tab) after text, with a line of text after it: a line break of Markdown
+    private bool IsMarkdownLineBreak(string line, int end, int lineIndex)
+    {
+        return end > 0 && line.Length - end >= 2 && line.IndexOf('\t', end) < 0 &&
+               lineIndex + 1 < Buffer.LineCount && Buffer[lineIndex + 1].Trim().Length > 0;
     }
 
     // The start of a line in a Markdown list: "- ", "* ", "+ ", "1. " or "1) " (after the indentation)

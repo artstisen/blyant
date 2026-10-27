@@ -202,10 +202,10 @@ public class CommandTests
     [Fact]
     public void TheTables_HaveTheCommandsOfTheEditor()
     {
-        // (":s/old/new/" is found by its first letter, and ":diff", ":book", ":play", ":macro", ":new" and ":saveas" by
-        // a pattern, as they can have something after them)
+        // (":s/old/new/" is found by its first letter, and ":diff", ":book", ":play", ":macro", ":new", ":saveas" and
+        // ":lineendings" by a pattern, as they can have something after them)
         AssertSame(CommandContext.Editor, Compared(Method("Editor/EditorEngine.cs", "ExecuteCommand")), "s", "diff",
-            "book", "play", "macro", "new", "sur", "saveas");
+            "book", "play", "macro", "new", "sur", "saveas", "lineendings");
     }
 
     [Fact]

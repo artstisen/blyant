@@ -918,7 +918,7 @@ public class EditorTests
     [Fact]
     public void Commands_EditTheText()
     {
-        var editor = Editor("  one  \ntwo\nthree");
+        var editor = Editor("one  \ntwo\nthree");
         editor.Type(":3<CR>");
         Assert.Equal(2, editor.Cursor.Line);
         editor.Type(":trim<CR>");
@@ -1245,6 +1245,59 @@ public class EditorTests
     }
 
     #endregion
+
+    [Fact]
+    public void Trim_RemovesBlankSpaceAtLineEnds_AndKeepsIndentation()
+    {
+        var editor = Editor("  one \t\n    two  \n\t\nthree");
+        editor.Type(":trim<CR>");
+        Assert.Equal("  one\n    two\n\nthree", editor.GetText());
+        Assert.Equal("3 lines trimmed", editor.Message);
+        // Undone as one step
+        editor.Type("u");
+        Assert.Equal("  one \t\n    two  \n\t\nthree", editor.GetText());
+    }
+
+    [Fact]
+    public void Trim_KeepsTheLineBreaksOfMarkdown_UnlessTrimBang()
+    {
+        // Two spaces after text, with a line of text after it: a line break. Before an empty line, or at the end of
+        // the text, they break nothing
+        const string text = "Roses are red  \nViolets are blue  \n\nEnd  ";
+        var editor = new EditorEngine(text, 40, 10, false) { CompletionSyntax = SyntaxType.Markdown };
+        editor.Type(":trim<CR>");
+        Assert.Equal("Roses are red  \nViolets are blue\n\nEnd", editor.GetText());
+        Assert.Contains(":trim!", editor.Message);
+        editor.Type(":trim!<CR>");
+        Assert.Equal("Roses are red\nViolets are blue\n\nEnd", editor.GetText());
+        // Not Markdown: all is trimmed
+        var plain = Editor(text);
+        plain.Type(":trim<CR>");
+        Assert.Equal("Roses are red\nViolets are blue\n\nEnd", plain.GetText());
+    }
+
+    [Fact]
+    public void Trim_WorksOnTheSelectedLines()
+    {
+        var editor = Editor("a \nb \nc ");
+        editor.Type("jVj:trim<CR>");
+        Assert.Equal("a \nb\nc", editor.GetText());
+        editor.Type(":1,1trim<CR>");
+        Assert.Equal("a\nb\nc", editor.GetText());
+        editor.Type(":trim<CR>");
+        Assert.Equal("No blank space at line ends", editor.Message);
+    }
+
+    [Fact]
+    public void LineEndingsAndWhitespace_AreAskedOfTheHost()
+    {
+        var editor = Editor("text");
+        Assert.Equal(EditorRequest.LineEndings, editor.Type(":lineendings CRLF<CR>"));
+        Assert.Equal("crlf", editor.LineEndingsArgument);
+        Assert.Equal(EditorRequest.LineEndings, editor.Type(":lineendings<CR>"));
+        Assert.Equal(string.Empty, editor.LineEndingsArgument);
+        Assert.Equal(EditorRequest.WhitespaceToggle, editor.Type(":whitespace<CR>"));
+    }
 }
 
 public class TextBufferTests

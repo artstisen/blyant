@@ -416,6 +416,8 @@ internal static class FileIo
         _tempSettings += "startmode=" + StartMenu.SettingName(StartMenu.Mode) + '\n';
         // The kind of new files and blank pages: the extension a name without one gets (md, txt, html ...)
         _tempSettings += "filetype=" + FileOperations.DefaultExtension.TrimStart('.') + '\n';
+        // The line endings of new files and blank pages: system, lf or crlf
+        _tempSettings += "newlineendings=" + TextFile.NewFileLineEndings + '\n';
         // Starting in the file browser: open the favorites list first
         _tempSettings += "startfavorites=" + (StartMenu.StartInFavorites ? DialogText.BTrue : DialogText.BFalse) +
                          '\n';
@@ -488,6 +490,8 @@ internal static class FileIo
         _tempSettings += "linenumbers=" + (TextArea.LineNumbers ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // Long lines in the editor wrapped (on unless turned off)
         _tempSettings += "wrap=" + (TextArea.WordWrap ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        // Blank space shown in the editor as . (space), > (tab) and $ (line end) (:whitespace)
+        _tempSettings += "whitespace=" + (TextArea.ShowWhitespace ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // Lines kept above and below the cursor when the editor scrolls (on or off, and how many)
         _tempSettings += "scrolloff=" + (TextArea.ScrollOff ? DialogText.BTrue : DialogText.BFalse) +
                          '\n';
@@ -626,6 +630,8 @@ internal static class FileIo
         StartMenu.Mode = StartMenu.ParseSetting(Get("startmode"));
         // The kind of new files and blank pages (Markdown unless another of the list is set)
         FileOperations.DefaultExtension = FileOperations.ParseFileType(Get("filetype")) ?? FileOperations.MarkdownExtension;
+        var lineEndings = Tools.TrimToLower(Get("newlineendings"));
+        TextFile.NewFileLineEndings = lineEndings is "lf" or "crlf" ? lineEndings : "system";
         StartMenu.StartInFavorites = Tools.TrimToLower(Get("startfavorites")) == DialogText.BTrue;
         // Deleting to the trash: on unless turned off
         FileOperations.DeleteToTrash = Tools.TrimToLower(Get("deletetotrash")) != DialogText.BFalse;
@@ -662,6 +668,7 @@ internal static class FileIo
         // On unless turned off
         TextArea.LineNumbers = Tools.TrimToLower(Get("linenumbers")) == DialogText.BTrue;
         TextArea.WordWrap = Tools.TrimToLower(Get("wrap")) != DialogText.BFalse;
+        TextArea.ShowWhitespace = Tools.TrimToLower(Get("whitespace")) == DialogText.BTrue;
         // On unless turned off
         TextArea.ScrollOff = Tools.TrimToLower(Get("scrolloff")) != DialogText.BFalse;
         var scrollLines = GetNumber("scrolllines");

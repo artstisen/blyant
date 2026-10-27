@@ -32,7 +32,37 @@ internal sealed class TextFile
     /// </summary>
     internal string EncodingName { get; private set; } = "UTF-8";
 
-    internal string LineEnding { get; private set; } = Environment.NewLine;
+    /// <summary>
+    /// The line endings of new files and blank pages (setting "newlineendings"): "system" (those of the system: CRLF
+    /// on Windows, LF on Linux and macOS), "lf" or "crlf"
+    /// </summary>
+    internal static string NewFileLineEndings { get; set; } = "system";
+
+    /// <summary>
+    /// The line ending of new files, as set
+    /// </summary>
+    internal static string NewFileLineEnding => NewFileLineEndings switch
+    {
+        "lf" => "\n",
+        "crlf" => "\r\n",
+        _ => Environment.NewLine
+    };
+
+    internal string LineEnding { get; private set; } = NewFileLineEnding;
+
+    /// <summary>
+    /// The file had more than one kind of line endings when it was read: it is saved with one (LineEnding)
+    /// </summary>
+    internal bool MixedLineEndings { get; private set; }
+
+    /// <summary>
+    /// The line endings the file is saved with from now on (":lineendings lf")
+    /// </summary>
+    internal void SetLineEnding(string ending)
+    {
+        LineEnding = ending;
+        MixedLineEndings = false;
+    }
 
     /// <summary>
     /// The encoding of the file as shown to the user: "UTF-8", "UTF-8 (BOM)", "UTF-16", "Windows-1252" ...
@@ -42,7 +72,12 @@ internal sealed class TextFile
     /// <summary>
     /// The line endings of the file as shown to the user: "CRLF" (Windows), "LF" (Linux, macOS) or "CR"
     /// </summary>
-    internal string LineEndingLabel => LineEnding switch
+    internal string LineEndingLabel => LabelOf(LineEnding);
+
+    /// <summary>
+    /// A line ending as shown to the user: "CRLF", "LF" or "CR"
+    /// </summary>
+    internal static string LabelOf(string ending) => ending switch
     {
         "\r\n" => "CRLF",
         "\r" => "CR",
@@ -135,6 +170,9 @@ internal sealed class TextFile
         {
             file.LineEnding = windows >= unix && windows >= mac ? "\r\n" : unix >= mac ? "\n" : "\r";
         }
+
+        // More than one kind: the editor tells which one the file is saved with
+        file.MixedLineEndings = (windows > 0 ? 1 : 0) + (unix > 0 ? 1 : 0) + (mac > 0 ? 1 : 0) > 1;
 
         file.Text = TextBuffer.Normalize(text);
         return file;

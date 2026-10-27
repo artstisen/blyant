@@ -134,4 +134,39 @@ public class TextFileTests
             TextFile.Read(new byte[] { 0xFF, 0xFE }.Concat(System.Text.Encoding.Unicode.GetBytes("text")).ToArray())
                 .EncodingLabel);
     }
+
+    [Theory]
+    [InlineData("one\r\ntwo\nthree\r\n", true, "\r\n")]
+    [InlineData("one\ntwo\r\nthree\n", true, "\n")]
+    [InlineData("one\r\ntwo\r\n", false, "\r\n")]
+    [InlineData("one", false, null)]
+    public void MixedLineEndings_AreFound_AndTheMostUsedIsKept(string content, bool mixed, string? ending)
+    {
+        var file = TextFile.Read(Encoding.UTF8.GetBytes(content));
+        Assert.Equal(mixed, file.MixedLineEndings);
+        if (ending != null) Assert.Equal(ending, file.LineEnding);
+        // Changed: saved with the new ones, and no longer mixed
+        file.SetLineEnding("\n");
+        Assert.False(file.MixedLineEndings);
+        Assert.DoesNotContain((byte)'\r', file.GetBytes(file.Text));
+    }
+
+    [Fact]
+    public void NewFiles_HaveTheLineEndingsSet()
+    {
+        try
+        {
+            TextFile.NewFileLineEndings = "lf";
+            Assert.Equal("\n", TextFile.Create("new.md").LineEnding);
+            TextFile.NewFileLineEndings = "crlf";
+            Assert.Equal("\r\n", TextFile.Create("new.md").LineEnding);
+            Assert.Equal("CRLF", TextFile.Create("new.md").LineEndingLabel);
+            TextFile.NewFileLineEndings = "system";
+            Assert.Equal(Environment.NewLine, TextFile.Create("new.md").LineEnding);
+        }
+        finally
+        {
+            TextFile.NewFileLineEndings = "system";
+        }
+    }
 }

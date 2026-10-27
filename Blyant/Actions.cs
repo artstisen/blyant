@@ -210,6 +210,8 @@ internal static class Actions
         FileExplorer.DualPane = true;
         TextArea.LineNumbers = false;
         TextArea.WordWrap = true;
+        TextArea.ShowWhitespace = false;
+        TextFile.NewFileLineEndings = "system";
         TextArea.ScrollOff = true;
         TextArea.ScrollOffLines = TextArea.DefaultScrollOffLines;
         Snippets.Sort = Snippets.SortOrder.File;

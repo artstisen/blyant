@@ -1366,6 +1366,29 @@ internal static partial class FileExplorer
     }
 
     /// <summary>
+    /// The line endings of the file being edited: "CRLF" or "LF" (empty if none)
+    /// </summary>
+    internal static string CurrentLineEndingLabel => _file?.LineEndingLabel ?? string.Empty;
+
+    /// <summary>
+    /// Save the file being edited with other line endings from now on (":lineendings lf"). False if it has them
+    /// already, or no file is edited
+    /// </summary>
+    internal static bool SetLineEnding(string ending)
+    {
+        if (_file == null || _file.LineEnding == ending) return false;
+        _file.SetLineEnding(ending);
+        return true;
+    }
+
+    /// <summary>
+    /// What the editor tells when the file was read with more than one kind of line endings (null: one kind)
+    /// </summary>
+    internal static string? MixedLineEndingsNote => _file is { MixedLineEndings: true } file
+        ? Lang.F("Mixed line endings: saved as {0} (:lineendings changes it)", file.LineEndingLabel)
+        : null;
+
+    /// <summary>
     /// Read the file being edited from disk again (it can have been changed by another program)
     /// </summary>
     /// <param name="text">The text of the file</param>

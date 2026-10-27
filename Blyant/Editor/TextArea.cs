@@ -38,7 +38,9 @@ public partial class TextArea
     private const int StyleFound = 6; // The character found by f, F, t or T
     private const int StyleJumpLabel = 7; // The letter to type to jump to a word
     private const int StyleJumpNext = 8; // The letter to type after it
-    private const int StyleMarkdown = 10; // The styles of Markdown follow from this number
+    private const int StyleWhitespace = 9; // Blank space shown (:whitespace): . > $
+    private const int StyleTrailingSpace = 10; // ... at the end of a line
+    private const int StyleMarkdown = 12; // The styles of Markdown follow from this number
 
     /// <summary>
     /// True to show line numbers in the editor (setting "linenumbers")
@@ -49,6 +51,16 @@ public partial class TextArea
     /// Long lines are wrapped (setting "wrap", on unless turned off)
     /// </summary>
     internal static bool WordWrap { get; set; } = true;
+
+    /// <summary>
+    /// Blank space is shown: a space as ".", a tab as ">" and the end of a line as "$", in the color of the line
+    /// numbers, and the blank space at the end of a line highlighted (setting "whitespace", ":whitespace"). Classic
+    /// ASCII, so every terminal shows it, and each mark takes the place of what it marks
+    /// </summary>
+    internal static bool ShowWhitespace { get; set; }
+
+    // Not in a peek, or a field of one line
+    private bool ShowsWhitespace => ShowWhitespace && _peek == null && !_singleLine;
 
     internal const int DefaultScrollOffLines = 12;
 
@@ -337,8 +349,11 @@ public partial class TextArea
         {
             // Split as it was when it was closed
             if (split is { } place) RestoreSplit(place.Index, place.OtherLeft);
-            // Once, until the first key: where the keys are found (the top row has no room for it)
-            _engine.SetMessage(DialogText.EditorHelpHint, false);
+            // Once, until the first key: where the keys are found (the top row has no room for it), or that the file
+            // has more than one kind of line endings
+            _engine.SetMessage(saveMode == SaveAsFile && FileExplorer.MixedLineEndingsNote is { } mixed
+                ? mixed
+                : DialogText.EditorHelpHint, false);
         }
 
 
@@ -871,6 +886,16 @@ public partial class TextArea
                 // Remembered (but not while the settings file itself is being edited)
                 LineNumbers = _engine.LineNumbers;
                 if (_saveMode != SaveAsSettings) FileIo.SaveSettings();
+                break;
+            case EditorRequest.WhitespaceToggle:
+                ShowWhitespace = !ShowWhitespace;
+                _engine.ShowMessage(ShowWhitespace
+                    ? Lang.T("Blank space shown: . space, > tab, $ line end")
+                    : Lang.T("Blank space not shown"), false);
+                if (_saveMode != SaveAsSettings) FileIo.SaveSettings();
+                break;
+            case EditorRequest.LineEndings:
+                ChangeLineEndings(_engine.LineEndingsArgument);
                 break;
             case EditorRequest.WrapChanged:
                 if (_peek?.NoWrap == true) break;
@@ -1649,6 +1674,45 @@ public partial class TextArea
         return true;
     }
 
+    // ":lineendings lf" or "crlf": the file is saved with them from now on (the text has changes, so it can be
+    // saved). Alone: the line endings of the file are told
+    private void ChangeLineEndings(string argument)
+    {
+        if (_saveMode != SaveAsFile)
+        {
+            _engine.ShowMessage(Lang.T("Only a file has line endings"), true);
+            return;
+        }
+
+        var ending = argument switch
+        {
+            "lf" => "\n",
+            "crlf" => "\r\n",
+            _ => null
+        };
+        if (argument.Length == 0)
+        {
+            _engine.ShowMessage(Lang.F("Line endings: {0} (:lineendings lf or crlf changes them)",
+                FileExplorer.CurrentLineEndingLabel), false);
+        }
+        else if (ending == null)
+        {
+            _engine.ShowMessage(Lang.T("Line endings are lf or crlf: :lineendings lf"), true);
+        }
+        else if (!FileExplorer.SetLineEnding(ending))
+        {
+            _engine.ShowMessage(Lang.F("The line endings are {0} already", FileExplorer.CurrentLineEndingLabel), false);
+        }
+        else
+        {
+            _engine.MarkModified();
+            _engine.ShowMessage(Lang.F("Line endings: {0}, written when the file is saved",
+                FileExplorer.CurrentLineEndingLabel), false);
+            // The bottom line shows them at once
+            _shownStatus = null;
+        }
+    }
+
     // Show or remove the "unsaved" indicator when the state changes
     // The label "Read only" at the top right, where the label "Unsaved" is shown for a text with changes
     private void DrawReadOnlyLabel()
@@ -1927,7 +1991,10 @@ public partial class TextArea
         var s = _engine.Buffer[line];
         if (layout.Wrap)
         {
-            return BuildRange(row, line, s, layout.SegmentStart(line, segment), layout.SegmentEnd(line, segment));
+            var segmentEnd = layout.SegmentEnd(line, segment);
+            var rangeStart = row.Length;
+            var shown = BuildRange(row, line, s, layout.SegmentStart(line, segment), segmentEnd);
+            return shown + LineEndMark(row, rangeStart, s, segmentEnd, shown, layout.Width);
         }
 
         // Not wrapped: the cells from LeftCell, with "<" and ">" where text is hidden to the left or the right
@@ -1993,7 +2060,42 @@ public partial class TextArea
             row.Insert(textStart, new string(new[] { StyleMarker, (char)('0' + StyleNormal) }));
         }
 
+        if (!rightMark) cells += LineEndMark(row, rowStart, s, end, cells, width);
         return cells;
+    }
+
+    // The "$" at the end of a line while blank space is shown, when the row has room for it (the cells it took).
+    // A row with colors has its colors from its start: the text from "start" is given its own, if it has none
+    private int LineEndMark(StringBuilder row, int start, string s, int end, int cells, int width)
+    {
+        if (!ShowsWhitespace || end != s.Length || cells >= width) return 0;
+        if (row.Length > start && row[start] != StyleMarker)
+        {
+            row.Insert(start, new string(new[] { StyleMarker, (char)('0' + StyleNormal) }));
+        }
+
+        row.Append(StyleMarker).Append((char)('0' + StyleWhitespace)).Append('$');
+        return 1;
+    }
+
+    // A part of a line as written to the terminal: control characters as blank space, and while blank space is
+    // shown, a space as "." and a tab as ">"
+    private string Visible(string s, int start, int end)
+    {
+        if (!ShowsWhitespace) return TextMetrics.Printable(s, start, end);
+        var builder = new StringBuilder(end - start);
+        for (var i = start; i < end; i++)
+        {
+            builder.Append(s[i] switch
+            {
+                ' ' => '.',
+                '\t' => '>',
+                _ when char.IsControl(s[i]) => ' ',
+                _ => s[i]
+            });
+        }
+
+        return builder.ToString();
     }
 
     // The text of a part of a line (from the char index "start" to "end"), with its colors
@@ -2014,7 +2116,9 @@ public partial class TextArea
         // The common case is a row in a single color
         var misspelled = _engine.Misspelled(line);
         var markdown = _engine.SyntaxStyles(line);
-        if (selection == null && !hasMatches && misspelled.Count == 0 && markdown == null && labels == null)
+        var blank = ShowsWhitespace && s.AsSpan(start, end - start).IndexOfAny(' ', '\t') >= 0;
+        if (selection == null && !hasMatches && misspelled.Count == 0 && markdown == null && labels == null &&
+            !blank)
         {
             row.Append(TextMetrics.Printable(s, start, end));
             return cells;
@@ -2027,6 +2131,16 @@ public partial class TextArea
             for (var i = start; i < end && i < markdown.Length; i++)
             {
                 if (markdown[i] != SyntaxStyle.None) styles[i - start] = StyleMarkdown + (int)markdown[i];
+            }
+        }
+
+        if (blank)
+        {
+            // Dimmed, and highlighted at the end of the line (below the other marks)
+            var trailing = EditorEngine.TrailingBlankStart(s);
+            for (var i = start; i < end; i++)
+            {
+                if (s[i] is ' ' or '\t') styles[i - start] = i >= trailing ? StyleTrailingSpace : StyleWhitespace;
             }
         }
 
@@ -2122,12 +2236,12 @@ public partial class TextArea
 
     // A part of a line as shown, with the letters of a jump in place of the characters they cover (a wide character
     // keeps its width: the letter and a blank space)
-    private static void AppendShown(StringBuilder row, string s, int start, int end,
+    private void AppendShown(StringBuilder row, string s, int start, int end,
         Dictionary<int, (char Letter, bool Next)>? labels)
     {
         if (labels == null)
         {
-            row.Append(TextMetrics.Printable(s, start, end));
+            row.Append(Visible(s, start, end));
             return;
         }
 
@@ -2135,13 +2249,13 @@ public partial class TextArea
         for (var i = start; i < end; i += Math.Max(1, TextMetrics.ElementLength(s, i)))
         {
             if (!labels.TryGetValue(i, out var label)) continue;
-            if (i > from) row.Append(TextMetrics.Printable(s, from, i));
+            if (i > from) row.Append(Visible(s, from, i));
             var after = i + Math.Max(1, TextMetrics.ElementLength(s, i));
             row.Append(label.Letter).Append(' ', Math.Max(0, TextMetrics.WidthOfRange(s, i, after) - 1));
             from = after;
         }
 
-        if (end > from) row.Append(TextMetrics.Printable(s, from, end));
+        if (end > from) row.Append(Visible(s, from, end));
     }
 
     // The colors of a part of a row
@@ -2157,6 +2271,8 @@ public partial class TextArea
                 StyleJumpLabel => ConsoleColors.ColorPreset.KeyHintInverted,
                 StyleJumpNext => ConsoleColors.ColorPreset.Accent,
                 StyleMisspelled => ConsoleColors.ColorPreset.WarningInverted,
+                StyleWhitespace => ConsoleColors.ColorPreset.LineNumber,
+                StyleTrailingSpace => ConsoleColors.ColorPreset.WarningInverted,
                 StyleLineNumber => ConsoleColors.ColorPreset.LineNumber,
                 StyleCurrentLineNumber => ConsoleColors.ColorPreset.CurrentLineNumber,
                 _ => ConsoleColors.ColorPreset.Normal

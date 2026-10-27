@@ -459,6 +459,7 @@ internal static class StartMenu
         StartFavorites, // Shown below StartEditor when it is chosen
         StartBlank,
         FileType,
+        NewLineEndings,
         DeleteToTrash,
         CommandList,
         Monochrome,
@@ -471,6 +472,7 @@ internal static class StartMenu
         Corners,
         LineNumbers,
         WordWrap,
+        Whitespace,
         ScrollOff,
         Clipboard,
         SyntaxColors,
@@ -501,6 +503,7 @@ internal static class StartMenu
         if (Mode == StartMode.Editor) settings.Add(Setting.StartFavorites);
         settings.Add(Setting.StartBlank);
         settings.Add(Setting.FileType);
+        settings.Add(Setting.NewLineEndings);
         settings.Add(Setting.DeleteToTrash);
         settings.Add(Setting.CommandList);
         settings.Add(Setting.Language);
@@ -515,6 +518,7 @@ internal static class StartMenu
         // Editor
         settings.Add(Setting.LineNumbers);
         settings.Add(Setting.WordWrap);
+        settings.Add(Setting.Whitespace);
         settings.Add(Setting.ScrollOff);
         settings.Add(Setting.Clipboard);
         settings.Add(Setting.SyntaxColors);
@@ -552,6 +556,13 @@ internal static class StartMenu
             Setting.StartBlank => Check(Mode == StartMode.Blank) + Lang.T("Start on a blank page"),
             Setting.FileType => indent + Lang.F("New files and blank pages: {0} (Enter: Change)",
                 FileOperations.FileTypeName(FileOperations.DefaultExtension) + " (" + FileOperations.DefaultExtension + ")"),
+            Setting.NewLineEndings => indent + Lang.F("Line endings of new files: {0} (Enter: Change)",
+                TextFile.NewFileLineEndings switch
+                {
+                    "lf" => "LF",
+                    "crlf" => "CRLF",
+                    _ => Lang.F("System ({0})", TextFile.LabelOf(Environment.NewLine))
+                }),
             Setting.StartFavorites => indent + Check(StartInFavorites) + Lang.T("Open favorites list first"),
             Setting.DeleteToTrash => Check(FileOperations.DeleteToTrash) + Lang.T("Delete to trash (:trash in file browser)"),
             Setting.CommandList => Check(Blyant.CommandList.Enabled) + Lang.T("List commands above command line"),
@@ -568,6 +579,7 @@ internal static class StartMenu
                             DialogText.ConfigSizeNote,
             Setting.LineNumbers => Check(TextArea.LineNumbers) + DialogText.ConfigLineNumbers,
             Setting.WordWrap => Check(TextArea.WordWrap) + Lang.T("Wrap long lines"),
+            Setting.Whitespace => Check(TextArea.ShowWhitespace) + Lang.T("Show blank space as . > $ (:whitespace)"),
             Setting.ScrollOff => Check(TextArea.ScrollOff) +
                                  Lang.F("Keep {0} lines around cursor", TextArea.ScrollOffLines),
             Setting.Clipboard => indent + Lang.T("Clipboard and paste bin (Enter: Change)"),
@@ -605,10 +617,11 @@ internal static class StartMenu
         return setting switch
         {
             Setting.StartSelect or Setting.StartEditor or Setting.StartFavorites or Setting.StartBlank
-                or Setting.FileType or Setting.DeleteToTrash or Setting.CommandList or Setting.Language => 0,
+                or Setting.FileType or Setting.NewLineEndings or Setting.DeleteToTrash or Setting.CommandList
+                or Setting.Language => 0,
             Setting.AutoSize or Setting.Size or Setting.Monochrome or Setting.ColorScheme or Setting.Logo
                 or Setting.LogoAnimation or Setting.Corners => 1,
-            Setting.LineNumbers or Setting.WordWrap or Setting.ScrollOff or Setting.Clipboard
+            Setting.LineNumbers or Setting.WordWrap or Setting.Whitespace or Setting.ScrollOff or Setting.Clipboard
                 or Setting.SyntaxColors or Setting.Spell or Setting.Snippets or Setting.AutoComplete
                 or Setting.Completions or Setting.Recovery => 2,
             Setting.FavoriteNumbers or Setting.FavoritePanes or Setting.FavoritePeek or Setting.BookmarkNumbers
@@ -1082,6 +1095,10 @@ internal static class StartMenu
         private readonly int _page;
         private Setting? _selected; // Kept by the setting, as rows come and go (the size, the color scheme)
 
+        // A page with more settings than rows scrolls: the first setting shown, and the one drawn last time
+        private int _scroll;
+        private int _shownScroll = -1;
+
         internal SettingsPage(int page)
         {
             _page = page;
@@ -1103,24 +1120,49 @@ internal static class StartMenu
             // A blank row above the groups of the page, when there is room for them
             var groups = settings.Count(StartsGroup);
             var gaps = settings.Count + groups <= area.Height;
-            int Row(int i) => area.Top + i + (gaps ? settings.Take(i + 1).Count(StartsGroup) : 0);
+            // More settings than rows: the page scrolls to keep the selected one shown, with "^" and "v" at the right
+            // while there are more above or below (as in the lists of boxes)
+            var rows = Math.Max(1, area.Height);
+            var scrolls = settings.Count > rows;
+            if (!scrolls) _scroll = 0;
+            else if (selected < _scroll) _scroll = selected;
+            else if (selected >= _scroll + rows) _scroll = selected - rows + 1;
+            _scroll = Math.Clamp(_scroll, 0, Math.Max(0, settings.Count - rows));
+            // Scrolled: the rows are written again
+            if (_scroll != _shownScroll) full = true;
+            _shownScroll = _scroll;
+            var last = Math.Min(settings.Count, _scroll + rows);
+            int Row(int i) => area.Top + i - _scroll + (gaps ? settings.Take(i + 1).Count(StartsGroup) : 0);
             if (full)
             {
                 // The settings without a check box are indented to line up with the names of the ones with a
                 // check box. On a page without check boxes they line up with the pointer
                 var texts = settings.Select(SettingText).ToList();
                 var checkBoxes = texts.Any(text => text.StartsWith('['));
-                for (var i = 0; i < settings.Count; i++)
+                // (room for the marks at the right of a page that scrolls; the rows are written to their end)
+                var room = area.Width - (scrolls ? 6 : 4);
+                for (var i = _scroll; i < last; i++)
                 {
                     Tools.SetCursorEx(Row(i), area.Left + 2);
-                    var text = checkBoxes ? texts[i] : texts[i].TrimStart();
+                    var text = " " + Tools.TruncateString(checkBoxes ? texts[i] : texts[i].TrimStart(), room, true);
                     if (IsDimmed(settings[i])) ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
-                    Console.Write(" " + Tools.TruncateString(text, area.Width - 4, true));
+                    Console.Write(text);
+                    ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
+                    if (scrolls) Console.Write(new string(' ', Math.Max(0, room + 1 - TextMetrics.WidthOf(text))));
+                }
+
+                if (scrolls)
+                {
+                    ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
+                    Tools.SetCursorEx(area.Top, area.Left + area.Width - 2);
+                    Console.Write(_scroll > 0 ? "^" : " ");
+                    Tools.SetCursorEx(area.Top + rows - 1, area.Left + area.Width - 2);
+                    Console.Write(last < settings.Count ? "v" : " ");
                     ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
                 }
             }
 
-            for (var i = 0; i < settings.Count; i++)
+            for (var i = _scroll; i < last; i++)
             {
                 Tools.SetCursorEx(Row(i), area.Left);
                 if (i == selected) ConsoleColors.SetColors(ConsoleColors.ColorPreset.SelectorInverted);
@@ -1148,6 +1190,11 @@ internal static class StartMenu
             else if (key.KeyChar >= '1' && key.KeyChar - '1' < count)
             {
                 _selected = settings[key.KeyChar - '1'];
+            }
+            else if (key.KeyChar == '0' && count >= 10)
+            {
+                // The tenth
+                _selected = settings[9];
             }
             else if (key.KeyChar == 'G' || key.Key == ConsoleKey.End)
             {
@@ -1213,6 +1260,18 @@ internal static class StartMenu
                 return;
             case Setting.StartFavorites:
                 StartInFavorites = !StartInFavorites;
+                break;
+            case Setting.NewLineEndings:
+                // System, LF, CRLF, and round again
+                TextFile.NewFileLineEndings = TextFile.NewFileLineEndings switch
+                {
+                    "system" => "lf",
+                    "lf" => "crlf",
+                    _ => "system"
+                };
+                break;
+            case Setting.Whitespace:
+                TextArea.ShowWhitespace = !TextArea.ShowWhitespace;
                 break;
             case Setting.DeleteToTrash:
                 FileOperations.DeleteToTrash = !FileOperations.DeleteToTrash;
