@@ -763,13 +763,18 @@ public partial class TextArea
                 }
 
                 break;
-            case EditorRequest.WriteCopy when _saveMode == SaveAsFile && FileExplorer.IsUntitled:
-                // ":w name" on a blank page: saved, with the name in the box (the folder can be changed there)
+            case EditorRequest.WriteCopy or EditorRequest.SaveAs when _saveMode == SaveAsFile && FileExplorer.IsUntitled:
+                // ":w name" (":saveas name") on a blank page: saved, with the name in the box (the folder can be
+                // changed there)
                 _saveName = _engine.WriteName;
                 if (!_engine.IsModified) _engine.MarkModified();
                 if (Save()) _engine.SetMessage(DialogText.EditorSaved, false);
                 break;
-            case EditorRequest.WriteCopy:
+            case EditorRequest.WriteCopy or EditorRequest.SaveAs
+                when _saveMode == SaveAsFile && !FileExplorer.EditingBlyantFile:
+                SaveFileAs(_engine.WriteName, request == EditorRequest.SaveAs);
+                break;
+            case EditorRequest.WriteCopy or EditorRequest.SaveAs:
                 _engine.ShowMessage(DialogText.WriteCopyNotHere, true);
                 break;
             case EditorRequest.CompleteChanged:
@@ -1182,6 +1187,51 @@ public partial class TextArea
 
         // Nothing is said when the box was closed without a name
         if (status.Length > 0) _engine.SetMessage(status, true);
+    }
+
+    // ":w name" (a copy) and ":saveas name" (the new file is edited from then on): the text as a new file next to the
+    // file, named as typed, with the extension of the file if the name has none (FileExplorer.SaveCurrentFileAs).
+    // ":saveas" alone asks for the name
+    private void SaveFileAs(string name, bool saveAs)
+    {
+        if (name.Length == 0)
+        {
+            ChoiceBox.Forget();
+            name = ChoiceBox.AskText(DialogText.SaveAs, DialogText.TypeNameAndPressEnter, DialogText.NameColon,
+                string.Empty)?.Trim() ?? string.Empty;
+            RedrawAll();
+            if (name.Length == 0) return;
+        }
+
+        Tools.HideCursor();
+        var written = System.IO.Path.GetFileName(FileExplorer.PathNextToCurrent(FileExplorer.CurrentFilePath, name));
+        var problem = FileExplorer.SaveCurrentFileAs(GetText(), name, saveAs);
+        if (problem != null)
+        {
+            RedrawAll();
+            // (nothing is said when the user gave up)
+            if (problem.Length > 0) _engine.SetMessage(problem, true);
+            return;
+        }
+
+        if (!saveAs)
+        {
+            RedrawAll();
+            _engine.SetMessage(Lang.F("A copy is saved as {0}", written), false);
+            return;
+        }
+
+        // The new file is the one edited: saved, and colored as the kind of file its name tells
+        _engine.MarkSaved();
+        RecoverySaved();
+        DocumentInfo.HasChanged = false;
+        Menu.InitializeSaveIndicator();
+        var type = FileSyntax();
+        _engine.SyntaxDefault = type;
+        _engine.CompletionSyntax = type;
+        _engine.Syntax = SyntaxHighlighter.ColorFiles ? type : SyntaxType.None;
+        RedrawAll();
+        _engine.SetMessage(Lang.F("Saved as {0}: it is the file edited now", written), false);
     }
 
     // ":info": the text being edited in a box: its name, how many characters, words and lines it has as it is now

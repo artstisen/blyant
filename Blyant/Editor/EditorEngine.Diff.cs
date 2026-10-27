@@ -24,7 +24,7 @@ internal sealed partial class EditorEngine
     internal string BookArgument { get; private set; } = string.Empty;
 
     /// <summary>
-    /// The name given with ":w name" (EditorRequest.WriteCopy)
+    /// The name given with ":w name" (EditorRequest.WriteCopy) or ":saveas name" (EditorRequest.SaveAs)
     /// </summary>
     internal string WriteName { get; private set; } = string.Empty;
 

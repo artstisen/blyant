@@ -858,6 +858,8 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("  Up Down", Lang.T("Earlier commands of this page"), false));
             _shortcutList.Add(new Shortcut(string.Empty, Lang.T("Save and close"), true));
             _shortcutList.Add(new Shortcut(":w", Lang.T("Save"), false));
+            _shortcutList.Add(new Shortcut(":w name", Lang.T("Save a copy next to the file (this one stays open)"), false));
+            _shortcutList.Add(new Shortcut(":saveas name", Lang.T("Save as a new file next to it, and edit that"), false));
             _shortcutList.Add(new Shortcut(":wq :x ZZ", Lang.T("Save and close editor"), false));
             _shortcutList.Add(new Shortcut(":q Esc", Lang.T("Close editor (asks to save changes)"), false));
             _shortcutList.Add(new Shortcut(":q! ZQ", Lang.T("Close editor without saving"), false));

@@ -889,8 +889,17 @@ internal static partial class FileExplorer
         }
 
         Edit(file, converted);
-        // The file is selected (by the name it has now, if it was renamed in the editor)
-        LoadItems(System.IO.Path.GetFileName(_lastEditedPath.Length > 0 ? _lastEditedPath : file.Path));
+        // The file is selected (by the name it has now, if it was renamed in the editor), or the last file written
+        // with ":w name" or ":saveas name" (they are in the same directory; a filter that hides it is taken away)
+        var select = System.IO.Path.GetFileName(_lastWrittenPath.Length > 0 ? _lastWrittenPath
+            : _lastEditedPath.Length > 0 ? _lastEditedPath : file.Path);
+        if (_lastWrittenPath.Length > 0 && ActivePane.Filter.Length > 0 &&
+            !select.Contains(ActivePane.Filter, StringComparison.OrdinalIgnoreCase))
+        {
+            ActivePane.Filter = string.Empty;
+        }
+
+        LoadItems(select);
         return false;
     }
 
@@ -915,6 +924,7 @@ internal static partial class FileExplorer
         // The places of the browser are saved before the editor is opened, should Blyant not be closed as usual
         if (_browsing) RememberPanes();
         _file = file;
+        _lastWrittenPath = string.Empty;
         // Text of the file that was not saved when Blyant stopped: the user is asked what to do with it
         var recovered = OfferRecovery(file, out var recoveredCopy);
         EventLog.Add(DialogText.LogFile + "Open: " + file.Path);
@@ -1390,6 +1400,102 @@ internal static partial class FileExplorer
 
         return _file.Save(text);
     }
+
+    /// <summary>
+    /// The file a name given to ":w name" or ":saveas name" is: next to the file being edited, and with its
+    /// extension if the name has none
+    /// </summary>
+    internal static string PathNextToCurrent(string currentPath, string name)
+    {
+        name = name.Trim();
+        if (System.IO.Path.GetExtension(name).Length == 0) name += System.IO.Path.GetExtension(currentPath);
+        var directory = System.IO.Path.GetDirectoryName(System.IO.Path.GetFullPath(currentPath)) ?? string.Empty;
+        return System.IO.Path.Combine(directory, name);
+    }
+
+    /// <summary>
+    /// ":w name" and ":saveas name": the text being edited saved as a new file next to the file, with the name typed
+    /// (and the extension of the file if it has none), the encoding and line endings of the file. A file of that
+    /// name is replaced only if the user says so. With saveAs the new file is the one edited from then on; else the
+    /// file being edited stays as it is (with its changes not saved). If the file is a favorite, the user is asked
+    /// whether the new one goes below it in the favorites
+    /// </summary>
+    /// <returns>Null if it was saved, else why not (empty: the user gave up)</returns>
+    internal static string? SaveCurrentFileAs(string text, string name, bool saveAs)
+    {
+        if (_file == null || IsUntitled) return DialogText.NoFilePath;
+        var original = System.IO.Path.GetFullPath(_file.Path);
+        var path = PathNextToCurrent(original, name);
+        var fileName = System.IO.Path.GetFileName(path);
+        if (Tools.FileNameProblem(fileName) is { } problem) return problem;
+        if (FileOperations.SamePath(path, original)) return Lang.T("That is the file being edited (:w saves it)");
+        if (Directory.Exists(path)) return DialogText.NameExists;
+        var replace = File.Exists(path);
+        if (replace)
+        {
+            ChoiceBox.Forget();
+            if (!ChoiceBox.Confirm(DialogText.SaveAs, Lang.F("Replace {0}?", fileName),
+                    Lang.T("A file of that name is there: it is replaced by this text."), true))
+            {
+                return string.Empty;
+            }
+        }
+
+        var copy = _file.WithPath(path);
+        try
+        {
+            // A new file is made as such first (a file that has come since it was looked for is not emptied)
+            if (!replace) FileIo.CreateNewFile(path);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or NotSupportedException)
+        {
+            return e.Message;
+        }
+
+        var status = copy.Save(text);
+        if (status != DialogText.Success) return status;
+        _lastWrittenPath = path;
+        if (saveAs)
+        {
+            _file = copy;
+            AddToHistory(path);
+        }
+
+        OfferFavoriteBelow(original, path);
+        return null;
+    }
+
+    // The files written with ":w name" or ":saveas name" that were put below a favorite (the favorite, and the last
+    // put below it): the next one made from the same favorite goes after them, so they keep the order they were made in
+    private static readonly List<(string Favorite, string Last)> PutBelow = new();
+
+    // A file written from a favorite: the user is asked whether it goes below the favorite in the favorites (after
+    // the files put below it before)
+    private static void OfferFavoriteBelow(string original, string path)
+    {
+        FileFavorites.Load();
+        if (!FileFavorites.Contains(original) || FileFavorites.Contains(path)) return;
+        ChoiceBox.Forget();
+        if (!ChoiceBox.Confirm(Lang.T("Favorites"),
+                Lang.F("Add {0} to the favorites, below {1}?", System.IO.Path.GetFileName(path),
+                    System.IO.Path.GetFileName(original)), string.Empty, false))
+        {
+            return;
+        }
+
+        var before = PutBelow.FindLastIndex(put => FileOperations.SamePath(put.Favorite, original));
+        var after = before >= 0 && FileFavorites.Contains(PutBelow[before].Last) ? PutBelow[before].Last : original;
+        var index = FileFavorites.Items.ToList()
+            .FindIndex(item => !item.IsFolder && FileOperations.SamePath(item.Path, after));
+        if (FileFavorites.AddBelow(path, index) < 0) return;
+        PutBelow.Add((original, path));
+        var status = FileFavorites.Save();
+        if (status != DialogText.Success) _message = status;
+    }
+
+    // The last file written with ":w name" or ":saveas name" while the editor was open (empty: none): it is selected
+    // in the file browser, or in the favorites when it is one, when the editor is closed
+    private static string _lastWrittenPath = string.Empty;
 
     /// <summary>
     /// What is wrong with a name for a new file next to the file being edited (":new name" in the editor): not a

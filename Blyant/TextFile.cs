@@ -59,6 +59,20 @@ internal sealed class TextFile
     }
 
     /// <summary>
+    /// The same file under another path (":w name", ":saveas name"): it is saved with the line endings and byte order
+    /// mark of this one
+    /// </summary>
+    internal TextFile WithPath(string path) => new()
+    {
+        Path = path,
+        Text = Text,
+        IsUtf8 = IsUtf8,
+        EncodingName = EncodingName,
+        LineEnding = LineEnding,
+        _hasUtf8Bom = _hasUtf8Bom
+    };
+
+    /// <summary>
     /// Read a text file
     /// </summary>
     /// <exception cref="InvalidDataException">The file is too large or is not a text file</exception>

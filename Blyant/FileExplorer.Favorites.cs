@@ -63,7 +63,22 @@ internal static partial class FileExplorer
 
             _favoriteMessage = _message;
             _message = string.Empty;
+            // A file written with ":w name" or ":saveas name" and put in the favorites is selected
+            SelectFavoriteFile(_lastWrittenPath);
         }
+    }
+
+    // Select a favorite by its path (also when the list was filtered)
+    private static void SelectFavoriteFile(string path)
+    {
+        if (path.Length == 0) return;
+        var number = FileFavorites.Items.ToList()
+            .FindIndex(item => !item.IsFolder && FileOperations.SamePath(item.Path, path));
+        if (number < 0) return;
+        _favoriteFilter = string.Empty;
+        FileFavorites.Reveal(number);
+        FilterFavorites();
+        _favoriteIndex = Math.Max(0, _favorites.IndexOf(number));
     }
 
     private static void FilterFavorites()

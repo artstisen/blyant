@@ -332,7 +332,7 @@ internal static class DialogText
     public static string DiffHowTo => Lang.T("Mark two files, select one in each pane, or :diff name");
     public static string DiffSameFile => Lang.T("That is the same file");
     public static string DiffReplaceNote => Lang.T("The file is replaced by the comparison.");
-    public static string WriteCopyNotHere => Lang.T(":w name saves a comparison (:diff) as a file");
+    public static string WriteCopyNotHere => Lang.T(":w name saves a copy of a file, or a comparison (:diff)");
     public static string CompleteOn => Lang.T("Completing words: on");
     public static string CompleteOff => Lang.T("Completing words: off");
     public static string CompleteOneKeys => Lang.T("Tab Complete");
