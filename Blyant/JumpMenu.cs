@@ -1099,10 +1099,68 @@ internal static class JumpMenu
             : new List<Bookmarks.Entry>();
     }
 
+    // M on a folder: into another folder (a folder at the top), as a subfolder, or a subfolder out of its folder. A
+    // folder with subfolders stays where it is (two levels of folders at most)
+    private static void MoveBookmarkFolder(Bookmarks.Entry folder)
+    {
+        var index = IndexOf(folder);
+        if (folder.Level == 0 && Bookmarks.SubfolderCount(index) > 0)
+        {
+            _message = Lang.F("{0} has subfolders: it cannot go into another folder", folder.Name);
+            return;
+        }
+
+        var parent = Bookmarks.Parent(index);
+        var folders = Bookmarks.Items.Where(item => item.IsFolder && item.Level == 0 && item != folder &&
+                                                    (parent < 0 || item != Bookmarks.Items[parent])).ToList();
+        var choices = new List<string> { DialogText.FavoriteNewFolder + "..." };
+        if (folder.Level > 0) choices.Add(DialogText.FavoriteNoFolder);
+        var first = choices.Count;
+        choices.AddRange(folders.Select(item => "[" + item.Name + "]"));
+        ChoiceBox.Forget();
+        var choice = FileExplorer.PickFromList(Lang.F("Move folder {0} to", folder.Name), choices,
+            folders.Count > 0 ? first : 0);
+        ChoiceBox.Forget();
+        if (choice < 0) return;
+        Bookmarks.Entry? into = null;
+        if (choice == 0)
+        {
+            // A new folder, where the folder (or the folder it is in) is
+            ChoiceBox.Forget();
+            var name = ChoiceBox.AskText(DialogText.FavoriteNewFolder, DialogText.TypeNameAndPressEnter,
+                DialogText.NameColon, string.Empty);
+            if (name == null) return;
+            var at = Bookmarks.AddFolder(name, index);
+            if (at < 0)
+            {
+                _message = DialogText.FavoriteFolderName;
+                return;
+            }
+
+            into = Bookmarks.Items[at];
+        }
+        else if (choice >= first)
+        {
+            into = folders[choice - first];
+        }
+
+        if (Bookmarks.MoveFolderTo(folder, into) < 0) return;
+        _select = folder;
+        _message = DialogText.FavoriteMovedOne + (into == null ? DialogText.FavoriteNoFolder : into.Name);
+        SaveBookmarks();
+    }
+
     // M or ":move": the marked bookmarks (or the selected one) to a folder picked from a list: one of the folders,
     // a new folder, or out of the folders
     private static void MoveBookmarksToFolder(List<Row> rows, int selected)
     {
+        // A folder (selected, nothing marked): into another folder, or out of its folder
+        if (Marks.Count == 0 && rows.Count > 0 && rows[selected].Bookmark is { IsFolder: true } selectedFolder)
+        {
+            MoveBookmarkFolder(selectedFolder);
+            return;
+        }
+
         var items = MarkedOrSelected(rows, selected);
         if (items.Count == 0)
         {

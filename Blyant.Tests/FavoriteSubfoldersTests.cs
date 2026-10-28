@@ -340,4 +340,40 @@ public class FavoriteSubfoldersTests : IDisposable
         Assert.Equal("[Work] .a .[Sub] ..b ..d .c .[Other] ..e .f g", string.Join(" ", Bookmarks.Items.Select(entry =>
             new string('.', entry.Level) + (entry.IsFolder ? "[" + entry.Name + "]" : entry.Target.Name))));
     }
+
+    [Fact]
+    public void AFolder_MovesIntoAnother_AndASubfolderOutOfItsFolder()
+    {
+        FileFavorites.Parse(Article);
+        Assert.Equal("a [Article] .b .[Done] ..c .[Pending+] ..d .e f", Show());
+        // A subfolder out of its folder: a folder, right after it
+        var done = FileFavorites.Items[Find("Done")];
+        Assert.True(FileFavorites.MoveFolderTo(done, null) >= 0);
+        Assert.Equal("a [Article] .b .[Pending+] ..d .e [Done] .c f", Show());
+        // A folder into another: last in it, with what is in it
+        Assert.True(FileFavorites.MoveFolderTo(done, FileFavorites.Items[Find("Article")]) >= 0);
+        Assert.Equal("a [Article] .b .[Pending+] ..d .e .[Done] ..c f", Show());
+        // A folder with subfolders does not go into another (two levels at most), nor a folder into itself
+        FileFavorites.AddFolder("Other", Find("f"));
+        var article = FileFavorites.Items[Find("Article")];
+        var other = FileFavorites.Items[Find("Other")];
+        Assert.Equal(-1, FileFavorites.MoveFolderTo(article, other));
+        Assert.Equal(-1, FileFavorites.MoveFolderTo(other, other));
+        // A folder at the top is not out of a folder
+        Assert.Equal(-1, FileFavorites.MoveFolderTo(other, null));
+        // A subfolder into another folder at the top, closed as it was; the folder is opened
+        other.Collapsed = true;
+        var pending = FileFavorites.Items[Find("Pending")];
+        Assert.True(FileFavorites.MoveFolderTo(pending, other) >= 0);
+        Assert.Equal("a [Article] .b .e .[Done] ..c [Other] .[Pending+] ..d f", Show());
+        // ... and not into the folder it is in
+        Assert.Equal(-1, FileFavorites.MoveFolderTo(pending, other));
+        // The bookmarks have the same folders
+        Bookmarks.Parse("[Work]\n file\t/x/a\n [Old]\n  file\t/x/b\n[Archive]\n");
+        var old = Bookmarks.Items.First(entry => entry.Name == "Old");
+        Assert.True(Bookmarks.MoveFolderTo(old, null) >= 0);
+        Assert.True(Bookmarks.MoveFolderTo(old, Bookmarks.Items.First(entry => entry.Name == "Archive")) >= 0);
+        Assert.Equal("[Work] .a [Archive] .[Old] ..b", string.Join(" ", Bookmarks.Items.Select(entry =>
+            new string('.', entry.Level) + (entry.IsFolder ? "[" + entry.Name + "]" : entry.Target.Name))));
+    }
 }

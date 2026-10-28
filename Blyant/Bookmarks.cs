@@ -430,6 +430,11 @@ internal static class Bookmarks
     internal static int MoveToFolder(ICollection<Entry> items, Entry? folder) => Folders.MoveToFolder(items, folder);
 
     /// <summary>
+    /// Move a folder into another (as a subfolder), or a subfolder out of its folder (null). See FolderList.MoveFolderTo
+    /// </summary>
+    internal static int MoveFolderTo(Entry folder, Entry? into) => Folders.MoveFolderTo(folder, into);
+
+    /// <summary>
     /// Give a bookmark the name it is shown with (empty: the name of the place), or a folder a new name
     /// </summary>
     /// <returns>False if a folder cannot have the name</returns>

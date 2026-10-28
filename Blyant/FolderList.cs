@@ -167,6 +167,50 @@ internal sealed class FolderList<T> where T : class, IFolderItem
     }
 
     /// <summary>
+    /// Move a folder, with what is in it, into another folder: last in it, as a subfolder (its items one level further
+    /// in). With no folder (null), a subfolder is taken out of its folder: a folder again, right after the one it was
+    /// in. A folder with subfolders does not go into another, as there are two levels of folders at most
+    /// </summary>
+    /// <param name="folder">The folder or subfolder to move</param>
+    /// <param name="into">A folder at the top (not a subfolder), or null: out of the folder it is in</param>
+    /// <returns>The place of the folder in the list, or -1 if it was not moved</returns>
+    internal int MoveFolderTo(T folder, T? into)
+    {
+        var index = Items.IndexOf(folder);
+        if (index < 0 || !folder.IsFolder) return -1;
+        var end = FolderEnd(index);
+        var block = Items.GetRange(index, end - index + 1);
+        int level;
+        if (into == null)
+        {
+            if (folder.Level == 0) return -1;
+            level = 0;
+        }
+        else
+        {
+            if (!into.IsFolder || into.Level != 0 || ReferenceEquals(into, folder) || !Items.Contains(into) ||
+                block.Skip(1).Any(item => item.IsFolder) || folder.Level == 1 && Parent(index) == Items.IndexOf(into))
+            {
+                return -1;
+            }
+
+            level = 1;
+        }
+
+        var parent = into == null ? Items[Parent(index)] : into;
+        Items.RemoveRange(index, block.Count);
+        var at = Items.IndexOf(parent);
+        // Last in the folder, or right after the folder it was in
+        var target = FolderEnd(at) + 1;
+        var change = level - folder.Level;
+        foreach (var item in block) item.Level += change;
+        Items.InsertRange(target, block);
+        // Opened, so that it can be seen where it went
+        if (into != null) Open(at);
+        return target;
+    }
+
+    /// <summary>
     /// Move items (or folders, with the items in them) to the top or the end: an item in a folder to the top or
     /// the end of its folder (or subfolder), the others to the top or the end of the list. Their order is kept
     /// </summary>

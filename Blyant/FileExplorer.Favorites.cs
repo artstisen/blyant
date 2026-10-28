@@ -721,10 +721,69 @@ internal static partial class FileExplorer
             : new List<FileFavorites.Favorite>();
     }
 
+    // M on a folder: into another folder (a folder at the top), as a subfolder, or a subfolder out of its folder. A
+    // folder with subfolders stays where it is (two levels of folders at most)
+    private static void MoveFavoriteFolder(int index)
+    {
+        var folder = FileFavorites.Items[index];
+        if (folder.Level == 0 && FileFavorites.SubfolderCount(index) > 0)
+        {
+            _favoriteMessage = Lang.F("{0} has subfolders: it cannot go into another folder", folder.Name);
+            return;
+        }
+
+        var parent = FileFavorites.Parent(index);
+        var folders = FileFavorites.Items.Where(item => item.IsFolder && item.Level == 0 &&
+                                                        !ReferenceEquals(item, folder) &&
+                                                        (parent < 0 || !ReferenceEquals(item, FileFavorites.Items[parent])))
+            .ToList();
+        var choices = new List<string> { DialogText.FavoriteNewFolder + "..." };
+        if (folder.Level > 0) choices.Add(DialogText.FavoriteNoFolder);
+        var first = choices.Count;
+        choices.AddRange(folders.Select(item => "[" + item.Name + "]"));
+        var choice = PickFromList(Lang.F("Move folder {0} to", folder.Name), choices, folders.Count > 0 ? first : 0);
+        if (choice < 0) return;
+        FileFavorites.Favorite? into = null;
+        if (choice == 0)
+        {
+            // A new folder, where the folder (or the folder it is in) is
+            var name = AskName(DialogText.FavoriteNewFolder, string.Empty);
+            if (name == null) return;
+            var at = FileFavorites.AddFolder(name, index);
+            if (at < 0)
+            {
+                _favoriteMessage = DialogText.FavoriteFolderName;
+                return;
+            }
+
+            into = FileFavorites.Items[at];
+        }
+        else if (choice >= first)
+        {
+            into = folders[choice - first];
+        }
+
+        if (FileFavorites.MoveFolderTo(folder, into) < 0) return;
+        // Show it, also when the list was filtered
+        _favoriteFilter = string.Empty;
+        FilterFavorites();
+        _favoriteIndex = Math.Max(0,
+            _favorites.FindIndex(number => ReferenceEquals(FileFavorites.Items[number], folder)));
+        _favoriteMessage = DialogText.FavoriteMovedOne + (into == null ? DialogText.FavoriteNoFolder : into.Name);
+        SaveFavoriteList();
+    }
+
     // Move the marked favorites (or the selected one) to a folder picked from a list: one of the folders,
     // a new folder, or out of the folders
     private static void MoveFavoritesToFolder(int selected)
     {
+        // A folder (selected, nothing marked): into another folder, or out of its folder
+        if (_favoriteMarks.Count == 0 && selected >= 0 && FileFavorites.Items[selected].IsFolder)
+        {
+            MoveFavoriteFolder(selected);
+            return;
+        }
+
         var items = MarkedOrSelected(selected);
         if (items.Count == 0)
         {

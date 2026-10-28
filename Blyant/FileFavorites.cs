@@ -322,6 +322,11 @@ internal static class FileFavorites
         Folders.MoveToFolder(items, folder);
 
     /// <summary>
+    /// Move a folder into another (as a subfolder), or a subfolder out of its folder (null). See FolderList.MoveFolderTo
+    /// </summary>
+    internal static int MoveFolderTo(Favorite folder, Favorite? into) => Folders.MoveFolderTo(folder, into);
+
+    /// <summary>
     /// Move favorites (or folders, with the favorites in them) to the top or the end: a favorite in a folder to
     /// the top or the end of its folder, the others to the top or the end of the list. Their order is kept
     /// </summary>

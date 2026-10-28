@@ -687,6 +687,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("X :rename name", Lang.T("Rename the folder"), false));
             _shortcutList.Add(new Shortcut("Space", Lang.T("Mark/Unmark the favorite (several can be marked)"), false));
             _shortcutList.Add(new Shortcut("M :move", Lang.T("Move the marked (or selected) to a folder"), false));
+            _shortcutList.Add(new Shortcut("  " + Lang.T("On a folder"), Lang.T("Into another folder, or a subfolder out of its folder"), false));
             _shortcutList.Add(new Shortcut("T :top", Lang.T("Move the marked (or selected) to the top"), false));
             _shortcutList.Add(new Shortcut("E :bottom", Lang.T("Move the marked (or selected) to the end"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("In a folder"), Lang.T("T and E move to the top/end of the folder"), false));
@@ -792,6 +793,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":panes :peek", Lang.T("Bookmarks: show/hide the note and the peek"), false));
             _shortcutList.Add(new Shortcut(":number", Lang.T("Number the rows of the tab (:nonumber: not)"), false));
             _shortcutList.Add(new Shortcut("Space M", Lang.T("Bookmarks: mark several/move them to a folder"), false));
+            _shortcutList.Add(new Shortcut("  " + Lang.T("On a folder"), Lang.T("Into another folder, or a subfolder out of its folder"), false));
             _shortcutList.Add(new Shortcut(":expand :collapse", Lang.T("Bookmarks: open/close all the folders"), false));
             _shortcutList.Add(new Shortcut("u :clearbook", Lang.T("Bookmarks: put back the removed/clear (asks first)"), false));
             _shortcutList.Add(new Shortcut(":import favorites", Lang.T("Bookmarks: copy the favorites of the file browser"), false));
