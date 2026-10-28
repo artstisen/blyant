@@ -1021,6 +1021,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":number :nu", Lang.T("Line numbers on/off"), false));
             _shortcutList.Add(new Shortcut(":split", Lang.T("Two panes on/off (Tab: go to the other)"), false));
             _shortcutList.Add(new Shortcut(":split name", Lang.T("Another file at the right, read only"), false));
+            _shortcutList.Add(new Shortcut(":view :sv", Lang.T("... picked in the file browser (:view name)"), false));
             _shortcutList.Add(new Shortcut("Tab Shift+Tab", Lang.T("Split: go to the other pane (Normal mode)"), false));
             _shortcutList.Add(new Shortcut(":only :q", Lang.T("Split: close the other pane/this pane"), false));
             _shortcutList.Add(new Shortcut(":yankall", Lang.T("Yank all the text (as gg V G y; the clipboard as y)"), false));

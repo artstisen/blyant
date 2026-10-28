@@ -1456,6 +1456,11 @@ public class EditorTests
         Assert.Equal(string.Empty, editor.SplitArgument);
         Assert.Equal(EditorRequest.Split, editor.Type(":split notes/ideas 2.md<CR>"));
         Assert.Equal("notes/ideas 2.md", editor.SplitArgument);
+        // ":view" picks the file (":sview" and ":sv" as in Vim), ":view name" shows it
+        Assert.Equal(EditorRequest.View, editor.Type(":view<CR>"));
+        Assert.Equal(string.Empty, editor.SplitArgument);
+        Assert.Equal(EditorRequest.View, editor.Type(":sv outline.md<CR>"));
+        Assert.Equal("outline.md", editor.SplitArgument);
     }
 
     [Fact]

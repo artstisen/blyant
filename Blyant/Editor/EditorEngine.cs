@@ -64,6 +64,7 @@ internal enum EditorRequest
     MacroStop, // The Esc that would close the editor, while recording: ask whether to stop, save or go on
     MacroList, // ":macro": show the macros, to pick one to play
     Split, // ":split": show the text in two panes (":split name": a file read only at the right, SplitArgument)
+    View, // ":view": pick a file to show read only at the right (":view name": that file, SplitArgument)
     SwitchPane, // Tab (Shift+Tab) in Normal mode: the other pane of a split gets the keys
     ClosePane, // ":q" in a split: close this pane (the other shows the text)
     OnlyPane, // ":only": close the other pane of a split
@@ -1047,12 +1048,13 @@ internal sealed partial class EditorEngine
         // ":mark a", ":marks", ":delmarks a"
         if (MarkCommand(command)) return;
 
-        // ":split" (two panes of the text, or one again), or ":split name": a file shown read only beside the text
-        var split = Regex.Match(command, "^split(?: +(.*))?$");
+        // ":split" (two panes of the text, or one again), or ":split name": a file shown read only beside the text.
+        // ":view" (also ":sview", ":sv", as in Vim) picks the file, and ":view name" shows that file
+        var split = Regex.Match(command, "^(split|view|sview|sv)(?: +(.*))?$");
         if (split.Success)
         {
-            SplitArgument = split.Groups[1].Value.Trim();
-            if (!SingleLine) _request = EditorRequest.Split;
+            SplitArgument = split.Groups[2].Value.Trim();
+            if (!SingleLine) _request = split.Groups[1].Value == "split" ? EditorRequest.Split : EditorRequest.View;
             return;
         }
 

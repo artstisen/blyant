@@ -272,8 +272,9 @@ public partial class TextArea
         };
         // The marks set in the file earlier in this session
         if (marks != null && !_singleLine && peek == null) _engine.LoadMarks(marks);
-        // Tab after ":split " completes the names of the files next to the file being edited
+        // Tab after ":split " and ":view " completes the names of the files next to the file being edited
         CommandCompletion.Arguments["split"] = SplitFileNames;
+        CommandCompletion.Arguments["view"] = SplitFileNames;
         // Tab after ":play " and ":macro " completes the names of the macros
         CommandCompletion.Arguments["play"] = MacroFiles.Names;
         CommandCompletion.Arguments["macro"] = MacroFiles.Names;
@@ -605,6 +606,9 @@ public partial class TextArea
                 break;
             case EditorRequest.Split:
                 Split();
+                break;
+            case EditorRequest.View:
+                View();
                 break;
             case EditorRequest.SwitchPane:
                 SwitchPane();

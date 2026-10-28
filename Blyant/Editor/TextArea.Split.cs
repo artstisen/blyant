@@ -43,6 +43,24 @@ public partial class TextArea
         else SplitText();
     }
 
+    // ":view": a file picked in the file browser (starting next to the file being edited) is shown read only at the
+    // right, as ":split name" shows it; ":view name" shows that file. Esc in the browser keeps the text as it was
+    private void View()
+    {
+        if (_peek != null || _singleLine) return;
+        if (_engine.SplitArgument.Length > 0)
+        {
+            ShowReference(_engine.SplitArgument);
+            return;
+        }
+
+        Tools.HideCursor();
+        var picked = FileExplorer.PickFile(Lang.T("View beside the text"),
+            FileExplorer.CurrentFilePath.Length > 0 ? FileExplorer.CurrentFilePath : null);
+        RedrawAll();
+        if (picked != null) ShowReference(picked);
+    }
+
     // The text in two panes, or one again (as ":only")
     private void SplitText()
     {

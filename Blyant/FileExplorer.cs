@@ -164,11 +164,25 @@ internal static partial class FileExplorer
     /// <summary>
     /// Let the user select a file
     /// </summary>
+    /// <param name="caption">The label at the top</param>
+    /// <param name="start">The file the browser starts at, selected in its directory (null: where the file browser
+    /// is)</param>
     /// <returns>The path of the file, or null if canceled</returns>
-    internal static string? PickFile(string caption)
+    internal static string? PickFile(string caption, string? start = null)
     {
-        return Browse(BrowseMode.PickFile, caption);
+        _pickFileStart = start;
+        try
+        {
+            return Browse(BrowseMode.PickFile, caption);
+        }
+        finally
+        {
+            _pickFileStart = null;
+        }
     }
+
+    // The file a file is picked from (PickFile)
+    private static string? _pickFileStart;
 
     /// <summary>
     /// Let the user select a directory
@@ -253,6 +267,13 @@ internal static partial class FileExplorer
         {
             // Where a folder was picked last (or the picking canceled)
             StartPaneIn(PickPane, place.Directory, place.Select);
+        }
+        else if (mode == BrowseMode.PickFile && _pickFileStart != null &&
+                 System.IO.Path.GetDirectoryName(_pickFileStart) is { } startDirectory &&
+                 System.IO.Directory.Exists(startDirectory))
+        {
+            // Next to the file it is picked for, which is selected
+            StartPaneIn(PickPane, startDirectory, System.IO.Path.GetFileName(_pickFileStart));
         }
         else
         {
