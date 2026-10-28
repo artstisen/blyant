@@ -49,7 +49,7 @@ internal static class Commands
     private static readonly Dictionary<CommandContext, Table> Tables = new()
     {
         [CommandContext.Files] = new Table(
-            "quit close exit home data help jump book peek diff cd new info mkdir rename copy duplicate move delete favorite favorites history hotlist hotadd bookmark refresh panes match path name find projects trash recovery project protect number nonumber bookmark! splits",
+            "quit close exit home data help jump book peek diff cd new info mkdir rename copy duplicate move delete favorite favorites history hotlist hotadd bookmark refresh panes match path name find projects trash recovery project protect number nonumber bookmark! splits recent",
             "q h fav favs hist hot ju jmp proj pro"),
         [CommandContext.FilePicker] = new Table(
             "quit close home data help cd number nonumber",
@@ -68,7 +68,7 @@ internal static class Commands
             "quit close help jump book find info goto favorite number nonumber",
             "q h fav ju jmp"),
         [CommandContext.Start] = new Table(
-            "new blank recover file open favorites project projects start config general layout editor lists system jump book splits help about " +
+            "new blank recover file open favorites project projects start config general layout editor lists system jump book splits recent help about " +
             "quick scheme logo snippet completions clipboard log restart reset quit exit",
             "browse favs newproject proj pro ju jmp h guide snip comp q"),
         [CommandContext.Jump] = new Table(
@@ -81,7 +81,7 @@ internal static class Commands
         [CommandContext.Editor] = new Table(
             "write saveas quit quit! wq help edit edit! reload reload! undo redo delete yank replace nohlsearch " +
             "spell nospell spellnext spellprev suggest spelladd syntax number nonumber timestamp " +
-            "favorite record play macro trim trim! lineendings whitespace mark marks delmarks delmarks! bookmark! view splits clear registers reglist regclear putall vsel vline block ol ul dup duplicate surround pb pbappend pbread pbclear clipboard path sort sort! wrap nowrap snip complete diff scrolloff info jump book bookmark yankall rename split only new projects",
+            "favorite record play macro trim trim! lineendings whitespace mark marks delmarks delmarks! bookmark! view splits recent clear registers reglist regclear putall vsel vline block ol ul dup duplicate surround pb pbappend pbread pbclear clipboard path sort sort! wrap nowrap snip complete diff scrolloff info jump book bookmark yankall rename split only new projects",
             "w q q! wq! x h e e! u red d y s rep noh set spellsuggest spellgood nu nonu ts reg sn ju jmp fav proj pro sur k sview sv")
     };
 

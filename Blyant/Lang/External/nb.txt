@@ -1686,6 +1686,14 @@ nb: "Fullfører kommandoen du skriver. Trykk igjen for neste kommando som begynn
 en: "There is much more. Press ? on any page, or type :help in the editor, to see the keys that can be used there."
 nb: "Det er mye mer. Trykk ? på hvilken som helst side, eller skriv :help i editoren, for å se tastene som kan brukes der."
 
+# RecentBox.cs
+en: "Recent files"
+nb: "Siste filer"
+en: "No other file has been opened yet"
+nb: "Ingen annen fil er åpnet ennå"
+en: "j/k Select | Enter or 1-9 Open | Esc Close"
+nb: "j/k Velg | Enter eller 1-9 Åpne | Esc Lukk"
+
 # SchemeEditor.cs
 en: "Text"
 nb: "Tekst"
@@ -2013,6 +2021,8 @@ en: "The Jump menu/The help (this list)"
 nb: "Hoppmenyen/Hjelpen (denne listen)"
 en: "Files closed with another beside them: open one"
 nb: "Filer lukket med en annen ved siden av: åpne en"
+en: "The latest files: Enter or 1-9 opens one"
+nb: "De siste filene: Enter eller 1-9 åpner en"
 en: "About/The quick guide"
 nb: "Om/Hurtigguiden"
 en: "Color schemes/Logos"
@@ -2869,12 +2879,12 @@ en: "{0}, read only"
 nb: "{0}, skrivebeskyttet"
 
 # Editor/TextArea.cs
+en: "Stop recording the macro first (Esc)"
+nb: "Stopp først opptaket av makroen (Esc)"
 en: "String memory ({0} of {1})"
 nb: "Minne ({0} av {1})"
 en: "Only a file can be a favorite"
 nb: "Bare en fil kan være favoritt"
-en: "Stop recording the macro first (Esc)"
-nb: "Stopp først opptaket av makroen (Esc)"
 en: "Blank space shown: . space, > tab, $ line end"
 nb: "Mellomrom vises: . mellomrom, > tab, $ linjeslutt"
 en: "Blank space not shown"

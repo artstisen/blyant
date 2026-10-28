@@ -568,6 +568,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":layout :editor", Lang.T("The pages of Configuration (and :lists, :system)"), false));
             _shortcutList.Add(new Shortcut(":jump :help", Lang.T("The Jump menu/The help (this list)"), false));
             _shortcutList.Add(new Shortcut(":splits", Lang.T("Files closed with another beside them: open one"), false));
+            _shortcutList.Add(new Shortcut(":recent", Lang.T("The latest files: Enter or 1-9 opens one"), false));
             _shortcutList.Add(new Shortcut(":about :quick", Lang.T("About/The quick guide"), false));
             _shortcutList.Add(new Shortcut(":scheme :logo", Lang.T("Color schemes/Logos"), false));
             _shortcutList.Add(new Shortcut(":snip :clipboard", Lang.T("Snippet editor/Clipboard settings"), false));
@@ -596,6 +597,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":jump Ctrl+O", Lang.T("The Jump menu: files, directories and pages"), false));
             _shortcutList.Add(new Shortcut(":book 3", Lang.T("Jump to bookmark 3 (:book alone: the bookmarks)"), false));
             _shortcutList.Add(new Shortcut(":splits", Lang.T("Files closed with another beside them: open one"), false));
+            _shortcutList.Add(new Shortcut(":recent", Lang.T("The latest files: Enter or 1-9 opens one"), false));
             _shortcutList.Add(new Shortcut("j k", Lang.T("Select (as Down/Up)"), false));
             _shortcutList.Add(new Shortcut("5j 5k 5gg 5G", Lang.T("With a count: 5 rows down/up, to row 5"), false));
             _shortcutList.Add(new Shortcut("gg G", Lang.T("First/Last"), false));
@@ -857,6 +859,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("  " + Lang.T("Open"), Lang.T(":logo, or Configuration: Logo"), false));
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionEditor, true));
             _shortcutList.Add(new Shortcut(":jump Ctrl+O", Lang.T("The Jump menu: files, directories and pages"), false));
+            _shortcutList.Add(new Shortcut("Ctrl+K :recent", Lang.T("The latest files: Enter or 1-9 opens one"), false));
             _shortcutList.Add(new Shortcut(":book 3", Lang.T("Jump to bookmark 3 (:book alone: the bookmarks)"), false));
             _shortcutList.Add(new Shortcut(string.Empty, Lang.T("Modes"), true));
             _shortcutList.Add(new Shortcut("Esc", Lang.T("Normal mode (navigate and give commands)"), false));

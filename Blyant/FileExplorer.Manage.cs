@@ -77,6 +77,11 @@ internal static partial class FileExplorer
                 // ":book 3": jump to bookmark 3
                 Jump.ToBookmark(argument);
                 break;
+            case "recent":
+                // The latest files, to open one
+                if (RecentBox.Pick(null) is { } recent) Jump.ToPlace(new JumpTarget(JumpKind.File, recent));
+                Draw(true);
+                break;
             case "splits":
                 // A file with another beside it, as it was closed
                 if (SplitsBox.Pick() is { } split) Jump.ToPlace(new JumpTarget(JumpKind.File, split.Left));

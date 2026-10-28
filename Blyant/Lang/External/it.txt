@@ -1686,6 +1686,14 @@ it: "Completa il comando che stai scrivendo. Premilo di nuovo per il comando suc
 en: "There is much more. Press ? on any page, or type :help in the editor, to see the keys that can be used there."
 it: "C'è molto altro. Premi ? in qualsiasi pagina, o scrivi :help nell'editor, per vedere i tasti utilizzabili lì."
 
+# RecentBox.cs
+en: "Recent files"
+it: "File recenti"
+en: "No other file has been opened yet"
+it: "Nessun altro file aperto finora"
+en: "j/k Select | Enter or 1-9 Open | Esc Close"
+it: "j/k Seleziona | Enter o 1-9 Apri | Esc Chiudi"
+
 # SchemeEditor.cs
 en: "Text"
 it: "Testo"
@@ -2013,6 +2021,8 @@ en: "The Jump menu/The help (this list)"
 it: "Il Menu salti/L'aiuto (questo elenco)"
 en: "Files closed with another beside them: open one"
 it: "File chiusi con un altro accanto: aprine uno"
+en: "The latest files: Enter or 1-9 opens one"
+it: "Gli ultimi file: Enter o 1-9 ne apre uno"
 en: "About/The quick guide"
 it: "Info/La guida rapida"
 en: "Color schemes/Logos"
@@ -2869,12 +2879,12 @@ en: "{0}, read only"
 it: "{0}, sola lettura"
 
 # Editor/TextArea.cs
+en: "Stop recording the macro first (Esc)"
+it: "Prima ferma la registrazione della macro (Esc)"
 en: "String memory ({0} of {1})"
 it: "Memoria testi ({0} di {1})"
 en: "Only a file can be a favorite"
 it: "Solo un file può essere un preferito"
-en: "Stop recording the macro first (Esc)"
-it: "Prima ferma la registrazione della macro (Esc)"
 en: "Blank space shown: . space, > tab, $ line end"
 it: "Spazi visibili: . spazio, > tab, $ fine riga"
 en: "Blank space not shown"

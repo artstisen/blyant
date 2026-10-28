@@ -80,6 +80,33 @@ public class SplitsTests : IDisposable
     }
 
     [Fact]
+    public void TheRecentFiles_AreTheNewestOfTheHistory_WithoutTheFileEdited()
+    {
+        var history = Enumerable.Range(1, 12).Select(i => In(i + ".md")).ToList();
+        Assert.Equal(history.Take(RecentBox.MaxFiles), RecentBox.Files(history, null));
+        // The file being edited is left out: the one before it comes first
+        var files = RecentBox.Files(history, In("1.md"));
+        Assert.Equal(In("2.md"), files[0]);
+        Assert.Equal(RecentBox.MaxFiles, files.Count);
+        Assert.DoesNotContain(In("1.md"), files);
+        Assert.Empty(RecentBox.Files(new[] { In("1.md") }, In("1.md")));
+    }
+
+    [Fact]
+    public void CtrlKAndRecentInTheEditor_AskForTheLatestFiles()
+    {
+        var editor = new EditorEngine("text", 40, 10, false);
+        Assert.Equal(EditorRequest.Recent, editor.Type(":recent<CR>"));
+        Assert.Equal(EditorRequest.Recent,
+            editor.HandleKey(new ConsoleKeyInfo('\u000b', ConsoleKey.K, false, false, true)));
+        // In INSERT mode it is the snippets, as before
+        editor.Type("i");
+        Assert.Equal(EditorRequest.Snippets,
+            editor.HandleKey(new ConsoleKeyInfo('', ConsoleKey.K, false, false, true)));
+        Assert.Equal(EditorMode.Insert, editor.Mode);
+    }
+
+    [Fact]
     public void SplitsInTheEditor_AsksForTheList()
     {
         var editor = new EditorEngine("text", 40, 10, false);

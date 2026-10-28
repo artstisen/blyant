@@ -1686,6 +1686,14 @@ fi: "Täydentää kirjoittamasi komennon. Paina uudelleen saadaksesi seuraavan s
 en: "There is much more. Press ? on any page, or type :help in the editor, to see the keys that can be used there."
 fi: "Paljon muutakin on. Paina ? millä tahansa sivulla tai kirjoita :help editorissa nähdäksesi siellä käytettävät näppäimet."
 
+# RecentBox.cs
+en: "Recent files"
+fi: "Viimeisimmät tiedostot"
+en: "No other file has been opened yet"
+fi: "Muuta tiedostoa ei ole vielä avattu"
+en: "j/k Select | Enter or 1-9 Open | Esc Close"
+fi: "j/k Valitse | Enter tai 1-9 Avaa | Esc Sulje"
+
 # SchemeEditor.cs
 en: "Text"
 fi: "Teksti"
@@ -2013,6 +2021,8 @@ en: "The Jump menu/The help (this list)"
 fi: "Hyppyvalikko/Ohje (tämä lista)"
 en: "Files closed with another beside them: open one"
 fi: "Toinen vieressä suljetut tiedostot: avaa yksi"
+en: "The latest files: Enter or 1-9 opens one"
+fi: "Viimeisimmät tiedostot: Enter tai 1-9 avaa yhden"
 en: "About/The quick guide"
 fi: "Tietoja/Pikaopas"
 en: "Color schemes/Logos"
@@ -2869,12 +2879,12 @@ en: "{0}, read only"
 fi: "{0}, vain luku"
 
 # Editor/TextArea.cs
+en: "Stop recording the macro first (Esc)"
+fi: "Lopeta ensin makron nauhoitus (Esc)"
 en: "String memory ({0} of {1})"
 fi: "Tekstimuisti ({0}/{1})"
 en: "Only a file can be a favorite"
 fi: "Vain tiedosto voi olla suosikki"
-en: "Stop recording the macro first (Esc)"
-fi: "Lopeta ensin makron nauhoitus (Esc)"
 en: "Blank space shown: . space, > tab, $ line end"
 fi: "Tyhjä tila näkyy: . välilyönti, > sarkain, $ rivin loppu"
 en: "Blank space not shown"

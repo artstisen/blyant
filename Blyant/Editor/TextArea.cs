@@ -614,6 +614,26 @@ public partial class TextArea
             case EditorRequest.View:
                 View();
                 break;
+            case EditorRequest.Recent:
+            {
+                // The latest files, without this one: the one picked is opened as a jump (changes are asked about).
+                // Leaving would throw a macro being recorded away: it is stopped first (Esc)
+                if (_engine.IsRecording)
+                {
+                    _engine.SetMessage(Lang.T("Stop recording the macro first (Esc)"), true);
+                    break;
+                }
+
+                Tools.HideCursor();
+                DrawStatusLine();
+                var current = _saveMode == SaveAsFile && !FileExplorer.IsUntitled && !FileExplorer.EditingListNote
+                    ? FileExplorer.CurrentFilePath
+                    : null;
+                var recent = RecentBox.Pick(current);
+                RedrawAll();
+                if (recent != null) Jump.ToPlace(new JumpTarget(JumpKind.File, recent), LeaveForJump);
+                break;
+            }
             case EditorRequest.Splits:
             {
                 Tools.HideCursor();

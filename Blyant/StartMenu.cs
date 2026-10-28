@@ -193,6 +193,10 @@ internal static class StartMenu
                 // ":book 3": jump to bookmark 3
                 Blyant.Jump.ToBookmark(argument);
                 break;
+            case "recent":
+                // The latest files, to open one
+                if (RecentBox.Pick(null) is { } recent) Blyant.Jump.ToPlace(new JumpTarget(JumpKind.File, recent));
+                break;
             case "splits":
                 // A file with another beside it, as it was closed
                 if (SplitsBox.Pick() is { } split) Blyant.Jump.ToPlace(new JumpTarget(JumpKind.File, split.Left));

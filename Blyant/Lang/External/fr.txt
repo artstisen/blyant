@@ -1686,6 +1686,14 @@ fr: "Complète la commande en cours de saisie. Appuyez à nouveau pour la comman
 en: "There is much more. Press ? on any page, or type :help in the editor, to see the keys that can be used there."
 fr: "Il y a bien plus. Appuyez sur ? sur n'importe quelle page, ou tapez :help dans l'éditeur, pour voir les touches utilisables."
 
+# RecentBox.cs
+en: "Recent files"
+fr: "Fichiers récents"
+en: "No other file has been opened yet"
+fr: "Aucun autre fichier ouvert pour l'instant"
+en: "j/k Select | Enter or 1-9 Open | Esc Close"
+fr: "j/k Choisir | Enter ou 1-9 Ouvrir | Esc Fermer"
+
 # SchemeEditor.cs
 en: "Text"
 fr: "Texte"
@@ -2013,6 +2021,8 @@ en: "The Jump menu/The help (this list)"
 fr: "Le menu des sauts/L'aide (cette liste)"
 en: "Files closed with another beside them: open one"
 fr: "Fichiers fermés avec un autre à côté : en ouvrir un"
+en: "The latest files: Enter or 1-9 opens one"
+fr: "Les derniers fichiers : Enter ou 1-9 en ouvre un"
 en: "About/The quick guide"
 fr: "À propos/Le guide rapide"
 en: "Color schemes/Logos"
@@ -2869,12 +2879,12 @@ en: "{0}, read only"
 fr: "{0}, lecture seule"
 
 # Editor/TextArea.cs
+en: "Stop recording the macro first (Esc)"
+fr: "Arrêtez d'abord l'enregistrement de la macro (Esc)"
 en: "String memory ({0} of {1})"
 fr: "Mémoire ({0} sur {1})"
 en: "Only a file can be a favorite"
 fr: "Seul un fichier peut être un favori"
-en: "Stop recording the macro first (Esc)"
-fr: "Arrêtez d'abord l'enregistrement de la macro (Esc)"
 en: "Blank space shown: . space, > tab, $ line end"
 fr: "Blancs visibles : . espace, > tab, $ fin de ligne"
 en: "Blank space not shown"

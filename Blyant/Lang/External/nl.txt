@@ -1686,6 +1686,14 @@ nl: "Vult het commando aan dat je typt. Druk nogmaals voor het volgende commando
 en: "There is much more. Press ? on any page, or type :help in the editor, to see the keys that can be used there."
 nl: "Er is veel meer. Druk op ? op elke pagina, of typ :help in de editor, om de toetsen te zien die daar werken."
 
+# RecentBox.cs
+en: "Recent files"
+nl: "Recente bestanden"
+en: "No other file has been opened yet"
+nl: "Nog geen ander bestand geopend"
+en: "j/k Select | Enter or 1-9 Open | Esc Close"
+nl: "j/k Kiezen | Enter of 1-9 Openen | Esc Sluiten"
+
 # SchemeEditor.cs
 en: "Text"
 nl: "Tekst"
@@ -2013,6 +2021,8 @@ en: "The Jump menu/The help (this list)"
 nl: "Het springmenu/de hulp (deze lijst)"
 en: "Files closed with another beside them: open one"
 nl: "Bestanden gesloten met een ander ernaast: open er een"
+en: "The latest files: Enter or 1-9 opens one"
+nl: "De laatste bestanden: Enter of 1-9 opent er een"
 en: "About/The quick guide"
 nl: "Over/de snelgids"
 en: "Color schemes/Logos"
@@ -2869,12 +2879,12 @@ en: "{0}, read only"
 nl: "{0}, alleen lezen"
 
 # Editor/TextArea.cs
+en: "Stop recording the macro first (Esc)"
+nl: "Stop eerst het opnemen van de macro (Esc)"
 en: "String memory ({0} of {1})"
 nl: "Tekstgeheugen ({0} van {1})"
 en: "Only a file can be a favorite"
 nl: "Alleen bestanden als favoriet"
-en: "Stop recording the macro first (Esc)"
-nl: "Stop eerst het opnemen van de macro (Esc)"
 en: "Blank space shown: . space, > tab, $ line end"
 nl: "Witruimte zichtbaar: . spatie, > tab, $ regeleinde"
 en: "Blank space not shown"
