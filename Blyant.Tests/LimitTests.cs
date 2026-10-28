@@ -100,7 +100,9 @@ public class LimitTests : IDisposable
         Assert.Equal(text, File.ReadAllText(SystemClipboard.PasteBinPath).TrimEnd('\r', '\n'));
     }
 
+    // (UnixFact skips it on Windows; the attribute tells the analyzer, as File.SetUnixFileMode is not on Windows)
     [UnixFact]
+    [System.Runtime.Versioning.UnsupportedOSPlatform("windows")]
     public void AFileThatMayNotBeWritten_IsNotReplaced()
     {
         var path = Path.Combine(_directory, "locked.md");
