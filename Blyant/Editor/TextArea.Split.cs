@@ -61,6 +61,57 @@ public partial class TextArea
         if (picked != null) ShowReference(picked);
     }
 
+    /// <summary>
+    /// The file read only beside the next file opened, as it was when that file was closed (taken by the editor)
+    /// </summary>
+    internal static Splits.Entry? NextReference { get; set; }
+
+    /// <summary>
+    /// The file read only beside the text when it is closed, and the line and column of its cursor (from 1), or null
+    /// </summary>
+    internal (string Path, int Line, int Column)? ReferenceSplit
+    {
+        get
+        {
+            if (_referencePath == null || _otherPane == null) return null;
+            var (line, column) = CaretPosition.Of(_otherPane.Engine.Buffer.GetText(),
+                _otherPane.Engine.GetCursorIndex());
+            return (_referencePath, line, column);
+        }
+    }
+
+    // The file opened with the file beside it it was closed with, at its place (one that is gone is told about)
+    private void RestoreReference(Splits.Entry entry)
+    {
+        var name = Path.GetFileName(entry.Right);
+        if (!File.Exists(entry.Right))
+        {
+            _engine.SetMessage(Lang.F("{0} is gone: the file is shown alone", name), false);
+            return;
+        }
+
+        ShowReference(entry.Right);
+        if (_referencePath == null || _otherPane == null) return;
+        var other = _otherPane.Engine;
+        other.SetCursorIndex(CaretPosition.IndexOf(other.Buffer.GetText(), entry.Line, entry.Column));
+        _engine.SetMessage(Lang.F("{0} beside it, as it was (Tab: go to it, :only: close it)", name), false);
+    }
+
+    // ":splits" picked a split: the file being edited gets the file beside it; another file is opened with it, as a
+    // jump (asking about changes that are not saved first)
+    private void OpenSplit(Splits.Entry entry)
+    {
+        if (_saveMode == SaveAsFile && !FileExplorer.EditingListNote &&
+            FileOperations.SamePath(entry.Left, FileExplorer.CurrentFilePath))
+        {
+            RestoreReference(entry);
+            RedrawAll();
+            return;
+        }
+
+        Jump.ToPlace(new JumpTarget(JumpKind.File, entry.Left), LeaveForJump);
+    }
+
     // The text in two panes, or one again (as ":only")
     private void SplitText()
     {

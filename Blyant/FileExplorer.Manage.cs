@@ -77,6 +77,11 @@ internal static partial class FileExplorer
                 // ":book 3": jump to bookmark 3
                 Jump.ToBookmark(argument);
                 break;
+            case "splits":
+                // A file with another beside it, as it was closed
+                if (SplitsBox.Pick() is { } split) Jump.ToPlace(new JumpTarget(JumpKind.File, split.Left));
+                Draw(true);
+                break;
             case "peek":
                 TogglePeek();
                 break;
@@ -506,13 +511,14 @@ internal static partial class FileExplorer
         }
     }
 
-    // The file history and the jumps (Recent) follow a file or directory that was renamed or moved
+    // The file history, the jumps (Recent) and the splits follow a file or directory that was renamed or moved
     private static void HistoryFollows(string oldPath, string newPath)
     {
         FileHistory.Load();
         if (FileHistory.PathChanged(oldPath, newPath)) FileHistory.Save();
         JumpHistory.Load();
         if (JumpHistory.PathChanged(oldPath, newPath)) JumpHistory.Save();
+        Splits.Follow(oldPath, newPath);
     }
 
     // The most of a file a peek shows: the lines up to this size, with a line at the end telling that there

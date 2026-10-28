@@ -65,6 +65,7 @@ internal enum EditorRequest
     MacroList, // ":macro": show the macros, to pick one to play
     Split, // ":split": show the text in two panes (":split name": a file read only at the right, SplitArgument)
     View, // ":view": pick a file to show read only at the right (":view name": that file, SplitArgument)
+    Splits, // ":splits": the files closed with another beside them, to open one as it was
     SwitchPane, // Tab (Shift+Tab) in Normal mode: the other pane of a split gets the keys
     ClosePane, // ":q" in a split: close this pane (the other shows the text)
     OnlyPane, // ":only": close the other pane of a split
@@ -1311,6 +1312,9 @@ internal sealed partial class EditorEngine
                 break;
             case "only":
                 if (!SingleLine) _request = EditorRequest.OnlyPane;
+                break;
+            case "splits":
+                if (!SingleLine) _request = EditorRequest.Splits;
                 break;
             case "q!":
             case "quit!":

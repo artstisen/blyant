@@ -193,6 +193,10 @@ internal static class StartMenu
                 // ":book 3": jump to bookmark 3
                 Blyant.Jump.ToBookmark(argument);
                 break;
+            case "splits":
+                // A file with another beside it, as it was closed
+                if (SplitsBox.Pick() is { } split) Blyant.Jump.ToPlace(new JumpTarget(JumpKind.File, split.Left));
+                break;
             case "help":
             case "h":
                 // The keys of the start page, without going to the Help tab

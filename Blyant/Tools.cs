@@ -567,6 +567,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":start :config", Lang.T("The Start tab/Configuration (General)"), false));
             _shortcutList.Add(new Shortcut(":layout :editor", Lang.T("The pages of Configuration (and :lists, :system)"), false));
             _shortcutList.Add(new Shortcut(":jump :help", Lang.T("The Jump menu/The help (this list)"), false));
+            _shortcutList.Add(new Shortcut(":splits", Lang.T("Files closed with another beside them: open one"), false));
             _shortcutList.Add(new Shortcut(":about :quick", Lang.T("About/The quick guide"), false));
             _shortcutList.Add(new Shortcut(":scheme :logo", Lang.T("Color schemes/Logos"), false));
             _shortcutList.Add(new Shortcut(":snip :clipboard", Lang.T("Snippet editor/Clipboard settings"), false));
@@ -594,6 +595,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionFiles, true));
             _shortcutList.Add(new Shortcut(":jump Ctrl+O", Lang.T("The Jump menu: files, directories and pages"), false));
             _shortcutList.Add(new Shortcut(":book 3", Lang.T("Jump to bookmark 3 (:book alone: the bookmarks)"), false));
+            _shortcutList.Add(new Shortcut(":splits", Lang.T("Files closed with another beside them: open one"), false));
             _shortcutList.Add(new Shortcut("j k", Lang.T("Select (as Down/Up)"), false));
             _shortcutList.Add(new Shortcut("5j 5k 5gg 5G", Lang.T("With a count: 5 rows down/up, to row 5"), false));
             _shortcutList.Add(new Shortcut("gg G", Lang.T("First/Last"), false));
@@ -1022,6 +1024,8 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":split", Lang.T("Two panes on/off (Tab: go to the other)"), false));
             _shortcutList.Add(new Shortcut(":split name", Lang.T("Another file at the right, read only"), false));
             _shortcutList.Add(new Shortcut(":view :sv", Lang.T("... picked in the file browser (:view name)"), false));
+            _shortcutList.Add(new Shortcut("  " + Lang.T("Closed"), Lang.T("Opened with it again next time (splits.txt)"), false));
+            _shortcutList.Add(new Shortcut(":splits", Lang.T("Files closed with another beside them: open one"), false));
             _shortcutList.Add(new Shortcut("Tab Shift+Tab", Lang.T("Split: go to the other pane (Normal mode)"), false));
             _shortcutList.Add(new Shortcut(":only :q", Lang.T("Split: close the other pane/this pane"), false));
             _shortcutList.Add(new Shortcut(":yankall", Lang.T("Yank all the text (as gg V G y; the clipboard as y)"), false));
@@ -1033,7 +1037,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("ma", Lang.T("Set mark a at the cursor (a-z, while Blyant runs)"), false));
             _shortcutList.Add(new Shortcut("`a 'a", Lang.T("To mark a/the start of its line"), false));
             _shortcutList.Add(new Shortcut("`` ''", Lang.T("Back to where the last jump was made from"), false));
-            _shortcutList.Add(new Shortcut("  ` " + Lang.T("hard to type"), Lang.T("Configuration, Editor: ' to the exact place"), false));
+            _shortcutList.Add(new Shortcut("  ` " + Lang.T("alternate key"), Lang.T("Configuration, Editor: ' to the exact place"), false));
             _shortcutList.Add(new Shortcut(":marks", Lang.T("The marks in a list: Enter jumps, D deletes"), false));
             _shortcutList.Add(new Shortcut(":mark a :k a", Lang.T("Set mark a (:delmarks a b, a-c, or ! all)"), false));
             _shortcutList.Add(new Shortcut(":favorite :fav", Lang.T("Add/remove the file as a favorite"), false));

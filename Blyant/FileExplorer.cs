@@ -1064,6 +1064,9 @@ internal static partial class FileExplorer
                 Actions.DrawEditFileMenu();
                 TextArea.NextSplit = split;
                 TextArea.NextMarks = SessionMarks.GetValueOrDefault(file.Path);
+                // The file read only beside it when it was closed (":view")
+                Splits.Load();
+                TextArea.NextReference = Splits.Get(file.Path);
                 // The recovered text is opened as changes that are not saved yet
                 if (recovered != null) modified = true;
                 TextArea.NextRecoveredCopy = recovered != null ? recoveredCopy : null;
@@ -1287,6 +1290,7 @@ internal static partial class FileExplorer
         JumpHistory.Load();
         if (JumpHistory.PathChanged(oldPath, newPath)) JumpHistory.Save();
         Bookmarks.Follow(oldPath, newPath);
+        Splits.Follow(oldPath, newPath);
     }
 
     // Where the cursor was in a file when it was closed: kept in the favorites first, then in the history
@@ -1315,6 +1319,15 @@ internal static partial class FileExplorer
     {
         // The marks, while Blyant runs
         SessionMarks[path] = textArea.CopyMarks();
+        // The file read only beside it, to be shown again when it is opened (or none)
+        Splits.Load();
+        if (textArea.ReferenceSplit is { } reference
+                ? Splits.Set(path, reference.Path, reference.Line, reference.Column)
+                : Splits.Remove(path))
+        {
+            var saved = Splits.Save();
+            if (saved != DialogText.Success) EventLog.Add(DialogText.LogFile + "Splits: " + saved);
+        }
         var text = textArea.GetText();
         var (line, column) = CaretPosition.Of(text, textArea.GetCursorIndex());
         // Closed in a split: where the cursor of the other pane was, and on which side

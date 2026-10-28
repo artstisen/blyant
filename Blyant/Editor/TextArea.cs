@@ -234,6 +234,8 @@ public partial class TextArea
         NextSplit = null;
         var marks = NextMarks;
         NextMarks = null;
+        var reference = NextReference;
+        NextReference = null;
         _tabLeaves = NextTabLeaves;
         NextTabLeaves = false;
         // Opened from a recovery copy: the copy goes with the changes, as one this editor wrote
@@ -361,6 +363,8 @@ public partial class TextArea
             _engine.SetMessage(saveMode == SaveAsFile && FileExplorer.MixedLineEndingsNote is { } mixed
                 ? mixed
                 : DialogText.EditorHelpHint, false);
+            // The file read only beside it when it was closed (that it is, or that it is gone, is told instead)
+            if (reference != null && saveMode == SaveAsFile && split == null) RestoreReference(reference);
         }
 
 
@@ -610,6 +614,15 @@ public partial class TextArea
             case EditorRequest.View:
                 View();
                 break;
+            case EditorRequest.Splits:
+            {
+                Tools.HideCursor();
+                DrawStatusLine();
+                var split = SplitsBox.Pick();
+                RedrawAll();
+                if (split != null) OpenSplit(split);
+                break;
+            }
             case EditorRequest.SwitchPane:
                 SwitchPane();
                 break;
