@@ -282,11 +282,12 @@ internal static class Bookmarks
             : List.Find(entry => !entry.IsFolder && entry.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
-    /// The names of the bookmarks, for Tab after ":book " (read from the file)
+    /// The names of the bookmarks, for Tab after ":book ". From the list as it is (read from the file only when it has
+    /// not been read yet): in the Jump menu, reading it again would lose what "u" puts back, and the marks
     /// </summary>
     internal static IEnumerable<string> NamesToComplete()
     {
-        Load();
+        if (List.Count == 0) Load();
         return Places.Where(entry => entry.Name.Length > 0 && !entry.Name.Contains(' ')).Select(entry => entry.Name)
             .ToList();
     }

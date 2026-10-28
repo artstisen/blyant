@@ -317,8 +317,13 @@ public class BookmarksTests : IDisposable
         Assert.Equal(Lang.F("The name {0} is used by bookmark {1}", "notes", 1),
             Bookmarks.NameProblem("NOTES", Bookmarks.Places[1]));
         Assert.True(Bookmarks.Rename(1, "y2"));
-        Bookmarks.Save();
         Assert.Equal(new[] { "notes", "y2" }, Bookmarks.NamesToComplete());
+        Bookmarks.Save();
+        // Completing names keeps the list as it is: what "u" puts back is still there
+        Bookmarks.RemoveAt(1);
+        Bookmarks.NamesToComplete();
+        Assert.Equal(1, Bookmarks.UndoRemove());
+        Assert.Equal(2, Bookmarks.Places.Count);
         // Without a name: by its number
         Bookmarks.AddWithMessage(FileAt("z.md"));
         Assert.Equal(":book 3", Bookmarks.CommandOf(Bookmarks.Places[2]));
