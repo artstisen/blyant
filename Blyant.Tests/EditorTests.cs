@@ -1317,6 +1317,150 @@ public class EditorTests
     }
 
     [Fact]
+    public void Marks_AreSetWithM_AndJumpedTo()
+    {
+        var editor = Editor("one\n  two words\nthree\nfour");
+        editor.Type("jwwmb");
+        Assert.Equal("Mark b: line 2", editor.Message);
+        editor.Type("gg`b");
+        Assert.Equal(new TextPos(1, 6), editor.Cursor);
+        // ' goes to the start of the line (its first character)
+        editor.Type("G'b");
+        Assert.Equal(new TextPos(1, 2), editor.Cursor);
+        // `` back to where the cursor was before the jump, and again
+        editor.Type("``");
+        Assert.Equal(new TextPos(3, 0), editor.Cursor);
+        editor.Type("''");
+        Assert.Equal(new TextPos(1, 2), editor.Cursor);
+        editor.Type("`c");
+        Assert.True(editor.MessageIsError);
+        Assert.Contains("mc", editor.Message);
+    }
+
+    [Fact]
+    public void AMark_FollowsTheChangesOfTheText_AndUndo()
+    {
+        var editor = Editor("a\nb\nc\nd");
+        editor.Type("2jma");
+        // A line above it: it moves down with its line
+        editor.Type("ggOnew<Esc>");
+        editor.Type("G`a");
+        Assert.Equal(new TextPos(3, 0), editor.Cursor);
+        Assert.Equal("c", editor.Buffer[editor.Cursor.Line]);
+        // Two lines above it deleted: it moves up
+        editor.Type("gg2dd`a");
+        Assert.Equal("c", editor.Buffer[editor.Cursor.Line]);
+        Assert.Equal(1, editor.Cursor.Line);
+        // Undone: back with its line
+        editor.Type("u`a");
+        Assert.Equal("c", editor.Buffer[editor.Cursor.Line]);
+        // Its own line deleted: it stays where the line was
+        editor.Type("dd`a");
+        Assert.Equal("d", editor.Buffer[editor.Cursor.Line]);
+    }
+
+    [Fact]
+    public void GAndSearches_AreJumps_ThatBacktickBacktickGoesBackFrom()
+    {
+        var editor = Editor("one\ntwo\nthree\nfour");
+        editor.Type("jG``");
+        Assert.Equal(1, editor.Cursor.Line);
+        editor.Type("/four<CR>``");
+        Assert.Equal(1, editor.Cursor.Line);
+        editor.Type(":3<CR>``");
+        Assert.Equal(1, editor.Cursor.Line);
+        // A move that is not a jump keeps the place to go back to
+        editor.Type("G" + "k``");
+        Assert.Equal(1, editor.Cursor.Line);
+    }
+
+    [Fact]
+    public void MarkCommands_SetListAndDelete()
+    {
+        var editor = Editor("one\ntwo\nthree");
+        editor.Type("j:mark a<CR>G:k c<CR>");
+        Assert.Equal(new[] { 'a', 'c' }, editor.MarkList.Select(mark => mark.Name));
+        Assert.Equal(1, editor.MarkList[0].At.Line);
+        Assert.Equal(EditorRequest.Marks, editor.Type(":marks<CR>"));
+        editor.Type(":mark A<CR>");
+        Assert.True(editor.MessageIsError);
+        editor.Type(":delmarks a-b<CR>");
+        Assert.Equal(new[] { 'c' }, editor.MarkList.Select(mark => mark.Name));
+        editor.Type(":delmarks!<CR>");
+        Assert.Empty(editor.MarkList);
+        Assert.Equal('\0', editor.MarkOnLine(2));
+        editor.Type("mz");
+        Assert.Equal('z', editor.MarkOnLine(2));
+    }
+
+    [Fact]
+    public void WithTheSetting_TheApostropheJumpsToTheExactPlace()
+    {
+        try
+        {
+            EditorEngine.MarksApostrophe = true;
+            var editor = Editor("one\n  two words");
+            editor.Type("jwwmagg'a");
+            Assert.Equal(new TextPos(1, 6), editor.Cursor);
+            editor.Type("''");
+            Assert.Equal(new TextPos(0, 0), editor.Cursor);
+        }
+        finally
+        {
+            EditorEngine.MarksApostrophe = false;
+        }
+    }
+
+    [Fact]
+    public void TheMarksOfAText_AreKeptAndSetAgain()
+    {
+        var editor = Editor("a\nb\nc");
+        editor.Type("jmb");
+        var kept = editor.CopyMarks();
+        var again = Editor("a\nb\nc");
+        again.LoadMarks(kept);
+        again.Type("`b");
+        Assert.Equal(1, again.Cursor.Line);
+    }
+
+    [Theory]
+    [InlineData(2, 3, 1, 0, 1, 0, 2, 3)] // Before the insert: stays
+    [InlineData(2, 3, 2, 1, 2, 4, 2, 6)] // On the line after it: moves along
+    [InlineData(2, 3, 1, 5, 3, 0, 4, 3)] // A later line: down by the lines put in
+    public void AMark_AfterAnInsert(int line, int col, int atLine, int atCol, int endLine, int endCol, int toLine,
+        int toCol)
+    {
+        Assert.Equal(new TextPos(toLine, toCol), TextMarks.AfterInsert(new TextPos(line, col),
+            new TextPos(atLine, atCol), new TextPos(endLine, endCol)));
+    }
+
+    [Theory]
+    [InlineData(5, 2, 1, 0, 3, 0, 3, 2)] // After it: up by the lines taken out
+    [InlineData(2, 2, 1, 0, 3, 0, 1, 0)] // In it: where it was
+    [InlineData(3, 4, 1, 2, 3, 1, 1, 5)] // On its last line, after it: along the line
+    [InlineData(0, 1, 1, 0, 3, 0, 0, 1)] // Before it: stays
+    public void AMark_AfterADelete(int line, int col, int fromLine, int fromCol, int toLine, int toCol, int newLine,
+        int newCol)
+    {
+        Assert.Equal(new TextPos(newLine, newCol), TextMarks.AfterDelete(new TextPos(line, col),
+            new TextPos(fromLine, fromCol), new TextPos(toLine, toCol)));
+    }
+
+    [Fact]
+    public void BookmarkWithAName_IsAskedOfTheHost()
+    {
+        var editor = Editor("text");
+        Assert.Equal(EditorRequest.Bookmark, editor.Type(":bookmark Chapter 3<CR>"));
+        Assert.Equal("Chapter 3", editor.BookmarkName);
+        Assert.False(editor.BookmarkMovesName);
+        editor.Type(":bookmark! now<CR>");
+        Assert.Equal("now", editor.BookmarkName);
+        Assert.True(editor.BookmarkMovesName);
+        editor.Type(":bookmark<CR>");
+        Assert.Equal(string.Empty, editor.BookmarkName);
+    }
+
+    [Fact]
     public void AnUnknownCommand_IsACommandError_AndOtherErrorsAreNot()
     {
         var editor = Editor("text");

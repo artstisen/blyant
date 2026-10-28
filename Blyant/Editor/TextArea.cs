@@ -232,6 +232,8 @@ public partial class TextArea
         // Taken at once, so it is never left for another editor
         var split = NextSplit;
         NextSplit = null;
+        var marks = NextMarks;
+        NextMarks = null;
         _tabLeaves = NextTabLeaves;
         NextTabLeaves = false;
         // Opened from a recovery copy: the copy goes with the changes, as one this editor wrote
@@ -268,6 +270,8 @@ public partial class TextArea
             // The macros played with ":play name" are read from their files
             MacroLoader = MacroFiles.Load
         };
+        // The marks set in the file earlier in this session
+        if (marks != null && !_singleLine && peek == null) _engine.LoadMarks(marks);
         // Tab after ":play " and ":macro " completes the names of the macros
         CommandCompletion.Arguments["play"] = MacroFiles.Names;
         CommandCompletion.Arguments["macro"] = MacroFiles.Names;
@@ -700,6 +704,12 @@ public partial class TextArea
                 MacroBoxes.Stop(_engine, RedrawAll);
                 RedrawAll();
                 break;
+            case EditorRequest.Marks:
+                Tools.HideCursor();
+                DrawStatusLine();
+                PickMark();
+                RedrawAll();
+                break;
             case EditorRequest.MacroList:
                 Tools.HideCursor();
                 DrawStatusLine();
@@ -750,12 +760,13 @@ public partial class TextArea
                 }
                 else if (_saveMode == SaveAsFile && FileExplorer.CurrentFilePath.Length > 0)
                 {
-                    // Where the cursor is: ":book" and the Jump menu open the file there
-                    _engine.ShowMessage(Bookmarks.AddWithMessage(
+                    // Where the cursor is: ":book" and the Jump menu open the file there (":bookmark name": by the name)
+                    var message = Bookmarks.AddWithMessage(
                         new JumpTarget(JumpKind.File, FileExplorer.CurrentFilePath)
                         {
                             At = CaretPosition.Of(GetText(), GetCursorIndex())
-                        }), false);
+                        }, _engine.BookmarkName, _engine.BookmarkMovesName, true, out var failed);
+                    _engine.ShowMessage(message, failed);
                 }
                 else
                 {
@@ -1689,9 +1700,56 @@ public partial class TextArea
             return false;
         }
 
-        _engine.SetCursorIndex(CaretPosition.IndexOf(GetText(), at.Line, at.Column));
+        _engine.JumpToIndex(CaretPosition.IndexOf(GetText(), at.Line, at.Column));
         return true;
     }
+
+    // ":marks": the marks of the text in a list, each with its line; Enter jumps to the one picked, D deletes it
+    private void PickMark()
+    {
+        while (true)
+        {
+            var marks = _engine.MarkList;
+            if (marks.Count == 0)
+            {
+                _engine.ShowMessage(Lang.T("No marks: m and a letter sets one (ma)"), false);
+                return;
+            }
+
+            var rows = marks.Select(mark => mark.Name + "  " + (mark.At.Line + 1).ToString().PadLeft(6) + "  " +
+                                            _engine.Buffer[mark.At.Line].Trim().Replace('\t', ' ')).ToList();
+            var picked = PickListBox.Show(Lang.T("Marks"), rows, i =>
+                    string.Join("\n", Enumerable.Range(marks[i].At.Line,
+                            Math.Min(8, _engine.Buffer.LineCount - marks[i].At.Line))
+                        .Select(line => _engine.Buffer[line].Replace("\t", "    "))),
+                0, Lang.T("j/k Select | Enter Jump | D Delete | / Filter | Esc Close"), new PickListBox.Extras
+                {
+                    Key = (key, i) =>
+                    {
+                        if (key.Key != ConsoleKey.D || i < 0 || (key.Modifiers & ConsoleModifiers.Control) != 0)
+                        {
+                            return PickListBox.KeyUse.None;
+                        }
+
+                        _engine.DeleteMark(marks[i].Name);
+                        return PickListBox.KeyUse.Reload;
+                    }
+                });
+            if (picked == PickListBox.Reload) continue;
+            if (picked >= 0) _engine.JumpToMark(marks[picked].Name);
+            return;
+        }
+    }
+
+    /// <summary>
+    /// The marks of the text, kept by the file browser while the file is closed (this session only)
+    /// </summary>
+    internal Dictionary<char, TextPos> CopyMarks() => _engine.CopyMarks();
+
+    /// <summary>
+    /// The marks of the next file opened, kept from when it was closed in this session (taken by the editor)
+    /// </summary>
+    internal static IReadOnlyDictionary<char, TextPos>? NextMarks { get; set; }
 
     // ":lineendings lf" or "crlf": the file is saved with them from now on (the text has changes, so it can be
     // saved). Alone: the line endings of the file are told
@@ -1987,8 +2045,10 @@ public partial class TextArea
     private int BuildRow(StringBuilder row, int line, int segment)
     {
         if (_gutter == 0) return BuildTextRow(row, line, segment);
-        // The number of the line on its first row (the following rows of a long line have none)
-        var number = segment == 0 ? (line + 1).ToString() : string.Empty;
+        // The number of the line on its first row (the following rows of a long line have none); a line with a mark
+        // shows its letter instead
+        var mark = segment == 0 ? _engine.MarkOnLine(line) : '\0';
+        var number = segment != 0 ? string.Empty : mark != '\0' ? mark.ToString() : (line + 1).ToString();
         row.Append(StyleMarker)
             .Append((char)('0' + (line == _engine.Cursor.Line ? StyleCurrentLineNumber : StyleLineNumber)))
             .Append(number.PadLeft(_gutter - GutterGap)).Append(' ', GutterGap);

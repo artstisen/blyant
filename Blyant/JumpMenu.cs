@@ -174,7 +174,7 @@ internal static class JumpMenu
     // ":book 3" on a row of the Bookmarks tab: its number among all the bookmarks (also when a filter shows some, and
     // the bookmarks in closed folders count); nothing for a folder
     private static string BookCommand(Row row) =>
-        row.Bookmark is { IsFolder: false } entry ? ":book " + Bookmarks.NumberOf(entry) : string.Empty; // English
+        row.Bookmark is { IsFolder: false } entry ? Bookmarks.CommandOf(entry) : string.Empty;
 
     private const int MarkWidth = 4; // "FILE", "DIR", "PAGE"
 
@@ -1249,7 +1249,10 @@ internal static class JumpMenu
 
         if (!Bookmarks.Rename(IndexOf(entry), name))
         {
-            _message = DialogText.FavoriteFolderName;
+            // A folder with a name that cannot be used, or a bookmark with the name of another (or only digits)
+            var given = name.Replace('\t', ' ').Replace('\r', ' ').Replace('\n', ' ').Trim();
+            _message = entry.IsFolder ? DialogText.FavoriteFolderName
+                : Bookmarks.NameProblem(given, entry) ?? DialogText.FavoriteFolderName;
             return;
         }
 

@@ -1042,6 +1042,7 @@ internal static partial class FileExplorer
                 Tools.ClearScreen();
                 Actions.DrawEditFileMenu();
                 TextArea.NextSplit = split;
+                TextArea.NextMarks = SessionMarks.GetValueOrDefault(file.Path);
                 // The recovered text is opened as changes that are not saved yet
                 if (recovered != null) modified = true;
                 TextArea.NextRecoveredCopy = recovered != null ? recoveredCopy : null;
@@ -1278,6 +1279,10 @@ internal static partial class FileExplorer
     /// <summary>
     /// Keep where the cursor is in the file being edited, when the editor is left by a jump
     /// </summary>
+    // The marks of the files closed in this session ("ma"), by their paths: set again when a file is opened
+    private static readonly Dictionary<string, Dictionary<char, TextPos>> SessionMarks =
+        new(FileOperations.NamesIgnoreCase ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal);
+
     internal static void KeepCaretOfCurrentFile(TextArea textArea)
     {
         if (_file != null && !IsUntitled) KeepCaret(_file.Path, textArea);
@@ -1287,6 +1292,8 @@ internal static partial class FileExplorer
     // it is one
     private static void KeepCaret(string path, TextArea textArea)
     {
+        // The marks, while Blyant runs
+        SessionMarks[path] = textArea.CopyMarks();
         var text = textArea.GetText();
         var (line, column) = CaretPosition.Of(text, textArea.GetCursorIndex());
         // Closed in a split: where the cursor of the other pane was, and on which side

@@ -81,6 +81,8 @@ class Program
     // another place ends with Navigation.Wait, which brings control back here (see Navigation)
     private static void MainLoop()
     {
+        // Tab after ":book " completes the names of the bookmarks, on every page
+        CommandCompletion.Arguments["book"] = Bookmarks.NamesToComplete;
         while (true)
         {
             try

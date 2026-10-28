@@ -473,6 +473,7 @@ internal static class StartMenu
         LineNumbers,
         WordWrap,
         Whitespace,
+        MarksApostrophe,
         ScrollOff,
         Clipboard,
         SyntaxColors,
@@ -523,6 +524,7 @@ internal static class StartMenu
         settings.Add(Setting.LineNumbers);
         settings.Add(Setting.WordWrap);
         settings.Add(Setting.Whitespace);
+        settings.Add(Setting.MarksApostrophe);
         settings.Add(Setting.ScrollOff);
         settings.Add(Setting.Clipboard);
         settings.Add(Setting.SyntaxColors);
@@ -589,6 +591,7 @@ internal static class StartMenu
             Setting.LineNumbers => Check(TextArea.LineNumbers) + DialogText.ConfigLineNumbers,
             Setting.WordWrap => Check(TextArea.WordWrap) + Lang.T("Wrap long lines"),
             Setting.Whitespace => Check(TextArea.ShowWhitespace) + Lang.T("Show blank space as . > $ (:whitespace)"),
+            Setting.MarksApostrophe => Check(EditorEngine.MarksApostrophe) + Lang.T("Marks: ' jumps to the exact place"),
             Setting.ScrollOff => Check(TextArea.ScrollOff) +
                                  Lang.F("Keep {0} lines around cursor", TextArea.ScrollOffLines),
             Setting.Clipboard => indent + Lang.T("Clipboard and paste bin (Enter: Change)"),
@@ -634,7 +637,7 @@ internal static class StartMenu
                 or Setting.Language => 0,
             Setting.AutoSize or Setting.Size or Setting.Monochrome or Setting.ColorScheme or Setting.Logo
                 or Setting.LogoAnimation or Setting.Corners => 1,
-            Setting.LineNumbers or Setting.WordWrap or Setting.Whitespace or Setting.ScrollOff or Setting.Clipboard
+            Setting.LineNumbers or Setting.WordWrap or Setting.Whitespace or Setting.MarksApostrophe or Setting.ScrollOff or Setting.Clipboard
                 or Setting.SyntaxColors or Setting.Spell or Setting.Snippets or Setting.AutoComplete
                 or Setting.Completions or Setting.Recovery => 2,
             Setting.FileNumbers or Setting.FavoriteNumbers or Setting.HistoryNumbers or Setting.HotlistNumbers
@@ -1287,6 +1290,9 @@ internal static class StartMenu
                 break;
             case Setting.Whitespace:
                 TextArea.ShowWhitespace = !TextArea.ShowWhitespace;
+                break;
+            case Setting.MarksApostrophe:
+                EditorEngine.MarksApostrophe = !EditorEngine.MarksApostrophe;
                 break;
             case Setting.DeleteToTrash:
                 FileOperations.DeleteToTrash = !FileOperations.DeleteToTrash;

@@ -77,7 +77,7 @@ public class CommandTests
     [Fact]
     public void Tab_InTheEditor_KeepsTheLinesInFrontOfTheCommand()
     {
-        Assert.Equal("%delete %diff %dup %duplicate %d", Tabs(CommandContext.Editor, "%d", 5));
+        Assert.Equal("%delete %delmarks %delmarks! %diff %dup %duplicate %d", Tabs(CommandContext.Editor, "%d", 7));
         Assert.Equal("'<,'>yank", Tabs(CommandContext.Editor, "'<,'>y", 1));
         Assert.Equal("2,5replace", Tabs(CommandContext.Editor, "2,5rep", 1));
         // "quit" is a command, and there is one more that starts with it
@@ -203,10 +203,12 @@ public class CommandTests
     [Fact]
     public void TheTables_HaveTheCommandsOfTheEditor()
     {
-        // (":s/old/new/" is found by its first letter, and ":diff", ":book", ":play", ":macro", ":new", ":saveas" and
-        // ":lineendings" by a pattern, as they can have something after them)
-        AssertSame(CommandContext.Editor, Compared(Method("Editor/EditorEngine.cs", "ExecuteCommand")), "s", "diff",
-            "book", "play", "macro", "new", "sur", "saveas", "lineendings");
+        // (":s/old/new/" is found by its first letter, and ":diff", ":book", ":bookmark", ":play", ":macro", ":new",
+        // ":saveas" and ":lineendings" by a pattern, as they can have something after them; the marks are run by
+        // MarkCommand)
+        AssertSame(CommandContext.Editor, Compared(Method("Editor/EditorEngine.cs", "ExecuteCommand"),
+                Method("Editor/EditorEngine.Marks.cs", "MarkCommand")), "s", "diff", "book", "bookmark", "bookmark!",
+            "play", "macro", "new", "sur", "saveas", "lineendings", "mark", "k", "delmarks", "delmarks!");
     }
 
     [Fact]

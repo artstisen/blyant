@@ -497,6 +497,8 @@ internal static class FileIo
         _tempSettings += "wrap=" + (TextArea.WordWrap ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // Blank space shown in the editor as . (space), > (tab) and $ (line end) (:whitespace)
         _tempSettings += "whitespace=" + (TextArea.ShowWhitespace ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        // ' jumps to the place of a mark, as ` (for keyboards where ` is hard to type)
+        _tempSettings += "marksapostrophe=" + (EditorEngine.MarksApostrophe ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // Lines kept above and below the cursor when the editor scrolls (on or off, and how many)
         _tempSettings += "scrolloff=" + (TextArea.ScrollOff ? DialogText.BTrue : DialogText.BFalse) +
                          '\n';
@@ -678,6 +680,7 @@ internal static class FileIo
         TextArea.LineNumbers = Tools.TrimToLower(Get("linenumbers")) == DialogText.BTrue;
         TextArea.WordWrap = Tools.TrimToLower(Get("wrap")) != DialogText.BFalse;
         TextArea.ShowWhitespace = Tools.TrimToLower(Get("whitespace")) == DialogText.BTrue;
+        EditorEngine.MarksApostrophe = Tools.TrimToLower(Get("marksapostrophe")) == DialogText.BTrue;
         // On unless turned off
         TextArea.ScrollOff = Tools.TrimToLower(Get("scrolloff")) != DialogText.BFalse;
         var scrollLines = GetNumber("scrolllines");

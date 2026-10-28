@@ -55,6 +55,7 @@ In Insert mode: `Tab` inserts 4 blank spaces (or completes a word, see [Completi
 - `w` `b` `e` Next word/Previous word/End of word (`W` `B` `E`: words separated by blank space)
 - `0` `_` `$` Start of line/First character/End of line (as `Home` and `End`)
 - `gg` `G` Top/End of the text
+- `ma` Set mark `a` at the cursor, and `` `a `` jump back to it (`'a`: to the start of its line). See [Marks](#marks)
 - `5G` or `:5` Go to line 5
 - `{` `}` Previous/Next blank line
 - `f.` `t.` To/Before the next `.`, on the line or on a line below (`F` `T`: backwards, on the line or above), repeated with `;` and `,`. `t` before a `.` that starts a line goes to the end of the line above (`T` after one that ends a line: to the start of the line below). With an operator it reaches the other lines too (`dfx`, `ct.`). Every `.` in the text is highlighted until you press a key other than `;`, `,`, a count or another `f` `t` `F` `T`; `Esc` only takes the highlight away (the next `Esc` closes the editor). Also with an emoji: `f😀`
@@ -179,6 +180,22 @@ The comparison is shown read only, as a unified diff (as `git diff` shows one): 
 - `:diff -w` Compare without counting blank space: lines that differ only in their indentation or spaces are the same
 
 If too many lines differ (more than 2000), the comparison is not shown.
+
+## Marks
+A mark keeps a place in the text to come back to while you work: set it, move away, and jump back with two keys. There are 26 marks in each file, `a` to `z`.
+
+- `ma` Set mark `a` at the cursor (any letter `a` to `z`; a mark that is set already moves here). The bottom line tells it: _Mark a: line 120_
+- `` `a `` Jump to the place of mark `a`, and `'a` to the start of its line
+- ``` `` ``` (or `''`) Jump back to where the cursor was before the last jump, and again to go forth. A jump is a jump to a mark, `G`, `gg`, `5G` or `:5`, a search (`/`, `?`, `n`, `N`, `*`, `#`) and a bookmark in the same file
+- `:mark a` (or `:k a`) Set mark `a`, as `ma`
+- `:marks` The marks of the text in a list, each with its line number and text, and the lines below it under the list. `Enter` jumps to the one selected, `D` deletes it, and `/` filters the list
+- `:delmarks a b` Delete marks `a` and `b` (`:delmarks a-d` the marks `a` to `d`, `:delmarks!` all of them)
+
+With line numbers on, a line with a mark shows the letter of the mark in place of its number.
+
+The marks follow the text: lines put in above a mark move it down with its line, lines taken out above it move it up, and a mark in text that is deleted stays where the text was. Undo and redo move them too. They are kept while Blyant runs: a file closed and opened again in the same session has its marks still, but they are not saved (a [bookmark](Guide-to-jump-menu.md#bookmarks) is the place to keep, and is reached from anywhere).
+
+**A keyboard where ` is hard to type:** on many keyboards outside the US (Danish, Norwegian, Swedish, German, French, Spanish ...) the backtick is a dead key, which waits for a letter to put an accent on (`` ` `` and `a` make `à`), so `` `a `` does not reach the mark. Turn on **Marks: ' jumps to the exact place** on the Editor page of Configuration (setting `marksapostrophe`): `'a` then jumps to the place of mark `a`, and `''` back. The jump to the start of the line is then `'a` followed by `0` or `^`. `` ` `` still works where it can be typed.
 
 ## Line numbers
 - `:number` (or `:nu`) Show or hide line numbers (they are off until turned on). `:set number` and `:set nonumber` do one of the two
@@ -434,6 +451,7 @@ A line of a text file ends with a line ending: `CRLF` on Windows, `LF` on Linux 
 - `:new name` Make a new, empty file in the same directory as the file being edited, and open it in its place. Without a name, it is asked for; a name without an extension gets the extension of the kind set for new files (Markdown from the start: `:new chapter 2` makes `chapter 2.md`). Only a plain name is used (not a path), and not one that is there already. If the text being edited has changes, you are asked about them first. Closing the new file goes back to the file browser, and the file before it is in the file history. Not in the settings, snippets or completions files, in a peek, or while a macro is recorded
 - `:split` Show the text in two panes side by side, to see two parts of it at once; `:split` again goes back to one pane, as `:only`. Both panes show the same text: a change made in one is seen in the other at once, and the other pane keeps showing the place it was at (its cursor moves with lines added or removed above it). `Tab` (or `Shift+Tab`) in Normal mode goes to the other pane; the pane with the focus has the cursor, and the mode is shown over it. The top row, _Unsaved_ and the bottom line are those of the text, as with one pane. `:q` closes the pane with the focus and `:only` the other one, and the pane left takes the whole width; `Esc` closes the editor as usual. Each pane has its own cursor, view, search and line numbers (`:number` in that pane), and undo works on the text in both. While a macro is recorded, `Tab` does not go to the other pane. A text closed in two panes is opened in two panes again, with each cursor where it was and the focus in the same pane: a text file through the file history and the favorites (where the cursor of the other pane is written after the line and column, as `12:5|40:1`, or `12:5|<40:1` when that pane was at the left)
 - `:favorite` (or `:fav`) Make the file being edited a favorite of the [file browser](Guide-to-start-page.md#favorites), or take it out of the favorites if it is one, as `P` in the file browser. It is saved at once
+- `:bookmark name` Bookmark the place of the cursor with a name to jump to it by: `:book name` jumps there from anywhere, as `:book 14` (upper and lower case alike, and `Tab` after `:book ` completes the names). A name is used by one bookmark only: `:bookmark! name` moves the bookmark with the name here (keeping its number, folder and note), for a place that changes, as `:bookmark! now` at the end of a day's writing. A place that is bookmarked already gets the name. A name of only digits is not taken, as `:book 12` is bookmark 12
 - `:bookmark` Bookmark the place of the cursor in the file being edited: it is then on the Bookmarks tab of the [Jump menu](Guide-to-jump-menu.md#bookmarks), named with its line (`chapter.md:120`), and the message tells its number (`Bookmarked (14): chapter.md:120`). `:book 14` and the Jump menu open the file there, also when it was changed and closed since; in the file being edited the cursor just moves there. Bookmarks at other lines of the same file are bookmarks of their own. The line is a number: lines added or removed above it move the text away from it (if the line is gone, the cursor goes to the end of the text).
 - `:yankall` Yank all the text, as `gg` `V` `G` `y` (and `:%y`). It goes to the string memory, and to the system clipboard and/or the paste bin as set for `y`
 - `:%y` `:%d` Yank all/Delete all, `:2,9d` Delete line 2 to 9

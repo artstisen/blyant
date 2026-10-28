@@ -11,7 +11,8 @@ namespace Blyant;
 /// ":import bookmarks" in the favorites copies it there (FileFavorites.ImportBookmarks).
 ///
 /// The bookmarks are numbered 1, 2, 3 ... in the order of the list (folders are not counted, and the bookmarks in a
-/// closed folder are): ":book 3" jumps to the third.
+/// closed folder are): ":book 3" jumps to the third. A bookmark with a name is also jumped to by it (":book chapter3"):
+/// a name is used by one bookmark only, and is not only digits.
 ///
 /// The list is kept in the file "bookmarks.txt" in the data directory, one bookmark on each line: the kind ("file",
 /// "dir" or "page", as in jump.txt), a tab character, the place, and after other tab characters the name it was
@@ -273,6 +274,45 @@ internal static class Bookmarks
         List.Find(entry => !entry.IsFolder && SameBookmark(entry.Target, target));
 
     /// <summary>
+    /// The bookmark with a name (upper and lower case alike; not a folder), or null
+    /// </summary>
+    internal static Entry? FindByName(string name) =>
+        name.Length == 0
+            ? null
+            : List.Find(entry => !entry.IsFolder && entry.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>
+    /// The names of the bookmarks, for Tab after ":book " (read from the file)
+    /// </summary>
+    internal static IEnumerable<string> NamesToComplete()
+    {
+        Load();
+        return Places.Where(entry => entry.Name.Length > 0 && !entry.Name.Contains(' ')).Select(entry => entry.Name)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Why a bookmark cannot have a name, or null: a name of only digits would be a number of ":book", and a name is
+    /// used by one bookmark only (other than the one given)
+    /// </summary>
+    internal static string? NameProblem(string name, Entry? entry)
+    {
+        if (name.Length == 0) return null;
+        if (name.All(char.IsAsciiDigit)) return Lang.T("A name of only digits is the number of a bookmark: add a letter");
+        return FindByName(name) is { } other && other != entry
+            ? Lang.F("The name {0} is used by bookmark {1}", other.Name, NumberOf(other))
+            : null;
+    }
+
+    /// <summary>
+    /// The command that jumps to a bookmark: ":book chapter3" by its name, else ":book 14" by its number
+    /// </summary>
+    internal static string CommandOf(Entry entry) =>
+        ":book " + (entry.Name.Length > 0 && !entry.Name.All(char.IsAsciiDigit) && FindByName(entry.Name) == entry
+            ? entry.Name
+            : NumberOf(entry).ToString()); // English
+
+    /// <summary>
     /// What adding a place did
     /// </summary>
     internal enum AddResult
@@ -406,8 +446,11 @@ internal static class Bookmarks
             return true;
         }
 
-        // The name of the place (as offered when renaming), with or without the line: no name of its own
-        entry.Name = name == entry.Target.Name || name == entry.PlaceName ? string.Empty : name;
+        // The name of the place (as offered when renaming), with or without the line: no name of its own. A name of
+        // another bookmark, or of only digits, is not taken (NameProblem tells why)
+        name = name == entry.Target.Name || name == entry.PlaceName ? string.Empty : name;
+        if (NameProblem(name, entry) != null) return false;
+        entry.Name = name;
         return true;
     }
 
@@ -512,21 +555,79 @@ internal static class Bookmarks
     /// <param name="reload">False in the Jump menu, which has read the list already: what can be undone there (a
     /// bookmark removed) is kept</param>
     /// <returns>The message that tells what happened</returns>
-    internal static string AddWithMessage(JumpTarget target, bool reload = true)
+    internal static string AddWithMessage(JumpTarget target, bool reload = true) =>
+        AddWithMessage(target, string.Empty, false, reload, out _);
+
+    /// <summary>
+    /// Add a place to the bookmarks with a name, to jump to it by (":bookmark chapter3", then ":book chapter3"), and
+    /// save them. A place that is bookmarked already gets the name. A name another bookmark has is not taken, unless
+    /// "moveName" (":bookmark! name"): that bookmark is moved to the place, keeping its number, folder and note
+    /// </summary>
+    /// <param name="target">The place</param>
+    /// <param name="name">The name (empty: none)</param>
+    /// <param name="moveName">The bookmark with the name is moved here</param>
+    /// <param name="reload">As for AddWithMessage</param>
+    /// <param name="isError">True when nothing was done for a reason the message tells</param>
+    /// <returns>The message that tells what happened (with the number of the bookmark, for ":book 14")</returns>
+    internal static string AddWithMessage(JumpTarget target, string name, bool moveName, bool reload,
+        out bool isError)
     {
+        isError = true;
         if (reload) Load();
-        var result = Add(target);
-        if (result == AddResult.NotKept) return Lang.T("A path with a tab or a line break is not kept");
-        // With its number, for ":book 14", and its name as the Jump menu shows it
-        var entry = Find(target with
+        name = name.Replace('\t', ' ').Replace('\r', ' ').Replace('\n', ' ').Trim();
+        if (target.Kind is JumpKind.File or JumpKind.Directory)
         {
-            Target = target.Kind == JumpKind.Page ? target.Target : Path.GetFullPath(target.Target)
-        });
-        var number = entry == null ? 0 : NumberOf(entry);
-        var name = entry?.Shown ?? target.Name;
-        if (result == AddResult.AlreadyThere) return Lang.F("Already bookmarked ({0}): {1}", number, name);
-        var status = Save();
-        return status == DialogText.Success ? Lang.F("Bookmarked ({0}): {1}", number, name) : status;
+            target = target with { Target = Path.GetFullPath(target.Target) };
+        }
+
+        if (target.Target.IndexOfAny(LineBreaking) >= 0) return Lang.T("A path with a tab or a line break is not kept");
+        if (name.Length > 0 && name.All(char.IsAsciiDigit)) return NameProblem(name, null)!;
+        var existing = Find(target);
+        var named = FindByName(name);
+        Entry entry;
+        if (named != null && named != existing)
+        {
+            if (!moveName)
+            {
+                return Lang.F("{0} is the name of bookmark {1}: :bookmark! moves it here", named.Name,
+                    NumberOf(named));
+            }
+
+            // (a place has one bookmark: the one it has keeps its own name)
+            if (existing != null) return Lang.F("Already bookmarked ({0}): {1}", NumberOf(existing), existing.Shown);
+            named.Target = target;
+            isError = !Saved(out var moved);
+            return isError ? moved : Lang.F("Bookmark {0} moved here: {1}", NumberOf(named), named.Shown);
+        }
+
+        if (existing != null)
+        {
+            isError = false;
+            if (name.Length == 0 || existing.Name.Equals(name, StringComparison.Ordinal))
+            {
+                return Lang.F("Already bookmarked ({0}): {1}", NumberOf(existing), existing.Shown);
+            }
+
+            // The bookmark of the place gets the name
+            existing.Name = name;
+            entry = existing;
+        }
+        else
+        {
+            Add(target);
+            entry = Find(target)!;
+            entry.Name = name;
+        }
+
+        isError = !Saved(out var status);
+        return isError ? status : Lang.F("Bookmarked ({0}): {1}", NumberOf(entry), entry.Shown);
+    }
+
+    // The list saved: true, else false and why
+    private static bool Saved(out string status)
+    {
+        status = Save();
+        return status == DialogText.Success;
     }
 
     /// <summary>

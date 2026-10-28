@@ -352,7 +352,8 @@ internal static class Jump
     }
 
     /// <summary>
-    /// ":book 3": jump to bookmark 3 (its number on the Bookmarks tab of the Jump menu). ":book" alone shows the
+    /// ":book 3": jump to bookmark 3 (its number on the Bookmarks tab of the Jump menu), or ":book chapter3" to the
+    /// bookmark with that name. ":book" alone shows the
     /// Jump menu on the Bookmarks tab. A number that is not a bookmark is told about in a box. Returns when nothing
     /// was jumped to, or the place was opened on top of the page (which must then be drawn again)
     /// </summary>
@@ -376,7 +377,19 @@ internal static class Jump
         ChoiceBox.Forget();
         // The bookmarks are numbered without the folders (also those in a closed folder)
         var places = Bookmarks.Places;
-        if (!int.TryParse(argument, out var number) || number < 1 || number > places.Count)
+        Bookmarks.Entry? bookmark;
+        if (!int.TryParse(argument, out var number))
+        {
+            // A name (upper and lower case alike)
+            bookmark = Bookmarks.FindByName(argument);
+            if (bookmark == null)
+            {
+                ChoiceBox.Message(Lang.T("Bookmarks"), Lang.F("No bookmark is named {0}", argument),
+                    DialogText.BookNumbersNote);
+                return;
+            }
+        }
+        else if (number < 1 || number > places.Count)
         {
             ChoiceBox.Message(Lang.T("Bookmarks"), places.Count == 0
                 ? DialogText.BookmarksEmpty
@@ -384,8 +397,12 @@ internal static class Jump
                 DialogText.BookNumbersNote);
             return;
         }
+        else
+        {
+            bookmark = places[number - 1];
+        }
 
-        var target = places[number - 1].Target;
+        var target = bookmark.Target;
         if (!target.Exists)
         {
             ChoiceBox.Message(Lang.T("Bookmarks"), DialogText.FileNotFound, target.FullPath);

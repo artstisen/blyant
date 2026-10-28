@@ -22,7 +22,8 @@ internal sealed partial class EditorEngine
     private string _count = string.Empty; // The count being typed
     private string _opCount = string.Empty; // The count typed before the operator
     private char _operator; // "d", "c", "y", ">", "<", or "u", "U" and "~" for "gu", "gU" and "g~"
-    private char _prefix; // A key waiting for a second key: "g", "z", "Z", "r", "f", "F", "t", "T", "i", "a", "[", "]", '"'
+    private char _prefix; // A key waiting for a second key: "g", "z", "Z", "r", "f", "F", "t", "T", "i", "a", "[", "]", '"',
+                          // and "m", "'", "`" (marks)
     private bool _clipboardAsked; // '"+' was typed: the next yank goes to the clipboard
     private bool _clipboardJustAsked; // ... it was typed with the key just handled
     private TextPos _visualAnchor; // Where the selection was started in Visual mode
@@ -190,7 +191,8 @@ internal sealed partial class EditorEngine
             (cmd == 'Z' && !IsVisual || cmd == 'r' && (!IsVisual || Mode == EditorMode.VisualBlock)) &&
             !operatorPending ||
             cmd is '[' or ']' && !operatorPending ||
-            cmd == '"' && !operatorPending)
+            cmd == '"' && !operatorPending ||
+            cmd is 'm' or '\'' or '`' && !operatorPending)
         {
             _prefix = cmd;
             return;
@@ -253,7 +255,10 @@ internal sealed partial class EditorEngine
         {
             // A block selected with "$" goes to the end of each line, until the cursor is moved sideways
             if (Mode == EditorMode.VisualBlock) _blockToEnd = motionKey == '$' || _blockToEnd && motionKey == 'G';
+            var from = Cursor;
             RunMotion(motion);
+            // "``" goes back from a jump
+            if (!operatorPending && motionKey is 'G' or 'n' or 'N') RememberJump(from);
             return;
         }
 
@@ -287,6 +292,14 @@ internal sealed partial class EditorEngine
         var last = Buffer.LineCount - 1;
         switch (prefix)
         {
+            case 'm':
+                SetMark(cmd);
+                return;
+            case '\'':
+            case '`':
+                // "`a" its place, "'a" the start of its line (its place too with the setting "marksapostrophe")
+                JumpToMark(cmd, prefix == '`' || MarksApostrophe);
+                return;
             case '"':
                 // A register: only "+ (and "*), the system clipboard, for the next yank
                 if (cmd is '+' or '*')
@@ -380,7 +393,10 @@ internal sealed partial class EditorEngine
                     {
                         var count = TakeCount();
                         var line = count.HasValue ? Math.Clamp(count.Value - 1, 0, last) : 0;
+                        var jump = _operator == NoKey;
+                        var jumpFrom = Cursor;
                         RunMotion(new Motion(new TextPos(line, FirstNonBlank(line)), true));
+                        if (jump) RememberJump(jumpFrom);
                         return;
                     }
                     case 'u':

@@ -129,7 +129,8 @@ internal static partial class FileExplorer
                 Draw(true);
                 break;
             case "bookmark":
-                BookmarkSelected();
+            case "bookmark!":
+                BookmarkSelected(argument, name == "bookmark!");
                 break;
             case "refresh":
                 // As R: read the directories again, keeping the selection
@@ -955,8 +956,9 @@ internal static partial class FileExplorer
         return string.Empty;
     }
 
-    // ":bookmark": the selected file or directory as a bookmark of the Jump menu (on "..": the directory shown)
-    private static void BookmarkSelected()
+    // ":bookmark": the selected file or directory as a bookmark of the Jump menu (on "..": the directory shown), with a
+    // name to jump to it by (":bookmark name"; ":bookmark! name" moves the name here from the bookmark that has it)
+    private static void BookmarkSelected(string bookmarkName, bool moveName)
     {
         var item = SelectedItem();
         var path = item?.Path ?? ActivePane.Directory;
@@ -967,7 +969,7 @@ internal static partial class FileExplorer
         }
 
         var target = new JumpTarget(item == null || item.IsDirectory ? JumpKind.Directory : JumpKind.File, path);
-        _message = Bookmarks.AddWithMessage(target);
+        _message = Bookmarks.AddWithMessage(target, bookmarkName, moveName, true, out _);
     }
 
     // ":name": the name of the selected file or directory to the clipboard (on "..": of the directory shown, and

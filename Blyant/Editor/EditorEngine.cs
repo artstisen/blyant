@@ -56,7 +56,8 @@ internal enum EditorRequest
     Diff, // ":diff": compare the text with the file on disk
     WriteCopy, // ":w name": save the text as a new file (a copy of the file, or a comparison)
     SaveAs, // ":saveas name": save the text as a new file, and edit that file from now on
-    Bookmark, // ":bookmark": keep the file as a bookmark of the Jump menu
+    Bookmark, // ":bookmark name": keep the place of the cursor as a bookmark of the Jump menu (BookmarkName)
+    Marks, // ":marks": the marks of the text, to jump to one
     JumpToBookmark, // ":book 3": jump to bookmark 3 (BookArgument)
     StringMemory, // ":reglist": show the strings of the string memory, to pick one to insert
     MacroRecord, // ":record": start recording a macro
@@ -409,6 +410,14 @@ internal sealed partial class EditorEngine
     /// ":lineendings lf": what follows the command (lowercase), for the host
     /// </summary>
     internal string LineEndingsArgument { get; private set; } = string.Empty;
+
+    /// <summary>
+    /// ":bookmark name": the name the bookmark is given (empty: none), and with "!" the name is moved to it from the
+    /// bookmark that has it
+    /// </summary>
+    internal string BookmarkName { get; private set; } = string.Empty;
+
+    internal bool BookmarkMovesName { get; private set; }
 
     /// <summary>
     /// The text cannot be changed (a peek, a comparison): commands that would change it are refused with
@@ -1030,7 +1039,20 @@ internal sealed partial class EditorEngine
             return;
         }
 
-        // ":book 3": jump to bookmark 3 (":book": the Bookmarks tab of the Jump menu)
+        // ":mark a", ":marks", ":delmarks a"
+        if (MarkCommand(command)) return;
+
+        // ":bookmark name" (or ":bookmark! name", which moves the name here): the place of the cursor as a bookmark
+        var bookmark = Regex.Match(command, "^bookmark(!)?(?: +(.*))?$");
+        if (bookmark.Success)
+        {
+            BookmarkName = bookmark.Groups[2].Value.Trim();
+            BookmarkMovesName = bookmark.Groups[1].Success;
+            if (!SingleLine) _request = EditorRequest.Bookmark;
+            return;
+        }
+
+        // ":book 3" or ":book name": jump to bookmark 3 (":book": the Bookmarks tab of the Jump menu)
         var book = Regex.Match(command, "^book(?: +(.*))?$");
         if (book.Success)
         {
@@ -1393,9 +1415,6 @@ internal sealed partial class EditorEngine
             case "path":
                 if (!SingleLine) _request = EditorRequest.CopyPath;
                 break;
-            case "bookmark":
-                if (!SingleLine) _request = EditorRequest.Bookmark;
-                break;
             case "fav":
             case "favorite":
                 if (!SingleLine) _request = EditorRequest.Favorite;
@@ -1512,7 +1531,9 @@ internal sealed partial class EditorEngine
     private void GoToLine(int line)
     {
         line = Math.Clamp(line, 0, Buffer.LineCount - 1);
+        var from = Cursor;
         Cursor = new TextPos(line, FirstNonBlank(line));
+        RememberJump(from);
     }
 
     // Remove blank space at the start and end of all lines
@@ -1925,7 +1946,9 @@ internal sealed partial class EditorEngine
         HighlightSearch = true;
         if (FindNext(Cursor, forward, out var found))
         {
+            var from = Cursor;
             Cursor = found;
+            RememberJump(from);
         }
         else if (!_searchTimedOut)
         {

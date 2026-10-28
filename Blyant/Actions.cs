@@ -211,6 +211,7 @@ internal static class Actions
         TextArea.LineNumbers = false;
         TextArea.WordWrap = true;
         TextArea.ShowWhitespace = false;
+        EditorEngine.MarksApostrophe = false;
         TextFile.NewFileLineEndings = "system";
         TextArea.ScrollOff = true;
         TextArea.ScrollOffLines = TextArea.DefaultScrollOffLines;

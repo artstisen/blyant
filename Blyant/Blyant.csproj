@@ -7,10 +7,10 @@
         <Nullable>enable</Nullable>
         <!-- The version of Blyant (also in DialogText.ApplicationVersion): the product version, and that of the
              assembly and the file. The product version is the version alone, without the commit .NET adds to it -->
-        <Version>1.0.1</Version>
+        <Version>1.0.2</Version>
         <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
-        <AssemblyVersion>1.0.1.0</AssemblyVersion>
-        <FileVersion>1.0.1.0</FileVersion>
+        <AssemblyVersion>1.0.2.0</AssemblyVersion>
+        <FileVersion>1.0.2.0</FileVersion>
         <!-- No dependency on the ICU libraries of the system (needed for the self-contained Linux builds) -->
         <InvariantGlobalization>true</InvariantGlobalization>
         <!-- The icon of Blyant.exe (Windows): a pencil writing a cursor, 16 to 256 pixels. It is drawn by

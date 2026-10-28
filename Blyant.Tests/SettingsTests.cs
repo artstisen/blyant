@@ -337,7 +337,8 @@ backup=
         Assert.False(settings.ContainsKey("stayloggedin"));
         Assert.False(settings.ContainsKey("projectsdir"));
         Assert.False(settings.ContainsKey("projectsask"));
-        Assert.Equal(49, settings.Count);
+        Assert.Equal(50, settings.Count);
+        Assert.Equal("false", settings["marksapostrophe"]);
         Assert.Equal("false", settings["filenumbers"]);
         Assert.Equal("false", settings["searchnumbers"]);
         Assert.Equal("system", settings["newlineendings"]);

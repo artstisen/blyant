@@ -629,6 +629,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(string.Empty, Lang.T(":path and :name: also p in the editor"), false));
             _shortcutList.Add(new Shortcut(":name", Lang.T("Copy the name to the clipboard"), false));
             _shortcutList.Add(new Shortcut(":bookmark", Lang.T("Bookmark the selected file or directory (Jump menu)"), false));
+            _shortcutList.Add(new Shortcut(":bookmark name", Lang.T("... with a name: :book name jumps to it"), false));
             _shortcutList.Add(new Shortcut(":diff", Lang.T("Compare 2 marked files, or 1 in each pane"), false));
             _shortcutList.Add(new Shortcut(":diff name", Lang.T("Compare the selected file with that file"), false));
             _shortcutList.Add(new Shortcut(":diff -w", Lang.T("Compare, blank space does not count"), false));
@@ -1025,6 +1026,14 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":new name", Lang.T("New file next to this one"), false));
             _shortcutList.Add(new Shortcut(":projects :pro", Lang.T("Open a project in the file browser"), false));
             _shortcutList.Add(new Shortcut(":bookmark", Lang.T("Bookmark the place of the cursor (Jump menu)"), false));
+            _shortcutList.Add(new Shortcut(":bookmark name", Lang.T("... with a name: :book name jumps to it"), false));
+            _shortcutList.Add(new Shortcut(":bookmark! name", Lang.T("Move the bookmark with the name here"), false));
+            _shortcutList.Add(new Shortcut("ma", Lang.T("Set mark a at the cursor (a-z, while Blyant runs)"), false));
+            _shortcutList.Add(new Shortcut("`a 'a", Lang.T("To mark a/the start of its line"), false));
+            _shortcutList.Add(new Shortcut("`` ''", Lang.T("Back to where the last jump was made from"), false));
+            _shortcutList.Add(new Shortcut("  ` " + Lang.T("hard to type"), Lang.T("Configuration, Editor: ' to the exact place"), false));
+            _shortcutList.Add(new Shortcut(":marks", Lang.T("The marks in a list: Enter jumps, D deletes"), false));
+            _shortcutList.Add(new Shortcut(":mark a :k a", Lang.T("Set mark a (:delmarks a b, a-c, or ! all)"), false));
             _shortcutList.Add(new Shortcut(":favorite :fav", Lang.T("Add/remove the file as a favorite"), false));
             _shortcutList.Add(new Shortcut(":diff :diff -w", Lang.T("Compare with the saved text (-w: not blank space)"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Comparison"), Lang.T("n N ]c [c: the next/previous change"), false));
