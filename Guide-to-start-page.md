@@ -23,9 +23,9 @@ Each choice has a number and a key, shown in front of it. The number selects the
 - `3` `F` **File browser**: Open the [file browser](#file-browser), where `Enter` opens a file in the editor, and files and folders are made, renamed, copied, moved and deleted. Closing the file browser returns here
 - `4` `P` **New project**: Make a new [project](#projects): you pick the folder it goes in, you are asked for its name, a folder of that name is made there, and it is shown in the file browser
 - `5` `O` **Open project**: The [projects](#projects) in a list to pick from, with what each holds below the list and the start of its note to the right of that. `Enter` shows the project picked in the file browser, `C` picks the color of the project, `N` opens its note in the editor, `I` shows information about it, `/` filters the list, `:` is its command line, `?` shows its keys and `Esc` closes it
-- `6` `V` **Favorites**: The [favorites](#favorites) of the file browser at once, with their folders, notes and peek. `Enter` opens a file in the editor (and the favorites come back after), and `B` shows a file or directory in the file browser. `Esc` closes them and returns here (from the file browser shown with `B`: closing it returns here)
-- `7` `M` **Jump menu**: Open the [Jump menu](Guide-to-jump-menu.md#jump-menu), to go straight to a file, a directory or a page of Blyant (also with `Ctrl+O`, on every tab and page of the start page: Start, the pages of Configuration and Help). Pages such as Color schemes and Help open on top of the start page
-- `8` `U` **Quick guide**: A short introduction to Blyant: files and projects, the keys for moving around, and the modes of the editor. `Esc` closes it, and `?` shows the help with all the keys
+- `6` `E` **Recent files**: The latest files you opened, newest first, in a small box (the 9 newest of the [file history](#file-history)): `Enter` or `1` to `9` opens one in the editor, where it was left, and `Esc` closes the box. Also with `Ctrl+K`, on every tab and page of the start page and in the file browser (in the editor, in Normal mode), and with `:recent`
+- `7` `V` **Favorites**: The [favorites](#favorites) of the file browser at once, with their folders, notes and peek. `Enter` opens a file in the editor (and the favorites come back after), and `B` shows a file or directory in the file browser. `Esc` closes them and returns here (from the file browser shown with `B`: closing it returns here)
+- `8` `M` **Jump menu**: Open the [Jump menu](Guide-to-jump-menu.md#jump-menu), to go straight to a file, a directory or a page of Blyant (also with `Ctrl+O`, on every tab and page of the start page: Start, the pages of Configuration and Help). Pages such as Color schemes and Help open on top of the start page
 - `9` **Exit**: Close Blyant at once (`Enter` on it; with Recover shown, it is `0`). `Q` exits too, after asking
 
 To the right of the menu a **hint** tells about one of the features of Blyant: the command line, the Jump menu, bookmarks and `:book`, favorites, writing Markdown with completions and `:surround`, recovery copies, the trash, splitting and comparing, peeking at files and the notes of projects. Each time Blyant starts the next one is shown, ten in all, and then the first again (setting `hintindex`). `X` hides them; **Show hints on start page** in Configuration (System) shows them again, and they go on where they were (while they are hidden, the hint does not change). In a window too narrow for it, no hint is shown.
@@ -143,7 +143,7 @@ The command names are the same in all languages.
 
 ### Help
 - `1` **Help**: All the keys and commands of Blyant, as `:help` (`?` on a page shows the keys of that page)
-- `2` **Quick guide**: The short introduction to Blyant, as `U` on the Start tab
+- `2` **Quick guide**: The short introduction to Blyant: files and projects, the keys for moving around, and the modes of the editor. `Esc` closes it, and `?` shows the help with all the keys
 - `3` **Projects guide**, `4` **File browser guide**, `5` **Text editor guide**, `6` **Jump menu guide**: A short guide to each part: what it is for and its most used keys. They are shown as the quick guide: `h`/`l` page, `j`/`k` line, `Esc` closes, and `?` shows all the keys of that part
 - `7` **About**: General information about Blyant, and its license on the next page. `Esc` closes it
 

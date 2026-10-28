@@ -624,8 +624,8 @@ public partial class TextArea
                     break;
                 }
 
-                Tools.HideCursor();
-                DrawStatusLine();
+                // (the text drawn first: after ":recent" the box of commands has just been taken away)
+                RedrawAll();
                 var current = _saveMode == SaveAsFile && !FileExplorer.IsUntitled && !FileExplorer.EditingListNote
                     ? FileExplorer.CurrentFilePath
                     : null;
@@ -636,8 +636,8 @@ public partial class TextArea
             }
             case EditorRequest.Splits:
             {
-                Tools.HideCursor();
-                DrawStatusLine();
+                // (the text drawn first, as for ":recent")
+                RedrawAll();
                 var split = SplitsBox.Pick();
                 RedrawAll();
                 if (split != null) OpenSplit(split);

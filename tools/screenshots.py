@@ -272,8 +272,14 @@ page\tschemes
 HISTORY = """2026-10-27 21:40\t14:1\t{c3}
 2026-10-27 20:12\t1:1\t{outline}
 2026-10-27 19:55\t5:1\t{c2}
+2026-10-27 18:30\t3:1\t{tides}
+2026-10-27 17:02\t1:1\t{characters}
+2026-10-27 16:45\t2:1\t{salt}
 2026-10-26 22:03\t1:1\t{c1}
-""".format(c3=p('chapter-03.md'), outline=p('outline.md'), c2=p('chapter-02.md'), c1=p('chapter-01.md'))
+2026-10-26 21:10\t1:1\t{todo}
+""".format(c3=p('chapter-03.md'), outline=p('outline.md'), c2=p('chapter-02.md'), c1=p('chapter-01.md'),
+           tides=p('research', 'tides.md'), characters=p('characters.md'), todo=p('todo.md'),
+           salt=os.path.join(WRITING, 'Short Stories', 'the-salt-road.md'))
 
 PROJECTS = "\n".join([PROJECT, os.path.join(WRITING, 'Short Stories'), os.path.join(WRITING, 'Blog')]) + "\n"
 
@@ -297,7 +303,7 @@ def make_data(work, settings):
 # Running Blyant in a pseudo console
 
 KEYS = {'<Esc>': '\x1b', '<Enter>': '\r', '<Tab>': '\t', '<Down>': '\x1b[B', '<Up>': '\x1b[A',
-        '<Left>': '\x1b[D', '<Right>': '\x1b[C', '<C-o>': '\x0f', '<BS>': '\x7f'}
+        '<Left>': '\x1b[D', '<Right>': '\x1b[C', '<C-o>': '\x0f', '<C-k>': '\x0b', '<BS>': '\x7f'}
 
 
 def run(exe, work, args, steps):
@@ -444,6 +450,10 @@ SCENES = [
      [p('chapter-01.md')], ['<wait>', '3Gcc<Esc>', 'iThe ferry came late that October.<Esc>',
                             '13Go', 'He had written it on the first page of every logbook.<Esc>',
                             ':diff<Enter>'], False),
+    ('split-file', 'Blyant: :view, another file read only beside the text', {},
+     [p('chapter-03.md')], ['<wait>', '24Gzt', ':split outline.md<Enter>'], True),
+    ('recent-files', 'Blyant: Ctrl+K, the latest files at a key', {'colorscheme': 'Deep Blue'},
+     [p('chapter-03.md')], ['<wait>', '24Gzt', '<C-k>'], False),
 ]
 
 

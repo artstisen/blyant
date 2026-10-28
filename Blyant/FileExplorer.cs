@@ -461,6 +461,11 @@ internal static partial class FileExplorer
                 // The Jump menu
                 Jump.Open();
             }
+            else if (_mode == BrowseMode.Edit && _pending == null && RecentBox.IsKey(key))
+            {
+                // The latest files: the one picked is opened in the editor
+                RecentBox.Open();
+            }
             else if (_peeking && key.Key == ConsoleKey.Escape)
             {
                 StopPeek();

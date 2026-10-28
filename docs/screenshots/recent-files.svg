@@ -1,0 +1,125 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="868" height="572" viewBox="0 0 868 572">
+<title>Blyant: Ctrl+K, the latest files at a key</title>
+<style>text{font-family:"Cascadia Mono","Cascadia Code",Consolas,"DejaVu Sans Mono",Menlo,monospace;font-size:14px;white-space:pre}</style>
+<rect width="100%" height="100%" rx="10" fill="#0C0C0C"/>
+<rect width="100%" height="34" rx="10" fill="#2B2B2B"/>
+<rect y="24" width="100%" height="10" fill="#2B2B2B"/>
+<circle cx="20" cy="17" r="6" fill="#FF5F57"/>
+<circle cx="40" cy="17" r="6" fill="#FEBC2E"/>
+<circle cx="60" cy="17" r="6" fill="#28C840"/>
+<text x="434.0" y="22" fill="#A0A0A0" text-anchor="middle">Blyant: Ctrl+K, the latest files at a key</text>
+<rect x="14.0" y="48" width="67.2" height="17" fill="#3B78FF"/>
+<rect x="81.2" y="48" width="772.8" height="17" fill="#0037DA"/>
+<text x="14.0" y="60.8" fill="#61D6D6" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> EDITOR</text>
+<text x="81.2" y="60.8" fill="#CCCCCC" textLength="117.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> chapter-03.md</text>
+<rect x="14.0" y="65" width="840.0" height="17" fill="#0037DA"/>
+<text x="14.0" y="77.8" fill="#61D6D6" textLength="369.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">--------------------------------------------</text>
+<text x="383.6" y="77.8" fill="#F2F2F2" textLength="75.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> NAVIGATE</text>
+<text x="467.6" y="77.8" fill="#61D6D6" textLength="378.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">---------------------------------------------</text>
+<rect x="14.0" y="82" width="840.0" height="17" fill="#0037DA"/>
+<text x="14.0" y="94.8" fill="#CCCCCC" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 12</text>
+<text x="56.0" y="94.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">-</text>
+<text x="72.8" y="94.8" fill="#F9F1A5" textLength="134.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">*Harbour mouth:*</text>
+<text x="207.2" y="94.8" fill="#CCCCCC" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> st</text>
+<text x="232.4" y="94.8" fill="#61D6D6" textLength="134.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">.--------------.</text>
+<text x="366.8" y="94.8" fill="#CCCCCC" textLength="42.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">night</text>
+<rect x="14.0" y="99" width="226.8" height="17" fill="#0037DA"/>
+<rect x="240.8" y="99" width="117.6" height="17" fill="#3B78FF"/>
+<rect x="358.4" y="99" width="495.6" height="17" fill="#0037DA"/>
+<text x="14.0" y="111.8" fill="#CCCCCC" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 13</text>
+<text x="56.0" y="111.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">-</text>
+<text x="72.8" y="111.8" fill="#F9F1A5" textLength="109.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">*North pier:*</text>
+<text x="182.0" y="111.8" fill="#CCCCCC" textLength="42.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> red,</text>
+<text x="232.4" y="111.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="240.8" y="111.8" fill="#F2F2F2" textLength="109.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Recent files</text>
+<text x="358.4" y="111.8" fill="#61D6D6" textLength="260.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&#x27;-----------------------------.</text>
+<rect x="14.0" y="116" width="252.0" height="17" fill="#0037DA"/>
+<rect x="266.0" y="116" width="16.8" height="17" fill="#3B78FF"/>
+<rect x="282.8" y="116" width="571.2" height="17" fill="#0037DA"/>
+<text x="14.0" y="128.8" fill="#CCCCCC" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 14</text>
+<text x="56.0" y="128.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">-</text>
+<text x="72.8" y="128.8" fill="#F9F1A5" textLength="100.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">*The Teeth:*</text>
+<text x="173.6" y="128.8" fill="#CCCCCC" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> white,</text>
+<text x="232.4" y="128.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="249.2" y="128.8" fill="#CCCCCC" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">1</text>
+<text x="266.0" y="128.8" fill="#F2F2F2" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">-&gt;</text>
+<text x="282.8" y="128.8" fill="#CCCCCC" textLength="92.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> outline.md</text>
+<text x="375.2" y="128.8" fill="#61D6D6" textLength="243.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">        Harbour Lights      |</text>
+<rect x="14.0" y="133" width="840.0" height="17" fill="#0037DA"/>
+<text x="14.0" y="145.8" fill="#CCCCCC" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 15</text>
+<text x="232.4" y="145.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="249.2" y="145.8" fill="#CCCCCC" textLength="151.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">2    chapter-02.md</text>
+<text x="400.4" y="145.8" fill="#61D6D6" textLength="218.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">     Harbour Lights      |</text>
+<rect x="14.0" y="150" width="840.0" height="17" fill="#0037DA"/>
+<text x="14.0" y="162.8" fill="#CCCCCC" textLength="210.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 16  She read them twice.</text>
+<text x="232.4" y="162.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="249.2" y="162.8" fill="#CCCCCC" textLength="109.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">3    tides.md</text>
+<text x="358.4" y="162.8" fill="#61D6D6" textLength="260.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">          research            |</text>
+<text x="618.8" y="162.8" fill="#CCCCCC" textLength="84.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> board had</text>
+<rect x="14.0" y="167" width="840.0" height="17" fill="#0037DA"/>
+<text x="14.0" y="179.8" fill="#CCCCCC" textLength="218.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 17  said so in a letter s</text>
+<text x="232.4" y="179.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="249.2" y="179.8" fill="#CCCCCC" textLength="151.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">4    characters.md</text>
+<text x="400.4" y="179.8" fill="#61D6D6" textLength="218.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">     Harbour Lights      |</text>
+<text x="618.8" y="179.8" fill="#CCCCCC" textLength="67.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">d ticked</text>
+<rect x="14.0" y="184" width="840.0" height="17" fill="#0037DA"/>
+<text x="14.0" y="196.8" fill="#CCCCCC" textLength="210.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 18  it every night until</text>
+<text x="232.4" y="196.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="249.2" y="196.8" fill="#CCCCCC" textLength="176.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">5    the-salt-road.md</text>
+<text x="425.6" y="196.8" fill="#61D6D6" textLength="193.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  Short Stories       |</text>
+<rect x="14.0" y="201" width="840.0" height="17" fill="#0037DA"/>
+<text x="14.0" y="213.8" fill="#CCCCCC" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 19</text>
+<text x="232.4" y="213.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="249.2" y="213.8" fill="#CCCCCC" textLength="151.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">6    chapter-01.md</text>
+<text x="400.4" y="213.8" fill="#61D6D6" textLength="218.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">     Harbour Lights      |</text>
+<rect x="14.0" y="218" width="840.0" height="17" fill="#0037DA"/>
+<text x="14.0" y="230.8" fill="#CCCCCC" textLength="218.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 20  &gt; Saw the Teeth again</text>
+<text x="232.4" y="230.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="249.2" y="230.8" fill="#CCCCCC" textLength="100.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">7    todo.md</text>
+<text x="350.0" y="230.8" fill="#61D6D6" textLength="268.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">           Harbour Lights      |</text>
+<rect x="14.0" y="235" width="840.0" height="17" fill="#0037DA"/>
+<text x="14.0" y="247.8" fill="#CCCCCC" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 21</text>
+<text x="232.4" y="247.8" fill="#61D6D6" textLength="386.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">| j/k Select | Enter or 1-9 Open | Esc Close |</text>
+<rect x="14.0" y="252" width="840.0" height="17" fill="#0037DA"/>
+<text x="14.0" y="264.8" fill="#CCCCCC" textLength="218.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 22  She closed the book a</text>
+<text x="232.4" y="264.8" fill="#61D6D6" textLength="386.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&#x27;--------------------------------------------&#x27;</text>
+<rect x="14.0" y="269" width="840.0" height="17" fill="#0037DA"/>
+<text x="14.0" y="281.8" fill="#CCCCCC" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 23</text>
+<rect x="14.0" y="286" width="840.0" height="17" fill="#0037DA"/>
+<text x="14.0" y="298.8" fill="#F2F2F2" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 24</text>
+<text x="56.0" y="298.8" fill="#16C60C" textLength="151.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">## The first night</text>
+<rect x="14.0" y="303" width="840.0" height="17" fill="#0037DA"/>
+<text x="14.0" y="315.8" fill="#CCCCCC" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 25</text>
+<rect x="14.0" y="320" width="840.0" height="17" fill="#0037DA"/>
+<text x="14.0" y="332.8" fill="#CCCCCC" textLength="663.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 26  The wind came round to the east after midnight and the windows of the lamp</text>
+<rect x="14.0" y="337" width="840.0" height="17" fill="#0037DA"/>
+<text x="14.0" y="349.8" fill="#CCCCCC" textLength="646.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 27  room hummed like a glass rubbed with a wet finger. Maren sat on the iron</text>
+<rect x="14.0" y="354" width="840.0" height="17" fill="#0037DA"/>
+<text x="14.0" y="366.8" fill="#CCCCCC" textLength="604.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 28  steps with the logbook on her knees and watched the harbour lights.</text>
+<rect x="14.0" y="371" width="840.0" height="17" fill="#0037DA"/>
+<text x="14.0" y="383.8" fill="#CCCCCC" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 29</text>
+<rect x="14.0" y="388" width="840.0" height="17" fill="#0037DA"/>
+<text x="14.0" y="400.8" fill="#CCCCCC" textLength="688.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 30  Steady green. Red, every four seconds. And out past the north pier, where the</text>
+<rect x="14.0" y="405" width="840.0" height="17" fill="#0037DA"/>
+<text x="14.0" y="417.8" fill="#CCCCCC" textLength="613.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 31  chart showed nothing but broken water, two white flashes, then dark.</text>
+<rect x="14.0" y="422" width="840.0" height="17" fill="#0037DA"/>
+<text x="14.0" y="434.8" fill="#CCCCCC" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 32</text>
+<rect x="14.0" y="439" width="840.0" height="17" fill="#0037DA"/>
+<text x="14.0" y="451.8" fill="#CCCCCC" textLength="319.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 33  She wrote the time in the margin:</text>
+<text x="341.6" y="451.8" fill="#61D6D6" textLength="75.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">**02:13**</text>
+<text x="417.2" y="451.8" fill="#CCCCCC" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">.</text>
+<rect x="14.0" y="456" width="840.0" height="17" fill="#0037DA"/>
+<text x="14.0" y="468.8" fill="#CCCCCC" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 34</text>
+<rect x="14.0" y="473" width="840.0" height="17" fill="#0037DA"/>
+<text x="14.0" y="485.8" fill="#CCCCCC" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 35</text>
+<text x="56.0" y="485.8" fill="#16C60C" textLength="84.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">## Night 2</text>
+<rect x="14.0" y="490" width="840.0" height="17" fill="#0037DA"/>
+<text x="14.0" y="502.8" fill="#CCCCCC" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 36</text>
+<rect x="14.0" y="507" width="840.0" height="17" fill="#0037DA"/>
+<text x="14.0" y="519.8" fill="#CCCCCC" textLength="663.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 37  The wind came round to the east after midnight and the windows of the lamp</text>
+<rect x="14.0" y="524" width="67.2" height="17" fill="#3B78FF"/>
+<rect x="81.2" y="524" width="772.8" height="17" fill="#0037DA"/>
+<text x="14.0" y="536.8" fill="#61D6D6" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> NORMAL</text>
+<text x="89.6" y="536.8" fill="#61D6D6" textLength="756.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">--------------------------------------------------------------- MD UTF-8 LF | 24:1 | 20% -</text>
+<rect x="14.0" y="541" width="840.0" height="17" fill="#0037DA"/>
+</svg>

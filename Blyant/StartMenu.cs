@@ -107,8 +107,9 @@ internal static class StartMenu
             new TabItem(() => Lang.T("Help"), new HelpPage()))
         {
             Commands = ReadCommand,
-            // Ctrl+O: the Jump menu, on every tab and sub-tab
-            OnJumpKey = () => Blyant.Jump.Open()
+            // Ctrl+O: the Jump menu, on every tab and sub-tab, and Ctrl+K: the latest files
+            OnJumpKey = () => Blyant.Jump.Open(),
+            OnRecentKey = RecentBox.Open
         };
         if (_showConfiguration >= 0) frame.Selected = 1 + _showConfiguration;
         _showConfiguration = -1;
@@ -194,11 +195,13 @@ internal static class StartMenu
                 Blyant.Jump.ToBookmark(argument);
                 break;
             case "recent":
-                // The latest files, to open one
-                if (RecentBox.Pick(null) is { } recent) Blyant.Jump.ToPlace(new JumpTarget(JumpKind.File, recent));
+                // The latest files, to open one (the page drawn first: the box of commands has just been taken away)
+                _frame?.Redraw();
+                RecentBox.Open();
                 break;
             case "splits":
-                // A file with another beside it, as it was closed
+                // A file with another beside it, as it was closed (the page drawn first, as for ":recent")
+                _frame?.Redraw();
                 if (SplitsBox.Pick() is { } split) Blyant.Jump.ToPlace(new JumpTarget(JumpKind.File, split.Left));
                 break;
             case "help":
@@ -751,7 +754,7 @@ internal static class StartMenu
     }
 
     /// <summary>
-    /// The Start tab: make or open a file or a project, the Jump menu, the quick guide, and exit
+    /// The Start tab: make or open a file or a project, the latest files, the favorites, the Jump menu, and exit
     /// </summary>
     private sealed class ChoicesPage : ITabPage
     {
@@ -765,9 +768,9 @@ internal static class StartMenu
             FileBrowser,
             NewProject,
             OpenProject,
+            Recent,
             Favorites,
             Jump,
-            QuickGuide,
             Exit
         }
 
@@ -782,8 +785,9 @@ internal static class StartMenu
         }
 
         // The keys that open a choice at once (the same in all languages; the numbers only select). A new file: N,
-        // a blank page: B, recovering unsaved text: R, the file browser: F, a new project: P, the projects: O, the Jump menu: M (and Ctrl+O, as everywhere; j
-        // moves down), the quick guide: U, exit: Q (asks)
+        // a blank page: B, recovering unsaved text: R, the file browser: F, a new project: P, the projects: O, the latest
+        // files: E (and Ctrl+K), the favorites: V, the Jump menu: M (and Ctrl+O, as everywhere; j and k move), exit: Q
+        // (asks)
         private static string KeysOf(Choice choice) => choice switch
         {
             Choice.NewFile => "N",
@@ -793,8 +797,8 @@ internal static class StartMenu
             Choice.NewProject => "P",
             Choice.OpenProject => "O",
             Choice.Favorites => "V",
+            Choice.Recent => "E",
             Choice.Jump => "M",
-            Choice.QuickGuide => "U",
             _ => "Q"
         };
 
@@ -808,8 +812,8 @@ internal static class StartMenu
             Choice.NewProject => DialogText.NewProject,
             Choice.OpenProject => DialogText.OpenProject,
             Choice.Favorites => Lang.T("Favorites"),
+            Choice.Recent => Lang.T("Recent files"),
             Choice.Jump => DialogText.StartJump,
-            Choice.QuickGuide => DialogText.QuickGuide,
             _ => DialogText.StartExit
         };
 
@@ -925,7 +929,7 @@ internal static class StartMenu
                 ConsoleKey.O => Choice.OpenProject,
                 ConsoleKey.V => Choice.Favorites,
                 ConsoleKey.M => Choice.Jump,
-                ConsoleKey.U => Choice.QuickGuide,
+                ConsoleKey.E => Choice.Recent,
                 _ => (Choice?)null
             };
             if (direct is { } choice && (key.Modifiers & (ConsoleModifiers.Control | ConsoleModifiers.Alt)) == 0)
@@ -1013,8 +1017,9 @@ internal static class StartMenu
                     // A place that is opened on top of the page returns here; the others leave it
                     Blyant.Jump.Open();
                     break;
-                case Choice.QuickGuide:
-                    QuickGuide.Show();
+                case Choice.Recent:
+                    // The file picked is opened as a jump (closing the box returns here)
+                    RecentBox.Open();
                     break;
                 default:
                     // Exit without asking

@@ -2,8 +2,9 @@
 
 /// <summary>
 /// The latest files opened, to switch to one at once: a small box on top of the page with the newest of the file
-/// history (history.txt), without the file being edited, so the second row of the history comes first. Ctrl+K in the
-/// editor, and ":recent" there, in the file browser and on the start page. j k (Up Down) select, Enter opens the
+/// history (history.txt), without the file being edited, so the second row of the history comes first. Ctrl+K (in the
+/// editor in Normal mode), and ":recent", in the editor, the file browser and on the start page (also its choice
+/// Recent files). j k (Up Down) select, Enter opens the
 /// selected file and 1 to 9 the file of that number, Esc closes. The caller opens the file picked (as a jump, so the
 /// editor asks about changes that are not saved first)
 /// </summary>
@@ -13,6 +14,21 @@ internal static class RecentBox
     /// The most files shown
     /// </summary>
     internal const int MaxFiles = 9;
+
+    /// <summary>
+    /// True for the key that opens the box: Ctrl+K
+    /// </summary>
+    internal static bool IsKey(ConsoleKeyInfo key) =>
+        key.Key == ConsoleKey.K && (key.Modifiers & ConsoleModifiers.Control) != 0 &&
+        (key.Modifiers & ConsoleModifiers.Alt) == 0;
+
+    /// <summary>
+    /// Show the box, and open the file picked as a jump (the page is left; from the editor, use Pick and ask first)
+    /// </summary>
+    internal static void Open()
+    {
+        if (Pick(null) is { } recent) Jump.ToPlace(new JumpTarget(JumpKind.File, recent));
+    }
 
     /// <summary>
     /// The files of the box: the newest first, without the file being edited (null: none), at most MaxFiles

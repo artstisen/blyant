@@ -78,12 +78,14 @@ internal static partial class FileExplorer
                 Jump.ToBookmark(argument);
                 break;
             case "recent":
-                // The latest files, to open one
-                if (RecentBox.Pick(null) is { } recent) Jump.ToPlace(new JumpTarget(JumpKind.File, recent));
+                // The latest files, to open one (the browser drawn first: the box of commands has just been taken away)
+                Draw(true);
+                RecentBox.Open();
                 Draw(true);
                 break;
             case "splits":
-                // A file with another beside it, as it was closed
+                // A file with another beside it, as it was closed (the browser drawn first, as for ":recent")
+                Draw(true);
                 if (SplitsBox.Pick() is { } split) Jump.ToPlace(new JumpTarget(JumpKind.File, split.Left));
                 Draw(true);
                 break;

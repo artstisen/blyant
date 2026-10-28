@@ -8,7 +8,7 @@
 <circle cx="40" cy="17" r="6" fill="#FEBC2E"/>
 <circle cx="60" cy="17" r="6" fill="#28C840"/>
 <text x="434.0" y="22" fill="#A0A0A0" text-anchor="middle">Blyant: start page</text>
-<text x="30.8" y="60.8" fill="#767676" textLength="50.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">v1.0.1</text>
+<text x="30.8" y="60.8" fill="#767676" textLength="50.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">v1.1.0</text>
 <text x="22.4" y="77.8" fill="#61D6D6" textLength="495.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">     &quot;&quot;&quot;&quot;&quot;MM_ MMM      MMM  MMM &quot;&quot;&quot;&quot;&quot;MM_ M_   MMM &quot;&quot;&quot;MMM&quot;&quot;&quot;</text>
 <text x="22.4" y="94.8" fill="#61D6D6" textLength="470.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">     MMM _MM&quot; M%M      &quot;MM__MM&quot; MMM _M%M MMM_ M%M    M%M</text>
 <text x="22.4" y="111.8" fill="#61D6D6" textLength="470.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">     M%M&quot; M%M M%M  ___   M%M    M%M&quot; M%M M%M&quot;_M%M    M%M</text>
@@ -55,13 +55,13 @@
 <text x="694.4" y="298.8" fill="#767676" textLength="109.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Hide hints &#x27;</text>
 <text x="828.8" y="298.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="22.4" y="315.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
-<text x="30.8" y="315.8" fill="#CCCCCC" textLength="184.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">    6 V .... Favorites</text>
+<text x="30.8" y="315.8" fill="#CCCCCC" textLength="210.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">    6 E .... Recent files</text>
 <text x="828.8" y="315.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="22.4" y="332.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
-<text x="30.8" y="332.8" fill="#CCCCCC" textLength="184.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">    7 M .... Jump menu</text>
+<text x="30.8" y="332.8" fill="#CCCCCC" textLength="184.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">    7 V .... Favorites</text>
 <text x="828.8" y="332.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="22.4" y="349.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
-<text x="30.8" y="349.8" fill="#CCCCCC" textLength="201.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">    8 U .... Quick guide</text>
+<text x="30.8" y="349.8" fill="#CCCCCC" textLength="184.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">    8 M .... Jump menu</text>
 <text x="828.8" y="349.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="22.4" y="366.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="30.8" y="366.8" fill="#CCCCCC" textLength="142.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">    9 Q .... Exit</text>

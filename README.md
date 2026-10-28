@@ -55,11 +55,13 @@ The screenshots are of the real program, made with [tools/screenshots.py](tools/
 | The Jump menu: bookmarks of places in files, `:book 1` from anywhere | `:diff`: what you changed since the file was saved |
 | ![The color schemes](docs/screenshots/color-schemes.svg) | ![Split view](docs/screenshots/split-view.svg) |
 | Color schemes: the colors of the command line, with a sample | Split view, and the commands listed while one is typed |
+| ![Another file read only beside the text](docs/screenshots/split-file.svg) | ![The latest files at a key](docs/screenshots/recent-files.svg) |
+| `:view` (or `:split name`): another file read only beside the text | `Ctrl+K`: the latest files, to switch to one |
 
 ## Getting started
 1. Download the build for your platform from the [releases page](https://github.com/artstisen/blyant/releases), and unzip it into a directory of your choice.
 2. Start `Blyant` (or `Blyant.exe` on Windows) in your terminal. `blyant .` opens the file browser in the directory you are in, and `blyant chapter.md` opens the file in the editor.
-3. On the start page, press `P` for a new project or `N` for a new file. Press `?` on any page to see its keys, or open the Quick guide from the start page.
+3. On the start page, press `P` for a new project or `N` for a new file. Press `?` on any page to see its keys, or open the Quick guide on the Help tab of the start page.
 
 See the [guide to installation](Guide-to-installation.md) for the builds and the details.
 
@@ -91,7 +93,7 @@ Inside Blyant, press `?` for the list of keys.
 | Core code base | Agnostic: no OS-specific logic, .NET handles the differences between the platforms |
 | Box drawing | Classic ASCII |
 | Console I/O encoding | UTF-8 |
-| Languages | English and German built in; Danish, Norwegian (bokmål), Swedish, Spanish, French, Italian, Polish, Dutch and Finnish as language files that can be changed, and more can be added (the commands and keys are the same in all languages). The language files are also a pack of their own on the releases page (`Blyant-languages-1.0.1.zip`) |
+| Languages | English and German built in; Danish, Norwegian (bokmål), Swedish, Spanish, French, Italian, Polish, Dutch and Finnish as language files that can be changed, and more can be added (the commands and keys are the same in all languages). The language files are also a pack of their own on the releases page (`Blyant-languages-1.1.0.zip`) |
 | Date/time format | ISO 8601 |
 | Software license | [MIT](LICENSE) |
 

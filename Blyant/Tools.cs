@@ -538,7 +538,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("j k 1-9 0", Lang.T("Select"), false));
             _shortcutList.Add(new Shortcut("gg G", Lang.T("First/Last (also in Configuration)"), false));
             _shortcutList.Add(new Shortcut("Enter", Lang.T("Open the selected"), false));
-            _shortcutList.Add(new Shortcut("N B R F P O V M U", Lang.T("Open the choice of the key at once"), false));
+            _shortcutList.Add(new Shortcut("N B R F P O E V M", Lang.T("Open the choice of the key at once"), false));
             _shortcutList.Add(new Shortcut("  N", Lang.T("New file (Tab in the box: another folder)"), false));
             _shortcutList.Add(new Shortcut("  B", Lang.T("Blank page: write first, the name and folder when saved"), false));
             _shortcutList.Add(new Shortcut("  R", Lang.T("Recover unsaved text (shown when there is some)"), false));
@@ -547,9 +547,9 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("  O", Lang.T("Open project: pick one in the list of projects"), false));
             _shortcutList.Add(new Shortcut("      C", Lang.T("In the list: the color of the project"), false));
             _shortcutList.Add(new Shortcut("      N", Lang.T("In the list: the note of the project, in the editor"), false));
+            _shortcutList.Add(new Shortcut("  E Ctrl+K", Lang.T("Recent files: the latest, to open one"), false));
             _shortcutList.Add(new Shortcut("  V", Lang.T("Favorites: files and folders you use most"), false));
             _shortcutList.Add(new Shortcut("  M Ctrl+O", Lang.T("The Jump menu: files, directories and pages"), false));
-            _shortcutList.Add(new Shortcut("  U", Lang.T("Quick guide: a short introduction"), false));
             _shortcutList.Add(new Shortcut("  " + DialogText.StartExit, Lang.T("Exit Blyant (without asking)"), false));
             _shortcutList.Add(new Shortcut("Tab", Lang.T("Next tab: Start, Configuration, Help"), false));
             _shortcutList.Add(new Shortcut("Shift+Tab", Lang.T("The tab before"), false));
@@ -597,7 +597,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":jump Ctrl+O", Lang.T("The Jump menu: files, directories and pages"), false));
             _shortcutList.Add(new Shortcut(":book 3", Lang.T("Jump to bookmark 3 (:book alone: the bookmarks)"), false));
             _shortcutList.Add(new Shortcut(":splits", Lang.T("Files closed with another beside them: open one"), false));
-            _shortcutList.Add(new Shortcut(":recent", Lang.T("The latest files: Enter or 1-9 opens one"), false));
+            _shortcutList.Add(new Shortcut("Ctrl+K :recent", Lang.T("The latest files: Enter or 1-9 opens one"), false));
             _shortcutList.Add(new Shortcut("j k", Lang.T("Select (as Down/Up)"), false));
             _shortcutList.Add(new Shortcut("5j 5k 5gg 5G", Lang.T("With a count: 5 rows down/up, to row 5"), false));
             _shortcutList.Add(new Shortcut("gg G", Lang.T("First/Last"), false));
