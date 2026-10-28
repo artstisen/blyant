@@ -63,7 +63,7 @@ internal enum EditorRequest
     MacroRecord, // ":record": start recording a macro
     MacroStop, // The Esc that would close the editor, while recording: ask whether to stop, save or go on
     MacroList, // ":macro": show the macros, to pick one to play
-    Split, // ":split": show the text in two panes
+    Split, // ":split": show the text in two panes (":split name": a file read only at the right, SplitArgument)
     SwitchPane, // Tab (Shift+Tab) in Normal mode: the other pane of a split gets the keys
     ClosePane, // ":q" in a split: close this pane (the other shows the text)
     OnlyPane, // ":only": close the other pane of a split
@@ -416,6 +416,11 @@ internal sealed partial class EditorEngine
     /// bookmark that has it
     /// </summary>
     internal string BookmarkName { get; private set; } = string.Empty;
+
+    /// <summary>
+    /// ":split name": the file to show read only beside the text (empty: ":split", the text in two panes)
+    /// </summary>
+    internal string SplitArgument { get; private set; } = string.Empty;
 
     internal bool BookmarkMovesName { get; private set; }
 
@@ -1042,6 +1047,15 @@ internal sealed partial class EditorEngine
         // ":mark a", ":marks", ":delmarks a"
         if (MarkCommand(command)) return;
 
+        // ":split" (two panes of the text, or one again), or ":split name": a file shown read only beside the text
+        var split = Regex.Match(command, "^split(?: +(.*))?$");
+        if (split.Success)
+        {
+            SplitArgument = split.Groups[1].Value.Trim();
+            if (!SingleLine) _request = EditorRequest.Split;
+            return;
+        }
+
         // ":bookmark name" (or ":bookmark! name", which moves the name here): the place of the cursor as a bookmark
         var bookmark = Regex.Match(command, "^bookmark(!)?(?: +(.*))?$");
         if (bookmark.Success)
@@ -1292,9 +1306,6 @@ internal sealed partial class EditorEngine
             case "quit":
                 // In a split: only this pane is closed
                 _request = InSplit ? EditorRequest.ClosePane : EditorRequest.Quit;
-                break;
-            case "split":
-                if (!SingleLine) _request = EditorRequest.Split;
                 break;
             case "only":
                 if (!SingleLine) _request = EditorRequest.OnlyPane;

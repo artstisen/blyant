@@ -272,6 +272,8 @@ public partial class TextArea
         };
         // The marks set in the file earlier in this session
         if (marks != null && !_singleLine && peek == null) _engine.LoadMarks(marks);
+        // Tab after ":split " completes the names of the files next to the file being edited
+        CommandCompletion.Arguments["split"] = SplitFileNames;
         // Tab after ":play " and ":macro " completes the names of the macros
         CommandCompletion.Arguments["play"] = MacroFiles.Names;
         CommandCompletion.Arguments["macro"] = MacroFiles.Names;
@@ -1998,6 +2000,7 @@ public partial class TextArea
         Tools.SetCursorEx(_top - 1, Math.Max(0, ModeCenter - (TextMetrics.WidthOf(label) / 2 + 1)));
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.EditorTitle);
         Console.Write(" " + label + " ");
+        DrawReferenceName(false);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
     }
 

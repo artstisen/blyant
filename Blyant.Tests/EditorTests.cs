@@ -1447,6 +1447,18 @@ public class EditorTests
     }
 
     [Fact]
+    public void SplitWithAName_AsksForTheFileReadOnly()
+    {
+        var editor = Editor("text");
+        Assert.Equal(EditorRequest.Split, editor.Type(":split outline.md<CR>"));
+        Assert.Equal("outline.md", editor.SplitArgument);
+        Assert.Equal(EditorRequest.Split, editor.Type(":split<CR>"));
+        Assert.Equal(string.Empty, editor.SplitArgument);
+        Assert.Equal(EditorRequest.Split, editor.Type(":split notes/ideas 2.md<CR>"));
+        Assert.Equal("notes/ideas 2.md", editor.SplitArgument);
+    }
+
+    [Fact]
     public void BookmarkWithAName_IsAskedOfTheHost()
     {
         var editor = Editor("text");
