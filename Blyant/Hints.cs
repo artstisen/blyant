@@ -27,6 +27,8 @@ internal static class Hints
                "all the keys of the page."),
         Lang.T("Ctrl+O opens the Jump menu from anywhere: bookmarks, recent places, projects, the lists of the " +
                "file browser and the pages of Blyant."),
+        Lang.T("Ctrl+K or :recent shows the latest files you opened, on almost any page. In the editor, Ctrl+K " +
+               "and Enter go back to the file you were in before."),
         Lang.T("B in the Jump menu bookmarks the selected place, and :bookmark does it in the editor and the file " +
                "browser. Then :book 3 jumps to bookmark 3 from almost any page."),
         Lang.T("In the file browser, P keeps a file or folder as a favorite, and F shows them. Group them in " +

@@ -194,6 +194,12 @@ public class LangTests : IDisposable
             // Brackets with a key in front of a choice, like "[Y] Yes" or "[Esc] Cancel"
             string Keys(string s) => string.Join(",", Regex.Matches(s, @"\[(?:[A-Z]|Esc|Enter|Tab)\]").Select(m => m.Value));
             if (Keys(english) != Keys(text)) problems.Add("keys in brackets: " + english);
+            // Keys with Ctrl, Shift or Alt are kept as they are, each as often as in the English text
+            if (Regex.Matches(english, @"\b(?:Ctrl|Shift|Alt)\+\w+").Select(m => m.Value).Distinct()
+                .Any(k => Regex.Matches(text, Regex.Escape(k)).Count < Regex.Matches(english, Regex.Escape(k)).Count))
+            {
+                problems.Add("keys with Ctrl, Shift or Alt: " + english);
+            }
         }
 
         Assert.True(problems.Count == 0, code + ": " + string.Join(Environment.NewLine, problems));
