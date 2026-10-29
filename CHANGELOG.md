@@ -1,5 +1,7 @@
 # Changes
 
+## v1.1.1 (unreleased)
+
 ## v1.1.0 (2026-10-28)
 - **The latest files at a key**: `Ctrl+K` (in the editor in Normal mode; in INSERT mode it still opens the snippets), on the start page and in the file browser, or `:recent`, shows the 9 newest files of the file history in a small box, without the file being edited, so `Ctrl+K` `Enter` goes back to the file before and again back. `Enter` or `1` to `9` opens one where it was left.
 - **Recent files on the start page, in place of the Quick guide**: the Start tab has **Recent files** (`E`) above Favorites, which opens the same box. The Quick guide is on the Help tab, as before, and is no longer a choice of the Start tab (`U`).

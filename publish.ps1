@@ -9,9 +9,9 @@
 #   languages   The language file pack: a zip with the language files (lang), the German file built into
 #               Blyant (built-in) and a read-me, to be downloaded on its own
 # Each version is also packed for a release in "publish/release", named by the version of Blyant: a zip for
-# Windows and the portable version (Blyant-1.1.0-win-x64.zip), and a tar.gz for Linux and macOS
-# (Blyant-1.1.0-linux-x64.tar.gz), where the program is marked as one that can be run. Each has a folder "Blyant"
-# with the files in it. The language pack is Blyant-languages-1.1.0.zip
+# Windows and the portable version (Blyant-1.1.1-win-x64.zip), and a tar.gz for Linux and macOS
+# (Blyant-1.1.1-linux-x64.tar.gz), where the program is marked as one that can be run. Each has a folder "Blyant"
+# with the files in it. The language pack is Blyant-languages-1.1.1.zip
 # The tests are run first (nothing is published when one fails), and the version must be the same in all the
 # places it is set: Version, AssemblyVersion and FileVersion in Blyant.csproj, and DialogText.ApplicationVersion.
 # The archives of a version that is published again are replaced, also those of an earlier version of Blyant
@@ -35,7 +35,7 @@ foreach ($platform in $Platforms) {
     if ($known -notcontains $platform) { throw "Unknown version: '$platform' (known: $($known -join ', '))" }
 }
 
-# The version of Blyant (1.1.0), for the names of the archives: the same in all four places
+# The version of Blyant (1.1.1), for the names of the archives: the same in all four places
 [xml]$csproj = Get-Content $project
 function Get-Property([string]$name) {
     $csproj.Project.PropertyGroup | ForEach-Object { $_.$name } | Where-Object { $_ } | Select-Object -First 1
@@ -125,7 +125,7 @@ foreach ($platform in $Platforms) {
         Get-ChildItem $release -Filter $old -File | Remove-Item
     }
     if ($platform -eq "languages") {
-        # The zip is named by the version of Blyant (Blyant-languages-1.1.0.zip)
+        # The zip is named by the version of Blyant (Blyant-languages-1.1.1.zip)
         $lang = Join-Path $PSScriptRoot "Blyant/Lang"
         $staging = Join-Path ([System.IO.Path]::GetTempPath()) ("blyant-languages-" + [guid]::NewGuid().ToString("N"))
         New-Item -ItemType Directory -Force (Join-Path $staging "lang"), (Join-Path $staging "built-in") | Out-Null
