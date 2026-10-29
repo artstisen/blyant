@@ -115,6 +115,13 @@ internal static partial class FileExplorer
                 continue;
             }
 
+            if (RecentBox.IsKey(key))
+            {
+                // The latest files: the one picked is opened in the editor
+                RecentBox.Open();
+                continue;
+            }
+
             if (key.KeyChar == ':')
             {
                 var command = CommandLine.Read(CommandContext.Hotlist);
@@ -146,6 +153,11 @@ internal static partial class FileExplorer
                     case "h":
                     case "help":
                         Tools.WriteEditorHelp(Tools.HelpTopic.Hotlist);
+                        break;
+                    case "recent":
+                        // The latest files (the list drawn first: the box of commands has just been taken away)
+                        DrawHotlist(true);
+                        RecentBox.Open();
                         break;
                     case "info":
                         ShowHotlistInfo(selected);

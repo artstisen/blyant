@@ -1,6 +1,8 @@
 # Changes
 
 ## v1.1.1 (unreleased)
+- **The latest files from the lists and the Jump menu**: `Ctrl+K` and `:recent` also open the Recent files box in the favorites, the history, the hotlist and the search results of the file browser, and in the Jump menu. The file picked is opened in the editor, where it was left; `Esc` goes back to the list or the menu.
+- **German is a language file, as the others**: only English is built into Blyant now. German is `de.txt` in the folder `lang` next to the program, with the other nine languages, so all translations are changed the same way. The language file pack no longer has the folder `built-in`, and the list of languages no longer marks a file that replaces a built-in language with `(lang)`. If the folder `lang` is missing, German is not offered (Blyant starts in English and keeps the choice for when the file is back).
 
 ## v1.1.0 (2026-10-28)
 - **The latest files at a key**: `Ctrl+K` (in the editor in Normal mode; in INSERT mode it still opens the snippets), on the start page and in the file browser, or `:recent`, shows the 9 newest files of the file history in a small box, without the file being edited, so `Ctrl+K` `Enter` goes back to the file before and again back. `Enter` or `1` to `9` opens one where it was left.

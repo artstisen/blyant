@@ -48,6 +48,14 @@ internal static partial class FileExplorer
                 continue;
             }
 
+            if (RecentBox.IsKey(key))
+            {
+                // The latest files: the one picked is opened in the editor (a count typed before it is dropped)
+                _listCount.Take();
+                RecentBox.Open();
+                continue;
+            }
+
             // A count in front of a key: 5j 5k (5 rows), 5gg 5G (row 5). Esc only drops it
             if (_listCount.Add(key))
             {
@@ -91,6 +99,11 @@ internal static partial class FileExplorer
                     case "h":
                     case "help":
                         Tools.WriteEditorHelp(Tools.HelpTopic.History);
+                        break;
+                    case "recent":
+                        // The latest files (the list drawn first: the box of commands has just been taken away)
+                        DrawHistory(true);
+                        RecentBox.Open();
                         break;
                     case "info":
                         ShowHistoryInfo(selected);

@@ -127,6 +127,9 @@ internal static class JumpMenu
 
     // The place a command (":book 3", ":new") or W jumps to, and that the Bookmarks tab is to be shown (":book")
     private static JumpTarget? _jumpTo;
+
+    // Ctrl+K or ":recent": the latest files are shown over the menu when it has been drawn
+    private static bool _openRecent;
     private static bool _showBookmarks;
     private static string _message = string.Empty;
 
@@ -328,6 +331,7 @@ internal static class JumpMenu
         _message = string.Empty;
         _select = null;
         _jumpTo = null;
+        _openRecent = false;
         _showBookmarks = false;
         Marks.Clear();
         // The bookmarks are read once: the rows refer to them (marks, moving)
@@ -360,6 +364,14 @@ internal static class JumpMenu
             var visible = Draw(tabs, tab, filter, rows, selected, ref scroll, full);
             // (the keys that only move the selection set it to false)
             full = true;
+            if (_openRecent)
+            {
+                // The latest files: the one picked is the place to jump to, and Esc goes back to the menu
+                _openRecent = false;
+                if (RecentBox.Pick(null) is { } recent) return new JumpTarget(JumpKind.File, recent);
+                continue;
+            }
+
             var message = _message;
             _message = _moving ? DialogText.Moving : string.Empty;
             var key = Keyboard.ReadKey();
@@ -408,6 +420,12 @@ internal static class JumpMenu
             }
 
             if (Jump.IsKey(key)) return null;
+            if (RecentBox.IsKey(key))
+            {
+                _openRecent = true;
+                continue;
+            }
+
             if (key.Key == ConsoleKey.Tab)
             {
                 // The next (Shift: the previous) tab at the top
@@ -1536,6 +1554,13 @@ internal static class JumpMenu
         if (command is "info")
         {
             if (rows.Count > 0 && !rows[selected].IsFolder) ShowInfo(current, rows[selected]);
+            return false;
+        }
+
+        if (command is "recent")
+        {
+            // The latest files, over the menu when it has been drawn again
+            _openRecent = true;
             return false;
         }
 
