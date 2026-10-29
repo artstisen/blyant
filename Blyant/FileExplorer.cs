@@ -405,10 +405,10 @@ internal static partial class FileExplorer
     private static string? BrowseLoop(BrowseMode mode, string? jumpFile, (int Line, int Column)? jumpAt)
     {
         Init.ApplyAutoSize();
-        Draw(true);
-        if (Tools.TakeRedrawRequest()) Draw(true);
         if (mode == BrowseMode.Edit && jumpFile != null && File.Exists(jumpFile))
         {
+            // A jump to a file: the browser is only the way to the editor, so it is drawn when the editor is closed
+            // (or when the file could not be opened), not shown for a moment before the editor
             var info = new FileInfo(jumpFile);
             _openAtCaret = jumpAt;
             var close = Open(new Item(info.Name, info.FullName, false, info.Length));
@@ -416,6 +416,11 @@ internal static partial class FileExplorer
             if (close) return _picked;
             LoadItems(info.Name);
             Draw(true);
+        }
+        else
+        {
+            Draw(true);
+            if (Tools.TakeRedrawRequest()) Draw(true);
         }
 
         while (true)
