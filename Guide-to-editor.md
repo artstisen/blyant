@@ -296,7 +296,7 @@ With completing turned on, the word you type in Insert mode is looked up in list
 
 A word is looked up when it has 2 characters or more and the cursor is at its end. It can start with `<`, `</`, `<!`, `/`, `&`, `@`, `#`, `.` or `:`, so `<d` finds the HTML tags starting so, `/bo` the Markdown `/bold`, and `console.lo` the JavaScript `console.log`. At most 8 completions are shown, those for the kind of text first.
 
-The lists are kept in `completions.txt` in the data directory. Completing is on from the start, and the file is made at startup when there is none (also when completing is turned on, or the file is opened); a file that is there is never written over. It is made with lists of HTML tags, CSS properties, JavaScript, Markdown (see below) and a few for all text (`/todo`, `/lorem`), and a short explanation at the top. Until it is made, the lists it starts with are used. It is also opened from the Configuration tab of the start page (**Completions editor**), the command `:completions` there, and the Jump menu. A changed file is used as soon as it is saved:
+The lists are kept in `completions.txt` in the data directory. Completing is on from the start, and the file is made at startup when there is none (also when completing is turned on, or the file is opened); a file that is there is never written over. It is made with lists of HTML tags, CSS properties, JavaScript, Markdown and Typst (see below) and a few for all text (`/todo`, `/lorem`), and a short explanation at the top. Until it is made, the lists it starts with are used. It is also opened from the Configuration tab of the start page (**Completions editor**), the command `:completions` there, and the Jump menu. A changed file is used as soon as it is saved:
 
 ```
 === HTML tags (html)
@@ -312,10 +312,11 @@ The lists are kept in `completions.txt` in the data directory. Completing is on 
 Blyant
 ```
 
-- A line starting with `===` starts a list, and the rest of the line is its title. A tag at the end of the title, like `(html)`, `(css)`, `(js)`, `(json)`, `(xml)`, `(cs)`, `(php)` or `(md)`, uses the list when that kind of text is edited (the colors used, or the kind of the file); a list without a tag is used for all text
+- A line starting with `===` starts a list, and the rest of the line is its title. A tag at the end of the title, like `(html)`, `(css)`, `(js)`, `(json)`, `(xml)`, `(cs)`, `(php)`, `(md)` or `(typ)`, uses the list when that kind of text is edited (the colors used, or the kind of the file); a list without a tag is used for all text
 - Each line of a list is a word, or `word = text`: the word is what you type, and the text what it is completed to. A word alone is completed to itself (a list of words you use often)
 - In the text, `$0` marks where the cursor goes, `\n` starts a new line and `\\` is a `\`
 - Blank lines are not used, and neither is the text above the first title
+- Typst (`.typ` files) has a list of its own built into Blyant, used when the file has no list tagged `(typ)` (as a file made before Blyant had it): `/bold` (`*...*`), `/italic` (`_..._`), `/h1` to `/h4` (`= ...`), `/list`, `/numbered`, `/term`, `/code`, `/inline`, `/math` and `/imath`, `/link`, `/image`, `/figure`, `/table`, `/footnote`, `/label`, `/ref`, `/quote`, `/comment`, `/outline`, `/pagebreak`, and settings: `/page`, `/lang`, `/font` and `/numbering`. A list `(typ)` of your own is used instead, and an empty one turns it off. See the [guide to Typst](Guide-to-typst.md)
 
 ## Emoji and wide characters
 An emoji, a character with an accent written as two (`é`) or a flag is one character to the editor: the cursor is never inside it, `x` deletes all of it, and `w` `b` `e` go over it as one (also ❤️ ✔️ ⚠️, made of a symbol and a variation selector). Characters that terminals show two columns wide take two columns here too: Chinese, Japanese and Korean, emoji, and the symbols shown as emoji (✅ ❌ ⭐ ⚡ ☕ 1️⃣). `r`, `f` and `t` work with an emoji as with any character. (Some terminals on Linux show a symbol with a variation selector one column wide; the cursor can then be one column off on that line.)
@@ -339,11 +340,11 @@ A number of lines (12 from the start) are kept above and below the cursor: the t
 - The choice is remembered (`scrolloff` and `scrolllines` in the settings file), and it can be turned on and off on the Configuration page of the start page
 
 ## Colors
-The editor can color the parts of a text by what they are, for Markdown, HTML, CSS, JavaScript, JSON, XML, C#, PHP, settings files (INI), C and C++, Rust, Python, PowerShell, batch files and shell scripts. The text itself is shown as it is written: it is coloring, not a preview, and nothing is checked for errors.
+The editor can color the parts of a text by what they are, for Markdown, Typst, HTML, CSS, JavaScript, JSON, XML, C#, PHP, settings files (INI), C and C++, Rust, Python, PowerShell, batch files and shell scripts. The text itself is shown as it is written: it is coloring, not a preview, and nothing is checked for errors.
 
-- Files named `.md`, `.html`/`.htm`, `.css`, `.js`/`.mjs`, `.json`, `.cs`, `.php` and `.xml` (also `.svg`, `.xsd`, `.xsl`, `.xaml`, `.rss`, `.csproj` and other XML files), `.ini`, `.cfg`, `.conf` and `.editorconfig` (settings files), `.c`, `.h`, `.cpp`, `.cc`, `.cxx`, `.hpp`, `.hh` and `.hxx` (C and C++), `.rs` (Rust), `.py`, `.pyw` and `.pyi` (Python), `.ps1`, `.psm1` and `.psd1` (PowerShell), `.bat` and `.cmd` (batch files), and `.sh`, `.bash`, `.zsh` and `.bashrc` (shell scripts) are colored when they are opened from the file browser. A file whose name has no extension is colored by its first line, when that tells the program that runs it: `#!/bin/bash` or `#!/bin/sh` (a shell script), `#!/usr/bin/env python3` (Python) or `#!/usr/bin/env pwsh` (PowerShell). Blyant's own `settings.ini` is colored too, also when it is edited from the System page of Configuration
+- Files named `.md`, `.typ` (Typst), `.html`/`.htm`, `.css`, `.js`/`.mjs`, `.json`, `.cs`, `.php` and `.xml` (also `.svg`, `.xsd`, `.xsl`, `.xaml`, `.rss`, `.csproj` and other XML files), `.ini`, `.cfg`, `.conf` and `.editorconfig` (settings files), `.c`, `.h`, `.cpp`, `.cc`, `.cxx`, `.hpp`, `.hh` and `.hxx` (C and C++), `.rs` (Rust), `.py`, `.pyw` and `.pyi` (Python), `.ps1`, `.psm1` and `.psd1` (PowerShell), `.bat` and `.cmd` (batch files), and `.sh`, `.bash`, `.zsh` and `.bashrc` (shell scripts) are colored when they are opened from the file browser. A file whose name has no extension is colored by its first line, when that tells the program that runs it: `#!/bin/bash` or `#!/bin/sh` (a shell script), `#!/usr/bin/env python3` (Python) or `#!/usr/bin/env pwsh` (PowerShell). Blyant's own `settings.ini` is colored too, also when it is edited from the System page of Configuration
 - `:syntax` Turn the colors on or off (`:syntax on` and `:syntax off` do one of the two). When you turn them off in one of these files, that is remembered (`syntaxcolors` in the settings file), so files are opened without colors until you turn them on again
-- `:syntax md`, `:syntax html`, `:syntax css`, `:syntax js`, `:syntax json`, `:syntax xml`, `:syntax cs`, `:syntax php`, `:syntax ini`, `:syntax cpp` (also `:syntax c`), `:syntax rust`, `:syntax py`, `:syntax ps`, `:syntax bat`, `:syntax sh`, `:syntax diff` Color the text as that kind, whatever the name of the file is. (for this time: the next time the file is colored by its name again). `:syntax off` removes it
+- `:syntax md`, `:syntax typ` (also `:syntax typst`), `:syntax html`, `:syntax css`, `:syntax js`, `:syntax json`, `:syntax xml`, `:syntax cs`, `:syntax php`, `:syntax ini`, `:syntax cpp` (also `:syntax c`), `:syntax rust`, `:syntax py`, `:syntax ps`, `:syntax bat`, `:syntax sh`, `:syntax diff` Color the text as that kind, whatever the name of the file is. (for this time: the next time the file is colored by its name again). `:syntax off` removes it
 
 Selected text, search matches and misspelled words are shown on top of the colors. With _Black and white_ on, the colored parts are shown brighter than the text.
 
@@ -359,6 +360,22 @@ Selected text, search matches and misspelled words are shown on top of the color
 | `(address)` of a link, web addresses, `> quotes` and rules (`---`) | The color of dividers |
 
 The reading of Markdown is simple: emphasis inside emphasis is shown as the outer one, emphasis that continues on the next line is not found, and tables are not colored.
+
+### Typst
+
+| | |
+|---|---|
+| `= Heading` to `====== Heading` | Red, magenta, yellow, cyan, green and blue, as in Markdown |
+| `*strong*`, list markers (`-` `+` `1.`) and the terms of a term list (`/ Term:`) | The color of the logo and labels |
+| `_emphasis_` | The color of the preview title |
+| `` `raw` `` and blocks of raw text between ```` ``` ```` | The color of favorites |
+| Math (`$x^2$`, and `$ ... $` over several lines) and numbers in code (`2pt`, `80%`) | Magenta |
+| Code: the words of the language after `#` and in code (`#let`, `#set`, `#show`, `#import`, `if`, `none`) | The color of the logo and labels |
+| Calls and names after `#` (`#image(...)`, `#title`), labels `<intro>` and references `@intro` | The color of the preview title |
+| Strings in code (`"a4"`) | The color of favorites |
+| Comments (`// ...` and `/* ... */`, also over several lines) and web addresses | The color of dividers |
+
+Code is found after `#` and inside its brackets, and markup again inside `[...]` in code, also over several lines (`#figure(` on one line, `caption: [...]` on the next). A statement (`#let`, `#set`, `#show` ...) goes on to the end of its line or a `;`. This too is a simple reading: `*strong*` and `_emphasis_` are found on one line only, and only at the edges of words (`snake_case` is not emphasis). See the [guide to Typst](Guide-to-typst.md).
 
 ### HTML, CSS, JavaScript, JSON, XML, C#, PHP, C/C++, Rust, Python and scripts
 

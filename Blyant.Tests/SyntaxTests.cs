@@ -486,6 +486,66 @@ public class SyntaxTests
 
     #endregion
 
+    #region Typst
+
+    [Theory]
+    [InlineData("= Title", "1111111")]
+    [InlineData("== Sub", "222222")]
+    [InlineData("Some *bold* and _it_", ".....BBBBBB.....IIII")]
+    [InlineData("a * b and snake_case_x", "......................")]
+    [InlineData("- item", "L.....")]
+    [InlineData("+ two", "L....")]
+    [InlineData("1. one", "LL....")]
+    [InlineData("/ Term: text", "L.BBBB......")]
+    [InlineData("Use `raw` here", "....CCCCC.....")]
+    [InlineData("See @intro and <intro>", "....NNNNNN.....NNNNNNN")]
+    [InlineData("mail anna@example.com", ".....................")]
+    [InlineData("a $x^2$ b", "..99999..")]
+    [InlineData("text // note", ".....#######")]
+    [InlineData("Go to https://typst.app.", "......UUUUUUUUUUUUUUUUU.")]
+    [InlineData("\\#not code", "..........")]
+    [InlineData("#set text(lang: \"da\")", "WWWW.NNNN.......SSSS.")]
+    [InlineData("#image(\"a.png\", width: 80%)", "NNNNNN.SSSSSSS.........999.")]
+    [InlineData("#let x = 2pt", "WWWW.....999")]
+    [InlineData("#emph[some *b*] after", "NNNNN......BBB.......")]
+    [InlineData("#let f(x) = [*#x m* at]", "WWWW.N.......BBBBBB....")]
+    [InlineData("_steady green_, then", "IIIIIIIIIIIIII......")]
+    public void Typst_Lines(string line, string expected)
+    {
+        Assert.Equal(expected, Style(SyntaxType.Typst, line));
+    }
+
+    [Fact]
+    public void Typst_BlocksGoOnOverSeveralLines()
+    {
+        // Raw text, a comment and math
+        Assert.Equal(new[] { "KKKKKKK", "KKKKKKKKKKKK", "KKK", "......BBB" },
+            Styles(SyntaxType.Typst, "```rust", "fn main() {}", "```", "after *b*"));
+        Assert.Equal(new[] { "..######", "######.." }, Styles(SyntaxType.Typst, "a /* one", "two */ b"));
+        Assert.Equal(new[] { "99999", "999.BBB" }, Styles(SyntaxType.Typst, "$ a +", "b $ *c*"));
+        // Code in brackets, and content in code
+        Assert.Equal(new[] { "WWWW.NNNN.", ".........SSSS.", ".", "BBB" },
+            Styles(SyntaxType.Typst, "#set page(", "  paper: \"a4\",", ")", "*b*"));
+        Assert.Equal(new[] { "NNNNNNN.", "..............BBB..", "." },
+            Styles(SyntaxType.Typst, "#figure(", "  caption: [A *b*],", ")"));
+        // A statement with blocks of content, and else
+        Assert.Equal(new[] { "WWW....", "..BBB", "..WWWW..", ".", "." },
+            Styles(SyntaxType.Typst, "#if x [", "  *a*", "] else [", "b", "]"));
+        // A statement ends with its line
+        Assert.Equal(new[] { "WWWW.....9", "......" }, Styles(SyntaxType.Typst, "#let n = 1", "if not"));
+    }
+
+    [Fact]
+    public void Typst_IsTheKindOfTypFiles()
+    {
+        Assert.Equal(SyntaxType.Typst, SyntaxHighlighter.TypeOfFile("thesis.TYP"));
+        Assert.Equal(SyntaxType.Typst, SyntaxHighlighter.ParseType("typst"));
+        Assert.Equal(SyntaxType.Typst, SyntaxHighlighter.ParseType("typ"));
+        Assert.Equal("Typst", SyntaxHighlighter.Name(SyntaxType.Typst));
+    }
+
+    #endregion
+
     #region Kinds of text
 
     [Theory]

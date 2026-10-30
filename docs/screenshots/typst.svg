@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="868" height="572" viewBox="0 0 868 572">
+<title>Blyant: editing Typst, with its colors</title>
+<style>text{font-family:"Cascadia Mono","Cascadia Code",Consolas,"DejaVu Sans Mono",Menlo,monospace;font-size:14px;white-space:pre}</style>
+<rect width="100%" height="100%" rx="10" fill="#0C0C0C"/>
+<rect width="100%" height="34" rx="10" fill="#2B2B2B"/>
+<rect y="24" width="100%" height="10" fill="#2B2B2B"/>
+<circle cx="20" cy="17" r="6" fill="#FF5F57"/>
+<circle cx="40" cy="17" r="6" fill="#FEBC2E"/>
+<circle cx="60" cy="17" r="6" fill="#28C840"/>
+<text x="434.0" y="22" fill="#A0A0A0" text-anchor="middle">Blyant: editing Typst, with its colors</text>
+<rect x="14.0" y="48" width="67.2" height="17" fill="#61D6D6"/>
+<text x="14.0" y="60.8" fill="#0C0C0C" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> EDITOR</text>
+<text x="81.2" y="60.8" fill="#CCCCCC" textLength="159.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> harbour-lights.typ</text>
+<text x="14.0" y="77.8" fill="#767676" textLength="369.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">--------------------------------------------</text>
+<text x="383.6" y="77.8" fill="#16C60C" textLength="75.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> NAVIGATE</text>
+<text x="467.6" y="77.8" fill="#767676" textLength="378.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">---------------------------------------------</text>
+<text x="14.0" y="94.8" fill="#767676" textLength="546.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 1  // Harbour Lights: the print edition, made with typst compile</text>
+<text x="14.0" y="111.8" fill="#767676" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 2</text>
+<text x="47.6" y="111.8" fill="#61D6D6" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">#set</text>
+<text x="89.6" y="111.8" fill="#F9F1A5" textLength="67.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">document</text>
+<text x="156.8" y="111.8" fill="#CCCCCC" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">(title:</text>
+<text x="224.0" y="111.8" fill="#16C60C" textLength="134.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&quot;Harbour Lights&quot;</text>
+<text x="358.4" y="111.8" fill="#CCCCCC" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">)</text>
+<text x="14.0" y="128.8" fill="#767676" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 3</text>
+<text x="47.6" y="128.8" fill="#61D6D6" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">#set</text>
+<text x="89.6" y="128.8" fill="#F9F1A5" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">page</text>
+<text x="123.2" y="128.8" fill="#CCCCCC" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">(paper:</text>
+<text x="190.4" y="128.8" fill="#16C60C" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&quot;a5&quot;</text>
+<text x="224.0" y="128.8" fill="#CCCCCC" textLength="109.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">, margin: (x:</text>
+<text x="341.6" y="128.8" fill="#B4009E" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">2cm</text>
+<text x="366.8" y="128.8" fill="#CCCCCC" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">, y:</text>
+<text x="408.8" y="128.8" fill="#B4009E" textLength="42.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">2.5cm</text>
+<text x="450.8" y="128.8" fill="#CCCCCC" textLength="109.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">), numbering:</text>
+<text x="568.4" y="128.8" fill="#16C60C" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&quot;1&quot;</text>
+<text x="593.6" y="128.8" fill="#CCCCCC" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">)</text>
+<text x="14.0" y="145.8" fill="#767676" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 4</text>
+<text x="47.6" y="145.8" fill="#61D6D6" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">#set</text>
+<text x="89.6" y="145.8" fill="#F9F1A5" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">text</text>
+<text x="123.2" y="145.8" fill="#CCCCCC" textLength="50.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">(font:</text>
+<text x="182.0" y="145.8" fill="#16C60C" textLength="151.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&quot;Libertinus Serif&quot;</text>
+<text x="333.2" y="145.8" fill="#CCCCCC" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">, size:</text>
+<text x="400.4" y="145.8" fill="#B4009E" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">11pt</text>
+<text x="434.0" y="145.8" fill="#CCCCCC" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">, lang:</text>
+<text x="501.2" y="145.8" fill="#16C60C" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&quot;en&quot;</text>
+<text x="534.8" y="145.8" fill="#CCCCCC" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">)</text>
+<text x="14.0" y="162.8" fill="#767676" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 5</text>
+<text x="47.6" y="162.8" fill="#61D6D6" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">#set</text>
+<text x="89.6" y="162.8" fill="#F9F1A5" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">heading</text>
+<text x="148.4" y="162.8" fill="#CCCCCC" textLength="92.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">(numbering:</text>
+<text x="249.2" y="162.8" fill="#16C60C" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&quot;1.&quot;</text>
+<text x="282.8" y="162.8" fill="#CCCCCC" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">)</text>
+<text x="14.0" y="179.8" fill="#767676" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 6</text>
+<text x="47.6" y="179.8" fill="#61D6D6" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">#set</text>
+<text x="89.6" y="179.8" fill="#F9F1A5" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">par</text>
+<text x="114.8" y="179.8" fill="#CCCCCC" textLength="75.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">(justify:</text>
+<text x="198.8" y="179.8" fill="#61D6D6" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">true</text>
+<text x="232.4" y="179.8" fill="#CCCCCC" textLength="168.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">, first-line-indent:</text>
+<text x="408.8" y="179.8" fill="#B4009E" textLength="42.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">1.2em</text>
+<text x="450.8" y="179.8" fill="#CCCCCC" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">)</text>
+<text x="14.0" y="196.8" fill="#767676" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 7</text>
+<text x="14.0" y="213.8" fill="#767676" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 8</text>
+<text x="47.6" y="213.8" fill="#61D6D6" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">#let</text>
+<text x="89.6" y="213.8" fill="#F9F1A5" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">tide</text>
+<text x="123.2" y="213.8" fill="#CCCCCC" textLength="100.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">(height) = [</text>
+<text x="224.0" y="213.8" fill="#61D6D6" textLength="92.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">*#height m*</text>
+<text x="316.4" y="213.8" fill="#CCCCCC" textLength="159.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> at the north pier]</text>
+<text x="14.0" y="230.8" fill="#767676" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 9</text>
+<text x="14.0" y="247.8" fill="#767676" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">10</text>
+<text x="47.6" y="247.8" fill="#F9F1A5" textLength="67.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">#outline</text>
+<text x="114.8" y="247.8" fill="#CCCCCC" textLength="159.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">(title: [Contents])</text>
+<text x="14.0" y="264.8" fill="#767676" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">11</text>
+<text x="47.6" y="264.8" fill="#F9F1A5" textLength="84.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">#pagebreak</text>
+<text x="131.6" y="264.8" fill="#CCCCCC" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">()</text>
+<text x="14.0" y="281.8" fill="#767676" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">12</text>
+<text x="14.0" y="298.8" fill="#767676" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">13</text>
+<text x="47.6" y="298.8" fill="#E74856" textLength="159.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">= The Ferry &lt;ferry&gt;</text>
+<rect x="47.6" y="303" width="8.4" height="17" fill="#CCCCCC"/>
+<text x="14.0" y="315.8" fill="#F2F2F2" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">14</text>
+<text x="47.6" y="315.8" fill="#0C0C0C" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">T</text>
+<text x="56.0" y="315.8" fill="#CCCCCC" textLength="546.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">he ferry came late that October. Maren stood at the rail with her</text>
+<text x="14.0" y="332.8" fill="#767676" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">15</text>
+<text x="47.6" y="332.8" fill="#CCCCCC" textLength="546.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">bag between her feet and counted the lights along the breakwater:</text>
+<text x="14.0" y="349.8" fill="#767676" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">16</text>
+<text x="47.6" y="349.8" fill="#F9F1A5" textLength="117.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">_steady green_</text>
+<text x="165.2" y="349.8" fill="#CCCCCC" textLength="260.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">, then red, every four seconds.</text>
+<text x="14.0" y="366.8" fill="#767676" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">17</text>
+<text x="14.0" y="383.8" fill="#767676" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">18</text>
+<text x="47.6" y="383.8" fill="#B4009E" textLength="134.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">== The lamp room</text>
+<text x="14.0" y="400.8" fill="#767676" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">19</text>
+<text x="47.6" y="400.8" fill="#CCCCCC" textLength="302.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">The keeper&#x27;s notes put high water at</text>
+<text x="358.4" y="400.8" fill="#F9F1A5" textLength="42.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">#tide</text>
+<text x="400.4" y="400.8" fill="#CCCCCC" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">(</text>
+<text x="408.8" y="400.8" fill="#B4009E" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">4.2</text>
+<text x="434.0" y="400.8" fill="#CCCCCC" textLength="50.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">); see</text>
+<text x="492.8" y="400.8" fill="#F9F1A5" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">@map</text>
+<text x="526.4" y="400.8" fill="#CCCCCC" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">.</text>
+<text x="14.0" y="417.8" fill="#767676" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">20</text>
+<text x="14.0" y="434.8" fill="#767676" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">21</text>
+<text x="47.6" y="434.8" fill="#F9F1A5" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">#figure</text>
+<text x="106.4" y="434.8" fill="#CCCCCC" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">(</text>
+<text x="14.0" y="451.8" fill="#767676" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">22</text>
+<text x="64.4" y="451.8" fill="#F9F1A5" textLength="42.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">image</text>
+<text x="106.4" y="451.8" fill="#CCCCCC" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">(</text>
+<text x="114.8" y="451.8" fill="#16C60C" textLength="142.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&quot;harbour-map.png&quot;</text>
+<text x="257.6" y="451.8" fill="#CCCCCC" textLength="67.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">, width:</text>
+<text x="333.2" y="451.8" fill="#B4009E" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">80%</text>
+<text x="358.4" y="451.8" fill="#CCCCCC" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">),</text>
+<text x="14.0" y="468.8" fill="#767676" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">23</text>
+<text x="47.6" y="468.8" fill="#CCCCCC" textLength="504.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  caption: [The harbour, with the north pier and the Teeth],</text>
+<text x="14.0" y="485.8" fill="#767676" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">24</text>
+<text x="47.6" y="485.8" fill="#CCCCCC" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">)</text>
+<text x="64.4" y="485.8" fill="#F9F1A5" textLength="42.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&lt;map&gt;</text>
+<text x="14.0" y="502.8" fill="#767676" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">25</text>
+<text x="14.0" y="519.8" fill="#767676" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">26</text>
+<text x="47.6" y="519.8" fill="#B4009E" textLength="327.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">$ t_&quot;next&quot; = t_&quot;last&quot; + 12&quot;h&quot; 25&quot;min&quot; $</text>
+<rect x="14.0" y="524" width="67.2" height="17" fill="#61D6D6"/>
+<text x="14.0" y="536.8" fill="#0C0C0C" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> NORMAL</text>
+<text x="89.6" y="536.8" fill="#767676" textLength="756.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">-------------------------------------------------------------- TYP UTF-8 LF | 14:1 | 46% -</text>
+</svg>

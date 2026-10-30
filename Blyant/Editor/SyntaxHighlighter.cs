@@ -22,12 +22,13 @@ internal enum SyntaxType
     Python,
     PowerShell,
     Batch, // Windows batch files (.bat, .cmd)
-    Bash // Shell scripts (.sh, and files without an extension that start with "#!/bin/bash" ...)
+    Bash, // Shell scripts (.sh, and files without an extension that start with "#!/bin/bash" ...)
+    Typst // Typst documents (.typ): markup, math and code
 }
 
 /// <summary>
-/// The coloring of text in the editor by what it is: Markdown, HTML, CSS, JavaScript, JSON, XML, C#, PHP, INI,
-/// C/C++, Rust, Python, PowerShell, batch files or shell scripts.
+/// The coloring of text in the editor by what it is: Markdown, Typst, HTML, CSS, JavaScript, JSON, XML, C#, PHP,
+/// INI, C/C++, Rust, Python, PowerShell, batch files or shell scripts.
 /// Each kind has a class of its own that finds the styles of a line (MarkdownHighlighter, HtmlHighlighter ...).
 /// This class picks the one to use, and tells what kind a file is from its name.
 ///
@@ -90,6 +91,7 @@ internal static class SyntaxHighlighter
         return Path.GetExtension(fileName).ToLowerInvariant() switch
         {
             ".md" or ".markdown" or ".mdown" or ".mkd" => SyntaxType.Markdown,
+            ".typ" => SyntaxType.Typst,
             ".html" or ".htm" or ".xhtml" => SyntaxType.Html,
             ".css" => SyntaxType.Css,
             ".js" or ".mjs" or ".cjs" => SyntaxType.JavaScript,
@@ -120,6 +122,7 @@ internal static class SyntaxHighlighter
         return name.Trim().ToLowerInvariant() switch
         {
             "md" or "markdown" => SyntaxType.Markdown,
+            "typ" or "typst" => SyntaxType.Typst,
             "html" or "htm" => SyntaxType.Html,
             "css" => SyntaxType.Css,
             "js" or "javascript" => SyntaxType.JavaScript,
@@ -145,6 +148,7 @@ internal static class SyntaxHighlighter
         return type switch
         {
             SyntaxType.Markdown => "Markdown",
+            SyntaxType.Typst => "Typst",
             SyntaxType.Html => "HTML",
             SyntaxType.Css => "CSS",
             SyntaxType.JavaScript => "JavaScript",
@@ -234,6 +238,9 @@ internal static class SyntaxHighlighter
                 break;
             case SyntaxType.Bash:
                 nextState = BashHighlighter.Scan(line, state, styles);
+                break;
+            case SyntaxType.Typst:
+                nextState = TypstHighlighter.Scan(line, state, styles);
                 break;
         }
 

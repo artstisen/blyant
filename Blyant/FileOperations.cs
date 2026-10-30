@@ -19,7 +19,7 @@ internal static class FileOperations
     /// </summary>
     internal static readonly IReadOnlyList<(string Extension, string Name)> FileTypes = new[]
     {
-        (MarkdownExtension, "Markdown"), (".txt", PlainText), (".html", "HTML"), (".css", "CSS"),
+        (MarkdownExtension, "Markdown"), (".typ", "Typst"), (".txt", PlainText), (".html", "HTML"), (".css", "CSS"),
         (".js", "JavaScript"), (".json", "JSON"), (".xml", "XML"), (".cs", "C#"), (".php", "PHP"), (".ini", "INI")
     };
 

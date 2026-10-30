@@ -20,8 +20,9 @@ Blyant has several features inspired by popular Neovim plugins for text navigati
 **A Vim-style editor**
 - Normal, Insert and Visual modes (also block selection), counts, text objects, registers and undo
 - Split view: the same text in two panes side by side, remembered when you open it again
-- Syntax highlighting for Markdown, HTML, PHP, CSS, JavaScript, JSON, XML, C#, C and C++, Rust, Python, PowerShell, shell scripts, Windows batch files, settings files (INI) and diffs ([which files](Guide-to-editor.md#colors))
+- Syntax highlighting for Markdown, Typst, HTML, PHP, CSS, JavaScript, JSON, XML, C#, C and C++, Rust, Python, PowerShell, shell scripts, Windows batch files, settings files (INI) and diffs ([which files](Guide-to-editor.md#colors))
 - Spell checking and word completion
+- Typst: colors, completions (`/h1`, `/figure`, `/math` ...) and a [guide to writing with Typst and its CLI](Guide-to-typst.md)
 - Search and replace with regular expressions, file comparison (diff), snippets, and a macro recorder whose macros can be edited as text
 - A command line with `Tab` completion and command history on every page
 
@@ -57,6 +58,8 @@ The screenshots are of the real program, made with [tools/screenshots.py](tools/
 | Color schemes: the colors of the command line, with a sample | Split view, and the commands listed while one is typed |
 | ![Another file read only beside the text](docs/screenshots/split-file.svg) | ![The latest files at a key](docs/screenshots/recent-files.svg) |
 | `:view` (or `:split name`): another file read only beside the text | `Ctrl+K`: the latest files, to switch to one |
+| ![Editing Typst](docs/screenshots/typst.svg) | |
+| Editing Typst: markup, math and code in their colors | |
 
 ## Getting started
 1. Download the build for your platform from the [releases page](https://github.com/artstisen/blyant/releases), and unzip it into a directory of your choice.
@@ -80,6 +83,7 @@ Blyant is operated in the style of Vim: the editor has Normal, Insert and Visual
 - [Start page, projects and the file browser](Guide-to-start-page.md)
 - [Jump menu, color schemes and logos](Guide-to-jump-menu.md)
 - [Editor](Guide-to-editor.md)
+- [Writing with Typst](Guide-to-typst.md)
 - [Changes](CHANGELOG.md)
 
 Inside Blyant, press `?` for the list of keys.
@@ -93,7 +97,7 @@ Inside Blyant, press `?` for the list of keys.
 | Core code base | Agnostic: no OS-specific logic, .NET handles the differences between the platforms |
 | Box drawing | Classic ASCII |
 | Console I/O encoding | UTF-8 |
-| Languages | English built in; German, Danish, Norwegian (bokmål), Swedish, Spanish, French, Italian, Polish, Dutch and Finnish as language files that can be changed, and more can be added (the commands and keys are the same in all languages). The language files are also a pack of their own on the releases page (`Blyant-languages-1.1.1.zip`) |
+| Languages | English built in; German, Danish, Norwegian (bokmål), Swedish, Spanish, French, Italian, Polish, Dutch and Finnish as language files that can be changed, and more can be added (the commands and keys are the same in all languages). The language files are also a pack of their own on the releases page (`Blyant-languages-1.2.0.zip`) |
 | Date/time format | ISO 8601 |
 | Software license | [MIT](LICENSE) |
 

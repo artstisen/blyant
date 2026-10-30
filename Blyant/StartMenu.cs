@@ -446,14 +446,17 @@ internal static class StartMenu
         if (ProjectsBox.Pick() is { } path) FileExplorer.RunAtDirectory(path);
     }
 
-    // The kind of new files and blank pages: picked in a list (1-9, 0, j/k gg G and Enter; Esc: as it is)
+    // The kind of new files and blank pages: picked in a list (1-9, then letters as in the list of languages, j/k
+    // gg G and Enter; Esc: as it is)
     private static void PickFileType()
     {
         ChoiceBox.Forget();
         var types = FileOperations.FileTypes;
         var choices = types.Select(type => FileOperations.FileTypeName(type.Extension) + " (" + type.Extension + ")")
             .ToList();
-        var keys = types.Select((_, i) => ((i + 1) % 10).ToString()).ToList();
+        // A key is one character: 1 to 9, then letters (not those that move in the box: g h j k l q)
+        const string more = "ABCDEFIMNOPRSTUVWXYZ";
+        var keys = types.Select((_, i) => i < 9 ? (i + 1).ToString() : more[i - 9].ToString()).ToList();
         var selected = Math.Max(0, types.ToList().FindIndex(type => type.Extension == FileOperations.DefaultExtension));
         var picked = ChoiceBox.Pick(Lang.T("New files and blank pages"),
             Lang.T("Assumed file type (redefined upon saving)"), string.Empty, choices,

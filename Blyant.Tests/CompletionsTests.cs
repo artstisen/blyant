@@ -56,7 +56,8 @@ public class CompletionsTests : IDisposable
     [Fact]
     public void TheLists_AreReadWithTheirKindOfText()
     {
-        Assert.Equal(9, Completions.Items.Count);
+        // (and the list of Typst built into Blyant, as the file has none)
+        Assert.Equal(9, Completions.Items.Count(item => item.Syntax != SyntaxType.Typst));
         Assert.Equal(new Completions.Item("<div", "<div>$0</div>", SyntaxType.Html), Completions.Items[0]);
         Assert.Equal("<ul>\n    <li>$0</li>\n</ul>", Completions.Items[3].Text);
         Assert.Equal(SyntaxType.Css, Completions.Items[4].Syntax);
@@ -284,6 +285,33 @@ public class CompletionsTests : IDisposable
         // A part of the word goes through the completions with Tab, as before
         editor.Type(" /bo<Tab><Tab><CR>x");
         Assert.Equal("A very **word** **co\n## Chapter ***x***", editor.Buffer.GetText());
+        Completions.Parse(Lists);
+    }
+
+    [Fact]
+    public void Typst_HasItsList_AlsoWhenTheFileWasMadeBeforeIt()
+    {
+        // A file without a list for Typst: the one built into Blyant is used
+        Completions.Parse("=== Mine\nhello = Hello\n");
+        Assert.Equal("*$0*", Completions.Find("/bold", SyntaxType.Typst).Single().Text);
+        Assert.Equal(new[] { "/h1", "/h2", "/h3", "/h4" }, Completions.Find("/h", SyntaxType.Typst).Select(item => item.Word));
+        Assert.Equal("= $0", Completions.Find("/h1", SyntaxType.Typst).Single().Text);
+        Assert.Equal("$...$", Completions.Find("/imath", SyntaxType.Typst).Single().Shown);
+        Assert.Empty(Completions.Find("/bold", SyntaxType.Markdown));
+        // A list of the file is used instead, also an empty one
+        Completions.Parse("=== My Typst (typ)\n/bold = #strong[$0]\n");
+        Assert.Equal("#strong[$0]", Completions.Find("/bold", SyntaxType.Typst).Single().Text);
+        Completions.Parse("=== Typst (typ)\n");
+        Assert.Empty(Completions.Find("/bo", SyntaxType.Typst));
+        // The file made with the lists to start with has it once
+        Assert.Equal(DialogText.Success, Completions.Load());
+        Assert.Single(Completions.Find("/bold", SyntaxType.Typst));
+        // Typed in a Typst file, with the cursor between the marks
+        var editor = Editor("", SyntaxType.Typst);
+        editor.Type("aSome /bold<Tab>word");
+        Assert.Equal("Some *word*", editor.Buffer.GetText());
+        editor.Type("<Esc>o/h2<Tab>Chapter");
+        Assert.Equal("Some *word*\n== Chapter", editor.Buffer.GetText());
         Completions.Parse(Lists);
     }
 

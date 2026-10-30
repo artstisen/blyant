@@ -88,14 +88,15 @@ internal static class Completions
         "\n" +
         "Each list starts with a line \"=== \" and its title. A tag at the end of the\n" + // English
         "title, like (html) or (css), uses the list only when that kind of text is\n" + // English
-        "edited (md, html, css, js, json or xml); a list without a tag is used for\n" + // English
-        "all text. Each line of a list is a word, or \"word = text\": the word is\n" + // English
+        "edited (md, typ, html, css, js, json or xml); a list without a tag is used\n" + // English
+        "for all text. A file without a Typst list uses the one built into Blyant.\n" + // English
+        "Each line of a list is a word, or \"word = text\": the word is\n" + // English
         "what you type, and the text what it is completed to. In the text, $0 marks\n" + // English
         "where the cursor is placed, \\n starts a new line and \\\\ is a \\. The lines\n" + // English
         "after the first are indented as the line of the cursor. Blank lines are not\n" + // English
         "used, and neither is the text above the first title.\n" + // English
         "\n" +
-        "The words of Markdown and of all text start with / (/bold, /link, /todo),\n" + // English
+        "The words of Markdown, Typst and all text start with / (/bold, /todo),\n" + // English
         "so they are not offered while you write: a word of a sentence does not\n" + // English
         "start so.\n" + // English
         "\n" +
@@ -219,9 +220,44 @@ internal static class Completions
         "/url = <$0>\n" +
         "/warning = > [!WARNING]\\n> $0\n" +
         "\n" +
+        TypstList +
+        "\n" +
         "=== All text\n" + // English
         "/lorem = Lorem ipsum dolor sit amet, consectetur adipiscing elit.\n" +
         "/todo = TODO: $0\n";
+
+    // The completions of Typst (.typ): in the file made when there is none, and used when a file has no list for
+    // Typst (made before Blyant had one). A list "(typ)" of the file is used instead, also an empty one
+    private const string TypstList =
+        "=== Typst (typ)\n" + // English
+        "/bold = *$0*\n" +
+        "/code = ```\\n$0\\n```\n" +
+        "/comment = // $0\n" +
+        "/figure = #figure(\\n  image(\"$0\", width: 80%),\\n  caption: [],\\n)\n" +
+        "/font = #set text(font: \"$0\", size: 11pt)\n" +
+        "/footnote = #footnote[$0]\n" +
+        "/h1 = = $0\n" +
+        "/h2 = == $0\n" +
+        "/h3 = === $0\n" +
+        "/h4 = ==== $0\n" +
+        "/image = #image(\"$0\", width: 80%)\n" +
+        "/imath = $$0$\n" +
+        "/inline = `$0`\n" +
+        "/italic = _$0_\n" +
+        "/label = <$0>\n" +
+        "/lang = #set text(lang: \"$0\")\n" +
+        "/link = #link(\"$0\")[]\n" +
+        "/list = - $0\n" +
+        "/math = $ $0 $\n" +
+        "/numbered = + $0\n" +
+        "/numbering = #set heading(numbering: \"1.\")$0\n" +
+        "/outline = #outline()\n" +
+        "/page = #set page(paper: \"a4\", margin: 2.5cm)$0\n" +
+        "/pagebreak = #pagebreak()\n" +
+        "/quote = #quote(block: true)[$0]\n" +
+        "/ref = @$0\n" +
+        "/table = #table(\\n  columns: 2,\\n  [$0], [],\\n)\n" +
+        "/term = / $0: \n";
 
     /// <summary>
     /// Read the completions from the file (from the text the file is made with, if there is none)
@@ -272,6 +308,18 @@ internal static class Completions
     internal static void Parse(string text)
     {
         List.Clear();
+        Read(text);
+        // A file made before Blyant had completions for Typst
+        if (!_typstList) Read(TypstList);
+    }
+
+    // A list for Typst was read (with Read)
+    private static bool _typstList;
+
+    // Add the completions of the lists of a text
+    private static void Read(string text)
+    {
+        _typstList = false;
         var syntax = SyntaxType.None;
         var inList = false;
         foreach (var raw in TextBuffer.Normalize(text).Split('\n'))
@@ -281,6 +329,7 @@ internal static class Completions
             {
                 inList = true;
                 syntax = Snippets.Tag(line[TitleMark.Length..]);
+                if (syntax == SyntaxType.Typst) _typstList = true;
                 continue;
             }
 

@@ -62,7 +62,12 @@ public class ProjectsTests : IDisposable
             Assert.Equal(".ini", FileOperations.ParseFileType(".ini"));
             Assert.Null(FileOperations.ParseFileType("docx"));
             Assert.Equal("C#", FileOperations.FileTypeName(".cs"));
-            Assert.Equal(10, FileOperations.FileTypes.Count);
+            Assert.Equal(".typ", FileOperations.ParseFileType("typ"));
+            Assert.Equal("Typst", FileOperations.FileTypeName(".typ"));
+            Assert.Equal("typst.typ", FileOperations.WithDefaultExtension("typst.typ"));
+            Assert.Equal(11, FileOperations.FileTypes.Count);
+            // Typst comes after Markdown
+            Assert.Equal(new[] { ".md", ".typ", ".txt" }, FileOperations.FileTypes.Take(3).Select(type => type.Extension));
         }
         finally
         {

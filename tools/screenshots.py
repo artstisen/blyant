@@ -169,6 +169,38 @@ The clock drove the lens; it had to be wound every four hours.
     os.path.join('drafts', 'opening-lines.md'): "# Openings to try\n\n- The ferry was late.\n- The lamp keeps itself.\n",
 }
 
+# The print edition of the book, in Typst (in a folder of its own, so the other screenshots stay as they are)
+TYPST = os.path.join(WRITING, 'Print', 'harbour-lights.typ')
+TYPST_TEXT = r"""// Harbour Lights: the print edition, made with typst compile
+#set document(title: "Harbour Lights")
+#set page(paper: "a5", margin: (x: 2cm, y: 2.5cm), numbering: "1")
+#set text(font: "Libertinus Serif", size: 11pt, lang: "en")
+#set heading(numbering: "1.")
+#set par(justify: true, first-line-indent: 1.2em)
+
+#let tide(height) = [*#height m* at the north pier]
+
+#outline(title: [Contents])
+#pagebreak()
+
+= The Ferry <ferry>
+The ferry came late that October. Maren stood at the rail with her
+bag between her feet and counted the lights along the breakwater:
+_steady green_, then red, every four seconds.
+
+== The lamp room
+The keeper's notes put high water at #tide(4.2); see @map.
+
+#figure(
+  image("harbour-map.png", width: 80%),
+  caption: [The harbour, with the north pier and the Teeth],
+) <map>
+
+$ t_"next" = t_"last" + 12"h" 25"min" $
+
+/ Teeth: the rocks past the north pier, dry at low water
+"""
+
 OTHER_PROJECTS = {
     os.path.join(WRITING, 'Short Stories', 'the-salt-road.md'):
         "# The Salt Road\n\nThey carried salt over the hills in the dry months, two donkeys and a boy.\n",
@@ -176,6 +208,7 @@ OTHER_PROJECTS = {
         "# Winter Orchard\n\nThe apples that nobody picked hung on the bare trees like lanterns.\n",
     os.path.join(WRITING, 'Blog', 'on-revising.md'):
         "# On revising\n\nThe second draft is where the story finds out what it is about.\n",
+    TYPST: TYPST_TEXT,
 }
 
 
@@ -454,6 +487,8 @@ SCENES = [
      [p('chapter-03.md')], ['<wait>', '24Gzt', ':split outline.md<Enter>'], True),
     ('recent-files', 'Blyant: Ctrl+K, the latest files at a key', {'colorscheme': 'Deep Blue'},
      [p('chapter-03.md')], ['<wait>', '24Gzt', '<C-k>'], False),
+    ('typst', 'Blyant: editing Typst, with its colors', {},
+     [TYPST], ['<wait>', '14G'], True),
 ]
 
 
