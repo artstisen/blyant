@@ -642,7 +642,7 @@ internal sealed partial class EditorEngine
 
                 var line = Math.Min(first, Buffer.LineCount - 1);
                 Cursor = new TextPos(line, FirstNonBlank(line));
-                if (count > 2) Message = Lang.F("{0} fewer lines", count);
+                if (count > 2) Message = Lang.F("Lines removed: {0}", count);
                 break;
             case 'c':
                 StoreRegister(Buffer.GetText(start, end), true, false);
@@ -654,7 +654,7 @@ internal sealed partial class EditorEngine
                 StoreRegister(Buffer.GetText(start, end), true, false);
                 Yanked(Buffer.GetText(start, end) + TextBuffer.NewLine);
                 Cursor = new TextPos(first, Cursor.Col);
-                if (count > 2) Message = Lang.F("{0} lines yanked", count);
+                if (count > 2) Message = Lang.F("Lines yanked: {0}", count);
                 break;
             case '>':
                 for (var i = first; i <= last; i++)

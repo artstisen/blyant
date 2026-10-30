@@ -295,7 +295,7 @@ internal sealed partial class EditorEngine
         }
 
         Message = ScrollOff > 0
-            ? Lang.F("Scrolling keeps {0} lines around the cursor", ScrollOff)
+            ? Lang.F("Lines kept around the cursor when scrolling: {0}", ScrollOff)
             : Lang.T("Scrolling keeps no lines around the cursor");
         _request = EditorRequest.ScrollOffChanged;
         EnsureCursorVisible();
@@ -1590,8 +1590,8 @@ internal sealed partial class EditorEngine
 
         ClampCursor();
         Message = trimmed == 0 && kept == 0 ? Lang.T("No blank space at line ends")
-            : kept == 0 ? Lang.F("{0} lines trimmed", trimmed)
-            : Lang.F("{0} lines trimmed, {1} Markdown line breaks kept (:trim! removes them)", trimmed, kept);
+            : kept == 0 ? Lang.F("Lines trimmed: {0}", trimmed)
+            : Lang.F("Lines trimmed: {0}. Markdown line breaks kept: {1} (:trim! removes them)", trimmed, kept);
     }
 
     /// <summary>
@@ -1860,7 +1860,7 @@ internal sealed partial class EditorEngine
         Delete(from, to);
         Insert(from, string.Join(TextBuffer.NewLine, sorted));
         Cursor = from;
-        Message = Lang.F("{0} lines sorted", lines.Count);
+        Message = Lang.F("Lines sorted: {0}", lines.Count);
     }
 
     private void MakeList(int first, int last, bool ordered)
@@ -2286,9 +2286,7 @@ internal sealed partial class EditorEngine
         }
 
         if (cursorLine >= 0) GoToLine(cursorLine);
-        Message = Lang.F("{0} on {1}",
-            substitutions == 1 ? Lang.T("1 substitution") : Lang.F("{0} substitutions", substitutions),
-            lines == 1 ? Lang.T("1 line") : Lang.F("{0} lines", lines));
+        Message = Lang.F("Substitutions: {0}, on lines: {1}", substitutions, lines);
     }
 
     // Split a text at a separator character, except where it is escaped with a backslash

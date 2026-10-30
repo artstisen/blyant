@@ -121,6 +121,6 @@ public class MissingPlacesTests : IDisposable
     {
         Lang.Set(Lang.English);
         Assert.Equal(MissingPlaces.NothingMissing, MissingPlaces.NothingToPrune(0));
-        Assert.Equal("Nothing removed: the 2 missing are on drives that are not connected", MissingPlaces.NothingToPrune(2));
+        Assert.Equal("Nothing removed: the missing are all on drives that are not connected (2)", MissingPlaces.NothingToPrune(2));
     }
 }

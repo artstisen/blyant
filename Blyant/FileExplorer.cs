@@ -2010,7 +2010,7 @@ internal static partial class FileExplorer
             if (pane.Filter.Length > 0) status += "/" + pane.Filter + " ";
             // A count being typed (5j), below the pane it moves in
             if (pane == ActivePane && _listCount.Shown.Length > 0) status = " " + _listCount.Shown + status;
-            if (pane.Marks.Count > 0) status = " " + Lang.F("{0} marked", pane.Marks.Count) + " -" + status;
+            if (pane.Marks.Count > 0) status = " " + Lang.F("Marked: {0}", pane.Marks.Count) + " -" + status;
             status = Tools.TruncateString(status, Math.Max(4, width - 6), true);
             Tools.SetCursorEx(Init.LineCount - 2, left + width - status.Length - 2);
             Console.Write(status);

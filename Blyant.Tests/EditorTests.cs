@@ -1252,7 +1252,7 @@ public class EditorTests
         var editor = Editor("  one \t\n    two  \n\t\nthree");
         editor.Type(":trim<CR>");
         Assert.Equal("  one\n    two\n\nthree", editor.GetText());
-        Assert.Equal("3 lines trimmed", editor.Message);
+        Assert.Equal("Lines trimmed: 3", editor.Message);
         // Undone as one step
         editor.Type("u");
         Assert.Equal("  one \t\n    two  \n\t\nthree", editor.GetText());

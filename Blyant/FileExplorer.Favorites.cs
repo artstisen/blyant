@@ -561,10 +561,10 @@ internal static partial class FileExplorer
         ChoiceBox.Forget();
         // What will be done, a sentence for each that there is
         var sentences = new List<string>();
-        if (plan.Added > 0) sentences.Add(Lang.F("{0} files and directories are added.", plan.Added));
+        if (plan.Added > 0) sentences.Add(Lang.F("Files and directories added: {0}.", plan.Added));
         if (plan.NewFolders > 0) sentences.Add(Lang.F("New folders: {0}.", plan.NewFolders));
         if (plan.MergedFolders > 0) sentences.Add(Lang.F("Added to folders of the same name: {0}.", plan.MergedFolders));
-        if (plan.Skipped > 0) sentences.Add(Lang.F("{0} are favorites already, and are left out.", plan.Skipped));
+        if (plan.Skipped > 0) sentences.Add(Lang.F("Favorites already, left out: {0}.", plan.Skipped));
         if (plan.LeftOut > 0) sentences.Add(Lang.F("Bookmarks of pages left out: {0}.", plan.LeftOut));
         if (plan.Notes > 0) sentences.Add(Lang.F("Notes copied: {0} (a note a favorite has is kept).", plan.Notes));
         // A favorite shows the name of its file
@@ -586,7 +586,7 @@ internal static partial class FileExplorer
         SaveFavoriteList();
         EventLog.Add(DialogText.LogFile + "Bookmarks copied to the favorites: " + done.Added + " added, " +
                      done.Skipped + " left out, " + done.LeftOut + " pages");
-        if (_favoriteMessage.Length == 0) _favoriteMessage = Lang.F("{0} bookmarks copied to the favorites", done.Added);
+        if (_favoriteMessage.Length == 0) _favoriteMessage = Lang.F("Bookmarks copied to the favorites: {0}", done.Added);
     }
 
     // ":import folder": the files of a directory (given, or picked in the file browser) as a folder of favorites, with
@@ -925,7 +925,7 @@ internal static partial class FileExplorer
         choices.AddRange(folders.Select(folder => new string(' ', 3 * folder.Level) + "[" + folder.Name + "]"));
         var caption = items.Count == 1
             ? DialogText.FavoriteMoveOne
-            : DialogText.FavoriteMoveMany.Replace("{0}", items.Count.ToString());
+            : DialogText.FavoriteMoveMany(items.Count);
         var choice = PickFromList(caption, choices, folders.Count > 0 ? 2 : 0);
         if (choice < 0) return;
         FileFavorites.Favorite? folder = null;
@@ -961,9 +961,10 @@ internal static partial class FileExplorer
         FilterFavorites();
         _favoriteIndex = Math.Max(0,
             _favorites.FindIndex(number => ReferenceEquals(FileFavorites.Items[number], folder ?? items[0])));
-        _favoriteMessage = (items.Count == 1 ? DialogText.FavoriteMovedOne
-                               : DialogText.FavoriteMovedMany.Replace("{0}", items.Count.ToString())) +
-                           (folder == null ? DialogText.FavoriteNoFolder : folder.Name);
+        var where = folder == null ? DialogText.FavoriteNoFolder : folder.Name;
+        _favoriteMessage = items.Count == 1
+            ? DialogText.FavoriteMovedOne + where
+            : DialogText.FavoriteMovedMany(items.Count, where);
         SaveFavoriteList();
     }
 
@@ -1068,13 +1069,13 @@ internal static partial class FileExplorer
             var count = FileFavorites.FolderCount(number);
             var subfolders = FileFavorites.SubfolderCount(number);
             var note = subfolders > 0
-                ? Lang.F("In it: {0} favorites and {1} subfolders, removed from the list too (the files stay).",
+                ? Lang.F("Removed from the list with it (the files stay), favorites: {0}, subfolders: {1}.",
                     count, subfolders)
                 : count == 0
                     ? Lang.T("The folder is empty.")
                     : count == 1
                         ? Lang.T("The favorite in it is removed from the list too (the file stays).")
-                        : Lang.F("The {0} favorites in it are removed from the list too (the files stay).", count);
+                        : Lang.F("The favorites in it are removed from the list too (the files stay): {0}.", count);
             if (item.Note.Length > 0) note += " " + Lang.T("Its note is removed with it.");
             if (!ChoiceBox.Confirm(item.Level > 0 ? Lang.T("Remove subfolder") : DialogText.FavoriteDeleteFolder,
                     Lang.F("Remove \"{0}\" from the favorites?", Tools.TruncateString(item.Name, 40, true)), note,
@@ -1334,7 +1335,7 @@ internal static partial class FileExplorer
         if (favorite.IsFolder)
         {
             var count = FileFavorites.FolderCount(number);
-            return (count == 1 ? Lang.T("1 favorite") : Lang.F("{0} favorites", count), false, true);
+            return (Lang.F("Favorites: {0}", count), false, true);
         }
 
         var isDirectory = Directory.Exists(favorite.Path);
@@ -1449,7 +1450,7 @@ internal static partial class FileExplorer
         var status = " " + (_favorites.Count == 0 ? 0 : _favoriteIndex + 1) + "/" + _favorites.Count + " ";
         if (_listCount.Shown.Length > 0) status = " " + _listCount.Shown + status;
         if (_favoriteFilter.Length > 0) status += "/" + _favoriteFilter + " ";
-        if (_favoriteMarks.Count > 0) status = " " + Lang.F("{0} marked", _favoriteMarks.Count) + " -" + status;
+        if (_favoriteMarks.Count > 0) status = " " + Lang.F("Marked: {0}", _favoriteMarks.Count) + " -" + status;
         Tools.SetCursorEx(Init.LineCount - 2, Init.LineWidth - status.Length - 2);
         Console.Write(status);
         Tools.SetCursorEx(Init.LineCount - 1, 0);

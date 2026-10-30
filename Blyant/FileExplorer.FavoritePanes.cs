@@ -111,7 +111,7 @@ internal static partial class FileExplorer
         return ChoiceBox.Confirm(Lang.T("Remove favorite"),
             notes == 1
                 ? Lang.T("Remove the favorite with its note?")
-                : Lang.F("Remove the favorites with their {0} notes?", notes),
+                : Lang.F("Remove the favorites with their notes ({0})?", notes),
             Lang.T("The note is kept in the favorites, and is removed with the favorite."), false);
     }
 

@@ -426,7 +426,7 @@ internal static partial class FileExplorer
         _hotlistIndex = Math.Max(0, DirectoryHotlist.Items.ToList().IndexOf(back[0]));
         _hotlistMessage = back.Count == 1
             ? Lang.F("Back in the hotlist: {0}", back[0].Shown)
-            : Lang.F("{0} back in the hotlist", back.Count);
+            : Lang.F("Directories put back in the hotlist: {0}", back.Count);
     }
 
     // The numbers of the directories of the hotlist that are not there (each drive looked at once by the checker)
@@ -472,7 +472,7 @@ internal static partial class FileExplorer
         _hotlistRemoved = DirectoryHotlist.RemoveMany(prune);
         EventLog.Add(DialogText.LogFile + "Hotlist prune: " + prune.Count);
         _hotlistFilter = string.Empty;
-        _hotlistMessage = Lang.F("{0} removed from the hotlist (u: Undo)", prune.Count);
+        _hotlistMessage = Lang.F("Directories removed from the hotlist: {0} (u: Undo)", prune.Count);
         SaveHotlist();
     }
 
@@ -481,7 +481,7 @@ internal static partial class FileExplorer
     {
         if (DirectoryHotlist.Items.Count == 0) return;
         if (!ChoiceBox.Confirm(DialogText.CaptionsHotlist,
-                Lang.F("Remove all {0} directories from the hotlist?", DirectoryHotlist.Items.Count),
+                Lang.F("Remove all the directories from the hotlist ({0})?", DirectoryHotlist.Items.Count),
                 DialogText.HotlistClearNote, true))
         {
             return;

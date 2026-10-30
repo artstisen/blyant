@@ -115,10 +115,10 @@ internal static class MissingPlaces
     {
         var note = Lang.T("Their files and directories are not there any more.");
         if (notes > 0) note += " " + Lang.T("Their notes are removed with them.");
-        if (kept > 0) note += " " + Lang.F("{0} on drives that are not connected are kept.", kept);
+        if (kept > 0) note += " " + Lang.F("Kept, on drives that are not connected: {0}.", kept);
         if (undo) note += " " + Lang.T("u puts them back.");
         ChoiceBox.Forget();
-        return ChoiceBox.Confirm(caption, Lang.F("Remove {0} missing from the list?", count), note, false);
+        return ChoiceBox.Confirm(caption, Lang.F("Remove the missing from the list ({0})?", count), note, false);
     }
 
     /// <summary>
@@ -131,5 +131,5 @@ internal static class MissingPlaces
     /// </summary>
     internal static string NothingToPrune(int kept) => kept == 0
         ? NothingMissing
-        : Lang.F("Nothing removed: the {0} missing are on drives that are not connected", kept);
+        : Lang.F("Nothing removed: the missing are all on drives that are not connected ({0})", kept);
 }

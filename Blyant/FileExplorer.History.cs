@@ -372,7 +372,7 @@ internal static partial class FileExplorer
         FileHistory.RemoveMany(prune);
         EventLog.Add(DialogText.LogFile + "History prune: " + prune.Count);
         _historyFilter = string.Empty;
-        _historyMessage = Lang.F("{0} removed from the history", prune.Count);
+        _historyMessage = Lang.F("Files removed from the history: {0}", prune.Count);
         SaveHistory();
     }
 
@@ -381,7 +381,7 @@ internal static partial class FileExplorer
     {
         if (FileHistory.Items.Count == 0) return;
         if (!ChoiceBox.Confirm(DialogText.HistoryClearCaption,
-                Lang.F("Remove all {0} files from the history?", FileHistory.Items.Count),
+                Lang.F("Remove all the files from the history ({0})?", FileHistory.Items.Count),
                 DialogText.HistoryClearNote, true))
         {
             return;
