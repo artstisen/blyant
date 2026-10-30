@@ -297,9 +297,12 @@ internal static class FileFavorites
 
     /// <summary>
     /// The files of a directory, to add to the favorites as a folder (":import folder"): its own files, and (when
-    /// asked for) those of the folders below it, at any depth
+    /// asked for) those of the folders below it, at any depth. TooMany: there are more than the most that are read
+    /// (the files are not all read then). Error: the directory itself could not be read. Unreadable: the folders
+    /// below it that could not be read, and are left out
     /// </summary>
-    internal sealed record FolderFiles(string Name, List<string> Files)
+    internal sealed record FolderFiles(string Name, List<string> Files, bool TooMany = false, string? Error = null,
+        int Unreadable = 0)
     {
         internal int Count => Files.Count;
     }
@@ -309,11 +312,12 @@ internal static class FileFavorites
     /// </summary>
     internal const int FolderImportMax = 2000;
 
-    // The files and folders of a directory that are read: not hidden ones, and not those that cannot be read
+    // The files and folders of a directory that are read: not hidden ones, and not those that cannot be read. (A
+    // folder marked System, as a customized folder of Windows, is read: it is no folder of the system)
     private static readonly EnumerationOptions Shown = new()
     {
         IgnoreInaccessible = true,
-        AttributesToSkip = FileAttributes.Hidden | FileAttributes.System
+        AttributesToSkip = FileAttributes.Hidden
     };
 
     // A name that is not hidden: ".git", ".obsidian" and ".DS_Store" are hidden also where they are not marked so
@@ -333,73 +337,102 @@ internal static class FileFavorites
         }
     }
 
-    private static IEnumerable<string> FilesIn(string directory) =>
-        Directory.EnumerateFiles(directory, "*", Shown).Where(IsShown).Order(StringComparer.OrdinalIgnoreCase);
+    // The files of a directory by name, at most a number of them (more are not read: the list is too long then).
+    // A link to a file that is not there is left out (File.Exists follows the link)
+    private static List<string> FilesIn(string directory, int most) =>
+        Directory.EnumerateFiles(directory, "*", Shown).Where(file => IsShown(file) && File.Exists(file))
+            .Take(most).Order(StringComparer.OrdinalIgnoreCase).ToList();
 
-    private static IEnumerable<string> FoldersIn(string directory) =>
+    private static List<string> FoldersIn(string directory) =>
         Directory.EnumerateDirectories(directory, "*", Shown).Where(folder => IsShown(folder) && !IsLink(folder))
-            .Order(StringComparer.OrdinalIgnoreCase);
+            .Order(StringComparer.OrdinalIgnoreCase).ToList();
 
-    // The files of a directory, then those of each folder below it (so the files of a folder stay together), until
-    // there are more than max
-    private static void AddAllFiles(string directory, List<string> files, int max)
+    /// <summary>
+    /// The name of a folder for a directory: its name, without the brackets that mark a folder in the file and the
+    /// characters that would break its line ("Folder" when nothing is left)
+    /// </summary>
+    internal static string FolderNameOf(string directory)
     {
-        files.AddRange(FilesIn(directory));
-        foreach (var folder in FoldersIn(directory))
-        {
-            if (files.Count > max) return;
-            AddAllFiles(folder, files, max);
-        }
+        var name = DirectoryHotlist.NameOf(directory).Replace('[', '(').Replace(']', ')')
+            .Replace('\t', ' ').Replace('\r', ' ').Replace('\n', ' ').Trim();
+        return name.Length > 0 ? name : "Folder"; // English: a name for the file, not shown as a text of Blyant
     }
 
     /// <summary>
-    /// The name of a folder for a directory: its name, without the brackets that mark a folder in the file
-    /// </summary>
-    internal static string FolderNameOf(string directory) =>
-        DirectoryHotlist.NameOf(directory).Replace('[', '(').Replace(']', ')').Replace('\t', ' ').Trim();
-
-    /// <summary>
     /// Read the files of a directory to add to the favorites as a folder: its own files by name, then (with
-    /// subfolders) those of each folder below it, at any depth. Hidden files and folders (also those whose names
-    /// start with "."), links to other folders, and what cannot be read are left out
+    /// subfolders) those of each folder below it in turn, at any depth, so the files of a folder stay together.
+    /// Hidden files and folders (also those whose names start with "."), links to other folders, links to files
+    /// that are not there, and what cannot be read are left out. Reading stops when there are more than max
     /// </summary>
     /// <param name="directory">The directory</param>
     /// <param name="subfolders">True to read the files of the folders below it too</param>
     /// <param name="max">The most files</param>
-    /// <returns>The files, or null when there are more than max (or the directory cannot be read)</returns>
-    internal static FolderFiles? ReadFolder(string directory, bool subfolders, int max = FolderImportMax)
+    internal static FolderFiles ReadFolder(string directory, bool subfolders, int max = FolderImportMax)
     {
-        try
+        var name = FolderNameOf(directory);
+        var files = new List<string>();
+        var unreadable = 0;
+        // The folders still to read, the next on top (a loop, not a call for each folder: no limit to the depth)
+        var folders = new Stack<string>();
+        folders.Push(directory);
+        while (folders.Count > 0)
         {
-            var files = new List<string>();
-            if (subfolders) AddAllFiles(directory, files, max);
-            else files.AddRange(FilesIn(directory));
-            return files.Count > max ? null : new FolderFiles(FolderNameOf(directory), files);
+            var folder = folders.Pop();
+            try
+            {
+                files.AddRange(FilesIn(folder, max + 1 - files.Count));
+                if (files.Count > max) return new FolderFiles(name, files, TooMany: true, Unreadable: unreadable);
+                if (!subfolders) break;
+                var below = FoldersIn(folder);
+                for (var i = below.Count - 1; i >= 0; i--) folders.Push(below[i]);
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException)
+            {
+                // The directory itself: nothing is added. A folder below it (gone since, or not to be read): left out
+                if (folder == directory) return new FolderFiles(name, new List<string>(), Error: e.Message);
+                unreadable++;
+            }
         }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException)
-        {
-            return null;
-        }
+
+        return new FolderFiles(name, files, Unreadable: unreadable);
     }
 
     /// <summary>
     /// Add the files of a directory to the favorites, all in one folder named after the directory (at the end of the
-    /// list), in the order they were read. A file that is a favorite already stays where it is, and a folder with
-    /// the name of a folder of the list is added to (see FolderList.Import), so the same directory added again adds
-    /// its new files
+    /// list, or added to a folder of that name that is there: see FolderList.Import), in the order they were read. A
+    /// file that is a favorite already stays where it is, so the same directory added again adds its new files
     /// </summary>
     /// <param name="folder">The files (ReadFolder)</param>
     /// <param name="apply">False to only count what would be done</param>
     internal static ImportResult ImportFolder(FolderFiles folder, bool apply)
     {
+        // The favorites there are, by their full paths: each file is looked up once (not compared with each)
+        var comparer = FileOperations.NamesIgnoreCase ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
+        var there = new HashSet<string>(List.Where(item => !item.IsFolder).Select(item => PlaceKey(item.Path)), comparer);
+        var fresh = folder.Files.Where(path => !there.Contains(PlaceKey(path))).ToList();
         var items = new List<Favorite> { new() { IsFolder = true, Name = folder.Name } };
-        items.AddRange(folder.Files.Select(path => new Favorite { Path = path, Level = 1 }));
-        return Folders.Import(items, apply,
+        items.AddRange(fresh.Select(path => new Favorite { Path = path, Level = 1 }));
+        var result = Folders.Import(items, apply,
             item => item.Path.IndexOfAny(new[] { '\r', '\n' }) < 0
                 ? new Favorite { Path = System.IO.Path.GetFullPath(item.Path) }
                 : null,
             name => new Favorite { IsFolder = true, Name = name },
-            (one, other) => FileOperations.SamePath(one.Path, other.Path));
+            // (those that are favorites already are left out above)
+            (_, _) => false);
+        return result with { Skipped = result.Skipped + folder.Files.Count - fresh.Count };
+    }
+
+    // A path as it is compared: full, without a separator at the end
+    private static string PlaceKey(string path)
+    {
+        try
+        {
+            return System.IO.Path.TrimEndingDirectorySeparator(System.IO.Path.GetFullPath(path));
+        }
+        catch (Exception e) when (e is ArgumentException or NotSupportedException or IOException)
+        {
+            return path;
+        }
     }
 
     /// <summary>

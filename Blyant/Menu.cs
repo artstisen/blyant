@@ -131,7 +131,9 @@ internal static class Menu
         ConsoleColors.SetColors(attention
             ? ConsoleColors.ColorPreset.AttentionInverted
             : ConsoleColors.ColorPreset.HighlightInverted);
-        Console.WriteLine(" " + title.ToUpper() + " ");
+        // (a caption in another language can be long: it stops a column before the name of the program in the
+        // middle of the row, see WriteNameInTopBar)
+        Console.WriteLine(" " + Tools.TruncateString(title.ToUpper(), CaptionRoom, true) + " ");
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
         if (!string.IsNullOrEmpty(note))
         {
@@ -174,6 +176,12 @@ internal static class Menu
             ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
         }
     }
+
+    /// <summary>
+    /// The room for a caption at the left of the top row: up to a column before the name of the program, which is
+    /// written in the middle (WriteCenterText)
+    /// </summary>
+    internal static int CaptionRoom => Math.Max(10, Init.LineWidth / 2 - (DialogText.ApplicationName.Length / 2 + 1) - 3);
 
     internal static void WriteNameInTopBar()
     {

@@ -406,8 +406,8 @@ internal static partial class FileExplorer
         else
         {
             message = isMove
-                ? Lang.F("Moved to {0}: {1}", ShortPath(target), done)
-                : Lang.F("Copied to {0}: {1}", ShortPath(target), done);
+                ? Lang.F("Moved: {0}, to {1}", done, ShortPath(target))
+                : Lang.F("Copied: {0}, to {1}", done, ShortPath(target));
         }
 
         // The last one copied or moved is selected where it was put

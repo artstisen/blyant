@@ -63,7 +63,7 @@ internal static partial class FileExplorer
         _foundSummary = Lang.F("Files found: {0}", _found.Count) +
                         (outcome.Capped ? DialogText.SearchCapped : string.Empty) +
                         (outcome.Stopped ? DialogText.SearchStopped : string.Empty) +
-                        (outcome.Unreadable > 0 ? " (" + Lang.F("Directories that could not be read: {0}", outcome.Unreadable) + ")" : "");
+                        (outcome.Unreadable > 0 ? " (" + Lang.F("Unreadable directories: {0}", outcome.Unreadable) + ")" : "");
         _foundMessage = string.Empty;
     }
 

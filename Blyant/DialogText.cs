@@ -460,7 +460,7 @@ internal static class DialogText
     public static string FavoriteMoveOne => Lang.T("Move to folder");
     public static string FavoriteMoveMany(int count) => Lang.F("Move favorites to folder ({0})", count);
     public static string FavoriteMovedOne => Lang.T("Moved to: ");
-    public static string FavoriteMovedMany(int count, string where) => Lang.F("Favorites moved to {0}: {1}", where, count);
+    public static string FavoriteMovedMany(int count, string where) => Lang.F("Favorites moved: {0}, to {1}", count, where);
     public static string FavoriteMarkFolder => Lang.T("Only favorites can be marked and moved to a folder (not folders)");
     public static string FavoritesMarkedKeys => Lang.T("Space Mark | M To folder | T/E Top/End | D Remove | Esc Clear the marks");
     public static string FavoriteRemoveCaption => Lang.T("Remove favorites");

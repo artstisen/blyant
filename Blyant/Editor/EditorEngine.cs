@@ -1591,7 +1591,7 @@ internal sealed partial class EditorEngine
         ClampCursor();
         Message = trimmed == 0 && kept == 0 ? Lang.T("No blank space at line ends")
             : kept == 0 ? Lang.F("Lines trimmed: {0}", trimmed)
-            : Lang.F("Lines trimmed: {0}. Markdown line breaks kept: {1} (:trim! removes them)", trimmed, kept);
+            : Lang.F("Trimmed: {0}, line breaks kept: {1} (:trim! all)", trimmed, kept);
     }
 
     /// <summary>

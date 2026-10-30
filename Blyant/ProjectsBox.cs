@@ -168,7 +168,7 @@ internal static class ProjectsBox
     private static string? AddFolder()
     {
         ChoiceBox.Forget();
-        var picked = FileExplorer.PickDirectory(Lang.T("Add a folder to the projects"));
+        var picked = FileExplorer.PickDirectory(Lang.T("Add a folder to projects"));
         Tools.ClearScreen();
         if (picked == null) return null;
         return AddFolder(picked);

@@ -131,5 +131,5 @@ internal static class MissingPlaces
     /// </summary>
     internal static string NothingToPrune(int kept) => kept == 0
         ? NothingMissing
-        : Lang.F("Nothing removed: the missing are all on drives that are not connected ({0})", kept);
+        : Lang.F("Nothing removed (on drives not connected: {0})", kept);
 }

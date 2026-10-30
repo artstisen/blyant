@@ -57,10 +57,14 @@ public class FavoriteFolderImportTests : IDisposable
         Assert.Equal(new[] { "a.md", "b.txt", "c1.md", "c2.md", "old.md", "start.md", "n.md" },
             all.Files.Select(Path.GetFileName));
         Assert.Equal(7, all.Count);
-        // More files than wanted: none
-        Assert.Null(FileFavorites.ReadFolder(_book, true, 5));
-        Assert.NotNull(FileFavorites.ReadFolder(_book, false, 2));
-        Assert.Null(FileFavorites.ReadFolder(Path.Combine(_directory, "not there"), false));
+        // More files than wanted: too many (the limit itself is not too many)
+        Assert.False(FileFavorites.ReadFolder(_book, true, 7).TooMany);
+        Assert.True(FileFavorites.ReadFolder(_book, true, 6).TooMany);
+        Assert.False(FileFavorites.ReadFolder(_book, false, 2).TooMany);
+        // A directory that is not there: an error, and no files
+        var gone = FileFavorites.ReadFolder(Path.Combine(_directory, "not there"), false);
+        Assert.NotNull(gone.Error);
+        Assert.Empty(gone.Files);
     }
 
     [Fact]
@@ -82,6 +86,42 @@ public class FavoriteFolderImportTests : IDisposable
         var again = FileFavorites.ImportFolder(FileFavorites.ReadFolder(_book, true)!, true);
         Assert.Equal((1, 0, 1), (again.Added, again.NewFolders, again.MergedFolders));
         Assert.Equal("b.txt [Book] .a.md .c1.md .c2.md .old.md .start.md .n.md .c3.md", Show());
+    }
+
+    [Fact]
+    public void AFolderOfTheSameName_IsAddedTo_ItsOwnFavoritesStaying()
+    {
+        // A folder of the user's with the name (in other letters), with a favorite of its own
+        FileFavorites.AddFolder("book", -1);
+        FileFavorites.AddBelow(Path.Combine(_directory, "mine.md"), 0);
+        var own = FileFavorites.ReadFolder(_book, false);
+        // Only counting changes nothing
+        var plan = FileFavorites.ImportFolder(own, false);
+        Assert.Equal((2, 0, 1), (plan.Added, plan.NewFolders, plan.MergedFolders));
+        Assert.Equal("[book] .mine.md", Show());
+        FileFavorites.ImportFolder(own, true);
+        Assert.Equal("[book] .mine.md .a.md .b.txt", Show());
+        Assert.Equal(0, FileFavorites.FolderIndex("Book"));
+    }
+
+    [Fact]
+    public void FilesOnlyBelow_AndNamesThatCannotBeFolderNames()
+    {
+        var only = Path.Combine(_directory, "Only below");
+        Directory.CreateDirectory(Path.Combine(only, "sub"));
+        File.WriteAllText(Path.Combine(only, "sub", "x.md"), "x");
+        Assert.Equal(0, FileFavorites.ReadFolder(only, false).Count);
+        Assert.Equal(1, FileFavorites.ReadFolder(only, true).Count);
+        // A line break would break the line of the folder in the file, and a name of blank space is no name
+        Assert.Equal("a b", FileFavorites.FolderNameOf(Path.Combine(_directory, "a\nb")));
+        Assert.Equal("Folder", FileFavorites.FolderNameOf(Path.Combine(_directory, "   ")));
+    }
+
+    [UnixFact]
+    public void ALinkToAFileThatIsNotThere_IsLeftOut()
+    {
+        File.CreateSymbolicLink(Path.Combine(_book, "broken.md"), Path.Combine(_directory, "nowhere.md"));
+        Assert.Equal(new[] { "a.md", "b.txt" }, FileFavorites.ReadFolder(_book, false).Files.Select(Path.GetFileName));
     }
 
     [UnixFact]

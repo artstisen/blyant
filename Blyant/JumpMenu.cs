@@ -1244,7 +1244,7 @@ internal static class JumpMenu
         _select = folder ?? items[0];
         var where = folder == null ? DialogText.FavoriteNoFolder : folder.Name;
         _message = items.Count == 1 ? DialogText.FavoriteMovedOne + where
-            : Lang.F("Bookmarks moved to {0}: {1}", where, items.Count);
+            : Lang.F("Bookmarks moved: {0}, to {1}", items.Count, where);
         SaveBookmarks();
     }
 

@@ -218,9 +218,10 @@ internal static class EventLog
             Menu.WriteModeLabel(DialogText.LogReview, string.Empty, 0);
             Tools.SetCursorEx(1, 1);
             ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
-            Console.Write(Lang.F("Lines: {0}", lines.Count) +
+            // (cut at the end of the line: a long filter would go on to the next)
+            Console.Write(Tools.FitLine(Lang.F("Lines: {0}", lines.Count) +
                           (filter.Length > 0 ? " " + Lang.F("of {0} containing: {1}", Lines.Count, filter) : "") +
-                          (_removed > 0 ? " (" + Lang.F("Older lines removed: {0}", _removed) + ")" : ""));
+                          (_removed > 0 ? " (" + Lang.F("Older lines removed: {0}", _removed) + ")" : ""), 1));
             ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
             for (var row = 0; row < pageSize && top + row < rows.Count; row++)
             {

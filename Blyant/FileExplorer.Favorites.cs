@@ -590,22 +590,22 @@ internal static partial class FileExplorer
     }
 
     // ":import folder": the files of a directory (given, or picked in the file browser) as a folder of favorites, with
-    // those of its subfolders if wanted (asked when it has some). The same directory added again adds its new files
+    // those of the folders below it if wanted (asked when there are some). What will be done is shown and asked
+    // first: a folder of that name may be there, and is added to. The same directory added again adds its new files
     private static void ImportFolder(string argument)
     {
-        if (_favoriteFilter.Length > 0)
-        {
-            _favoriteMessage = DialogText.FavoriteMoveFiltered;
-            return;
-        }
-
+        // A path in quotes (as copied in Explorer), and one relative to the directory shown (as ":cd")
+        argument = argument.Trim().Trim('"').Trim();
         var directory = argument.Length > 0
             ? argument
-            : FileExplorer.PickDirectory(Lang.T("Add a folder to the favorites"));
+            : FileExplorer.PickDirectory(Lang.T("Add a folder to favorites"));
         if (directory == null) return;
         try
         {
-            directory = System.IO.Path.GetFullPath(directory);
+            var shown = ActivePane.Directory;
+            directory = System.IO.Path.IsPathFullyQualified(shown)
+                ? System.IO.Path.GetFullPath(directory, shown)
+                : System.IO.Path.GetFullPath(directory);
         }
         catch (Exception e) when (e is ArgumentException or NotSupportedException or IOException)
         {
@@ -619,40 +619,45 @@ internal static partial class FileExplorer
             return;
         }
 
-        // Its own files, and with those of its subfolders (null: too many)
+        var tooMany = Lang.F("More than {0} files: choose a folder with fewer", FileFavorites.FolderImportMax);
         var own = FileFavorites.ReadFolder(directory, false);
-        var all = FileFavorites.ReadFolder(directory, true);
-        if (own == null)
+        if (own.Error != null || own.TooMany)
         {
-            _favoriteMessage = Lang.F("More than {0} files: choose a folder with fewer", FileFavorites.FolderImportMax);
+            _favoriteMessage = own.Error ?? tooMany;
             return;
         }
 
         var name = own.Name;
         var files = own;
-        if (all == null || all.Count > own.Count)
+        var all = FileFavorites.ReadFolder(directory, true);
+        if (all.TooMany || all.Count > own.Count)
         {
             ChoiceBox.Forget();
-            // (the counts after a colon: no plural that must agree with the number, in any language)
-            var note = all == null
-                ? Lang.F("Files in {0}: {1}. With its subfolders: more than {2} (too many to add).", name, own.Count,
-                    FileFavorites.FolderImportMax)
-                : Lang.F("Files in {0}: {1}. With its subfolders: {2}.", name, own.Count, all.Count);
-            if (all is { Count: > 500 }) note += " " + Lang.T("That is many favorites.");
-            var picked = ChoiceBox.Pick(DialogText.CaptionsFileFavorites, Lang.T("Include the files of its subfolders?"),
-                note, new[] { DialogText.ChoiceYes, DialogText.ChoiceNo }, new[] { "Y", "N" }, all == null ? 1 : 0,
-                false);
-            if (picked < 0) return;
-            if (picked == 0)
+            if (all.TooMany)
             {
-                if (all == null)
+                // Too many with them: only its own files can be added
+                if (own.Count == 0)
                 {
-                    _favoriteMessage = Lang.F("More than {0} files: choose a folder with fewer",
-                        FileFavorites.FolderImportMax);
+                    _favoriteMessage = tooMany;
                     return;
                 }
 
-                files = all;
+                if (!ChoiceBox.Confirm(DialogText.CaptionsFileFavorites, Lang.T("Add only its own files?"),
+                        Lang.F("Files in {0}: {1}. With its subfolders: more than {2} (too many to add).", name,
+                            own.Count, FileFavorites.FolderImportMax), false))
+                {
+                    return;
+                }
+            }
+            else
+            {
+                // (the counts after a colon: no plural that must agree with the number, in any language)
+                var picked = ChoiceBox.Pick(DialogText.CaptionsFileFavorites,
+                    Lang.T("Include the files of its subfolders?"),
+                    Lang.F("Files in {0}: {1}. With its subfolders: {2}.", name, own.Count, all.Count),
+                    new[] { DialogText.ChoiceYes, DialogText.ChoiceNo }, new[] { "Y", "N" }, 0, false);
+                if (picked < 0) return;
+                if (picked == 0) files = all;
             }
         }
 
@@ -665,7 +670,27 @@ internal static partial class FileExplorer
         var plan = FileFavorites.ImportFolder(files, false);
         if (plan.Added == 0)
         {
-            _favoriteMessage = Lang.T("All the files of the folder are favorites already");
+            _favoriteMessage = plan.Skipped > 0
+                ? Lang.T("All the files of the folder are favorites already")
+                : Lang.T("There are no files to add in that folder");
+            return;
+        }
+
+        // What will be done, a sentence for each that there is
+        var sentences = new List<string>
+        {
+            plan.NewFolders > 0
+                ? Lang.F("New folder: {0}, at the end of the list.", name)
+                : Lang.F("Added to the folder there: {0}.", name)
+        };
+        if (plan.Skipped > 0) sentences.Add(Lang.F("Favorites already, left out: {0}.", plan.Skipped));
+        if (plan.LeftOut > 0) sentences.Add(Lang.F("Left out, with a line break in the name: {0}.", plan.LeftOut));
+        if (files.Unreadable > 0) sentences.Add(Lang.F("Unreadable directories: {0}", files.Unreadable) + ".");
+        if (plan.Added > 500) sentences.Add(Lang.T("That is many favorites."));
+        ChoiceBox.Forget();
+        if (!ChoiceBox.Confirm(DialogText.CaptionsFileFavorites, Lang.F("Add files to favorites ({0})?", plan.Added),
+                string.Join(" ", sentences), false))
+        {
             return;
         }
 
@@ -675,9 +700,10 @@ internal static partial class FileExplorer
                      " files, " + done.Skipped + " left out");
         ShowFavoriteAt(FileFavorites.FolderIndex(name));
         if (_favoriteMessage.Length > 0) return;
+        // (the name last: a long one is what is cut)
         _favoriteMessage = done.Skipped == 0
-            ? Lang.F("Files added to the folder {0}: {1}", name, done.Added)
-            : Lang.F("Files added to the folder {0}: {1} (favorites already: {2})", name, done.Added, done.Skipped);
+            ? Lang.F("Files added: {0}. Folder: {1}", done.Added, name)
+            : Lang.F("Files added: {0}. Favorites already: {1}. Folder: {2}", done.Added, done.Skipped, name);
     }
 
     // Ask for the name of a new folder (if it is not given) and add it in front of the selected item
