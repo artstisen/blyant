@@ -43,6 +43,13 @@ Text shown to the user is written in English in the code and given to `Lang.T(".
 - Text shown to the user is kept in `DialogText` (or written in a `Lang.T` call where it is used)
 - The log (`EventLog`) can be read by anyone at the screen: never log the text of files or search texts. Commands are logged by name only. It is also written to `log.txt` in the data directory
 
+## Linux and macOS
+Blyant is written and tested on Windows, but it must work the same on Linux and macOS, and those cannot be tried on this computer. Code behind `!OperatingSystem.IsWindows()` and tests marked `[UnixFact]` do not run on Windows: only the GitHub workflow `Build and test` runs them, on all three systems.
+
+- Do not take the behavior of the file system from Windows. `File.Exists` is true on Linux and macOS for a link to a file that is not there (on Windows it is false), names of files are case-sensitive, a name starting with `.` is hidden, and the separator is `/`: use `Path.Combine`, never a written `\`
+- A change to files, paths, links or the terminal gets tests of what differs between the systems, also a `[UnixFact]` when it cannot be tried on Windows
+- Passing tests on Windows say nothing about the rest: look at the workflow, also for a change that seems to be about Windows only
+
 ## Files
 The files of the user, and Blyant's own files, must never be left empty or half written, whenever Blyant is stopped (the terminal closed, the computer turned off).
 
@@ -57,3 +64,4 @@ The files of the user, and Blyant's own files, must never be left empty or half 
 ## Releases
 - The version is set in `DialogText.ApplicationVersion` and in `Blyant.csproj`: `Version` (the product version, `1.0.0`), `AssemblyVersion` and `FileVersion` (`1.0.0.0`). Change all four together
 - `publish.ps1` builds the `publish` folder: it runs the tests first, and stops if the four versions differ
+- A release is made in this order: push `main`, wait until `Build and test` has passed on Windows, Linux and macOS, and only then tag it and publish the release. The tests on Windows do not cover Linux and macOS (see [Linux and macOS](#linux-and-macos))

@@ -114,6 +114,19 @@ internal static class SyntaxHighlighter
         };
     }
 
+    // Files of text that are not colored
+    private static readonly HashSet<string> OtherTextExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".txt", ".log", ".csv", ".tsv", ".yaml", ".yml", ".toml", ".tex", ".bib", ".rst", ".adoc", ".org"
+    };
+
+    /// <summary>
+    /// True if a file is text, as told by its name (the file is not read): a kind that is colored, or another
+    /// common kind of text
+    /// </summary>
+    internal static bool IsTextFile(string fileName) =>
+        TypeOfFile(fileName) != SyntaxType.None || OtherTextExtensions.Contains(Path.GetExtension(fileName));
+
     /// <summary>
     /// The kind of text given by a name in a command (":syntax html"). None if the name is not known
     /// </summary>

@@ -589,8 +589,8 @@ internal static partial class FileExplorer
         if (_favoriteMessage.Length == 0) _favoriteMessage = Lang.F("Bookmarks copied to the favorites: {0}", done.Added);
     }
 
-    // ":import folder": the files of a directory (given, or picked in the file browser) as a folder of favorites, with
-    // those of the folders below it if wanted (asked when there are some). What will be done is shown and asked
+    // ":import folder": the text files of a directory (given, or picked in the file browser) as a folder of favorites,
+    // with those of the folders below it if wanted (asked when there are some). What will be done is shown and asked
     // first: a folder of that name may be there, and is added to. The same directory added again adds its new files
     private static void ImportFolder(string argument)
     {
@@ -629,7 +629,14 @@ internal static partial class FileExplorer
 
         var name = own.Name;
         var files = own;
-        var all = FileFavorites.ReadFolder(directory, true);
+        // (the number found is shown while a large tree or a slow drive is read, and Esc stops it)
+        var all = FileFavorites.ReadFolder(directory, true, progress: ShowSearchProgress);
+        if (all.Stopped)
+        {
+            _favoriteMessage = DialogText.SearchStopped.Trim();
+            return;
+        }
+
         if (all.TooMany || all.Count > own.Count)
         {
             ChoiceBox.Forget();
@@ -684,6 +691,7 @@ internal static partial class FileExplorer
                 : Lang.F("Added to the folder there: {0}.", name)
         };
         if (plan.Skipped > 0) sentences.Add(Lang.F("Favorites already, left out: {0}.", plan.Skipped));
+        if (files.Other > 0) sentences.Add(Lang.F("Other kinds, left out: {0}.", files.Other));
         if (plan.LeftOut > 0) sentences.Add(Lang.F("Left out, with a line break in the name: {0}.", plan.LeftOut));
         if (files.Unreadable > 0) sentences.Add(Lang.F("Unreadable directories: {0}", files.Unreadable) + ".");
         if (plan.Added > 500) sentences.Add(Lang.T("That is many favorites."));

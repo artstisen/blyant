@@ -296,13 +296,14 @@ internal static class FileFavorites
             (one, other) => FileOperations.SamePath(one.Path, other.Path));
 
     /// <summary>
-    /// The files of a directory, to add to the favorites as a folder (":import folder"): its own files, and (when
+    /// The files of a directory, to add to the favorites as a folder (":import folder"): its own text files, and (when
     /// asked for) those of the folders below it, at any depth. TooMany: there are more than the most that are read
-    /// (the files are not all read then). Error: the directory itself could not be read. Unreadable: the folders
-    /// below it that could not be read, and are left out
+    /// (the files are not all read then). Stopped: the reading was stopped. Error: the directory itself could not be
+    /// read. Unreadable: the folders below it that could not be read, and are left out. Other: the files that are not
+    /// text (as told by their names), and are left out
     /// </summary>
-    internal sealed record FolderFiles(string Name, List<string> Files, bool TooMany = false, string? Error = null,
-        int Unreadable = 0)
+    internal sealed record FolderFiles(string Name, List<string> Files, bool TooMany = false, bool Stopped = false,
+        string? Error = null, int Unreadable = 0, int Other = 0)
     {
         internal int Count => Files.Count;
     }
@@ -337,11 +338,28 @@ internal static class FileFavorites
         }
     }
 
-    // The files of a directory by name, at most a number of them (more are not read: the list is too long then).
-    // A link to a file that is not there is left out
-    private static List<string> FilesIn(string directory, int most) =>
-        Directory.EnumerateFiles(directory, "*", Shown).Where(file => IsShown(file) && IsThere(file))
-            .Take(most).Order(StringComparer.OrdinalIgnoreCase).ToList();
+    // The text files of a directory by name (no file is read: their names tell), at most a number of them (more are
+    // not read: the list is too long then). The other files are counted. A link to a file that is not there is left
+    // out
+    private static List<string> FilesIn(string directory, int most, ref int other)
+    {
+        var files = new List<string>();
+        foreach (var file in Directory.EnumerateFiles(directory, "*", Shown))
+        {
+            if (!IsShown(file)) continue;
+            if (!SyntaxHighlighter.IsTextFile(file))
+            {
+                other++;
+                continue;
+            }
+
+            if (!IsThere(file)) continue;
+            files.Add(file);
+            if (files.Count >= most) break;
+        }
+
+        return files.Order(StringComparer.OrdinalIgnoreCase).ToList();
+    }
 
     // A file, or a link to a file that is there. (File.Exists is true for a link to a file that is not there on
     // Linux and macOS, where it looks at the link itself, and false on Windows: the target is looked at)
@@ -374,29 +392,39 @@ internal static class FileFavorites
     }
 
     /// <summary>
-    /// Read the files of a directory to add to the favorites as a folder: its own files by name, then (with
-    /// subfolders) those of each folder below it in turn, at any depth, so the files of a folder stay together.
-    /// Hidden files and folders (also those whose names start with "."), links to other folders, links to files
-    /// that are not there, and what cannot be read are left out. Reading stops when there are more than max
+    /// Read the text files of a directory to add to the favorites as a folder: its own files by name, then (with
+    /// subfolders) those of each folder below it in turn, at any depth, so the files of a folder stay together. Only
+    /// the names are read. Files that are not text, hidden files and folders (also those whose names start with
+    /// "."), links to other folders, links to files that are not there, and what cannot be read are left out.
+    /// Reading stops when there are more than max
     /// </summary>
     /// <param name="directory">The directory</param>
     /// <param name="subfolders">True to read the files of the folders below it too</param>
     /// <param name="max">The most files</param>
-    internal static FolderFiles ReadFolder(string directory, bool subfolders, int max = FolderImportMax)
+    /// <param name="progress">Called with each folder before it is read, and the number of files found: false stops
+    /// the reading</param>
+    internal static FolderFiles ReadFolder(string directory, bool subfolders, int max = FolderImportMax,
+        Func<string, int, bool>? progress = null)
     {
         var name = FolderNameOf(directory);
         var files = new List<string>();
         var unreadable = 0;
+        var other = 0;
         // The folders still to read, the next on top (a loop, not a call for each folder: no limit to the depth)
         var folders = new Stack<string>();
         folders.Push(directory);
         while (folders.Count > 0)
         {
             var folder = folders.Pop();
+            if (progress != null && !progress(folder, files.Count)) return new FolderFiles(name, files, Stopped: true);
             try
             {
-                files.AddRange(FilesIn(folder, max + 1 - files.Count));
-                if (files.Count > max) return new FolderFiles(name, files, TooMany: true, Unreadable: unreadable);
+                files.AddRange(FilesIn(folder, max + 1 - files.Count, ref other));
+                if (files.Count > max)
+                {
+                    return new FolderFiles(name, files, TooMany: true, Unreadable: unreadable, Other: other);
+                }
+
                 if (!subfolders) break;
                 var below = FoldersIn(folder);
                 for (var i = below.Count - 1; i >= 0; i--) folders.Push(below[i]);
@@ -409,11 +437,11 @@ internal static class FileFavorites
             }
         }
 
-        return new FolderFiles(name, files, Unreadable: unreadable);
+        return new FolderFiles(name, files, Unreadable: unreadable, Other: other);
     }
 
     /// <summary>
-    /// Add the files of a directory to the favorites, all in one folder named after the directory (at the end of the
+    /// Add the text files of a directory to the favorites, all in one folder named after the directory (at the end of the
     /// list, or added to a folder of that name that is there: see FolderList.Import), in the order they were read. A
     /// file that is a favorite already stays where it is, so the same directory added again adds its new files
     /// </summary>

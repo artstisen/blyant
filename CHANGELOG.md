@@ -1,5 +1,8 @@
 # Changes
 
+## v1.2.1 (unreleased)
+- **`:import folder` adds text files only**: the files are told by their names, without opening them: the kinds Blyant colors, and `.txt`, `.log`, `.csv`, `.tsv`, `.yaml`, `.yml`, `.toml`, `.tex`, `.bib`, `.rst`, `.adoc` and `.org`. Other files, such as images and the files of other programs, are left out and counted in the summary, and no longer count for the limit of 2000 files. The number found is shown while a large folder is read, and `Esc` stops it.
+
 ## v1.2.0 (2026-10-30)
 - **Counts in messages and questions**: a count is written after a colon or in brackets ("Lines trimmed: 1", "Remove all the bookmarks (14)?"), so no message reads "1 lines" and no word has to agree with the number in any of the languages (Polish, for one, has three forms).
 - **A folder with its files in the favorites**: `:import folder` in the favorites adds a directory you pick (or give, also in quotes or relative to the folder shown) as a folder of favorites with all its files, and asks whether to include the files of its subfolders, at any depth: all go in the one folder, those of a subfolder together. What will be done is shown and asked first, also when a favorites folder of the same name is there and is added to. Hidden files and folders (`.git`), links to other folders and broken links are left out, folders that cannot be read are skipped and counted, files that are favorites already stay where they are, and the same directory added again adds its new files.

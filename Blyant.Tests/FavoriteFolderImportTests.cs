@@ -23,7 +23,8 @@ public class FavoriteFolderImportTests : IDisposable
                  {
                      "b.txt", "a.md", ".hidden.md", Path.Combine(".git", "config"), Path.Combine("chapters", "c2.md"),
                      Path.Combine("chapters", "c1.md"), Path.Combine("chapters", "drafts", "old.md"),
-                     Path.Combine("chapters", "drafts", "early", "first", "start.md"), Path.Combine("notes", "n.md")
+                     Path.Combine("chapters", "drafts", "early", "first", "start.md"), Path.Combine("notes", "n.md"),
+                     "cover.png", "cover.psd", "README", Path.Combine("chapters", "map.xcf")
                  })
         {
             var path = Path.Combine(_book, name);
@@ -86,6 +87,54 @@ public class FavoriteFolderImportTests : IDisposable
         var again = FileFavorites.ImportFolder(FileFavorites.ReadFolder(_book, true)!, true);
         Assert.Equal((1, 0, 1), (again.Added, again.NewFolders, again.MergedFolders));
         Assert.Equal("b.txt [Book] .a.md .c1.md .c2.md .old.md .start.md .n.md .c3.md", Show());
+    }
+
+    [Theory]
+    [InlineData("chapter.md", true)]
+    [InlineData("MAIN.TYP", true)]
+    [InlineData("notes.txt", true)]
+    [InlineData("data.csv", true)]
+    [InlineData("config.yml", true)]
+    [InlineData("refs.bib", true)]
+    [InlineData("map.svg", true)]
+    [InlineData("site.html", true)]
+    [InlineData("photo.png", false)]
+    [InlineData("layers.psd", false)]
+    [InlineData("book.pdf", false)]
+    [InlineData("README", false)]
+    public void WhatIsText_IsToldByTheName(string name, bool text)
+    {
+        Assert.Equal(text, SyntaxHighlighter.IsTextFile(name));
+        Assert.Equal(text, SyntaxHighlighter.IsTextFile(Path.Combine(_directory, name)));
+    }
+
+    [Fact]
+    public void FilesThatAreNotText_AreLeftOutAndCounted_AndDoNotCountForTheLimit()
+    {
+        Assert.Equal(3, FileFavorites.ReadFolder(_book, false).Other);
+        var all = FileFavorites.ReadFolder(_book, true);
+        Assert.Equal(4, all.Other);
+        Assert.DoesNotContain(all.Files, file => file.EndsWith(".png", StringComparison.Ordinal));
+        // Only the text files count: 7 of the 11
+        Assert.False(FileFavorites.ReadFolder(_book, true, 7).TooMany);
+    }
+
+    [Fact]
+    public void TheReading_TellsWhereItIs_AndCanBeStopped()
+    {
+        var seen = new List<string>();
+        var read = FileFavorites.ReadFolder(_book, true, progress: (folder, _) =>
+        {
+            seen.Add(Path.GetFileName(folder));
+            return true;
+        });
+        Assert.False(read.Stopped);
+        Assert.Equal(new[] { "Book", "chapters", "drafts", "early", "first", "empty", "notes" }, seen);
+        // Stopped in the second folder
+        var calls = 0;
+        var stopped = FileFavorites.ReadFolder(_book, true, progress: (_, _) => ++calls < 2);
+        Assert.True(stopped.Stopped);
+        Assert.Equal(2, stopped.Count);
     }
 
     [Fact]
