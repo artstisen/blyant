@@ -594,7 +594,7 @@ en: "Ctrl+O opens the Jump menu from anywhere: bookmarks, recent places, project
 en: "Ctrl+K or :recent shows the latest files you opened, on almost any page. In the editor, Ctrl+K and Enter go back to the file you were in before."
 en: "B in the Jump menu bookmarks the selected place, and :bookmark does it in the editor and the file browser. Then :book 3 jumps to bookmark 3 from almost any page."
 en: "In the file browser, P keeps a file or folder as a favorite, and F shows them. Group them in folders and give them colors; :import favorites in the Jump menu copies them to the bookmarks."
-en: "In a Markdown file, type /bold, /link or /h2 and press Tab. Select text and type :surround /bold to put the marks around it. Your own completions go in completions.txt."
+en: "In a Markdown or Typst file, type /bold, /link or /h2 and press Tab. Select text and type :surround /bold to put the marks around it. Your own completions go in completions.txt."
 en: "While you write, a recovery copy is kept. If Blyant or the terminal stops, the text is offered when you open the file again, or under Recover unsaved text."
 en: "D in the file browser moves a file to the trash, after asking. :trash goes there, and M moves a file back where you want it."
 en: ":split shows two panes of a text (Tab goes from one to the other), and :diff compares the text with the file as it is saved."

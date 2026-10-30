@@ -33,8 +33,8 @@ internal static class Hints
                "browser. Then :book 3 jumps to bookmark 3 from almost any page."),
         Lang.T("In the file browser, P keeps a file or folder as a favorite, and F shows them. Group them in " +
                "folders and give them colors; :import favorites in the Jump menu copies them to the bookmarks."),
-        Lang.T("In a Markdown file, type /bold, /link or /h2 and press Tab. Select text and type :surround /bold " +
-               "to put the marks around it. Your own completions go in completions.txt."),
+        Lang.T("In a Markdown or Typst file, type /bold, /link or /h2 and press Tab. Select text and type " +
+               ":surround /bold to put the marks around it. Your own completions go in completions.txt."),
         Lang.T("While you write, a recovery copy is kept. If Blyant or the terminal stops, the text is offered " +
                "when you open the file again, or under Recover unsaved text."),
         Lang.T("D in the file browser moves a file to the trash, after asking. :trash goes there, and M moves a " +
