@@ -675,6 +675,8 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionFavorites, true));
             _shortcutList.Add(new Shortcut(":jump Ctrl+O", Lang.T("The Jump menu: files, directories and pages"), false));
             _shortcutList.Add(new Shortcut("Ctrl+K :recent", Lang.T("The latest files: Enter or 1-9 opens one"), false));
+            _shortcutList.Add(new Shortcut(":missing", Lang.T("List the entries whose file or folder is gone"), false));
+            _shortcutList.Add(new Shortcut(":prune", Lang.T("Remove them (asks first; drives not connected stay)"), false));
             _shortcutList.Add(new Shortcut(":book 3", Lang.T("Jump to bookmark 3 (:book alone: the bookmarks)"), false));
             _shortcutList.Add(new Shortcut("j k gg G", Lang.T("Select"), false));
             _shortcutList.Add(new Shortcut("5j 5k 5gg 5G", Lang.T("With a count: 5 rows down/up, to row 5"), false));
@@ -717,6 +719,8 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionHistory, true));
             _shortcutList.Add(new Shortcut(":jump Ctrl+O", Lang.T("The Jump menu: files, directories and pages"), false));
             _shortcutList.Add(new Shortcut("Ctrl+K :recent", Lang.T("The latest files: Enter or 1-9 opens one"), false));
+            _shortcutList.Add(new Shortcut(":missing", Lang.T("List the entries whose file or folder is gone"), false));
+            _shortcutList.Add(new Shortcut(":prune", Lang.T("Remove them (asks first; drives not connected stay)"), false));
             _shortcutList.Add(new Shortcut(":book 3", Lang.T("Jump to bookmark 3 (:book alone: the bookmarks)"), false));
             _shortcutList.Add(new Shortcut("j k gg G", Lang.T("Select"), false));
             _shortcutList.Add(new Shortcut("5j 5k 5gg 5G", Lang.T("With a count: 5 rows down/up, to row 5"), false));
@@ -736,6 +740,8 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionHotlist, true));
             _shortcutList.Add(new Shortcut(":jump Ctrl+O", Lang.T("The Jump menu: files, directories and pages"), false));
             _shortcutList.Add(new Shortcut("Ctrl+K :recent", Lang.T("The latest files: Enter or 1-9 opens one"), false));
+            _shortcutList.Add(new Shortcut(":missing", Lang.T("List the entries whose file or folder is gone"), false));
+            _shortcutList.Add(new Shortcut(":prune", Lang.T("Remove them (asks first; drives not connected stay)"), false));
             _shortcutList.Add(new Shortcut(":book 3", Lang.T("Jump to bookmark 3 (:book alone: the bookmarks)"), false));
             _shortcutList.Add(new Shortcut("j k gg G", Lang.T("Select"), false));
             _shortcutList.Add(new Shortcut("5j 5k 5gg 5G", Lang.T("With a count: 5 rows down/up, to row 5"), false));
@@ -802,6 +808,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("Space M", Lang.T("Bookmarks: mark several/move them to a folder"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("On a folder"), Lang.T("Into another folder, or a subfolder out of its folder"), false));
             _shortcutList.Add(new Shortcut(":expand :collapse", Lang.T("Bookmarks: open/close all the folders"), false));
+            _shortcutList.Add(new Shortcut(":missing :prune", Lang.T("Bookmarks: list/remove those whose place is gone"), false));
             _shortcutList.Add(new Shortcut("u :clearbook", Lang.T("Bookmarks: put back the removed/clear (asks first)"), false));
             _shortcutList.Add(new Shortcut(":import favorites", Lang.T("Bookmarks: copy the favorites of the file browser"), false));
             _shortcutList.Add(new Shortcut(":", Lang.T("A command (on the Bookmarks tab)"), false));

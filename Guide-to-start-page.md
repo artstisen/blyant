@@ -285,6 +285,8 @@ In the list of favorites:
 - `C` or `:color` Pick a text color for the favorite from the list of 16 colors
 - `P`, `D` or `:remove` Remove it from the favorites, after asking (the file itself stays where it is)
 - `u` or `:undo` Put back the favorite, or the folder with its favorites, that was removed last
+- `:missing` The favorites whose file or directory is not there any more, in a box with the full path of each: `Enter` selects the one picked in the list (opening its folder), `Esc` closes the box
+- `:prune` Remove the missing favorites from the list, after asking (the question tells how many, and if they have notes); `u` puts them back. The folders stay. An entry on a drive that is not connected (a drive letter or network share that is not there, or a drive not mounted in `/media`, `/run/media`, `/mnt` or `/Volumes`) is listed, but kept: it is only missing until the drive is back
 - `W` or `:new` (`:new name` fills in the name) Make a new file, in the same box as _New file_ on the start page. It starts in the folder of the selected favorite: the directory of a file, the selected directory, or for a folder of favorites the directory of the first file in it (else the folder the file browser was in last). `Tab` chooses another folder, where the folder of the favorite is one of the places. The new file is opened in the editor, and becomes a favorite below the selected item (first in a folder that is selected), so the list shows it when the editor is closed
 - `A` or `:folder name` Create a folder, and `S` or `:subfolder name` a subfolder (see below)
 - `N` or `:note` Write the note of the favorite or folder (see below)
@@ -327,6 +329,8 @@ The file history lists the files you have opened in the editor from the file bro
 - `I` or `:info` Show information about the file
 - `D` or `:remove` Take the file out of the history (the file itself stays)
 - `X` or `:clear` Clear the file history. You are asked first, in a box on top of the list
+- `:missing` The files of the history that are not there any more, in a box: `Enter` selects the one picked in the list
+- `:prune` Remove the missing files from the history, after asking (as `:clear`, this cannot be undone). An entry on a drive that is not connected (a drive letter or network share that is not there, or a drive not mounted in `/media`, `/run/media`, `/mnt` or `/Volumes`) is listed, but kept: it is only missing until the drive is back
 - `:name` Copy the name of the file, `:path` its full path, as in the file browser: to the system clipboard and/or the paste bin, as set, and to the string memory (so `p` in the editor puts it in)
 - `/text` Only show the files whose path contains "text". `Esc` shows all again
 - `?` Help, `:` the command line
@@ -348,6 +352,8 @@ The directory hotlist keeps directories you want to go back to. `B` (or `:hotadd
 - `X` or `:rename name` The name the directory is shown with in the hotlist (and the Jump menu), such as "Project docs" for a deep path. Without a name you are asked for it. The directory itself keeps its name; an empty name shows its own name again
 - `D` or `:remove` Take the directory out of the hotlist (the directory itself stays). `u` or `:undo` puts it back
 - `:clear` Clear the hotlist. You are asked first
+- `:missing` The directories of the hotlist that are not there any more, in a box: `Enter` selects the one picked in the list
+- `:prune` Remove the missing directories from the hotlist, after asking; `u` puts them back. An entry on a drive that is not connected (a drive letter or network share that is not there, or a drive not mounted in `/media`, `/run/media`, `/mnt` or `/Volumes`) is listed, but kept: it is only missing until the drive is back
 - `:name` Copy the name the directory is shown with (the name you gave it, or its own), `:path` its full path, as in the file browser (also to the string memory, for `p` in the editor)
 - `/text` Only show the directories whose path contains "text". `Esc` shows all again
 - `?` Help, `:` the command line

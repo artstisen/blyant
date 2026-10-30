@@ -230,6 +230,12 @@ internal static partial class FileExplorer
                     case "help":
                         Tools.WriteEditorHelp(Tools.HelpTopic.Favorites);
                         break;
+                    case "missing":
+                        ShowMissingFavorites();
+                        break;
+                    case "prune":
+                        PruneFavorites();
+                        break;
                     case "recent":
                         // The latest files (the list drawn first: the box of commands has just been taken away)
                         DrawFavorites(true);
@@ -986,6 +992,56 @@ internal static partial class FileExplorer
 
         FileFavorites.RemoveAt(number);
         _favoriteMessage = DialogText.FavoriteRemoved + ": " + name;
+        SaveFavoriteList();
+    }
+
+    // The favorites whose file or directory is not there
+    private static List<FileFavorites.Favorite> MissingFavorites() =>
+        FileFavorites.Items.Where(item => !item.IsFolder && MissingPlaces.IsMissing(item.Path)).ToList();
+
+    // ":missing": the missing favorites in a box. The one picked is selected in the list
+    private static void ShowMissingFavorites()
+    {
+        var missing = MissingFavorites();
+        if (missing.Count == 0)
+        {
+            _favoriteMessage = MissingPlaces.NothingMissing;
+            return;
+        }
+
+        // (the list drawn first: the box of commands has just been taken away)
+        DrawFavorites(true);
+        var picked = MissingPlaces.Pick(missing.Select(item => (FavoriteName(item.Path), item.Path)).ToList());
+        if (picked < 0) return;
+        // Shown, also when the list is filtered or it is in a closed folder
+        var index = FileFavorites.Items.ToList().IndexOf(missing[picked]);
+        FileFavorites.Reveal(index);
+        _favoriteFilter = string.Empty;
+        FilterFavorites();
+        _favoriteIndex = Math.Max(0, _favorites.IndexOf(index));
+    }
+
+    // ":prune": take the missing favorites out of the list, after asking (u puts them back). Those on a drive that
+    // is not connected are kept
+    private static void PruneFavorites()
+    {
+        var (prune, kept) = MissingPlaces.Sort(MissingFavorites(), item => item.Path);
+        if (prune.Count == 0)
+        {
+            _favoriteMessage = MissingPlaces.NothingToPrune(kept.Count);
+            return;
+        }
+
+        DrawFavorites(true);
+        if (!MissingPlaces.Confirm(DialogText.FavoriteRemoveCaption, prune.Count, kept.Count,
+                prune.Count(item => item.Note.Length > 0), true))
+        {
+            return;
+        }
+
+        var count = FileFavorites.RemoveMany(prune);
+        _favoriteMarks.Clear();
+        _favoriteMessage = DialogText.FavoriteRemovedMany.Replace("{0}", count.ToString());
         SaveFavoriteList();
     }
 

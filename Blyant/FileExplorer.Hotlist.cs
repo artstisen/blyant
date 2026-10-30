@@ -11,7 +11,7 @@ internal static partial class FileExplorer
     private static string _hotlistFilter = string.Empty;
     private static string _hotlistMessage = string.Empty;
     private static bool _hotlistMoving; // V: j k move the selected directory
-    private static (int Index, DirectoryHotlist.Entry Entry)? _hotlistRemoved; // For undo
+    private static List<(int Index, DirectoryHotlist.Entry Entry)>? _hotlistRemoved; // For undo
 
     // B: add the directory shown in the pane with the focus (whatever is selected in it)
     private static void AddToHotlist()
@@ -153,6 +153,12 @@ internal static partial class FileExplorer
                     case "h":
                     case "help":
                         Tools.WriteEditorHelp(Tools.HelpTopic.Hotlist);
+                        break;
+                    case "missing":
+                        ShowMissingHotlist();
+                        break;
+                    case "prune":
+                        PruneHotlist();
                         break;
                     case "recent":
                         // The latest files (the list drawn first: the box of commands has just been taken away)
@@ -398,7 +404,7 @@ internal static partial class FileExplorer
         if (number < 0) return;
         var entry = DirectoryHotlist.Items[number];
         DirectoryHotlist.RemoveAt(number);
-        _hotlistRemoved = (number, entry);
+        _hotlistRemoved = new List<(int, DirectoryHotlist.Entry)> { (number, entry) };
         EventLog.Add(DialogText.LogFile + "Hotlist remove: " + entry.Path);
         _hotlistMessage = Lang.F("Removed from the hotlist: {0} (u puts it back)", entry.Shown);
         SaveHotlist();
@@ -406,13 +412,62 @@ internal static partial class FileExplorer
 
     private static void UndoHotlistRemove()
     {
-        if (_hotlistRemoved is not { } removed) return;
+        if (_hotlistRemoved is not { Count: > 0 } removed) return;
         _hotlistRemoved = null;
-        DirectoryHotlist.Insert(removed.Index, removed.Entry);
+        // From the top, so that each gets the place it had
+        foreach (var (index, entry) in removed) DirectoryHotlist.Insert(index, entry);
         SaveHotlist();
         _hotlistFilter = string.Empty;
-        _hotlistIndex = Math.Clamp(removed.Index, 0, Math.Max(0, DirectoryHotlist.Items.Count - 1));
-        _hotlistMessage = Lang.F("Back in the hotlist: {0}", removed.Entry.Shown);
+        _hotlistIndex = Math.Clamp(removed[0].Index, 0, Math.Max(0, DirectoryHotlist.Items.Count - 1));
+        _hotlistMessage = removed.Count == 1
+            ? Lang.F("Back in the hotlist: {0}", removed[0].Entry.Shown)
+            : Lang.F("{0} back in the hotlist", removed.Count);
+    }
+
+    // The numbers of the directories of the hotlist that are not there
+    private static List<int> MissingHotlist() => Enumerable.Range(0, DirectoryHotlist.Items.Count)
+        .Where(i => MissingPlaces.IsMissing(DirectoryHotlist.Items[i].Path)).ToList();
+
+    // ":missing": the missing directories in a box. The one picked is selected in the list
+    private static void ShowMissingHotlist()
+    {
+        var missing = MissingHotlist();
+        if (missing.Count == 0)
+        {
+            _hotlistMessage = MissingPlaces.NothingMissing;
+            return;
+        }
+
+        // (the list drawn first: the box of commands has just been taken away)
+        DrawHotlist(true);
+        var picked = MissingPlaces.Pick(missing.Select(i => DirectoryHotlist.Items[i])
+            .Select(entry => (entry.Shown, entry.Path)).ToList());
+        if (picked < 0) return;
+        _hotlistFilter = string.Empty;
+        _hotlistIndex = missing[picked];
+    }
+
+    // ":prune": take the missing directories out of the hotlist, after asking (u puts them back). Those on a drive
+    // that is not connected are kept
+    private static void PruneHotlist()
+    {
+        var (prune, kept) = MissingPlaces.Sort(MissingHotlist(), i => DirectoryHotlist.Items[i].Path);
+        if (prune.Count == 0)
+        {
+            _hotlistMessage = MissingPlaces.NothingToPrune(kept.Count);
+            return;
+        }
+
+        DrawHotlist(true);
+        if (!MissingPlaces.Confirm(DialogText.CaptionsHotlist, prune.Count, kept.Count, 0, true)) return;
+        // Kept from the top with the places they had; removed from the end, so that the numbers of the others stay
+        _hotlistRemoved = prune.Select(i => (i, DirectoryHotlist.Items[i])).ToList();
+        foreach (var number in prune.OrderByDescending(i => i)) DirectoryHotlist.RemoveAt(number);
+        EventLog.Add(DialogText.LogFile + "Hotlist prune: " + prune.Count);
+        _hotlistFilter = string.Empty;
+        _hotlistIndex = 0;
+        _hotlistMessage = Lang.F("{0} removed from the hotlist (u: Undo)", prune.Count);
+        SaveHotlist();
     }
 
     // Empty the list, after asking

@@ -1,6 +1,7 @@
 # Changes
 
 ## v1.1.1 (unreleased)
+- **Missing files and directories in the lists**: `:missing` in the favorites, the bookmarks (Jump menu), the hotlist and the history lists the entries whose file or directory is not there any more, in a box with their full paths; `Enter` selects one in the list. `:prune` removes them all, after asking (`u` puts them back, but not in the history). Entries on a drive that is not connected (a USB drive, a network share) are listed but not pruned. Undo in the hotlist now puts back all that was removed last.
 - **A hint about the latest files**: the hints of the start page tell about `Ctrl+K` and `:recent` too (now 11 hints).
 - **Fixed: the hint about the Jump menu** began with "trl+O" in all the languages but English; it is `Ctrl+O` again. The tests and `tools/checklang.py` now check that a translation keeps the keys with `Ctrl`, `Shift` and `Alt`.
 - **Files open without the file browser in between**: a file opened from the Recent files box, the favorites, the history, the Jump menu or a bookmark goes straight to the editor; the file browser in its folder is no longer shown for a moment first. It is still there when the editor is closed.

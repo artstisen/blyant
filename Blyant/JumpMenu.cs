@@ -130,6 +130,12 @@ internal static class JumpMenu
 
     // Ctrl+K or ":recent": the latest files are shown over the menu when it has been drawn
     private static bool _openRecent;
+
+    // What a command shows over the menu when it has been drawn again (":missing", ":prune")
+    private static Action? _afterDraw;
+
+    // The filter of the Bookmarks tab is taken away (a bookmark is selected that it may hide)
+    private static bool _clearFilter;
     private static bool _showBookmarks;
     private static string _message = string.Empty;
 
@@ -332,6 +338,8 @@ internal static class JumpMenu
         _select = null;
         _jumpTo = null;
         _openRecent = false;
+        _afterDraw = null;
+        _clearFilter = false;
         _showBookmarks = false;
         Marks.Clear();
         // The bookmarks are read once: the rows refer to them (marks, moving)
@@ -340,6 +348,12 @@ internal static class JumpMenu
         {
             var current = tabs[tab];
             _lastTab = current;
+            if (_clearFilter)
+            {
+                filters[Tab.Bookmarks] = string.Empty;
+                _clearFilter = false;
+            }
+
             var filter = filters.GetValueOrDefault(current, string.Empty);
             var rows = current == Tab.Bookmarks
                 ? BookmarkRows(filter)
@@ -369,6 +383,13 @@ internal static class JumpMenu
                 // The latest files: the one picked is the place to jump to, and Esc goes back to the menu
                 _openRecent = false;
                 if (RecentBox.Pick(null) is { } recent) return new JumpTarget(JumpKind.File, recent);
+                continue;
+            }
+
+            if (_afterDraw is { } after)
+            {
+                _afterDraw = null;
+                after();
                 continue;
             }
 
@@ -1417,6 +1438,52 @@ internal static class JumpMenu
         _message = Lang.F("Removed from the bookmarks: {0} (u puts it back)", entry.Shown);
     }
 
+    // The bookmarks of files and directories that are not there
+    private static List<Bookmarks.Entry> MissingBookmarks() => Bookmarks.Items
+        .Where(entry => !entry.IsFolder && entry.Target.Kind is JumpKind.File or JumpKind.Directory &&
+                        MissingPlaces.IsMissing(entry.Target.FullPath)).ToList();
+
+    // ":missing": the missing bookmarks in a box. The one picked is selected in the list
+    private static void ShowMissingBookmarks()
+    {
+        var missing = MissingBookmarks();
+        if (missing.Count == 0)
+        {
+            _message = MissingPlaces.NothingMissing;
+            return;
+        }
+
+        var picked = MissingPlaces.Pick(missing.Select(entry => (entry.Shown, entry.Target.FullPath)).ToList());
+        if (picked < 0) return;
+        // Shown, also when it is in a closed folder or the filter hides it
+        Bookmarks.Reveal(IndexOf(missing[picked]));
+        _select = missing[picked];
+        _clearFilter = true;
+    }
+
+    // ":prune": take the missing bookmarks out of the list, after asking (u puts them back). Those on a drive that is
+    // not connected are kept
+    private static void PruneBookmarks()
+    {
+        var (prune, kept) = MissingPlaces.Sort(MissingBookmarks(), entry => entry.Target.FullPath);
+        if (prune.Count == 0)
+        {
+            _message = MissingPlaces.NothingToPrune(kept.Count);
+            return;
+        }
+
+        if (!MissingPlaces.Confirm(Lang.T("Remove bookmarks"), prune.Count, kept.Count,
+                prune.Count(entry => entry.Note.Length > 0), true))
+        {
+            return;
+        }
+
+        var count = Bookmarks.RemoveMany(prune);
+        Marks.Clear();
+        _message = Lang.F("{0} removed from the bookmarks (u: Undo)", count);
+        SaveBookmarks();
+    }
+
     // u or ":undo": put back what was removed last
     private static void UndoBookmarkRemove()
     {
@@ -1646,6 +1713,12 @@ internal static class JumpMenu
                 break;
             case "clearbook":
                 ClearBookmarks();
+                break;
+            case "missing":
+                _afterDraw = ShowMissingBookmarks;
+                break;
+            case "prune":
+                _afterDraw = PruneBookmarks;
                 break;
             case "import":
                 ImportFavorites(CommandLine.LastArgument);
