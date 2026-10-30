@@ -27,9 +27,9 @@ public class HintsTests : IDisposable
     private string SettingsFile => Path.Combine(_data, FileIo.SettingsFileName);
 
     [Fact]
-    public void ThereAreElevenHints_AndTheFirstIsShownBeforeBlyantHasStarted()
+    public void ThereAreTwelveHints_AndTheFirstIsShownBeforeBlyantHasStarted()
     {
-        Assert.Equal(11, Hints.All().Length);
+        Assert.Equal(12, Hints.All().Length);
         Assert.All(Hints.All(), hint => Assert.True(hint.Length > 40));
         Hints.Index = -1;
         Assert.Equal(1, Hints.Current().Number);

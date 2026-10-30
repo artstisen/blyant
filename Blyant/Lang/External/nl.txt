@@ -1163,6 +1163,8 @@ en: "D in the file browser moves a file to the trash, after asking. :trash goes 
 nl: "D in de bestandsbrowser verplaatst een bestand naar de prullenbak, na een vraag. :trash gaat erheen, en M zet een bestand terug waar je wilt."
 en: ":split shows two panes of a text (Tab goes from one to the other), and :diff compares the text with the file as it is saved."
 nl: ":split toont twee panelen van een tekst (Tab gaat van het ene naar het andere), en :diff vergelijkt de tekst met het opgeslagen bestand."
+en: ":split name shows another file at the right, read only: notes or an outline beside your text. :view picks it in the file browser, and Tab goes into it."
+nl: ":split name toont een ander bestand rechts, alleen lezen: notities of een opzet naast je tekst. :view kiest het in de bestandsbrowser, en Tab gaat erin."
 en: "V in the file browser peeks at the selected file in the other pane, without opening it, and j and k go on to the next file."
 nl: "V in de bestandsbrowser kijkt in het gekozen bestand in het andere paneel, zonder het te openen, en j en k gaan naar het volgende bestand."
 en: "A project can have a note: N in the list of projects opens it in the editor. Keep plans, things to do and ideas for the project there."

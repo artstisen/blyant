@@ -597,6 +597,7 @@ en: "In a Markdown file, type /bold, /link or /h2 and press Tab. Select text and
 en: "While you write, a recovery copy is kept. If Blyant or the terminal stops, the text is offered when you open the file again, or under Recover unsaved text."
 en: "D in the file browser moves a file to the trash, after asking. :trash goes there, and M moves a file back where you want it."
 en: ":split shows two panes of a text (Tab goes from one to the other), and :diff compares the text with the file as it is saved."
+en: ":split name shows another file at the right, read only: notes or an outline beside your text. :view picks it in the file browser, and Tab goes into it."
 en: "V in the file browser peeks at the selected file in the other pane, without opening it, and j and k go on to the next file."
 en: "A project can have a note: N in the list of projects opens it in the editor. Keep plans, things to do and ideas for the project there."
 

@@ -1163,6 +1163,8 @@ en: "D in the file browser moves a file to the trash, after asking. :trash goes 
 da: "D i filbrowseren flytter en fil til papirkurven, efter at have spurgt. :trash går derhen, og M flytter en fil tilbage, hvor du vil have den."
 en: ":split shows two panes of a text (Tab goes from one to the other), and :diff compares the text with the file as it is saved."
 da: ":split viser to ruder af en tekst (Tab skifter mellem dem), og :diff sammenligner teksten med filen, som den er gemt."
+en: ":split name shows another file at the right, read only: notes or an outline beside your text. :view picks it in the file browser, and Tab goes into it."
+da: ":split name viser en anden fil til højre, skrivebeskyttet: noter eller en disposition ved siden af din tekst. :view vælger den i filbrowseren, og Tab går ind i den."
 en: "V in the file browser peeks at the selected file in the other pane, without opening it, and j and k go on to the next file."
 da: "V i filbrowseren kigger i den valgte fil i den anden rude uden at åbne den, og j og k går videre til næste fil."
 en: "A project can have a note: N in the list of projects opens it in the editor. Keep plans, things to do and ideas for the project there."

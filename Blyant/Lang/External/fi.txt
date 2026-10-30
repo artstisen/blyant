@@ -1163,6 +1163,8 @@ en: "D in the file browser moves a file to the trash, after asking. :trash goes 
 fi: "D tiedostoselaimessa siirtää tiedoston roskakoriin kysyttyään ensin. :trash vie sinne, ja M siirtää tiedoston takaisin haluamaasi paikkaan."
 en: ":split shows two panes of a text (Tab goes from one to the other), and :diff compares the text with the file as it is saved."
 fi: ":split näyttää tekstistä kaksi ruutua (Tab siirtyy ruudusta toiseen), ja :diff vertaa tekstiä tallennettuun tiedostoon."
+en: ":split name shows another file at the right, read only: notes or an outline beside your text. :view picks it in the file browser, and Tab goes into it."
+fi: ":split name näyttää toisen tiedoston oikealla, vain luku: muistiinpanot tai jäsennys tekstin vieressä. :view valitsee sen tiedostoselaimessa, ja Tab siirtyy siihen."
 en: "V in the file browser peeks at the selected file in the other pane, without opening it, and j and k go on to the next file."
 fi: "V tiedostoselaimessa esikatselee valitun tiedoston toisessa ruudussa avaamatta sitä, ja j ja k siirtyvät seuraavaan tiedostoon."
 en: "A project can have a note: N in the list of projects opens it in the editor. Keep plans, things to do and ideas for the project there."

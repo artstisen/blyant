@@ -1163,6 +1163,8 @@ en: "D in the file browser moves a file to the trash, after asking. :trash goes 
 pl: "D w przeglądarce plików przenosi plik do kosza, po pytaniu. :trash tam przechodzi, a M przenosi plik z powrotem, gdzie chcesz."
 en: ":split shows two panes of a text (Tab goes from one to the other), and :diff compares the text with the file as it is saved."
 pl: ":split pokazuje tekst w dwóch panelach (Tab przechodzi między nimi), a :diff porównuje tekst z plikiem w zapisanej postaci."
+en: ":split name shows another file at the right, read only: notes or an outline beside your text. :view picks it in the file browser, and Tab goes into it."
+pl: ":split name pokazuje inny plik po prawej, tylko do odczytu: notatki lub konspekt obok tekstu. :view wybiera go w przeglądarce plików, a Tab do niego przechodzi."
 en: "V in the file browser peeks at the selected file in the other pane, without opening it, and j and k go on to the next file."
 pl: "V w przeglądarce plików pokazuje podgląd wybranego pliku w drugim panelu, bez otwierania go, a j i k przechodzą do następnego pliku."
 en: "A project can have a note: N in the list of projects opens it in the editor. Keep plans, things to do and ideas for the project there."

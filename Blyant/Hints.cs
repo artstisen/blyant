@@ -41,6 +41,8 @@ internal static class Hints
                "file back where you want it."),
         Lang.T(":split shows two panes of a text (Tab goes from one to the other), and :diff compares the text " +
                "with the file as it is saved."),
+        Lang.T(":split name shows another file at the right, read only: notes or an outline beside your text. " +
+               ":view picks it in the file browser, and Tab goes into it."),
         Lang.T("V in the file browser peeks at the selected file in the other pane, without opening it, and j and " +
                "k go on to the next file."),
         Lang.T("A project can have a note: N in the list of projects opens it in the editor. Keep plans, things " +
