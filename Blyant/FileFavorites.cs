@@ -296,6 +296,119 @@ internal static class FileFavorites
             (one, other) => FileOperations.SamePath(one.Path, other.Path));
 
     /// <summary>
+    /// The files of a directory, to add to the favorites as a folder (":import folder"): its own files, and (when
+    /// asked for) those of the folders below it, at any depth
+    /// </summary>
+    internal sealed record FolderFiles(string Name, List<string> Files)
+    {
+        internal int Count => Files.Count;
+    }
+
+    /// <summary>
+    /// The most files a directory can add to the favorites
+    /// </summary>
+    internal const int FolderImportMax = 2000;
+
+    // The files and folders of a directory that are read: not hidden ones, and not those that cannot be read
+    private static readonly EnumerationOptions Shown = new()
+    {
+        IgnoreInaccessible = true,
+        AttributesToSkip = FileAttributes.Hidden | FileAttributes.System
+    };
+
+    // A name that is not hidden: ".git", ".obsidian" and ".DS_Store" are hidden also where they are not marked so
+    private static bool IsShown(string path) => !System.IO.Path.GetFileName(path).StartsWith('.');
+
+    // A folder that is a link to another (a symbolic link or a junction), which could lead round in a circle. A
+    // folder of OneDrive or Dropbox is marked as a reparse point too, but is no link: it is read
+    private static bool IsLink(string folder)
+    {
+        try
+        {
+            return new DirectoryInfo(folder).LinkTarget != null;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return true;
+        }
+    }
+
+    private static IEnumerable<string> FilesIn(string directory) =>
+        Directory.EnumerateFiles(directory, "*", Shown).Where(IsShown).Order(StringComparer.OrdinalIgnoreCase);
+
+    private static IEnumerable<string> FoldersIn(string directory) =>
+        Directory.EnumerateDirectories(directory, "*", Shown).Where(folder => IsShown(folder) && !IsLink(folder))
+            .Order(StringComparer.OrdinalIgnoreCase);
+
+    // The files of a directory, then those of each folder below it (so the files of a folder stay together), until
+    // there are more than max
+    private static void AddAllFiles(string directory, List<string> files, int max)
+    {
+        files.AddRange(FilesIn(directory));
+        foreach (var folder in FoldersIn(directory))
+        {
+            if (files.Count > max) return;
+            AddAllFiles(folder, files, max);
+        }
+    }
+
+    /// <summary>
+    /// The name of a folder for a directory: its name, without the brackets that mark a folder in the file
+    /// </summary>
+    internal static string FolderNameOf(string directory) =>
+        DirectoryHotlist.NameOf(directory).Replace('[', '(').Replace(']', ')').Replace('\t', ' ').Trim();
+
+    /// <summary>
+    /// Read the files of a directory to add to the favorites as a folder: its own files by name, then (with
+    /// subfolders) those of each folder below it, at any depth. Hidden files and folders (also those whose names
+    /// start with "."), links to other folders, and what cannot be read are left out
+    /// </summary>
+    /// <param name="directory">The directory</param>
+    /// <param name="subfolders">True to read the files of the folders below it too</param>
+    /// <param name="max">The most files</param>
+    /// <returns>The files, or null when there are more than max (or the directory cannot be read)</returns>
+    internal static FolderFiles? ReadFolder(string directory, bool subfolders, int max = FolderImportMax)
+    {
+        try
+        {
+            var files = new List<string>();
+            if (subfolders) AddAllFiles(directory, files, max);
+            else files.AddRange(FilesIn(directory));
+            return files.Count > max ? null : new FolderFiles(FolderNameOf(directory), files);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Add the files of a directory to the favorites, all in one folder named after the directory (at the end of the
+    /// list), in the order they were read. A file that is a favorite already stays where it is, and a folder with
+    /// the name of a folder of the list is added to (see FolderList.Import), so the same directory added again adds
+    /// its new files
+    /// </summary>
+    /// <param name="folder">The files (ReadFolder)</param>
+    /// <param name="apply">False to only count what would be done</param>
+    internal static ImportResult ImportFolder(FolderFiles folder, bool apply)
+    {
+        var items = new List<Favorite> { new() { IsFolder = true, Name = folder.Name } };
+        items.AddRange(folder.Files.Select(path => new Favorite { Path = path, Level = 1 }));
+        return Folders.Import(items, apply,
+            item => item.Path.IndexOfAny(new[] { '\r', '\n' }) < 0
+                ? new Favorite { Path = System.IO.Path.GetFullPath(item.Path) }
+                : null,
+            name => new Favorite { IsFolder = true, Name = name },
+            (one, other) => FileOperations.SamePath(one.Path, other.Path));
+    }
+
+    /// <summary>
+    /// The place of a folder (not a subfolder) by its name (-1: none)
+    /// </summary>
+    internal static int FolderIndex(string name) => List.FindIndex(item =>
+        item.IsFolder && item.Level == 0 && item.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>
     /// Remove a favorite, or a folder with the favorites in it
     /// </summary>
     internal static void RemoveAt(int index) => Folders.RemoveAt(index);
