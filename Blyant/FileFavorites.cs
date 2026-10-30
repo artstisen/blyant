@@ -338,10 +338,25 @@ internal static class FileFavorites
     }
 
     // The files of a directory by name, at most a number of them (more are not read: the list is too long then).
-    // A link to a file that is not there is left out (File.Exists follows the link)
+    // A link to a file that is not there is left out
     private static List<string> FilesIn(string directory, int most) =>
-        Directory.EnumerateFiles(directory, "*", Shown).Where(file => IsShown(file) && File.Exists(file))
+        Directory.EnumerateFiles(directory, "*", Shown).Where(file => IsShown(file) && IsThere(file))
             .Take(most).Order(StringComparer.OrdinalIgnoreCase).ToList();
+
+    // A file, or a link to a file that is there. (File.Exists is true for a link to a file that is not there on
+    // Linux and macOS, where it looks at the link itself, and false on Windows: the target is looked at)
+    private static bool IsThere(string file)
+    {
+        try
+        {
+            var info = new FileInfo(file);
+            return info.LinkTarget == null || info.ResolveLinkTarget(true) is { Exists: true };
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return false;
+        }
+    }
 
     private static List<string> FoldersIn(string directory) =>
         Directory.EnumerateDirectories(directory, "*", Shown).Where(folder => IsShown(folder) && !IsLink(folder))
