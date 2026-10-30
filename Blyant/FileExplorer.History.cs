@@ -329,14 +329,15 @@ internal static partial class FileExplorer
         SaveHistory();
     }
 
-    // The numbers of the files of the history that are not there
-    private static List<int> MissingHistory() => Enumerable.Range(0, FileHistory.Items.Count)
-        .Where(i => MissingPlaces.IsMissing(FileHistory.Items[i].Path)).ToList();
+    // The numbers of the files of the history that are not there (each drive looked at once by the checker)
+    private static List<int> MissingHistory(MissingPlaces.Checker check) => Enumerable.Range(0, FileHistory.Items.Count)
+        .Where(i => check.IsMissing(FileHistory.Items[i].Path, true)).ToList();
 
     // ":missing": the missing files in a box. The one picked is selected in the list
     private static void ShowMissingHistory()
     {
-        var missing = MissingHistory();
+        var check = new MissingPlaces.Checker();
+        var missing = MissingHistory(check);
         if (missing.Count == 0)
         {
             _historyMessage = MissingPlaces.NothingMissing;
@@ -346,7 +347,7 @@ internal static partial class FileExplorer
         // (the list drawn first: the box of commands has just been taken away)
         DrawHistory(true);
         var picked = MissingPlaces.Pick(missing.Select(i => FileHistory.Items[i].Path)
-            .Select(path => (System.IO.Path.GetFileName(path), path)).ToList());
+            .Select(path => (System.IO.Path.GetFileName(path), path, check.OnAbsentDrive(path, true))).ToList());
         if (picked < 0) return;
         _historyFilter = string.Empty;
         FilterHistory();
@@ -357,7 +358,9 @@ internal static partial class FileExplorer
     // kept
     private static void PruneHistory()
     {
-        var (prune, kept) = MissingPlaces.Sort(MissingHistory(), i => FileHistory.Items[i].Path);
+        var check = new MissingPlaces.Checker();
+        var (prune, kept) = MissingPlaces.Sort(MissingHistory(check),
+            i => check.OnAbsentDrive(FileHistory.Items[i].Path, true));
         if (prune.Count == 0)
         {
             _historyMessage = MissingPlaces.NothingToPrune(kept.Count);
@@ -366,11 +369,9 @@ internal static partial class FileExplorer
 
         DrawHistory(true);
         if (!MissingPlaces.Confirm(DialogText.CaptionsFileHistory, prune.Count, kept.Count, 0, false)) return;
-        // From the end, so that the numbers of the others stay
-        foreach (var number in prune.OrderByDescending(i => i)) FileHistory.RemoveAt(number);
+        FileHistory.RemoveMany(prune);
         EventLog.Add(DialogText.LogFile + "History prune: " + prune.Count);
         _historyFilter = string.Empty;
-        _historyIndex = 0;
         _historyMessage = Lang.F("{0} removed from the history", prune.Count);
         SaveHistory();
     }

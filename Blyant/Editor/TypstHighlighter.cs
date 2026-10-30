@@ -9,7 +9,8 @@
 /// The state a line ends in tells the brackets that are open (for each, whether it holds code or content), and
 /// whether the line ends inside a block comment, a block of raw text (```) or math. This is a simple reading and
 /// not a complete one: strong and emphasis are found on one line only, a statement (#let, #set ...) goes on to the
-/// end of its line (or a ";"), and brackets nested more than 23 deep are not followed.
+/// end of its line (or a ";", or the "]" of the content it is in), "else" after a bracket that closes on a line
+/// of its own goes on with an #if over several lines, and brackets nested more than 23 deep are not followed.
 /// This class does not touch the console.
 /// </summary>
 internal static class TypstHighlighter
@@ -42,11 +43,15 @@ internal static class TypstHighlighter
         "pt", "mm", "cm", "in", "em", "fr", "deg", "rad"
     };
 
-    /// <summary>
-    /// True if the name of a file says it is a Typst file
-    /// </summary>
-    internal static bool IsTypstFile(string fileName) =>
-        Path.GetExtension(fileName).Equals(".typ", StringComparison.OrdinalIgnoreCase);
+    // The same, looked up by a part of the line (without making a string of it)
+    private static readonly HashSet<string>.AlternateLookup<ReadOnlySpan<char>> KeywordSpans =
+        Keywords.GetAlternateLookup<ReadOnlySpan<char>>();
+
+    private static readonly HashSet<string>.AlternateLookup<ReadOnlySpan<char>> StatementSpans =
+        Statements.GetAlternateLookup<ReadOnlySpan<char>>();
+
+    private static readonly HashSet<string>.AlternateLookup<ReadOnlySpan<char>> UnitSpans =
+        Units.GetAlternateLookup<ReadOnlySpan<char>>();
 
     /// <summary>
     /// Find the styles of a line
@@ -74,23 +79,38 @@ internal static class TypstHighlighter
         // Brackets beyond the deepest that is followed
         private int _overflow;
 
-        // A statement (#let, #set ...) in markup: code to the end of the line, at the depth it started at
-        private bool _statement;
-        private int _statementDepth;
+        // The statements (#let, #set ...) going on: each is code to the end of the line (or a ";", or the "]" of the
+        // content it is in), at the depth it started at. A statement in the content of another is above it
+        // (#let t = [#set text(red); hi] + 1). Null until there is one
+        private List<int>? _statements;
 
         // Where a call in markup (#name) has its brackets: after "(..)" or "[..]" closes at that depth, another
-        // may follow (#figure(..)[..])
-        private readonly List<int> _calls = new();
+        // may follow (#figure(..)[..]). Null until there is one
+        private List<int>? _calls;
 
         // Markup at the start of the line (or of a block of content), before its first character that is not blank
         private bool _lineStart = true;
 
-        internal int State => _stack | (Math.Min(_depth, MaxDepth) << DepthShift) | (_comment ? InComment : 0) |
+        // The rest of a heading: it keeps the color of the heading, and only what goes on over lines or in brackets
+        // (comments, raw text, math, code and brackets) is read in it
+        private bool _heading;
+
+        // Where on the line *strong* and _emphasis_ are known to have no closing mark (from there to the end), so a
+        // long line with many marks is read once
+        private int _noStrongFrom = int.MaxValue;
+        private int _noEmphasisFrom = int.MaxValue;
+
+        // (the brackets above the depth are not part of the state: the same state is the same number)
+        internal int State => (_stack & ((1 << Math.Min(_depth, MaxDepth)) - 1)) |
+                              (Math.Min(_depth, MaxDepth) << DepthShift) | (_comment ? InComment : 0) |
                               (_raw ? InRaw : 0) | (_math ? InMath : 0);
 
         private bool TopIsContent => _depth > 0 && ((_stack >> (_depth - 1)) & 1) == 1;
 
-        private bool InCode => _statement && _depth == _statementDepth || _depth > 0 && !TopIsContent;
+        // A statement at the depth the text is at
+        private bool InStatement => _statements is { Count: > 0 } && _statements[^1] == _depth;
+
+        private bool InCode => InStatement || _depth > 0 && !TopIsContent;
 
         internal void Run()
         {
@@ -124,6 +144,18 @@ internal static class TypstHighlighter
             _depth++;
         }
 
+        private void StartStatement()
+        {
+            _statements ??= new List<int>();
+            if (!InStatement) _statements.Add(_depth);
+        }
+
+        private void EndStatement()
+        {
+            if (InStatement) _statements!.RemoveAt(_statements.Count - 1);
+        }
+
+        // Close a bracket (_pos is after it)
         private void Pop()
         {
             if (_overflow > 0)
@@ -132,10 +164,12 @@ internal static class TypstHighlighter
                 return;
             }
 
+            var closing = _pos - 1;
             if (_depth > 0) _depth--;
-            if (_statement && _depth < _statementDepth) _statement = false;
-            // A call goes on with more brackets ("#f(x)[body]"), and "] else [" goes on with the statement
-            if (_calls.Count > 0 && _calls[^1] == _depth)
+            // The statements in the brackets end with them
+            while (_statements is { Count: > 0 } && _statements[^1] > _depth) _statements.RemoveAt(_statements.Count - 1);
+            // A call goes on with more brackets ("#f(x)[body]")
+            if (_calls is { Count: > 0 } && _calls[^1] == _depth)
             {
                 if (At(_pos) is '(' or '[')
                 {
@@ -147,13 +181,15 @@ internal static class TypstHighlighter
                 _calls.RemoveAt(_calls.Count - 1);
             }
 
+            // "] else [" on a line of its own goes on with an #if of the lines before (on one line the #if is still
+            // going on, and its else is read as code); after a bracket in a sentence "else" is a word
+            if (InCode || !line.AsSpan(0, Math.Max(0, closing)).IsWhiteSpace()) return;
             var word = _pos;
             while (word < line.Length && line[word] == ' ') word++;
             if (!line.AsSpan(word).StartsWith("else") || IsIdentPart(At(word + 4))) return;
             Fill(SyntaxStyle.Keyword, word, word + 4);
             _pos = word + 4;
-            _statement = true;
-            _statementDepth = _depth;
+            StartStatement();
         }
 
         // ---- Blocks over several lines
@@ -257,6 +293,12 @@ internal static class TypstHighlighter
                 if (LineStart()) return;
             }
 
+            if (_heading && c is not ('\\' or '/' or '`' or '$' or '#' or '[' or ']'))
+            {
+                _pos++;
+                return;
+            }
+
             switch (c)
             {
                 case '\\':
@@ -317,7 +359,8 @@ internal static class TypstHighlighter
                 while (At(_pos + level) == '=') level++;
                 if (At(_pos + level) is not (' ' or '\0')) return false;
                 Fill(SyntaxStyle.Heading1 + Math.Min(level, 6) - 1, _pos, line.Length);
-                _pos = line.Length;
+                _pos += level;
+                _heading = true;
                 return true;
             }
 
@@ -351,23 +394,37 @@ internal static class TypstHighlighter
             return false;
         }
 
-        // *strong* or _emphasis_ on the line: the marks are at the edges of words
+        // *strong* or _emphasis_ on the line: the marks are at the edges of words, and the brackets in it go in pairs
+        // (it does not go on past the "]" of the content it is in)
         private void Emphasis(char mark, SyntaxStyle style)
         {
             var start = _pos;
+            var noCloseFrom = mark == '*' ? _noStrongFrom : _noEmphasisFrom;
             if (start > 0 && char.IsLetterOrDigit(line[start - 1]) || char.IsWhiteSpace(At(start + 1)) ||
-                start + 1 == line.Length)
+                start + 1 == line.Length || start >= noCloseFrom)
             {
                 _pos++;
                 return;
             }
 
+            var open = 0;
+            var closing = false;
             for (var i = start + 1; i < line.Length; i++)
             {
-                if (line[i] == '\\')
+                switch (line[i])
                 {
-                    i++;
-                    continue;
+                    case '\\':
+                        i++;
+                        continue;
+                    case '[':
+                        open++;
+                        continue;
+                    case ']' when open == 0 && TopIsContent:
+                        _pos++;
+                        return;
+                    case ']':
+                        if (open > 0) open--;
+                        continue;
                 }
 
                 if (line[i] != mark || i == start + 1 || char.IsWhiteSpace(line[i - 1]) ||
@@ -376,9 +433,18 @@ internal static class TypstHighlighter
                     continue;
                 }
 
+                closing = true;
+                if (open != 0) continue;
                 Fill(style, start, i + 1);
                 _pos = i + 1;
                 return;
+            }
+
+            // No closing mark to the end of the line: none for a mark after this one either
+            if (!closing)
+            {
+                if (mark == '*') _noStrongFrom = start;
+                else _noEmphasisFrom = start;
             }
 
             _pos++;
@@ -440,17 +506,12 @@ internal static class TypstHighlighter
             if (IsIdentStart(next))
             {
                 var end = IdentEnd(start + 1);
-                var word = line[(start + 1)..end];
-                if (Keywords.Contains(word))
+                var word = line.AsSpan(start + 1, end - start - 1);
+                if (KeywordSpans.Contains(word))
                 {
                     Fill(SyntaxStyle.Keyword, start, end);
                     _pos = end;
-                    if (Statements.Contains(word))
-                    {
-                        _statement = true;
-                        _statementDepth = _depth;
-                    }
-
+                    if (StatementSpans.Contains(word)) StartStatement();
                     return;
                 }
 
@@ -466,7 +527,8 @@ internal static class TypstHighlighter
 
                 if (At(_pos) is '(' or '[')
                 {
-                    _calls.Add(_depth);
+                    // (a call deeper than the brackets that are followed is not remembered)
+                    if (_depth < MaxDepth) (_calls ??= new List<int>()).Add(_depth);
                     Push(At(_pos) == '[');
                     _pos++;
                 }
@@ -525,8 +587,18 @@ internal static class TypstHighlighter
                     _pos++;
                     if (_depth > 0 && !TopIsContent || _overflow > 0) Pop();
                     break;
+                case ']':
+                    // The end of the content a statement is in (#box[#let x = 1]): the statement ends with it
+                    _pos++;
+                    if (TopIsContent)
+                    {
+                        EndStatement();
+                        Pop();
+                    }
+
+                    break;
                 case ';':
-                    if (_statement && _depth == _statementDepth) _statement = false;
+                    EndStatement();
                     _pos++;
                     break;
                 default:
@@ -578,7 +650,7 @@ internal static class TypstHighlighter
                 {
                     var unit = end;
                     while (char.IsAsciiLetterLower(At(unit))) unit++;
-                    if (unit > end && Units.Contains(line[end..unit])) end = unit;
+                    if (unit > end && UnitSpans.Contains(line.AsSpan(end, unit - end))) end = unit;
                 }
             }
 
@@ -590,8 +662,7 @@ internal static class TypstHighlighter
         private void Word()
         {
             var end = IdentEnd(_pos);
-            var word = line[_pos..end];
-            if (Keywords.Contains(word))
+            if (KeywordSpans.Contains(line.AsSpan(_pos, end - _pos)))
             {
                 Fill(SyntaxStyle.Keyword, _pos, end);
             }
@@ -607,7 +678,7 @@ internal static class TypstHighlighter
         private int IdentEnd(int from)
         {
             var end = from;
-            while (IsIdentPart(At(end)) || At(end) == '-' && IsIdentPart(At(end + 1)) && At(end + 1) != '-') end++;
+            while (IsIdentPart(At(end)) || At(end) == '-' && IsIdentPart(At(end + 1))) end++;
             return end;
         }
     }

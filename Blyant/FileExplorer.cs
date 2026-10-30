@@ -408,14 +408,18 @@ internal static partial class FileExplorer
         if (mode == BrowseMode.Edit && jumpFile != null && File.Exists(jumpFile))
         {
             // A jump to a file: the browser is only the way to the editor, so it is drawn when the editor is closed
-            // (or when the file could not be opened), not shown for a moment before the editor
+            // (or when the file could not be opened, or a question is asked about it), not shown for a moment
+            // before the editor
             var info = new FileInfo(jumpFile);
             _openAtCaret = jumpAt;
+            _notDrawn = true;
             var close = Open(new Item(info.Name, info.FullName, false, info.Length));
+            _notDrawn = false;
             _openAtCaret = null;
             if (close) return _picked;
             LoadItems(info.Name);
             Draw(true);
+            if (Tools.TakeRedrawRequest()) Draw(true);
         }
         else
         {
@@ -943,6 +947,9 @@ internal static partial class FileExplorer
     #region Opening files
 
     /// <returns>True if a file was picked and the browser must close</returns>
+    // A jump opens a file before the browser is drawn (a question about the file draws it first)
+    private static bool _notDrawn;
+
     private static bool Open(Item item)
     {
         if (item.IsDirectory)
@@ -979,7 +986,9 @@ internal static partial class FileExplorer
         var converted = false;
         if (!file.IsUtf8)
         {
-            // Ask how to convert the file
+            // Ask how to convert the file (over the browser)
+            if (_notDrawn) Draw(true);
+            _notDrawn = false;
             var selection = ChoiceBox.Pick(DialogText.CaptionsFiles,
                 Lang.F("This file is not UTF-8. It is read as {0}.", file.EncodingName), DialogText.NotUtf8Note,
                 new[] { DialogText.ConvertReplace, DialogText.ConvertCopy, DialogText.ConvertCancel },

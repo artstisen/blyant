@@ -257,7 +257,7 @@ internal static class Completions
         "/quote = #quote(block: true)[$0]\n" +
         "/ref = @$0\n" +
         "/table = #table(\\n  columns: 2,\\n  [$0], [],\\n)\n" +
-        "/term = / $0: \n";
+        "/term = / $0:\n";
 
     /// <summary>
     /// Read the completions from the file (from the text the file is made with, if there is none)
@@ -308,18 +308,14 @@ internal static class Completions
     internal static void Parse(string text)
     {
         List.Clear();
-        Read(text);
-        // A file made before Blyant had completions for Typst
-        if (!_typstList) Read(TypstList);
+        // A file made before Blyant had completions for Typst: the list built in
+        if (!Read(text)) Read(TypstList);
     }
 
-    // A list for Typst was read (with Read)
-    private static bool _typstList;
-
-    // Add the completions of the lists of a text
-    private static void Read(string text)
+    // Add the completions of the lists of a text. True if it has a list for Typst (also an empty one)
+    private static bool Read(string text)
     {
-        _typstList = false;
+        var typst = false;
         var syntax = SyntaxType.None;
         var inList = false;
         foreach (var raw in TextBuffer.Normalize(text).Split('\n'))
@@ -329,7 +325,7 @@ internal static class Completions
             {
                 inList = true;
                 syntax = Snippets.Tag(line[TitleMark.Length..]);
-                if (syntax == SyntaxType.Typst) _typstList = true;
+                if (syntax == SyntaxType.Typst) typst = true;
                 continue;
             }
 
@@ -341,6 +337,8 @@ internal static class Completions
             if (word.Length == 0 || completion.Length == 0) continue;
             List.Add(new Item(word, completion, syntax));
         }
+
+        return typst;
     }
 
     // "\n" is a new line, "\t" a tab and "\\" a "\"

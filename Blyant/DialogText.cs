@@ -231,7 +231,7 @@ internal static class DialogText
     public static string WrapOff => Lang.T("Long lines are not wrapped (zh zl: scroll)");
     public static string SyntaxOn => Lang.T("Colors on: ");
     public static string SyntaxOff => Lang.T("Colors off");
-    public static string SyntaxUnknown => Lang.T("Use md, html, css, js, json, xml, cs, php or diff, not: ");
+    public static string SyntaxUnknown(string name) => Lang.F("Not a kind of text: {0} (:help lists them)", name);
 
     // The log
     public static string LogKeys => Lang.T("| h/l Page | j/k Line | gg G First/Last | /text Filter | Esc Close");
@@ -464,8 +464,9 @@ internal static class DialogText
     public static string FavoriteMarkFolder => Lang.T("Only favorites can be marked and moved to a folder (not folders)");
     public static string FavoritesMarkedKeys => Lang.T("Space Mark | M To folder | T/E Top/End | D Remove | Esc Clear the marks");
     public static string FavoriteRemoveCaption => Lang.T("Remove favorites");
-    public static string FavoriteRemoveMany => Lang.T("Remove the {0} marked favorites from the list?");
-    public static string FavoriteRemovedMany => Lang.T("{0} removed from the favorites (u: Undo)");
+    public static string FavoriteRemoveMany(int count) => Lang.F("Remove the {0} marked favorites from the list?", count);
+    public static string FavoriteRemovedMany(int count) => Lang.F("{0} removed from the favorites (u: Undo)", count);
+    public static string BookmarksRemoveCaption => Lang.T("Remove bookmarks");
     public static string FavoriteRenameFolder => Lang.T("Rename folder");
     public static string FavoriteDeleteFolder => Lang.T("Remove folder");
     public static string FavoriteFolderRemoved => Lang.T("Removed the folder: ");

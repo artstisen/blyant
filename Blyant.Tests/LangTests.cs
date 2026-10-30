@@ -194,15 +194,40 @@ public class LangTests : IDisposable
             // Brackets with a key in front of a choice, like "[Y] Yes" or "[Esc] Cancel"
             string Keys(string s) => string.Join(",", Regex.Matches(s, @"\[(?:[A-Z]|Esc|Enter|Tab)\]").Select(m => m.Value));
             if (Keys(english) != Keys(text)) problems.Add("keys in brackets: " + english);
-            // Keys with Ctrl, Shift or Alt are kept as they are, each as often as in the English text
-            if (Regex.Matches(english, @"\b(?:Ctrl|Shift|Alt)\+\w+").Select(m => m.Value).Distinct()
-                .Any(k => Regex.Matches(text, Regex.Escape(k)).Count < Regex.Matches(english, Regex.Escape(k)).Count))
-            {
-                problems.Add("keys with Ctrl, Shift or Alt: " + english);
-            }
+            if (!KeepsKeyCombinations(english, text)) problems.Add("keys with Ctrl, Shift or Alt: " + english);
         }
 
         Assert.True(problems.Count == 0, code + ": " + string.Join(Environment.NewLine, problems));
+    }
+
+    // Keys with Ctrl, Shift or Alt are kept in a translation as they are, each as often as in the English text
+    private static bool KeepsKeyCombinations(string english, string text) =>
+        !Regex.Matches(english, @"\b(?:Ctrl|Shift|Alt)\+\w+").Select(m => m.Value).Distinct()
+            .Any(k => Regex.Matches(text, Regex.Escape(k)).Count < Regex.Matches(english, Regex.Escape(k)).Count);
+
+    [Fact]
+    public void ATranslation_KeepsTheKeysWithCtrlShiftAndAlt()
+    {
+        Assert.True(KeepsKeyCombinations("Ctrl+O opens the Jump menu", "Ctrl+O öffnet das Sprungmenü"));
+        // A key lost in the translation (as "trl+O" once), translated, or given fewer times
+        Assert.False(KeepsKeyCombinations("Ctrl+O opens the Jump menu", "trl+O öffnet das Sprungmenü"));
+        Assert.False(KeepsKeyCombinations("Ctrl+K opens", "Strg+K öffnet"));
+        Assert.False(KeepsKeyCombinations("Shift+Tab and Ctrl+K, again Ctrl+K", "Shift+Tab und Ctrl+K"));
+        Assert.True(KeepsKeyCombinations("No keys here", "Keine Tasten"));
+    }
+
+    [Fact]
+    public void TheKeysOfAListOfChoices_AreNumbersThenLetters_EachOnce()
+    {
+        var keys = ChoiceBox.NumberKeys(29);
+        Assert.Equal(new[] { "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B" }, keys.Take(11));
+        Assert.Equal(keys.Length, keys.Distinct(StringComparer.OrdinalIgnoreCase).Count());
+        // Not the keys that move in the box
+        Assert.DoesNotContain(keys, key => key.ToLowerInvariant() is "g" or "h" or "j" or "k" or "l" or "q");
+        // A choice after the last letter has none (no failure)
+        Assert.Equal(string.Empty, ChoiceBox.NumberKeys(30)[29]);
+        // The kinds of new files: Typst after Markdown, PHP and INI on A and B
+        Assert.Equal(FileOperations.FileTypes.Count, ChoiceBox.NumberKeys(FileOperations.FileTypes.Count).Distinct().Count());
     }
 
     [Theory]

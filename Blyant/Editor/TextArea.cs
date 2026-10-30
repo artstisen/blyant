@@ -626,10 +626,7 @@ public partial class TextArea
 
                 // (the text drawn first: after ":recent" the box of commands has just been taken away)
                 RedrawAll();
-                var current = _saveMode == SaveAsFile && !FileExplorer.IsUntitled && !FileExplorer.EditingListNote
-                    ? FileExplorer.CurrentFilePath
-                    : null;
-                var recent = RecentBox.Pick(current);
+                var recent = RecentBox.Pick(RecentCurrent);
                 RedrawAll();
                 if (recent != null) Jump.ToPlace(new JumpTarget(JumpKind.File, recent), LeaveForJump);
                 break;
@@ -875,7 +872,7 @@ public partial class TextArea
             case EditorRequest.Jump:
                 Tools.HideCursor();
                 // Leaving the text asks about changes that are not saved
-                Jump.Open(LeaveForJump, () => _engine.IsModified, MoveToBookmark);
+                Jump.Open(LeaveForJump, () => _engine.IsModified, MoveToBookmark, RecentCurrent);
                 RedrawAll();
                 break;
             case EditorRequest.Projects:
@@ -1173,6 +1170,11 @@ public partial class TextArea
 
         Completions.Refresh();
     }
+
+    // The file being edited, left out of the latest files (Ctrl+K): null for a blank page or a note
+    private string? RecentCurrent => _saveMode == SaveAsFile && !FileExplorer.IsUntitled && !FileExplorer.EditingListNote
+        ? FileExplorer.CurrentFilePath
+        : null;
 
     // Before a jump leaves the text: changes that are not saved are asked about (false: stay)
     private bool LeaveForJump()

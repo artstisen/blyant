@@ -327,10 +327,11 @@ internal static class Jump
     /// (Color schemes ...) is shown: a jump from there that leaves is not made then (null: it has none)</param>
     /// <param name="here">Shows the place on the page itself, without leaving it (the editor, at a bookmarked place
     /// in the file it has): true when it did</param>
+    /// <param name="current">The file being edited, left out of the latest files (Ctrl+K in the menu)</param>
     internal static void Open(Func<bool>? beforeLeaving = null, Func<bool>? hasChanges = null,
-        Func<JumpTarget, bool>? here = null)
+        Func<JumpTarget, bool>? here = null, string? current = null)
     {
-        var target = JumpMenu.Pick();
+        var target = JumpMenu.Pick(current);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
         if (target == null) return;
         if (here != null && here(target))

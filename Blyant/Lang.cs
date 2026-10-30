@@ -151,20 +151,20 @@ internal static class Lang
     }
 
     // The file of a language in a folder "lang" (the data directory first), or null
-    private static (string Path, Source From)? FindFile(string code)
+    private static string? FindFile(string code)
     {
-        foreach (var (folder, from) in Folders())
+        foreach (var (folder, _) in Folders())
         {
             var path = Path.Combine(folder, code + ".txt");
             try
             {
-                if (File.Exists(path)) return (path, from);
+                if (File.Exists(path)) return path;
                 // The code is in lowercase, the name of the file can be in other letters ("PL.txt", "pt-BR.txt"):
                 // where file names are case-sensitive (Linux) it is found by comparing the names
                 if (!Directory.Exists(folder)) continue;
                 var named = Directory.EnumerateFiles(folder, "*.txt").FirstOrDefault(file =>
                     string.Equals(Path.GetFileNameWithoutExtension(file), code, StringComparison.OrdinalIgnoreCase));
-                if (named != null) return (named, from);
+                if (named != null) return named;
             }
             catch
             {
@@ -306,7 +306,7 @@ internal static class Lang
     /// </summary>
     internal static string? ReadFile(string code)
     {
-        return FindFile(code) is { } file ? ReadText(file.Path) : null;
+        return FindFile(code) is { } path ? ReadText(path) : null;
     }
 
     /// <summary>

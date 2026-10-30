@@ -510,6 +510,28 @@ public class SyntaxTests
     [InlineData("#emph[some *b*] after", "NNNNN......BBB.......")]
     [InlineData("#let f(x) = [*#x m* at]", "WWWW.N.......BBBBBB....")]
     [InlineData("_steady green_, then", "IIIIIIIIIIIIII......")]
+    [InlineData("Use #emph[this] else that", "....NNNNN................")]
+    [InlineData("#let t = [#set text(red); hi] + 1", "WWWW......WWWW.NNNN.............9")]
+    [InlineData("#set text(red); *b*", "WWWW.NNNN.......BBB")]
+    [InlineData("= Title /* c", "11111111####")]
+    [InlineData("======= x", "666666666")]
+    [InlineData("-5", "..")]
+    [InlineData("2024 was", "........")]
+    [InlineData("1.", "LL")]
+    [InlineData("@intro.", "NNNNNN.")]
+    [InlineData("@fig:a-b", "NNNNNNNN")]
+    [InlineData("(https://x.com/a_(b)).", ".UUUUUUUUUUUUUUUUUUU..")]
+    [InlineData("#calc.pi", "NNNNNNNN")]
+    [InlineData("#(1 + 2)", "W.9...9.")]
+    [InlineData("#f(x)[*y*] z", "NN....BBB...")]
+    [InlineData("#let a = (0xff, 1.5e3, 50%, 1fr, 2px, x2)", "WWWW......9999..99999..999..999..9.......")]
+    [InlineData("#let s = \"a\\\"b", "WWWW.....SSSSS")]
+    [InlineData("#let x = $a$ + 1", "WWWW.....999...9")]
+    [InlineData("#if a < b [x]", "WWW..........")]
+    [InlineData("*a", "..")]
+    [InlineData("a*b*", "....")]
+    [InlineData("\\*x*", "....")]
+    [InlineData("```x```", "CCCCCCC")]
     public void Typst_Lines(string line, string expected)
     {
         Assert.Equal(expected, Style(SyntaxType.Typst, line));
@@ -533,6 +555,66 @@ public class SyntaxTests
             Styles(SyntaxType.Typst, "#if x [", "  *a*", "] else [", "b", "]"));
         // A statement ends with its line
         Assert.Equal(new[] { "WWWW.....9", "......" }, Styles(SyntaxType.Typst, "#let n = 1", "if not"));
+    }
+
+    // The state after the last of the lines
+    private static int EndState(SyntaxType type, params string[] lines)
+    {
+        var state = 0;
+        foreach (var line in lines) SyntaxHighlighter.Highlight(type, line, state, out state);
+        return state;
+    }
+
+    [Fact]
+    public void Typst_BracketsClose_AlsoAfterAStatementOrEmphasisInThem()
+    {
+        // A statement in content ends with its "]"
+        Assert.Equal(0, EndState(SyntaxType.Typst, "#box[#let x = 1]"));
+        Assert.Equal("BBB", Styles(SyntaxType.Typst, "#box[#let x = 1]", "*b*")[1]);
+        Assert.Equal(0, EndState(SyntaxType.Typst, "#table(columns: 2, [#set text(red) a], [b])"));
+        // Strong and emphasis do not go past the "]" of their content
+        Assert.Equal(new[] { "NNNNNNN...........", "......BBB" },
+            Styles(SyntaxType.Typst, "#strong[*x] and y*", "after *b*"));
+        // A heading is read for brackets, comments and code
+        Assert.Equal("########..", Styles(SyntaxType.Typst, "= Title /* c", "still */ x")[1]);
+        Assert.Equal("BBB", Styles(SyntaxType.Typst, "#box[", "= A ]", "*b*")[2]);
+        Assert.Equal(0, EndState(SyntaxType.Typst, "= Results #figure(", ")"));
+        // The same state is the same number
+        Assert.Equal(0, EndState(SyntaxType.Typst, "#{ #f(x)[y] }"));
+        // A call on two lines
+        Assert.Equal("..BBB.", Styles(SyntaxType.Typst, "#f(", ")[*b*]")[1]);
+    }
+
+    [Fact]
+    public void Typst_OddAndUnfinishedLines_AreReadWithoutFailing()
+    {
+        foreach (var line in new[] { "#", "\\", "`", "``", "<", "@", "/ ", "/ Term", "=", "$", "#let", "#f(", "]" })
+        {
+            Styles(SyntaxType.Typst, line, line, "*b*");
+        }
+
+        // Math to the next $, raw text closed in a line, and a comment in code over two lines
+        Assert.Equal(new[] { "9", "99.." }, Styles(SyntaxType.Typst, "$", "b$ c"));
+        Assert.Equal(new[] { "KKK", "K", "KKKK", "BBB" }, Styles(SyntaxType.Typst, "```", "a", "````", "*b*"));
+        Assert.Equal("KKK.BBB", Styles(SyntaxType.Typst, "```", "x", "``` *b*")[2]);
+        Assert.Equal(new[] { "WWWW.....9.####", "####.." }, Styles(SyntaxType.Typst, "#let x = 1 /* a", "b */ 2"));
+        // More brackets than are followed: no failure, and the text after them is markup again
+        var open = "#" + new string('(', 25);
+        var close = new string(')', 25);
+        Assert.True((EndState(SyntaxType.Typst, open) >> 23 & 0x1F) <= 23);
+        Assert.Equal("BBB", Styles(SyntaxType.Typst, open, close, "*b*")[2]);
+    }
+
+    [Fact]
+    public void Typst_ALongLineWithManyMarks_IsReadQuickly()
+    {
+        foreach (var part in new[] { "*a ", "_a " })
+        {
+            var line = string.Concat(Enumerable.Repeat(part, 20000));
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            Style(SyntaxType.Typst, line);
+            Assert.True(watch.ElapsedMilliseconds < 250, part + ": " + watch.ElapsedMilliseconds + " ms");
+        }
     }
 
     [Fact]

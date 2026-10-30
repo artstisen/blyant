@@ -360,6 +360,18 @@ internal static class ChoiceBox
     }
 
     // The keys of a box, on the bottom line
+    /// <summary>
+    /// The keys of a list of choices (for Pick): 1 to 9, then letters, but not those that move in the box (g h j k l
+    /// q). A choice after the last letter has no key
+    /// </summary>
+    internal static string[] NumberKeys(int count)
+    {
+        const string letters = "ABCDEFIMNOPRSTUVWXYZ";
+        return Enumerable.Range(0, count)
+            .Select(n => n < 9 ? (n + 1).ToString() : n - 9 < letters.Length ? letters[n - 9].ToString() : string.Empty)
+            .ToArray();
+    }
+
     internal static void WriteHints(string hints)
     {
         Tools.SetCursorEx(Init.LineCount - 1, 0);

@@ -316,6 +316,28 @@ public class CompletionsTests : IDisposable
     }
 
     [Fact]
+    public void Typst_ListOfAFile_IsUsedInsteadOfTheOneBuiltIn_AsSoonAsItIsSaved()
+    {
+        // A file of an earlier version, without a list for Typst
+        Directory.CreateDirectory(_directory);
+        File.WriteAllText(Completions.FilePath, "=== Mine\nhello = Hello\n");
+        Assert.Equal(DialogText.Success, Completions.Load());
+        Assert.Equal("*$0*", Completions.Named("/bold", SyntaxType.Typst)?.Text);
+        Assert.Contains("/figure", Completions.SurroundWords(SyntaxType.Typst));
+        Assert.Equal("/ $0:", Completions.Find("/term", SyntaxType.Typst).Single().Text);
+        // Only in Typst
+        Assert.Empty(Completions.Find("/fig", SyntaxType.None));
+        Assert.Empty(Completions.Find("/fig", SyntaxType.Markdown));
+        // A list of its own (the tag can also be "typst") replaces the one built in when the file is saved
+        File.WriteAllText(Completions.FilePath, "=== Mine\nhello = Hello\n=== My Typst (typst)\n/bold = #strong[$0]\n");
+        File.SetLastWriteTimeUtc(Completions.FilePath, DateTime.UtcNow.AddMinutes(1));
+        Completions.Refresh();
+        Assert.Equal("#strong[$0]", Completions.Find("/bold", SyntaxType.Typst).Single().Text);
+        Assert.Empty(Completions.Find("/fig", SyntaxType.Typst));
+        Completions.Parse(Lists);
+    }
+
+    [Fact]
     public void CompletingWords_IsOnFromTheStart()
     {
         var saved = Completions.Enabled;

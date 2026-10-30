@@ -319,8 +319,9 @@ internal static class JumpMenu
     /// <summary>
     /// Show the Jump menu until a place is picked (Enter) or it is closed (Esc)
     /// </summary>
+    /// <param name="currentFile">The file being edited, left out of the latest files (Ctrl+K)</param>
     /// <returns>The place picked, or null</returns>
-    internal static JumpTarget? Pick()
+    internal static JumpTarget? Pick(string? currentFile = null)
     {
         // In the color of text in frames and boxes
         using var frameText = ConsoleColors.FrameTextScope();
@@ -382,7 +383,7 @@ internal static class JumpMenu
             {
                 // The latest files: the one picked is the place to jump to, and Esc goes back to the menu
                 _openRecent = false;
-                if (RecentBox.Pick(null) is { } recent) return new JumpTarget(JumpKind.File, recent);
+                if (RecentBox.Pick(currentFile) is { } recent) return new JumpTarget(JumpKind.File, recent);
                 continue;
             }
 
@@ -1379,7 +1380,7 @@ internal static class JumpMenu
             var marked = Bookmarks.Items.Where(Marks.Contains).ToList();
             var notes = marked.Count(item => item.Note.Length > 0);
             ChoiceBox.Forget();
-            if ((marked.Count > 1 || notes > 0) && !ChoiceBox.Confirm(Lang.T("Remove bookmarks"),
+            if ((marked.Count > 1 || notes > 0) && !ChoiceBox.Confirm(DialogText.BookmarksRemoveCaption,
                     Lang.F("Remove the {0} marked bookmarks from the list?", marked.Count),
                     (notes > 0 ? Lang.T("Their notes are removed with them.") + " " : string.Empty) +
                     DialogText.BookmarksClearNote, true))
@@ -1438,22 +1439,24 @@ internal static class JumpMenu
         _message = Lang.F("Removed from the bookmarks: {0} (u puts it back)", entry.Shown);
     }
 
-    // The bookmarks of files and directories that are not there
-    private static List<Bookmarks.Entry> MissingBookmarks() => Bookmarks.Items
+    // The bookmarks of files and directories that are not there (each drive looked at once by the checker)
+    private static List<Bookmarks.Entry> MissingBookmarks(MissingPlaces.Checker check) => Bookmarks.Items
         .Where(entry => !entry.IsFolder && entry.Target.Kind is JumpKind.File or JumpKind.Directory &&
-                        MissingPlaces.IsMissing(entry.Target.FullPath)).ToList();
+                        check.IsMissing(entry.Target.FullPath, entry.Target.Kind == JumpKind.File)).ToList();
 
     // ":missing": the missing bookmarks in a box. The one picked is selected in the list
     private static void ShowMissingBookmarks()
     {
-        var missing = MissingBookmarks();
+        var check = new MissingPlaces.Checker();
+        var missing = MissingBookmarks(check);
         if (missing.Count == 0)
         {
             _message = MissingPlaces.NothingMissing;
             return;
         }
 
-        var picked = MissingPlaces.Pick(missing.Select(entry => (entry.Shown, entry.Target.FullPath)).ToList());
+        var picked = MissingPlaces.Pick(missing.Select(entry => (entry.Shown, entry.Target.FullPath,
+            check.OnAbsentDrive(entry.Target.FullPath, entry.Target.Kind == JumpKind.File))).ToList());
         if (picked < 0) return;
         // Shown, also when it is in a closed folder or the filter hides it
         Bookmarks.Reveal(IndexOf(missing[picked]));
@@ -1465,14 +1468,16 @@ internal static class JumpMenu
     // not connected are kept
     private static void PruneBookmarks()
     {
-        var (prune, kept) = MissingPlaces.Sort(MissingBookmarks(), entry => entry.Target.FullPath);
+        var check = new MissingPlaces.Checker();
+        var (prune, kept) = MissingPlaces.Sort(MissingBookmarks(check),
+            entry => check.OnAbsentDrive(entry.Target.FullPath, entry.Target.Kind == JumpKind.File));
         if (prune.Count == 0)
         {
             _message = MissingPlaces.NothingToPrune(kept.Count);
             return;
         }
 
-        if (!MissingPlaces.Confirm(Lang.T("Remove bookmarks"), prune.Count, kept.Count,
+        if (!MissingPlaces.Confirm(DialogText.BookmarksRemoveCaption, prune.Count, kept.Count,
                 prune.Count(entry => entry.Note.Length > 0), true))
         {
             return;
@@ -1487,6 +1492,7 @@ internal static class JumpMenu
     // u or ":undo": put back what was removed last
     private static void UndoBookmarkRemove()
     {
+        var before = Bookmarks.Items.Count;
         var index = Bookmarks.UndoRemove();
         if (index < 0)
         {
@@ -1499,7 +1505,11 @@ internal static class JumpMenu
         Bookmarks.Reveal(index);
         _select = entry;
         SaveBookmarks();
-        _message = Lang.F("Back in the bookmarks: {0}", entry.Shown);
+        // (a folder comes back with what is in it, and :prune takes several out at once)
+        var back = Bookmarks.Items.Count - before;
+        _message = back == 1 || entry.IsFolder
+            ? Lang.F("Back in the bookmarks: {0}", entry.Shown)
+            : Lang.F("{0} back in the bookmarks", back);
     }
 
     // ":path" and ":name": the full path of the place, or the name of the file or directory itself, to the clipboard

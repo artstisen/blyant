@@ -70,7 +70,7 @@ internal sealed partial class EditorEngine
                 var type = SyntaxHighlighter.ParseType(argument);
                 if (type == SyntaxType.None)
                 {
-                    SetError(DialogText.SyntaxUnknown + argument);
+                    SetError(DialogText.SyntaxUnknown(argument));
                     return;
                 }
 

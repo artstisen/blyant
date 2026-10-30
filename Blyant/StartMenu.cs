@@ -454,9 +454,7 @@ internal static class StartMenu
         var types = FileOperations.FileTypes;
         var choices = types.Select(type => FileOperations.FileTypeName(type.Extension) + " (" + type.Extension + ")")
             .ToList();
-        // A key is one character: 1 to 9, then letters (not those that move in the box: g h j k l q)
-        const string more = "ABCDEFIMNOPRSTUVWXYZ";
-        var keys = types.Select((_, i) => i < 9 ? (i + 1).ToString() : more[i - 9].ToString()).ToList();
+        var keys = ChoiceBox.NumberKeys(types.Count);
         var selected = Math.Max(0, types.ToList().FindIndex(type => type.Extension == FileOperations.DefaultExtension));
         var picked = ChoiceBox.Pick(Lang.T("New files and blank pages"),
             Lang.T("Assumed file type (redefined upon saving)"), string.Empty, choices,
