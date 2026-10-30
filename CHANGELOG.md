@@ -1,6 +1,6 @@
 # Changes
 
-## v1.2.0 (unreleased)
+## v1.2.0 (2026-10-30)
 - **Counts in messages and questions**: a count is written after a colon or in brackets ("Lines trimmed: 1", "Remove all the bookmarks (14)?"), so no message reads "1 lines" and no word has to agree with the number in any of the languages (Polish, for one, has three forms).
 - **A folder with its files in the favorites**: `:import folder` in the favorites adds a directory you pick (or give, also in quotes or relative to the folder shown) as a folder of favorites with all its files, and asks whether to include the files of its subfolders, at any depth: all go in the one folder, those of a subfolder together. What will be done is shown and asked first, also when a favorites folder of the same name is there and is added to. Hidden files and folders (`.git`), links to other folders and broken links are left out, folders that cannot be read are skipped and counted, files that are favorites already stay where they are, and the same directory added again adds its new files.
 - **The Jump menu's Recent files box** (`Ctrl+K` there) leaves out the file being edited, as `Ctrl+K` in the editor does.
