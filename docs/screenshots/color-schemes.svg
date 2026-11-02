@@ -36,7 +36,7 @@
 <text x="22.4" y="145.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="30.8" y="145.8" fill="#CCCCCC" textLength="151.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  Page 1    Page 2</text>
 <text x="207.2" y="145.8" fill="#F2F2F2" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Page 3</text>
-<text x="274.4" y="145.8" fill="#CCCCCC" textLength="75.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">   Page 4</text>
+<text x="274.4" y="145.8" fill="#CCCCCC" textLength="159.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">   Page 4    Page 5</text>
 <text x="795.2" y="145.8" fill="#61D6D6" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">h/l</text>
 <text x="828.8" y="145.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <rect x="14.0" y="150" width="840.0" height="17" fill="#0037DA"/>
@@ -52,85 +52,77 @@
 <text x="828.8" y="196.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <rect x="14.0" y="201" width="25.2" height="17" fill="#0037DA"/>
 <rect x="39.2" y="201" width="16.8" height="17" fill="#3B78FF"/>
-<rect x="56.0" y="201" width="184.8" height="17" fill="#0037DA"/>
-<rect x="240.8" y="201" width="67.2" height="17" fill="#3B78FF"/>
-<rect x="308.0" y="201" width="546.0" height="17" fill="#0037DA"/>
+<rect x="56.0" y="201" width="798.0" height="17" fill="#0037DA"/>
 <text x="22.4" y="213.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="39.2" y="213.8" fill="#F2F2F2" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">-&gt;</text>
-<text x="56.0" y="213.8" fill="#CCCCCC" textLength="109.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Command line</text>
+<text x="56.0" y="213.8" fill="#CCCCCC" textLength="100.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Box borders</text>
 <text x="240.8" y="213.8" fill="#61D6D6" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Sample</text>
-<text x="308.0" y="213.8" fill="#CCCCCC" textLength="193.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  Cyan, background Blue</text>
+<text x="308.0" y="213.8" fill="#CCCCCC" textLength="50.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  Cyan</text>
 <text x="828.8" y="213.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <rect x="14.0" y="218" width="840.0" height="17" fill="#0037DA"/>
 <text x="22.4" y="230.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
-<text x="30.8" y="230.8" fill="#CCCCCC" textLength="193.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">    Command box borders</text>
+<text x="30.8" y="230.8" fill="#CCCCCC" textLength="117.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">    Box corner</text>
 <text x="240.8" y="230.8" fill="#61D6D6" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Sample</text>
-<text x="308.0" y="230.8" fill="#CCCCCC" textLength="50.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  Cyan</text>
+<text x="308.0" y="230.8" fill="#CCCCCC" textLength="235.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  [Default]: the box borders</text>
 <text x="828.8" y="230.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <rect x="14.0" y="235" width="840.0" height="17" fill="#0037DA"/>
 <text x="22.4" y="247.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
-<text x="30.8" y="247.8" fill="#CCCCCC" textLength="512.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">    Command box           Sample   Gray, background Dark Blue</text>
+<text x="30.8" y="247.8" fill="#CCCCCC" textLength="487.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">    Box                   Sample   [Default]: the tab text</text>
 <text x="828.8" y="247.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
-<rect x="14.0" y="252" width="840.0" height="17" fill="#0037DA"/>
+<rect x="14.0" y="252" width="226.8" height="17" fill="#0037DA"/>
+<rect x="240.8" y="252" width="67.2" height="17" fill="#3B78FF"/>
+<rect x="308.0" y="252" width="546.0" height="17" fill="#0037DA"/>
 <text x="22.4" y="264.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
-<text x="30.8" y="264.8" fill="#CCCCCC" textLength="117.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">    Typed part</text>
-<text x="240.8" y="264.8" fill="#B4009E" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Sample</text>
-<text x="308.0" y="264.8" fill="#CCCCCC" textLength="75.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  Magenta</text>
+<text x="30.8" y="264.8" fill="#CCCCCC" textLength="109.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">    Box title</text>
+<text x="240.8" y="264.8" fill="#F2F2F2" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Sample</text>
+<text x="308.0" y="264.8" fill="#CCCCCC" textLength="252.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  [Default]: the tab highlight</text>
 <text x="828.8" y="264.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
-<rect x="14.0" y="269" width="226.8" height="17" fill="#0037DA"/>
-<rect x="240.8" y="269" width="67.2" height="17" fill="#3B78FF"/>
-<rect x="308.0" y="269" width="546.0" height="17" fill="#0037DA"/>
+<rect x="14.0" y="269" width="840.0" height="17" fill="#0037DA"/>
 <text x="22.4" y="281.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
-<text x="30.8" y="281.8" fill="#CCCCCC" textLength="142.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">    Whole command</text>
-<text x="240.8" y="281.8" fill="#F2F2F2" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Sample</text>
-<text x="308.0" y="281.8" fill="#CCCCCC" textLength="201.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  White, background Blue</text>
 <text x="828.8" y="281.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <rect x="14.0" y="286" width="840.0" height="17" fill="#0037DA"/>
 <text x="22.4" y="298.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
-<text x="30.8" y="298.8" fill="#CCCCCC" textLength="142.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">    Command hints</text>
-<text x="240.8" y="298.8" fill="#61D6D6" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Sample</text>
-<text x="308.0" y="298.8" fill="#CCCCCC" textLength="50.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  Cyan</text>
+<text x="64.4" y="298.8" fill="#61D6D6" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">.-----.</text>
 <text x="828.8" y="298.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
-<rect x="14.0" y="303" width="226.8" height="17" fill="#0037DA"/>
-<rect x="240.8" y="303" width="67.2" height="17" fill="#F9F1A5"/>
-<rect x="308.0" y="303" width="546.0" height="17" fill="#0037DA"/>
+<rect x="14.0" y="303" width="58.8" height="17" fill="#0037DA"/>
+<rect x="72.8" y="303" width="42.0" height="17" fill="#3B78FF"/>
+<rect x="114.8" y="303" width="739.2" height="17" fill="#0037DA"/>
 <text x="22.4" y="315.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
-<text x="30.8" y="315.8" fill="#CCCCCC" textLength="142.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">    Command error</text>
-<text x="240.8" y="315.8" fill="#0C0C0C" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Sample</text>
-<text x="308.0" y="315.8" fill="#CCCCCC" textLength="218.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  Black, background Yellow</text>
+<text x="64.4" y="315.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="72.8" y="315.8" fill="#F2F2F2" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Box</text>
+<text x="114.8" y="315.8" fill="#61D6D6" textLength="302.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&#x27;----------------------------------.</text>
 <text x="828.8" y="315.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
-<rect x="14.0" y="320" width="840.0" height="17" fill="#0037DA"/>
+<rect x="14.0" y="320" width="67.2" height="17" fill="#0037DA"/>
+<rect x="81.2" y="320" width="92.4" height="17" fill="#F9F1A5"/>
+<rect x="173.6" y="320" width="680.4" height="17" fill="#0037DA"/>
 <text x="22.4" y="332.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="64.4" y="332.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="81.2" y="332.8" fill="#0C0C0C" textLength="84.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Attention</text>
+<text x="408.8" y="332.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="828.8" y="332.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <rect x="14.0" y="337" width="840.0" height="17" fill="#0037DA"/>
 <text x="22.4" y="349.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
-<text x="64.4" y="349.8" fill="#61D6D6" textLength="470.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">.-- Commands ------------------------------------------.</text>
+<text x="64.4" y="349.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="72.8" y="349.8" fill="#CCCCCC" textLength="50.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  Text</text>
+<text x="408.8" y="349.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="828.8" y="349.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <rect x="14.0" y="354" width="67.2" height="17" fill="#0037DA"/>
-<rect x="81.2" y="354" width="33.6" height="17" fill="#3B78FF"/>
-<rect x="114.8" y="354" width="739.2" height="17" fill="#0037DA"/>
+<rect x="81.2" y="354" width="16.8" height="17" fill="#3B78FF"/>
+<rect x="98.0" y="354" width="756.0" height="17" fill="#0037DA"/>
 <text x="22.4" y="366.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="64.4" y="366.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
-<text x="81.2" y="366.8" fill="#F2F2F2" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">copy</text>
-<text x="131.6" y="366.8" fill="#B4009E" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">co</text>
-<text x="148.4" y="366.8" fill="#CCCCCC" textLength="50.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">llapse</text>
-<text x="215.6" y="366.8" fill="#B4009E" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">co</text>
-<text x="232.4" y="366.8" fill="#CCCCCC" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">lor</text>
-<text x="274.4" y="366.8" fill="#61D6D6" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">+2 more</text>
-<text x="518.0" y="366.8" fill="#61D6D6" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> |</text>
+<text x="81.2" y="366.8" fill="#F2F2F2" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">-&gt;</text>
+<text x="98.0" y="366.8" fill="#CCCCCC" textLength="75.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Selector</text>
+<text x="408.8" y="366.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="828.8" y="366.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <rect x="14.0" y="371" width="840.0" height="17" fill="#0037DA"/>
 <text x="22.4" y="383.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
-<text x="64.4" y="383.8" fill="#61D6D6" textLength="470.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&#x27;------------------------------------------------------&#x27;</text>
+<text x="64.4" y="383.8" fill="#61D6D6" textLength="92.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|  Dividers</text>
+<text x="408.8" y="383.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="828.8" y="383.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
-<rect x="14.0" y="388" width="50.4" height="17" fill="#0037DA"/>
-<rect x="64.4" y="388" width="285.6" height="17" fill="#3B78FF"/>
-<rect x="350.0" y="388" width="16.8" height="17" fill="#0037DA"/>
-<rect x="366.8" y="388" width="168.0" height="17" fill="#F9F1A5"/>
-<rect x="534.8" y="388" width="319.2" height="17" fill="#0037DA"/>
+<rect x="14.0" y="388" width="840.0" height="17" fill="#0037DA"/>
 <text x="22.4" y="400.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
-<text x="64.4" y="400.8" fill="#61D6D6" textLength="100.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">COMMAND:copy</text>
-<text x="366.8" y="400.8" fill="#0C0C0C" textLength="159.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Not a command: cpy</text>
+<text x="64.4" y="400.8" fill="#61D6D6" textLength="352.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&#x27;----------------------------------------&#x27;</text>
 <text x="828.8" y="400.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <rect x="14.0" y="405" width="840.0" height="17" fill="#0037DA"/>
 <text x="22.4" y="417.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>

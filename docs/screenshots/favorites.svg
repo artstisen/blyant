@@ -8,8 +8,8 @@
 <circle cx="40" cy="17" r="6" fill="#FEBC2E"/>
 <circle cx="60" cy="17" r="6" fill="#28C840"/>
 <text x="434.0" y="22" fill="#A0A0A0" text-anchor="middle">Blyant: favorites in colored folders, with a note and a peek</text>
-<rect x="14.0" y="48" width="134.4" height="17" fill="#0037DA"/>
-<text x="14.0" y="60.8" fill="#61D6D6" textLength="126.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> FAVORITE FILES</text>
+<rect x="14.0" y="48" width="92.4" height="17" fill="#0037DA"/>
+<text x="14.0" y="60.8" fill="#61D6D6" textLength="84.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> FAVORITES</text>
 <text x="392.0" y="60.8" fill="#61D6D6" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Blyant</text>
 <text x="22.4" y="77.8" fill="#61D6D6" textLength="546.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Files and directories marked as favorites (P in the file browser)</text>
 <text x="14.0" y="94.8" fill="#B4009E" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">---</text>

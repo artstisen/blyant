@@ -1,6 +1,6 @@
 # Changes
 
-## v1.2.1 (unreleased)
+## v1.3.0 (2026-11-02)
 - **Several lists of favorites**: `:list` in the favorites shows the lists, to open one, add one (`N`), rename one (`R`) or delete one (`D`), and `:list name` opens one at once (`:list main` the main list). `favorites.txt` stays the main list, and the others are files in the directory `favorites` in the data directory. The list that is open is remembered (setting `favoritelist`) and used all over Blyant: by `P`, the marks in the file browser and the Favorites tab of the Jump menu. A file that is renamed, moved or deleted is followed in all the lists.
 - The favorites are called **Favorites** on the page, not Favorite files, as they can be directories too.
 - The logo **Islands** has stars in the sky.
