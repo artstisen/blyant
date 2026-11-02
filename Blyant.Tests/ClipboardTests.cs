@@ -1,7 +1,7 @@
 ﻿namespace Blyant.Tests;
 
 /// <summary>
-/// Yanks to the system clipboard ("+y, or every yank), and the paste bin (:pb, :pbappend, :pbread, :pbclear)
+/// Yanks to the system clipboard ("+y, or every yank), and the paste bin (:pb, :pbappend, :pbread, :pbclear, :pbpath)
 /// </summary>
 [Collection("Static state")]
 public class ClipboardTests : IDisposable
@@ -103,6 +103,7 @@ public class ClipboardTests : IDisposable
         Assert.True(editor.PasteBinAppend);
         Assert.Equal(EditorRequest.PasteBinRead, editor.Type(":pbread<CR>"));
         Assert.Equal(EditorRequest.PasteBinClear, editor.Type(":pbclear<CR>"));
+        Assert.Equal(EditorRequest.PasteBinPath, editor.Type(":pbpath<CR>"));
         Assert.Equal(EditorRequest.ClipboardSettings, editor.Type(":clipboard<CR>"));
         // ":info": the size, the dates and the path of the text, in a box
         Assert.Equal(EditorRequest.DocumentInfo, editor.Type(":info<CR>"));
@@ -159,6 +160,62 @@ public class ClipboardTests : IDisposable
         Assert.Contains("see", Tools.GetAllLinesFromLineMemory());
         SystemClipboard.ReadPasteBin(out var text);
         Assert.Equal("/home/lars", text);
+    }
+
+    [Fact]
+    public void AYankTooLongForTheClipboard_OffersThePasteBin_OnlyWhenThatIsOff()
+    {
+        var fits = new string('x', SystemClipboard.MaxOsc52Bytes);
+        var tooLong = fits + "x";
+        SystemClipboard.Osc52 = true;
+        SystemClipboard.PasteBin = false;
+        Assert.False(SystemClipboard.OffersPasteBin(fits));
+        Assert.True(SystemClipboard.OffersPasteBin(tooLong));
+        // Bytes count, not characters
+        Assert.True(SystemClipboard.OffersPasteBin(new string('\u00e6', SystemClipboard.MaxOsc52Bytes / 2 + 1)));
+        // The paste bin gets it anyway
+        SystemClipboard.PasteBin = true;
+        Assert.False(SystemClipboard.OffersPasteBin(tooLong));
+        // The clipboard is turned off: nothing was meant to go out
+        SystemClipboard.Osc52 = false;
+        SystemClipboard.PasteBin = false;
+        Assert.False(SystemClipboard.OffersPasteBin(tooLong));
+    }
+
+    [Fact]
+    public void TextInThePasteBin_IsTold_BeforeItIsReplaced()
+    {
+        Assert.False(SystemClipboard.PasteBinHasText);
+        SystemClipboard.WritePasteBin("kept", false);
+        Assert.True(SystemClipboard.PasteBinHasText);
+        SystemClipboard.ClearPasteBin();
+        Assert.False(SystemClipboard.PasteBinHasText);
+    }
+
+    [Fact]
+    public void ThePathOfThePasteBin_NeverGoesToThePasteBin()
+    {
+        SystemClipboard.WritePasteBin("kept", false);
+        SystemClipboard.Osc52 = false;
+        SystemClipboard.PasteBin = true;
+        var (message, isError) = SystemClipboard.CopyPasteBinPath();
+        Assert.False(isError);
+        // Nothing else can take it: the message tells it
+        Assert.Contains(SystemClipboard.PasteBinPath, message);
+        Assert.Equal(SystemClipboard.PasteBinPath, Tools.GetCurrentLineFromLineMemory());
+        SystemClipboard.ReadPasteBin(out var text);
+        Assert.Equal("kept", text);
+    }
+
+    [Fact]
+    public void ALongPath_IsShownInFull_OnRows()
+    {
+        var path = Path.Combine("C:", "a folder", new string('x', 90), "paste-bin.txt");
+        var rows = ChoiceBox.Rows(path, 30);
+        Assert.All(rows, row => Assert.True(row.Length <= 30));
+        // A row broken at a blank space loses only that space
+        Assert.Equal(path.Replace(" ", string.Empty), string.Concat(rows).Replace(" ", string.Empty));
+        Assert.Equal(new[] { "short" }, ChoiceBox.Rows("short", 30));
     }
 
     [Fact]

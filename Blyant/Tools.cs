@@ -824,6 +824,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":pbappend", Lang.T("Add the selection (or the text) to the paste bin"), false));
             _shortcutList.Add(new Shortcut(":pbread", Lang.T("Insert the text of the paste bin at the cursor"), false));
             _shortcutList.Add(new Shortcut(":pbclear", Lang.T("Empty the paste bin"), false));
+            _shortcutList.Add(new Shortcut(":pbpath", Lang.T("Copy path of paste bin"), false));
             _shortcutList.Add(new Shortcut(":path", Lang.T("File browser, editor: copy the path of the file"), false));
             _shortcutList.Add(new Shortcut(":clipboard", Lang.T("The clipboard settings (start page, editor)"), false));
             _shortcutList.Add(new Shortcut("j k Enter Space", Lang.T("Settings: select and change"), false));

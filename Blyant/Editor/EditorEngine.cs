@@ -40,6 +40,7 @@ internal enum EditorRequest
     PasteBinWrite, // ":pb": write PasteBinText to the paste bin (PasteBinAppend: add it to the end)
     PasteBinRead, // ":pbread": insert the text of the paste bin at the cursor
     PasteBinClear, // ":pbclear": empty the paste bin
+    PasteBinPath, // ":pbpath": copy the path of the paste bin
     ClipboardSettings, // ":clipboard": show the clipboard settings
     DocumentInfo, // ":info": show the size, the dates and the path of the text being edited
     Jump, // ":jump", ":ju" or Ctrl+O: show the Jump menu
@@ -1421,6 +1422,9 @@ internal sealed partial class EditorEngine
                 break;
             case "pbclear":
                 _request = EditorRequest.PasteBinClear;
+                break;
+            case "pbpath":
+                _request = EditorRequest.PasteBinPath;
                 break;
             case "clipboard":
                 _request = EditorRequest.ClipboardSettings;

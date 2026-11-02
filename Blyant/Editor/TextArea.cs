@@ -494,7 +494,8 @@ public partial class TextArea
                 }
 
                 if (_peek != null && request is not (EditorRequest.None or EditorRequest.Clipboard
-                        or EditorRequest.PasteBinWrite or EditorRequest.Help or EditorRequest.SyntaxChanged
+                        or EditorRequest.PasteBinWrite or EditorRequest.PasteBinPath or EditorRequest.Help
+                        or EditorRequest.SyntaxChanged
                         or EditorRequest.WrapChanged or EditorRequest.ScrollOffChanged) &&
                     !(EditablePeek && request is EditorRequest.Save or EditorRequest.SaveAndQuit
                         or EditorRequest.Quit or EditorRequest.ForceQuit or EditorRequest.PasteBinRead
@@ -669,6 +670,12 @@ public partial class TextArea
             case EditorRequest.Clipboard:
             {
                 // Yanked text: to the system clipboard and/or the paste bin
+                if (SystemClipboard.OffersPasteBin(_engine.ClipboardText) && WriteToPasteBinIfWanted(_engine.ClipboardText))
+                {
+                    _shownStatus = null;
+                    break;
+                }
+
                 var (message, isError) = SystemClipboard.Copy(_engine.ClipboardText, !SystemClipboard.EveryYank);
                 if (message.Length > 0) _engine.ShowMessage(message, isError);
                 _shownStatus = null;
@@ -703,6 +710,13 @@ public partial class TextArea
                 var result = SystemClipboard.ClearPasteBin();
                 _engine.ShowMessage(result == DialogText.Success ? DialogText.PasteBinCleared : result,
                     result != DialogText.Success);
+                break;
+            }
+            case EditorRequest.PasteBinPath:
+            {
+                var (message, isError) = SystemClipboard.CopyPasteBinPath();
+                _engine.ShowMessage(message, isError);
+                _shownStatus = null;
                 break;
             }
             case EditorRequest.CopyPath:
@@ -1867,6 +1881,42 @@ public partial class TextArea
     #region Drawing
 
     // Redraw the whole screen (after a dialog or message has been shown on top of the editor)
+    // A yank too long for the clipboard, with the paste bin turned off: ask whether to write it to the paste bin, this
+    // once (the setting stays off), and show where it went. False if not wanted
+    private bool WriteToPasteBinIfWanted(string text)
+    {
+        var caption = Lang.T("Paste bin file");
+        var append = SystemClipboard.PasteBinAppend;
+        var replaces = !append && SystemClipboard.PasteBinHasText;
+        Draw(); // Remove the command from the bottom line, and the selection of the yank
+        Tools.HideCursor();
+        if (!ChoiceBox.Confirm(caption,
+                Lang.F("Too long for clipboard (more than {0} KB). Write to paste bin?", SystemClipboard.MaxOsc52Bytes / 1000),
+                replaces ? Lang.T("Replaces text in paste bin") : string.Empty, replaces))
+        {
+            RedrawAll();
+            return false;
+        }
+
+        var result = SystemClipboard.WritePasteBin(text, append);
+        var written = append ? DialogText.PasteBinAdded : DialogText.PasteBinWritten;
+        if (result != DialogText.Success)
+        {
+            RedrawAll();
+            _engine.ShowMessage(result, true);
+            return true;
+        }
+
+        var key = ChoiceBox.MessageWithPath(caption, written, SystemClipboard.PasteBinPath,
+            Lang.T("C Copy path | Esc Close"));
+        RedrawAll();
+        var (message, isError) = char.ToUpperInvariant(key.KeyChar) == 'C'
+            ? SystemClipboard.CopyPasteBinPath()
+            : (written, false);
+        _engine.ShowMessage(message, isError);
+        return true;
+    }
+
     private void RedrawAll()
     {
         Tools.HideCursor();

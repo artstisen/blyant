@@ -133,25 +133,52 @@ internal static class ChoiceBox
     /// </summary>
     internal static void Message(string caption, string message, string note)
     {
+        var inner = InnerWidth(caption, message);
+        ShowMessage(caption, message, note.Length == 0 ? new List<string>() : Wrap(note, inner - 4), inner,
+            DialogText.HitAnyKeyToContinue);
+    }
+
+    /// <summary>
+    /// Show a message (highlighted) and a path in a box until a key is pressed. The path is shown in full: a long one
+    /// goes on on the next rows
+    /// </summary>
+    /// <param name="caption">The title of the box</param>
+    /// <param name="message">The message</param>
+    /// <param name="path">The path</param>
+    /// <param name="keys">What the keys do, on the last row of the box</param>
+    /// <returns>The key pressed</returns>
+    internal static ConsoleKeyInfo MessageWithPath(string caption, string message, string path, string keys)
+    {
+        var inner = InnerWidth(caption, message, path, keys);
+        var rows = Rows(path, inner - 4);
+        // The box fits on the screen
+        var most = Math.Max(1, Init.LineCount - 9);
+        return ShowMessage(caption, message, rows.Count > most ? rows.GetRange(0, most) : rows, inner, keys);
+    }
+
+    // The width inside a box that shows these texts
+    private static int InnerWidth(params string[] texts) =>
+        Math.Clamp(Math.Max(texts.Max(TextMetrics.WidthOf) + 4, MinInner), 10, Init.LineWidth - 6);
+
+    private static ConsoleKeyInfo ShowMessage(string caption, string message, List<string> noteLines, int inner,
+        string keys)
+    {
         // In the color of text in frames and boxes
         using var frameText = ConsoleColors.FrameTextScope();
 
-        var inner = Math.Clamp(Math.Max(Math.Max(TextMetrics.WidthOf(message), TextMetrics.WidthOf(caption)) + 4,
-            MinInner), 10, Init.LineWidth - 6);
         var messageLines = Wrap(message, inner - 4);
-        var noteLines = note.Length == 0 ? new List<string>() : Wrap(note, inner - 4);
-        // A blank row, the message, the note, a blank row, "Press any key" and a blank row
+        // A blank row, the message, the note, a blank row, the keys and a blank row
         var keyRow = 2 + messageLines.Count + noteLines.Count;
         var (top, left, _, _) = DrawFrame(caption, inner, keyRow + 2);
         WriteText(top, left, messageLines, noteLines, false, inner);
         Tools.SetCursorEx(top + 1 + keyRow, left + 3);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
-        Console.Write(DialogText.HitAnyKeyToContinue);
+        Console.Write(keys);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
         Tools.SetCursorEx(Init.LineCount - 1, 0);
         Console.Write(new string(' ', Init.LineWidth - 1));
         Tools.SetCursorEx(Init.LineCount - 1, 0);
-        Console.ReadKey(true);
+        return Console.ReadKey(true);
     }
 
     /// <summary>
@@ -234,18 +261,8 @@ internal static class ChoiceBox
         var lines = new List<(string Label, string Value)>();
         foreach (var (label, value) in rows)
         {
-            var rest = value;
-            var first = true;
-            do
-            {
-                var part = rest.Length <= room ? rest : rest[..room];
-                // Text goes on at a blank space when there is one in the second half of the row (a path at the room)
-                var space = part.Length < rest.Length ? part.LastIndexOf(' ') : -1;
-                if (space > room / 2) part = part[..(space + 1)];
-                lines.Add((first ? label : string.Empty, part.TrimEnd()));
-                rest = rest[part.Length..];
-                first = false;
-            } while (rest.Length > 0);
+            var valueRows = Rows(value, room);
+            for (var i = 0; i < valueRows.Count; i++) lines.Add((i == 0 ? label : string.Empty, valueRows[i]));
         }
 
         // The box fits on the screen
@@ -264,6 +281,26 @@ internal static class ChoiceBox
 
         Tools.SetCursorEx(Init.LineCount - 1, 0);
         Console.ReadKey(true);
+    }
+
+    /// <summary>
+    /// A long value (a path) on rows of a width, all of it: a word without blank space goes on on the next row
+    /// </summary>
+    internal static List<string> Rows(string value, int room)
+    {
+        var rows = new List<string>();
+        var rest = value;
+        do
+        {
+            var part = rest.Length <= room ? rest : rest[..room];
+            // Text goes on at a blank space when there is one in the second half of the row (a path at the room)
+            var space = part.Length < rest.Length ? part.LastIndexOf(' ') : -1;
+            if (space > room / 2) part = part[..(space + 1)];
+            rows.Add(part.TrimEnd());
+            rest = rest[part.Length..];
+        } while (rest.Length > 0);
+
+        return rows;
     }
 
     /// <summary>

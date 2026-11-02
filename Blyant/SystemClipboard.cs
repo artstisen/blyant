@@ -94,6 +94,16 @@ internal static class SystemClipboard
     /// </summary>
     internal const int MaxOsc52Bytes = 75_000;
 
+    // Text too long for the terminal is not sent: most terminals drop a sequence of more than about 100 KB, and
+    // writing it could hold the terminal for seconds
+    private static bool TooLong(string text) => Encoding.UTF8.GetByteCount(text) > MaxOsc52Bytes;
+
+    /// <summary>
+    /// True if a yank cannot go out as set, but the paste bin, turned off, could take it: the user is asked whether
+    /// to write it there, this once
+    /// </summary>
+    internal static bool OffersPasteBin(string text) => Osc52 && !PasteBin && TooLong(text);
+
     /// <summary>
     /// The escape sequence that puts text on the system clipboard of the terminal (OSC 52): the text in base64
     /// </summary>
@@ -115,9 +125,7 @@ internal static class SystemClipboard
             return asked ? (DialogText.ClipboardAllOff, true) : (string.Empty, false);
         }
 
-        // Text too long for the terminal is not sent: most terminals drop a sequence of more than about 100 KB, and
-        // writing it could hold the terminal for seconds
-        var tooLong = Osc52 && Encoding.UTF8.GetByteCount(text) > MaxOsc52Bytes;
+        var tooLong = Osc52 && TooLong(text);
         if (Osc52 && !tooLong) WriteOsc52(text);
         if (PasteBin)
         {
@@ -193,6 +201,27 @@ internal static class SystemClipboard
     }
 
     #region The paste bin
+
+    /// <summary>
+    /// True if there is text in the paste bin, which writing to it would replace
+    /// </summary>
+    internal static bool PasteBinHasText => ReadPasteBin(out _) == DialogText.Success;
+
+    /// <summary>
+    /// Copy the path of the paste bin (":pbpath"): to the clipboard and the string memory, never to the paste bin
+    /// itself, whose text it would replace. Where the clipboard is off, or the terminal may not take it, the message
+    /// tells the path
+    /// </summary>
+    /// <returns>The message that tells where it went, and whether it is an error</returns>
+    internal static (string Message, bool IsError) CopyPasteBinPath()
+    {
+        var path = PasteBinPath;
+        Tools.StoreInLineMemory(path);
+        if (Osc52) WriteOsc52(path);
+        return (Osc52 && !TerminalWithoutClipboard
+            ? DialogText.CopiedToClipboardAndMemory
+            : Lang.F("Copied to string memory: {0}", path), false);
+    }
 
     /// <summary>
     /// Write text to the paste bin: added to the end of it (on a line of its own), or replacing it
