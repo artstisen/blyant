@@ -499,7 +499,7 @@ internal sealed class ColorScheme
     {
         var text = new StringBuilder();
         text.Append("; Blyant color scheme: ").Append(Name).Append('\n'); // English
-        text.Append("; The colors: Black, DarkBlue, DarkGreen, DarkCyan, DarkRed, DarkMagenta, DarkYellow, Gray,\n");
+        text.Append("; Colors: Black, DarkBlue, DarkGreen, DarkCyan, DarkRed, DarkMagenta, DarkYellow, Gray,\n");
         text.Append("; DarkGray, Blue, Green, Cyan, Red, Magenta, Yellow, White (or default)\n");
         foreach (var (key, item) in Keys)
         {

@@ -1,5 +1,5 @@
 ; Blyant color scheme: Blyant Quest
-; The colors: Black, DarkBlue, DarkGreen, DarkCyan, DarkRed, DarkMagenta, DarkYellow, Gray,
+; Colors: Black, DarkBlue, DarkGreen, DarkCyan, DarkRed, DarkMagenta, DarkYellow, Gray,
 ; DarkGray, Blue, Green, Cyan, Red, Magenta, Yellow, White (or default)
 background=default
 text=Cyan
