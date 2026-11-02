@@ -24,6 +24,11 @@ internal sealed partial class EditorEngine
     internal string BookArgument { get; private set; } = string.Empty;
 
     /// <summary>
+    /// What follows ":jump" (EditorRequest.Jump): the name of a page, or empty
+    /// </summary>
+    internal string JumpArgument { get; private set; } = string.Empty;
+
+    /// <summary>
     /// The name given with ":w name" (EditorRequest.WriteCopy) or ":saveas name" (EditorRequest.SaveAs)
     /// </summary>
     internal string WriteName { get; private set; } = string.Empty;

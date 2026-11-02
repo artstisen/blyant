@@ -43,7 +43,7 @@ internal enum EditorRequest
     PasteBinPath, // ":pbpath": copy the path of the paste bin
     ClipboardSettings, // ":clipboard": show the clipboard settings
     DocumentInfo, // ":info": show the size, the dates and the path of the text being edited
-    Jump, // ":jump", ":ju" or Ctrl+O: show the Jump menu
+    Jump, // ":jump", ":ju" or Ctrl+O: show the Jump menu, or go to a page (JumpArgument)
     Projects, // ":projects": show the projects, to open one in the file browser
     Rename, // ":rename": rename the file (RenameText: the new name, or empty to ask)
     WrapChanged, // Wrapping of long lines was turned on or off
@@ -499,6 +499,7 @@ internal sealed partial class EditorEngine
         {
             if (Mode == EditorMode.Insert) HandleInsert(new ConsoleKeyInfo('\u001b', ConsoleKey.Escape, false, false, false));
             Buffer.EndStep(Cursor);
+            JumpArgument = string.Empty;
             _request = EditorRequest.Jump;
             RecordMacroCommandDone(true);
             ClampCursor();
@@ -1089,6 +1090,15 @@ internal sealed partial class EditorEngine
             return;
         }
 
+        // ":jump general": go to a page of Blyant (":jump": the Jump menu)
+        var jump = Regex.Match(command, "^(?:jump|ju|jmp)(?: +(.*))?$");
+        if (jump.Success)
+        {
+            JumpArgument = jump.Groups[1].Value.Trim();
+            if (!SingleLine) _request = EditorRequest.Jump;
+            return;
+        }
+
         // ":lineendings lf" (or crlf): the host changes the line endings of the file; alone: it tells them
         var lineEndings = Regex.Match(command, "^lineendings(?: +(.*))?$");
         if (lineEndings.Success)
@@ -1431,11 +1441,6 @@ internal sealed partial class EditorEngine
                 break;
             case "info":
                 if (!SingleLine) _request = EditorRequest.DocumentInfo;
-                break;
-            case "jump":
-            case "ju":
-            case "jmp":
-                if (!SingleLine) _request = EditorRequest.Jump;
                 break;
             case "projects":
             case "proj":

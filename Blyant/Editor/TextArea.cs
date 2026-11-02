@@ -884,9 +884,13 @@ public partial class TextArea
                 _engine.SetMessage(Lang.T("Stop recording the macro first (Esc)"), true);
                 break;
             case EditorRequest.Jump:
+                // (":jump general" can show a box at once: the page drawn first, without the list of commands)
+                if (_engine.JumpArgument.Length > 0) Draw();
                 Tools.HideCursor();
                 // Leaving the text asks about changes that are not saved
-                Jump.Open(LeaveForJump, () => _engine.IsModified, MoveToBookmark, RecentCurrent);
+                Jump.ToPage(_engine.JumpArgument, LeaveForJump, () => _engine.IsModified, MoveToBookmark, RecentCurrent);
+                // (a page opened on top of the editor can be the clipboard settings)
+                _engine.ClipboardEveryYank = SystemClipboard.EveryYank;
                 RedrawAll();
                 break;
             case EditorRequest.Projects:
@@ -904,6 +908,7 @@ public partial class TextArea
             case EditorRequest.JumpToBookmark:
                 Tools.HideCursor();
                 Jump.ToBookmark(_engine.BookArgument, LeaveForJump, () => _engine.IsModified, MoveToBookmark);
+                _engine.ClipboardEveryYank = SystemClipboard.EveryYank;
                 RedrawAll();
                 break;
             case EditorRequest.Rename:

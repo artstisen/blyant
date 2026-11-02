@@ -204,12 +204,12 @@ public class CommandTests
     [Fact]
     public void TheTables_HaveTheCommandsOfTheEditor()
     {
-        // (":s/old/new/" is found by its first letter, and ":diff", ":book", ":bookmark", ":play", ":macro", ":new",
+        // (":s/old/new/" is found by its first letter, and ":diff", ":book", ":jump", ":bookmark", ":play", ":macro", ":new",
         // ":saveas", ":lineendings", ":split" and ":view" by a pattern, as they can have something after them; the marks are run by
         // MarkCommand)
         AssertSame(CommandContext.Editor, Compared(Method("Editor/EditorEngine.cs", "ExecuteCommand"),
-                Method("Editor/EditorEngine.Marks.cs", "MarkCommand")), "s", "diff", "book", "bookmark", "bookmark!",
-            "play", "macro", "new", "sur", "saveas", "lineendings", "mark", "k", "delmarks", "delmarks!", "split",
+                Method("Editor/EditorEngine.Marks.cs", "MarkCommand")), "s", "diff", "book", "jump", "ju", "jmp", "bookmark",
+            "bookmark!", "play", "macro", "new", "sur", "saveas", "lineendings", "mark", "k", "delmarks", "delmarks!", "split",
             "view", "sview", "sv");
     }
 

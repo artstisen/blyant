@@ -1,6 +1,8 @@
 # Changes
 
 ## v1.2.1 (unreleased)
+- **`:jump name` goes straight to a page of Blyant**, without the menu: `general`, `layout`, `editor`, `lists`, `system`, `colors`, `logos`, `clipboard`, `snippets`, `completions`, `help` and `about`. It works wherever `:jump` does, and in the Jump menu; `Tab` completes the names.
+- A change to the clipboard settings on a page opened from the Jump menu, or with `:book` or `:jump`, reaches the editor at once. It used to take effect only when the file was opened again.
 - **A yank too long for the clipboard can go to the paste bin**: when a yank of more than about 75 KB cannot be sent to the clipboard and the paste bin is off, Blyant asks whether to write it to the paste bin, this once (the setting stays off). A box then shows the full path of the file, and `C` copies it. The question says so if text in the paste bin would be replaced.
 - **`:pbpath`** copies the full path of the paste bin file to the clipboard and the string memory. It never goes to the paste bin itself, and the message shows the path if the clipboard is off or the terminal may not take it.
 - **`:import folder` adds text files only**: the files are told by their names, without opening them: the kinds Blyant colors, and `.txt`, `.log`, `.csv`, `.tsv`, `.yaml`, `.yml`, `.toml`, `.tex`, `.bib`, `.rst`, `.adoc` and `.org`. Other files, such as images and the files of other programs, are left out and counted in the summary, and no longer count for the limit of 2000 files. The number found is shown while a large folder is read, and `Esc` stops it.

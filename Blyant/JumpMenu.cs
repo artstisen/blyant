@@ -743,7 +743,7 @@ internal static class JumpMenu
         // A message (a bookmark added ...), or what the list is
         var room = left + width - 1 - Console.CursorLeft - 2;
         var note = _message.Length > 0 ? _message
-            : tabs[tab] == Tab.Jumps ? Lang.T("Only jumps made in this menu, the latest first")
+            : tabs[tab] == Tab.Jumps ? Lang.T("Jumps from this menu or a command, the latest first")
             : tabs[tab] == Tab.Bookmarks && rows.Count == 0 && filter.Length == 0 ? DialogText.BookmarksEmpty
             : tabs[tab] == Tab.Projects && rows.Count == 0 && filter.Length == 0 ? DialogText.NoProjectsYet
             : string.Empty;
@@ -1620,6 +1620,13 @@ internal static class JumpMenu
             // ":book 3": jump to bookmark 3 (on every tab); ":book" alone: the bookmarks
             return JumpToBookmark(CommandLine.Argument(command));
         }
+
+        if (CommandLine.Name(command) is "jump" or "ju" or "jmp")
+        {
+            // ":jump general": a page of Blyant at once (":jump" alone: the menu is open)
+            return JumpToPage(CommandLine.Argument(command));
+        }
+
         if (command is "q" or "quit" or "close") return true;
         if (command is "h" or "help")
         {
@@ -1767,6 +1774,21 @@ internal static class JumpMenu
         }
 
         _jumpTo = target;
+        return true;
+    }
+
+    // ":jump general" in the menu. True if the menu is closed for the jump
+    private static bool JumpToPage(string argument)
+    {
+        argument = argument.Trim();
+        if (argument.Length == 0) return false;
+        if (JumpPages.IdOf(argument) is not { } page)
+        {
+            _message = Lang.F("No page named {0}", argument);
+            return false;
+        }
+
+        _jumpTo = new JumpTarget(JumpKind.Page, page);
         return true;
     }
 

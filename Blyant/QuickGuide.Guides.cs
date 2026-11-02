@@ -13,6 +13,7 @@ internal static partial class QuickGuide
         (Kind.Text, "", ""),
         (Kind.Text, "", Lang.T("The Jump menu takes you to a file, a directory or a page of Blyant with a few keys.")),
         (Kind.Item, ":jump  Ctrl+O", Lang.T("Open the Jump menu (from most places)")),
+        (Kind.Item, ":jump name", Lang.T("Go to a page of Blyant (Tab lists the names)")),
         (Kind.Text, "", ""),
         (Kind.Heading, "", Lang.T("The tabs")),
         (Kind.Item, Lang.T("Bookmarks"), Lang.T("Places kept with B, or :bookmark in the editor")),

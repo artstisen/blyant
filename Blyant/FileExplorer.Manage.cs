@@ -71,7 +71,8 @@ internal static partial class FileExplorer
             case "jump":
             case "ju":
             case "jmp":
-                Jump.Open();
+                // ":jump general": a page of Blyant at once
+                Jump.ToPage(argument);
                 break;
             case "book":
                 // ":book 3": jump to bookmark 3

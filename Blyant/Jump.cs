@@ -84,6 +84,20 @@ internal static class JumpPages
         "snippets", "completions", "help", "about"
     };
 
+    // The name of a page in ":jump general"
+    private static string NameOf(string id) => id == "schemes" ? "colors" : id[(id.IndexOf('/') + 1)..];
+
+    /// <summary>
+    /// The names of the pages in ":jump general" (English in all languages, as commands)
+    /// </summary>
+    internal static IEnumerable<string> Names => Ids.Select(NameOf);
+
+    /// <summary>
+    /// The page with a name given to ":jump" (upper and lower case alike), or null if there is none
+    /// </summary>
+    internal static string? IdOf(string name) =>
+        Ids.FirstOrDefault(id => NameOf(id).Equals(name, StringComparison.OrdinalIgnoreCase));
+
     /// <summary>
     /// The page of the Configuration tab (0 to 4) of a page, or -1 if it is not one
     /// </summary>
@@ -283,7 +297,8 @@ internal static class JumpHistory
 }
 
 /// <summary>
-/// Jumping: the Jump menu is opened (":jump", ":ju" or Ctrl+O), and the place picked there is gone to. A page
+/// Jumping: the Jump menu is opened (":jump", ":ju" or Ctrl+O), and the place picked there is gone to, or a page is
+/// named (":jump general"). A page
 /// that is shown on top of a page (color schemes, logos, clipboard, snippets, help, about) is opened where the
 /// jump was made from. For the other places (a file, a directory, a page of the Configuration tab) the page the
 /// jump was made from is left: the jump is kept as pending and control goes back to the main loop (see
@@ -333,7 +348,43 @@ internal static class Jump
     {
         var target = JumpMenu.Pick(current);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
-        if (target == null) return;
+        if (target != null) Go(target, beforeLeaving, hasChanges, here);
+    }
+
+    /// <summary>
+    /// ":jump general": go to a page of Blyant by its name (as if picked in the Jump menu). ":jump" alone opens the
+    /// Jump menu. A name that is not known is told about in a box, with the names
+    /// </summary>
+    /// <param name="argument">What follows ":jump"</param>
+    /// <param name="beforeLeaving">As for Open</param>
+    /// <param name="hasChanges">As for Open</param>
+    /// <param name="here">As for Open</param>
+    /// <param name="current">As for Open</param>
+    internal static void ToPage(string argument, Func<bool>? beforeLeaving = null, Func<bool>? hasChanges = null,
+        Func<JumpTarget, bool>? here = null, string? current = null)
+    {
+        argument = argument.Trim();
+        if (argument.Length == 0)
+        {
+            Open(beforeLeaving, hasChanges, here, current);
+            return;
+        }
+
+        if (JumpPages.IdOf(argument) is { } page)
+        {
+            Go(new JumpTarget(JumpKind.Page, page), beforeLeaving, hasChanges, here);
+            return;
+        }
+
+        ChoiceBox.Forget();
+        ChoiceBox.Message(DialogText.CaptionsJump, Lang.F("No page named {0}", argument),
+            string.Join(", ", JumpPages.Names));
+    }
+
+    // Go to a place: on the page itself, on top of it, or leaving it
+    private static void Go(JumpTarget target, Func<bool>? beforeLeaving, Func<bool>? hasChanges,
+        Func<JumpTarget, bool>? here)
+    {
         if (here != null && here(target))
         {
             Remember(target);
@@ -410,22 +461,7 @@ internal static class Jump
             return;
         }
 
-        if (here != null && here(target))
-        {
-            Remember(target);
-            return;
-        }
-
-        if (OpensInPlace(target))
-        {
-            OpenOnTop(target, hasChanges);
-            return;
-        }
-
-        if (!MayLeave(beforeLeaving)) return;
-        Remember(target);
-        Pending = target;
-        Navigation.Wait();
+        Go(target, beforeLeaving, hasChanges, here);
     }
 
     /// <summary>

@@ -188,7 +188,8 @@ internal static class StartMenu
             case "jump":
             case "ju":
             case "jmp":
-                Blyant.Jump.Open();
+                // ":jump general": a page of Blyant at once
+                Blyant.Jump.ToPage(argument);
                 break;
             case "book":
                 // ":book 3": jump to bookmark 3

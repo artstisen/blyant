@@ -780,6 +780,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("Esc Q :q", Lang.T("Close the list"), false));
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionJump, true));
             _shortcutList.Add(new Shortcut(":jump :ju :jmp", Lang.T("Open the Jump menu (from most places)"), false));
+            _shortcutList.Add(new Shortcut(":jump name", Lang.T("Go to a page of Blyant (Tab lists the names)"), false));
             _shortcutList.Add(new Shortcut("Ctrl+O", Lang.T("Open the Jump menu (from most places)"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Tabs"), Lang.T("Bookmarks, Recent, Projects, File browser, Blyant"), false));
             _shortcutList.Add(new Shortcut("  " + DialogText.CaptionsFiles, Lang.T("Its lists: History, Favorites, Hotlist"), false));
