@@ -368,8 +368,9 @@ public partial class TextArea
         }
 
 
-        // (a page of its own, also when it is opened from a box: the note of a bookmark in the Jump menu)
-        using var outside = ConsoleColors.OutsideBox();
+        // (a page of its own, also when it is opened from a box: the note of a bookmark in the Jump menu; a field of one
+        // row is a part of its box)
+        using var outside = _singleLine ? null : ConsoleColors.OutsideBox();
         DrawReadOnlyLabel();
         Draw();
         MainLoop();
@@ -1606,49 +1607,50 @@ public partial class TextArea
 
         // The tab of the title, the frame and the question
         var frameRow = firstRow + 1;
-        var box = ConsoleColors.BoxScope();
-        ChoiceBox.DrawBox(_top + firstRow, column, inner, frameHeight - 2, DialogText.Save);
-        ConsoleColors.SetColors(ConsoleColors.ColorPreset.AttentionInverted);
-        Tools.SetCursorEx(_top + frameRow + 1, column + 2);
-        Console.Write(" " + DialogText.SaveQuestion + " ");
-        ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
-
         var selected = 0;
         var result = 0;
-        while (true)
+        using (ConsoleColors.BoxScope())
         {
-            for (var i = 0; i < choices.Length; i++)
-            {
-                Tools.SetCursorEx(_top + frameRow + 3 + i, column + 2);
-                if (i == selected) ConsoleColors.SetColors(ConsoleColors.ColorPreset.SelectorInverted);
-                Console.Write(i == selected ? "->" : "  ");
-                ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
-                Console.Write(" " + choices[i]);
-            }
+            ChoiceBox.DrawBox(_top + firstRow, column, inner, frameHeight - 2, DialogText.Save);
+            ConsoleColors.SetColors(ConsoleColors.ColorPreset.AttentionInverted);
+            Tools.SetCursorEx(_top + frameRow + 1, column + 2);
+            Console.Write(" " + DialogText.SaveQuestion + " ");
+            ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
 
-            // (the text is not being changed while the question waits: it can be copied if the terminal closes)
-            var handling = _handlingKey;
-            _handlingKey = false;
-            var key = Console.ReadKey(true);
-            _handlingKey = handling;
-            if (key.Key == ConsoleKey.Escape) break;
-            if (key.Key == ConsoleKey.Y) result = 1;
-            if (key.Key == ConsoleKey.N) result = 2;
-            if (key.Key == ConsoleKey.E) result = 4;
-            if (key.Key == ConsoleKey.Enter) result = results[selected];
-            if (result != 0 || key.Key == ConsoleKey.Enter) break;
-            if (key.Key is ConsoleKey.J or ConsoleKey.DownArrow) selected = (selected + 1) % choices.Length;
-            if (key.Key is ConsoleKey.K or ConsoleKey.UpArrow)
+            while (true)
             {
-                selected = (selected + choices.Length - 1) % choices.Length;
-            }
+                for (var i = 0; i < choices.Length; i++)
+                {
+                    Tools.SetCursorEx(_top + frameRow + 3 + i, column + 2);
+                    if (i == selected) ConsoleColors.SetColors(ConsoleColors.ColorPreset.SelectorInverted);
+                    Console.Write(i == selected ? "->" : "  ");
+                    ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
+                    Console.Write(" " + choices[i]);
+                }
 
-            // gg and G: the first and the last choice
-            if (key.KeyChar == 'G') selected = choices.Length - 1;
-            if (key.KeyChar == 'g' && Console.ReadKey(true).KeyChar == 'g') selected = 0;
+                // (the text is not being changed while the question waits: it can be copied if the terminal closes)
+                var handling = _handlingKey;
+                _handlingKey = false;
+                var key = Console.ReadKey(true);
+                _handlingKey = handling;
+                if (key.Key == ConsoleKey.Escape) break;
+                if (key.Key == ConsoleKey.Y) result = 1;
+                if (key.Key == ConsoleKey.N) result = 2;
+                if (key.Key == ConsoleKey.E) result = 4;
+                if (key.Key == ConsoleKey.Enter) result = results[selected];
+                if (result != 0 || key.Key == ConsoleKey.Enter) break;
+                if (key.Key is ConsoleKey.J or ConsoleKey.DownArrow) selected = (selected + 1) % choices.Length;
+                if (key.Key is ConsoleKey.K or ConsoleKey.UpArrow)
+                {
+                    selected = (selected + choices.Length - 1) % choices.Length;
+                }
+
+                // gg and G: the first and the last choice
+                if (key.KeyChar == 'G') selected = choices.Length - 1;
+                if (key.KeyChar == 'g' && Console.ReadKey(true).KeyChar == 'g') selected = 0;
+            }
         }
 
-        box.Dispose();
         // The rows that were covered are written again when the editor is drawn
         Uncover(firstRow, boxHeight, left + inner + 2);
 
@@ -1880,6 +1882,21 @@ public partial class TextArea
         var replaces = !append && SystemClipboard.PasteBinHasText;
         Draw(); // Remove the command from the bottom line, and the selection of the yank
         Tools.HideCursor();
+        // (the text is not being changed while the boxes wait: it can be copied if the terminal closes)
+        var handling = _handlingKey;
+        _handlingKey = false;
+        try
+        {
+            return AskAndWriteToPasteBin(text, caption, append, replaces);
+        }
+        finally
+        {
+            _handlingKey = handling;
+        }
+    }
+
+    private bool AskAndWriteToPasteBin(string text, string caption, bool append, bool replaces)
+    {
         if (!ChoiceBox.Confirm(caption,
                 Lang.F("Too long for clipboard (more than {0} KB). Write to paste bin?", SystemClipboard.MaxOsc52Bytes / 1000),
                 replaces ? Lang.T("Replaces text in paste bin") : string.Empty, replaces))

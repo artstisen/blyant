@@ -649,9 +649,8 @@ internal static class FileIo
         JumpMenu.BookmarkPanes = Tools.TrimToLower(Get("bookmarkpanes")) != DialogText.BFalse;
         JumpMenu.BookmarkPeek = Tools.TrimToLower(Get("bookmarkpeek")) != DialogText.BFalse;
         // The numbers of the rows of the favorites and the bookmarks: off unless turned on
-        // The list of favorites that is open (a name that cannot be a list, written by hand, is not used)
-        var favoriteList = Get("favoritelist").Trim();
-        FileFavorites.CurrentList = FileFavorites.IsValidListName(favoriteList) ? favoriteList : string.Empty;
+        // The list of favorites that is open, with its name as its file has it (one that is not there: the main list)
+        FileFavorites.CurrentList = FileFavorites.FindList(Get("favoritelist")) ?? string.Empty;
         FileExplorer.FavoriteNumbers = Tools.TrimToLower(Get("favoritenumbers")) == DialogText.BTrue;
         JumpMenu.BookmarkNumbers = Tools.TrimToLower(Get("bookmarknumbers")) == DialogText.BTrue;
         FileExplorer.FileNumbers = Tools.TrimToLower(Get("filenumbers")) == DialogText.BTrue;

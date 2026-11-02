@@ -25,7 +25,7 @@ internal static class FileFavorites
     private const string CollapsedMark = "collapsed";
     private const string ListsDirectoryName = "favorites";
     private const string ListExtension = ".txt";
-    private const int MaxListName = 24; // The name of a list is shown in the top bar
+    private const int MaxListName = 20; // The name of a list fits in the top bar, after the caption
 
     /// <summary>
     /// What stands for the main list in ":list main" (English: as the names of commands)
@@ -71,17 +71,31 @@ internal static class FileFavorites
     internal static string FilePath => ListPath(CurrentList);
 
     /// <summary>
-    /// The name of the list that is open (setting "favoritelist"; empty: the main list)
+    /// The name of the list that is open (setting "favoritelist"; empty: the main list). The favorites of another list
+    /// are read when it is set, so what is saved never goes to a list it was not read from
     /// </summary>
-    internal static string CurrentList { get; set; } = string.Empty;
+    internal static string CurrentList
+    {
+        get => _currentList;
+        set
+        {
+            if (_currentList == value) return;
+            _currentList = value;
+            Load();
+        }
+    }
+
+    private static string _currentList = string.Empty;
 
     private static string MainFilePath => FilePathOverride ?? Path.Combine(FileIo.GetDataDirectoryName(), FileName);
 
     private static string ListsDirectory =>
         Path.Combine(Path.GetDirectoryName(Path.GetFullPath(MainFilePath)) ?? string.Empty, ListsDirectoryName);
 
-    // The file of a list (empty: the main list)
-    private static string ListPath(string name) =>
+    /// <summary>
+    /// The file of a list (empty: the main list)
+    /// </summary>
+    internal static string ListPath(string name) =>
         name.Length == 0 ? MainFilePath : Path.Combine(ListsDirectory, name + ListExtension);
 
     /// <summary>
@@ -186,7 +200,7 @@ internal static class FileFavorites
     /// <param name="name">Its name (empty: the main list)</param>
     internal static void UseList(string name)
     {
-        CurrentList = name;
+        _currentList = name;
         Load();
     }
 
@@ -228,7 +242,7 @@ internal static class FileFavorites
         try
         {
             if (name != newName) FileIo.MoveFile(ListPath(name), ListPath(newName), false);
-            if (CurrentList == name) CurrentList = newName;
+            if (_currentList == name) _currentList = newName;
             return DialogText.Success;
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
@@ -277,7 +291,7 @@ internal static class FileFavorites
         Folders.ForgetRemoved();
         _unreadable = false;
         // A list that is gone (deleted outside Blyant): the main list
-        if (CurrentList.Length > 0 && !File.Exists(FilePath)) CurrentList = string.Empty;
+        if (_currentList.Length > 0 && !File.Exists(FilePath)) _currentList = string.Empty;
         try
         {
             if (File.Exists(FilePath)) Parse(File.ReadAllText(FilePath, Encoding.UTF8));
@@ -840,10 +854,19 @@ internal static class FileFavorites
     /// lists. The other lists are saved here
     /// </summary>
     /// <returns>True if the list that is open was changed</returns>
-    internal static bool PathChanged(string oldPath, string newPath)
+    internal static bool PathChanged(string oldPath, string newPath) => PathsChanged(new[] { (oldPath, newPath) });
+
+    /// <summary>
+    /// Files or directories were moved: as PathChanged, with each list read and written once
+    /// </summary>
+    /// <returns>True if the list that is open was changed</returns>
+    internal static bool PathsChanged(IReadOnlyCollection<(string Old, string New)> moved)
     {
-        InOtherLists(() => ChangePath(oldPath, newPath));
-        return ChangePath(oldPath, newPath);
+        if (moved.Count == 0) return false;
+        // (not stopped by the first that changes something)
+        bool Change() => moved.Count(item => ChangePath(item.Old, item.New)) > 0;
+        InOtherLists(Change);
+        return Change();
     }
 
     private static bool ChangePath(string oldPath, string newPath)
@@ -869,14 +892,16 @@ internal static class FileFavorites
     }
 
     /// <summary>
-    /// A file or directory was deleted: it is removed from the favorites (with what was inside a directory), in all
-    /// the lists. The other lists are saved here
+    /// Files or directories were deleted: they are removed from the favorites (with what was inside a directory), in
+    /// all the lists, each read and written once. The other lists are saved here
     /// </summary>
     /// <returns>True if the list that is open was changed</returns>
-    internal static bool PathDeleted(string path)
+    internal static bool PathsDeleted(IReadOnlyCollection<string> paths)
     {
-        InOtherLists(() => RemovePath(path));
-        return RemovePath(path);
+        if (paths.Count == 0) return false;
+        bool Remove() => paths.Count(RemovePath) > 0;
+        InOtherLists(Remove);
+        return Remove();
     }
 
     private static bool RemovePath(string path)

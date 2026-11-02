@@ -52,11 +52,16 @@ internal static partial class FileExplorer
     private static void OpenFavoriteList(string name)
     {
         FileFavorites.UseList(name);
+        ShowOtherFavoriteList();
+        _favoriteMessage = Lang.F("List: {0}", FavoriteListName(FileFavorites.CurrentList));
+    }
+
+    private static void ShowOtherFavoriteList()
+    {
         FileIo.SaveSettings();
         _favoriteMarks.Clear();
         _favoriteFilter = string.Empty;
         _favoriteIndex = 0;
-        _favoriteMessage = Lang.F("List: {0}", FavoriteListName(FileFavorites.CurrentList));
     }
 
     // The box for a new list: the name of the list made, or null
@@ -110,24 +115,23 @@ internal static partial class FileExplorer
         }
 
         var wasOpen = FileFavorites.CurrentList == name;
+        var path = FileFavorites.ListPath(name);
         var result = FileFavorites.DeleteList(name, out var trashedPath);
-        LogOperation(trashedPath.Length > 0 ? "Delete (to the trash)" : "Delete", name +
-            (trashedPath.Length > 0 ? " -> " + trashedPath : string.Empty), result);
+        // (deleted for good it is logged where it is deleted)
+        if (FileOperations.DeleteToTrash)
+        {
+            LogOperation("Delete (to the trash)", path + (trashedPath.Length > 0 ? " -> " + trashedPath : string.Empty),
+                result);
+        }
+
         if (result != DialogText.Success)
         {
             ChoiceBox.Message(Lang.T("Delete list"), result, string.Empty);
             return PickListBox.KeyUse.Used;
         }
 
-        if (wasOpen)
-        {
-            // The main list is open now
-            FileIo.SaveSettings();
-            _favoriteMarks.Clear();
-            _favoriteFilter = string.Empty;
-            _favoriteIndex = 0;
-        }
-
+        // (the main list is open now)
+        if (wasOpen) ShowOtherFavoriteList();
         return PickListBox.KeyUse.Reload;
     }
 }

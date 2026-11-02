@@ -581,7 +581,7 @@ internal static partial class FileExplorer
         }
 
         var note = string.Join(" ", sentences);
-        if (!ChoiceBox.Confirm(DialogText.CaptionsFileFavorites, Lang.T("Copy the bookmarks to the favorites?"), note,
+        if (!ChoiceBox.Confirm(DialogText.CaptionsFavorites, Lang.T("Copy the bookmarks to the favorites?"), note,
                 false))
         {
             return;
@@ -654,7 +654,7 @@ internal static partial class FileExplorer
                     return;
                 }
 
-                if (!ChoiceBox.Confirm(DialogText.CaptionsFileFavorites, Lang.T("Add only its own files?"),
+                if (!ChoiceBox.Confirm(DialogText.CaptionsFavorites, Lang.T("Add only its own files?"),
                         Lang.F("Files in {0}: {1}. With its subfolders: more than {2} (too many to add).", name,
                             own.Count, FileFavorites.FolderImportMax), false))
                 {
@@ -664,7 +664,7 @@ internal static partial class FileExplorer
             else
             {
                 // (the counts after a colon: no plural that must agree with the number, in any language)
-                var picked = ChoiceBox.Pick(DialogText.CaptionsFileFavorites,
+                var picked = ChoiceBox.Pick(DialogText.CaptionsFavorites,
                     Lang.T("Include the files of its subfolders?"),
                     Lang.F("Files in {0}: {1}. With its subfolders: {2}.", name, own.Count, all.Count),
                     new[] { DialogText.ChoiceYes, DialogText.ChoiceNo }, new[] { "Y", "N" }, 0, false);
@@ -701,7 +701,7 @@ internal static partial class FileExplorer
         if (files.Unreadable > 0) sentences.Add(Lang.F("Unreadable directories: {0}", files.Unreadable) + ".");
         if (plan.Added > 500) sentences.Add(Lang.T("That is many favorites."));
         ChoiceBox.Forget();
-        if (!ChoiceBox.Confirm(DialogText.CaptionsFileFavorites, Lang.F("Add files to favorites ({0})?", plan.Added),
+        if (!ChoiceBox.Confirm(DialogText.CaptionsFavorites, Lang.F("Add files to favorites ({0})?", plan.Added),
                 string.Join(" ", sentences), false))
         {
             return;
@@ -1256,8 +1256,8 @@ internal static partial class FileExplorer
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
         Tools.ClearScreen();
         Menu.WriteModeLabel(FileFavorites.CurrentList.Length > 0
-            ? Lang.F("{0}: {1}", DialogText.CaptionsFileFavorites, FileFavorites.CurrentList)
-            : DialogText.CaptionsFileFavorites, string.Empty, 0);
+            ? Lang.F("{0}: {1}", DialogText.CaptionsFavorites, FileFavorites.CurrentList)
+            : DialogText.CaptionsFavorites, string.Empty, 0);
         Menu.WriteNameInTopBar();
         Tools.SetCursorEx(1, 1);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.HeaderColor);

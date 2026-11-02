@@ -416,7 +416,7 @@ internal static class DialogText
     public static string SearchResultKeys => Lang.T("Enter Open | B Show | I Info | P Fave | S Search | / Filter | Esc Close");
 
     // The favorites of the file browser
-    public static string CaptionsFileFavorites => Lang.T("Favorites");
+    public static string CaptionsFavorites => Lang.T("Favorites");
     public static string HelpSectionFavorites => Lang.T("File browser favorites");
     // The history of the file browser (the files opened from it)
     public static string HelpSectionHistory => Lang.T("File history");

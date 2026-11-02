@@ -473,9 +473,9 @@ public class FileManagementTests : IDisposable
         Assert.False(FileFavorites.PathChanged(In("unknown"), In("x")));
 
         // The directory is deleted
-        Assert.True(FileFavorites.PathDeleted(In("new")));
+        Assert.True(FileFavorites.PathsDeleted(new[] { In("new") }));
         Assert.Equal(new[] { other }, FileFavorites.Items.Select(f => f.Path));
-        Assert.False(FileFavorites.PathDeleted(In("new")));
+        Assert.False(FileFavorites.PathsDeleted(new[] { In("new") }));
     }
 
     #endregion

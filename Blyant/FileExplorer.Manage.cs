@@ -376,7 +376,7 @@ internal static partial class FileExplorer
         string? failed = null;
         var done = 0;
         var path = string.Empty;
-        var favoritesChanged = false;
+        var moved = new List<(string Old, string New)>();
         foreach (var item in items)
         {
             var result = isMove
@@ -391,7 +391,7 @@ internal static partial class FileExplorer
 
             done++;
             source.Marks.Remove(item.Path);
-            if (isMove && FileFavorites.PathChanged(item.Path, path)) favoritesChanged = true;
+            if (isMove) moved.Add((item.Path, path));
             // A directory moved: the hotlist follows it (and the bookmarks follow what is moved)
             if (isMove && item.IsDirectory) HotlistPathChanged(item.Path, path);
             if (isMove) Bookmarks.Follow(item.Path, path);
@@ -414,7 +414,7 @@ internal static partial class FileExplorer
         // The last one copied or moved is selected where it was put
         Finish(failed ?? DialogText.Success, done > 0 ? path : null, message);
         if (_active != sourceNumber) Reload(source);
-        if (favoritesChanged) SaveFavorites();
+        if (FileFavorites.PathsChanged(moved)) SaveFavorites();
     }
 
     #endregion
@@ -1091,7 +1091,7 @@ internal static partial class FileExplorer
         Item? failedItem = null;
         var done = 0;
         var trashed = 0;
-        var favoritesChanged = false;
+        var deleted = new List<string>();
         foreach (var item in items)
         {
             var result = DeleteItem(item, toTrash, out var wasTrashed);
@@ -1104,7 +1104,7 @@ internal static partial class FileExplorer
 
             done++;
             if (wasTrashed) trashed++;
-            if (FileFavorites.PathDeleted(item.Path)) favoritesChanged = true;
+            deleted.Add(item.Path);
         }
 
         string message;
@@ -1118,7 +1118,7 @@ internal static partial class FileExplorer
         }
 
         Finish(failed ?? DialogText.Success, failedItem?.Path, message);
-        if (favoritesChanged) SaveFavorites();
+        if (FileFavorites.PathsDeleted(deleted)) SaveFavorites();
     }
 
     // Delete one file or directory: to the trash, or for good. One that cannot be moved to the trash is only

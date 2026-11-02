@@ -322,7 +322,7 @@ The list is kept in the file `favorites.txt` in the data directory (one line per
 You can keep several lists of favorites, as one for each client or for writing and for technical work, and see only the one you work on. One list is open at a time, and it is the one used all over Blyant: `P` adds to it, the `*` in the file browser marks what is in it, and the Favorites tab of the [Jump menu](Guide-to-jump-menu.md#jump-menu) shows it, with its name. The name is also in the top bar, as _FAVORITES: WORK_; the main list shows none. Blyant remembers the list that is open (setting `favoritelist`).
 
 - `:list` in the favorites Show the lists in a box, with what is in the selected one below them. `Enter` opens the selected list and `/` filters them
-  - `N` A new list: type its name (at most 24 characters), and it is opened. A name a file cannot have, or that another list has, is refused
+  - `N` A new list: type its name (at most 20 characters), and it is opened. A name a file cannot have, or that another list has, is refused
   - `R` Rename the selected list
   - `D` Delete the selected list, after asking. It goes to the trash, unless `deletetotrash` is off, and the files in it stay where they are. The main list opens if it was open. The main list itself cannot be renamed or deleted
 - `:list name` Open a list at once (`Tab` completes the names), and `:list main` the main list

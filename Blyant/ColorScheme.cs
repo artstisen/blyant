@@ -26,8 +26,8 @@ internal enum ColorItem
     BoxCorner, // The left side and the top of a box (null: the box borders)
     BoxBackground, // The background of a box (null: the background)
     BoxText, // The text in a box (null: the text in frames with tabs)
-    BoxTitle, // The background of the title of a box (null: the background of the tab shown)
-    BoxTitleText, // The title of a box (null: the text of the tab shown)
+    BoxTitle, // The background of the title of a box (null: as the tab shown; the box when it is not highlighted)
+    BoxTitleText, // The title of a box (null: as the tab shown)
     Tab, // The background of the tab shown (null: the color of the tab frames)
     TabText, // The text of the tab shown when it is highlighted (null: the color of TabShown)
     TabShown, // The name of the tab shown when it is not highlighted (null: the text)
@@ -147,8 +147,8 @@ internal sealed class ColorScheme
     internal ConsoleColor BoxCornerColor => BoxCorner ?? BoxBorderColor;
     internal ConsoleColor BoxBackgroundColor => BoxBackground ?? BackgroundColor;
     internal ConsoleColor BoxTextColor => BoxText ?? FrameTextColor;
-    internal ConsoleColor BoxTitleColor => BoxTitle ?? TabColor;
-    internal ConsoleColor BoxTitleTextColor => BoxTitleText ?? TabTextColor;
+    internal ConsoleColor BoxTitleColor => BoxTitle ?? (TabHighlight ? TabColor : BoxBackgroundColor);
+    internal ConsoleColor BoxTitleTextColor => BoxTitleText ?? (TabHighlight ? TabTextColor : TabShownColor);
     internal ConsoleColor TabColor => Tab ?? TabFrameColor;
     internal ConsoleColor TabTextColor => TabText ?? TabShownColor;
     internal ConsoleColor TabShownColor => TabShown ?? Text;

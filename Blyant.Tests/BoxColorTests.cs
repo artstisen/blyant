@@ -87,6 +87,20 @@ public class BoxColorTests : IDisposable
     }
 
     [Fact]
+    public void WithTheHighlightOff_TheTitleIsOnTheBackgroundOfTheBox()
+    {
+        var scheme = Scheme();
+        scheme.TabHighlight = false;
+        scheme.Set(ColorItem.BoxBackground, ConsoleColor.DarkBlue);
+        Assert.Equal(ConsoleColor.DarkBlue, scheme.BoxTitleColor);
+        Assert.False(scheme.Allowed(ColorItem.BoxTitleText, ConsoleColor.DarkBlue));
+        Assert.True(scheme.Allowed(ColorItem.BoxTitleText, ConsoleColor.Yellow));
+        // A background of its own is used all the same
+        scheme.Set(ColorItem.BoxTitle, ConsoleColor.Cyan);
+        Assert.Equal(ConsoleColor.Cyan, scheme.BoxTitleColor);
+    }
+
+    [Fact]
     public void AColorThatCannotBeSeenInABox_HasTheTextOfTheBox()
     {
         var scheme = Scheme();

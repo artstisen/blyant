@@ -320,7 +320,7 @@ internal static class ChoiceBox
     /// <param name="left">The column of the left side of the box</param>
     /// <param name="inner">The width inside the box</param>
     /// <param name="caption">The title</param>
-    internal static void DrawTitleTab(int tabRow, int left, int inner, string caption)
+    private static void DrawTitleTab(int tabRow, int left, int inner, string caption)
     {
         var top = AsciiStyles.GetTopCorner();
         var bottom = AsciiStyles.GetBottomCorner();
@@ -348,7 +348,6 @@ internal static class ChoiceBox
     /// <param name="caption">The title</param>
     internal static void DrawBox(int tabRow, int left, int inner, int height, string caption)
     {
-        using var box = ConsoleColors.BoxScope();
         DrawTitleTab(tabRow, left, inner, caption);
         var top = tabRow + 1;
         for (var row = 0; row < height; row++)

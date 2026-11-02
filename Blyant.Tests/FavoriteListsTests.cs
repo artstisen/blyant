@@ -86,7 +86,7 @@ public class FavoriteListsTests : IDisposable
     [InlineData("..", false)]
     [InlineData(".hidden", false)]
     [InlineData("a:b", false)]
-    [InlineData("a name that is too long for the top bar", false)]
+    [InlineData("a name too long to fit", false)]
     public void ANameCanBeUsed_OrNot(string name, bool valid)
     {
         Assert.Equal(valid, FileFavorites.IsValidListName(name));
@@ -104,10 +104,10 @@ public class FavoriteListsTests : IDisposable
     public void ANameThatIsTooLong_IsToldAsThat()
     {
         Lang.Set(Lang.English);
-        var tooLong = new string('x', 25);
-        Assert.Equal("Name too long (at most 24 characters)", FileFavorites.NewList(tooLong));
-        Assert.Equal(DialogText.Success, FileFavorites.NewList(new string('x', 24)));
-        Assert.Equal("Name too long (at most 24 characters)", FileFavorites.RenameList(new string('x', 24), tooLong));
+        var tooLong = new string('x', 21);
+        Assert.Equal("Name too long (at most 20 characters)", FileFavorites.NewList(tooLong));
+        Assert.Equal(DialogText.Success, FileFavorites.NewList(new string('x', 20)));
+        Assert.Equal("Name too long (at most 20 characters)", FileFavorites.RenameList(new string('x', 20), tooLong));
         // Another name that cannot be used says so
         Assert.Equal("That name cannot be used for a list", FileFavorites.NewList("a/b"));
     }
@@ -182,11 +182,41 @@ public class FavoriteListsTests : IDisposable
     }
 
     [Fact]
+    public void ManyFilesMoved_AreFollowed_WithEachListWrittenOnce()
+    {
+        MakeList("Work", "a.md", "b.md", "c.md");
+        FileFavorites.UseList(string.Empty);
+        FileFavorites.Toggle(In("b.md"));
+        // All of them, also when the first has changed something
+        Assert.True(FileFavorites.PathsChanged(new[] { (In("b.md"), In("x.md")), (In("c.md"), In("y.md")), (In("a.md"), In("z.md")) }));
+        Assert.Equal("x.md", Names());
+        Assert.False(FileFavorites.PathsChanged(Array.Empty<(string, string)>()));
+        FileFavorites.UseList("Work");
+        Assert.Equal("z.md x.md y.md", Names());
+    }
+
+    [Fact]
+    public void WhatIsSaved_NeverGoesToAListItWasNotReadFrom()
+    {
+        FileFavorites.Toggle(In("main.md"));
+        FileFavorites.Save();
+        MakeList("Work", "report.md");
+        // The setting changes the list that is open (the settings read again, or reset)
+        FileFavorites.CurrentList = string.Empty;
+        Assert.Equal("main.md", Names());
+        FileFavorites.CurrentList = "Work";
+        Assert.Equal("report.md", Names());
+        FileFavorites.Save();
+        FileFavorites.UseList(string.Empty);
+        Assert.Equal("main.md", Names());
+    }
+
+    [Fact]
     public void ADeletedFile_LeavesAllTheLists()
     {
         MakeList("Work", "gone.md", "report.md");
         MakeList("Home", "gone.md");
-        Assert.True(FileFavorites.PathDeleted(In("gone.md")));
+        Assert.True(FileFavorites.PathsDeleted(new[] { In("gone.md") }));
         Assert.Equal(string.Empty, Names());
         FileFavorites.UseList("Work");
         Assert.Equal("report.md", Names());

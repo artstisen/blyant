@@ -217,7 +217,7 @@ internal static partial class FileExplorer
         var parent = FileFavorites.Parent(number);
         var parentName = parent < 0 ? string.Empty : FileFavorites.Items[parent].Name;
         var error = EditListNote(favorite.Note, FavoriteNoteFileName(favorite, parentName),
-            DialogText.CaptionsFileFavorites, written => KeepFavoriteNote(favorite, number, parentName, written));
+            DialogText.CaptionsFavorites, written => KeepFavoriteNote(favorite, number, parentName, written));
         if (error != null) _favoriteMessage = error;
     }
 
