@@ -176,7 +176,7 @@ The logo of the start page can be one of your own. The logos are chosen and draw
 - `R` Rename a logo of your own: type the new name and press `Enter`. Its file is renamed, and if it is the logo in use, the setting follows. The name of a built-in logo or of another logo of yours cannot be used, and the built-in logos cannot be renamed
 - `D` Delete a logo of your own (you are asked first). The built-in logos cannot be deleted
 
-**Editor** shows the logo on a grid of 4 rows of 63 characters, the size of the Blyant logo, in a box with a ruler above it (a dot for each column, `:` for every 5th, and the tens as digits). The cursor cannot leave the grid. The editor has the modes of the [text editor](Guide-to-editor.md), shown below the grid with the row and column of the cursor:
+**Editor** shows the logo on a grid of 4 rows of 63 characters, the size of the Blyant logo, in a frame with a ruler above it, both in the color of the dividers (a dot for each column, `:` for every 5th, and the tens as digits). The cursor cannot leave the grid. The editor has the modes of the [text editor](Guide-to-editor.md), shown below the grid with the row and column of the cursor:
 
 - **NORMAL**: `h` `j` `k` `l` (or the arrow keys) move, `0` `$` go to the start/end of the row, `gg` `G` to the first/last row. `x` clears the character under the cursor, `r` and a character replaces it, `dd` clears the row, and `u` undoes (the last 100 changes)
 - `i` or `R` go to **REPLACE** mode, `a` after the cursor: what you type is drawn over the grid and the cursor moves on. `Backspace` clears the character before the cursor, `Enter` goes to the start of the next row, the arrow keys move, and `Esc` goes back to NORMAL

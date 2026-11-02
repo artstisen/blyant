@@ -120,7 +120,7 @@ internal static class DialogText
     public static string LogoDiscardQuestion => Lang.T("Use or edit another logo?");
     public static string LogoBuiltInDelete => Lang.T("A built-in logo cannot be deleted");
     public static string LogoListKeys => Lang.T("j/k Select | Enter Use | E Edit | Y Duplicate | R Rename | D Delete");
-    public static string LogoEditorKeys => Lang.T("hjkl Move | i/R Draw | x Clear | r Char | u Undo | S Save | Esc Close");
+    public static string LogoEditorKeys => Lang.T("hjkl Move | i/R Draw | x Clear | dd Del | u Undo | S Save | Esc Close");
     public static string LogoColorKeys => Lang.T("j/k Select | Enter Pick | S Save | h/l Page | ? Help | Esc Close");
     public static string LogoCellKeys => Lang.T("hjkl Move | c Color | Space Paint | x Clear | v Select | u Undo | Esc Close");
     public static string LogoCellVisualKeys => Lang.T("hjkl Move | Space Paint | x Clear | Esc NORMAL");
