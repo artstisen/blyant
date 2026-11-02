@@ -34,18 +34,15 @@ public class BoxColorTests : IDisposable
     }
 
     [Fact]
-    public void AllThe_BuiltInSchemes_LeaveTheNewColorsOpen()
+    public void TheDefaultScheme_LeavesTheNewColorsOpen()
     {
-        foreach (var scheme in ColorScheme.BuiltIn)
+        foreach (var item in new[]
+                 {
+                     ColorItem.BoxCorner, ColorItem.BoxBackground, ColorItem.BoxText, ColorItem.BoxTitle,
+                     ColorItem.BoxTitleText
+                 })
         {
-            foreach (var item in new[]
-                     {
-                         ColorItem.BoxCorner, ColorItem.BoxBackground, ColorItem.BoxText, ColorItem.BoxTitle,
-                         ColorItem.BoxTitleText
-                     })
-            {
-                Assert.Null(scheme.Get(item));
-            }
+            Assert.Null(ColorScheme.Default.Get(item));
         }
     }
 

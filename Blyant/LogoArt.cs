@@ -239,15 +239,15 @@ internal sealed class LogoArt
         }
     }
 
-    // Two islands with palms, one of sand and one of grass, and the sun over the water between them: a logo with
-    // a color for each of its cells
+    // Two islands with palms, one of sand and one of grass, and the sun and stars over the water between them: a logo
+    // with a color for each of its cells
     private static LogoArt Islands => Parse(string.Join("\n",
-        @"   ,-\|/-,                  \ | /              .(\|/), ,-\|/-,",
-        @"   '  |  '      _,        -~~ O ~~-     _.     '' |' : '  |  '",
+        @"   ,-\|/-,  .               \ | /     .        .(\|/), ,-\|/-,",
+        @"   '  |  '      _,   .    -~~ O ~~-     _.   . '' |' : '  |  '",
         @"    __|_o___.--'. '-.       / | \   _.-'.;'-.___o_|_;_.___|_",
         @"~~~/..:......:.......\~~~~~~~~~~~~~/,,,;,,,,,;,,,,,,,;,,,,,\~~~",
-        "cells=...222AAAA..................6.6.6..............AAAAA22.AAAA222",
-        "cells=...2..6..A......EE......6E66E.E.E6666...AA.....AA662.2.A..6..2",
+        "cells=...222AAAA..8...............6.6.6.....8........AAAAA22.AAAA222",
+        "cells=...2..6..A......EE...8....66E.E.E66.....AA...8.AA.62.2.A..6..2",
         "cells=....E66E6EEE6EE6E.EEE.......6.6.6...AAAAAA2A2AAACA622AAAAA62",
         "cells=B996EE6EEEEEE6EEEEEEEE99B99B9EEE9B9AAAA2AAAAA2AAAAAAA2AAAAA2B99"), IslandsName);
 
