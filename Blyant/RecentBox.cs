@@ -65,15 +65,15 @@ internal static class RecentBox
         const int top = 3; // The tab of the title is on the row above
         var selected = 0;
         var message = string.Empty;
+        using var box = ConsoleColors.BoxScope();
         Tools.HideCursor();
+        // The files, and the keys below them
+        ChoiceBox.DrawBox(top - 1, left, inner, files.Count + 1, caption);
         while (true)
         {
-            ChoiceBox.DrawTitleTab(top - 1, left, inner, caption);
             for (var row = 0; row < files.Count; row++)
             {
-                Tools.SetCursorEx(top + 1 + row, left);
-                ConsoleColors.SetColors(ConsoleColors.ColorPreset.BoxBorder);
-                Console.Write("| ");
+                Tools.SetCursorEx(top + 1 + row, left + 2);
                 ConsoleColors.SetColors(ConsoleColors.ColorPreset.LineNumber);
                 Console.Write((row + 1) + " ");
                 ConsoleColors.SetColors(row == selected
@@ -93,21 +93,13 @@ internal static class RecentBox
                     Math.Max(0, room - used), true);
                 Console.Write(folder);
                 Console.Write(new string(' ', Math.Max(0, room - used - TextMetrics.WidthOf(folder))));
-                ConsoleColors.SetColors(ConsoleColors.ColorPreset.BoxBorder);
-                Console.Write(" |");
             }
 
             // The keys (or what the last key did)
-            Tools.SetCursorEx(top + 1 + files.Count, left);
-            ConsoleColors.SetColors(ConsoleColors.ColorPreset.BoxBorder);
-            Console.Write("| ");
+            Tools.SetCursorEx(top + 1 + files.Count, left + 2);
             ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
             var bottom = Tools.TruncateString(message.Length > 0 ? message : hints, inner - 2, true);
             Console.Write(bottom + new string(' ', Math.Max(0, inner - 2 - TextMetrics.WidthOf(bottom))));
-            ConsoleColors.SetColors(ConsoleColors.ColorPreset.BoxBorder);
-            Console.Write(" |");
-            Tools.SetCursorEx(top + 2 + files.Count, left);
-            Console.Write(AsciiStyles.GetBottomCorner() + new string('-', inner) + AsciiStyles.GetBottomCorner());
             ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
 
             var key = Console.ReadKey(true);

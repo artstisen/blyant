@@ -3,6 +3,7 @@
 /// <summary>
 /// ":jump general": a page of Blyant by its name, without the Jump menu
 /// </summary>
+[Collection("Static state")]
 public class JumpToPageTests
 {
     private static EditorEngine Editor() => new("text", 40, 10, false);

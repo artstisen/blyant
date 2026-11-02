@@ -59,8 +59,8 @@ internal static class ColorPicker
     internal static bool Pick(string caption, int left, bool withDefault, ConsoleColor? current,
         Func<ConsoleColor, bool>? isAllowed, Action<ConsoleColor>? setSampleColors, out ConsoleColor? picked)
     {
-        // In the color of text in frames and boxes
-        using var frameText = ConsoleColors.FrameTextScope();
+        // In the colors of boxes
+        using var box = ConsoleColors.BoxScope();
 
         picked = current;
         var first = withDefault ? 1 : 0; // The row of the first color
@@ -79,12 +79,10 @@ internal static class ColorPicker
         left = Math.Max(0, Math.Min(left, Init.LineWidth - boxWidth - 2));
 
         Tools.HideCursor();
-        ChoiceBox.DrawTitleTab(BoxTop - 1, left, boxWidth, caption);
+        ChoiceBox.DrawBox(BoxTop - 1, left, boxWidth, rows, caption);
         for (var row = 0; row < rows; row++)
         {
-            Tools.SetCursorEx(BoxTop + 1 + row, left);
-            ConsoleColors.SetColors(ConsoleColors.ColorPreset.BoxBorder);
-            Console.Write('|');
+            Tools.SetCursorEx(BoxTop + 1 + row, left + 1);
             ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
             // The number and the key of the row
             var number = row < first ? "  " : (row - first + 1).ToString().PadLeft(2);
@@ -114,7 +112,7 @@ internal static class ColorPicker
                 {
                     setSampleColors(color);
                 }
-                else if (ConsoleColors.IsBackgroundColor(color))
+                else if (ConsoleColors.IsHidden(color))
                 {
                     // The color of the background cannot be seen as text: it is shown inverted
                     ConsoleColors.SetColors(ConsoleColors.ColorPreset.NormalInverted);
@@ -129,12 +127,8 @@ internal static class ColorPicker
             Console.Write(name);
             ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
             Console.Write(new string(' ', Math.Max(0, boxWidth - NameStart + 1 - TextMetrics.WidthOf(name))));
-            ConsoleColors.SetColors(ConsoleColors.ColorPreset.BoxBorder);
-            Console.Write('|');
         }
 
-        Tools.SetCursorEx(BoxTop + rows + 1, left);
-        Console.Write(AsciiStyles.GetBottomCorner() + new string('-', boxWidth) + AsciiStyles.GetBottomCorner());
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
 
         while (true)

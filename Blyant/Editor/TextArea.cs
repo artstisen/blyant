@@ -368,6 +368,8 @@ public partial class TextArea
         }
 
 
+        // (a page of its own, also when it is opened from a box: the note of a bookmark in the Jump menu)
+        using var outside = ConsoleColors.OutsideBox();
         DrawReadOnlyLabel();
         Draw();
         MainLoop();
@@ -1527,25 +1529,20 @@ public partial class TextArea
 
     private void DrawBox(int firstRow, int left, int inner, string caption, List<string> rows, int selected)
     {
+        using var box = ConsoleColors.BoxScope();
         var column = _left + left;
         // The tab of the title on the first row, the box below it
-        ChoiceBox.DrawTitleTab(_top + firstRow, column, inner, caption);
+        ChoiceBox.DrawBox(_top + firstRow, column, inner, rows.Count, caption);
         firstRow++;
         for (var i = 0; i < rows.Count; i++)
         {
-            Tools.SetCursorEx(_top + firstRow + 1 + i, column);
-            ConsoleColors.SetColors(ConsoleColors.ColorPreset.BoxBorder);
-            Console.Write('|');
+            Tools.SetCursorEx(_top + firstRow + 1 + i, column + 1);
             ConsoleColors.SetColors(i == selected
                 ? ConsoleColors.ColorPreset.HighlightInverted
                 : ConsoleColors.ColorPreset.Normal);
             Console.Write(" " + rows[i] + new string(' ', inner - 1 - TextMetrics.WidthOf(rows[i])));
-            ConsoleColors.SetColors(ConsoleColors.ColorPreset.BoxBorder);
-            Console.Write('|');
         }
 
-        Tools.SetCursorEx(_top + firstRow + 1 + rows.Count, column);
-        Console.Write(AsciiStyles.GetBottomCorner() + new string('-', inner) + AsciiStyles.GetBottomCorner());
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
     }
 
@@ -1609,21 +1606,8 @@ public partial class TextArea
 
         // The tab of the title, the frame and the question
         var frameRow = firstRow + 1;
-        ChoiceBox.DrawTitleTab(_top + firstRow, column, inner, DialogText.Save);
-        ConsoleColors.SetColors(ConsoleColors.ColorPreset.BoxBorder);
-        for (var row = 1; row < frameHeight - 1; row++)
-        {
-            Tools.SetCursorEx(_top + frameRow + row, column);
-            ConsoleColors.SetColors(ConsoleColors.ColorPreset.BoxBorder);
-            Console.Write('|');
-            ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
-            Console.Write(new string(' ', inner));
-            ConsoleColors.SetColors(ConsoleColors.ColorPreset.BoxBorder);
-            Console.Write('|');
-        }
-
-        Tools.SetCursorEx(_top + frameRow + frameHeight - 1, column);
-        Console.Write(AsciiStyles.GetBottomCorner() + new string('-', inner) + AsciiStyles.GetBottomCorner());
+        var box = ConsoleColors.BoxScope();
+        ChoiceBox.DrawBox(_top + firstRow, column, inner, frameHeight - 2, DialogText.Save);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.AttentionInverted);
         Tools.SetCursorEx(_top + frameRow + 1, column + 2);
         Console.Write(" " + DialogText.SaveQuestion + " ");
@@ -1664,6 +1648,7 @@ public partial class TextArea
             if (key.KeyChar == 'g' && Console.ReadKey(true).KeyChar == 'g') selected = 0;
         }
 
+        box.Dispose();
         // The rows that were covered are written again when the editor is drawn
         Uncover(firstRow, boxHeight, left + inner + 2);
 

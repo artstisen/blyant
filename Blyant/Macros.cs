@@ -791,6 +791,7 @@ internal static class MacroBoxes
     // the text below it
     private static (int Left, int Top, int Width, int Height) DrawEditBox(Func<string> label)
     {
+        using var box = ConsoleColors.BoxScope();
         ChoiceBox.Forget();
         var (top, left, inner, height) = ChoiceBox.DrawFrame(Lang.T("Edit macro"),
             Init.LineWidth - 6, Math.Max(8, Init.LineCount - 5));

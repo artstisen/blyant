@@ -23,6 +23,11 @@ internal enum ColorItem
     TabFrames, // The frames with tabs (null: the color of the dividers)
     TabCorner, // The left side, corner and top of the tab shown in a frame with tabs (null: the tab frames)
     BoxBorders, // The borders of the boxes on top of a page (null: the color of the dividers)
+    BoxCorner, // The left side and the top of a box (null: the box borders)
+    BoxBackground, // The background of a box (null: the background)
+    BoxText, // The text in a box (null: the text in frames with tabs)
+    BoxTitle, // The background of the title of a box (null: the background of the tab shown)
+    BoxTitleText, // The title of a box (null: the text of the tab shown)
     Tab, // The background of the tab shown (null: the color of the tab frames)
     TabText, // The text of the tab shown when it is highlighted (null: the color of TabShown)
     TabShown, // The name of the tab shown when it is not highlighted (null: the text)
@@ -95,6 +100,11 @@ internal sealed class ColorScheme
     internal ConsoleColor? TabFrames { get; set; }
     internal ConsoleColor? TabCorner { get; set; }
     internal ConsoleColor? BoxBorders { get; set; }
+    internal ConsoleColor? BoxCorner { get; set; }
+    internal ConsoleColor? BoxBackground { get; set; }
+    internal ConsoleColor? BoxText { get; set; }
+    internal ConsoleColor? BoxTitle { get; set; }
+    internal ConsoleColor? BoxTitleText { get; set; }
     internal ConsoleColor? Tab { get; set; }
     internal ConsoleColor? TabText { get; set; }
     internal ConsoleColor? TabShown { get; set; }
@@ -134,6 +144,11 @@ internal sealed class ColorScheme
     internal ConsoleColor TabFrameColor => TabFrames ?? Dividers;
     internal ConsoleColor TabCornerColor => TabCorner ?? TabFrameColor;
     internal ConsoleColor BoxBorderColor => BoxBorders ?? Dividers;
+    internal ConsoleColor BoxCornerColor => BoxCorner ?? BoxBorderColor;
+    internal ConsoleColor BoxBackgroundColor => BoxBackground ?? BackgroundColor;
+    internal ConsoleColor BoxTextColor => BoxText ?? FrameTextColor;
+    internal ConsoleColor BoxTitleColor => BoxTitle ?? TabColor;
+    internal ConsoleColor BoxTitleTextColor => BoxTitleText ?? TabTextColor;
     internal ConsoleColor TabColor => Tab ?? TabFrameColor;
     internal ConsoleColor TabTextColor => TabText ?? TabShownColor;
     internal ConsoleColor TabShownColor => TabShown ?? Text;
@@ -157,6 +172,11 @@ internal sealed class ColorScheme
     internal ConsoleColor CommandHintsColor => CommandHints ?? Dividers;
     internal ConsoleColor CommandErrorColor => CommandError ?? Attention;
     internal ConsoleColor CommandErrorTextColor => CommandErrorText ?? AttentionText;
+
+    /// <summary>
+    /// The color of text in a box: a color that cannot be seen on the background of the box has the text of the box
+    /// </summary>
+    internal ConsoleColor TextInBox(ConsoleColor color) => color == BoxBackground ? BoxTextColor : color;
 
     // True for the colors of the command line and its box
     internal static bool IsCommand(ColorItem item) => item is >= ColorItem.CommandLine and <= ColorItem.CommandErrorText;
@@ -215,7 +235,8 @@ internal sealed class ColorScheme
     /// </summary>
     internal static bool CanBeDefault(ColorItem item) =>
         item is ColorItem.Background or ColorItem.TabFrames or ColorItem.TabCorner or ColorItem.BoxBorders
-            or ColorItem.Tab
+            or ColorItem.BoxCorner or ColorItem.BoxBackground or ColorItem.BoxText or ColorItem.BoxTitle
+            or ColorItem.BoxTitleText or ColorItem.Tab
             or ColorItem.TabText or ColorItem.TabShown or ColorItem.OtherTabs or ColorItem.KeyHints
             or ColorItem.Unsaved or ColorItem.UnsavedText or ColorItem.LineNumbers or ColorItem.CurrentLineNumber
             or ColorItem.FrameText || IsCommand(item) || IsSyntax(item, out _);
@@ -241,6 +262,11 @@ internal sealed class ColorScheme
             ColorItem.TabFrames => TabFrames,
             ColorItem.TabCorner => TabCorner,
             ColorItem.BoxBorders => BoxBorders,
+            ColorItem.BoxCorner => BoxCorner,
+            ColorItem.BoxBackground => BoxBackground,
+            ColorItem.BoxText => BoxText,
+            ColorItem.BoxTitle => BoxTitle,
+            ColorItem.BoxTitleText => BoxTitleText,
             ColorItem.Tab => Tab,
             ColorItem.TabText => TabText,
             ColorItem.TabShown => TabShown,
@@ -279,6 +305,11 @@ internal sealed class ColorScheme
             ColorItem.TabFrames => TabFrameColor,
             ColorItem.TabCorner => TabCornerColor,
             ColorItem.BoxBorders => BoxBorderColor,
+            ColorItem.BoxCorner => BoxCornerColor,
+            ColorItem.BoxBackground => BoxBackgroundColor,
+            ColorItem.BoxText => BoxTextColor,
+            ColorItem.BoxTitle => BoxTitleColor,
+            ColorItem.BoxTitleText => BoxTitleTextColor,
             ColorItem.Tab => TabColor,
             ColorItem.TabText => TabTextColor,
             ColorItem.TabShown => TabShownColor,
@@ -336,6 +367,11 @@ internal sealed class ColorScheme
             case ColorItem.TabFrames: TabFrames = color; break;
             case ColorItem.TabCorner: TabCorner = color; break;
             case ColorItem.BoxBorders: BoxBorders = color; break;
+            case ColorItem.BoxCorner: BoxCorner = color; break;
+            case ColorItem.BoxBackground: BoxBackground = color; break;
+            case ColorItem.BoxText: BoxText = color; break;
+            case ColorItem.BoxTitle: BoxTitle = color; break;
+            case ColorItem.BoxTitleText: BoxTitleText = color; break;
             case ColorItem.Tab: Tab = color; break;
             case ColorItem.TabText: TabText = color; break;
             case ColorItem.TabShown: TabShown = color; break;
@@ -385,23 +421,24 @@ internal sealed class ColorScheme
     internal bool Allowed(ColorItem item, ConsoleColor color)
     {
         if (!AllowedOnItsOwn(item, color)) return false;
-        // The command line and its box: no text there gets the color it is on (also when it follows the color
+        // The command line and the boxes: no text there gets the color it is on (also when it follows the color
         // that is changed). What was already so is not made the reason
-        var before = CommandPairs();
+        var before = TextPairs();
         var changed = Clone();
         changed.Set(item, color);
-        var after = changed.CommandPairs();
+        var after = changed.TextPairs();
         return !after.Where((pair, i) => pair.Text == pair.On && before[i].Text != before[i].On).Any();
     }
 
-    // The colors of the command line and its box, as shown: each text and what it is on
-    private (ConsoleColor Text, ConsoleColor On)[] CommandPairs() =>
+    // The colors of the command line and the boxes, as shown: each text and what it is on
+    private (ConsoleColor Text, ConsoleColor On)[] TextPairs() =>
         new[]
         {
             (CommandLineTextColor, CommandLineColor), (CommandWholeTextColor, CommandWholeColor),
             (CommandErrorTextColor, CommandErrorColor), (CommandBorderColor, CommandBoxColor),
             (CommandBoxTextColor, CommandBoxColor), (CommandTypedColor, CommandBoxColor),
-            (CommandHintsColor, CommandBoxColor)
+            (CommandHintsColor, CommandBoxColor), (BoxBorderColor, BoxBackgroundColor),
+            (BoxCornerColor, BoxBackgroundColor), (BoxTextColor, BoxBackgroundColor), (BoxTitleTextColor, BoxTitleColor)
         };
 
     private bool AllowedOnItsOwn(ColorItem item, ConsoleColor color)
@@ -431,7 +468,9 @@ internal sealed class ColorScheme
         ("attention", ColorItem.Attention), ("attentiontext", ColorItem.AttentionText),
         ("warning", ColorItem.Warning), ("warningtext", ColorItem.WarningText),
         ("tabframes", ColorItem.TabFrames), ("tabcorner", ColorItem.TabCorner),
-        ("boxborders", ColorItem.BoxBorders), ("tab", ColorItem.Tab),
+        ("boxborders", ColorItem.BoxBorders), ("boxcorner", ColorItem.BoxCorner),
+        ("boxbackground", ColorItem.BoxBackground), ("boxtext", ColorItem.BoxText), ("boxtitle", ColorItem.BoxTitle),
+        ("boxtitletext", ColorItem.BoxTitleText), ("tab", ColorItem.Tab),
         ("tabtext", ColorItem.TabText), ("tabshown", ColorItem.TabShown), ("othertabs", ColorItem.OtherTabs),
         ("keyhints", ColorItem.KeyHints), ("unsaved", ColorItem.Unsaved), ("unsavedtext", ColorItem.UnsavedText),
         ("linenumbers", ColorItem.LineNumbers), ("currentline", ColorItem.CurrentLineNumber),

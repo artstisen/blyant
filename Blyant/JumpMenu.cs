@@ -323,8 +323,8 @@ internal static class JumpMenu
     /// <returns>The place picked, or null</returns>
     internal static JumpTarget? Pick(string? currentFile = null)
     {
-        // In the color of text in frames and boxes
-        using var frameText = ConsoleColors.FrameTextScope();
+        // In the colors of boxes
+        using var box = ConsoleColors.BoxScope();
         var tabs = Tabs();
         // The favorites, for the colors of the names
         FileFavorites.Load();

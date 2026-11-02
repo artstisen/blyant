@@ -3,7 +3,7 @@
 /// <summary>
 /// The color schemes: a page of their own, opened from the Configuration page and with ":scheme" in the main
 /// menu. It is a frame with three tabs (TabFrame): Schemes, where a scheme is selected and used (the built-in
-/// ones and the ones saved by the user), Colors, where the colors of the scheme are picked (on four pages), and
+/// ones and the ones saved by the user), Colors, where the colors of the scheme are picked (on five pages), and
 /// Preview, a small screen in the colors being edited. Edited colors are only used when they are saved, as a
 /// scheme of the user's own (a file in the directory "colorschemes"), which is then the scheme in use.
 /// </summary>
@@ -15,10 +15,10 @@ internal static class SchemeEditor
     private sealed record Group(string Name, ColorItem Color, ColorItem? Text, ConsoleColors.ColorPreset Style,
         int Syntax = -1, string Sample = "");
 
-    private const int ColorPages = 4;
+    private const int ColorPages = 5;
 
-    // The groups on the pages of the Colors tab: the text and the editor, the highlights and tabs, the command
-    // line and its box, and the colors of colored text
+    // The groups on the pages of the Colors tab: the text and the editor, the highlights and tabs, the boxes, the
+    // command line and its box, and the colors of colored text
     private static Group[] GroupsOf(int page)
     {
         switch (page)
@@ -57,13 +57,22 @@ internal static class SchemeEditor
                     new Group(Lang.T("Tab text"), ColorItem.FrameText, null, ConsoleColors.ColorPreset.FrameText),
                     new Group(Lang.T("Tab frames"), ColorItem.TabFrames, null, ConsoleColors.ColorPreset.TabFrame),
                     new Group(Lang.T("Tab corner"), ColorItem.TabCorner, null, ConsoleColors.ColorPreset.TabCorner),
-                    new Group(Lang.T("Box borders"), ColorItem.BoxBorders, null, ConsoleColors.ColorPreset.BoxBorder),
                     new Group(Lang.T("Tab highlight"), ColorItem.Tab, ColorItem.TabText,
                         ConsoleColors.ColorPreset.Normal),
                     new Group(Lang.T("Tab focus"), ColorItem.TabShown, null, ConsoleColors.ColorPreset.TabShown),
                     new Group(Lang.T("Other tabs"), ColorItem.OtherTabs, null, ConsoleColors.ColorPreset.OtherTabs)
                 };
             case 2:
+                return new[]
+                {
+                    new Group(Lang.T("Box borders"), ColorItem.BoxBorders, null, ConsoleColors.ColorPreset.BoxBorder),
+                    new Group(Lang.T("Box corner"), ColorItem.BoxCorner, null, ConsoleColors.ColorPreset.BoxCorner),
+                    new Group(Lang.T("Box"), ColorItem.BoxBackground, ColorItem.BoxText,
+                        ConsoleColors.ColorPreset.BoxText),
+                    new Group(Lang.T("Box title"), ColorItem.BoxTitle, ColorItem.BoxTitleText,
+                        ConsoleColors.ColorPreset.Normal)
+                };
+            case 3:
                 return new[]
                 {
                     new Group(Lang.T("Command line"), ColorItem.CommandLine, ColorItem.CommandLineText,
@@ -547,6 +556,7 @@ internal static class SchemeEditor
                     else
                     {
                         if (group.Color == ColorItem.Tab) ConsoleColors.SetTabColors(true);
+                        else if (group.Color == ColorItem.BoxTitle) ConsoleColors.SetBoxTitleColors(true);
                         else ConsoleColors.SetColorsFromPreview(group.Style);
                         Console.Write(sample);
                     }
@@ -563,8 +573,12 @@ internal static class SchemeEditor
                     Console.Write((Preview.TabHighlight ? "[x] " : "[ ] ") + Lang.T("Highlight focused tabs"));
                 }
 
+                // A box, as it looks
+                if (_page == 2) DrawBoxPageSample(area.Left + 3, RowOf(area, groups.Length + 1), area.Width - 3,
+                    area.Top + area.Height - (ConsoleColors.Monochrome ? 1 : 0));
+
                 // The command line and its box, as they look
-                if (_page == 2) DrawCommandSample(area.Left + 3, RowOf(area, groups.Length + 1), area.Width - 3,
+                if (_page == 3) DrawCommandSample(area.Left + 3, RowOf(area, groups.Length + 1), area.Width - 3,
                     area.Top + area.Height - (ConsoleColors.Monochrome ? 1 : 0));
 
                 if (ConsoleColors.Monochrome && area.Height > Count + 3)
@@ -679,10 +693,11 @@ internal static class SchemeEditor
     {
         var caption = item switch
         {
-            ColorItem.Background or ColorItem.CommandBox => DialogText.BackgroundCaption,
+            ColorItem.Background or ColorItem.CommandBox or ColorItem.BoxBackground => DialogText.BackgroundCaption,
             ColorItem.HighlightText or ColorItem.AttentionText or ColorItem.WarningText or ColorItem.TabText
                 or ColorItem.UnsavedText or ColorItem.SelectorText or ColorItem.CommandLineText
-                or ColorItem.CommandBoxText or ColorItem.CommandWholeText or ColorItem.CommandErrorText =>
+                or ColorItem.CommandBoxText or ColorItem.CommandWholeText or ColorItem.CommandErrorText
+                or ColorItem.BoxText or ColorItem.BoxTitleText =>
                 DialogText.TextColorCaption,
             _ => DialogText.ColorCaption
         };
@@ -721,6 +736,18 @@ internal static class SchemeEditor
                 case ColorItem.Background:
                     ConsoleColors.SetBackground(color);
                     ConsoleColors.SetForeground(scheme.Text);
+                    break;
+                case ColorItem.BoxTitle or ColorItem.BoxTitleText:
+                    ConsoleColors.SetBackground(scheme.BoxTitleColor);
+                    ConsoleColors.SetForeground(scheme.BoxTitleTextColor);
+                    break;
+                case ColorItem.BoxBackground:
+                    ConsoleColors.SetBackground(color);
+                    ConsoleColors.SetForeground(scheme.BoxTextColor);
+                    break;
+                case ColorItem.BoxBorders or ColorItem.BoxCorner or ColorItem.BoxText:
+                    ConsoleColors.SetBackground(scheme.BoxBackgroundColor);
+                    ConsoleColors.SetForeground(color);
                     break;
                 case ColorItem.CommandLine or ColorItem.CommandLineText:
                     ConsoleColors.SetBackground(scheme.CommandLineColor);
@@ -774,7 +801,10 @@ internal static class SchemeEditor
                 ColorItem.TabCorner => Lang.T("[Default]: the tab frames"),
                 ColorItem.TabShown or ColorItem.OtherTabs or ColorItem.KeyHints or ColorItem.CurrentLineNumber
                     or ColorItem.FrameText or ColorItem.CommandBoxText => Lang.T("[Default]: the text"),
-                ColorItem.CommandBorders => Lang.T("[Default]: the box borders"),
+                ColorItem.CommandBorders or ColorItem.BoxCorner => Lang.T("[Default]: the box borders"),
+                ColorItem.BoxText => Lang.T("[Default]: the tab text"),
+                ColorItem.BoxTitle or ColorItem.BoxTitleText =>
+                    Lang.F("[Default]: {0}", ColorPicker.Name(Preview.Shown(item))),
                 ColorItem.CommandBox => DialogText.ColorDefault,
                 ColorItem.CommandTyped => Lang.T("[Default]: the accent"),
                 // One of a pair, when the other has a color of its own: the color it has
@@ -796,6 +826,17 @@ internal static class SchemeEditor
             return Lang.T("[Default]: Tab focus on the tab frames");
         }
 
+        // The pairs of the boxes that have no colors of their own: what they follow
+        if (group.Color == ColorItem.BoxBackground && Preview.BoxBackground == null && Preview.BoxText == null)
+        {
+            return Lang.T("[Default]: the tab text");
+        }
+
+        if (group.Color == ColorItem.BoxTitle && Preview.BoxTitle == null && Preview.BoxTitleText == null)
+        {
+            return Lang.T("[Default]: the tab highlight");
+        }
+
         // The pairs of the command line that have no colors of their own: what they follow
         if (group.Text is { } pairText && ColorScheme.IsCommand(group.Color) && Preview.Get(group.Color) == null &&
             Preview.Get(pairText) == null)
@@ -812,6 +853,76 @@ internal static class SchemeEditor
         return group.Text is { } text
             ? Lang.F("{0}, background {1}", Name(text), Name(group.Color))
             : Name(group.Color);
+    }
+
+    // A box in the colors being edited, with its title in a tab: its rows are the parts of each row, in their styles
+    private static void DrawBoxSample(int left, int tabRow, int inner, string title,
+        IReadOnlyList<(ConsoleColors.ColorPreset Style, string Text)[]> rows)
+    {
+        using var box = ConsoleColors.BoxScope();
+
+        void Part(ConsoleColors.ColorPreset style, string text)
+        {
+            ConsoleColors.SetColorsFromPreview(style);
+            Console.Write(text);
+        }
+
+        title = Tools.TruncateString(title, inner - 4, true);
+        var titleWidth = TextMetrics.WidthOf(title);
+        Tools.SetCursorEx(tabRow, left);
+        Part(ConsoleColors.ColorPreset.BoxCorner,
+            AsciiStyles.GetTopCorner() + new string('-', titleWidth + 2) + AsciiStyles.GetTopCorner());
+        Tools.SetCursorEx(tabRow + 1, left);
+        Part(ConsoleColors.ColorPreset.BoxCorner, "|");
+        ConsoleColors.SetBoxTitleColors(true);
+        Console.Write(" " + title + " ");
+        Part(ConsoleColors.ColorPreset.BoxCorner, AsciiStyles.GetBottomCorner() +
+                                                  new string('-', Math.Max(0, inner - titleWidth - 3)) +
+                                                  AsciiStyles.GetTopCorner());
+        for (var row = 0; row < rows.Count; row++)
+        {
+            Tools.SetCursorEx(tabRow + 2 + row, left);
+            Part(ConsoleColors.ColorPreset.BoxCorner, "|");
+            var room = inner;
+            foreach (var (style, text) in rows[row])
+            {
+                var fitted = Tools.TruncateString(text, Math.Max(0, room), true);
+                Part(style, fitted);
+                room -= TextMetrics.WidthOf(fitted);
+            }
+
+            Part(ConsoleColors.ColorPreset.BoxText, new string(' ', Math.Max(0, room)));
+            Part(ConsoleColors.ColorPreset.BoxBorder, "|");
+        }
+
+        Tools.SetCursorEx(tabRow + 2 + rows.Count, left);
+        Part(ConsoleColors.ColorPreset.BoxBorder,
+            AsciiStyles.GetBottomCorner() + new string('-', inner) + AsciiStyles.GetBottomCorner());
+    }
+
+    // A box as it looks, below the groups of its page: a highlighted question, text, the selector and dimmed text. Only
+    // when there is room above the bottom row
+    private static void DrawBoxPageSample(int left, int top, int width, int bottom)
+    {
+        var inner = Math.Min(width - 3, 40);
+        var rows = new (ConsoleColors.ColorPreset Style, string Text)[][]
+        {
+            new[]
+            {
+                (ConsoleColors.ColorPreset.BoxText, " "),
+                (ConsoleColors.ColorPreset.AttentionInverted, " " + Lang.T("Attention") + " ")
+            },
+            new[] { (ConsoleColors.ColorPreset.BoxText, "  " + Lang.T("Text")) },
+            new[]
+            {
+                (ConsoleColors.ColorPreset.BoxText, " "), (ConsoleColors.ColorPreset.SelectorInverted, "->"),
+                (ConsoleColors.ColorPreset.BoxText, " " + Lang.T("Selector"))
+            },
+            new[] { (ConsoleColors.ColorPreset.Divider, "  " + Lang.T("Dividers")) }
+        };
+        // (the tab of the title, the rows and the bottom line)
+        if (top + rows.Length + 3 > bottom || inner < 24) return;
+        DrawBoxSample(left, top, inner, Lang.T("Box"), rows);
     }
 
     // The command line and the box of commands above it in the colors being edited: a box with names (one typed
@@ -981,32 +1092,15 @@ internal static class SchemeEditor
         Part(ConsoleColors.ColorPreset.TabFrame,
             AsciiStyles.GetBottomCorner() + new string('-', frameWidth - 2) + AsciiStyles.GetBottomCorner());
 
-        // A box with its title in a tab (in the color of the box borders), to the right of it
+        // A box with its title in a tab, to the right of it
         var boxLeft = x + frameWidth + 2;
         var inner = Math.Min(24, left + width - boxLeft - 3);
         if (inner < 12) return;
-        var title = Tools.TruncateString(Lang.T("Box"), inner - 4, true);
-        var titleWidth = TextMetrics.WidthOf(title);
-        Tools.SetCursorEx(top + 6, boxLeft);
-        Part(ConsoleColors.ColorPreset.BoxBorder,
-            AsciiStyles.GetTopCorner() + new string('-', titleWidth + 2) + AsciiStyles.GetTopCorner());
-        Tools.SetCursorEx(top + 7, boxLeft);
-        Part(ConsoleColors.ColorPreset.BoxBorder, "|");
-        Tab(" " + title + " ");
-        Part(ConsoleColors.ColorPreset.BoxBorder, AsciiStyles.GetBottomCorner() +
-                                                 new string('-', Math.Max(0, inner - titleWidth - 3)) +
-                                                 AsciiStyles.GetTopCorner());
-        for (var row = 8; row <= 9; row++)
+        DrawBoxSample(boxLeft, top + 6, inner, Lang.T("Box"), new[]
         {
-            Tools.SetCursorEx(top + row, boxLeft);
-            Part(ConsoleColors.ColorPreset.BoxBorder, "|");
-            Part(ConsoleColors.ColorPreset.Normal, (row == 8 ? "  " + Lang.T("Text") : string.Empty).PadRight(inner));
-            Part(ConsoleColors.ColorPreset.BoxBorder, "|");
-        }
-
-        Tools.SetCursorEx(top + 10, boxLeft);
-        Part(ConsoleColors.ColorPreset.BoxBorder,
-            AsciiStyles.GetBottomCorner() + new string('-', inner) + AsciiStyles.GetBottomCorner());
+            new[] { (ConsoleColors.ColorPreset.BoxText, "  " + Lang.T("Text")) },
+            Array.Empty<(ConsoleColors.ColorPreset, string)>()
+        });
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
     }
 }

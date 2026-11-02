@@ -45,6 +45,8 @@ internal static class CommandLine
     /// <returns>The text, or null if canceled or empty</returns>
     internal static string? Read(char prefix, bool isCommand, CommandContext? context = null)
     {
+        // (the bottom line, also when a box is shown)
+        using var outside = ConsoleColors.OutsideBox();
         var command = string.Empty;
         var completion = context == null ? null : new CommandCompletion(context.Value);
         // Up and Down: the commands given here before

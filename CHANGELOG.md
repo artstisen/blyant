@@ -1,6 +1,7 @@
 # Changes
 
 ## v1.2.1 (unreleased)
+- **Colors of the boxes**: a new Page 3 on the Colors tab of the color schemes has the colors of the boxes shown on top of a page, with a small box to show them: Box borders (moved from Page 2), Box corner (the left side and the top, for a box that looks lit from the top left), Box (its background and text) and Box title (its background and text). Without colors of their own the boxes look as they did, so existing schemes are not changed. The former Pages 3 and 4 are now Pages 4 and 5.
 - **`:jump name` goes straight to a page of Blyant**, without the menu: `general`, `layout`, `editor`, `lists`, `system`, `colors`, `logos`, `clipboard`, `snippets`, `completions`, `help` and `about`. It works wherever `:jump` does, and in the Jump menu; `Tab` completes the names.
 - A change to the clipboard settings on a page opened from the Jump menu, or with `:book` or `:jump`, reaches the editor at once. It used to take effect only when the file was opened again.
 - **A yank too long for the clipboard can go to the paste bin**: when a yank of more than about 75 KB cannot be sent to the clipboard and the paste bin is off, Blyant asks whether to write it to the paste bin, this once (the setting stays off). A box then shows the full path of the file, and `C` copies it. The question says so if text in the paste bin would be replaced.
