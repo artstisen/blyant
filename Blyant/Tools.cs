@@ -676,6 +676,8 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("Esc Q h -", Lang.T("Back to the file browser"), false));
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionFavorites, true));
             _shortcutList.Add(new Shortcut(":jump Ctrl+O", Lang.T("The Jump menu: files, directories and pages"), false));
+            _shortcutList.Add(new Shortcut(":list", Lang.T("Lists of favorites: open, add, rename, delete"), false));
+            _shortcutList.Add(new Shortcut(":list name", Lang.T("Open a list (:list main: the main list)"), false));
             _shortcutList.Add(new Shortcut("Ctrl+K :recent", Lang.T("The latest files: Enter or 1-9 opens one"), false));
             _shortcutList.Add(new Shortcut(":missing", Lang.T("List the entries whose file or folder is gone"), false));
             _shortcutList.Add(new Shortcut(":prune", Lang.T("Remove them (asks first; drives not connected stay)"), false));

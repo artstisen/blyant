@@ -302,6 +302,7 @@ internal static class Init
         JumpMenu.BookmarkPanes = true;
         JumpMenu.BookmarkPeek = true;
         FileExplorer.FavoriteNumbers = false;
+        FileFavorites.CurrentList = string.Empty;
         JumpMenu.BookmarkNumbers = false;
         FileExplorer.FileNumbers = false;
         FileExplorer.HistoryNumbers = false;

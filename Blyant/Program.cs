@@ -83,7 +83,8 @@ class Program
     {
         // Tab after ":book " completes the names of the bookmarks, on every page
         CommandCompletion.Arguments["book"] = Bookmarks.NamesToComplete;
-        // ... and after ":jump " the names of the pages
+        // ... after ":list " the lists of favorites, and after ":jump " the names of the pages
+        CommandCompletion.Arguments["list"] = FileFavorites.ListWords;
         foreach (var jump in new[] { "jump", "ju", "jmp" }) CommandCompletion.Arguments[jump] = () => JumpPages.Names;
         while (true)
         {

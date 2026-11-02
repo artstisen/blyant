@@ -220,7 +220,7 @@ internal static partial class FileExplorer
                 }
 
                 // A name can follow the command
-                if (command != null && CommandLine.Name(command) is "folder" or "subfolder" or "rename" or "new" or "import")
+                if (command != null && CommandLine.Name(command) is "folder" or "subfolder" or "rename" or "new" or "import" or "list")
                 {
                     command = CommandLine.Name(command);
                 }
@@ -236,6 +236,11 @@ internal static partial class FileExplorer
                     case "h":
                     case "help":
                         Tools.WriteEditorHelp(Tools.HelpTopic.Favorites);
+                        break;
+                    case "list":
+                        // The lists of favorites (the list drawn first: the box of commands has just been taken away)
+                        DrawFavorites(true);
+                        ShowFavoriteLists(CommandLine.LastArgument);
                         break;
                     case "missing":
                         ShowMissingFavorites();
@@ -1250,7 +1255,9 @@ internal static partial class FileExplorer
 
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
         Tools.ClearScreen();
-        Menu.WriteModeLabel(DialogText.CaptionsFileFavorites, string.Empty, 0);
+        Menu.WriteModeLabel(FileFavorites.CurrentList.Length > 0
+            ? Lang.F("{0}: {1}", DialogText.CaptionsFileFavorites, FileFavorites.CurrentList)
+            : DialogText.CaptionsFileFavorites, string.Empty, 0);
         Menu.WriteNameInTopBar();
         Tools.SetCursorEx(1, 1);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.HeaderColor);

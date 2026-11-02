@@ -744,6 +744,8 @@ internal static class JumpMenu
         var room = left + width - 1 - Console.CursorLeft - 2;
         var note = _message.Length > 0 ? _message
             : tabs[tab] == Tab.Jumps ? Lang.T("Jumps from this menu or a command, the latest first")
+            : tabs[tab] == Tab.Favorites && FileFavorites.CurrentList.Length > 0
+                ? Lang.F("List: {0}", FileFavorites.CurrentList)
             : tabs[tab] == Tab.Bookmarks && rows.Count == 0 && filter.Length == 0 ? DialogText.BookmarksEmpty
             : tabs[tab] == Tab.Projects && rows.Count == 0 && filter.Length == 0 ? DialogText.NoProjectsYet
             : string.Empty;

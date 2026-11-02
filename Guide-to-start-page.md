@@ -269,6 +269,7 @@ Files and directories you use often can be marked as favorites:
 
 - `P` or `:fav` Add the selected file or directory to the favorites, or remove it (one with a note: after asking). Favorites are marked with a `*`
 - `F` or `:favorites` Show the list of favorites
+- `:list` in the favorites Show the [lists of favorites](#lists-of-favorites), to keep other favorites in another list
 
 The list has three columns, with lines between them and their labels at the top: _Name_ (the name of the file or directory), _Path_ (the directory it is in; the end of a long path is shown) and _Info_ (the size of a file, `<DIR>` for a directory, _(missing)_ for one that is gone, and the number of favorites in a favorites folder).
 
@@ -316,6 +317,17 @@ In the list of favorites:
 While the list is filtered with `/text` the favorites and folders found are shown without the folders they are in, and nothing can be moved.
 
 The list is kept in the file `favorites.txt` in the data directory (one line per favorite: the color, a tab character and the path; a folder has its name in brackets instead of a path, and the favorites in it start with a blank space; a folder line with a blank space in front, in a folder, is a subfolder, and the favorites in it start with two). A note is on the line after its favorite or folder, after a `#`, with its line breaks written as `\n` (a backslash as `\\`, a tab as `\t`). A file that has been closed in the editor has the line and column of the cursor before its path (`3:12` and a tab character). Favorites follow when you rename or move a file or directory in the browser, and are removed when you delete it. A favorite whose file is gone is shown as _(missing)_.
+
+#### Lists of favorites
+You can keep several lists of favorites, as one for each client or for writing and for technical work, and see only the one you work on. One list is open at a time, and it is the one used all over Blyant: `P` adds to it, the `*` in the file browser marks what is in it, and the Favorites tab of the [Jump menu](Guide-to-jump-menu.md#jump-menu) shows it, with its name. The name is also in the top bar, as _FAVORITES: WORK_; the main list shows none. Blyant remembers the list that is open (setting `favoritelist`).
+
+- `:list` in the favorites Show the lists in a box, with what is in the selected one below them. `Enter` opens the selected list and `/` filters them
+  - `N` A new list: type its name (at most 24 characters), and it is opened. A name a file cannot have, or that another list has, is refused
+  - `R` Rename the selected list
+  - `D` Delete the selected list, after asking. It goes to the trash, unless `deletetotrash` is off, and the files in it stay where they are. The main list opens if it was open. The main list itself cannot be renamed or deleted
+- `:list name` Open a list at once (`Tab` completes the names), and `:list main` the main list
+
+The main list is `favorites.txt`, and the others are files of the same kind in the directory `favorites` in the data directory, as `favorites/Work.txt`. A file that is renamed, moved or deleted in Blyant is followed in all the lists. A file can be in several lists, and each list remembers where the cursor was in it.
 
 ### File history
 The list has three columns, as the favorites: _Name_, _Path_ (the directory the file is in) and _Opened_ (when it was opened last, or _(missing)_ for a file that is gone).

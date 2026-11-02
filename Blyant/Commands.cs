@@ -56,7 +56,7 @@ internal static class Commands
             "q h"),
         [CommandContext.Favorites] = new Table(
             "quit close help jump book new color info remove move top bottom undo folder subfolder note panes peek number nonumber expand collapse rename import goto " +
-            "path name recent missing prune",
+            "path name recent missing prune list",
             "q h u ju jmp"),
         [CommandContext.History] = new Table(
             "quit close help jump book info goto favorite remove clear path name number nonumber recent missing prune",

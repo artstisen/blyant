@@ -14,11 +14,23 @@ namespace Blyant;
 /// folder are the lines after it that start with a blank space. A folder line that starts with a blank space in a
 /// folder is a subfolder, and the favorites in it start with two. A note is on the line after its favorite or
 /// folder, after a "#" (the line breaks in it written as \n, a backslash as \\ and a tab as \t).
+///
+/// There can be more lists than this main list: each is a file of the same kind in the directory "favorites" next
+/// to it, with the name of the list. One list is open at a time (setting "favoritelist"). The favorites of all the
+/// lists follow a file that is renamed, moved or deleted.
 /// </summary>
 internal static class FileFavorites
 {
     internal const string FileName = "favorites.txt";
     private const string CollapsedMark = "collapsed";
+    private const string ListsDirectoryName = "favorites";
+    private const string ListExtension = ".txt";
+    private const int MaxListName = 24; // The name of a list is shown in the top bar
+
+    /// <summary>
+    /// What stands for the main list in ":list main" (English: as the names of commands)
+    /// </summary>
+    internal const string MainListWord = "main";
 
     internal sealed class Favorite : IFolderItem
     {
@@ -43,7 +55,7 @@ internal static class FileFavorites
     }
 
     // The list, with its folders (moving, removing and putting back are done by it)
-    private static readonly FolderList<Favorite> Folders = new();
+    private static FolderList<Favorite> Folders = new();
     private static List<Favorite> List => Folders.Items;
 
     /// <summary>
@@ -56,8 +68,205 @@ internal static class FileFavorites
     /// </summary>
     internal static string? FilePathOverride { get; set; }
 
-    internal static string FilePath =>
-        FilePathOverride ?? Path.Combine(FileIo.GetDataDirectoryName(), FileName);
+    internal static string FilePath => ListPath(CurrentList);
+
+    /// <summary>
+    /// The name of the list that is open (setting "favoritelist"; empty: the main list)
+    /// </summary>
+    internal static string CurrentList { get; set; } = string.Empty;
+
+    private static string MainFilePath => FilePathOverride ?? Path.Combine(FileIo.GetDataDirectoryName(), FileName);
+
+    private static string ListsDirectory =>
+        Path.Combine(Path.GetDirectoryName(Path.GetFullPath(MainFilePath)) ?? string.Empty, ListsDirectoryName);
+
+    // The file of a list (empty: the main list)
+    private static string ListPath(string name) =>
+        name.Length == 0 ? MainFilePath : Path.Combine(ListsDirectory, name + ListExtension);
+
+    /// <summary>
+    /// The names of the lists besides the main list, in alphabetical order
+    /// </summary>
+    internal static List<string> ListNames()
+    {
+        try
+        {
+            if (!Directory.Exists(ListsDirectory)) return new List<string>();
+            return Directory.GetFiles(ListsDirectory, "*" + ListExtension).Select(Path.GetFileNameWithoutExtension)
+                .OfType<string>().Order(StringComparer.OrdinalIgnoreCase).ToList();
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return new List<string>();
+        }
+    }
+
+    /// <summary>
+    /// The words that can follow ":list": the main list and the names of the others
+    /// </summary>
+    internal static IEnumerable<string> ListWords() => ListNames().Prepend(MainListWord);
+
+    /// <summary>
+    /// The list with a name (upper and lower case alike): its name as it is written, empty for the main list, and
+    /// null if there is none
+    /// </summary>
+    internal static string? FindList(string name)
+    {
+        name = name.Trim();
+        if (name.Equals(MainListWord, StringComparison.OrdinalIgnoreCase)) return string.Empty;
+        return ListNames().FirstOrDefault(list => list.Equals(name, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    /// A name a list can have: not too long, usable as a file name on all systems, and not the word for the main list
+    /// </summary>
+    internal static bool IsValidListName(string name)
+    {
+        name = name.Trim();
+        return name.Length is > 0 and <= MaxListName && name.IndexOfAny(Path.GetInvalidFileNameChars()) < 0 &&
+               name.IndexOfAny(new[] { '/', '\\', ':', '*', '?', '"', '<', '>', '|' }) < 0 &&
+               !name.StartsWith('.') && !name.EndsWith('.') &&
+               !name.Equals(MainListWord, StringComparison.OrdinalIgnoreCase);
+    }
+
+    // Why a list cannot have a name (null: it can)
+    private static string? ListNameProblem(string name)
+    {
+        if (name.Length > MaxListName) return Lang.F("Name too long (at most {0} characters)", MaxListName);
+        return IsValidListName(name) ? null : Lang.T("That name cannot be used for a list");
+    }
+
+    // Do something with a list in the place of the one that is open, which stays as it is. A list that cannot be read
+    // is left alone
+    private static void WithList(string name, Action action)
+    {
+        var open = Folders;
+        Folders = new FolderList<Favorite>();
+        try
+        {
+            if (File.Exists(ListPath(name))) Parse(File.ReadAllText(ListPath(name), Encoding.UTF8));
+            action();
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            EventLog.Add(DialogText.LogFile + "Favorites: " + ListPath(name) + " - FAILED: " + e.Message);
+        }
+        finally
+        {
+            Folders = open;
+        }
+    }
+
+    // A change to the favorites in all the lists but the one that is open
+    private static void InOtherLists(Func<bool> change)
+    {
+        foreach (var name in ListNames().Prepend(string.Empty).Where(name => name != CurrentList))
+        {
+            WithList(name, () =>
+            {
+                if (change()) FileIo.WriteAllBytesSafe(ListPath(name), new UTF8Encoding(false).GetBytes(Serialize()));
+            });
+        }
+    }
+
+    /// <summary>
+    /// What is in a list, a line for each favorite or folder, to show it in the box of lists
+    /// </summary>
+    internal static string ListPreview(string name)
+    {
+        var lines = new List<string>();
+        WithList(name, () => lines.AddRange(List.Select(item =>
+            new string(' ', item.Level * 2) + (item.IsFolder ? "[" + item.Name + "]" : Path.GetFileName(item.Path)))));
+        return string.Join("\n", lines);
+    }
+
+    /// <summary>
+    /// Open a list
+    /// </summary>
+    /// <param name="name">Its name (empty: the main list)</param>
+    internal static void UseList(string name)
+    {
+        CurrentList = name;
+        Load();
+    }
+
+    /// <summary>
+    /// Make a new, empty list
+    /// </summary>
+    /// <returns>DialogText.Success or a message</returns>
+    internal static string NewList(string name)
+    {
+        name = name.Trim();
+        if (ListNameProblem(name) is { } problem) return problem;
+        if (FindList(name) != null) return Lang.T("There is a list of that name");
+        try
+        {
+            FileIo.CreateDirectory(ListsDirectory);
+            FileIo.CreateNewFile(ListPath(name));
+            return DialogText.Success;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+        {
+            return e.Message;
+        }
+    }
+
+    /// <summary>
+    /// Give a list another name (its file is renamed). The open list stays open
+    /// </summary>
+    /// <returns>DialogText.Success or a message</returns>
+    internal static string RenameList(string name, string newName)
+    {
+        newName = newName.Trim();
+        if (ListNameProblem(newName) is { } problem) return problem;
+        // (another way of writing the name is not another list)
+        if (FindList(newName) is { } taken && !taken.Equals(name, StringComparison.OrdinalIgnoreCase))
+        {
+            return Lang.T("There is a list of that name");
+        }
+
+        try
+        {
+            if (name != newName) FileIo.MoveFile(ListPath(name), ListPath(newName), false);
+            if (CurrentList == name) CurrentList = newName;
+            return DialogText.Success;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+        {
+            return e.Message;
+        }
+    }
+
+    /// <summary>
+    /// Delete a list: to the trash, unless that is turned off. The files in it stay where they are. If it is open, the
+    /// main list is opened
+    /// </summary>
+    /// <param name="name">Its name (not the main list)</param>
+    /// <param name="trashedPath">Where it is in the trash (empty: it is not there)</param>
+    /// <returns>DialogText.Success or a message</returns>
+    internal static string DeleteList(string name, out string trashedPath)
+    {
+        trashedPath = string.Empty;
+        var result = DialogText.Success;
+        try
+        {
+            if (FileOperations.DeleteToTrash)
+            {
+                result = FileOperations.MoveToTrash(ListPath(name), FileOperations.TrashDirectory, out trashedPath);
+            }
+            else
+            {
+                FileIo.DeleteFile(ListPath(name));
+            }
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return e.Message;
+        }
+
+        if (result == DialogText.Success && CurrentList == name) UseList(string.Empty);
+        return result;
+    }
 
     /// <summary>
     /// Read the list from the file
@@ -67,6 +276,8 @@ internal static class FileFavorites
         List.Clear();
         Folders.ForgetRemoved();
         _unreadable = false;
+        // A list that is gone (deleted outside Blyant): the main list
+        if (CurrentList.Length > 0 && !File.Exists(FilePath)) CurrentList = string.Empty;
         try
         {
             if (File.Exists(FilePath)) Parse(File.ReadAllText(FilePath, Encoding.UTF8));
@@ -625,10 +836,17 @@ internal static class FileFavorites
     internal static bool Move(int index, bool up) => Folders.Move(index, up);
 
     /// <summary>
-    /// A file or directory was renamed or moved: the favorites follow (also the ones inside a directory)
+    /// A file or directory was renamed or moved: the favorites follow (also the ones inside a directory), in all the
+    /// lists. The other lists are saved here
     /// </summary>
-    /// <returns>True if the list was changed</returns>
+    /// <returns>True if the list that is open was changed</returns>
     internal static bool PathChanged(string oldPath, string newPath)
+    {
+        InOtherLists(() => ChangePath(oldPath, newPath));
+        return ChangePath(oldPath, newPath);
+    }
+
+    private static bool ChangePath(string oldPath, string newPath)
     {
         var changed = false;
         foreach (var favorite in List)
@@ -651,10 +869,17 @@ internal static class FileFavorites
     }
 
     /// <summary>
-    /// A file or directory was deleted: it is removed from the favorites (with what was inside a directory)
+    /// A file or directory was deleted: it is removed from the favorites (with what was inside a directory), in all
+    /// the lists. The other lists are saved here
     /// </summary>
-    /// <returns>True if the list was changed</returns>
+    /// <returns>True if the list that is open was changed</returns>
     internal static bool PathDeleted(string path)
+    {
+        InOtherLists(() => RemovePath(path));
+        return RemovePath(path);
+    }
+
+    private static bool RemovePath(string path)
     {
         return List.RemoveAll(favorite => !favorite.IsFolder &&
                                           (FileOperations.SamePath(favorite.Path, path) ||

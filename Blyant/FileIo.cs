@@ -427,6 +427,7 @@ internal static class FileIo
         _tempSettings += "favoritepanes=" + (FileExplorer.FavoritePanes ? DialogText.BTrue : DialogText.BFalse) + '\n';
         _tempSettings += "favoritepeek=" + (FileExplorer.FavoritePeek ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // The rows of the favorites numbered (and below, of the bookmarks)
+        _tempSettings += "favoritelist=" + FileFavorites.CurrentList + '\n';
         _tempSettings += "favoritenumbers=" + (FileExplorer.FavoriteNumbers ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // The same below the bookmarks of the Jump menu
         _tempSettings += "bookmarkpanes=" + (JumpMenu.BookmarkPanes ? DialogText.BTrue : DialogText.BFalse) + '\n';
@@ -648,6 +649,9 @@ internal static class FileIo
         JumpMenu.BookmarkPanes = Tools.TrimToLower(Get("bookmarkpanes")) != DialogText.BFalse;
         JumpMenu.BookmarkPeek = Tools.TrimToLower(Get("bookmarkpeek")) != DialogText.BFalse;
         // The numbers of the rows of the favorites and the bookmarks: off unless turned on
+        // The list of favorites that is open (a name that cannot be a list, written by hand, is not used)
+        var favoriteList = Get("favoritelist").Trim();
+        FileFavorites.CurrentList = FileFavorites.IsValidListName(favoriteList) ? favoriteList : string.Empty;
         FileExplorer.FavoriteNumbers = Tools.TrimToLower(Get("favoritenumbers")) == DialogText.BTrue;
         JumpMenu.BookmarkNumbers = Tools.TrimToLower(Get("bookmarknumbers")) == DialogText.BTrue;
         FileExplorer.FileNumbers = Tools.TrimToLower(Get("filenumbers")) == DialogText.BTrue;

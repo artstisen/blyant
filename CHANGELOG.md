@@ -1,6 +1,8 @@
 # Changes
 
 ## v1.2.1 (unreleased)
+- **Several lists of favorites**: `:list` in the favorites shows the lists, to open one, add one (`N`), rename one (`R`) or delete one (`D`), and `:list name` opens one at once (`:list main` the main list). `favorites.txt` stays the main list, and the others are files in the directory `favorites` in the data directory. The list that is open is remembered (setting `favoritelist`) and used all over Blyant: by `P`, the marks in the file browser and the Favorites tab of the Jump menu. A file that is renamed, moved or deleted is followed in all the lists.
+- The favorites are called **Favorites** on the page, not Favorite files, as they can be directories too.
 - The logo **Islands** has stars in the sky.
 - The color scheme **Tasty Bytes** has box colors of its own, and new colors for the accent and the box of commands.
 - **The logo editor**: the frame around the logo has the color of the ruler above it, and no longer follows the colors of the boxes. The key hints of the Editor tab show `dd` (clear the row), which empties a logo to start from scratch, in the place of `r`, which is still in the help.
