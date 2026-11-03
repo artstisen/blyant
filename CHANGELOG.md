@@ -1,6 +1,7 @@
 # Changes
 
 ## v1.3.1 (unreleased)
+- **`:import` completes what follows it**: after `:import ` the box above the command line lists `bookmarks` and `folder` in the favorites, and `favorites` in the Jump menu, and `Tab` completes them.
 - **One width for all pages**: the favorites, the history, the hotlist, the search results and the editor drew their lines one column wider than the other pages, so the box of commands and the command line ended a column short there (in the editor a `-` was left at the end of the command line). They now end in the same column.
 - **The box of commands** above the command line has a bottom line, so it is closed just above the command line, as the other boxes are (it takes one row more).
 - **Command box corner**: a new color on Page 4 of the Colors tab of the color schemes, for the left side and the top of the box of commands above the command line, as Box corner is for the other boxes. Without a color of its own it has the color of the command box borders, so existing schemes look as they did.

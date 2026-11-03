@@ -24,6 +24,22 @@ public class CommandTests
     }
 
     [Fact]
+    public void WhatFollowsImport_IsTheOneOfThePlace()
+    {
+        // In the favorites: bookmarks or a folder
+        Assert.Equal("import bookmarks import folder import ", Tabs(CommandContext.Favorites, "import ", 3));
+        Assert.Equal("import folder", Tabs(CommandContext.Favorites, "import f", 1));
+        // In the Jump menu: the favorites
+        Assert.Equal("import favorites", Tabs(CommandContext.Jump, "import ", 1));
+        Assert.Equal(new[] { "bookmarks", "folder" }, CommandList.Matches(CommandContext.Favorites, "import ").Names);
+        Assert.Equal(new[] { "favorites" }, CommandList.Matches(CommandContext.Jump, "import fa").Names);
+        // After the word (a path): nothing more
+        Assert.Equal("import folder C:", Tabs(CommandContext.Favorites, "import folder C:", 1));
+        // Not in another place
+        Assert.False(CommandCompletion.ArgumentsOf(CommandContext.Start, "import", out _));
+    }
+
+    [Fact]
     public void Tab_CompletesTheCommand_AndGoesThroughTheOnesThatStartTheSame()
     {
         // After the last of them, what was typed is shown again

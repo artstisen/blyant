@@ -51,7 +51,7 @@ internal sealed class CommandList
             typed = text;
         }
         else if (Commands.All(context).Contains(text[..space]) &&
-                 CommandCompletion.Arguments.TryGetValue(text[..space], out var words) &&
+                 CommandCompletion.ArgumentsOf(context, text[..space], out var words) &&
                  !text[(space + 1)..].Contains(' '))
         {
             all = words().ToList();

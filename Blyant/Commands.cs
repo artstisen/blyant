@@ -182,13 +182,35 @@ internal sealed class CommandCompletion
     /// </summary>
     internal static Dictionary<string, Func<IEnumerable<string>>> Arguments { get; } = new(StringComparer.Ordinal);
 
+    // What follows a command that takes other words in one place than in another (English: as the commands)
+    private static readonly Dictionary<(CommandContext, string), string[]> PlaceArguments = new()
+    {
+        [(CommandContext.Favorites, "import")] = new[] { "bookmarks", "folder" },
+        [(CommandContext.Jump, "import")] = new[] { "favorites" }
+    };
+
+    /// <summary>
+    /// The words that can follow a command in a place: those of the place, or else those of the command (Arguments).
+    /// False if nothing is known to follow it
+    /// </summary>
+    internal static bool ArgumentsOf(CommandContext context, string name, out Func<IEnumerable<string>> words)
+    {
+        if (PlaceArguments.TryGetValue((context, name), out var own))
+        {
+            words = () => own;
+            return true;
+        }
+
+        return Arguments.TryGetValue(name, out words!);
+    }
+
     // Find the commands that start with what is typed (or what follows a command, see Arguments)
     private bool Start(string text)
     {
         var space = text.IndexOf(' ');
         // (the name of the command, also after the lines it works on: "'<,'>surround /b")
         var name = space > 0 ? Regex.Match(text[..space], "[a-z!]+$").Value : string.Empty;
-        if (name.Length > 0 && Arguments.TryGetValue(name, out var words))
+        if (name.Length > 0 && ArgumentsOf(_context, name, out var words))
         {
             _before = text[..(space + 1)];
             _typed = text[(space + 1)..];
