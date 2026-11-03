@@ -430,7 +430,7 @@ internal static partial class FileExplorer
         Console.Write(Tools.TruncateString(header + root, Init.LineWidth - 2, true));
         Tools.SetCursorEx(2, 0);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
-        Console.Write(new string('-', Init.LineWidth));
+        Console.Write(new string('-', Init.LineWidth - 1));
 
         // The columns: the names (with a * after a favorite), the directories they are in (or the line found, when
         // the text of the files was searched), and the size, with lines between them and their labels in the
@@ -542,7 +542,7 @@ internal static partial class FileExplorer
     {
         Tools.SetCursorEx(Init.LineCount - 2, 0);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
-        Console.Write(new string('-', Init.LineWidth));
+        Console.Write(new string('-', Init.LineWidth - 1));
         DrawColumnEnds(Init.LineCount - 2, _foundLines);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
         var status = " " + (_foundShown.Count == 0 ? 0 : _foundIndex + 1) + "/" + _foundShown.Count + " ";

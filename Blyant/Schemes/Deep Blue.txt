@@ -37,6 +37,7 @@ frametext=Gray
 commandline=Blue
 commandlinetext=Cyan
 commandborders=Cyan
+commandcorner=Cyan
 commandbox=DarkBlue
 commandboxtext=Gray
 commandtyped=Magenta

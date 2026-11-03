@@ -79,6 +79,8 @@ internal static class SchemeEditor
                         ConsoleColors.ColorPreset.CommandLineInverted),
                     new Group(Lang.T("Command box borders"), ColorItem.CommandBorders, null,
                         ConsoleColors.ColorPreset.CommandBorder),
+                    new Group(Lang.T("Command box corner"), ColorItem.CommandCorner, null,
+                        ConsoleColors.ColorPreset.CommandCorner),
                     new Group(Lang.T("Command box"), ColorItem.CommandBox, ColorItem.CommandBoxText,
                         ConsoleColors.ColorPreset.CommandText),
                     new Group(Lang.T("Typed part"), ColorItem.CommandTyped, null,
@@ -577,9 +579,14 @@ internal static class SchemeEditor
                 if (_page == 2) DrawBoxPageSample(area.Left + 3, RowOf(area, groups.Length + 1), area.Width - 3,
                     area.Top + area.Height - (ConsoleColors.Monochrome ? 1 : 0));
 
-                // The command line and its box, as they look
-                if (_page == 3) DrawCommandSample(area.Left + 3, RowOf(area, groups.Length + 1), area.Width - 3,
-                    area.Top + area.Height - (ConsoleColors.Monochrome ? 1 : 0));
+                // The command line and its box, as they look (after a blank row, when there is room for it)
+                if (_page == 3)
+                {
+                    var bottom = area.Top + area.Height - (ConsoleColors.Monochrome ? 1 : 0);
+                    var top = RowOf(area, groups.Length + 1);
+                    if (top + CommandSampleRows > bottom) top--;
+                    DrawCommandSample(area.Left + 3, top, area.Width - 3, bottom);
+                }
 
                 if (ConsoleColors.Monochrome && area.Height > Count + 3)
                 {
@@ -765,7 +772,8 @@ internal static class SchemeEditor
                     ConsoleColors.SetBackground(color);
                     ConsoleColors.SetForeground(scheme.CommandBoxTextColor);
                     break;
-                case ColorItem.CommandBorders or ColorItem.CommandBoxText or ColorItem.CommandTyped
+                case ColorItem.CommandBorders or ColorItem.CommandCorner or ColorItem.CommandBoxText
+                    or ColorItem.CommandTyped
                     or ColorItem.CommandHints:
                     ConsoleColors.SetBackground(scheme.CommandBoxColor);
                     ConsoleColors.SetForeground(color);
@@ -802,6 +810,7 @@ internal static class SchemeEditor
                 ColorItem.TabShown or ColorItem.OtherTabs or ColorItem.KeyHints or ColorItem.CurrentLineNumber
                     or ColorItem.FrameText or ColorItem.CommandBoxText => Lang.T("[Default]: the text"),
                 ColorItem.CommandBorders or ColorItem.BoxCorner => Lang.T("[Default]: the box borders"),
+                ColorItem.CommandCorner => Lang.T("[Default]: the command box borders"),
                 ColorItem.BoxText => Lang.T("[Default]: the tab text"),
                 ColorItem.BoxTitle or ColorItem.BoxTitleText =>
                     Lang.F("[Default]: {0}", ColorPicker.Name(Preview.Shown(item))),
@@ -928,11 +937,12 @@ internal static class SchemeEditor
     // The command line and the box of commands above it in the colors being edited: a box with names (one typed
     // whole, the typed part of the others, how many more), and below it the command line with a command error
     // beside it. Only when there is room above the bottom row
+    private const int CommandSampleRows = 4;
+
     private static void DrawCommandSample(int left, int top, int width, int bottom)
     {
-        const int rows = 4;
         var boxWidth = Math.Min(width - 1, 56);
-        if (top + rows > bottom || boxWidth < 30) return;
+        if (top + CommandSampleRows > bottom || boxWidth < 30) return;
         var inner = boxWidth - 4;
 
         void Part(ConsoleColors.ColorPreset style, string text)
@@ -943,12 +953,12 @@ internal static class SchemeEditor
 
         var title = "-- " + Lang.T("Commands") + " ";
         Tools.SetCursorEx(top, left);
-        Part(ConsoleColors.ColorPreset.CommandBorder, AsciiStyles.GetTopCorner() + title +
+        Part(ConsoleColors.ColorPreset.CommandCorner, AsciiStyles.GetTopCorner() + title +
                                                       new string('-', Math.Max(0, boxWidth - 2 - TextMetrics.WidthOf(title))) +
                                                       AsciiStyles.GetTopCorner());
         // The names: "copy" typed whole, "co" typed of the others (English: commands are not translated)
         Tools.SetCursorEx(top + 1, left);
-        Part(ConsoleColors.ColorPreset.CommandBorder, "| ");
+        Part(ConsoleColors.ColorPreset.CommandCorner, "| ");
         var used = 0;
         Part(ConsoleColors.ColorPreset.CommandWholeInverted, "copy"); // English
         Part(ConsoleColors.ColorPreset.CommandText, "  ");

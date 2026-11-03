@@ -1,5 +1,10 @@
 # Changes
 
+## v1.3.1 (unreleased)
+- **One width for all pages**: the favorites, the history, the hotlist, the search results and the editor drew their lines one column wider than the other pages, so the box of commands and the command line ended a column short there (in the editor a `-` was left at the end of the command line). They now end in the same column.
+- **The box of commands** above the command line has a bottom line, so it is closed just above the command line, as the other boxes are (it takes one row more).
+- **Command box corner**: a new color on Page 4 of the Colors tab of the color schemes, for the left side and the top of the box of commands above the command line, as Box corner is for the other boxes. Without a color of its own it has the color of the command box borders, so existing schemes look as they did.
+
 ## v1.3.0 (2026-11-02)
 - **Several lists of favorites**: `:list` in the favorites shows the lists, to open one, add one (`N`), rename one (`R`) or delete one (`D`), and `:list name` opens one at once (`:list main` the main list). `favorites.txt` stays the main list, and the others are files in the directory `favorites` in the data directory. The list that is open is remembered (setting `favoritelist`) and used all over Blyant: by `P`, the marks in the file browser and the Favorites tab of the Jump menu. A file that is renamed, moved or deleted is followed in all the lists.
 - The favorites are called **Favorites** on the page, not Favorite files, as they can be directories too.

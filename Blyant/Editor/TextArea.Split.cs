@@ -401,7 +401,7 @@ public partial class TextArea
         // the text at the left is not shown
         Tools.SetCursorEx(_top - 1, 0);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
-        Console.Write(new string('-', Init.LineWidth));
+        Console.Write(new string('-', Init.LineWidth - 1));
         DrawReferenceName(true);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
         var peek = new TextArea(pane.Left, _top, pane.Width, _height, text, pane.Engine.GetCursorIndex(), false, false,

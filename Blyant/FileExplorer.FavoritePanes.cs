@@ -83,7 +83,7 @@ internal static partial class FileExplorer
         if (rows == 0) return;
         var selected = _favorites.Count > 0 ? _favorites[_favoriteIndex] : -1;
         var favorite = selected >= 0 ? FileFavorites.Items[selected] : null;
-        NotePanes.Draw(ListTop + FavoritePageSize, 0, Init.LineWidth, rows, _favoriteLines, favorite?.Note,
+        NotePanes.Draw(ListTop + FavoritePageSize, 0, Init.LineWidth - 1, rows, _favoriteLines, favorite?.Note,
             FavoritePeek ? favorite == null ? new List<string>() : PeekOf(selected, rows) : null);
     }
 

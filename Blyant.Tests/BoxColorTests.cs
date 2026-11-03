@@ -101,6 +101,25 @@ public class BoxColorTests : IDisposable
     }
 
     [Fact]
+    public void TheCornerOfTheBoxOfCommands_FollowsItsBorders_AndIsKept()
+    {
+        var scheme = Scheme();
+        scheme.Set(ColorItem.CommandBorders, ConsoleColor.White);
+        Assert.Null(scheme.CommandCorner);
+        Assert.Equal(ConsoleColor.White, scheme.CommandCornerColor);
+        Assert.True(ColorScheme.CanBeDefault(ColorItem.CommandCorner));
+        scheme.Set(ColorItem.CommandBox, ConsoleColor.DarkBlue);
+        Assert.False(scheme.Allowed(ColorItem.CommandCorner, ConsoleColor.DarkBlue));
+        Assert.True(scheme.Allowed(ColorItem.CommandCorner, ConsoleColor.Yellow));
+        scheme.Set(ColorItem.CommandCorner, ConsoleColor.Yellow);
+        Assert.Contains("commandcorner=Yellow\n", scheme.Serialize());
+        Assert.Equal(ConsoleColor.Yellow, ColorScheme.Parse(scheme.Serialize(), "Read").CommandCorner);
+        // A file written before there was this color: it follows the borders
+        Assert.Null(ColorScheme.Parse("commandborders=Cyan\n", "Older").CommandCorner);
+        Assert.Equal(ConsoleColor.Cyan, ColorScheme.Parse("commandborders=Cyan\n", "Older").CommandCornerColor);
+    }
+
+    [Fact]
     public void AColorThatCannotBeSeenInABox_HasTheTextOfTheBox()
     {
         var scheme = Scheme();

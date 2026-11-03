@@ -228,7 +228,7 @@ internal static class Menu
         if (DocumentInfo.HasChanged && (_tempCurrentSaveIndicator == "" || forceDisplay))
         {
             // At the right of the top row of the editor
-            Tools.SetCursorEx(0, Math.Max(0, Init.LineWidth - TextMetrics.WidthOf(DialogText.SavIndicator)));
+            Tools.SetCursorEx(0, Math.Max(0, Init.LineWidth - 1 - TextMetrics.WidthOf(DialogText.SavIndicator)));
             _tempCurrentSaveIndicator = DialogText.SavIndicator;
             ConsoleColors.SetColors(ConsoleColors.ColorPreset.UnsavedInverted);
             Console.Write(_tempCurrentSaveIndicator);

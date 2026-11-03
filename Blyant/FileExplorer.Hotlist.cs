@@ -548,7 +548,7 @@ internal static partial class FileExplorer
                 DirectoryHotlist.MaxCount), Init.LineWidth - 2, true));
         Tools.SetCursorEx(2, 0);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
-        Console.Write(new string('-', Init.LineWidth));
+        Console.Write(new string('-', Init.LineWidth - 1));
 
         // The columns: the names, and the paths (a directory that is gone: "(missing)" at the end), with a line
         // between them and their labels in the divider line (as in the favorites)
@@ -630,7 +630,7 @@ internal static partial class FileExplorer
     {
         Tools.SetCursorEx(Init.LineCount - 2, 0);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
-        Console.Write(new string('-', Init.LineWidth));
+        Console.Write(new string('-', Init.LineWidth - 1));
         DrawColumnEnds(Init.LineCount - 2, _hotlistLines);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
         var status = " " + (_hotlistShown.Count == 0 ? 0 : _hotlistIndex + 1) + "/" + _hotlistShown.Count + " ";

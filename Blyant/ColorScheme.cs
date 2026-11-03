@@ -45,6 +45,7 @@ internal enum ColorItem
     CommandLine, // The background of the command line, and of the "/" of the filters (null: the highlight)
     CommandLineText, // The text typed on it (null: the text of the highlight)
     CommandBorders, // The borders of the box of commands (null: the box borders)
+    CommandCorner, // The left side and the top of the box of commands (null: its borders)
     CommandBox, // The background of the box (null: the background)
     CommandBoxText, // The names of the commands, and what the command typed does (null: the text)
     CommandTyped, // The part of the names that is typed (null: the accent)
@@ -120,6 +121,7 @@ internal sealed class ColorScheme
     internal ConsoleColor? CommandLine { get; set; }
     internal ConsoleColor? CommandLineText { get; set; }
     internal ConsoleColor? CommandBorders { get; set; }
+    internal ConsoleColor? CommandCorner { get; set; }
     internal ConsoleColor? CommandBox { get; set; }
     internal ConsoleColor? CommandBoxText { get; set; }
     internal ConsoleColor? CommandTyped { get; set; }
@@ -164,6 +166,7 @@ internal sealed class ColorScheme
     internal ConsoleColor CommandLineColor => CommandLine ?? Highlight;
     internal ConsoleColor CommandLineTextColor => CommandLineText ?? HighlightText;
     internal ConsoleColor CommandBorderColor => CommandBorders ?? BoxBorderColor;
+    internal ConsoleColor CommandCornerColor => CommandCorner ?? CommandBorderColor;
     internal ConsoleColor CommandBoxColor => CommandBox ?? BackgroundColor;
     internal ConsoleColor CommandBoxTextColor => CommandBoxText ?? Text;
     internal ConsoleColor CommandTypedColor => CommandTyped ?? Accent;
@@ -281,6 +284,7 @@ internal sealed class ColorScheme
             ColorItem.CommandLine => CommandLine,
             ColorItem.CommandLineText => CommandLineText,
             ColorItem.CommandBorders => CommandBorders,
+            ColorItem.CommandCorner => CommandCorner,
             ColorItem.CommandBox => CommandBox,
             ColorItem.CommandBoxText => CommandBoxText,
             ColorItem.CommandTyped => CommandTyped,
@@ -325,6 +329,7 @@ internal sealed class ColorScheme
             ColorItem.CommandLine => CommandLineColor,
             ColorItem.CommandLineText => CommandLineTextColor,
             ColorItem.CommandBorders => CommandBorderColor,
+            ColorItem.CommandCorner => CommandCornerColor,
             ColorItem.CommandBox => CommandBoxColor,
             ColorItem.CommandBoxText => CommandBoxTextColor,
             ColorItem.CommandTyped => CommandTypedColor,
@@ -386,6 +391,7 @@ internal sealed class ColorScheme
             case ColorItem.CommandLine: CommandLine = color; break;
             case ColorItem.CommandLineText: CommandLineText = color; break;
             case ColorItem.CommandBorders: CommandBorders = color; break;
+            case ColorItem.CommandCorner: CommandCorner = color; break;
             case ColorItem.CommandBox: CommandBox = color; break;
             case ColorItem.CommandBoxText: CommandBoxText = color; break;
             case ColorItem.CommandTyped: CommandTyped = color; break;
@@ -436,6 +442,7 @@ internal sealed class ColorScheme
         {
             (CommandLineTextColor, CommandLineColor), (CommandWholeTextColor, CommandWholeColor),
             (CommandErrorTextColor, CommandErrorColor), (CommandBorderColor, CommandBoxColor),
+            (CommandCornerColor, CommandBoxColor),
             (CommandBoxTextColor, CommandBoxColor), (CommandTypedColor, CommandBoxColor),
             (CommandHintsColor, CommandBoxColor), (BoxBorderColor, BoxBackgroundColor),
             (BoxCornerColor, BoxBackgroundColor), (BoxTextColor, BoxBackgroundColor), (BoxTitleTextColor, BoxTitleColor)
@@ -477,7 +484,8 @@ internal sealed class ColorScheme
         ("selector", ColorItem.Selector), ("selectortext", ColorItem.SelectorText),
         ("frametext", ColorItem.FrameText),
         ("commandline", ColorItem.CommandLine), ("commandlinetext", ColorItem.CommandLineText),
-        ("commandborders", ColorItem.CommandBorders), ("commandbox", ColorItem.CommandBox),
+        ("commandborders", ColorItem.CommandBorders), ("commandcorner", ColorItem.CommandCorner),
+        ("commandbox", ColorItem.CommandBox),
         ("commandboxtext", ColorItem.CommandBoxText), ("commandtyped", ColorItem.CommandTyped),
         ("commandwhole", ColorItem.CommandWhole), ("commandwholetext", ColorItem.CommandWholeText),
         ("commandhints", ColorItem.CommandHints), ("commanderror", ColorItem.CommandError),

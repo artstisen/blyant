@@ -1283,7 +1283,7 @@ internal static partial class FileExplorer
         _favoriteLines = columns ? new[] { nameLine, infoLine } : Array.Empty<int>();
         Tools.SetCursorEx(2, 0);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
-        Console.Write(new string('-', Init.LineWidth));
+        Console.Write(new string('-', Init.LineWidth - 1));
         if (columns)
         {
             DrawColumnLabels(2, new[] { (1 + FavoriteNumberWidth, DialogText.ColumnName), (nameLine, DialogText.ColumnPath), (infoLine, DialogText.ColumnInfo) },
@@ -1476,7 +1476,7 @@ internal static partial class FileExplorer
     {
         Tools.SetCursorEx(Init.LineCount - 2, 0);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
-        Console.Write(new string('-', Init.LineWidth));
+        Console.Write(new string('-', Init.LineWidth - 1));
         // Where the lines between the columns end
         DrawColumnEnds(Init.LineCount - 2, FavoriteBottomLines);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);

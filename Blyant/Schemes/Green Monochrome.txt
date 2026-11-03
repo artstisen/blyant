@@ -37,6 +37,7 @@ frametext=Green
 commandline=DarkGreen
 commandlinetext=Green
 commandborders=DarkGreen
+commandcorner=DarkGreen
 commandbox=default
 commandboxtext=Green
 commandtyped=Green

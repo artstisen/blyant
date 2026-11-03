@@ -16,7 +16,8 @@ internal sealed class CommandList
     /// </summary>
     internal static bool Enabled { get; set; } = true;
 
-    // The most rows of names in the box (it has a line at the top and one for what the command does below them)
+    // The most rows of names in the box (it has a line at the top, one for what the command does below them, and a
+    // line at the bottom, above the command line)
     internal const int MaxRows = 5;
 
     private readonly CommandContext _context;
@@ -30,7 +31,7 @@ internal sealed class CommandList
     /// <summary>
     /// The rows of the window the box takes (0 before it is drawn): the page draws them again when it closes
     /// </summary>
-    internal int Height => _rows < 0 ? 0 : _rows + 2;
+    internal int Height => _rows < 0 ? 0 : _rows + 3;
 
     /// <summary>
     /// What the list shows for what is typed: the commands (or what can follow the command) that start with it,
@@ -119,9 +120,10 @@ internal sealed class CommandList
 
         var top = Init.LineCount - 1 - Height;
         if (top < 1) return;
-        // The frame: its top with the name of the box, and its sides
+        // The frame: its top with the name of the box, and its sides (the top and the left side in the color of the
+        // corner)
         Tools.SetCursorEx(top, 0);
-        ConsoleColors.SetColors(ConsoleColors.ColorPreset.CommandBorder);
+        ConsoleColors.SetColors(ConsoleColors.ColorPreset.CommandCorner);
         var title = "-- " + Lang.T("Commands") + " ";
         Console.Write(AsciiStyles.GetTopCorner() + title + new string('-', Math.Max(0, width - 2 - TextMetrics.WidthOf(title))) +
                       AsciiStyles.GetTopCorner());
@@ -130,7 +132,7 @@ internal sealed class CommandList
         for (var row = 0; row < _rows; row++)
         {
             Tools.SetCursorEx(top + 1 + row, 0);
-            ConsoleColors.SetColors(ConsoleColors.ColorPreset.CommandBorder);
+            ConsoleColors.SetColors(ConsoleColors.ColorPreset.CommandCorner);
             Console.Write("| ");
             var used = 0;
             if (row < lines.Count)
@@ -164,7 +166,7 @@ internal sealed class CommandList
             : null;
         var bottom = help != null ? ":" + described + "  " + help : Lang.T("Tab completes, Enter runs, Esc cancels");
         Tools.SetCursorEx(top + 1 + _rows, 0);
-        ConsoleColors.SetColors(ConsoleColors.ColorPreset.CommandBorder);
+        ConsoleColors.SetColors(ConsoleColors.ColorPreset.CommandCorner);
         Console.Write("| ");
         ConsoleColors.SetColors(help != null
             ? ConsoleColors.ColorPreset.CommandText
@@ -173,6 +175,9 @@ internal sealed class CommandList
         Console.Write(line + new string(' ', Math.Max(0, inner - TextMetrics.WidthOf(line))));
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.CommandBorder);
         Console.Write(" |");
+        // The bottom, just above the command line
+        Tools.SetCursorEx(top + 2 + _rows, 0);
+        Console.Write(AsciiStyles.GetBottomCorner() + new string('-', Math.Max(0, width - 2)) + AsciiStyles.GetBottomCorner());
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
     }
 

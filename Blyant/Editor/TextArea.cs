@@ -1844,7 +1844,7 @@ public partial class TextArea
         if (!_engine.ReadOnly || _peek != null) return;
         // At the right of the top row, where Unsaved is shown (a text that is read only is not changed)
         var label = DialogText.ReadOnlyLabel;
-        Tools.SetCursorEx(0, Math.Max(0, Init.LineWidth - TextMetrics.WidthOf(label)));
+        Tools.SetCursorEx(0, Math.Max(0, Init.LineWidth - 1 - TextMetrics.WidthOf(label)));
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.AttentionInverted);
         Console.Write(label);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
@@ -2091,7 +2091,7 @@ public partial class TextArea
         _shownModeLabel = label;
         Tools.SetCursorEx(_top - 1, 0);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
-        Console.Write(new string('-', Init.LineWidth));
+        Console.Write(new string('-', Init.LineWidth - 1));
         // Over the pane with the focus in a split
         Tools.SetCursorEx(_top - 1, Math.Max(0, ModeCenter - (TextMetrics.WidthOf(label) / 2 + 1)));
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.EditorTitle);
@@ -2114,7 +2114,7 @@ public partial class TextArea
         var shown = "\u0001" + chosen + "\u0001" + string.Join("\u0001", list.Select(item => item.Text));
         if (shown == _shownModeLabel) return;
         _shownModeLabel = shown;
-        var width = Init.LineWidth;
+        var width = Init.LineWidth - 1;
         Tools.SetCursorEx(_top - 1, 0);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
         Console.Write(new string('-', width));

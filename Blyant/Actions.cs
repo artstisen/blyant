@@ -300,11 +300,11 @@ internal static class Actions
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
         if (jaggedLine)
         {
-            Console.Write(Tools.WriteJaggedLine(Init.LineWidth));
+            Console.Write(Tools.WriteJaggedLine(Init.LineWidth - 1));
         }
         else
         {
-            Console.Write(new string('-', Init.LineWidth));
+            Console.Write(new string('-', Init.LineWidth - 1));
         }
 
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);

@@ -149,6 +149,7 @@ internal static class ConsoleColors
         FrameText, // The text in frames with tabs and in boxes
         CommandLineInverted, // The command line, and the "/" of the filters
         CommandBorder, // The borders of the box of commands above the command line
+        CommandCorner, // The left side and the top of the box of commands
         CommandText, // The names of the commands in the box (and the background of the box)
         CommandTyped, // The part of the names that is typed
         CommandWholeInverted, // A name typed whole
@@ -339,7 +340,8 @@ internal static class ConsoleColors
                 SetBackground(scheme.CommandErrorColor);
                 SetForeground(scheme.CommandErrorTextColor);
                 return;
-            case ColorPreset.CommandBorder or ColorPreset.CommandText or ColorPreset.CommandTyped
+            case ColorPreset.CommandBorder or ColorPreset.CommandCorner or ColorPreset.CommandText
+                or ColorPreset.CommandTyped
                 or ColorPreset.CommandHint:
                 // On the background of the box of commands
                 if (scheme.CommandBox is { } box)
@@ -355,6 +357,7 @@ internal static class ConsoleColors
                 SetForeground(preset switch
                 {
                     ColorPreset.CommandBorder => scheme.CommandBorderColor,
+                    ColorPreset.CommandCorner => scheme.CommandCornerColor,
                     ColorPreset.CommandTyped => scheme.CommandTypedColor,
                     ColorPreset.CommandHint => scheme.CommandHintsColor,
                     _ => scheme.CommandBoxTextColor
