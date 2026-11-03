@@ -779,9 +779,10 @@ internal static class CorkboardPage
         var (x, y) = Corkboard.Shown(card, width, height);
         var inner = Corkboard.CardWidth - 2;
         var dim = missing || !Matches(card);
-        // (a note has corners of its own)
-        var top = card.IsNote ? '+' : AsciiStyles.GetTopCorner();
-        var bottom = card.IsNote ? '+' : AsciiStyles.GetBottomCorner();
+        var top = AsciiStyles.GetTopCorner();
+        var bottom = AsciiStyles.GetBottomCorner();
+        // (a note has a top edge of its own, in both styles of corners)
+        var edge = card.IsNote ? '~' : '-';
 
         void Frame()
         {
@@ -793,7 +794,7 @@ internal static class CorkboardPage
 
         Tools.SetCursorEx(BoardTop + y, x);
         Frame();
-        Console.Write(top + new string('-', inner) + top);
+        Console.Write(top + new string(edge, inner) + top);
         Tools.SetCursorEx(BoardTop + y + 1, x);
         Console.Write('|');
         // The number (highlighted on the selected card), and the name
