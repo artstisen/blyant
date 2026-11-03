@@ -1011,6 +1011,16 @@ internal static partial class FileExplorer
         _message = message;
     }
 
+    /// <summary>
+    /// ":bookmark" on the lists (favorites, history, hotlist, search results): a file or directory to the bookmarks of
+    /// the Jump menu, as in the file browser (":bookmark name" with a name, ":bookmark! name" moves the bookmark with
+    /// the name here)
+    /// </summary>
+    /// <returns>The message that tells what was done (with the number of the bookmark)</returns>
+    internal static string BookmarkPlace(string path, bool isDirectory, string name, bool moveName) =>
+        Bookmarks.AddWithMessage(new JumpTarget(isDirectory ? JumpKind.Directory : JumpKind.File, path), name, moveName,
+            true, out _);
+
     // ":name" and ":path" on the lists (favorites, history, hotlist): the text to the string memory and to the
     // clipboard as set, and the message that tells where it went
     private static string CopyOfList(string text) => text.Length == 0 ? string.Empty : SystemClipboard.CopyWithMemory(text).Message;

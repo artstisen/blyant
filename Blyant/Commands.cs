@@ -56,17 +56,18 @@ internal static class Commands
             "q h"),
         [CommandContext.Favorites] = new Table(
             "quit close help jump book new color info remove move top bottom undo folder subfolder note panes peek number nonumber expand collapse rename import goto " +
-            "path name recent missing prune list",
+            "path name recent missing prune list bookmark bookmark!",
             "q h u ju jmp"),
         [CommandContext.History] = new Table(
-            "quit close help jump book info goto favorite remove clear path name number nonumber recent missing prune",
+            "quit close help jump book info goto favorite remove clear path name number nonumber recent missing prune " +
+            "bookmark bookmark!",
             "q h fav ju jmp"),
         [CommandContext.Hotlist] = new Table(
             "quit close help jump book info remove undo top bottom move rename clear path name number nonumber recent " +
-            "missing prune",
+            "missing prune bookmark bookmark!",
             "q h u ju jmp"),
         [CommandContext.Search] = new Table(
-            "quit close help jump book find info goto favorite number nonumber recent",
+            "quit close help jump book find info goto favorite number nonumber recent bookmark bookmark!",
             "q h fav ju jmp"),
         [CommandContext.Start] = new Table(
             "new blank recover file open favorites project projects start config general layout editor lists system jump book splits recent help about " +

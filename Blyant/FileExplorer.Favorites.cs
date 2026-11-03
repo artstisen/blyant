@@ -220,7 +220,8 @@ internal static partial class FileExplorer
                 }
 
                 // A name can follow the command
-                if (command != null && CommandLine.Name(command) is "folder" or "subfolder" or "rename" or "new" or "import" or "list")
+                if (command != null && CommandLine.Name(command) is "folder" or "subfolder" or "rename" or "new" or "import" or "list"
+                    or "bookmark" or "bookmark!")
                 {
                     command = CommandLine.Name(command);
                 }
@@ -236,6 +237,16 @@ internal static partial class FileExplorer
                     case "h":
                     case "help":
                         Tools.WriteEditorHelp(Tools.HelpTopic.Favorites);
+                        break;
+                    case "bookmark":
+                    case "bookmark!":
+                        // (a folder of the favorites is not a place)
+                        if (selected < 0) break;
+                        var favorite = FileFavorites.Items[selected];
+                        _favoriteMessage = favorite.IsFolder
+                            ? DialogText.FavoriteFolderNoPath
+                            : BookmarkPlace(favorite.Path, Directory.Exists(favorite.Path), CommandLine.LastArgument,
+                                command == "bookmark!");
                         break;
                     case "list":
                         // The lists of favorites (the list drawn first: the box of commands has just been taken away)

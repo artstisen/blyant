@@ -88,6 +88,12 @@ internal static partial class FileExplorer
                     continue;
                 }
 
+                // A name can follow ":bookmark"
+                if (command != null && CommandLine.Name(command) is "bookmark" or "bookmark!")
+                {
+                    command = CommandLine.Name(command);
+                }
+
                 switch (command)
                 {
                     case null:
@@ -126,6 +132,12 @@ internal static partial class FileExplorer
                         break;
                     case "path":
                         if (selected >= 0) _historyMessage = CopyOfList(FileHistory.Items[selected].Path);
+                        break;
+                    case "bookmark":
+                    case "bookmark!":
+                        if (selected < 0) break;
+                        _historyMessage = BookmarkPlace(FileHistory.Items[selected].Path, false,
+                            CommandLine.LastArgument, command == "bookmark!");
                         break;
                     case "fav":
                     case "favorite":

@@ -139,8 +139,11 @@ internal static partial class FileExplorer
                     continue;
                 }
 
-                // A name can follow ":rename"
-                if (command != null && CommandLine.Name(command) == "rename") command = "rename";
+                // A name can follow ":rename" and ":bookmark"
+                if (command != null && CommandLine.Name(command) is "rename" or "bookmark" or "bookmark!")
+                {
+                    command = CommandLine.Name(command);
+                }
 
                 switch (command)
                 {
@@ -190,6 +193,12 @@ internal static partial class FileExplorer
                         break;
                     case "path":
                         if (selected >= 0) _hotlistMessage = CopyOfList(DirectoryHotlist.Items[selected].Path);
+                        break;
+                    case "bookmark":
+                    case "bookmark!":
+                        if (selected < 0) break;
+                        _hotlistMessage = BookmarkPlace(DirectoryHotlist.Items[selected].Path, true,
+                            CommandLine.LastArgument, command == "bookmark!");
                         break;
                     case "rename":
                         RenameHotlistEntry(selected, CommandLine.LastArgument);

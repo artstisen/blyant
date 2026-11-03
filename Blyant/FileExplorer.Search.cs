@@ -182,6 +182,12 @@ internal static partial class FileExplorer
                     continue;
                 }
 
+                // A name can follow ":bookmark"
+                if (command != null && CommandLine.Name(command) is "bookmark" or "bookmark!")
+                {
+                    command = CommandLine.Name(command);
+                }
+
                 switch (command)
                 {
                     case null:
@@ -193,6 +199,12 @@ internal static partial class FileExplorer
                     case "h":
                     case "help":
                         Tools.WriteEditorHelp(Tools.HelpTopic.Search);
+                        break;
+                    case "bookmark":
+                    case "bookmark!":
+                        if (selected == null) break;
+                        _foundMessage = BookmarkPlace(selected.Path, selected.IsDirectory, CommandLine.LastArgument,
+                            command == "bookmark!");
                         break;
                     case "recent":
                         // The latest files (the list drawn first: the box of commands has just been taken away)

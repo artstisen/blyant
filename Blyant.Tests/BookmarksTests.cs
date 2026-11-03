@@ -372,4 +372,21 @@ public class BookmarksTests : IDisposable
         Assert.Equal(tabs.IndexOf(JumpMenu.Tab.History), JumpMenu.NextGroup(tabs, tabs.IndexOf(JumpMenu.Tab.Projects), false));
         Assert.Equal(0, JumpMenu.NextGroup(tabs, tabs.Count - 1, false));
     }
+
+    [Fact]
+    public void AFileOrDirectoryOfAList_IsBookmarked_AsInTheFileBrowser()
+    {
+        Lang.Set(Lang.English);
+        var file = Path.Combine(_directory, "chapter.md");
+        File.WriteAllText(file, "x");
+        Assert.StartsWith("Bookmarked", FileExplorer.BookmarkPlace(file, false, string.Empty, false));
+        Assert.StartsWith("Bookmarked", FileExplorer.BookmarkPlace(_directory, true, "Book", false));
+        Bookmarks.Load();
+        Assert.Equal(new[] { JumpKind.File, JumpKind.Directory }, Bookmarks.Places.Select(place => place.Target.Kind));
+        Assert.Equal("Book", Bookmarks.Places[1].Name);
+        // Once: the message says it is there
+        FileExplorer.BookmarkPlace(file, false, string.Empty, false);
+        Bookmarks.Load();
+        Assert.Equal(2, Bookmarks.Places.Count);
+    }
 }
