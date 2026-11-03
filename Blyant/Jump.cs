@@ -353,6 +353,17 @@ internal static class Jump
     }
 
     /// <summary>
+    /// ":board name" (":jump board name"): the board of the corkboard is chosen, and the page is "board"
+    /// </summary>
+    internal static string BoardOf(string argument)
+    {
+        var space = argument.IndexOf(' ');
+        if (space <= 0 || JumpPages.IdOf(argument[..space]) != "board") return argument;
+        CorkboardPage.Choose(argument[(space + 1)..]);
+        return "board";
+    }
+
+    /// <summary>
     /// ":jump general": go to a page of Blyant by its name (as if picked in the Jump menu). ":jump" alone opens the
     /// Jump menu. A name that is not known is told about in a box, with the names
     /// </summary>
@@ -364,7 +375,7 @@ internal static class Jump
     internal static void ToPage(string argument, Func<bool>? beforeLeaving = null, Func<bool>? hasChanges = null,
         Func<JumpTarget, bool>? here = null, string? current = null)
     {
-        argument = argument.Trim();
+        argument = BoardOf(argument.Trim());
         if (argument.Length == 0)
         {
             Open(beforeLeaving, hasChanges, here, current);

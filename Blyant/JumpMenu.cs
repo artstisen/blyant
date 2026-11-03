@@ -1629,7 +1629,10 @@ internal static class JumpMenu
             return JumpToPage(CommandLine.Argument(command));
         }
 
-        if (command is "board" or "corkboard") return JumpToPage("board");
+        if (CommandLine.Name(command) is "board" or "corkboard")
+        {
+            return JumpToPage(("board " + CommandLine.Argument(command)).Trim());
+        }
 
         if (command is "q" or "quit" or "close") return true;
         if (command is "h" or "help")
@@ -1784,7 +1787,7 @@ internal static class JumpMenu
     // ":jump general" in the menu. True if the menu is closed for the jump
     private static bool JumpToPage(string argument)
     {
-        argument = argument.Trim();
+        argument = Jump.BoardOf(argument.Trim());
         if (argument.Length == 0) return false;
         if (JumpPages.IdOf(argument) is not { } page)
         {

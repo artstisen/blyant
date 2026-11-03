@@ -303,6 +303,8 @@ internal static class Init
         JumpMenu.BookmarkPeek = true;
         FileExplorer.FavoriteNumbers = false;
         FileFavorites.CurrentList = string.Empty;
+        Corkboard.CurrentBoard = string.Empty;
+        CorkboardPage.PeekOn = false;
         JumpMenu.BookmarkNumbers = false;
         FileExplorer.FileNumbers = false;
         FileExplorer.HistoryNumbers = false;

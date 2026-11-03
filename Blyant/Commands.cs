@@ -82,8 +82,9 @@ internal static class Commands
             "quit close help info path name color note new add remove",
             "q h"),
         [CommandContext.Board] = new Table(
-            "quit close help jump book recent new color rename remove undo top bottom missing prune",
-            "q h u ju jmp"),
+            "quit close help jump book recent new note info peek list board arrange color rename remove undo top bottom " +
+            "missing prune",
+            "q h u ju jmp corkboard"),
         [CommandContext.Editor] = new Table(
             "write saveas quit quit! wq help edit edit! reload reload! undo redo delete yank replace nohlsearch " +
             "spell nospell spellnext spellprev suggest spelladd syntax number nonumber timestamp " +
@@ -188,10 +189,12 @@ internal sealed class CommandCompletion
     internal static Dictionary<string, Func<IEnumerable<string>>> Arguments { get; } = new(StringComparer.Ordinal);
 
     // What follows a command that takes other words in one place than in another (English: as the commands)
-    private static readonly Dictionary<(CommandContext, string), string[]> PlaceArguments = new()
+    private static readonly Dictionary<(CommandContext, string), Func<IEnumerable<string>>> PlaceArguments = new()
     {
-        [(CommandContext.Favorites, "import")] = new[] { "bookmarks", "folder" },
-        [(CommandContext.Jump, "import")] = new[] { "favorites" }
+        [(CommandContext.Favorites, "import")] = () => new[] { "bookmarks", "folder" },
+        [(CommandContext.Jump, "import")] = () => new[] { "favorites" },
+        [(CommandContext.Board, "arrange")] = () => Corkboard.Orders,
+        [(CommandContext.Board, "list")] = () => Corkboard.Boards.Words()
     };
 
     /// <summary>
@@ -202,7 +205,7 @@ internal sealed class CommandCompletion
     {
         if (PlaceArguments.TryGetValue((context, name), out var own))
         {
-            words = () => own;
+            words = own;
             return true;
         }
 

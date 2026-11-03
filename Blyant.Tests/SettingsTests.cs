@@ -337,7 +337,7 @@ backup=
         Assert.False(settings.ContainsKey("stayloggedin"));
         Assert.False(settings.ContainsKey("projectsdir"));
         Assert.False(settings.ContainsKey("projectsask"));
-        Assert.Equal(51, settings.Count);
+        Assert.Equal(53, settings.Count);
         Assert.Equal("false", settings["marksapostrophe"]);
         Assert.Equal("false", settings["filenumbers"]);
         Assert.Equal("false", settings["searchnumbers"]);
@@ -352,6 +352,8 @@ backup=
         Assert.Equal("true", settings["bookmarkpanes"]);
         Assert.Equal("true", settings["bookmarkpeek"]);
         Assert.Equal(string.Empty, settings["favoritelist"]);
+        Assert.Equal(string.Empty, settings["boardname"]);
+        Assert.Equal("false", settings["boardpeek"]);
         Assert.Equal("false", settings["favoritenumbers"]);
         Assert.Equal("false", settings["bookmarknumbers"]);
         Assert.Equal("true", settings["commandlist"]);

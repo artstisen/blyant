@@ -1093,10 +1093,11 @@ internal sealed partial class EditorEngine
         }
 
         // ":jump general": go to a page of Blyant (":jump": the Jump menu)
-        // ":board": the corkboard (a page of Blyant, as ":jump board")
-        if (command is "board" or "corkboard")
+        // ":board": the corkboard (a page of Blyant, as ":jump board"), ":board name" one of its boards
+        var board = Regex.Match(command, "^(?:board|corkboard)(?: +(.*))?$");
+        if (board.Success)
         {
-            JumpArgument = "board";
+            JumpArgument = ("board " + board.Groups[1].Value.Trim()).Trim();
             if (!SingleLine) _request = EditorRequest.Jump;
             return;
         }

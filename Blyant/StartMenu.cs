@@ -193,7 +193,7 @@ internal static class StartMenu
                 break;
             case "board":
             case "corkboard":
-                Blyant.Jump.ToPage("board");
+                Blyant.Jump.ToPage(("board " + argument).Trim());
                 break;
             case "book":
                 // ":book 3": jump to bookmark 3

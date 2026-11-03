@@ -171,7 +171,9 @@ internal static partial class FileExplorer
                 if (command != null && CommandLine.Name(command) is "jump" or "ju" or "jmp" or "board" or "corkboard")
                 {
                     // The Jump menu, or ":jump general": a page of Blyant at once (":board": the corkboard)
-                    Jump.ToPage(CommandLine.Name(command) is "board" or "corkboard" ? "board" : CommandLine.Argument(command));
+                    Jump.ToPage(CommandLine.Name(command) is "board" or "corkboard"
+                        ? ("board " + CommandLine.Argument(command)).Trim()
+                        : CommandLine.Argument(command));
                     continue;
                 }
 

@@ -23,14 +23,14 @@ internal static class FileFavorites
 {
     internal const string FileName = "favorites.txt";
     private const string CollapsedMark = "collapsed";
-    private const string ListsDirectoryName = "favorites";
-    private const string ListExtension = ".txt";
-    private const int MaxListName = 20; // The name of a list fits in the top bar, after the caption
 
     /// <summary>
-    /// What stands for the main list in ":list main" (English: as the names of commands)
+    /// What stands for the main list in ":list main"
     /// </summary>
-    internal const string MainListWord = "main";
+    internal const string MainListWord = NamedLists.MainWord;
+
+    // The lists of favorites besides the main list: files in the directory "favorites"
+    private static readonly NamedLists Lists = new(() => MainFilePath, "favorites");
 
     internal sealed class Favorite : IFolderItem
     {
@@ -89,66 +89,31 @@ internal static class FileFavorites
 
     private static string MainFilePath => FilePathOverride ?? Path.Combine(FileIo.GetDataDirectoryName(), FileName);
 
-    private static string ListsDirectory =>
-        Path.Combine(Path.GetDirectoryName(Path.GetFullPath(MainFilePath)) ?? string.Empty, ListsDirectoryName);
-
     /// <summary>
     /// The file of a list (empty: the main list)
     /// </summary>
-    internal static string ListPath(string name) =>
-        name.Length == 0 ? MainFilePath : Path.Combine(ListsDirectory, name + ListExtension);
+    internal static string ListPath(string name) => Lists.PathOf(name);
 
     /// <summary>
     /// The names of the lists besides the main list, in alphabetical order
     /// </summary>
-    internal static List<string> ListNames()
-    {
-        try
-        {
-            if (!Directory.Exists(ListsDirectory)) return new List<string>();
-            return Directory.GetFiles(ListsDirectory, "*" + ListExtension).Select(Path.GetFileNameWithoutExtension)
-                .OfType<string>().Order(StringComparer.OrdinalIgnoreCase).ToList();
-        }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
-        {
-            return new List<string>();
-        }
-    }
+    internal static List<string> ListNames() => Lists.Names();
 
     /// <summary>
     /// The words that can follow ":list": the main list and the names of the others
     /// </summary>
-    internal static IEnumerable<string> ListWords() => ListNames().Prepend(MainListWord);
+    internal static IEnumerable<string> ListWords() => Lists.Words();
 
     /// <summary>
     /// The list with a name (upper and lower case alike): its name as it is written, empty for the main list, and
     /// null if there is none
     /// </summary>
-    internal static string? FindList(string name)
-    {
-        name = name.Trim();
-        if (name.Equals(MainListWord, StringComparison.OrdinalIgnoreCase)) return string.Empty;
-        return ListNames().FirstOrDefault(list => list.Equals(name, StringComparison.OrdinalIgnoreCase));
-    }
+    internal static string? FindList(string name) => Lists.Find(name);
 
     /// <summary>
-    /// A name a list can have: not too long, usable as a file name on all systems, and not the word for the main list
+    /// A name a list can have
     /// </summary>
-    internal static bool IsValidListName(string name)
-    {
-        name = name.Trim();
-        return name.Length is > 0 and <= MaxListName && name.IndexOfAny(Path.GetInvalidFileNameChars()) < 0 &&
-               name.IndexOfAny(new[] { '/', '\\', ':', '*', '?', '"', '<', '>', '|' }) < 0 &&
-               !name.StartsWith('.') && !name.EndsWith('.') &&
-               !name.Equals(MainListWord, StringComparison.OrdinalIgnoreCase);
-    }
-
-    // Why a list cannot have a name (null: it can)
-    private static string? ListNameProblem(string name)
-    {
-        if (name.Length > MaxListName) return Lang.F("Name too long (at most {0} characters)", MaxListName);
-        return IsValidListName(name) ? null : Lang.T("That name cannot be used for a list");
-    }
+    internal static bool IsValidListName(string name) => NamedLists.IsValidName(name);
 
     // Do something with a list in the place of the one that is open, which stays as it is. A list that cannot be read
     // is left alone
@@ -222,22 +187,7 @@ internal static class FileFavorites
     /// Make a new, empty list
     /// </summary>
     /// <returns>DialogText.Success or a message</returns>
-    internal static string NewList(string name)
-    {
-        name = name.Trim();
-        if (ListNameProblem(name) is { } problem) return problem;
-        if (FindList(name) != null) return Lang.T("There is a list of that name");
-        try
-        {
-            FileIo.CreateDirectory(ListsDirectory);
-            FileIo.CreateNewFile(ListPath(name));
-            return DialogText.Success;
-        }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
-        {
-            return e.Message;
-        }
-    }
+    internal static string NewList(string name) => Lists.New(name);
 
     /// <summary>
     /// Give a list another name (its file is renamed). The open list stays open
@@ -245,24 +195,9 @@ internal static class FileFavorites
     /// <returns>DialogText.Success or a message</returns>
     internal static string RenameList(string name, string newName)
     {
-        newName = newName.Trim();
-        if (ListNameProblem(newName) is { } problem) return problem;
-        // (another way of writing the name is not another list)
-        if (FindList(newName) is { } taken && !taken.Equals(name, StringComparison.OrdinalIgnoreCase))
-        {
-            return Lang.T("There is a list of that name");
-        }
-
-        try
-        {
-            if (name != newName) FileIo.MoveFile(ListPath(name), ListPath(newName), false);
-            if (_currentList == name) _currentList = newName;
-            return DialogText.Success;
-        }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
-        {
-            return e.Message;
-        }
+        var result = Lists.Rename(name, newName);
+        if (result == DialogText.Success && _currentList == name) _currentList = newName.Trim();
+        return result;
     }
 
     /// <summary>
@@ -274,24 +209,7 @@ internal static class FileFavorites
     /// <returns>DialogText.Success or a message</returns>
     internal static string DeleteList(string name, out string trashedPath)
     {
-        trashedPath = string.Empty;
-        var result = DialogText.Success;
-        try
-        {
-            if (FileOperations.DeleteToTrash)
-            {
-                result = FileOperations.MoveToTrash(ListPath(name), FileOperations.TrashDirectory, out trashedPath);
-            }
-            else
-            {
-                FileIo.DeleteFile(ListPath(name));
-            }
-        }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
-        {
-            return e.Message;
-        }
-
+        var result = Lists.Delete(name, out trashedPath);
         if (result == DialogText.Success && CurrentList == name) UseList(string.Empty);
         return result;
     }

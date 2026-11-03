@@ -1,15 +1,23 @@
 ﻿namespace Blyant;
 
 /// <summary>
-/// The page of the corkboard (Corkboard): the cards drawn where they are placed, the selected one on top. A card
-/// is selected with Tab, its number and Enter, or the keys of a direction (the nearest card that way), and opened
-/// with Enter. V moves it, T and E put it on top of the others or below them, C colors it, X gives it a title, D
-/// takes it off the board and N pins another file. Opened with ":board" from every command line, ":jump board",
+/// The page of the corkboard (Corkboard): the cards of the open board drawn where they are placed, the selected one on
+/// top, and below them the peek of the selected card when it is on. A card is selected with Tab, its number and
+/// Enter, or the keys of a direction (the nearest card that way), and opened with Enter (a note is edited). V moves
+/// it, T and E put it on top of the others or below them, C colors it, X gives it a title, D takes it off the board,
+/// N pins a file, A adds a note, I shows information, P the peek. ":list" shows the boards, and ":arrange" lays the
+/// cards out in an order. Opened with ":board" (":board name": another board) from every command line, ":jump board",
 /// the Jump menu and the Start tab
 /// </summary>
 internal static class CorkboardPage
 {
     private const int BoardTop = 2; // Below the top bar and its line
+    private const int PeekRows = 6; // The peek: its line and the text below it
+
+    /// <summary>
+    /// The peek of the selected card is shown below the board (setting "boardpeek")
+    /// </summary>
+    internal static bool PeekOn { get; set; }
 
     private static bool _open; // The page is open (it is not opened again on top of itself)
     private static int _selected = -1; // The number of the selected card
@@ -37,14 +45,44 @@ internal static class CorkboardPage
         }
     }
 
+    /// <summary>
+    /// ":board name": the board to show (upper and lower case alike; "main" is the main board). A name that is not
+    /// a board is told on the board shown
+    /// </summary>
+    internal static void Choose(string name)
+    {
+        name = name.Trim();
+        if (name.Length == 0) return;
+        if (Corkboard.Boards.Find(name) is not { } found)
+        {
+            _message = Lang.F("No board named {0}", name);
+            return;
+        }
+
+        OpenBoard(found);
+    }
+
+    // A board is shown with its last card selected, without a filter
+    private static void OpenBoard(string name)
+    {
+        Corkboard.UseBoard(name);
+        FileIo.SaveSettings();
+        _filter = string.Empty;
+        _selected = Corkboard.Cards.Count > 0 ? Corkboard.Cards[^1].Number : -1;
+    }
+
     private static Corkboard.Card? Selected => Corkboard.Numbered(_selected);
+
+    // The height of the board: less with the peek below it
+    private static int Height => Math.Max(Corkboard.CardHeight, Corkboard.BoardHeight - (PeekOn ? PeekRows : 0));
 
     // The cards the filter leaves (all without a filter), in the order they are drawn
     private static List<Corkboard.Card> Matching() => Corkboard.Cards.Where(Matches).ToList();
 
     private static bool Matches(Corkboard.Card card) => _filter.Length == 0 ||
                                                         card.Name.Contains(_filter, StringComparison.OrdinalIgnoreCase) ||
-                                                        card.Path.Contains(_filter, StringComparison.OrdinalIgnoreCase);
+                                                        card.Path.Contains(_filter, StringComparison.OrdinalIgnoreCase) ||
+                                                        card.Text.Contains(_filter, StringComparison.OrdinalIgnoreCase);
 
     private static void Run()
     {
@@ -132,11 +170,7 @@ internal static class CorkboardPage
             // The nearest card that way
             if (card == null) return true;
             var (columns, rows) = Direction(navigation);
-            if (Corkboard.Nearest(card, columns, rows, Corkboard.BoardWidth, Corkboard.BoardHeight) is { } next)
-            {
-                _selected = next.Number;
-            }
-
+            if (Corkboard.Nearest(card, columns, rows, Corkboard.BoardWidth, Height) is { } next) _selected = next.Number;
             return true;
         }
 
@@ -163,12 +197,7 @@ internal static class CorkboardPage
                 Open(card);
                 break;
             case ConsoleKey.V:
-                if (card != null)
-                {
-                    _moving = true;
-                    // (on top while it is moved, as it is drawn)
-                }
-
+                if (card != null) _moving = true;
                 break;
             case ConsoleKey.T:
             case ConsoleKey.E:
@@ -188,6 +217,15 @@ internal static class CorkboardPage
                 break;
             case ConsoleKey.N:
                 PinFile();
+                break;
+            case ConsoleKey.A:
+                AddNote();
+                break;
+            case ConsoleKey.I:
+                ShowInfo(card);
+                break;
+            case ConsoleKey.P:
+                TogglePeek();
                 break;
         }
 
@@ -223,7 +261,7 @@ internal static class CorkboardPage
         }
 
         if (MoveOf(key) is not { } move) return;
-        Corkboard.Move(card, move.Columns, move.Rows, Corkboard.BoardWidth, Corkboard.BoardHeight);
+        Corkboard.Move(card, move.Columns, move.Rows, Corkboard.BoardWidth, Height);
     }
 
     /// <summary>
@@ -247,10 +285,16 @@ internal static class CorkboardPage
         return (columns * steps, rows * steps);
     }
 
-    // Enter: open the file of the card in the editor (as a jump: the page is left)
+    // Enter: open the file of the card in the editor (as a jump: the page is left), or edit the text of a note
     private static void Open(Corkboard.Card? card)
     {
         if (card == null) return;
+        if (card.IsNote)
+        {
+            EditNote(card);
+            return;
+        }
+
         if (!File.Exists(card.Path))
         {
             _message = DialogText.FileNotFound;
@@ -258,6 +302,63 @@ internal static class CorkboardPage
         }
 
         Jump.ToPlace(new JumpTarget(JumpKind.File, card.Path));
+    }
+
+    // A or ":note": a new note card, its text written in the editor at once
+    private static void AddNote()
+    {
+        var card = Corkboard.AddNote(string.Empty, Corkboard.BoardWidth, Height);
+        _selected = card.Number;
+        SaveCards();
+        EditNote(card);
+        // A new note left without text is not kept
+        if (card.Text.Length > 0 || !Corkboard.Discard(card)) return;
+        _selected = Corkboard.Cards.Count > 0 ? Corkboard.Cards[^1].Number : -1;
+        SaveCards();
+    }
+
+    // The text of a note in the editor (its first line is the title of the card, unless it has one of its own)
+    private static void EditNote(Corkboard.Card card)
+    {
+        var error = FileExplorer.EditListNote(card.Text,
+            NotePanes.NoteFileName("board-note", Corkboard.CurrentBoard + "/" + card.Number), Lang.T("Corkboard"),
+            written =>
+            {
+                card.Text = Notes.Clean(written);
+                SaveCards();
+            });
+        if (error != null) _message = error;
+    }
+
+    // I or ":info": what the card is, and its file
+    private static void ShowInfo(Corkboard.Card? card)
+    {
+        if (card == null) return;
+        if (!card.IsNote)
+        {
+            if (!File.Exists(card.Path))
+            {
+                _message = DialogText.FileNotFound;
+                return;
+            }
+
+            _message = FileExplorer.ShowFileInfo(card.Path);
+            return;
+        }
+
+        ChoiceBox.Forget();
+        ChoiceBox.ShowRows(Lang.T("Note"), new[]
+        {
+            (DialogText.InfoName, card.Name), (Lang.T("Words:"), Tools.WordCount(card.Text).ToString()),
+            (Lang.T("Lines:"), Tools.LineCount(card.Text).ToString())
+        });
+    }
+
+    // P or ":peek": the peek of the selected card below the board on or off (kept in the settings)
+    private static void TogglePeek()
+    {
+        PeekOn = !PeekOn;
+        FileIo.SaveSettings();
     }
 
     private static void PickColor(Corkboard.Card? card)
@@ -295,7 +396,7 @@ internal static class CorkboardPage
         if (card == null) return;
         ChoiceBox.Forget();
         if (!ChoiceBox.Confirm(Lang.T("Remove card"), Lang.F("Take card {0} off the corkboard?", card.Number),
-                Lang.T("The file stays where it is."), false))
+                card.IsNote ? string.Empty : Lang.T("The file stays where it is."), false))
         {
             return;
         }
@@ -306,16 +407,36 @@ internal static class CorkboardPage
         SaveCards();
     }
 
+    // u: the card removed last back, or the cards back where they were before they were arranged
     private static void Undo()
     {
-        if (Corkboard.Undo() is not { } card)
+        switch (Corkboard.Undo())
         {
-            _message = Lang.T("Nothing to put back");
+            case Corkboard.Undone.Card:
+                _selected = Corkboard.UndoneCard!.Number;
+                _message = Lang.F("Put back: {0}", Corkboard.UndoneCard.Name);
+                break;
+            case Corkboard.Undone.Places:
+                _message = Lang.T("The cards are back in their places");
+                break;
+            default:
+                _message = Lang.T("Nothing to put back");
+                return;
+        }
+
+        SaveCards();
+    }
+
+    // ":arrange number" (name, color): the cards in rows in that order (u puts them back)
+    private static void Arrange(string order)
+    {
+        if (!Corkboard.Arrange(order.Trim().ToLowerInvariant(), Corkboard.BoardWidth, Height))
+        {
+            _message = Lang.T(":arrange number, :arrange name or :arrange color");
             return;
         }
 
-        _selected = card.Number;
-        _message = Lang.F("Put back: {0}", card.Name);
+        _message = Lang.T("Arranged (u puts the cards back)");
         SaveCards();
     }
 
@@ -368,6 +489,23 @@ internal static class CorkboardPage
             case "new":
                 PinFile();
                 break;
+            case "note":
+                AddNote();
+                break;
+            case "info":
+                ShowInfo(Selected);
+                break;
+            case "peek":
+                TogglePeek();
+                break;
+            case "list":
+            case "board":
+            case "corkboard":
+                ShowBoards(argument);
+                break;
+            case "arrange":
+                Arrange(argument);
+                break;
             case "color":
                 PickColor(Selected);
                 break;
@@ -402,9 +540,132 @@ internal static class CorkboardPage
         return true;
     }
 
+    #region Boards
+
+    private static string BoardName(string name) => name.Length == 0 ? Lang.T("Main board") : name;
+
+    // ":list": the boards in a box, to open one, add one, rename one or delete one. ":list name" opens one at once
+    private static void ShowBoards(string argument)
+    {
+        if (argument.Trim().Length > 0)
+        {
+            if (Corkboard.Boards.Find(argument) is { } found) OpenBoard(found);
+            else _message = Lang.F("No board named {0}", argument.Trim());
+            return;
+        }
+
+        Draw();
+        while (true)
+        {
+            var boards = Corkboard.Boards.Names().Prepend(string.Empty).ToList();
+            string? open = null;
+            var picked = PickListBox.Show(Lang.T("Boards"), boards.Select(BoardName).ToList(),
+                row => Corkboard.BoardPreview(boards[row]), Math.Max(0, boards.IndexOf(Corkboard.CurrentBoard)),
+                Lang.T("j/k Select | Enter Open | N New | R Rename | D Delete | Esc Close"), new PickListBox.Extras
+                {
+                    Key = (key, row) =>
+                    {
+                        if ((key.Modifiers & ConsoleModifiers.Control) != 0 || row < 0) return PickListBox.KeyUse.None;
+                        switch (key.Key)
+                        {
+                            case ConsoleKey.N:
+                                open = NewBoard();
+                                return open != null ? PickListBox.KeyUse.Close : PickListBox.KeyUse.Used;
+                            case ConsoleKey.R:
+                                return RenameBoard(boards[row]);
+                            case ConsoleKey.D:
+                                return DeleteBoard(boards[row]);
+                            default:
+                                return PickListBox.KeyUse.None;
+                        }
+                    }
+                });
+            if (picked == PickListBox.Reload) continue;
+            if (open != null) OpenBoard(open);
+            else if (picked >= 0 && boards[picked] != Corkboard.CurrentBoard) OpenBoard(boards[picked]);
+            if (open != null || picked >= 0) _message = Lang.F("Board: {0}", BoardName(Corkboard.CurrentBoard));
+            return;
+        }
+    }
+
+    // The box for a new board: the name of the board made, or null
+    private static string? NewBoard()
+    {
+        ChoiceBox.Forget();
+        var name = ChoiceBox.AskText(Lang.T("New board"), DialogText.TypeNameAndPressEnter, DialogText.NameColon,
+            string.Empty);
+        if (name == null) return null;
+        var result = Corkboard.NewBoard(name);
+        if (result == DialogText.Success) return name.Trim();
+        ChoiceBox.Message(Lang.T("New board"), result, string.Empty);
+        return null;
+    }
+
+    private static PickListBox.KeyUse RenameBoard(string name)
+    {
+        ChoiceBox.Forget();
+        if (name.Length == 0)
+        {
+            ChoiceBox.Message(Lang.T("Rename board"), Lang.T("The main board keeps its name"), string.Empty);
+            return PickListBox.KeyUse.Used;
+        }
+
+        var newName = ChoiceBox.AskText(Lang.T("Rename board"), DialogText.TypeNameAndPressEnter, DialogText.NameColon,
+            name);
+        if (newName == null) return PickListBox.KeyUse.Used;
+        var result = Corkboard.RenameBoard(name, newName);
+        if (result == DialogText.Success)
+        {
+            FileIo.SaveSettings();
+            return PickListBox.KeyUse.Reload;
+        }
+
+        ChoiceBox.Message(Lang.T("Rename board"), result, string.Empty);
+        return PickListBox.KeyUse.Used;
+    }
+
+    private static PickListBox.KeyUse DeleteBoard(string name)
+    {
+        ChoiceBox.Forget();
+        if (name.Length == 0)
+        {
+            ChoiceBox.Message(Lang.T("Delete board"), Lang.T("The main board cannot be deleted"), string.Empty);
+            return PickListBox.KeyUse.Used;
+        }
+
+        if (!ChoiceBox.ConfirmGuarded(Lang.T("Delete board"), Lang.F("Delete the board {0}?", name),
+                Lang.T("The files stay where they are.")))
+        {
+            return PickListBox.KeyUse.Used;
+        }
+
+        var wasOpen = Corkboard.CurrentBoard == name;
+        var path = Corkboard.Boards.PathOf(name);
+        var result = Corkboard.DeleteBoard(name, out var trashedPath);
+        // (deleted for good it is logged where it is deleted)
+        if (FileOperations.DeleteToTrash)
+        {
+            EventLog.Add(DialogText.LogFile + "Delete (to the trash): " + path +
+                         (trashedPath.Length > 0 ? " -> " + trashedPath : string.Empty) +
+                         (result == DialogText.Success ? string.Empty : " - FAILED: " + result));
+        }
+
+        if (result != DialogText.Success)
+        {
+            ChoiceBox.Message(Lang.T("Delete board"), result, string.Empty);
+            return PickListBox.KeyUse.Used;
+        }
+
+        // (the main board is open now)
+        if (wasOpen) OpenBoard(string.Empty);
+        return PickListBox.KeyUse.Reload;
+    }
+
+    #endregion
+
     // The cards whose file is not there
     private static List<Corkboard.Card> Missing(MissingPlaces.Checker check) =>
-        Corkboard.Cards.Where(card => check.IsMissing(card.Path, true)).ToList();
+        Corkboard.Cards.Where(card => !card.IsNote && check.IsMissing(card.Path, true)).ToList();
 
     // ":missing": the cards whose file is gone, to select one
     private static void ShowMissing()
@@ -449,19 +710,20 @@ internal static class CorkboardPage
     {
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
         Tools.ClearScreen();
-        Menu.WriteModeLabel(Lang.T("Corkboard"), string.Empty, 0);
+        Menu.WriteModeLabel(Corkboard.CurrentBoard.Length > 0
+            ? Lang.F("{0}: {1}", Lang.T("Corkboard"), Corkboard.CurrentBoard)
+            : Lang.T("Corkboard"), string.Empty, 0);
         Menu.WriteNameInTopBar();
         Tools.SetCursorEx(1, 0);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
         Console.Write(new string('-', Init.LineWidth - 1));
 
         var width = Corkboard.BoardWidth;
-        var height = Corkboard.BoardHeight;
         var check = new MissingPlaces.Checker();
         var selected = Selected;
         foreach (var card in Corkboard.Cards.Where(card => card != selected).Append(selected))
         {
-            if (card != null) DrawCard(card, card == selected, check.IsMissing(card.Path, true), width, height);
+            if (card != null) DrawCard(card, card == selected, !card.IsNote && check.IsMissing(card.Path, true), width, Height);
         }
 
         if (Corkboard.Cards.Count == 0)
@@ -472,11 +734,12 @@ internal static class CorkboardPage
                 width - 4, true));
         }
 
+        if (PeekOn) DrawPeek(selected);
         DrawStatus();
         Tools.SetCursorEx(Init.LineCount - 1, 0);
         Menu.WriteKeyHints(_moving
             ? Lang.T("hjkl Move | HJKL Move 5 | Enter/Esc Done")
-            : Lang.T("Tab Select | Enter Open | V Move | T/E Top/Bottom | C Color | X Title | D Remove | N New | Esc Close"));
+            : Lang.T("Tab Select | Enter Open | V Move | A Note | N New | C Color | X Title | D Remove | I Info | P Peek | Esc Close"));
     }
 
     private static void DrawCard(Corkboard.Card card, bool selected, bool missing, int width, int height)
@@ -484,6 +747,9 @@ internal static class CorkboardPage
         var (x, y) = Corkboard.Shown(card, width, height);
         var inner = Corkboard.CardWidth - 2;
         var dim = missing || !Matches(card);
+        // (a note has corners of its own)
+        var top = card.IsNote ? '+' : AsciiStyles.GetTopCorner();
+        var bottom = card.IsNote ? '+' : AsciiStyles.GetBottomCorner();
 
         void Frame()
         {
@@ -495,7 +761,7 @@ internal static class CorkboardPage
 
         Tools.SetCursorEx(BoardTop + y, x);
         Frame();
-        Console.Write(AsciiStyles.GetTopCorner() + new string('-', inner) + AsciiStyles.GetTopCorner());
+        Console.Write(top + new string('-', inner) + top);
         Tools.SetCursorEx(BoardTop + y + 1, x);
         Console.Write('|');
         // The number (highlighted on the selected card), and the name
@@ -511,8 +777,27 @@ internal static class CorkboardPage
         Frame();
         Console.Write('|');
         Tools.SetCursorEx(BoardTop + y + 2, x);
-        Console.Write(AsciiStyles.GetBottomCorner() + new string('-', inner) + AsciiStyles.GetBottomCorner());
+        Console.Write(bottom + new string('-', inner) + bottom);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
+    }
+
+    // The peek: the start of the selected card's file (or the text of a note), below the board
+    private static void DrawPeek(Corkboard.Card? card)
+    {
+        var row = Init.LineCount - 2 - PeekRows;
+        Tools.SetCursorEx(row, 0);
+        ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
+        var label = Tools.TruncateString("-- " + Lang.T("Peek") + (card != null ? ": " + card.Name : string.Empty) + " ",
+            Init.LineWidth - 1, true);
+        Console.Write(label + new string('-', Math.Max(0, Init.LineWidth - 1 - TextMetrics.WidthOf(label))));
+        if (card == null) return;
+        var lines = card.IsNote ? card.Text.Split('\n').ToList() : NotePanes.PeekPlace(card.Path, PeekRows - 1);
+        ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
+        for (var i = 0; i < PeekRows - 1 && i < lines.Count; i++)
+        {
+            Tools.SetCursorEx(row + 1 + i, 1);
+            Console.Write(Tools.TruncateString(lines[i].Replace('\t', ' '), Init.LineWidth - 3, true));
+        }
     }
 
     // The line above the keys: a message, the number typed or the filter, and how many cards there are

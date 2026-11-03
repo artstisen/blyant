@@ -76,7 +76,7 @@ internal static partial class FileExplorer
                 break;
             case "board":
             case "corkboard":
-                Jump.ToPage("board");
+                Jump.ToPage(("board " + argument).Trim());
                 break;
             case "pin":
                 // The selected file to the corkboard
@@ -1036,6 +1036,19 @@ internal static partial class FileExplorer
     /// <returns>The message that tells what was done (with the number of the card)</returns>
     internal static string PinFile(string path) =>
         Directory.Exists(path) ? OnlyFilesArePinned : Corkboard.PinWithMessage(path);
+
+    /// <summary>
+    /// I on the corkboard: information about a file, as in the file browser
+    /// </summary>
+    /// <returns>The message (why it could not be shown), or empty</returns>
+    internal static string ShowFileInfo(string path)
+    {
+        _message = string.Empty;
+        ShowInfo(new Item(System.IO.Path.GetFileName(path), path, false, new FileInfo(path).Length));
+        var message = _message;
+        _message = string.Empty;
+        return message;
+    }
 
     private static string OnlyFilesArePinned => Lang.T("Only a file can be pinned to the corkboard");
 
