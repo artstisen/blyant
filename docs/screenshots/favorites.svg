@@ -18,7 +18,7 @@
 <text x="282.8" y="94.8" fill="#CCCCCC" textLength="42.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Path</text>
 <text x="333.2" y="94.8" fill="#B4009E" textLength="403.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">----------------------------------------------+-</text>
 <text x="736.4" y="94.8" fill="#CCCCCC" textLength="42.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Info</text>
-<text x="786.8" y="94.8" fill="#B4009E" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">-------</text>
+<text x="786.8" y="94.8" fill="#B4009E" textLength="50.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">------</text>
 <text x="30.8" y="111.8" fill="#61D6D6" textLength="159.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> [-] Harbour Lights</text>
 <text x="266.0" y="111.8" fill="#B4009E" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="719.6" y="111.8" fill="#B4009E" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
@@ -96,7 +96,7 @@
 <text x="30.8" y="366.8" fill="#CCCCCC" textLength="42.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Note</text>
 <text x="81.2" y="366.8" fill="#B4009E" textLength="361.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">----------------------+------------------+-</text>
 <text x="442.4" y="366.8" fill="#CCCCCC" textLength="42.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Peek</text>
-<text x="492.8" y="366.8" fill="#B4009E" textLength="352.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">---------------------------+--------------</text>
+<text x="492.8" y="366.8" fill="#B4009E" textLength="344.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">---------------------------+-------------</text>
 <text x="14.0" y="383.8" fill="#CCCCCC" textLength="352.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Night scenes: check that the times in the</text>
 <text x="425.6" y="383.8" fill="#B4009E" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="442.4" y="383.8" fill="#B4009E" textLength="201.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve"># Chapter 3: The Logbook</text>
@@ -104,17 +104,17 @@
 <text x="425.6" y="400.8" fill="#B4009E" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="14.0" y="417.8" fill="#CCCCCC" textLength="310.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Read it aloud before the next draft.</text>
 <text x="425.6" y="417.8" fill="#B4009E" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
-<text x="442.4" y="417.8" fill="#B4009E" textLength="394.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">The logbook was in the drawer of the chart tabl</text>
+<text x="442.4" y="417.8" fill="#B4009E" textLength="386.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">The logbook was in the drawer of the chart tab</text>
 <text x="425.6" y="434.8" fill="#B4009E" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
-<text x="442.4" y="434.8" fill="#B4009E" textLength="394.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">a pair of reading glasses with one arm mended i</text>
+<text x="442.4" y="434.8" fill="#B4009E" textLength="378.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">a pair of reading glasses with one arm mended</text>
 <text x="425.6" y="451.8" fill="#B4009E" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="425.6" y="468.8" fill="#B4009E" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
-<text x="442.4" y="468.8" fill="#B4009E" textLength="394.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Maren opened it at the last page. The entries s</text>
+<text x="442.4" y="468.8" fill="#B4009E" textLength="378.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Maren opened it at the last page. The entries</text>
 <text x="425.6" y="485.8" fill="#B4009E" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
-<text x="442.4" y="485.8" fill="#B4009E" textLength="394.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">middle of a sentence, and the harbour lights we</text>
+<text x="442.4" y="485.8" fill="#B4009E" textLength="386.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">middle of a sentence, and the harbour lights w</text>
 <text x="425.6" y="502.8" fill="#B4009E" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="442.4" y="502.8" fill="#B4009E" textLength="294.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">margin, each with a tick beside it.</text>
-<text x="14.0" y="519.8" fill="#B4009E" textLength="831.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">-------------------------------------------------+----------------------------------------- 5/16 --</text>
+<text x="14.0" y="519.8" fill="#B4009E" textLength="823.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">-------------------------------------------------+----------------------------------------- 5/16 -</text>
 <rect x="22.4" y="524" width="25.2" height="17" fill="#16C60C"/>
 <rect x="98.0" y="524" width="25.2" height="17" fill="#16C60C"/>
 <rect x="165.2" y="524" width="25.2" height="17" fill="#16C60C"/>

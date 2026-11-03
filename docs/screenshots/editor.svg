@@ -15,7 +15,7 @@
 <rect x="14.0" y="65" width="840.0" height="17" fill="#0037DA"/>
 <text x="14.0" y="77.8" fill="#61D6D6" textLength="369.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">--------------------------------------------</text>
 <text x="383.6" y="77.8" fill="#F2F2F2" textLength="75.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> NAVIGATE</text>
-<text x="467.6" y="77.8" fill="#61D6D6" textLength="378.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">---------------------------------------------</text>
+<text x="467.6" y="77.8" fill="#61D6D6" textLength="369.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">--------------------------------------------</text>
 <rect x="14.0" y="82" width="840.0" height="17" fill="#0037DA"/>
 <text x="14.0" y="94.8" fill="#CCCCCC" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  1</text>
 <text x="56.0" y="94.8" fill="#F9F1A5" textLength="201.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve"># Chapter 3: The Logbook</text>
@@ -98,6 +98,6 @@
 <rect x="14.0" y="524" width="67.2" height="17" fill="#3B78FF"/>
 <rect x="81.2" y="524" width="772.8" height="17" fill="#0037DA"/>
 <text x="14.0" y="536.8" fill="#61D6D6" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> NORMAL</text>
-<text x="89.6" y="536.8" fill="#61D6D6" textLength="756.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">------------------------------------------------------- [2/12] | MD UTF-8 LF | 12:4 | 9% -</text>
+<text x="89.6" y="536.8" fill="#61D6D6" textLength="739.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">------------------------------------------------------- [2/12] | MD UTF-8 LF | 12:4 | 9%</text>
 <rect x="14.0" y="541" width="840.0" height="17" fill="#0037DA"/>
 </svg>

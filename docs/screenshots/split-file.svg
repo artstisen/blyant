@@ -13,7 +13,7 @@
 <text x="81.2" y="60.8" fill="#CCCCCC" textLength="117.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> chapter-03.md</text>
 <text x="14.0" y="77.8" fill="#767676" textLength="159.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">-------------------</text>
 <text x="173.6" y="77.8" fill="#16C60C" textLength="75.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> NAVIGATE</text>
-<text x="257.6" y="77.8" fill="#767676" textLength="588.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">--------------------------------- outline.md, read only --------------</text>
+<text x="257.6" y="77.8" fill="#767676" textLength="579.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">--------------------------------- outline.md, read only -------------</text>
 <text x="14.0" y="94.8" fill="#767676" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 15</text>
 <text x="417.2" y="94.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="425.6" y="94.8" fill="#E74856" textLength="210.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve"># Harbour Lights: outline</text>
@@ -93,5 +93,5 @@
 <rect x="14.0" y="524" width="67.2" height="17" fill="#61D6D6"/>
 <text x="14.0" y="536.8" fill="#0C0C0C" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> NORMAL</text>
 <text x="81.2" y="536.8" fill="#CCCCCC" textLength="470.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Tab: the file at the right (read only), :only: one pane</text>
-<text x="560.0" y="536.8" fill="#767676" textLength="285.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">------- MD UTF-8 LF | 24:1 | 18% -</text>
+<text x="560.0" y="536.8" fill="#767676" textLength="268.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">------- MD UTF-8 LF | 24:1 | 18%</text>
 </svg>

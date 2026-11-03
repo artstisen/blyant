@@ -255,8 +255,11 @@ def make_demo():
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, 'w', encoding='utf-8', newline='\n') as f:
             f.write(text)
-    with open(os.path.join(PROJECT, '.blyant-board.txt'), 'w', encoding='utf-8', newline='\n') as f:
+    board = os.path.join(PROJECT, '.blyant-board.txt')
+    with open(board, 'w', encoding='utf-8', newline='\n') as f:
         f.write(BOARD)
+    # (hidden on Windows, as on Linux and macOS: the file browser does not show it)
+    hide(board)
     # A picture (only its name and size are shown)
     with open(os.path.join(PROJECT, 'research', 'harbour-map.png'), 'wb') as f:
         f.write(b'\x89PNG\r\n\x1a\n' + bytes(4096))
