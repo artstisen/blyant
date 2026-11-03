@@ -132,8 +132,8 @@ public class CorkboardTests : IDisposable
     public void PinningAFileTwice_SaysWhereItIs()
     {
         Lang.Set(Lang.English);
-        Assert.Equal("Pinned to the corkboard (1): notes", Corkboard.PinWithMessage(In("notes.md")));
-        Assert.Equal("Already on the corkboard (1): notes", Corkboard.PinWithMessage(In("notes.md")));
+        Assert.Equal("Pinned to the corkboard (1): notes", Corkboard.PinWithMessage(In("notes.md"), Height));
+        Assert.Equal("Already on the corkboard (1): notes", Corkboard.PinWithMessage(In("notes.md"), Height));
         Corkboard.Load();
         Assert.Single(Corkboard.Cards);
     }
@@ -311,5 +311,105 @@ public class CorkboardTests : IDisposable
         Assert.Equal(In("first.md"), Corkboard.Cards[0].Path);
         Corkboard.UseBoard("Plot");
         Assert.Equal(In("first.md"), Corkboard.Cards[0].Path);
+    }
+
+    [Fact]
+    public void ACard_IsChangedOnItsBoard_AlsoWhenAnotherIsOpen()
+    {
+        var note = Corkboard.AddNote("First", Width, Height);
+        Corkboard.Save();
+        Corkboard.NewBoard("Plot");
+        Corkboard.UseBoard("Plot");
+        // The main board, while Plot is open
+        Assert.True(Corkboard.ChangeCard(string.Empty, note.Number, card =>
+        {
+            card.Text = "Second";
+            return true;
+        }));
+        Assert.Empty(Corkboard.Cards);
+        Corkboard.UseBoard(string.Empty);
+        Assert.Equal("Second", Corkboard.Numbered(note.Number)!.Text);
+        // The open board, read again since (a card object of before is not the one changed)
+        Corkboard.Load();
+        Assert.True(Corkboard.ChangeCard(string.Empty, note.Number, card =>
+        {
+            card.Text = "Third";
+            return true;
+        }));
+        Corkboard.Load();
+        Assert.Equal("Third", Corkboard.Numbered(note.Number)!.Text);
+        // A card that is not there, or not changed
+        Assert.False(Corkboard.ChangeCard(string.Empty, 9, _ => true));
+        Assert.False(Corkboard.ChangeCard(string.Empty, note.Number, _ => false));
+    }
+
+    [Fact]
+    public void ReadingAgain_KeepsWhatUPutsBack_IfTheFileIsAsItWas()
+    {
+        Corkboard.Add(In("one.md"), Width, Height);
+        var two = Corkboard.Add(In("two.md"), Width, Height);
+        Corkboard.Remove(two);
+        Corkboard.Save();
+        Corkboard.Reload();
+        Assert.Equal(Corkboard.Undone.Card, Corkboard.Undo());
+        Corkboard.Save();
+        // Changed by another page: read again
+        File.WriteAllText(Corkboard.FilePath, "1\t0,0\t\t\t" + In("one.md") + "\n");
+        Corkboard.Reload();
+        Assert.Equal("1", Order());
+        Assert.Equal(Corkboard.Undone.Nothing, Corkboard.Undo());
+    }
+
+    [Fact]
+    public void ATitleAsTheOwnName_IsNoTitle()
+    {
+        var card = Corkboard.Add(In("chapter.md"), Width, Height);
+        Corkboard.Rename(card, "Opening");
+        Assert.Equal("Opening", card.Title);
+        // Enter on the name as it was in the box: the card goes on following its file
+        Corkboard.Rename(card, "chapter");
+        Assert.Equal((string.Empty, "chapter"), (card.Title, card.Name));
+        Corkboard.Rename(card, "Opening");
+        Corkboard.Rename(card, "  ");
+        Assert.Equal(string.Empty, card.Title);
+        // A tab in a note's first line is blank space on the card
+        Assert.Equal("To do", Corkboard.AddNote("To\tdo", Width, Height).Name);
+    }
+
+    [Fact]
+    public void APathWithATabOrALineBreak_IsNotPinned()
+    {
+        Assert.True(Corkboard.CanKeep(In("one.md")));
+        Assert.False(Corkboard.CanKeep(In("a\tb.md")));
+        Assert.Equal(Lang.T("A path with a tab or a line break is not kept"),
+            Corkboard.PinWithMessage(In("a\nb.md"), Height));
+        Assert.Empty(Corkboard.Cards);
+        // A file renamed to such a name: the card stays as it was
+        var card = Corkboard.Add(In("one.md"), Width, Height);
+        Corkboard.Save();
+        Corkboard.Follow(In("one.md"), In("a\tb.md"));
+        Assert.Equal(In("one.md"), Corkboard.Numbered(card.Number)!.Path);
+    }
+
+    [UnixFact]
+    public void APathEndingWithBlankSpace_IsKept()
+    {
+        var path = In("Chapter ");
+        File.WriteAllText(path, "text");
+        Corkboard.Add(path, Width, Height);
+        Corkboard.Save();
+        Corkboard.Load();
+        Assert.Equal(path, Corkboard.Cards[0].Path);
+    }
+
+    [UnixFact]
+    public void BoardsWhoseNamesDifferInCase_AreFoundAsWritten()
+    {
+        Assert.Equal(DialogText.Success, Corkboard.NewBoard("Plot"));
+        // (made beside it, as by another program: Blyant takes it as the same name)
+        File.WriteAllText(Corkboard.Boards.PathOf("plot"), string.Empty);
+        Assert.Equal("plot", Corkboard.Boards.Find("plot"));
+        Assert.Equal("Plot", Corkboard.Boards.Find("Plot"));
+        Assert.Contains(Corkboard.Boards.Find("PLOT"), new[] { "Plot", "plot" });
     }
 }

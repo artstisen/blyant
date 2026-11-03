@@ -68,13 +68,18 @@ internal static class CorkboardPage
         Corkboard.UseBoard(name);
         FileIo.SaveSettings();
         _filter = string.Empty;
-        _selected = Corkboard.Cards.Count > 0 ? Corkboard.Cards[^1].Number : -1;
+        SelectLast();
     }
+
+    // The card on top selected (none on an empty board)
+    private static void SelectLast() => _selected = Corkboard.Cards.Count > 0 ? Corkboard.Cards[^1].Number : -1;
 
     private static Corkboard.Card? Selected => Corkboard.Numbered(_selected);
 
-    // The height of the board: less with the peek below it
-    private static int Height => Math.Max(Corkboard.CardHeight, Corkboard.BoardHeight - (PeekOn ? PeekRows : 0));
+    /// <summary>
+    /// The height of the board: less with the peek below it
+    /// </summary>
+    internal static int Height => Math.Max(Corkboard.CardHeight, Corkboard.BoardHeight - (PeekOn ? PeekRows : 0));
 
     // The cards the filter leaves (all without a filter), in the order they are drawn
     private static List<Corkboard.Card> Matching() => Corkboard.Cards.Where(Matches).ToList();
@@ -87,7 +92,7 @@ internal static class CorkboardPage
     private static void Run()
     {
         Corkboard.Load();
-        if (Selected == null) _selected = Corkboard.Cards.Count > 0 ? Corkboard.Cards[^1].Number : -1;
+        if (Selected == null) SelectLast();
         while (true)
         {
             Init.ApplyAutoSize();
@@ -110,7 +115,7 @@ internal static class CorkboardPage
             if (Jump.IsKey(key))
             {
                 Jump.Open();
-                Corkboard.Load();
+                Corkboard.Reload();
                 continue;
             }
 
@@ -308,24 +313,45 @@ internal static class CorkboardPage
     private static void AddNote()
     {
         var card = Corkboard.AddNote(string.Empty, Corkboard.BoardWidth, Height);
+        var board = Corkboard.CurrentBoard;
         _selected = card.Number;
         SaveCards();
-        EditNote(card);
-        // A new note left without text is not kept
-        if (card.Text.Length > 0 || !Corkboard.Discard(card)) return;
-        _selected = Corkboard.Cards.Count > 0 ? Corkboard.Cards[^1].Number : -1;
-        SaveCards();
+        try
+        {
+            EditNote(card);
+        }
+        finally
+        {
+            // A new note left without text is not kept, also when the editor was left by a jump
+            if (Corkboard.ChangeCard(board, card.Number, kept => kept.IsNote && kept.Text.Length == 0 &&
+                                                                 Corkboard.Discard(kept)) &&
+                Selected == null)
+            {
+                SelectLast();
+            }
+        }
     }
 
-    // The text of a note in the editor (its first line is the title of the card, unless it has one of its own)
+    // The text of a note in the editor (its first line is the title of the card, unless it has one of its own). It
+    // is kept on the board and card it was written for, by number: the cards may be read again while the editor is
+    // open, and another board opened (":board" in the editor)
     private static void EditNote(Corkboard.Card card)
     {
+        var board = Corkboard.CurrentBoard;
         var error = FileExplorer.EditListNote(card.Text,
-            NotePanes.NoteFileName("board-note", Corkboard.CurrentBoard + "/" + card.Number), Lang.T("Corkboard"),
+            NotePanes.NoteFileName("board-note", board + "/" + card.Number), Lang.T("Corkboard"),
             written =>
             {
-                card.Text = Notes.Clean(written);
-                SaveCards();
+                var text = Notes.Clean(written);
+                if (!Corkboard.ChangeCard(board, card.Number, kept =>
+                    {
+                        if (!kept.IsNote) return false;
+                        kept.Text = text;
+                        return true;
+                    }))
+                {
+                    _message = Lang.T("The card is no longer on the board: the note was not kept");
+                }
             });
         if (error != null) _message = error;
     }
@@ -402,7 +428,7 @@ internal static class CorkboardPage
         }
 
         Corkboard.Remove(card);
-        _selected = Corkboard.Cards.Count > 0 ? Corkboard.Cards[^1].Number : -1;
+        SelectLast();
         _message = Lang.F("Removed: {0} (u puts it back)", card.Name);
         SaveCards();
     }
@@ -444,9 +470,9 @@ internal static class CorkboardPage
     private static void PinFile()
     {
         var path = FileExplorer.PickFile(Lang.T("Pin a file to the corkboard"));
-        Corkboard.Load();
+        Corkboard.Reload();
         if (path == null) return;
-        _message = Corkboard.PinWithMessage(path);
+        _message = Corkboard.PinWithMessage(path, Height);
         if (Corkboard.CardOf(path) is { } card) _selected = card.Number;
     }
 
@@ -477,11 +503,11 @@ internal static class CorkboardPage
             case "ju":
             case "jmp":
                 Jump.ToPage(CommandLine.Argument(command));
-                Corkboard.Load();
+                Corkboard.Reload();
                 break;
             case "book":
                 Jump.ToBookmark(CommandLine.Argument(command));
-                Corkboard.Load();
+                Corkboard.Reload();
                 break;
             case "recent":
                 RecentBox.Open();
@@ -656,8 +682,14 @@ internal static class CorkboardPage
             return PickListBox.KeyUse.Used;
         }
 
-        // (the main board is open now)
-        if (wasOpen) OpenBoard(string.Empty);
+        // (the main board is open now: Corkboard.DeleteBoard opened it)
+        if (wasOpen)
+        {
+            FileIo.SaveSettings();
+            _filter = string.Empty;
+            SelectLast();
+        }
+
         return PickListBox.KeyUse.Reload;
     }
 
@@ -699,7 +731,7 @@ internal static class CorkboardPage
         Draw();
         if (!MissingPlaces.Confirm(Lang.T("Remove card"), prune.Count, kept.Count, 0, false)) return;
         var count = Corkboard.RemoveMany(prune);
-        if (Selected == null) _selected = Corkboard.Cards.Count > 0 ? Corkboard.Cards[^1].Number : -1;
+        if (Selected == null) SelectLast();
         _message = Lang.F("Cards removed: {0}", count);
         SaveCards();
     }

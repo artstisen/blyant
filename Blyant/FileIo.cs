@@ -426,11 +426,12 @@ internal static class FileIo
         // Below the list of favorites: the panes with the note and the peek of the selected item, and the peek in them
         _tempSettings += "favoritepanes=" + (FileExplorer.FavoritePanes ? DialogText.BTrue : DialogText.BFalse) + '\n';
         _tempSettings += "favoritepeek=" + (FileExplorer.FavoritePeek ? DialogText.BTrue : DialogText.BFalse) + '\n';
-        // The rows of the favorites numbered (and below, of the bookmarks)
+        // The list of favorites that is open
         _tempSettings += "favoritelist=" + FileFavorites.CurrentList + '\n';
         // The board of the corkboard that is open, and its peek
         _tempSettings += "boardname=" + Corkboard.CurrentBoard + '\n';
         _tempSettings += "boardpeek=" + (CorkboardPage.PeekOn ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        // The rows of the favorites numbered (and below, of the bookmarks)
         _tempSettings += "favoritenumbers=" + (FileExplorer.FavoriteNumbers ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // The same below the bookmarks of the Jump menu
         _tempSettings += "bookmarkpanes=" + (JumpMenu.BookmarkPanes ? DialogText.BTrue : DialogText.BFalse) + '\n';

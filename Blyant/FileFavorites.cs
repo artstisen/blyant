@@ -510,27 +510,12 @@ internal static class FileFavorites
                 continue;
             }
 
-            if (!IsThere(file)) continue;
+            if (!FileOperations.IsFileThere(file)) continue;
             files.Add(file);
             if (files.Count >= most) break;
         }
 
         return files.Order(StringComparer.OrdinalIgnoreCase).ToList();
-    }
-
-    // A file, or a link to a file that is there. (File.Exists is true for a link to a file that is not there on
-    // Linux and macOS, where it looks at the link itself, and false on Windows: the target is looked at)
-    private static bool IsThere(string file)
-    {
-        try
-        {
-            var info = new FileInfo(file);
-            return info.LinkTarget == null || info.ResolveLinkTarget(true) is { Exists: true };
-        }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
-        {
-            return false;
-        }
     }
 
     private static List<string> FoldersIn(string directory) =>

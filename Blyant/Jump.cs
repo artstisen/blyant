@@ -353,6 +353,11 @@ internal static class Jump
     }
 
     /// <summary>
+    /// ":board name" as the argument of ":jump": "board name" ("board" alone without a name)
+    /// </summary>
+    internal static string BoardPage(string name) => ("board " + name.Trim()).Trim();
+
+    /// <summary>
     /// ":board name" (":jump board name"): the board of the corkboard is chosen, and the page is "board"
     /// </summary>
     internal static string BoardOf(string argument)

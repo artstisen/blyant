@@ -538,11 +538,10 @@ internal static class Tools
             // Start by collecting all shortcuts
             _shortcutList.Add(new Shortcut(string.Empty, Lang.T("Keyboard Functions"), true));
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionStart, true));
-            _shortcutList.Add(new Shortcut(":board", Lang.T("The corkboard: files pinned as cards"), false));
             _shortcutList.Add(new Shortcut("j k 1-9 0", Lang.T("Select"), false));
             _shortcutList.Add(new Shortcut("gg G", Lang.T("First/Last (also in Configuration)"), false));
             _shortcutList.Add(new Shortcut("Enter", Lang.T("Open the selected"), false));
-            _shortcutList.Add(new Shortcut("N B R F P O E V M", Lang.T("Open the choice of the key at once"), false));
+            _shortcutList.Add(new Shortcut("N B R F P O E V C M", Lang.T("Open the choice of the key at once"), false));
             _shortcutList.Add(new Shortcut("  N", Lang.T("New file (Tab in the box: another folder)"), false));
             _shortcutList.Add(new Shortcut("  B", Lang.T("Blank page: write first, the name and folder when saved"), false));
             _shortcutList.Add(new Shortcut("  R", Lang.T("Recover unsaved text (shown when there is some)"), false));
@@ -553,6 +552,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("      N", Lang.T("In the list: the note of the project, in the editor"), false));
             _shortcutList.Add(new Shortcut("  E Ctrl+K", Lang.T("Recent files: the latest, to open one"), false));
             _shortcutList.Add(new Shortcut("  V", Lang.T("Favorites: files and folders you use most"), false));
+            _shortcutList.Add(new Shortcut("  C :board", Lang.T("The corkboard: files pinned as cards"), false));
             _shortcutList.Add(new Shortcut("  M Ctrl+O", Lang.T("The Jump menu: files, directories and pages"), false));
             _shortcutList.Add(new Shortcut("  " + DialogText.StartExit, Lang.T("Exit Blyant (without asking)"), false));
             _shortcutList.Add(new Shortcut("Tab", Lang.T("Next tab: Start, Configuration, Help"), false));
@@ -1339,12 +1339,6 @@ internal static class Tools
         _rowPosition = 0;
         _columnPosition = 0;
         Refresh();
-    }
-
-    public static void CursorTopLeftDown(int linesDown)
-    {
-        CursorTopLeft();
-        CursorDown(linesDown);
     }
 
     public static void SetCursorEx(int top, int left)

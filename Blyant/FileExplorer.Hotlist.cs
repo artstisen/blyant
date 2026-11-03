@@ -129,7 +129,7 @@ internal static partial class FileExplorer
                 {
                     // The Jump menu, or ":jump general": a page of Blyant at once (":board": the corkboard)
                     Jump.ToPage(CommandLine.Name(command) is "board" or "corkboard"
-                        ? ("board " + CommandLine.Argument(command)).Trim()
+                        ? Jump.BoardPage(CommandLine.Argument(command))
                         : CommandLine.Argument(command));
                     continue;
                 }

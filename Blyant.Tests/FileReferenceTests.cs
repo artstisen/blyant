@@ -13,6 +13,14 @@ public class FileReferenceTests
     [InlineData("- `api.md`: the API", 4, "api.md")]
     [InlineData("(see draft.typ)", 7, "draft.typ")]
     [InlineData("**intro.md**", 4, "intro.md")]
+    [InlineData("_index.md", 2, "_index.md")]
+    [InlineData("See _draft.md.", 6, "_draft.md")]
+    [InlineData("*notes.md*", 3, "notes.md")]
+    [InlineData("__notes.md__", 3, "notes.md")]
+    [InlineData("See plan.md#intro", 6, "plan.md")]
+    [InlineData("at notes.md:12", 5, "notes.md")]
+    [InlineData("at notes.md:12:5", 5, "notes.md")]
+    [InlineData("issue#12", 3, "issue#12")]
     [InlineData("two words", 3, "")]
     [InlineData("two words", 1, "two")]
     [InlineData("", 0, "")]
@@ -28,6 +36,7 @@ public class FileReferenceTests
     [InlineData("[Old](old%20notes.md)", 1, "old notes.md")]
     [InlineData("[Old](<old notes.md>)", 1, "old notes.md")]
     [InlineData("[Plan](plan.md \"The plan\")", 1, "plan.md")]
+    [InlineData("[Side](_sidebar.md)", 1, "_sidebar.md")]
     public void InALink_TheNameIsItsTarget(string line, int column, string name)
     {
         Assert.Equal(name, FileReference.At(line, column));
@@ -80,5 +89,69 @@ public class FileReferenceTests
     {
         var there = new HashSet<string> { In("a", "plan.md") };
         Assert.Equal(new[] { In("a", "plan.md") }, FileReference.Find(In("a", "plan.md"), null, Array.Empty<string>(), there.Contains));
+    }
+
+    [Fact]
+    public void ABackslash_IsASeparator_OnAllSystems()
+    {
+        var there = new HashSet<string> { In("book", "notes", "plan.md") };
+        var current = In("book", "contents.md");
+        Assert.Equal(new[] { In("book", "notes", "plan.md") },
+            FileReference.Find("notes\\plan.md", current, Array.Empty<string>(), there.Contains));
+        // and in the files known
+        Assert.Equal(new[] { In("book", "notes", "plan.md") },
+            FileReference.Find("notes\\plan.md", null, there, there.Contains));
+    }
+
+    [Fact]
+    public void APathFromTheTop_IsLookedForAboveTheFile()
+    {
+        var there = new HashSet<string> { In("site", "docs", "plan.md") };
+        var current = In("site", "blog", "2026", "post.md");
+        Assert.Equal(new[] { In("site", "docs", "plan.md") },
+            FileReference.Find("/docs/plan.md", current, Array.Empty<string>(), there.Contains));
+        // Nothing edited: the files known, by the end of their path
+        Assert.Equal(new[] { In("site", "docs", "plan.md") },
+            FileReference.Find("/docs/plan.md", null, there, there.Contains));
+    }
+
+    [Fact]
+    public void AFile_IsThere_AndOneThatIsGone_IsNot()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "blyant-gf-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        try
+        {
+            var file = Path.Combine(directory, "plan.md");
+            File.WriteAllText(file, "plan");
+            Assert.True(FileOperations.IsFileThere(file));
+            Assert.False(FileOperations.IsFileThere(Path.Combine(directory, "gone.md")));
+            Assert.False(FileOperations.IsFileThere(directory));
+        }
+        finally
+        {
+            Directory.Delete(directory, true);
+        }
+    }
+
+    [UnixFact]
+    public void ALinkToAFileThatIsGone_IsNotThere()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "blyant-gf-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        try
+        {
+            var link = Path.Combine(directory, "notes.md");
+            File.CreateSymbolicLink(link, Path.Combine(directory, "gone.md"));
+            // (File.Exists is true here on Linux and macOS)
+            Assert.True(File.Exists(link));
+            Assert.False(FileOperations.IsFileThere(link));
+            Assert.Empty(FileReference.Find("notes.md", Path.Combine(directory, "toc.md"), Array.Empty<string>(),
+                FileOperations.IsFileThere));
+        }
+        finally
+        {
+            Directory.Delete(directory, true);
+        }
     }
 }

@@ -1881,9 +1881,6 @@ public partial class TextArea
 
     #endregion
 
-    #region Drawing
-
-    // Redraw the whole screen (after a dialog or message has been shown on top of the editor)
     // "gf": open the file named in the text, as a jump (changes that are not saved are asked about first). Where
     // the name fits several files, they are shown to pick one
     private void GoToFile(string name)
@@ -1894,14 +1891,24 @@ public partial class TextArea
             return;
         }
 
+        // (the editor is left: the recording would be lost)
+        if (_engine.IsRecording)
+        {
+            _engine.ShowMessage(Lang.T("Stop recording the macro first (Esc)"), true);
+            return;
+        }
+
         FileFavorites.Load();
         FileHistory.Load();
         var current = _saveMode == SaveAsFile && !FileExplorer.IsUntitled ? FileExplorer.CurrentFilePath : null;
         var found = FileReference.Find(name, current,
-            FileFavorites.PathsInAllLists().Concat(FileHistory.Items.Select(entry => entry.Path)), File.Exists);
+            FileFavorites.PathsInAllLists().Concat(FileHistory.Items.Select(entry => entry.Path)),
+            FileOperations.IsFileThere);
         if (found.Count == 0)
         {
-            _engine.ShowMessage(Lang.F("Not next to the file, in favorites or history: {0}", name), true);
+            _engine.ShowMessage(current == null
+                ? Lang.F("Not in favorites or history: {0}", name)
+                : Lang.F("Not next to the file, in favorites or history: {0}", name), true);
             return;
         }
 
@@ -1974,6 +1981,9 @@ public partial class TextArea
         return true;
     }
 
+    #region Drawing
+
+    // Redraw the whole screen (after a dialog or message has been shown on top of the editor)
     private void RedrawAll()
     {
         Tools.HideCursor();

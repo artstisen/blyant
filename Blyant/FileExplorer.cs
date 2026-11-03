@@ -1298,7 +1298,7 @@ internal static partial class FileExplorer
     }
 
     /// <summary>
-    /// A file or directory has a new path: the favorites, the history and the jumps follow it
+    /// A file or directory has a new path: the favorites, the history, the jumps and the corkboard follow it
     /// </summary>
     internal static void PathRenamed(string oldPath, string newPath)
     {
@@ -1766,7 +1766,7 @@ internal static partial class FileExplorer
     // separator between them
     private static (int Left, int Width) PaneArea(int number)
     {
-        if (!IsDual) return (0, Init.LineWidth);
+        if (!IsDual) return (0, Init.LineWidth - 1);
         var half = (Init.LineWidth - 1) / 2;
         return number == 0 ? (0, half) : (half + 1, Init.LineWidth - half - 2);
     }

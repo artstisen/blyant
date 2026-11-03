@@ -1631,7 +1631,7 @@ internal static class JumpMenu
 
         if (CommandLine.Name(command) is "board" or "corkboard")
         {
-            return JumpToPage(("board " + CommandLine.Argument(command)).Trim());
+            return JumpToPage(Jump.BoardPage(CommandLine.Argument(command)));
         }
 
         if (command is "q" or "quit" or "close") return true;

@@ -45,12 +45,17 @@ internal static class Corkboard
         internal bool IsNote => Path.Length == 0;
 
         /// <summary>
-        /// What the card shows: its title, or the name of its file without the extension, or the first line of its
-        /// text
+        /// What the card shows: its title, or else its own name
         /// </summary>
-        internal string Name => Title.Length > 0 ? Title
-            : !IsNote ? System.IO.Path.GetFileNameWithoutExtension(Path)
-            : Text.Split('\n').Select(line => line.Trim()).FirstOrDefault(line => line.Length > 0) ?? Lang.T("Note");
+        internal string Name => Title.Length > 0 ? Title : OwnName;
+
+        /// <summary>
+        /// The name of the card without a title: the name of its file without the extension, or the first line of
+        /// its text (a tab in it as blank space, so the card keeps its frame)
+        /// </summary>
+        internal string OwnName => (!IsNote ? System.IO.Path.GetFileNameWithoutExtension(Path)
+            : Text.Split('\n').Select(line => line.Trim()).FirstOrDefault(line => line.Length > 0) ?? Lang.T("Note"))
+            .Replace('\t', ' ');
     }
 
     private static List<Card> _cards = new();
@@ -122,6 +127,25 @@ internal static class Corkboard
     }
 
     /// <summary>
+    /// Read the cards again if their file was changed (by another page while this one was left): what u puts back is
+    /// kept when it was not
+    /// </summary>
+    internal static void Reload()
+    {
+        try
+        {
+            var text = File.Exists(FilePath) ? File.ReadAllText(FilePath, Encoding.UTF8) : string.Empty;
+            if (!_unreadable && text.Replace("\r", string.Empty) == Serialize()) return;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            // Read below, as it can be
+        }
+
+        Load();
+    }
+
+    /// <summary>
     /// Open a board
     /// </summary>
     /// <param name="name">Its name (empty: the main board)</param>
@@ -156,7 +180,7 @@ internal static class Corkboard
             last = new Card
             {
                 Number = number, X = Math.Max(0, x), Y = Math.Max(0, y), Color = color, Title = parts[3].Trim(),
-                Path = parts[4].Trim()
+                Path = FileOperations.ListedPath(parts[4])
             };
             _cards.Add(last);
         }
@@ -215,6 +239,29 @@ internal static class Corkboard
         {
             _cards = open;
         }
+    }
+
+    /// <summary>
+    /// Change a card on a board, the open one or another (as the cards may have been read again since the card was
+    /// taken: a note written in the editor, where the board can be changed). The change is given the card with the
+    /// number, and returns true if it changed it; then the board is saved
+    /// </summary>
+    /// <returns>False if the card is not there, or nothing was changed or saved</returns>
+    internal static bool ChangeCard(string board, int number, Func<Card, bool> change)
+    {
+        if (board == _currentBoard)
+        {
+            return Numbered(number) is { } card && change(card) && Save() == DialogText.Success;
+        }
+
+        var changed = false;
+        WithBoard(board, () =>
+        {
+            if (Numbered(number) is not { } card || !change(card)) return;
+            FileIo.WriteAllBytesSafe(Boards.PathOf(board), new UTF8Encoding(false).GetBytes(Serialize()));
+            changed = true;
+        });
+        return changed;
     }
 
     /// <summary>
@@ -459,11 +506,14 @@ internal static class Corkboard
     }
 
     /// <summary>
-    /// Give a card a title of its own (one with tabs or line breaks has them as blank space)
+    /// Give a card a title of its own (one with tabs or line breaks has them as blank space). Its own name, or an empty
+    /// title, takes the title away
     /// </summary>
     internal static void Rename(Card card, string title)
     {
-        card.Title = string.Join(' ', title.Split('\t', '\r', '\n')).Trim();
+        title = string.Join(' ', title.Split('\t', '\r', '\n')).Trim();
+        // (the name it has without one: no title of its own, so it follows its file or text)
+        card.Title = title == card.OwnName ? string.Empty : title;
     }
 
     /// <summary>
@@ -496,6 +546,7 @@ internal static class Corkboard
     private static bool FollowHere(string oldPath, string newPath)
     {
         var changed = false;
+        if (!CanKeep(newPath)) return false;
         foreach (var card in _cards.Where(card => !card.IsNote))
         {
             if (FileOperations.SamePath(card.Path, oldPath))
@@ -539,14 +590,23 @@ internal static class Corkboard
     }
 
     /// <summary>
+    /// A path the file of the board can keep: a card is a line, with tabs between its parts (Linux and macOS allow
+    /// both in names)
+    /// </summary>
+    internal static bool CanKeep(string path) => path.IndexOfAny(new[] { '\t', '\r', '\n' }) < 0;
+
+    /// <summary>
     /// ":pin": pin a file to the open board, at a free place on the board as the window is now
     /// </summary>
     /// <returns>The message that tells what was done (with the number of the card)</returns>
-    internal static string PinWithMessage(string path)
+    /// <param name="path">The file</param>
+    /// <param name="height">The height of the board on the page (less with the peek below it)</param>
+    internal static string PinWithMessage(string path, int height)
     {
-        Load();
+        if (!CanKeep(path)) return Lang.T("A path with a tab or a line break is not kept");
+        Reload();
         if (CardOf(path) is { } there) return Lang.F("Already on the corkboard ({0}): {1}", there.Number, there.Name);
-        var card = Add(path, BoardWidth, BoardHeight);
+        var card = Add(path, BoardWidth, height);
         var status = Save();
         return status == DialogText.Success
             ? Lang.F("Pinned to the corkboard ({0}): {1}", card.Number, card.Name)

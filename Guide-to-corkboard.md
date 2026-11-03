@@ -5,13 +5,13 @@ The corkboard is a page where files are pinned as cards, like notes on a board, 
 It is opened with `:board` (or `:corkboard`) from every command line (the start page, the file browser, the favorites, the history, the hotlist, the search results, the Jump menu and the editor), with **Corkboard** (`C`) on the Start tab of the start page, and with `:jump board` or the Blyant tab of the [Jump menu](Guide-to-jump-menu.md#jump-menu). It opens on top of the page you were on, and `Esc` takes you back there. `:board name` opens the board with that name (`:board main` the main board).
 
 ## Pinning files
-- `:pin` in the editor pins the file being edited, and in the file browser, the favorites, the history and the search results the selected file, to the board that is open. The message tells the number of its card: `Pinned to the corkboard (4): Chapter one`. A file is pinned once to a board; pinned again, you are told where it is
+- `:pin` in the editor pins the file being edited, and in the file browser, the favorites, the history and the search results the selected file, to the board that is open. The message tells the number of its card: `Pinned to the corkboard (4): Chapter one`. A file is pinned once to a board; pinned again, you are told where it is. A file whose path has a tab or a line break in it (Linux and macOS allow them) cannot be pinned
 - `N` (or `:new`) on the corkboard: pick a file in the file browser to pin
 
 A new card is placed at the first free place, row by row, with a column between the cards; on a full board it is put on top of the others, a step from the last one. Its number is the lowest one that is free, and it keeps it.
 
 ## Note cards
-`A` (or `:note`) adds a note card: its text is written in the editor, and kept when the editor is closed. The first line of the text is the title of the card, unless you give it a title of its own with `X`. `Enter` on a note opens its text in the editor again. A note card has `+` in its corners, where the card of a file has the corners of the frame. A new note left without text is not kept.
+`A` (or `:note`) adds a note card: its text is written in the editor, and kept when the editor is closed. The first line of the text is the title of the card, unless you give it a title of its own with `X`. `Enter` on a note opens its text in the editor again. A note card has `+` in its corners, where the card of a file has the corners of the frame. A new note left without text is not kept, also when the editor is left by a jump. The text is kept on the board it was written for, also when another board is opened from the editor (`:board name`).
 
 ## On the corkboard
 - `Tab` `Shift+Tab` Select the next/previous card, by number
@@ -21,7 +21,7 @@ A new card is placed at the first free place, row by row, with a column between 
 - `V` Move the selected card: `h` `j` `k` `l` (or the arrow keys) move it one step, `H` `J` `K` `L` five steps, and `Esc` (or `Enter`, `V`) ends the moving
 - `T` (or `:top`) Put the card on top of the others, `E` (or `:bottom`) below them. Where cards overlap, the one on top covers the others
 - `C` (or `:color`) Pick the color of the card, its frame and title, from the 16 colors
-- `X` (or `:rename title`) Give the card a title of its own (the file keeps its name). Without one, the card shows the name of its file without the extension
+- `X` (or `:rename title`) Give the card a title of its own (the file keeps its name). Without one, the card shows the name of its file without the extension, or the first line of a note. The box shows the name the card has: `Enter` on its own name keeps it without a title, so it goes on following its file, and typing its own name takes a title away
 - `D` (or `:remove`) Take the card off the board, after asking. The file stays where it is. `u` (or `:undo`) puts it back
 - `I` (or `:info`) Information about the card: for a file, as `I` in the file browser shows it (its size, when it was changed ...), and for a note, its words and lines
 - `P` (or `:peek`) The peek on or off: the first lines of the selected card's file (or the text of a note) below the board. It stays on until you turn it off
@@ -47,4 +47,4 @@ The board that is open is shown in the top bar and remembered (setting `boardnam
 ## Where the cards are kept
 The cards of the main board are kept in `board.txt` in the data directory, and those of the other boards in files with their names in the directory `boards` next to it. Each card is one line: its number, its place (column and row), its color, its own title and the path of its file, with a tab character between them. A note card has no path, and its text is on the line after it. The cards are drawn in the order of the lines, so the last one is on top.
 
-A card's place is kept as it is placed. In a smaller window, a card that would be outside it is drawn at its edge, and it is back in its place in the larger window. When a file is renamed or moved in Blyant (in the file browser or with `:rename` in the editor), its cards follow it, on all the boards.
+A card's place is kept as it is placed. In a smaller window, a card that would be outside it is drawn at its edge, and it is back in its place in the larger window. When a file is renamed or moved in Blyant (in the file browser or with `:rename` in the editor), its cards follow it, on all the boards. What `u` puts back is kept while you visit another page, unless the board was changed there.

@@ -63,13 +63,15 @@ internal sealed class NamedLists
 
     /// <summary>
     /// The list with a name (upper and lower case alike): its name as it is written, empty for the main list, and
-    /// null if there is none
+    /// null if there is none. A list with the name written the same way comes first (Linux can have "Plot" and "plot")
     /// </summary>
     internal string? Find(string name)
     {
         name = name.Trim();
         if (name.Equals(MainWord, StringComparison.OrdinalIgnoreCase)) return string.Empty;
-        return Names().FirstOrDefault(list => list.Equals(name, StringComparison.OrdinalIgnoreCase));
+        var names = Names();
+        return names.FirstOrDefault(list => list.Equals(name, StringComparison.Ordinal)) ??
+               names.FirstOrDefault(list => list.Equals(name, StringComparison.OrdinalIgnoreCase));
     }
 
     /// <summary>

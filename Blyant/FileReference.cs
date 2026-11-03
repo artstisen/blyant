@@ -14,6 +14,9 @@ internal static class FileReference
     // A Markdown link, [text](target) or [text](<target with spaces>), with a title after the target if any
     private static readonly Regex Link = new(@"\[[^\]]*\]\((?:<([^>]+)>|([^)\s]+))(?:\s+""[^""]*"")?\)");
 
+    // A place in a file written after its name in a text: "plan.md:12" or "plan.md:12:5" (a line and column)
+    private static readonly Regex LineAfter = new(@"^(.+\.[^.\\/:]+):\d+(?::\d+)?$");
+
     // The kinds a name without an extension can be (as written in a table of contents)
     private static readonly string[] Extensions = { ".md", ".typ" };
 
@@ -49,26 +52,35 @@ internal static class FileReference
         while (start > 0 && IsNameChar(line[start - 1])) start--;
         var end = column + 1;
         while (end < line.Length && IsNameChar(line[end])) end++;
-        return Clean(line[start..end]);
+        var name = Clean(line[start..end]);
+        // A place in the file after its name is not part of it: "plan.md#intro", "plan.md:12"
+        var hashAt = name.IndexOf('#');
+        if (hashAt > 0 && Path.HasExtension(name[..hashAt])) name = name[..hashAt];
+        var place = LineAfter.Match(name);
+        return place.Success ? place.Groups[1].Value : name;
     }
 
     private static bool IsNameChar(char c) => !char.IsWhiteSpace(c) && NotInName.IndexOf(c) < 0;
 
     /// <summary>
-    /// A name as written, without what is around it in a text: blank space, quotes, and the marks that end a
-    /// sentence ("see notes.md." is notes.md)
+    /// A name as written, without what is around it in a text: blank space, quotes, the marks that end a sentence
+    /// ("see notes.md." is notes.md), and the marks of emphasis around it ("*notes.md*", "__notes.md__"). Those are
+    /// the same at both ends: a name of its own can start with one ("_index.md")
     /// </summary>
     internal static string Clean(string name)
     {
-        name = name.Replace("\r", string.Empty).Replace("\n", " ").Trim().Trim('`', '"', '\'', '<', '>', '*', '_');
+        name = name.Replace("\r", string.Empty).Replace("\n", " ").Trim().Trim('`', '"', '\'', '<', '>');
+        name = name.TrimEnd('.', ',', ';', ':', '!', '?');
+        while (name.Length > 2 && (name[0] == '*' || name[0] == '_') && name[^1] == name[0]) name = name[1..^1];
         return name.TrimEnd('.', ',', ';', ':', '!', '?').Trim();
     }
 
     /// <summary>
     /// The files a name can be. A full path, or a path from the folder of the file being edited, that is there is
-    /// the file; else the files Blyant knows (the favorites and the history) whose path ends with the name, upper and
-    /// lower case alike. A name without an extension can also be a Markdown or Typst file. The file being edited is
-    /// left out
+    /// the file; a path from the top of a site or repository ("/docs/plan.md") is also looked for from the folders
+    /// above it. Else the files Blyant knows (the favorites and the history) whose path ends with the name, upper and
+    /// lower case alike. A name without an extension can also be a Markdown or Typst file. "\" in a name is a
+    /// separator on all systems (a name written on Windows). The file being edited is left out
     /// </summary>
     /// <param name="name">The name, as written</param>
     /// <param name="currentFile">The file being edited (null: none)</param>
@@ -78,7 +90,7 @@ internal static class FileReference
         Func<string, bool> isFile)
     {
         var found = new List<string>();
-        name = Clean(name);
+        name = Clean(name).Replace('\\', '/');
         if (name.Length == 0) return found;
         var names = Path.HasExtension(name) ? new[] { name } : Extensions.Select(ext => name + ext).Prepend(name).ToArray();
 
@@ -107,6 +119,17 @@ internal static class FileReference
         }
 
         if (found.Count > 0) return found;
+        // A path from the top ("/docs/plan.md", not a network path "//server"): from the folders above the file,
+        // the nearest first
+        foreach (var each in names.Where(each => each.StartsWith('/') && !each.StartsWith("//", StringComparison.Ordinal)))
+        {
+            for (var above = folder; above != null; above = Path.GetDirectoryName(above))
+            {
+                Add(Path.Combine(above, each.TrimStart('/')));
+            }
+        }
+
+        if (found.Count > 0) return found;
 
         // The files Blyant knows, by the end of their path ("./" and "../" in front of the name are left out)
         foreach (var path in known)
@@ -117,10 +140,10 @@ internal static class FileReference
         return found;
     }
 
-    // A name without what leads to it from a folder ("../notes/plan.md" is notes/plan.md)
+    // A name without what leads to it from a folder ("../notes/plan.md" and "/notes/plan.md" are notes/plan.md)
     private static string Relative(string name)
     {
-        name = name.Replace('\\', '/');
+        name = name.Replace('\\', '/').TrimStart('/');
         while (name.StartsWith("./", StringComparison.Ordinal) || name.StartsWith("../", StringComparison.Ordinal))
         {
             name = name[(name.IndexOf('/') + 1)..];

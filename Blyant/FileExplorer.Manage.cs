@@ -76,7 +76,7 @@ internal static partial class FileExplorer
                 break;
             case "board":
             case "corkboard":
-                Jump.ToPage(("board " + argument).Trim());
+                Jump.ToPage(Jump.BoardPage(argument));
                 break;
             case "pin":
                 // The selected file to the corkboard
@@ -527,7 +527,8 @@ internal static partial class FileExplorer
         }
     }
 
-    // The file history, the jumps (Recent) and the splits follow a file or directory that was renamed or moved
+    // The file history, the jumps (Recent), the splits and the corkboard follow a file or directory that was renamed or
+    // moved
     private static void HistoryFollows(string oldPath, string newPath)
     {
         Corkboard.Follow(oldPath, newPath);
@@ -1035,7 +1036,7 @@ internal static partial class FileExplorer
     /// </summary>
     /// <returns>The message that tells what was done (with the number of the card)</returns>
     internal static string PinFile(string path) =>
-        Directory.Exists(path) ? OnlyFilesArePinned : Corkboard.PinWithMessage(path);
+        Directory.Exists(path) ? OnlyFilesArePinned : Corkboard.PinWithMessage(path, CorkboardPage.Height);
 
     /// <summary>
     /// I on the corkboard: information about a file, as in the file browser
@@ -1044,7 +1045,18 @@ internal static partial class FileExplorer
     internal static string ShowFileInfo(string path)
     {
         _message = string.Empty;
-        ShowInfo(new Item(System.IO.Path.GetFileName(path), path, false, new FileInfo(path).Length));
+        long length;
+        try
+        {
+            length = new FileInfo(path).Length;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            // (gone since it was looked for)
+            return e is FileNotFoundException ? DialogText.FileNotFound : e.Message;
+        }
+
+        ShowInfo(new Item(System.IO.Path.GetFileName(path), path, false, length));
         var message = _message;
         _message = string.Empty;
         return message;

@@ -104,6 +104,24 @@ internal static class FileOperations
     private static bool Exists(string path) => File.Exists(path) || Directory.Exists(path);
 
     /// <summary>
+    /// A file, or a link to a file that is there. (File.Exists is true for a link to a file that is not there on
+    /// Linux and macOS, where it looks at the link itself, and false on Windows: the target is looked at)
+    /// </summary>
+    internal static bool IsFileThere(string path)
+    {
+        if (!File.Exists(path)) return false;
+        try
+        {
+            var info = new FileInfo(path);
+            return info.LinkTarget == null || info.ResolveLinkTarget(true) is { Exists: true };
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
     /// A path with the links in it followed, so the same place is written the same way: on Linux and macOS a
     /// directory can be a link to another (on macOS "/var" and "/tmp" are links into "/private"), and the current
     /// directory is told with the links followed. The parts that are not there are kept as they are. On Windows,
