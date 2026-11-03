@@ -10,6 +10,19 @@ Blyant has several features inspired by popular Neovim plugins for text navigati
 ![The editor in split view, with the commands listed while one is typed](docs/screenshots/split-view.svg)
 
 
+## The corkboard
+Plan a book, an article or a thesis on a corkboard: its chapters, research folders and loose ideas are cards that you place freely, color, and lay on top of each other. Each project has a corkboard of its own, kept in the project folder, so it goes with the project when you move, copy or sync it.
+
+![The corkboard of a project: chapters, a research folder, files and notes as cards in colors, with the peek of a chapter](docs/screenshots/corkboard.svg)
+
+- **Cards of files, folders and notes**: `:pin` a file or folder from the editor, the file browser or the lists, or write a note card (`A`) with your own text. `Enter` opens the file in the editor, the folder in the file browser, or the note
+- **Arrange them your way**: move a card with `V` and `h` `j` `k` `l`, put it on top of the others or below them, give it a color and a title of its own, or lay them all out in rows with `:arrange number`, `:arrange name` or `:arrange color`
+- **See without opening**: `P` shows the start of the selected card's file (or what a folder holds) below the board, and `I` tells about it
+- **A board for each project**: `B` in the list of projects opens its board, and the cards are shown beside the list; `:list` keeps more boards of your own
+- **Safe to try**: `D` takes a card off (the file stays), `:clear` takes them all off after asking, and `u` puts them back. Cards follow their files when you rename or move them in Blyant
+
+See the [guide to the corkboard](Guide-to-corkboard.md).
+
 ## Key features
 
 **Files and projects**
@@ -60,8 +73,8 @@ The screenshots are of the real program, made with [tools/screenshots.py](tools/
 | Color schemes: the colors of the command line, with a sample | Split view, and the commands listed while one is typed |
 | ![Another file read only beside the text](docs/screenshots/split-file.svg) | ![The latest files at a key](docs/screenshots/recent-files.svg) |
 | `:view` (or `:split name`): another file read only beside the text | `Ctrl+K`: the latest files, to switch to one |
-| ![Editing Typst](docs/screenshots/typst.svg) | |
-| Editing Typst: markup, math and code in their colors | |
+| ![Editing Typst](docs/screenshots/typst.svg) | ![The corkboard of a project](docs/screenshots/corkboard.svg) |
+| Editing Typst: markup, math and code in their colors | The corkboard of a project: files, folders and notes as cards |
 
 ## Getting started
 1. Download the build for your platform from the [releases page](https://github.com/artstisen/blyant/releases), and unzip it into a directory of your choice.
