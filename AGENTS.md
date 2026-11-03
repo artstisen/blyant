@@ -46,7 +46,8 @@ Text shown to the user is written in English in the code and given to `Lang.T(".
 ## Linux and macOS
 Blyant is written and tested on Windows, but it must work the same on Linux and macOS, and those cannot be tried on this computer. Code behind `!OperatingSystem.IsWindows()` and tests marked `[UnixFact]` do not run on Windows: only the GitHub workflow `Build and test` runs them, on all three systems.
 
-- Do not take the behavior of the file system from Windows. `File.Exists` is true on Linux and macOS for a link to a file that is not there (on Windows it is false), names of files are case-sensitive, a name starting with `.` is hidden, and the separator is `/`: use `Path.Combine`, never a written `\`
+- Do not take the behavior of the file system from Windows. `File.Exists` is true on Linux and macOS for a link to a file that is not there (on Windows it is false), names of files are case-sensitive on Linux, but on macOS usually not (its file systems take `Plot` and `plot` as the same name, as Windows does): code must work both ways, and a test of names that differ only in case first checks that the file system tells them apart. A name starting with `.` is hidden, and the separator is `/`: use `Path.Combine`, never a written `\`
+- On Windows a path that starts with `/` or `\` without a drive (`/docs/plan.md`) is taken from the drive Blyant was started on, which can be another than the drive of the file it is about (on the GitHub workflow they differ: `C:` and `D:`). Take the drive from a path you know (`Path.GetPathRoot` of the file), never from `Path.GetFullPath` alone
 - A change to files, paths, links or the terminal gets tests of what differs between the systems, also a `[UnixFact]` when it cannot be tried on Windows
 - Passing tests on Windows say nothing about the rest: look at the workflow, also for a change that seems to be about Windows only
 
