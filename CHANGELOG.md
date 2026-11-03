@@ -1,6 +1,7 @@
 # Changes
 
 ## v1.3.1 (unreleased)
+- **`gf` opens the file named in the text** (go to file, as in Vim): the file name at the cursor, the target of a Markdown link, or the text selected. It is looked for next to the file being edited, and else in the favorites (all the lists) and the file history, so a table of contents of file names leads to the files. Several files of the name are shown to pick one.
 - **`:bookmark` in the lists of the file browser**: in the favorites, the history, the hotlist and the search results, `:bookmark` bookmarks the selected file or directory in the Jump menu, as in the file browser (`:bookmark name` with a name, `:bookmark! name` moves the bookmark with that name there).
 - **`:import` completes what follows it**: after `:import ` the box above the command line lists `bookmarks` and `folder` in the favorites, and `favorites` in the Jump menu, and `Tab` completes them.
 - **One width for all pages**: the favorites, the history, the hotlist, the search results and the editor drew their lines one column wider than the other pages, so the box of commands and the command line ended a column short there (in the editor a `-` was left at the end of the command line). They now end in the same column.

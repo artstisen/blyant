@@ -722,6 +722,10 @@ public partial class TextArea
                 _shownStatus = null;
                 break;
             }
+            case EditorRequest.GoToFile:
+                Tools.HideCursor();
+                GoToFile(_engine.GoToFileName);
+                break;
             case EditorRequest.CopyPath:
             {
                 // Only a file has a path
@@ -1873,6 +1877,45 @@ public partial class TextArea
     #region Drawing
 
     // Redraw the whole screen (after a dialog or message has been shown on top of the editor)
+    // "gf": open the file named in the text, as a jump (changes that are not saved are asked about first). Where
+    // the name fits several files, they are shown to pick one
+    private void GoToFile(string name)
+    {
+        if (name.Length == 0)
+        {
+            _engine.ShowMessage(Lang.T("No file name at the cursor"), true);
+            return;
+        }
+
+        FileFavorites.Load();
+        FileHistory.Load();
+        var current = _saveMode == SaveAsFile && !FileExplorer.IsUntitled ? FileExplorer.CurrentFilePath : null;
+        var found = FileReference.Find(name, current,
+            FileFavorites.PathsInAllLists().Concat(FileHistory.Items.Select(entry => entry.Path)), File.Exists);
+        if (found.Count == 0)
+        {
+            _engine.ShowMessage(Lang.F("Not next to the file, in favorites or history: {0}", name), true);
+            return;
+        }
+
+        var path = found[0];
+        if (found.Count > 1)
+        {
+            // (as many as the box has room for, with the end of each path: the name and its folders)
+            var shown = found.Take(Math.Max(2, Init.LineCount - 10)).ToList();
+            Draw();
+            var picked = ChoiceBox.Pick(Lang.T("Go to file"), Lang.F("Files of that name: {0}", found.Count),
+                string.Empty, shown.Select(file => TextMetrics.KeepEnd(file, Init.LineWidth - 24)).ToList(),
+                ChoiceBox.NumberKeys(shown.Count), 0, false);
+            RedrawAll();
+            if (picked < 0) return;
+            path = shown[picked];
+        }
+
+        Jump.ToPlace(new JumpTarget(JumpKind.File, path), LeaveForJump);
+        RedrawAll();
+    }
+
     // A yank too long for the clipboard, with the paste bin turned off: ask whether to write it to the paste bin, this
     // once (the setting stays off), and show where it went. False if not wanted
     private bool WriteToPasteBinIfWanted(string text)

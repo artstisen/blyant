@@ -888,6 +888,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionEditor, true));
             _shortcutList.Add(new Shortcut(":jump Ctrl+O", Lang.T("The Jump menu: files, directories and pages"), false));
             _shortcutList.Add(new Shortcut("Ctrl+K :recent", Lang.T("The latest files: Enter or 1-9 opens one"), false));
+            _shortcutList.Add(new Shortcut("gf", Lang.T("Open the file named at the cursor (or selected)"), false));
             _shortcutList.Add(new Shortcut(":book 3", Lang.T("Jump to bookmark 3 (:book alone: the bookmarks)"), false));
             _shortcutList.Add(new Shortcut(string.Empty, Lang.T("Modes"), true));
             _shortcutList.Add(new Shortcut("Esc", Lang.T("Normal mode (navigate and give commands)"), false));

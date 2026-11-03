@@ -407,6 +407,34 @@ internal sealed partial class EditorEngine
                     case 'v' when _operator == NoKey:
                         ReselectLast();
                         break;
+                    case 'f' when _operator == NoKey && Mode != EditorMode.VisualBlock:
+                    {
+                        // "gf": the file named at the cursor (a word, or the target of a Markdown link), or the
+                        // text selected (a name with blank space in it)
+                        if (IsVisual)
+                        {
+                            var start = _visualAnchor < Cursor ? _visualAnchor : Cursor;
+                            var stop = _visualAnchor < Cursor ? Cursor : _visualAnchor;
+                            if (Mode == EditorMode.VisualLine)
+                            {
+                                start = new TextPos(start.Line, 0);
+                                stop = new TextPos(stop.Line, Math.Max(0, Buffer.LineLength(stop.Line) - 1));
+                            }
+
+                            var end = stop.Col < Buffer.LineLength(stop.Line)
+                                ? new TextPos(stop.Line, stop.Col + TextMetrics.ElementLength(Buffer[stop.Line], stop.Col))
+                                : stop;
+                            GoToFileName = FileReference.Clean(Buffer.GetText(start, end));
+                            Mode = EditorMode.Normal;
+                        }
+                        else
+                        {
+                            GoToFileName = FileReference.At(CurrentLine, Cursor.Col);
+                        }
+
+                        if (!SingleLine) _request = EditorRequest.GoToFile;
+                        break;
+                    }
                     case 's' or 'S' when _operator == NoKey:
                         // The next/previous misspelled word (as "]s" "[s", for keyboards without [ and ])
                         JumpToMisspelled(cmd == 's', TakeCount() ?? 1);

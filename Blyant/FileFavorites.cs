@@ -184,6 +184,20 @@ internal static class FileFavorites
     }
 
     /// <summary>
+    /// The files and directories of all the lists (the one that is open first)
+    /// </summary>
+    internal static List<string> PathsInAllLists()
+    {
+        var paths = List.Where(item => !item.IsFolder).Select(item => item.Path).ToList();
+        foreach (var name in ListNames().Prepend(string.Empty).Where(name => name != CurrentList))
+        {
+            WithList(name, () => paths.AddRange(List.Where(item => !item.IsFolder).Select(item => item.Path)));
+        }
+
+        return paths;
+    }
+
+    /// <summary>
     /// What is in a list, a line for each favorite or folder, to show it in the box of lists
     /// </summary>
     internal static string ListPreview(string name)

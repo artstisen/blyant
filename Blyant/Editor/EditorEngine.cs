@@ -41,6 +41,7 @@ internal enum EditorRequest
     PasteBinRead, // ":pbread": insert the text of the paste bin at the cursor
     PasteBinClear, // ":pbclear": empty the paste bin
     PasteBinPath, // ":pbpath": copy the path of the paste bin
+    GoToFile, // "gf": open the file named at the cursor, or selected (GoToFileName)
     ClipboardSettings, // ":clipboard": show the clipboard settings
     DocumentInfo, // ":info": show the size, the dates and the path of the text being edited
     Jump, // ":jump", ":ju" or Ctrl+O: show the Jump menu, or go to a page (JumpArgument)

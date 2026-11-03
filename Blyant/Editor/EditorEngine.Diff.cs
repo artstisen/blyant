@@ -29,6 +29,11 @@ internal sealed partial class EditorEngine
     internal string JumpArgument { get; private set; } = string.Empty;
 
     /// <summary>
+    /// The name of the file "gf" opens (EditorRequest.GoToFile): at the cursor, or the text selected
+    /// </summary>
+    internal string GoToFileName { get; private set; } = string.Empty;
+
+    /// <summary>
     /// The name given with ":w name" (EditorRequest.WriteCopy) or ":saveas name" (EditorRequest.SaveAs)
     /// </summary>
     internal string WriteName { get; private set; } = string.Empty;
