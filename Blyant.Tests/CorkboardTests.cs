@@ -409,6 +409,8 @@ public class CorkboardTests : IDisposable
     public void BoardsWhoseNamesDifferInCase_AreFoundAsWritten()
     {
         Assert.Equal(DialogText.Success, Corkboard.NewBoard("Plot"));
+        // (on a file system where upper and lower case are alike, as most on macOS, there is only one)
+        if (File.Exists(Corkboard.Boards.PathOf("plot"))) return;
         // (made beside it, as by another program: Blyant takes it as the same name)
         File.WriteAllText(Corkboard.Boards.PathOf("plot"), string.Empty);
         Assert.Equal("plot", Corkboard.Boards.Find("plot"));

@@ -150,8 +150,13 @@ internal static class FileReference
             }
 
             if (found.Count > 0) return found;
-            // Last, from the root of the drive (on Linux and macOS a full path is written so too)
-            foreach (var each in fromTop) Add(each);
+            // Last, from the root of the drive of the file being edited (on Linux and macOS a full path is written so
+            // too). On Windows "/" alone would be the root of the drive Blyant was started on
+            var driveRoot = folder == null ? null : Path.GetPathRoot(folder);
+            foreach (var each in fromTop)
+            {
+                Add(string.IsNullOrEmpty(driveRoot) ? each : Path.Combine(driveRoot, each.TrimStart('/')));
+            }
             if (found.Count > 0) return found;
         }
 
