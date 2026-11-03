@@ -5,7 +5,7 @@ The corkboard is a page where files are pinned as cards, like notes on a board, 
 It is opened with `:board` (or `:corkboard`) from every command line (the start page, the file browser, the favorites, the history, the hotlist, the search results, the Jump menu and the editor), with **Corkboard** (`C`) on the Start tab of the start page, and with `:jump board` or the Blyant tab of the [Jump menu](Guide-to-jump-menu.md#jump-menu). It opens on top of the page you were on, and `Esc` takes you back there. `:board name` opens the board with that name (`:board main` the main board).
 
 ## Pinning files and folders
-- `:pin` in the editor pins the file being edited, and in the file browser, the favorites, the history and the search results the selected file or folder, to the board that is open. The message tells the number of its card: `Pinned to the corkboard (4): Chapter one`. A file or folder is pinned once to a board; pinned again, you are told where it is. One whose path has a tab or a line break in it (Linux and macOS allow them) cannot be pinned
+- `:pin` in the editor pins the file being edited, and in the file browser, the favorites, the history, the hotlist and the search results the selected file or folder, to the board that is open. The message tells the number of its card: `Pinned to the corkboard (4): Chapter one`. A file or folder is pinned once to a board; pinned again, you are told where it is. One whose path has a tab or a line break in it (Linux and macOS allow them) cannot be pinned
 - `N` (or `:new`) on the corkboard: pick a file in the file browser to pin
 - `F` (or `:folder`) on the corkboard: pick a folder in the file browser to pin (go to it and press `S`)
 
@@ -34,7 +34,7 @@ A new card is placed at the first free place, row by row, with a column between 
 - `C` (or `:color`) Pick the color of the card, its frame and title, from the 16 colors
 - `X` (or `:rename title`) Give the card a title of its own (the file keeps its name). Without one, the card shows the name of its file without the extension, or the first line of a note. The box shows the name the card has: `Enter` on its own name keeps it without a title, so it goes on following its file, and typing its own name takes a title away
 - `D` (or `:remove`) Take the card off the board, after asking. The file stays where it is. `u` (or `:undo`) puts it back
-- `:clear` Take all the cards off the board, after asking in a box where `No` is selected and a key typed by mistake does not answer. The files stay where they are, and `u` puts the cards back (a card added since keeps its number)
+- `:clear` Take all the cards off the board, after asking in a box where `No` is selected and a key typed by mistake does not answer. The files stay where they are, and `u` puts the cards back (a card added since keeps its number, and a card put back that had it gets a new one)
 - `I` (or `:info`) Information about the card: for a file, as `I` in the file browser shows it (its size, when it was changed ...), and for a note, its words and lines
 - `P` (or `:peek`) The peek on or off: the first lines of the selected card's file (or the text of a note) below the board. It stays on until you turn it off
 - `/` Filter the cards: the others are dimmed, and `Tab` goes through those that are left. `Esc` shows all again

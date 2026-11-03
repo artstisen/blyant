@@ -38,9 +38,11 @@ internal static class ProjectsBox
             {
                 RowColor = i => info[i].Color,
                 Side = i => info[i].Note,
-                // To the right of the list: the corkboard of the project
+                // To the right of the list: the corkboard of the project (nothing when there is no project, or it is
+                // missing)
                 Beside = (i, top, left, width, height) =>
-                    CorkboardPage.DrawSnapshot(i >= 0 ? info[i].Board : null, top, left, width, height),
+                    CorkboardPage.DrawSnapshot(i >= 0 ? info[i].Board : null, top, left, width, height,
+                        i >= 0 && !projects[i].Missing),
                 BesideWidth = BoardColumnWidth,
                 EmptyText = Lang.T("No projects yet: P makes a new one, A adds a folder"),
                 // Below the list: where the project is and what it holds, and the start of its note
@@ -85,7 +87,9 @@ internal static class ProjectsBox
                                     return PickListBox.KeyUse.Close;
                             }
 
-                            // Drawn again: the command line (and its list of commands) covered the box
+                            // Drawn again: the command line (and its list of commands) covered the box. A command may
+                            // have changed the color, note or board of the project
+                            if (project != null) info[i] = Info(project.Path);
                             return PickListBox.KeyUse.Used;
                     }
 

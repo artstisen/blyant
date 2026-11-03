@@ -345,7 +345,7 @@ internal static class CorkboardPage
         {
             // A new note left without text is not kept, also when the editor was left by a jump
             if (Corkboard.ChangeCard(board, card.Number, kept => kept.IsNote && kept.Text.Length == 0 &&
-                                                                 Corkboard.Discard(kept)) &&
+                                                                 Corkboard.Discard(kept)) == DialogText.Success &&
                 Selected == null)
             {
                 SelectLast();
@@ -364,14 +364,20 @@ internal static class CorkboardPage
             written =>
             {
                 var text = Notes.Clean(written);
-                if (!Corkboard.ChangeCard(board, card.Number, kept =>
-                    {
-                        if (!kept.IsNote) return false;
-                        kept.Text = text;
-                        return true;
-                    }))
+                var result = Corkboard.ChangeCard(board, card.Number, kept =>
+                {
+                    if (!kept.IsNote) return false;
+                    kept.Text = text;
+                    return true;
+                });
+                // (not there, or saving it failed: told why)
+                if (result == null || result == string.Empty)
                 {
                     _message = Lang.T("The card is no longer on the board: the note was not kept");
+                }
+                else if (result != DialogText.Success)
+                {
+                    _message = result;
                 }
             });
         if (error != null) _message = error;
@@ -757,9 +763,10 @@ internal static class CorkboardPage
 
         var wasOpen = Corkboard.CurrentBoard == name;
         var path = Corkboard.BoardFile(name);
+        var existed = File.Exists(path);
         var result = Corkboard.DeleteBoard(name, out var trashedPath);
         // (deleted for good it is logged where it is deleted)
-        if (FileOperations.DeleteToTrash)
+        if (FileOperations.DeleteToTrash && existed)
         {
             EventLog.Add(DialogText.LogFile + "Delete (to the trash): " + path +
                          (trashedPath.Length > 0 ? " -> " + trashedPath : string.Empty) +
@@ -771,8 +778,6 @@ internal static class CorkboardPage
             ChoiceBox.Message(Lang.T("Delete board"), result, string.Empty);
             return PickListBox.KeyUse.Used;
         }
-
-        if (!FileOperations.DeleteToTrash) EventLog.Add(DialogText.LogFile + "Delete: " + path);
 
         // (the main board is open now: Corkboard.DeleteBoard opened it)
         if (wasOpen)
@@ -794,7 +799,7 @@ internal static class CorkboardPage
     private static bool IsMissing(Corkboard.Card card, MissingPlaces.Checker check) =>
         !card.IsNote && check.IsMissing(card.Path, !card.IsFolder);
 
-    // ":missing": the cards whose file is gone, to select one
+    // ":missing": the cards whose file or folder is gone, to select one
     private static void ShowMissing()
     {
         var check = new MissingPlaces.Checker();
@@ -811,7 +816,7 @@ internal static class CorkboardPage
         if (picked >= 0) _selected = missing[picked].Number;
     }
 
-    // ":prune": take the cards whose file is gone off the board, after asking. Those on a drive that is not connected
+    // ":prune": take the cards whose file or folder is gone off the board, after asking. Those on a drive that is not connected
     // stay
     private static void Prune()
     {
@@ -938,9 +943,11 @@ internal static class CorkboardPage
     /// <summary>
     /// The cards of a board beside the list of projects: its name (with how many cards it has), and the cards by
     /// their numbers laid on each other, each a step to the right and down, as many as there is room for (cut at the
-    /// right side). Null cards: the project has no board
+    /// right side). Null cards: the project has no board. Not shown: the column is left empty (no project, or one
+    /// that is missing)
     /// </summary>
-    internal static void DrawSnapshot(List<Corkboard.Card>? cards, int top, int left, int width, int height)
+    internal static void DrawSnapshot(List<Corkboard.Card>? cards, int top, int left, int width, int height,
+        bool shown = true)
     {
         var blank = new string(' ', Math.Max(0, width));
         for (var row = 0; row < height; row++)
@@ -949,6 +956,7 @@ internal static class CorkboardPage
             Console.Write(blank);
         }
 
+        if (!shown) return;
         Tools.SetCursorEx(top, left);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
         var label = cards == null ? Lang.T("No corkboard: B makes one")

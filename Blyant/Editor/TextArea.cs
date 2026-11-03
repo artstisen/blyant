@@ -1903,7 +1903,7 @@ public partial class TextArea
         var current = _saveMode == SaveAsFile && !FileExplorer.IsUntitled ? FileExplorer.CurrentFilePath : null;
         var found = FileReference.Find(name, current,
             FileFavorites.PathsInAllLists().Concat(FileHistory.Items.Select(entry => entry.Path)),
-            FileOperations.IsFileThere);
+            FileOperations.IsFileThere, IsTopFolder);
         if (found.Count == 0)
         {
             _engine.ShowMessage(current == null
@@ -1928,6 +1928,14 @@ public partial class TextArea
 
         Jump.ToPlace(new JumpTarget(JumpKind.File, path), LeaveForJump);
         RedrawAll();
+    }
+
+    // The top of a site or repository, for "gf" on "/docs/plan.md": a project, or a folder with ".git" in it
+    private static bool IsTopFolder(string folder)
+    {
+        var git = Path.Combine(folder, ".git");
+        return Directory.Exists(git) || File.Exists(git) ||
+               Projects.ListedPaths().Any(project => FileOperations.SamePath(project, folder));
     }
 
     // A yank too long for the clipboard, with the paste bin turned off: ask whether to write it to the paste bin, this

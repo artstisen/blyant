@@ -65,7 +65,7 @@ internal static class Commands
             "q h fav ju jmp corkboard"),
         [CommandContext.Hotlist] = new Table(
             "quit close help jump book info remove undo top bottom move rename clear path name number nonumber recent " +
-            "missing prune bookmark bookmark! board",
+            "missing prune bookmark bookmark! board pin",
             "q h u ju jmp corkboard"),
         [CommandContext.Search] = new Table(
             "quit close help jump book find info goto favorite number nonumber recent bookmark bookmark! board pin",

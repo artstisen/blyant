@@ -63,10 +63,17 @@ internal static class Corkboard
         /// "/" after it (as in the file browser), or the first line of its text (a tab in it as blank space, so the
         /// card keeps its frame)
         /// </summary>
-        internal string OwnName => (IsFolder ? System.IO.Path.GetFileName(Path.TrimEnd('/', '\\')) + "/"
+        internal string OwnName => (IsFolder ? FolderName(Path)
             : !IsNote ? System.IO.Path.GetFileNameWithoutExtension(Path)
             : Text.Split('\n').Select(line => line.Trim()).FirstOrDefault(line => line.Length > 0) ?? Lang.T("Note"))
             .Replace('\t', ' ');
+    }
+
+    // The name of a folder with "/" after it, or the root of a drive as it is written ("D:\\", "/")
+    private static string FolderName(string path)
+    {
+        var name = System.IO.Path.GetFileName(System.IO.Path.TrimEndingDirectorySeparator(path));
+        return name.Length > 0 ? name + "/" : path;
     }
 
     private static List<Card> _cards = new();
@@ -94,7 +101,7 @@ internal static class Corkboard
     /// <summary>
     /// A key that is the board of a project (its full path), not a name
     /// </summary>
-    internal static bool IsProjectBoard(string key) => key.IndexOfAny(new[] { '/', '\\' }) >= 0;
+    internal static bool IsProjectBoard(string key) => System.IO.Path.IsPathFullyQualified(key);
 
     /// <summary>
     /// The file of a board
@@ -115,14 +122,17 @@ internal static class Corkboard
     /// <summary>
     /// The projects that have a board, by their full paths (those whose folder is there)
     /// </summary>
-    internal static List<string> ProjectBoards()
+    internal static List<string> ProjectBoards() => WithBoardFiles(ProjectKeys());
+
+    // The projects in the list of projects, by their full paths
+    private static List<string> ProjectKeys()
     {
-        var boards = new List<string>();
+        var keys = new List<string>();
         foreach (var project in Projects.ListedPaths())
         {
             try
             {
-                if (File.Exists(BoardFile(project))) boards.Add(System.IO.Path.GetFullPath(project));
+                keys.Add(System.IO.Path.GetFullPath(project));
             }
             catch (Exception e) when (e is ArgumentException or NotSupportedException)
             {
@@ -130,26 +140,42 @@ internal static class Corkboard
             }
         }
 
-        return boards;
+        return keys;
+    }
+
+    // The keys of projects whose board file is there
+    private static List<string> WithBoardFiles(IEnumerable<string> keys) =>
+        keys.Where(key => File.Exists(BoardFile(key))).Distinct().ToList();
+
+    /// <summary>
+    /// The name a board is shown with: its name, or the name of its project (empty: the main board; a project at the
+    /// root of a drive: the root as it is written)
+    /// </summary>
+    internal static string NameOf(string key)
+    {
+        if (!IsProjectBoard(key)) return key;
+        var name = System.IO.Path.GetFileName(System.IO.Path.TrimEndingDirectorySeparator(key));
+        return name.Length > 0 ? name : key;
     }
 
     /// <summary>
-    /// The name a board is shown with: its name, or the name of its project (empty: the main board)
-    /// </summary>
-    internal static string NameOf(string key) =>
-        IsProjectBoard(key) ? System.IO.Path.GetFileName(System.IO.Path.TrimEndingDirectorySeparator(key)) : key;
-
-    /// <summary>
-    /// ":board name": a board by its name, or the board of a project by the name of its folder (upper and lower case
-    /// alike). Null if there is none
+    /// ":board name": a board by its name, or the board of a project by the name of its folder. A name written the
+    /// same way comes first, of a board or a project, then upper and lower case alike. Null if there is none
     /// </summary>
     internal static string? FindByName(string name)
     {
-        if (Boards.Find(name) is { } found) return found;
         name = name.Trim();
+        if (name.Equals(NamedLists.MainWord, StringComparison.OrdinalIgnoreCase)) return string.Empty;
+        var names = Boards.Names();
         var projects = ProjectBoards();
-        return projects.FirstOrDefault(key => NameOf(key).Equals(name, StringComparison.Ordinal)) ??
-               projects.FirstOrDefault(key => NameOf(key).Equals(name, StringComparison.OrdinalIgnoreCase));
+        foreach (var comparison in new[] { StringComparison.Ordinal, StringComparison.OrdinalIgnoreCase })
+        {
+            var found = names.FirstOrDefault(board => board.Equals(name, comparison)) ??
+                        projects.FirstOrDefault(key => NameOf(key).Equals(name, comparison));
+            if (found != null) return found;
+        }
+
+        return null;
     }
 
     /// <summary>
@@ -283,16 +309,16 @@ internal static class Corkboard
     private static (string Path, bool IsFolder) ReadPath(string written, string? root)
     {
         var trimmed = written.TrimEnd();
-        var isFolder = trimmed.Length > 1 && (trimmed.EndsWith('/') ||
-                                              (OperatingSystem.IsWindows() && trimmed.EndsWith('\\')));
-        if (isFolder) written = trimmed.TrimEnd('/', '\\');
+        var isFolder = trimmed.EndsWith('/') || (OperatingSystem.IsWindows() && trimmed.EndsWith('\\'));
+        // (the separator after a folder; the root of a drive is written with its own: "D:\\", "/")
+        if (isFolder) written = System.IO.Path.GetPathRoot(trimmed) == trimmed ? trimmed : trimmed[..^1];
         if (written.Trim().Length == 0) return (isFolder ? root ?? string.Empty : string.Empty, isFolder);
         if (root != null && !System.IO.Path.IsPathRooted(written.Trim()))
         {
             try
             {
-                written = System.IO.Path.GetFullPath(System.IO.Path.Combine(root,
-                    OperatingSystem.IsWindows() ? written : written.Replace('\\', '/')));
+                // ("\\" is a character of a name on Linux and macOS: Blyant writes "/" between the parts)
+                written = System.IO.Path.GetFullPath(System.IO.Path.Combine(root, written));
             }
             catch (Exception e) when (e is ArgumentException or NotSupportedException)
             {
@@ -314,7 +340,7 @@ internal static class Corkboard
             if (OperatingSystem.IsWindows()) path = path.Replace('\\', '/');
         }
 
-        if (!card.IsFolder) return path;
+        if (!card.IsFolder || (!relative && System.IO.Path.GetPathRoot(path) == path)) return path;
         return path + (relative ? '/' : System.IO.Path.DirectorySeparatorChar);
     }
 
@@ -390,22 +416,37 @@ internal static class Corkboard
     /// taken: a note written in the editor, where the board can be changed). The change is given the card with the
     /// number, and returns true if it changed it; then the board is saved
     /// </summary>
-    /// <returns>False if the card is not there, or nothing was changed or saved</returns>
-    internal static bool ChangeCard(string board, int number, Func<Card, bool> change)
+    /// <returns>DialogText.Success, null if the card is not there, empty if nothing was changed, or why it could not be
+    /// saved</returns>
+    internal static string? ChangeCard(string board, int number, Func<Card, bool> change)
     {
         if (board == _currentBoard)
         {
-            return Numbered(number) is { } card && change(card) && Save() == DialogText.Success;
+            if (Numbered(number) is not { } card) return null;
+            return change(card) ? Save() : string.Empty;
         }
 
-        var changed = false;
+        string? result = null;
         WithBoard(board, () =>
         {
-            if (Numbered(number) is not { } card || !change(card)) return;
-            WriteBoard(board);
-            changed = true;
+            if (Numbered(number) is not { } card) return;
+            if (!change(card))
+            {
+                result = string.Empty;
+                return;
+            }
+
+            try
+            {
+                WriteBoard(board);
+                result = DialogText.Success;
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            {
+                result = e.Message;
+            }
         });
-        return changed;
+        return result;
     }
 
     // Write the cards read (WithBoard) to the file of a board
@@ -460,15 +501,17 @@ internal static class Corkboard
     /// <returns>DialogText.Success or a message</returns>
     internal static string DeleteBoard(string key, out string trashedPath)
     {
-        var result = IsProjectBoard(key)
-            ? NamedLists.DeleteFile(BoardFile(key), out trashedPath)
-            : Boards.Delete(key, out trashedPath);
+        trashedPath = string.Empty;
+        // (the board of a project without cards yet has no file)
+        var result = !IsProjectBoard(key) ? Boards.Delete(key, out trashedPath)
+            : File.Exists(BoardFile(key)) ? NamedLists.DeleteFile(BoardFile(key), out trashedPath)
+            : DialogText.Success;
         if (result == DialogText.Success && _currentBoard == key) UseBoard(string.Empty);
         return result;
     }
 
     /// <summary>
-    /// The card of a file, or null if it is not pinned
+    /// The card of a file or folder, or null if it is not pinned
     /// </summary>
     internal static Card? CardOf(string path) =>
         _cards.FirstOrDefault(card => !card.IsNote && FileOperations.SamePath(card.Path, path));
@@ -487,7 +530,7 @@ internal static class Corkboard
     }
 
     /// <summary>
-    /// Pin a file: a new card at the first free place on a board of a size, on top of the others
+    /// Pin a file or folder: a new card at the first free place on a board of a size, on top of the others
     /// </summary>
     internal static Card Add(string path, int width, int height, bool isFolder = false)
     {
@@ -678,11 +721,17 @@ internal static class Corkboard
         UndoneCount = 0;
         if (_cleared is { } cleared)
         {
-            // (a card added since keeps its number: one of those put back that has it is not put back)
-            var back = cleared.Where(card => _cards.All(other => other.Number != card.Number)).ToList();
-            _cards.InsertRange(0, back);
+            // (a card added since keeps its number: one put back that had it gets a new one)
+            var taken = _cards.ToList();
+            _cards.InsertRange(0, cleared);
+            foreach (var card in cleared.Where(card => taken.Any(other => other.Number == card.Number)))
+            {
+                card.Number = 1;
+                while (_cards.Any(other => other != card && other.Number == card.Number)) card.Number++;
+            }
+
             _cleared = null;
-            UndoneCount = back.Count;
+            UndoneCount = cleared.Count;
             return Undone.Cards;
         }
 
@@ -774,11 +823,11 @@ internal static class Corkboard
     {
         // The board of a project that was moved is in its new place (the paths in it are kept from the project, so
         // those inside it need no change)
-        var current = Followed(_currentBoard, oldPath, newPath);
-        if (current != _currentBoard) _currentBoard = current;
+        _currentBoard = Followed(_currentBoard, oldPath, newPath);
         Load();
+        // (the list of projects may not have followed yet: their boards are looked for where they are now)
         var others = Boards.Names().Prepend(string.Empty)
-            .Concat(ProjectBoards().Select(key => Followed(key, oldPath, newPath)))
+            .Concat(WithBoardFiles(ProjectKeys().Select(key => Followed(key, oldPath, newPath))))
             .Where(key => key != _currentBoard).Distinct();
         foreach (var key in others)
         {

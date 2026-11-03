@@ -15,6 +15,7 @@ Blyant has several features inspired by popular Neovim plugins for text navigati
 **Files and projects**
 - The start page: New file, File browser, New project and Open project, a key each
 - A project is a folder with the files of a piece of writing, kept in a folder of your choosing
+- A corkboard to plan a book or an article: its files, folders and notes as cards you place, color and arrange, with a board for each project that goes with its folder ([guide](Guide-to-corkboard.md))
 - Your files are ordinary text files on your own computer, to back up, sync and open with any other program
 
 **A Vim-style editor**
@@ -33,6 +34,7 @@ Blyant has several features inspired by popular Neovim plugins for text navigati
 
 **Quick to get around**
 - The Jump menu (`Ctrl+O`): bookmarks, recent places, files, directories and pages in a few keys
+- `gf` on a file name or a Markdown link in your text opens that file, so a table of contents leads to the chapters
 - Use bookmarks to create custom jump points in files, folders, projects, pages, and settings, and open them from anywhere using the command `:book number`
 - The same keys everywhere: `h` `j` `k` `l` to move, `/` to search, `?` for help and `:` for commands
 - Built-in guides: a quick guide and short guides to each part of Blyant

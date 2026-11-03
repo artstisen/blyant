@@ -24,11 +24,6 @@ internal static class FileFavorites
     internal const string FileName = "favorites.txt";
     private const string CollapsedMark = "collapsed";
 
-    /// <summary>
-    /// What stands for the main list in ":list main"
-    /// </summary>
-    internal const string MainListWord = NamedLists.MainWord;
-
     // The lists of favorites besides the main list: files in the directory "favorites"
     private static readonly NamedLists Lists = new(() => MainFilePath, "favorites");
 
@@ -109,11 +104,6 @@ internal static class FileFavorites
     /// null if there is none
     /// </summary>
     internal static string? FindList(string name) => Lists.Find(name);
-
-    /// <summary>
-    /// A name a list can have
-    /// </summary>
-    internal static bool IsValidListName(string name) => NamedLists.IsValidName(name);
 
     // Do something with a list in the place of the one that is open, which stays as it is. A list that cannot be read
     // is left alone

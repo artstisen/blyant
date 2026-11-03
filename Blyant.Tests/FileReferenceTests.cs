@@ -154,4 +154,39 @@ public class FileReferenceTests
             Directory.Delete(directory, true);
         }
     }
+
+    [Theory]
+    [InlineData("notes.md:12", "notes.md")]
+    [InlineData("plan.md#intro", "plan.md")]
+    [InlineData("notes.md", "notes.md")]
+    [InlineData("issue#12", "issue#12")]
+    public void APlaceAfterTheName_IsLeftOut_AlsoFromASelection(string name, string without)
+    {
+        Assert.Equal(without, FileReference.WithoutPlace(name));
+    }
+
+    [Fact]
+    public void APathFromTheTop_IsLookedForInTheTopFolder_First()
+    {
+        var there = new HashSet<string> { In("site", "index.md"), In("site", "docs", "guide", "index.md") };
+        var current = In("site", "docs", "guide", "page.md");
+        Assert.Equal(new[] { In("site", "index.md") },
+            FileReference.Find("/index.md", current, Array.Empty<string>(), there.Contains, folder => folder == In("site")));
+        // Without a top: the nearest first
+        Assert.Equal(new[] { In("site", "docs", "guide", "index.md"), In("site", "index.md") },
+            FileReference.Find("/index.md", current, Array.Empty<string>(), there.Contains));
+    }
+
+    [Fact]
+    public void AtTheRootOfTheDrive_APathFromTheTop_IsLookedForLast()
+    {
+        var atRoot = Path.Combine(Path.GetPathRoot(Root)!, "README.md");
+        var there = new HashSet<string> { Path.GetFullPath(atRoot), In("site", "README.md") };
+        var current = In("site", "docs", "page.md");
+        Assert.Equal(new[] { In("site", "README.md") },
+            FileReference.Find("/README.md", current, Array.Empty<string>(), there.Contains));
+        there.Remove(In("site", "README.md"));
+        Assert.Equal(new[] { Path.GetFullPath(atRoot) },
+            FileReference.Find("/README.md", current, Array.Empty<string>(), there.Contains));
+    }
 }

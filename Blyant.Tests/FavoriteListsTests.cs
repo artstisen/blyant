@@ -71,7 +71,7 @@ public class FavoriteListsTests : IDisposable
         Assert.Equal(string.Empty, FileFavorites.FindList("main"));
         Assert.Equal(string.Empty, FileFavorites.FindList(" Main "));
         Assert.Null(FileFavorites.FindList("Home"));
-        Assert.Equal(new[] { FileFavorites.MainListWord, "Work" }, FileFavorites.ListWords());
+        Assert.Equal(new[] { NamedLists.MainWord, "Work" }, FileFavorites.ListWords());
     }
 
     [Theory]
@@ -89,7 +89,7 @@ public class FavoriteListsTests : IDisposable
     [InlineData("a name too long to fit", false)]
     public void ANameCanBeUsed_OrNot(string name, bool valid)
     {
-        Assert.Equal(valid, FileFavorites.IsValidListName(name));
+        Assert.Equal(valid, NamedLists.IsValidName(name));
     }
 
     [Fact]

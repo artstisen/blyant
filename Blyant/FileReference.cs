@@ -52,8 +52,14 @@ internal static class FileReference
         while (start > 0 && IsNameChar(line[start - 1])) start--;
         var end = column + 1;
         while (end < line.Length && IsNameChar(line[end])) end++;
-        var name = Clean(line[start..end]);
-        // A place in the file after its name is not part of it: "plan.md#intro", "plan.md:12"
+        return WithoutPlace(Clean(line[start..end]));
+    }
+
+    /// <summary>
+    /// A name without a place in the file written after it, which is not part of it: "plan.md#intro", "plan.md:12"
+    /// </summary>
+    internal static string WithoutPlace(string name)
+    {
         var hashAt = name.IndexOf('#');
         if (hashAt > 0 && Path.HasExtension(name[..hashAt])) name = name[..hashAt];
         var place = LineAfter.Match(name);
@@ -77,17 +83,19 @@ internal static class FileReference
 
     /// <summary>
     /// The files a name can be. A full path, or a path from the folder of the file being edited, that is there is
-    /// the file; a path from the top of a site or repository ("/docs/plan.md") is also looked for from the folders
-    /// above it. Else the files Blyant knows (the favorites and the history) whose path ends with the name, upper and
-    /// lower case alike. A name without an extension can also be a Markdown or Typst file. "\" in a name is a
-    /// separator on all systems (a name written on Windows). The file being edited is left out
+    /// the file. A path from the top of a site or repository ("/docs/plan.md") is looked for in the top folder above
+    /// the file (one that is a project or has ".git" in it), else in the folders above it, the nearest first, and only
+    /// then from the root of the drive. Else the files Blyant knows (the favorites and the history) whose path ends
+    /// with the name, upper and lower case alike. A name without an extension can also be a Markdown or Typst file.
+    /// "\" in a name is a separator on all systems (a name written on Windows). The file being edited is left out
     /// </summary>
     /// <param name="name">The name, as written</param>
     /// <param name="currentFile">The file being edited (null: none)</param>
     /// <param name="known">The files Blyant knows</param>
     /// <param name="isFile">Tells if a file is there</param>
+    /// <param name="isTop">Tells if a folder is the top of a site or repository (null: none is)</param>
     internal static List<string> Find(string name, string? currentFile, IEnumerable<string> known,
-        Func<string, bool> isFile)
+        Func<string, bool> isFile, Func<string, bool>? isTop = null)
     {
         var found = new List<string>();
         name = Clean(name).Replace('\\', '/');
@@ -110,26 +118,42 @@ internal static class FileReference
             found.Add(path);
         }
 
-        // A full path, or one from the folder of the file being edited
+        // A full path, or one from the folder of the file being edited (a path from the top is looked for below)
         var folder = currentFile == null ? null : Path.GetDirectoryName(currentFile);
-        foreach (var each in names)
+        var fromTop = names.Where(IsFromTop).ToList();
+        foreach (var each in names.Where(each => !IsFromTop(each)))
         {
             if (Path.IsPathRooted(each)) Add(each);
             else if (folder != null) Add(Path.Combine(folder, each));
         }
 
         if (found.Count > 0) return found;
-        // A path from the top ("/docs/plan.md", not a network path "//server"): from the folders above the file,
-        // the nearest first
-        foreach (var each in names.Where(each => each.StartsWith('/') && !each.StartsWith("//", StringComparison.Ordinal)))
+        if (fromTop.Count > 0)
         {
-            for (var above = folder; above != null; above = Path.GetDirectoryName(above))
+            // The folders above the file, below the root of the drive, up to the top of a site or repository
+            var above = new List<string>();
+            for (var each = folder; each != null && Path.GetPathRoot(each) != each; each = Path.GetDirectoryName(each))
             {
-                Add(Path.Combine(above, each.TrimStart('/')));
+                above.Add(each);
+                if (isTop?.Invoke(each) == true) break;
             }
-        }
 
-        if (found.Count > 0) return found;
+            if (above.Count > 0 && isTop?.Invoke(above[^1]) == true)
+            {
+                foreach (var each in fromTop) Add(Path.Combine(above[^1], each.TrimStart('/')));
+                if (found.Count > 0) return found;
+            }
+
+            foreach (var place in above)
+            {
+                foreach (var each in fromTop) Add(Path.Combine(place, each.TrimStart('/')));
+            }
+
+            if (found.Count > 0) return found;
+            // Last, from the root of the drive (on Linux and macOS a full path is written so too)
+            foreach (var each in fromTop) Add(each);
+            if (found.Count > 0) return found;
+        }
 
         // The files Blyant knows, by the end of their path ("./" and "../" in front of the name are left out)
         foreach (var path in known)
@@ -139,6 +163,10 @@ internal static class FileReference
 
         return found;
     }
+
+    // A path from the top of a site or repository, or of the drive: "/docs/plan.md" (not a network path "//server")
+    private static bool IsFromTop(string name) =>
+        name.StartsWith('/') && !name.StartsWith("//", StringComparison.Ordinal);
 
     // A name without what leads to it from a folder ("../notes/plan.md" and "/notes/plan.md" are notes/plan.md)
     private static string Relative(string name)

@@ -196,6 +196,10 @@ internal static partial class FileExplorer
                     case "path":
                         if (selected >= 0) _hotlistMessage = CopyOfList(DirectoryHotlist.Items[selected].Path);
                         break;
+                    case "pin":
+                        // The selected directory to the corkboard
+                        if (selected >= 0) _hotlistMessage = PinFile(DirectoryHotlist.Items[selected].Path);
+                        break;
                     case "bookmark":
                     case "bookmark!":
                         if (selected < 0) break;

@@ -531,7 +531,7 @@ internal static partial class FileExplorer
     // moved
     private static void HistoryFollows(string oldPath, string newPath)
     {
-        Corkboard.Follow(oldPath, newPath);
+        CorkboardFollows(oldPath, newPath);
         FileHistory.Load();
         if (FileHistory.PathChanged(oldPath, newPath)) FileHistory.Save();
         JumpHistory.Load();

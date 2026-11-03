@@ -27,7 +27,7 @@ public class CorkboardTests : IDisposable
         if (Directory.Exists(_directory)) Directory.Delete(_directory, true);
     }
 
-    private string In(string name) => Path.Combine(_directory, name);
+    private string In(params string[] parts) => Path.Combine(new[] { _directory }.Concat(parts).ToArray());
 
     private static string Order() => string.Join(" ", Corkboard.Cards.Select(card => card.Number));
 
@@ -323,7 +323,7 @@ public class CorkboardTests : IDisposable
         Corkboard.NewBoard("Plot");
         Corkboard.UseBoard("Plot");
         // The main board, while Plot is open
-        Assert.True(Corkboard.ChangeCard(string.Empty, note.Number, card =>
+        Assert.Equal(DialogText.Success, Corkboard.ChangeCard(string.Empty, note.Number, card =>
         {
             card.Text = "Second";
             return true;
@@ -333,7 +333,7 @@ public class CorkboardTests : IDisposable
         Assert.Equal("Second", Corkboard.Numbered(note.Number)!.Text);
         // The open board, read again since (a card object of before is not the one changed)
         Corkboard.Load();
-        Assert.True(Corkboard.ChangeCard(string.Empty, note.Number, card =>
+        Assert.Equal(DialogText.Success, Corkboard.ChangeCard(string.Empty, note.Number, card =>
         {
             card.Text = "Third";
             return true;
@@ -341,8 +341,9 @@ public class CorkboardTests : IDisposable
         Corkboard.Load();
         Assert.Equal("Third", Corkboard.Numbered(note.Number)!.Text);
         // A card that is not there, or not changed
-        Assert.False(Corkboard.ChangeCard(string.Empty, 9, _ => true));
-        Assert.False(Corkboard.ChangeCard(string.Empty, note.Number, _ => false));
+        Assert.Null(Corkboard.ChangeCard(string.Empty, 9, _ => true));
+        Assert.Equal(string.Empty, Corkboard.ChangeCard(string.Empty, note.Number, _ => false));
+        Assert.Null(Corkboard.ChangeCard("Plot", 9, _ => true));
     }
 
     [Fact]
@@ -457,13 +458,14 @@ public class CorkboardTests : IDisposable
         Assert.Equal(0, Corkboard.Clear());
         Assert.Equal(Corkboard.Undone.Cards, Corkboard.Undo());
         Assert.Equal((3, "1 2 3"), (Corkboard.UndoneCount, Order()));
-        // A card added since keeps its number: the one put back with it is not
+        // A card added since keeps its number: the one put back that had it gets a new one
         Corkboard.Clear();
         var added = Corkboard.Add(In("new.md"), Width, Height);
         Assert.Equal(1, added.Number);
         Corkboard.Undo();
-        Assert.Equal((2, "2 3 1"), (Corkboard.UndoneCount, Order()));
+        Assert.Equal((3, "4 2 3 1"), (Corkboard.UndoneCount, Order()));
         Assert.Same(added, Corkboard.Numbered(1));
+        Assert.Equal(In("one.md"), Corkboard.Numbered(4)!.Path);
     }
 
     [Fact]
@@ -558,5 +560,95 @@ public class CorkboardTests : IDisposable
         Assert.False(File.Exists(Path.Combine(project, Corkboard.ProjectFileName)));
         Assert.True(Directory.Exists(project));
         Assert.Equal(string.Empty, Corkboard.CurrentBoard);
+    }
+
+    [Fact]
+    public void AFolderCardOfARoot_IsKeptAsItIs()
+    {
+        var driveRoot = Path.GetPathRoot(Path.GetFullPath(_directory))!;
+        Corkboard.Add(driveRoot, Width, Height, true);
+        Corkboard.Add(In("research"), Width, Height, true);
+        Corkboard.Save();
+        Corkboard.Load();
+        Assert.Equal((true, driveRoot, driveRoot), (Corkboard.Numbered(1)!.IsFolder, Corkboard.Numbered(1)!.Path,
+            Corkboard.Numbered(1)!.Name));
+        Assert.Equal((true, In("research")), (Corkboard.Numbered(2)!.IsFolder, Corkboard.Numbered(2)!.Path));
+        Assert.False(Corkboard.Numbered(1)!.IsNote);
+        // A project at the root of a drive is named by the root
+        Assert.Equal(driveRoot, Corkboard.NameOf(driveRoot));
+    }
+
+    [Fact]
+    public void AProjectBoard_IsAFullPath_NotAName()
+    {
+        Assert.True(Corkboard.IsProjectBoard(Path.GetFullPath(In("Novel"))));
+        Assert.False(Corkboard.IsProjectBoard("Plot"));
+        Assert.False(Corkboard.IsProjectBoard("a" + "\\" + "b"));
+        Assert.False(Corkboard.IsProjectBoard(string.Empty));
+    }
+
+    [Fact]
+    public void ABoardAndAProject_AreFoundByTheirNamesAsWritten_First()
+    {
+        var project = In("Plot");
+        Directory.CreateDirectory(project);
+        File.WriteAllText(Projects.ListPathOverride!, project + "\n");
+        File.WriteAllText(Path.Combine(project, Corkboard.ProjectFileName), string.Empty);
+        Assert.Equal(DialogText.Success, Corkboard.NewBoard("plot"));
+        Assert.Equal(Path.GetFullPath(project), Corkboard.FindByName("Plot"));
+        Assert.Equal("plot", Corkboard.FindByName("plot"));
+        Assert.Equal("plot", Corkboard.FindByName("PLOT"));
+        Assert.Equal(string.Empty, Corkboard.FindByName("main"));
+        Assert.Null(Corkboard.FindByName("nothing"));
+    }
+
+    [Fact]
+    public void AFolderRenamed_IsFollowed_OnTheBoardsOfTheProjectsInIt()
+    {
+        // The project W/P, with a card of W/S/notes.md (outside the project: a full path)
+        var project = In("W", "P");
+        Directory.CreateDirectory(project);
+        Directory.CreateDirectory(In("W", "S"));
+        File.WriteAllText(Projects.ListPathOverride!, project + "\n");
+        Corkboard.UseBoard(project);
+        Corkboard.Add(In("W", "S", "notes.md"), Width, Height);
+        Corkboard.Add(Path.Combine(project, "one.md"), Width, Height);
+        Corkboard.Save();
+        Corkboard.UseBoard(string.Empty);
+        // W renamed: the list of projects has not followed yet
+        Directory.Move(In("W"), In("W2"));
+        Corkboard.Follow(In("W"), In("W2"));
+        Corkboard.UseBoard(In("W2", "P"));
+        Assert.Equal(In("W2", "S", "notes.md"), Corkboard.Numbered(1)!.Path);
+        Assert.Equal(In("W2", "P", "one.md"), Corkboard.Numbered(2)!.Path);
+    }
+
+    [Fact]
+    public void TheBoardOfAProjectWithoutAFile_IsDeletedAsNothing()
+    {
+        var project = Path.GetFullPath(In("Novel"));
+        Directory.CreateDirectory(project);
+        Corkboard.UseBoard(project);
+        Assert.Equal(DialogText.Success, Corkboard.DeleteBoard(project, out var trashed));
+        Assert.Equal((string.Empty, string.Empty), (trashed, Corkboard.CurrentBoard));
+    }
+
+    [UnixFact]
+    public void ANameWithABackslash_InAProject_IsKept()
+    {
+        var project = In("Novel");
+        Directory.CreateDirectory(project);
+        var file = Path.Combine(project, "a" + "\\" + "b.md");
+        File.WriteAllText(file, "text");
+        Corkboard.UseBoard(project);
+        Corkboard.Add(file, Width, Height);
+        Corkboard.Save();
+        Corkboard.Load();
+        Assert.Equal(file, Corkboard.Numbered(1)!.Path);
+        // Read again unchanged: what u puts back stays
+        Corkboard.Remove(Corkboard.Numbered(1)!);
+        Corkboard.Save();
+        Corkboard.Reload();
+        Assert.Equal(Corkboard.Undone.Card, Corkboard.Undo());
     }
 }

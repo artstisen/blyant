@@ -1310,7 +1310,16 @@ internal static partial class FileExplorer
         if (JumpHistory.PathChanged(oldPath, newPath)) JumpHistory.Save();
         Bookmarks.Follow(oldPath, newPath);
         Splits.Follow(oldPath, newPath);
+        CorkboardFollows(oldPath, newPath);
+    }
+
+    // The cards of the boards follow a file or directory that was renamed or moved, and the open board when it is of
+    // a project that was (kept in the settings at once)
+    private static void CorkboardFollows(string oldPath, string newPath)
+    {
+        var board = Corkboard.CurrentBoard;
         Corkboard.Follow(oldPath, newPath);
+        if (Corkboard.CurrentBoard != board) FileIo.SaveSettings();
     }
 
     // Where the cursor was in a file when it was closed: kept in the favorites first, then in the history

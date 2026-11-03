@@ -424,7 +424,7 @@ internal sealed partial class EditorEngine
                             var end = stop.Col < Buffer.LineLength(stop.Line)
                                 ? new TextPos(stop.Line, stop.Col + TextMetrics.ElementLength(Buffer[stop.Line], stop.Col))
                                 : stop;
-                            GoToFileName = FileReference.Clean(Buffer.GetText(start, end));
+                            GoToFileName = FileReference.WithoutPlace(FileReference.Clean(Buffer.GetText(start, end)));
                             Mode = EditorMode.Normal;
                         }
                         else
