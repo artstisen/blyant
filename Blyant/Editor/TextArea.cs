@@ -722,6 +722,13 @@ public partial class TextArea
                 _shownStatus = null;
                 break;
             }
+            case EditorRequest.Pin:
+                // Only a file has a place on the corkboard
+                _engine.ShowMessage(_saveMode != SaveAsFile || FileExplorer.IsUntitled
+                    ? FileExplorer.IsUntitled ? DialogText.SaveFirst : DialogText.NoFilePath
+                    : FileExplorer.PinFile(FileExplorer.CurrentFilePath), _saveMode != SaveAsFile || FileExplorer.IsUntitled);
+                _shownStatus = null;
+                break;
             case EditorRequest.GoToFile:
                 Tools.HideCursor();
                 GoToFile(_engine.GoToFileName);

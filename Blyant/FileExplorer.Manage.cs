@@ -74,6 +74,14 @@ internal static partial class FileExplorer
                 // ":jump general": a page of Blyant at once
                 Jump.ToPage(argument);
                 break;
+            case "board":
+            case "corkboard":
+                Jump.ToPage("board");
+                break;
+            case "pin":
+                // The selected file to the corkboard
+                _message = SelectedItem() is { IsDirectory: false } item ? PinFile(item.Path) : OnlyFilesArePinned;
+                break;
             case "book":
                 // ":book 3": jump to bookmark 3
                 Jump.ToBookmark(argument);
@@ -522,6 +530,7 @@ internal static partial class FileExplorer
     // The file history, the jumps (Recent) and the splits follow a file or directory that was renamed or moved
     private static void HistoryFollows(string oldPath, string newPath)
     {
+        Corkboard.Follow(oldPath, newPath);
         FileHistory.Load();
         if (FileHistory.PathChanged(oldPath, newPath)) FileHistory.Save();
         JumpHistory.Load();
@@ -1020,6 +1029,15 @@ internal static partial class FileExplorer
     internal static string BookmarkPlace(string path, bool isDirectory, string name, bool moveName) =>
         Bookmarks.AddWithMessage(new JumpTarget(isDirectory ? JumpKind.Directory : JumpKind.File, path), name, moveName,
             true, out _);
+
+    /// <summary>
+    /// ":pin" in the file browser, its lists and the editor: a file to the corkboard
+    /// </summary>
+    /// <returns>The message that tells what was done (with the number of the card)</returns>
+    internal static string PinFile(string path) =>
+        Directory.Exists(path) ? OnlyFilesArePinned : Corkboard.PinWithMessage(path);
+
+    private static string OnlyFilesArePinned => Lang.T("Only a file can be pinned to the corkboard");
 
     // ":name" and ":path" on the lists (favorites, history, hotlist): the text to the string memory and to the
     // clipboard as set, and the message that tells where it went

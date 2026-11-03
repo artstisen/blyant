@@ -168,10 +168,10 @@ internal static partial class FileExplorer
             if (key.KeyChar == ':')
             {
                 var command = CommandLine.Read(CommandContext.Search);
-                if (command != null && CommandLine.Name(command) is "jump" or "ju" or "jmp")
+                if (command != null && CommandLine.Name(command) is "jump" or "ju" or "jmp" or "board" or "corkboard")
                 {
-                    // The Jump menu, or ":jump general": a page of Blyant at once
-                    Jump.ToPage(CommandLine.Argument(command));
+                    // The Jump menu, or ":jump general": a page of Blyant at once (":board": the corkboard)
+                    Jump.ToPage(CommandLine.Name(command) is "board" or "corkboard" ? "board" : CommandLine.Argument(command));
                     continue;
                 }
 
@@ -199,6 +199,9 @@ internal static partial class FileExplorer
                     case "h":
                     case "help":
                         Tools.WriteEditorHelp(Tools.HelpTopic.Search);
+                        break;
+                    case "pin":
+                        if (selected != null) _foundMessage = PinFile(selected.Path);
                         break;
                     case "bookmark":
                     case "bookmark!":

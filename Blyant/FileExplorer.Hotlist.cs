@@ -125,10 +125,10 @@ internal static partial class FileExplorer
             if (key.KeyChar == ':')
             {
                 var command = CommandLine.Read(CommandContext.Hotlist);
-                if (command != null && CommandLine.Name(command) is "jump" or "ju" or "jmp")
+                if (command != null && CommandLine.Name(command) is "jump" or "ju" or "jmp" or "board" or "corkboard")
                 {
-                    // The Jump menu, or ":jump general": a page of Blyant at once
-                    Jump.ToPage(CommandLine.Argument(command));
+                    // The Jump menu, or ":jump general": a page of Blyant at once (":board": the corkboard)
+                    Jump.ToPage(CommandLine.Name(command) is "board" or "corkboard" ? "board" : CommandLine.Argument(command));
                     continue;
                 }
 

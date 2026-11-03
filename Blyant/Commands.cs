@@ -16,7 +16,8 @@ internal enum CommandContext
     Editor,
     Start, // The start page: its tabs Start, Configuration and Help
     Jump, // The Jump menu (the commands work on its Bookmarks tab)
-    Projects // The list of projects (the commands work on the selected project)
+    Projects, // The list of projects (the commands work on the selected project)
+    Board // The corkboard (the commands work on the selected card)
 }
 
 /// <summary>
@@ -49,42 +50,45 @@ internal static class Commands
     private static readonly Dictionary<CommandContext, Table> Tables = new()
     {
         [CommandContext.Files] = new Table(
-            "quit close exit home data help jump book peek diff cd new info mkdir rename copy duplicate move delete favorite favorites history hotlist hotadd bookmark refresh panes match path name find projects trash recovery project protect number nonumber bookmark! splits recent",
-            "q h fav favs hist hot ju jmp proj pro"),
+            "quit close exit home data help jump book peek diff cd new info mkdir rename copy duplicate move delete favorite favorites history hotlist hotadd bookmark board pin refresh panes match path name find projects trash recovery project protect number nonumber bookmark! splits recent",
+            "q h fav favs hist hot ju jmp proj pro corkboard"),
         [CommandContext.FilePicker] = new Table(
             "quit close home data help cd number nonumber",
             "q h"),
         [CommandContext.Favorites] = new Table(
             "quit close help jump book new color info remove move top bottom undo folder subfolder note panes peek number nonumber expand collapse rename import goto " +
-            "path name recent missing prune list bookmark bookmark!",
-            "q h u ju jmp"),
+            "path name recent missing prune list bookmark bookmark! board pin",
+            "q h u ju jmp corkboard"),
         [CommandContext.History] = new Table(
             "quit close help jump book info goto favorite remove clear path name number nonumber recent missing prune " +
-            "bookmark bookmark!",
-            "q h fav ju jmp"),
+            "bookmark bookmark! board pin",
+            "q h fav ju jmp corkboard"),
         [CommandContext.Hotlist] = new Table(
             "quit close help jump book info remove undo top bottom move rename clear path name number nonumber recent " +
-            "missing prune bookmark bookmark!",
-            "q h u ju jmp"),
+            "missing prune bookmark bookmark! board",
+            "q h u ju jmp corkboard"),
         [CommandContext.Search] = new Table(
-            "quit close help jump book find info goto favorite number nonumber recent bookmark bookmark!",
-            "q h fav ju jmp"),
+            "quit close help jump book find info goto favorite number nonumber recent bookmark bookmark! board pin",
+            "q h fav ju jmp corkboard"),
         [CommandContext.Start] = new Table(
             "new blank recover file open favorites project projects start config general layout editor lists system jump book splits recent help about " +
-            "quick scheme logo snippet completions clipboard log restart reset quit exit",
-            "browse favs newproject proj pro ju jmp h guide snip comp q"),
+            "quick scheme logo snippet completions clipboard log restart reset quit exit board",
+            "browse favs newproject proj pro ju jmp h guide snip comp q corkboard"),
         [CommandContext.Jump] = new Table(
             "quit close help info jump book new note panes peek number nonumber folder subfolder expand collapse rename color remove move " +
-            "top bottom undo clearbook import path name recent missing prune",
-            "q h u ju jmp"),
+            "top bottom undo clearbook import path name recent missing prune board",
+            "q h u ju jmp corkboard"),
         [CommandContext.Projects] = new Table(
             "quit close help info path name color note new add remove",
             "q h"),
+        [CommandContext.Board] = new Table(
+            "quit close help jump book recent new color rename remove undo top bottom missing prune",
+            "q h u ju jmp"),
         [CommandContext.Editor] = new Table(
             "write saveas quit quit! wq help edit edit! reload reload! undo redo delete yank replace nohlsearch " +
             "spell nospell spellnext spellprev suggest spelladd syntax number nonumber timestamp " +
-            "favorite record play macro trim trim! lineendings whitespace mark marks delmarks delmarks! bookmark! view splits recent clear registers reglist regclear putall vsel vline block ol ul dup duplicate surround pb pbappend pbread pbclear pbpath clipboard path sort sort! wrap nowrap snip complete diff scrolloff info jump book bookmark yankall rename split only new projects",
-            "w q q! wq! x h e e! u red d y s rep noh set spellsuggest spellgood nu nonu ts reg sn ju jmp fav proj pro sur k sview sv")
+            "favorite record play macro trim trim! lineendings whitespace mark marks delmarks delmarks! bookmark! view splits recent clear registers reglist regclear putall vsel vline block ol ul dup duplicate surround pb pbappend pbread pbclear pbpath clipboard path sort sort! wrap nowrap snip complete diff scrolloff info jump book bookmark yankall rename split only new projects board pin",
+            "w q q! wq! x h e e! u red d y s rep noh set spellsuggest spellgood nu nonu ts reg sn ju jmp fav proj pro sur k sview sv corkboard")
     };
 
     /// <summary>

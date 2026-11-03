@@ -42,6 +42,7 @@ internal enum EditorRequest
     PasteBinClear, // ":pbclear": empty the paste bin
     PasteBinPath, // ":pbpath": copy the path of the paste bin
     GoToFile, // "gf": open the file named at the cursor, or selected (GoToFileName)
+    Pin, // ":pin": pin the file being edited to the corkboard
     ClipboardSettings, // ":clipboard": show the clipboard settings
     DocumentInfo, // ":info": show the size, the dates and the path of the text being edited
     Jump, // ":jump", ":ju" or Ctrl+O: show the Jump menu, or go to a page (JumpArgument)
@@ -1092,6 +1093,14 @@ internal sealed partial class EditorEngine
         }
 
         // ":jump general": go to a page of Blyant (":jump": the Jump menu)
+        // ":board": the corkboard (a page of Blyant, as ":jump board")
+        if (command is "board" or "corkboard")
+        {
+            JumpArgument = "board";
+            if (!SingleLine) _request = EditorRequest.Jump;
+            return;
+        }
+
         var jump = Regex.Match(command, "^(?:jump|ju|jmp)(?: +(.*))?$");
         if (jump.Success)
         {
@@ -1454,6 +1463,9 @@ internal sealed partial class EditorEngine
                 break;
             case "path":
                 if (!SingleLine) _request = EditorRequest.CopyPath;
+                break;
+            case "pin":
+                if (!SingleLine) _request = EditorRequest.Pin;
                 break;
             case "fav":
             case "favorite":

@@ -79,7 +79,7 @@ internal static class JumpPages
 {
     internal static readonly IReadOnlyList<string> Ids = new[]
     {
-        "config/general", "config/layout", "config/editor", "config/lists", "config/system", "schemes", "logos",
+        "config/general", "config/layout", "config/editor", "config/lists", "config/system", "board", "schemes", "logos",
         "clipboard",
         "snippets", "completions", "help", "about"
     };
@@ -123,6 +123,7 @@ internal static class JumpPages
             "config/editor" => Lang.F("{0}: {1}", DialogText.StartConfiguration, Lang.T("Editor")),
             "config/lists" => Lang.F("{0}: {1}", DialogText.StartConfiguration, Lang.T("Lists")),
             "config/system" => Lang.F("{0}: {1}", DialogText.StartConfiguration, Lang.T("System")),
+            "board" => Lang.T("Corkboard"),
             "schemes" => DialogText.CaptionsColorScheme,
             "logos" => DialogText.CaptionsLogos,
             "clipboard" => Lang.T("Clipboard"),
@@ -527,6 +528,9 @@ internal static class Jump
         ChoiceBox.Forget();
         switch (page)
         {
+            case "board":
+                CorkboardPage.Show();
+                break;
             case "schemes":
                 SchemeEditor.Show();
                 break;

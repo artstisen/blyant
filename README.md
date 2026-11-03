@@ -82,6 +82,7 @@ Blyant is operated in the style of Vim: the editor has Normal, Insert and Visual
 - [Download and installation](Guide-to-installation.md)
 - [Start page, projects and the file browser](Guide-to-start-page.md)
 - [Jump menu, color schemes and logos](Guide-to-jump-menu.md)
+- [Corkboard](Guide-to-corkboard.md)
 - [Editor](Guide-to-editor.md)
 - [Writing with Typst](Guide-to-typst.md)
 - [Changes](CHANGELOG.md)

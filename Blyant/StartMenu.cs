@@ -191,6 +191,10 @@ internal static class StartMenu
                 // ":jump general": a page of Blyant at once
                 Blyant.Jump.ToPage(argument);
                 break;
+            case "board":
+            case "corkboard":
+                Blyant.Jump.ToPage("board");
+                break;
             case "book":
                 // ":book 3": jump to bookmark 3
                 Blyant.Jump.ToBookmark(argument);
@@ -772,6 +776,7 @@ internal static class StartMenu
             OpenProject,
             Recent,
             Favorites,
+            Board,
             Jump,
             Exit
         }
@@ -788,8 +793,8 @@ internal static class StartMenu
 
         // The keys that open a choice at once (the same in all languages; the numbers only select). A new file: N,
         // a blank page: B, recovering unsaved text: R, the file browser: F, a new project: P, the projects: O, the latest
-        // files: E (and Ctrl+K), the favorites: V, the Jump menu: M (and Ctrl+O, as everywhere; j and k move), exit: Q
-        // (asks)
+        // files: E (and Ctrl+K), the favorites: V, the corkboard: C, the Jump menu: M (and Ctrl+O, as everywhere; j and k
+        // move), exit: Q (asks)
         private static string KeysOf(Choice choice) => choice switch
         {
             Choice.NewFile => "N",
@@ -799,6 +804,7 @@ internal static class StartMenu
             Choice.NewProject => "P",
             Choice.OpenProject => "O",
             Choice.Favorites => "V",
+            Choice.Board => "C",
             Choice.Recent => "E",
             Choice.Jump => "M",
             _ => "Q"
@@ -814,6 +820,7 @@ internal static class StartMenu
             Choice.NewProject => DialogText.NewProject,
             Choice.OpenProject => DialogText.OpenProject,
             Choice.Favorites => Lang.T("Favorites"),
+            Choice.Board => Lang.T("Corkboard"),
             Choice.Recent => Lang.T("Recent files"),
             Choice.Jump => DialogText.StartJump,
             _ => DialogText.StartExit
@@ -840,8 +847,8 @@ internal static class StartMenu
                 {
                     // The number, the key that opens the choice at once, and the choice
                     Tools.SetCursorEx(area.Top + i, area.Left + 3);
-                    // (the tenth is 0)
-                    Console.Write(Tools.TruncateString((i + 1) % 10 + " " + KeysOf(_shown[i]) + " .... " +
+                    // (the tenth is 0, and the ones after it have no number: their keys open them)
+                    Console.Write(Tools.TruncateString((i < 10 ? ((i + 1) % 10).ToString() : " ") + " " + KeysOf(_shown[i]) + " .... " +
                                                        TextOf(_shown[i]), area.Width - 4, true));
                 }
 
@@ -930,6 +937,7 @@ internal static class StartMenu
                 ConsoleKey.P => Choice.NewProject,
                 ConsoleKey.O => Choice.OpenProject,
                 ConsoleKey.V => Choice.Favorites,
+                ConsoleKey.C => Choice.Board,
                 ConsoleKey.M => Choice.Jump,
                 ConsoleKey.E => Choice.Recent,
                 _ => (Choice?)null
@@ -973,7 +981,7 @@ internal static class StartMenu
             }
             else if (key.KeyChar == '0' && count >= 10)
             {
-                // The tenth (Exit, when Recover is shown)
+                // The tenth
                 _selected = 9;
             }
             else if (key.KeyChar == 'G' || key.Key == ConsoleKey.End)
@@ -1014,6 +1022,10 @@ internal static class StartMenu
                 case Choice.Favorites:
                     // Closing them returns here
                     FileExplorer.RunFavorites();
+                    break;
+                case Choice.Board:
+                    // On top of the page: closing it returns here
+                    Blyant.Jump.ToPage("board");
                     break;
                 case Choice.Jump:
                     // A place that is opened on top of the page returns here; the others leave it

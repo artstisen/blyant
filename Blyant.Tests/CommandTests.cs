@@ -59,9 +59,9 @@ public class CommandTests
     public void Tab_WithNothingTyped_GoesThroughAllTheCommands()
     {
         var names = Commands.Names(CommandContext.Search);
-        Assert.Equal(new[] { "book", "bookmark", "bookmark!", "close", "favorite", "find", "goto", "help", "info", "jump",
-            "nonumber", "number", "quit", "recent" }, names);
-        Assert.Equal(string.Join(" ", names) + "  book", Tabs(CommandContext.Search, "", names.Count + 2));
+        Assert.Equal(new[] { "board", "book", "bookmark", "bookmark!", "close", "favorite", "find", "goto", "help", "info",
+            "jump", "nonumber", "number", "pin", "quit", "recent" }, names);
+        Assert.Equal(string.Join(" ", names) + "  board", Tabs(CommandContext.Search, "", names.Count + 2));
     }
 
     [Fact]
@@ -212,6 +212,13 @@ public class CommandTests
     }
 
     [Fact]
+    public void TheTables_HaveTheCommandsOfTheCorkboard()
+    {
+        AssertSame(CommandContext.Board, Compared(Part("CorkboardPage.cs", "var command = CommandLine.Read(",
+            "// (the end of the commands)")));
+    }
+
+    [Fact]
     public void TheTables_HaveTheCommandsOfTheStartPage()
     {
         AssertSame(CommandContext.Start, Compared(Method("StartMenu.cs", "RunCommand")));
@@ -224,7 +231,7 @@ public class CommandTests
         // ":saveas", ":lineendings", ":split" and ":view" by a pattern, as they can have something after them; the marks are run by
         // MarkCommand)
         AssertSame(CommandContext.Editor, Compared(Method("Editor/EditorEngine.cs", "ExecuteCommand"),
-                Method("Editor/EditorEngine.Marks.cs", "MarkCommand")), "s", "diff", "book", "jump", "ju", "jmp", "bookmark",
+                Method("Editor/EditorEngine.Marks.cs", "MarkCommand")), "s", "diff", "book", "jump", "ju", "jmp", "board", "corkboard", "bookmark",
             "bookmark!", "play", "macro", "new", "sur", "saveas", "lineendings", "mark", "k", "delmarks", "delmarks!", "split",
             "view", "sview", "sv");
     }

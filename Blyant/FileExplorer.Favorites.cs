@@ -203,10 +203,10 @@ internal static partial class FileExplorer
             if (key.KeyChar == ':')
             {
                 var command = CommandLine.Read(CommandContext.Favorites);
-                if (command != null && CommandLine.Name(command) is "jump" or "ju" or "jmp")
+                if (command != null && CommandLine.Name(command) is "jump" or "ju" or "jmp" or "board" or "corkboard")
                 {
-                    // The Jump menu, or ":jump general": a page of Blyant at once
-                    Jump.ToPage(CommandLine.Argument(command));
+                    // The Jump menu, or ":jump general": a page of Blyant at once (":board": the corkboard)
+                    Jump.ToPage(CommandLine.Name(command) is "board" or "corkboard" ? "board" : CommandLine.Argument(command));
                     FindFavoriteMarks();
                     continue;
                 }
@@ -237,6 +237,12 @@ internal static partial class FileExplorer
                     case "h":
                     case "help":
                         Tools.WriteEditorHelp(Tools.HelpTopic.Favorites);
+                        break;
+                    case "pin":
+                        if (selected < 0) break;
+                        _favoriteMessage = FileFavorites.Items[selected].IsFolder
+                            ? DialogText.FavoriteFolderNoPath
+                            : PinFile(FileFavorites.Items[selected].Path);
                         break;
                     case "bookmark":
                     case "bookmark!":

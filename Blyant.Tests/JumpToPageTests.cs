@@ -13,8 +13,8 @@ public class JumpToPageTests
     {
         Assert.Equal(new[]
         {
-            "general", "layout", "editor", "lists", "system", "colors", "logos", "clipboard", "snippets", "completions",
-            "help", "about"
+            "general", "layout", "editor", "lists", "system", "board", "colors", "logos", "clipboard", "snippets",
+            "completions", "help", "about"
         }, JumpPages.Names);
         Assert.Equal("config/general", JumpPages.IdOf("general"));
         Assert.Equal("schemes", JumpPages.IdOf("colors"));
@@ -41,7 +41,7 @@ public class JumpToPageTests
             Assert.False(Jump.OpensInPlace(new JumpTarget(JumpKind.Page, JumpPages.IdOf(name)!)));
         }
 
-        foreach (var name in new[] { "colors", "logos", "clipboard", "snippets", "completions", "help", "about" })
+        foreach (var name in new[] { "board", "colors", "logos", "clipboard", "snippets", "completions", "help", "about" })
         {
             Assert.True(Jump.OpensInPlace(new JumpTarget(JumpKind.Page, JumpPages.IdOf(name)!)));
         }

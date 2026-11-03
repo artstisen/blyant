@@ -370,6 +370,7 @@ internal static class DialogText
     public static string CaptionsJump => Lang.T("Jump");
     public static string CaptionsJumpInfo => Lang.T("Jump info");
     public static string HelpSectionJump => Lang.T("Jump menu");
+    public static string HelpSectionBoard => Lang.T("Corkboard");
     public static string JumpBookmarkKeys =>
         Lang.T("Enter Jump | W New | A Folder | S Subfolder | N Note | V Move | C Color");
     public static string BookmarkMoveFiltered => Lang.T("Remove the filter (Esc) to move bookmarks and add folders");

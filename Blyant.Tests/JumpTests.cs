@@ -107,7 +107,7 @@ public class JumpTests : IDisposable
 
         Assert.False(Jump.OpensInPlace(new JumpTarget(JumpKind.Page, "config/system")));
         Assert.False(Jump.OpensInPlace(new JumpTarget(JumpKind.File, In("a.md"))));
-        Assert.Equal(12, JumpPages.Ids.Count);
+        Assert.Equal(13, JumpPages.Ids.Count);
         Assert.All(JumpPages.Ids, id => Assert.NotEqual(id, JumpPages.Label(id)));
     }
 

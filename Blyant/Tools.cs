@@ -497,6 +497,7 @@ internal static class Tools
         Logos, // The logos and the logo editor
         Jump, // The Jump menu
         Projects, // The list of projects
+        Board, // The corkboard
         Clipboard, // The clipboard settings
         Editor
     }
@@ -537,6 +538,7 @@ internal static class Tools
             // Start by collecting all shortcuts
             _shortcutList.Add(new Shortcut(string.Empty, Lang.T("Keyboard Functions"), true));
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionStart, true));
+            _shortcutList.Add(new Shortcut(":board", Lang.T("The corkboard: files pinned as cards"), false));
             _shortcutList.Add(new Shortcut("j k 1-9 0", Lang.T("Select"), false));
             _shortcutList.Add(new Shortcut("gg G", Lang.T("First/Last (also in Configuration)"), false));
             _shortcutList.Add(new Shortcut("Enter", Lang.T("Open the selected"), false));
@@ -596,6 +598,8 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("  " + FileIo.SettingsFileName, Lang.T("Edit the settings file (saved: Blyant restarts)"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Help"), Lang.T("The tab Help: all the keys, guides and About"), false));
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionFiles, true));
+            _shortcutList.Add(new Shortcut(":board", Lang.T("The corkboard: files pinned as cards"), false));
+            _shortcutList.Add(new Shortcut(":pin", Lang.T("Pin the selected file to the corkboard"), false));
             _shortcutList.Add(new Shortcut(":jump Ctrl+O", Lang.T("The Jump menu: files, directories and pages"), false));
             _shortcutList.Add(new Shortcut(":book 3", Lang.T("Jump to bookmark 3 (:book alone: the bookmarks)"), false));
             _shortcutList.Add(new Shortcut(":splits", Lang.T("Files closed with another beside them: open one"), false));
@@ -656,6 +660,8 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("  " + Lang.T("Saving"), Lang.T("As UTF-8, with the line endings of the file"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Not UTF-8"), Lang.T("Can be converted (replace file or save copy)"), false));
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionSearch, true));
+            _shortcutList.Add(new Shortcut(":board", Lang.T("The corkboard: files pinned as cards"), false));
+            _shortcutList.Add(new Shortcut(":pin", Lang.T("Pin the selected file to the corkboard"), false));
             _shortcutList.Add(new Shortcut(":bookmark", Lang.T("Bookmark the selected file or directory (Jump menu)"), false));
             _shortcutList.Add(new Shortcut(":bookmark name", Lang.T("... with a name: :book name jumps to it"), false));
             _shortcutList.Add(new Shortcut(":jump Ctrl+O", Lang.T("The Jump menu: files, directories and pages"), false));
@@ -677,6 +683,8 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("  Up Down", Lang.T("Earlier commands of this page"), false));
             _shortcutList.Add(new Shortcut("Esc Q h -", Lang.T("Back to the file browser"), false));
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionFavorites, true));
+            _shortcutList.Add(new Shortcut(":board", Lang.T("The corkboard: files pinned as cards"), false));
+            _shortcutList.Add(new Shortcut(":pin", Lang.T("Pin the selected file to the corkboard"), false));
             _shortcutList.Add(new Shortcut(":bookmark", Lang.T("Bookmark the selected file or directory (Jump menu)"), false));
             _shortcutList.Add(new Shortcut(":bookmark name", Lang.T("... with a name: :book name jumps to it"), false));
             _shortcutList.Add(new Shortcut(":jump Ctrl+O", Lang.T("The Jump menu: files, directories and pages"), false));
@@ -726,6 +734,8 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("Esc Q F h -", Lang.T("Back to the file browser"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("The list"), Lang.T("Kept in favorites.txt in the data directory"), false));
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionHistory, true));
+            _shortcutList.Add(new Shortcut(":board", Lang.T("The corkboard: files pinned as cards"), false));
+            _shortcutList.Add(new Shortcut(":pin", Lang.T("Pin the selected file to the corkboard"), false));
             _shortcutList.Add(new Shortcut(":bookmark", Lang.T("Bookmark the selected file or directory (Jump menu)"), false));
             _shortcutList.Add(new Shortcut(":bookmark name", Lang.T("... with a name: :book name jumps to it"), false));
             _shortcutList.Add(new Shortcut(":jump Ctrl+O", Lang.T("The Jump menu: files, directories and pages"), false));
@@ -749,6 +759,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("Esc Q O h -", Lang.T("Back to the file browser"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("The list"), Lang.F("The last {0} files opened, kept in history.txt", FileHistory.MaxCount), false));
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionHotlist, true));
+            _shortcutList.Add(new Shortcut(":board", Lang.T("The corkboard: files pinned as cards"), false));
             _shortcutList.Add(new Shortcut(":bookmark", Lang.T("Bookmark the selected file or directory (Jump menu)"), false));
             _shortcutList.Add(new Shortcut(":bookmark name", Lang.T("... with a name: :book name jumps to it"), false));
             _shortcutList.Add(new Shortcut(":jump Ctrl+O", Lang.T("The Jump menu: files, directories and pages"), false));
@@ -774,6 +785,22 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("  Up Down", Lang.T("Earlier commands of this page"), false));
             _shortcutList.Add(new Shortcut("Esc Q W h -", Lang.T("Back to the file browser"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("The list"), Lang.F("At most {0} directories, kept in hotlist.txt", DirectoryHotlist.MaxCount), false));
+            _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionBoard, true));
+            _shortcutList.Add(new Shortcut(":board", Lang.T("The corkboard: files pinned as cards"), false));
+            _shortcutList.Add(new Shortcut("Tab Shift+Tab", Lang.T("Select the next/previous card"), false));
+            _shortcutList.Add(new Shortcut("12 Enter", Lang.T("Select card 12"), false));
+            _shortcutList.Add(new Shortcut("h j k l", Lang.T("Select the nearest card that way"), false));
+            _shortcutList.Add(new Shortcut("Enter", Lang.T("Open the file of the card"), false));
+            _shortcutList.Add(new Shortcut("V", Lang.T("Move the card (hjkl, HJKL: 5 steps; Esc: done)"), false));
+            _shortcutList.Add(new Shortcut("T E", Lang.T("Put the card on top of/below the others"), false));
+            _shortcutList.Add(new Shortcut("C X", Lang.T("Color/Title of the card"), false));
+            _shortcutList.Add(new Shortcut("D u", Lang.T("Remove the card (the file stays)/Put it back"), false));
+            _shortcutList.Add(new Shortcut("N :new", Lang.T("Pin a file, picked in the file browser"), false));
+            _shortcutList.Add(new Shortcut("/", Lang.T("Filter the cards by name (Esc: all)"), false));
+            _shortcutList.Add(new Shortcut(":missing", Lang.T("List the entries whose file or folder is gone"), false));
+            _shortcutList.Add(new Shortcut(":prune", Lang.T("Remove missing (asks; drives not connected stay)"), false));
+            _shortcutList.Add(new Shortcut("Ctrl+K :recent", Lang.T("The latest files: Enter or 1-9 opens one"), false));
+            _shortcutList.Add(new Shortcut("Esc Q :q", Lang.T("Close the corkboard"), false));
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionProjects, true));
             _shortcutList.Add(new Shortcut("O :projects :pro", Lang.T("Open project (start page; E in the file browser)"), false));
             _shortcutList.Add(new Shortcut("j k gg G", Lang.T("Select a project"), false));
@@ -791,6 +818,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("? :help", Lang.T("The keys of the list (this help)"), false));
             _shortcutList.Add(new Shortcut("Esc Q :q", Lang.T("Close the list"), false));
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionJump, true));
+            _shortcutList.Add(new Shortcut(":board", Lang.T("The corkboard: files pinned as cards"), false));
             _shortcutList.Add(new Shortcut(":jump :ju :jmp", Lang.T("Open the Jump menu (from most places)"), false));
             _shortcutList.Add(new Shortcut(":jump name", Lang.T("Go to a page of Blyant (Tab lists the names)"), false));
             _shortcutList.Add(new Shortcut("Ctrl+O", Lang.T("Open the Jump menu (from most places)"), false));
@@ -886,6 +914,8 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("Ctrl+O", Lang.T("The Jump menu (asks to save changes before leaving)"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Open"), Lang.T(":logo, or Configuration: Logo"), false));
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionEditor, true));
+            _shortcutList.Add(new Shortcut(":board", Lang.T("The corkboard: files pinned as cards"), false));
+            _shortcutList.Add(new Shortcut(":pin", Lang.T("Pin the file being edited to the corkboard"), false));
             _shortcutList.Add(new Shortcut(":jump Ctrl+O", Lang.T("The Jump menu: files, directories and pages"), false));
             _shortcutList.Add(new Shortcut("Ctrl+K :recent", Lang.T("The latest files: Enter or 1-9 opens one"), false));
             _shortcutList.Add(new Shortcut("gf", Lang.T("Open the file named at the cursor (or selected)"), false));
@@ -1103,6 +1133,7 @@ internal static class Tools
             HelpTopic.Logos => DialogText.HelpSectionLogos,
             HelpTopic.Jump => DialogText.HelpSectionJump,
             HelpTopic.Projects => DialogText.HelpSectionProjects,
+            HelpTopic.Board => DialogText.HelpSectionBoard,
             HelpTopic.Editor => DialogText.HelpSectionEditor,
             _ => string.Empty
         };
