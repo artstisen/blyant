@@ -14,6 +14,7 @@ public class CorkboardTests : IDisposable
     {
         Directory.CreateDirectory(_directory);
         Corkboard.FilePathOverride = Path.Combine(_directory, Corkboard.FileName);
+        Projects.ListPathOverride = Path.Combine(_directory, Projects.ListFileName);
         Corkboard.UseBoard(string.Empty);
     }
 
@@ -21,6 +22,7 @@ public class CorkboardTests : IDisposable
     {
         Corkboard.UseBoard(string.Empty);
         Corkboard.FilePathOverride = null;
+        Projects.ListPathOverride = null;
         Corkboard.Parse(string.Empty);
         if (Directory.Exists(_directory)) Directory.Delete(_directory, true);
     }
@@ -411,5 +413,150 @@ public class CorkboardTests : IDisposable
         Assert.Equal("plot", Corkboard.Boards.Find("plot"));
         Assert.Equal("Plot", Corkboard.Boards.Find("Plot"));
         Assert.Contains(Corkboard.Boards.Find("PLOT"), new[] { "Plot", "plot" });
+    }
+
+    [Fact]
+    public void AFolder_IsACard_KeptWithASeparatorAfterIt()
+    {
+        var folder = In("research");
+        Directory.CreateDirectory(folder);
+        Assert.StartsWith("Pinned", Corkboard.PinWithMessage(folder, Height));
+        var card = Corkboard.CardOf(folder)!;
+        Assert.True(card.IsFolder);
+        Assert.Equal("research/", card.Name);
+        Corkboard.Add(In("notes.md"), Width, Height);
+        Corkboard.Save();
+        Assert.Contains(folder + Path.DirectorySeparatorChar + "\n", File.ReadAllText(Corkboard.FilePath));
+        Corkboard.Load();
+        Assert.Equal((true, folder), (Corkboard.Numbered(1)!.IsFolder, Corkboard.Numbered(1)!.Path));
+        Assert.False(Corkboard.Numbered(2)!.IsFolder);
+        // A folder that is renamed: its card follows, and stays a folder
+        Corkboard.Follow(folder, In("sources"));
+        Assert.Equal((true, In("sources")), (Corkboard.Numbered(1)!.IsFolder, Corkboard.Numbered(1)!.Path));
+    }
+
+    [Fact]
+    public void TheTopEdge_TellsANoteAndAFolder()
+    {
+        var file = Corkboard.Add(In("one.md"), Width, Height);
+        var folder = Corkboard.Add(In("research"), Width, Height, true);
+        var note = Corkboard.AddNote("Note", Width, Height);
+        Assert.Equal(new string('-', 22), CorkboardPage.TopEdge(file, 22));
+        Assert.Equal("-///" + new string('-', 18), CorkboardPage.TopEdge(folder, 22));
+        Assert.Equal(new string('~', 22), CorkboardPage.TopEdge(note, 22));
+    }
+
+    [Fact]
+    public void ClearingTheBoard_TakesAllOff_AndUPutsThemBack()
+    {
+        Corkboard.Add(In("one.md"), Width, Height);
+        Corkboard.Add(In("two.md"), Width, Height);
+        Corkboard.AddNote("Three", Width, Height);
+        Assert.Equal(3, Corkboard.Clear());
+        Assert.Empty(Corkboard.Cards);
+        Assert.Equal(0, Corkboard.Clear());
+        Assert.Equal(Corkboard.Undone.Cards, Corkboard.Undo());
+        Assert.Equal((3, "1 2 3"), (Corkboard.UndoneCount, Order()));
+        // A card added since keeps its number: the one put back with it is not
+        Corkboard.Clear();
+        var added = Corkboard.Add(In("new.md"), Width, Height);
+        Assert.Equal(1, added.Number);
+        Corkboard.Undo();
+        Assert.Equal((2, "2 3 1"), (Corkboard.UndoneCount, Order()));
+        Assert.Same(added, Corkboard.Numbered(1));
+    }
+
+    [Fact]
+    public void TheBoardOfAProject_IsInItsFolder_WithPathsFromIt()
+    {
+        var project = In("Novel");
+        Directory.CreateDirectory(Path.Combine(project, "chapters"));
+        Directory.CreateDirectory(Path.Combine(project, "research"));
+        File.WriteAllText(Projects.ListPathOverride!, project + "\n");
+        Assert.True(Corkboard.IsProjectBoard(project));
+        Assert.False(Corkboard.IsProjectBoard("Plot"));
+        Assert.Null(Corkboard.Snapshot(project));
+        Assert.Empty(Corkboard.ProjectBoards());
+        Corkboard.UseBoard(project);
+        Corkboard.Add(Path.Combine(project, "chapters", "one.md"), Width, Height);
+        Corkboard.Add(Path.Combine(project, "research"), Width, Height, true);
+        Corkboard.Add(In("outside.md"), Width, Height);
+        Assert.Equal(DialogText.Success, Corkboard.Save());
+        var file = Path.Combine(project, Corkboard.ProjectFileName);
+        var text = File.ReadAllText(file);
+        // What is in the project is kept from its folder, with "/" on all systems, the rest with its full path
+        Assert.Contains("\tchapters/one.md\n", text);
+        Assert.Contains("\tresearch/\n", text);
+        Assert.Contains("\t" + In("outside.md") + "\n", text);
+        Assert.Equal(new[] { Path.GetFullPath(project) }, Corkboard.ProjectBoards());
+        Assert.Equal("Novel", Corkboard.NameOf(project));
+        Assert.Equal(Path.GetFullPath(project), Corkboard.FindByName("novel"));
+        Assert.Contains("Novel", Corkboard.BoardWords());
+        Assert.Equal(new[] { 1, 2, 3 }, Corkboard.Snapshot(project)!.Select(card => card.Number));
+        // The project moved (outside Blyant): its board goes with it
+        Corkboard.UseBoard(string.Empty);
+        var moved = In("Book");
+        Directory.Move(project, moved);
+        Corkboard.UseBoard(moved);
+        Assert.Equal(Path.Combine(moved, "chapters", "one.md"), Corkboard.Numbered(1)!.Path);
+        Assert.Equal((true, Path.Combine(moved, "research")),
+            (Corkboard.Numbered(2)!.IsFolder, Corkboard.Numbered(2)!.Path));
+        Assert.Equal(In("outside.md"), Corkboard.Numbered(3)!.Path);
+    }
+
+    [Fact]
+    public void TheOpenBoardOfAProject_FollowsItsFolder()
+    {
+        var project = In("Novel");
+        Directory.CreateDirectory(project);
+        File.WriteAllText(Projects.ListPathOverride!, project + "\n");
+        Corkboard.UseBoard(project);
+        Corkboard.Add(Path.Combine(project, "one.md"), Width, Height);
+        Corkboard.Save();
+        Directory.Move(project, In("Book"));
+        Corkboard.Follow(project, In("Book"));
+        Assert.Equal(Path.GetFullPath(In("Book")), Corkboard.CurrentBoard);
+        Assert.Equal(Path.Combine(In("Book"), "one.md"), Corkboard.Numbered(1)!.Path);
+        Assert.Equal(Path.GetFullPath(In("Book")), Corkboard.FindBoard(In("Book")));
+        Assert.Null(Corkboard.FindBoard(project));
+    }
+
+    [Fact]
+    public void TheBoardOfAProjectThatIsGone_IsNotMadeAgain()
+    {
+        var project = In("Novel");
+        Directory.CreateDirectory(project);
+        Corkboard.UseBoard(project);
+        Corkboard.Add(In("one.md"), Width, Height);
+        Directory.Delete(project);
+        Assert.Equal(DialogText.ProjectMissing, Corkboard.Save());
+        Assert.False(Directory.Exists(project));
+        // Read again: the main board
+        Corkboard.Load();
+        Assert.Equal(string.Empty, Corkboard.CurrentBoard);
+    }
+
+    [Fact]
+    public void TheBoardOfAProject_IsDeletedAsAFile()
+    {
+        var project = In("Novel");
+        Directory.CreateDirectory(project);
+        Corkboard.UseBoard(project);
+        Corkboard.Add(In("one.md"), Width, Height);
+        Corkboard.Save();
+        var toTrash = FileOperations.DeleteToTrash;
+        try
+        {
+            FileOperations.DeleteToTrash = false;
+            Assert.Equal(DialogText.Success, Corkboard.DeleteBoard(Path.GetFullPath(project), out _));
+        }
+        finally
+        {
+            FileOperations.DeleteToTrash = toTrash;
+        }
+
+        Assert.False(File.Exists(Path.Combine(project, Corkboard.ProjectFileName)));
+        Assert.True(Directory.Exists(project));
+        Assert.Equal(string.Empty, Corkboard.CurrentBoard);
     }
 }

@@ -22,7 +22,7 @@ Each choice has a number and a key, shown in front of it. The number selects the
 - `3` `R` **Recover unsaved text**: Shown only when there are [recovery copies](Guide-to-editor.md#recovery-copies) of text that was not saved (the choices below it then have a number more). It lists them, the newest first, with the start of the text below the list: blank pages that were not saved, and files. `Enter` opens one: a blank page as a blank page with its text, a file in the editor, where you are asked what to do with the copy (a file that is gone is opened as a blank page with the text). `D` deletes a copy, after asking. Blyant stopped while a blank page had text in it (the terminal closed, the computer turned off): this is where you find it
 - `3` `F` **File browser**: Open the [file browser](#file-browser), where `Enter` opens a file in the editor, and files and folders are made, renamed, copied, moved and deleted. Closing the file browser returns here
 - `4` `P` **New project**: Make a new [project](#projects): you pick the folder it goes in, you are asked for its name, a folder of that name is made there, and it is shown in the file browser
-- `5` `O` **Open project**: The [projects](#projects) in a list to pick from, with what each holds below the list and the start of its note to the right of that. `Enter` shows the project picked in the file browser, `C` picks the color of the project, `N` opens its note in the editor, `I` shows information about it, `/` filters the list, `:` is its command line, `?` shows its keys and `Esc` closes it
+- `5` `O` **Open project**: The [projects](#projects) in a list to pick from, with what each holds below the list and the start of its note to the right of that. `Enter` shows the project picked in the file browser, `B` opens its [corkboard](Guide-to-corkboard.md#the-board-of-a-project), `C` picks the color of the project, `N` opens its note in the editor, `I` shows information about it, `/` filters the list, `:` is its command line, `?` shows its keys and `Esc` closes it
 - `6` `E` **Recent files**: The latest files you opened, newest first, in a small box (the 9 newest of the [file history](#file-history)): `Enter` or `1` to `9` opens one in the editor, where it was left, and `Esc` closes the box. Also with `Ctrl+K`, on every tab and page of the start page, in the file browser and its lists (favorites, history, hotlist, search results) and in the Jump menu (in the editor, in Normal mode), and with `:recent`
 - `7` `V` **Favorites**: The [favorites](#favorites) of the file browser at once, with their folders, notes and peek. `Enter` opens a file in the editor (and the favorites come back after), and `B` shows a file or directory in the file browser. `Esc` closes them and returns here (from the file browser shown with `B`: closing it returns here)
 - `8` `C` **Corkboard**: The [corkboard](Guide-to-corkboard.md), where files are pinned as cards and placed where you want them, to plan a story or keep the files you work on in view. It opens on top of the start page, and `Esc` comes back here
@@ -44,7 +44,7 @@ When a folder is picked in the file browser (a folder to add, or where to make a
 
 A project can be made on Windows, macOS and Linux alike, and synced between them: its name may not have the characters `\ / : * ? " < > |` in it, and may not be the name of another project in other upper or lower case (`novel` when there is `Novel`).
 
-_Open project_ lists the projects, in alphabetical order. Two projects of the same name have the name of the folder they are in after it. Below the list, under _Files_, is where the selected project is and what it holds, and to the right of it, under _Note_, the start of its note.
+_Open project_ lists the projects, in alphabetical order. Two projects of the same name have the name of the folder they are in after it. Below the list, under _Files_, is where the selected project is and what it holds, and to the right of it, under _Note_, the start of its note. To the right of the list are the cards of the project's [corkboard](Guide-to-corkboard.md#the-board-of-a-project), laid on each other, or _No corkboard: B makes one_.
 
 - `P` (`:new`) makes a **new project**, in a folder you pick in the file browser
 - `A` (`:add`) **adds** a folder you pick in the file browser. A folder that is a project already is not added
@@ -52,17 +52,19 @@ _Open project_ lists the projects, in alphabetical order. Two projects of the sa
 
 A project is worked on in the file browser: `N` makes a file in it (a Markdown file when the name has no extension), `A` a folder, and `Enter` opens a file in the editor.
 
-In the list of projects, each project can have a color and a note:
+In the list of projects, each project can have a color, a note and a corkboard:
 - `C` picks the **color** of the name of the project in the list (_[Default]_ takes it away). It is kept in the file `.blyant` in the project
 - `N` opens the **note** of the project in the editor: what to do next, an idea, where you are. It is the Markdown file `.blyant-note.md` in the project, and the start of it is shown to the right of what the project holds (with `...` where there is more). `:wq` saves it and goes back to the list; a note left empty is removed
 
-Both files are in the folder of the project, so they go with it when it is copied, moved or synced. They start with a dot, so they are not shown with what the project holds.
+- `B` opens the **corkboard** of the project, to plan it with cards of its files, folders and notes. It is the file `.blyant-board.txt` in the project (see the [guide to the corkboard](Guide-to-corkboard.md#the-board-of-a-project))
+
+The files are in the folder of the project, so they go with it when it is copied, moved or synced. They start with a dot, so they are not shown with what the project holds.
 
 `I` in the list of projects shows information about the selected project, in a box as `I` in the Jump menu: its name, what the folder holds, when it was made and changed, its color, the start of its note, and its path. The list has a command line of its own (`:`, with `Tab` completing the command and `Up`/`Down` bringing back the commands given before), with commands on the selected project:
 
 - `:info` Information about the project, as `I`
 - `:path` and `:name` Copy the full path of the project folder, or its name, to the clipboard (and the string memory, as set in the clipboard settings)
-- `:color` and `:note` The color and the note, as `C` and `N`
+- `:color`, `:note` and `:board` The color, the note and the corkboard, as `C`, `N` and `B`
 - `:new name`, `:add` and `:remove` A new project, a folder added, and a project off the list, as `P`, `A` and `D`
 - `:help` (or `?`) The keys of the list
 - `:q` (`:quit`, `:close`) Close the list, as `Esc`

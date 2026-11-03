@@ -79,8 +79,8 @@ internal static partial class FileExplorer
                 Jump.ToPage(Jump.BoardPage(argument));
                 break;
             case "pin":
-                // The selected file to the corkboard
-                _message = SelectedItem() is { IsDirectory: false } item ? PinFile(item.Path) : OnlyFilesArePinned;
+                // The selected file or folder to the corkboard (not "..")
+                if (SelectedItem() is { } item && item.Name != ParentName) _message = PinFile(item.Path);
                 break;
             case "book":
                 // ":book 3": jump to bookmark 3
@@ -1032,23 +1032,22 @@ internal static partial class FileExplorer
             true, out _);
 
     /// <summary>
-    /// ":pin" in the file browser, its lists and the editor: a file to the corkboard
+    /// ":pin" in the file browser, its lists and the editor: a file or folder to the corkboard
     /// </summary>
     /// <returns>The message that tells what was done (with the number of the card)</returns>
-    internal static string PinFile(string path) =>
-        Directory.Exists(path) ? OnlyFilesArePinned : Corkboard.PinWithMessage(path, CorkboardPage.Height);
+    internal static string PinFile(string path) => Corkboard.PinWithMessage(path, CorkboardPage.Height);
 
     /// <summary>
-    /// I on the corkboard: information about a file, as in the file browser
+    /// I on the corkboard: information about a file or folder, as in the file browser
     /// </summary>
     /// <returns>The message (why it could not be shown), or empty</returns>
-    internal static string ShowFileInfo(string path)
+    internal static string ShowPlaceInfo(string path, bool isDirectory)
     {
         _message = string.Empty;
         long length;
         try
         {
-            length = new FileInfo(path).Length;
+            length = isDirectory ? 0 : new FileInfo(path).Length;
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
@@ -1056,13 +1055,12 @@ internal static partial class FileExplorer
             return e is FileNotFoundException ? DialogText.FileNotFound : e.Message;
         }
 
-        ShowInfo(new Item(System.IO.Path.GetFileName(path), path, false, length));
+        ShowInfo(new Item(System.IO.Path.GetFileName(System.IO.Path.TrimEndingDirectorySeparator(path)), path,
+            isDirectory, length));
         var message = _message;
         _message = string.Empty;
         return message;
     }
-
-    private static string OnlyFilesArePinned => Lang.T("Only a file can be pinned to the corkboard");
 
     // ":name" and ":path" on the lists (favorites, history, hotlist): the text to the string memory and to the
     // clipboard as set, and the message that tells where it went

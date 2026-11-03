@@ -85,8 +85,8 @@ class Program
         CommandCompletion.Arguments["book"] = Bookmarks.NamesToComplete;
         // ... after ":list " the lists of favorites, and after ":jump " the names of the pages
         CommandCompletion.Arguments["list"] = FileFavorites.ListWords;
-        CommandCompletion.Arguments["board"] = () => Corkboard.Boards.Words();
-        CommandCompletion.Arguments["corkboard"] = () => Corkboard.Boards.Words();
+        CommandCompletion.Arguments["board"] = Corkboard.BoardWords;
+        CommandCompletion.Arguments["corkboard"] = Corkboard.BoardWords;
         foreach (var jump in new[] { "jump", "ju", "jmp" }) CommandCompletion.Arguments[jump] = () => JumpPages.Names;
         while (true)
         {

@@ -145,17 +145,25 @@ internal sealed class NamedLists
     /// <param name="name">Its name (not the main list)</param>
     /// <param name="trashedPath">Where it is in the trash (empty: it is not there)</param>
     /// <returns>DialogText.Success or a message</returns>
-    internal string Delete(string name, out string trashedPath)
+    internal string Delete(string name, out string trashedPath) => DeleteFile(PathOf(name), out trashedPath);
+
+    /// <summary>
+    /// Delete the file of a list: to the trash, unless that is turned off
+    /// </summary>
+    /// <param name="path">The file</param>
+    /// <param name="trashedPath">Where it is in the trash (empty: it is not there)</param>
+    /// <returns>DialogText.Success or a message</returns>
+    internal static string DeleteFile(string path, out string trashedPath)
     {
         trashedPath = string.Empty;
         try
         {
             if (FileOperations.DeleteToTrash)
             {
-                return FileOperations.MoveToTrash(PathOf(name), FileOperations.TrashDirectory, out trashedPath);
+                return FileOperations.MoveToTrash(path, FileOperations.TrashDirectory, out trashedPath);
             }
 
-            FileIo.DeleteFile(PathOf(name));
+            FileIo.DeleteFile(path);
             return DialogText.Success;
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)

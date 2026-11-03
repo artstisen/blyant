@@ -12,7 +12,10 @@ internal static class ProjectsBox
 {
     // The key hints of the list
     private static string Keys() =>
-        Lang.T("j/k Select | Enter Open | P New | A Add | D Remove | C Color | N Note | ? Help");
+        Lang.T("j/k Select | Enter Open | B Board | P New | A Add | D Remove | C Color | N Note | ? Help");
+
+    // The width of the cards of a board beside the list: a card, and the steps of three on top of it (cut)
+    private const int BoardColumnWidth = Corkboard.CardWidth + 4;
 
     /// <summary>
     /// Show the projects and let the user pick one (or make one, or add one)
@@ -28,13 +31,17 @@ internal static class ProjectsBox
             var names = Projects.DisplayNames(projects);
             // A missing one is told
             names = names.Select((name, i) => projects[i].Missing ? Lang.F("{0} (missing)", name) : name).ToList();
-            // The colors and notes, read once (and again when one is changed)
+            // The colors, notes and boards, read once (and again when one is changed)
             var info = projects.Select(project => Info(project.Path)).ToList();
             string? result = null;
             var extras = new PickListBox.Extras
             {
                 RowColor = i => info[i].Color,
                 Side = i => info[i].Note,
+                // To the right of the list: the corkboard of the project
+                Beside = (i, top, left, width, height) =>
+                    CorkboardPage.DrawSnapshot(i >= 0 ? info[i].Board : null, top, left, width, height),
+                BesideWidth = BoardColumnWidth,
                 EmptyText = Lang.T("No projects yet: P makes a new one, A adds a folder"),
                 // Below the list: where the project is and what it holds, and the start of its note
                 PreviewLabel = Lang.T("Files"),
@@ -91,6 +98,9 @@ internal static class ProjectsBox
                         case 'N':
                             WriteNote(project.Path);
                             break;
+                        case 'B':
+                            ShowBoard(project);
+                            break;
                         case 'I':
                             ShowInfo(project);
                             break;
@@ -125,8 +135,21 @@ internal static class ProjectsBox
         return path + "\n" + (project.Missing ? DialogText.ProjectMissing : Projects.Contents(project.Path, 4));
     }
 
-    private static (ConsoleColor? Color, string Note) Info(string project) =>
-        (Projects.ColorOf(project), Projects.NoteSnippet(project));
+    private static (ConsoleColor? Color, string Note, List<Corkboard.Card>? Board) Info(string project) =>
+        (Projects.ColorOf(project), Projects.NoteSnippet(project), Corkboard.Snapshot(project));
+
+    // B or ":board": the corkboard of the project (on top of the list, until it is closed)
+    private static void ShowBoard(Projects.Project project)
+    {
+        if (project.Missing)
+        {
+            ChoiceBox.Forget();
+            ChoiceBox.Message(Lang.T("Corkboard"), DialogText.ProjectMissing, project.Path);
+            return;
+        }
+
+        CorkboardPage.ShowProjectBoard(project.Path);
+    }
 
     #region Making, adding and removing projects
 
@@ -302,6 +325,9 @@ internal static class ProjectsBox
                 break;
             case "note":
                 WriteNote(project.Path);
+                break;
+            case "board":
+                ShowBoard(project);
                 break;
             case "remove":
                 return RemoveProject(project) ? CommandResult.Reload : CommandResult.None;

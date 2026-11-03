@@ -53,6 +53,17 @@ internal static class PickListBox
         internal string? PreviewLabel { get; init; }
 
         internal string? SideLabel { get; init; }
+
+        /// <summary>
+        /// Drawn in a column to the right of the list, for the row selected (-1: none): given the top, left, width
+        /// and height of the column (null: no column, the list takes the width of the box)
+        /// </summary>
+        internal Action<int, int, int, int, int>? Beside { get; init; }
+
+        /// <summary>
+        /// The width of the column to the right of the list (Beside)
+        /// </summary>
+        internal int BesideWidth { get; init; }
     }
 
     /// <summary>
@@ -121,6 +132,7 @@ internal static class PickListBox
             if (selected != shownSelected)
             {
                 DrawPointers(view, scroll, selected);
+                DrawBeside(view.Count > 0 ? view[selected] : -1);
                 DrawPreview(view.Count > 0 ? preview(view[selected]) : string.Empty,
                     view.Count > 0 && extras?.Side is { } side ? side(view[selected]) : string.Empty);
                 shownSelected = selected;
@@ -323,32 +335,51 @@ internal static class PickListBox
         }
     }
 
+    // The width of the column to the right of the list (0: none), with a blank column before it; at least 20
+    // columns are left for the list
+    private static int BesideWidth() =>
+        _extras?.Beside == null ? 0 : Math.Clamp(_extras.BesideWidth, 0, Math.Max(0, _inner - 4 - 20 - 1));
+
+    // The list ends here (the arrows of more above or below are in its last column but one)
+    private static int ListWidth() => BesideWidth() > 0 ? _inner - 1 - BesideWidth() - 1 : _inner;
+
     private static void DrawList(IReadOnlyList<string> rows, List<int> view, int scroll, string filter)
     {
+        var listWidth = ListWidth();
         for (var row = 0; row < _listRows; row++)
         {
             Tools.SetCursorEx(_listTop + row, _left + 1);
             var i = scroll + row;
             var text = i < view.Count
-                ? TextMetrics.Printable(Tools.TruncateString(rows[view[i]], _inner - 8, true))
+                ? TextMetrics.Printable(Tools.TruncateString(rows[view[i]], listWidth - 8, true))
                 : i == 0 && filter.Length > 0
                     ? DialogText.PickListNoMatch
                     : i == 0 && rows.Count == 0 && _extras?.EmptyText is { } empty
-                        ? Tools.TruncateString(empty, _inner - 8, true)
+                        ? Tools.TruncateString(empty, listWidth - 8, true)
                         : string.Empty;
             Console.Write("     ");
             if (i < view.Count && _extras?.RowColor?.Invoke(view[i]) is { } color) ConsoleColors.SetTextColor(color);
             Console.Write(text);
             ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
-            Console.Write(new string(' ', Math.Max(0, _inner - 5 - TextMetrics.WidthOf(text))));
+            Console.Write(new string(' ', Math.Max(0, listWidth - 5 - TextMetrics.WidthOf(text))));
         }
 
         // More above or below
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
-        Tools.SetCursorEx(_listTop, _left + _inner - 2);
+        Tools.SetCursorEx(_listTop, _left + listWidth - 2);
         Console.Write(scroll > 0 ? "^" : " ");
-        Tools.SetCursorEx(_listTop + _listRows - 1, _left + _inner - 2);
+        Tools.SetCursorEx(_listTop + _listRows - 1, _left + listWidth - 2);
         Console.Write(scroll + _listRows < view.Count ? "v" : " ");
+        ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
+    }
+
+    // The column to the right of the list, for the row selected (-1: none)
+    private static void DrawBeside(int row)
+    {
+        var width = BesideWidth();
+        if (width <= 0 || _extras?.Beside is not { } beside) return;
+        // (up to the blank column before the right border)
+        beside(row, _listTop, _left + ListWidth() + 1, width, _listRows);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
     }
 

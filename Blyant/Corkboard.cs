@@ -10,17 +10,25 @@ namespace Blyant;
 /// they overlap.
 ///
 /// There can be several boards: the main board is the file "board.txt" in the data directory, and the others are
-/// files of the same kind in the directory "boards" next to it, with their names. One board is open at a time (setting
-/// "boardname"). The cards of all the boards follow a file that is renamed or moved.
+/// files of the same kind in the directory "boards" next to it, with their names. A project can have a board of its
+/// own: the file ".blyant-board.txt" in its folder, where the paths of what is in the project are kept from the
+/// folder, so the board goes with the project when it is moved, copied or synced. A board is told by its key: its
+/// name (empty: the main board), or the full path of the project (a name cannot have a separator in it). One board is
+/// open at a time (setting "boardname"). The cards of all the boards follow a file that is renamed or moved.
 ///
 /// A board is kept as a line for each card: its number, its place ("column,row"), its color (or nothing), its title
-/// (or nothing) and the path of its file (nothing for a note), with a tab character between them. The text of a note
-/// is on the line after it, after a "#" (as the notes of the favorites). It does not touch the console, so it can be
-/// tested
+/// (or nothing) and the path of its file or folder (nothing for a note; a folder ends with a separator), with a tab
+/// character between them. The text of a note is on the line after it, after a "#" (as the notes of the favorites).
+/// It does not touch the console, so it can be tested
 /// </summary>
 internal static class Corkboard
 {
     internal const string FileName = "board.txt";
+
+    /// <summary>
+    /// The board of a project: a file in its folder (English: the name of a file)
+    /// </summary>
+    internal const string ProjectFileName = ".blyant-board.txt";
 
     /// <summary>
     /// The size of a card on the screen, with its frame
@@ -38,6 +46,7 @@ internal static class Corkboard
         internal string Title = string.Empty; // A title of its own (empty: the name of its file, or a note's first line)
         internal string Path = string.Empty; // Empty: a note
         internal string Text = string.Empty; // The text of a note
+        internal bool IsFolder; // The path is of a folder
 
         /// <summary>
         /// A card with a text of its own instead of a file
@@ -50,10 +59,12 @@ internal static class Corkboard
         internal string Name => Title.Length > 0 ? Title : OwnName;
 
         /// <summary>
-        /// The name of the card without a title: the name of its file without the extension, or the first line of
-        /// its text (a tab in it as blank space, so the card keeps its frame)
+        /// The name of the card without a title: the name of its file without the extension, of its folder with a
+        /// "/" after it (as in the file browser), or the first line of its text (a tab in it as blank space, so the
+        /// card keeps its frame)
         /// </summary>
-        internal string OwnName => (!IsNote ? System.IO.Path.GetFileNameWithoutExtension(Path)
+        internal string OwnName => (IsFolder ? System.IO.Path.GetFileName(Path.TrimEnd('/', '\\')) + "/"
+            : !IsNote ? System.IO.Path.GetFileNameWithoutExtension(Path)
             : Text.Split('\n').Select(line => line.Trim()).FirstOrDefault(line => line.Length > 0) ?? Lang.T("Note"))
             .Replace('\t', ' ');
     }
@@ -78,10 +89,77 @@ internal static class Corkboard
     /// </summary>
     internal static readonly NamedLists Boards = new(() => MainFilePath, "boards");
 
-    internal static string FilePath => Boards.PathOf(CurrentBoard);
+    internal static string FilePath => BoardFile(CurrentBoard);
 
     /// <summary>
-    /// The name of the board that is open (setting "boardname"; empty: the main board). Its cards are read when it
+    /// A key that is the board of a project (its full path), not a name
+    /// </summary>
+    internal static bool IsProjectBoard(string key) => key.IndexOfAny(new[] { '/', '\\' }) >= 0;
+
+    /// <summary>
+    /// The file of a board
+    /// </summary>
+    internal static string BoardFile(string key) =>
+        IsProjectBoard(key) ? System.IO.Path.Combine(key, ProjectFileName) : Boards.PathOf(key);
+
+    // The folder the paths of a board are kept from (a project), or null: full paths
+    private static string? RootOf(string key) => IsProjectBoard(key) ? key : null;
+
+    /// <summary>
+    /// The board of a key as it is now (setting "boardname"): a board of that name, or a project folder that is
+    /// there. Null if there is none
+    /// </summary>
+    internal static string? FindBoard(string key) =>
+        IsProjectBoard(key) ? Directory.Exists(key) ? System.IO.Path.GetFullPath(key) : null : Boards.Find(key);
+
+    /// <summary>
+    /// The projects that have a board, by their full paths (those whose folder is there)
+    /// </summary>
+    internal static List<string> ProjectBoards()
+    {
+        var boards = new List<string>();
+        foreach (var project in Projects.ListedPaths())
+        {
+            try
+            {
+                if (File.Exists(BoardFile(project))) boards.Add(System.IO.Path.GetFullPath(project));
+            }
+            catch (Exception e) when (e is ArgumentException or NotSupportedException)
+            {
+                // (a line that is not a path)
+            }
+        }
+
+        return boards;
+    }
+
+    /// <summary>
+    /// The name a board is shown with: its name, or the name of its project (empty: the main board)
+    /// </summary>
+    internal static string NameOf(string key) =>
+        IsProjectBoard(key) ? System.IO.Path.GetFileName(System.IO.Path.TrimEndingDirectorySeparator(key)) : key;
+
+    /// <summary>
+    /// ":board name": a board by its name, or the board of a project by the name of its folder (upper and lower case
+    /// alike). Null if there is none
+    /// </summary>
+    internal static string? FindByName(string name)
+    {
+        if (Boards.Find(name) is { } found) return found;
+        name = name.Trim();
+        var projects = ProjectBoards();
+        return projects.FirstOrDefault(key => NameOf(key).Equals(name, StringComparison.Ordinal)) ??
+               projects.FirstOrDefault(key => NameOf(key).Equals(name, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    /// The words that can follow ":board": the boards, and the projects with boards
+    /// </summary>
+    internal static IEnumerable<string> BoardWords() =>
+        Boards.Words().Concat(ProjectBoards().Select(NameOf)).Distinct(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// The key of the board that is open (setting "boardname"; empty: the main board). Its cards are read when it
     /// is set, so what is saved never goes to a board it was not read from
     /// </summary>
     internal static string CurrentBoard
@@ -100,9 +178,10 @@ internal static class Corkboard
     // The file was there, but could not be read: it is not written over until it is read
     private static bool _unreadable;
 
-    // What u puts back: the card removed last and where it was in the order, or the places of the cards before they
-    // were arranged
+    // What u puts back: the card removed last and where it was in the order, the cards taken off by ":clear", or the
+    // places of the cards before they were arranged
     private static (Card Card, int Index)? _removed;
+    private static List<Card>? _cleared;
     private static List<(Card Card, int X, int Y)>? _arranged;
 
     /// <summary>
@@ -112,13 +191,20 @@ internal static class Corkboard
     {
         _cards.Clear();
         _removed = null;
+        _cleared = null;
         _arranged = null;
         _unreadable = false;
-        // A board that is gone (deleted outside Blyant): the main board
-        if (_currentBoard.Length > 0 && !File.Exists(FilePath)) _currentBoard = string.Empty;
+        // A board that is gone (deleted outside Blyant, or its project folder): the main board. A project without a
+        // board yet has an empty one
+        if (IsProjectBoard(_currentBoard) ? !Directory.Exists(_currentBoard)
+                : _currentBoard.Length > 0 && !File.Exists(FilePath))
+        {
+            _currentBoard = string.Empty;
+        }
+
         try
         {
-            if (File.Exists(FilePath)) Parse(File.ReadAllText(FilePath, Encoding.UTF8));
+            if (File.Exists(FilePath)) Parse(File.ReadAllText(FilePath, Encoding.UTF8), RootOf(_currentBoard));
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
@@ -135,7 +221,7 @@ internal static class Corkboard
         try
         {
             var text = File.Exists(FilePath) ? File.ReadAllText(FilePath, Encoding.UTF8) : string.Empty;
-            if (!_unreadable && text.Replace("\r", string.Empty) == Serialize()) return;
+            if (!_unreadable && text.Replace("\r", string.Empty) == Serialize(RootOf(_currentBoard))) return;
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
@@ -148,14 +234,19 @@ internal static class Corkboard
     /// <summary>
     /// Open a board
     /// </summary>
-    /// <param name="name">Its name (empty: the main board)</param>
-    internal static void UseBoard(string name)
+    /// <param name="key">Its name (empty: the main board), or the full path of a project</param>
+    internal static void UseBoard(string key)
     {
-        _currentBoard = name;
+        _currentBoard = key;
         Load();
     }
 
-    internal static void Parse(string text)
+    /// <summary>
+    /// Read cards from the text of a board
+    /// </summary>
+    /// <param name="text">The text</param>
+    /// <param name="root">The folder of a project, the paths of what is in it are kept from (null: none)</param>
+    internal static void Parse(string text, string? root = null)
     {
         _cards.Clear();
         Card? last = null; // The card a note is of
@@ -177,23 +268,68 @@ internal static class Corkboard
             ConsoleColor? color = Enum.TryParse<ConsoleColor>(parts[2].Trim(), true, out var parsed) && Enum.IsDefined(parsed)
                 ? parsed
                 : null;
+            var (path, isFolder) = ReadPath(parts[4], root);
             last = new Card
             {
                 Number = number, X = Math.Max(0, x), Y = Math.Max(0, y), Color = color, Title = parts[3].Trim(),
-                Path = FileOperations.ListedPath(parts[4])
+                Path = path, IsFolder = isFolder
             };
             _cards.Add(last);
         }
     }
 
-    internal static string Serialize()
+    // A path as it is kept: a folder ends with a separator, and in a project, what is in it is kept from its folder
+    // with "/" (the same on all systems). It is read back as a full path
+    private static (string Path, bool IsFolder) ReadPath(string written, string? root)
+    {
+        var trimmed = written.TrimEnd();
+        var isFolder = trimmed.Length > 1 && (trimmed.EndsWith('/') ||
+                                              (OperatingSystem.IsWindows() && trimmed.EndsWith('\\')));
+        if (isFolder) written = trimmed.TrimEnd('/', '\\');
+        if (written.Trim().Length == 0) return (isFolder ? root ?? string.Empty : string.Empty, isFolder);
+        if (root != null && !System.IO.Path.IsPathRooted(written.Trim()))
+        {
+            try
+            {
+                written = System.IO.Path.GetFullPath(System.IO.Path.Combine(root,
+                    OperatingSystem.IsWindows() ? written : written.Replace('\\', '/')));
+            }
+            catch (Exception e) when (e is ArgumentException or NotSupportedException)
+            {
+                // Kept as it is (a card of a file that is not there)
+            }
+        }
+
+        return (FileOperations.ListedPath(written), isFolder);
+    }
+
+    private static string WritePath(Card card, string? root)
+    {
+        if (card.IsNote) return string.Empty;
+        var path = card.Path;
+        var relative = root != null && (FileOperations.IsInside(path, root) || FileOperations.SamePath(path, root));
+        if (relative)
+        {
+            path = System.IO.Path.GetRelativePath(root!, path);
+            if (OperatingSystem.IsWindows()) path = path.Replace('\\', '/');
+        }
+
+        if (!card.IsFolder) return path;
+        return path + (relative ? '/' : System.IO.Path.DirectorySeparatorChar);
+    }
+
+    /// <summary>
+    /// The text of the board that is read, as it is kept
+    /// </summary>
+    /// <param name="root">The folder of a project, the paths of what is in it are kept from (null: full paths)</param>
+    internal static string Serialize(string? root = null)
     {
         var text = new StringBuilder();
         foreach (var card in _cards)
         {
             text.Append(card.Number).Append('\t').Append(card.X).Append(',').Append(card.Y).Append('\t')
                 .Append(card.Color?.ToString() ?? string.Empty).Append('\t').Append(card.Title).Append('\t')
-                .Append(card.Path).Append('\n');
+                .Append(WritePath(card, root)).Append('\n');
             if (card.IsNote && card.Text.Length > 0) text.Append(Notes.Line(0, card.Text));
         }
 
@@ -209,9 +345,17 @@ internal static class Corkboard
         if (_unreadable) return DialogText.ListNotRead;
         try
         {
-            var directory = System.IO.Path.GetDirectoryName(System.IO.Path.GetFullPath(FilePath));
-            if (directory != null) FileIo.CreateDirectory(directory);
-            FileIo.WriteAllBytesSafe(FilePath, new UTF8Encoding(false).GetBytes(Serialize()));
+            // (the folder of a project is not made again: it was moved or deleted)
+            if (IsProjectBoard(_currentBoard))
+            {
+                if (!Directory.Exists(_currentBoard)) return DialogText.ProjectMissing;
+            }
+            else if (System.IO.Path.GetDirectoryName(System.IO.Path.GetFullPath(FilePath)) is { } directory)
+            {
+                FileIo.CreateDirectory(directory);
+            }
+
+            FileIo.WriteAllBytesSafe(FilePath, new UTF8Encoding(false).GetBytes(Serialize(RootOf(_currentBoard))));
             return DialogText.Success;
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
@@ -222,18 +366,18 @@ internal static class Corkboard
 
     // Do something with a board in the place of the one that is open, which stays as it is. A board that cannot be
     // read is left alone
-    private static void WithBoard(string name, Action action)
+    private static void WithBoard(string key, Action action)
     {
         var open = _cards;
         _cards = new List<Card>();
         try
         {
-            if (File.Exists(Boards.PathOf(name))) Parse(File.ReadAllText(Boards.PathOf(name), Encoding.UTF8));
+            if (File.Exists(BoardFile(key))) Parse(File.ReadAllText(BoardFile(key), Encoding.UTF8), RootOf(key));
             action();
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
-            EventLog.Add(DialogText.LogFile + "Corkboard: " + Boards.PathOf(name) + " - FAILED: " + e.Message);
+            EventLog.Add(DialogText.LogFile + "Corkboard: " + BoardFile(key) + " - FAILED: " + e.Message);
         }
         finally
         {
@@ -258,21 +402,38 @@ internal static class Corkboard
         WithBoard(board, () =>
         {
             if (Numbered(number) is not { } card || !change(card)) return;
-            FileIo.WriteAllBytesSafe(Boards.PathOf(board), new UTF8Encoding(false).GetBytes(Serialize()));
+            WriteBoard(board);
             changed = true;
         });
         return changed;
     }
 
+    // Write the cards read (WithBoard) to the file of a board
+    private static void WriteBoard(string key)
+    {
+        FileIo.WriteAllBytesSafe(BoardFile(key), new UTF8Encoding(false).GetBytes(Serialize(RootOf(key))));
+    }
+
     /// <summary>
     /// What is on a board, a line for each card, to show it in the box of boards
     /// </summary>
-    internal static string BoardPreview(string name)
+    internal static string BoardPreview(string key)
     {
         var lines = new List<string>();
-        WithBoard(name, () => lines.AddRange(_cards.OrderBy(card => card.Number)
+        WithBoard(key, () => lines.AddRange(_cards.OrderBy(card => card.Number)
             .Select(card => card.Number + "  " + card.Name)));
         return string.Join("\n", lines);
+    }
+
+    /// <summary>
+    /// The cards of a board by their numbers (to show them beside the list of projects), or null if it has no file
+    /// </summary>
+    internal static List<Card>? Snapshot(string key)
+    {
+        if (!File.Exists(BoardFile(key))) return null;
+        var cards = new List<Card>();
+        WithBoard(key, () => cards.AddRange(_cards.OrderBy(card => card.Number)));
+        return cards;
     }
 
     /// <summary>
@@ -297,10 +458,12 @@ internal static class Corkboard
     /// is open, the main board is opened
     /// </summary>
     /// <returns>DialogText.Success or a message</returns>
-    internal static string DeleteBoard(string name, out string trashedPath)
+    internal static string DeleteBoard(string key, out string trashedPath)
     {
-        var result = Boards.Delete(name, out trashedPath);
-        if (result == DialogText.Success && _currentBoard == name) UseBoard(string.Empty);
+        var result = IsProjectBoard(key)
+            ? NamedLists.DeleteFile(BoardFile(key), out trashedPath)
+            : Boards.Delete(key, out trashedPath);
+        if (result == DialogText.Success && _currentBoard == key) UseBoard(string.Empty);
         return result;
     }
 
@@ -326,10 +489,13 @@ internal static class Corkboard
     /// <summary>
     /// Pin a file: a new card at the first free place on a board of a size, on top of the others
     /// </summary>
-    internal static Card Add(string path, int width, int height)
+    internal static Card Add(string path, int width, int height, bool isFolder = false)
     {
         var (x, y) = FreePlace(width, height);
-        var card = new Card { Number = FreeNumber(), X = x, Y = y, Path = System.IO.Path.GetFullPath(path) };
+        var card = new Card
+        {
+            Number = FreeNumber(), X = x, Y = y, Path = System.IO.Path.GetFullPath(path), IsFolder = isFolder
+        };
         _cards.Add(card);
         return card;
     }
@@ -405,7 +571,22 @@ internal static class Corkboard
         if (index < 0) return;
         _cards.RemoveAt(index);
         _removed = (card, index);
+        _cleared = null;
         _arranged = null;
+    }
+
+    /// <summary>
+    /// ":clear": take all the cards off the board (their files stay). They can be put back with Undo
+    /// </summary>
+    /// <returns>How many were taken off</returns>
+    internal static int Clear()
+    {
+        if (_cards.Count == 0) return 0;
+        _cleared = _cards.ToList();
+        _removed = null;
+        _arranged = null;
+        _cards.Clear();
+        return _cleared.Count;
     }
 
     /// <summary>
@@ -421,6 +602,7 @@ internal static class Corkboard
     {
         var gone = cards.ToHashSet();
         _removed = null;
+        _cleared = null;
         _arranged = null;
         return _cards.RemoveAll(gone.Contains);
     }
@@ -449,6 +631,7 @@ internal static class Corkboard
         if (!Orders.Contains(order)) return false;
         _arranged = _cards.Select(card => (card, card.X, card.Y)).ToList();
         _removed = null;
+        _cleared = null;
         var perRow = Math.Max(1, (Math.Max(CardWidth, width) + 1) / (CardWidth + 1));
         var rows = Math.Max(1, Math.Max(CardHeight, height) / CardHeight);
         var i = 0;
@@ -471,6 +654,7 @@ internal static class Corkboard
     {
         Nothing,
         Card, // The card removed last (UndoneCard)
+        Cards, // The cards taken off by ":clear" (as many as UndoneCount)
         Places // The places of the cards before they were arranged
     }
 
@@ -480,12 +664,28 @@ internal static class Corkboard
     internal static Card? UndoneCard { get; private set; }
 
     /// <summary>
-    /// Put back what was done last: the card removed, where it was, or the places of the cards before they were
-    /// arranged
+    /// How many cards Undo put back
+    /// </summary>
+    internal static int UndoneCount { get; private set; }
+
+    /// <summary>
+    /// Put back what was done last: the card removed, where it was, the cards taken off by ":clear" (with those added
+    /// since on top of them), or the places of the cards before they were arranged
     /// </summary>
     internal static Undone Undo()
     {
         UndoneCard = null;
+        UndoneCount = 0;
+        if (_cleared is { } cleared)
+        {
+            // (a card added since keeps its number: one of those put back that has it is not put back)
+            var back = cleared.Where(card => _cards.All(other => other.Number != card.Number)).ToList();
+            _cards.InsertRange(0, back);
+            _cleared = null;
+            UndoneCount = back.Count;
+            return Undone.Cards;
+        }
+
         if (_arranged is { } places)
         {
             foreach (var (card, x, y) in places)
@@ -572,21 +772,35 @@ internal static class Corkboard
     /// </summary>
     internal static void Follow(string oldPath, string newPath)
     {
+        // The board of a project that was moved is in its new place (the paths in it are kept from the project, so
+        // those inside it need no change)
+        var current = Followed(_currentBoard, oldPath, newPath);
+        if (current != _currentBoard) _currentBoard = current;
         Load();
-        foreach (var name in Boards.Names().Prepend(string.Empty).Where(name => name != _currentBoard))
+        var others = Boards.Names().Prepend(string.Empty)
+            .Concat(ProjectBoards().Select(key => Followed(key, oldPath, newPath)))
+            .Where(key => key != _currentBoard).Distinct();
+        foreach (var key in others)
         {
-            WithBoard(name, () =>
+            WithBoard(key, () =>
             {
-                if (FollowHere(oldPath, newPath))
-                {
-                    FileIo.WriteAllBytesSafe(Boards.PathOf(name), new UTF8Encoding(false).GetBytes(Serialize()));
-                }
+                if (FollowHere(oldPath, newPath)) WriteBoard(key);
             });
         }
 
         if (!FollowHere(oldPath, newPath)) return;
         var status = Save();
         if (status != DialogText.Success) EventLog.Add(DialogText.LogFile + "Corkboard: " + status);
+    }
+
+    // The key of a board after a file or directory was renamed or moved: the board of a project in it follows
+    private static string Followed(string key, string oldPath, string newPath)
+    {
+        if (!IsProjectBoard(key) || !CanKeep(newPath)) return key;
+        if (FileOperations.SamePath(key, oldPath)) return System.IO.Path.GetFullPath(newPath);
+        if (!FileOperations.IsInside(key, oldPath)) return key;
+        return System.IO.Path.GetFullPath(System.IO.Path.Combine(newPath,
+            System.IO.Path.GetRelativePath(System.IO.Path.GetFullPath(oldPath), System.IO.Path.GetFullPath(key))));
     }
 
     /// <summary>
@@ -596,17 +810,17 @@ internal static class Corkboard
     internal static bool CanKeep(string path) => path.IndexOfAny(new[] { '\t', '\r', '\n' }) < 0;
 
     /// <summary>
-    /// ":pin": pin a file to the open board, at a free place on the board as the window is now
+    /// ":pin": pin a file or folder to the open board, at a free place on the board as the window is now
     /// </summary>
     /// <returns>The message that tells what was done (with the number of the card)</returns>
-    /// <param name="path">The file</param>
+    /// <param name="path">The file or folder</param>
     /// <param name="height">The height of the board on the page (less with the peek below it)</param>
     internal static string PinWithMessage(string path, int height)
     {
         if (!CanKeep(path)) return Lang.T("A path with a tab or a line break is not kept");
         Reload();
         if (CardOf(path) is { } there) return Lang.F("Already on the corkboard ({0}): {1}", there.Number, there.Name);
-        var card = Add(path, BoardWidth, height);
+        var card = Add(path, BoardWidth, height, Directory.Exists(path));
         var status = Save();
         return status == DialogText.Success
             ? Lang.F("Pinned to the corkboard ({0}): {1}", card.Number, card.Name)

@@ -152,6 +152,7 @@ internal static partial class QuickGuide
         (Kind.Item, "O  :projects", Lang.T("Open project: pick one in the list of projects")),
         (Kind.Item, "  C", Lang.T("In the list: the color of the project")),
         (Kind.Item, "  N", Lang.T("In the list: the note of the project, in the editor")),
+        (Kind.Item, "  B", Lang.T("In the list: the corkboard of the project")),
         (Kind.Item, "N  :new", Lang.T("New file (Tab in the box: another folder)")),
         (Kind.Item, "F  :file", Lang.T("File browser: open, make and manage files")),
         (Kind.Item, "V  :favs", Lang.T("Favorites: files and folders you use most")),

@@ -550,6 +550,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("  O", Lang.T("Open project: pick one in the list of projects"), false));
             _shortcutList.Add(new Shortcut("      C", Lang.T("In the list: the color of the project"), false));
             _shortcutList.Add(new Shortcut("      N", Lang.T("In the list: the note of the project, in the editor"), false));
+            _shortcutList.Add(new Shortcut("      B", Lang.T("In the list: the corkboard of the project"), false));
             _shortcutList.Add(new Shortcut("  E Ctrl+K", Lang.T("Recent files: the latest, to open one"), false));
             _shortcutList.Add(new Shortcut("  V", Lang.T("Favorites: files and folders you use most"), false));
             _shortcutList.Add(new Shortcut("  C :board", Lang.T("The corkboard: files pinned as cards"), false));
@@ -599,7 +600,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("  " + Lang.T("Help"), Lang.T("The tab Help: all the keys, guides and About"), false));
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionFiles, true));
             _shortcutList.Add(new Shortcut(":board", Lang.T("The corkboard: files pinned as cards"), false));
-            _shortcutList.Add(new Shortcut(":pin", Lang.T("Pin the selected file to the corkboard"), false));
+            _shortcutList.Add(new Shortcut(":pin", Lang.T("Pin the selected file or folder to the corkboard"), false));
             _shortcutList.Add(new Shortcut(":jump Ctrl+O", Lang.T("The Jump menu: files, directories and pages"), false));
             _shortcutList.Add(new Shortcut(":book 3", Lang.T("Jump to bookmark 3 (:book alone: the bookmarks)"), false));
             _shortcutList.Add(new Shortcut(":splits", Lang.T("Files closed with another beside them: open one"), false));
@@ -661,7 +662,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("  " + Lang.T("Not UTF-8"), Lang.T("Can be converted (replace file or save copy)"), false));
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionSearch, true));
             _shortcutList.Add(new Shortcut(":board", Lang.T("The corkboard: files pinned as cards"), false));
-            _shortcutList.Add(new Shortcut(":pin", Lang.T("Pin the selected file to the corkboard"), false));
+            _shortcutList.Add(new Shortcut(":pin", Lang.T("Pin the selected file or folder to the corkboard"), false));
             _shortcutList.Add(new Shortcut(":bookmark", Lang.T("Bookmark the selected file or directory (Jump menu)"), false));
             _shortcutList.Add(new Shortcut(":bookmark name", Lang.T("... with a name: :book name jumps to it"), false));
             _shortcutList.Add(new Shortcut(":jump Ctrl+O", Lang.T("The Jump menu: files, directories and pages"), false));
@@ -684,7 +685,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("Esc Q h -", Lang.T("Back to the file browser"), false));
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionFavorites, true));
             _shortcutList.Add(new Shortcut(":board", Lang.T("The corkboard: files pinned as cards"), false));
-            _shortcutList.Add(new Shortcut(":pin", Lang.T("Pin the selected file to the corkboard"), false));
+            _shortcutList.Add(new Shortcut(":pin", Lang.T("Pin the selected file or folder to the corkboard"), false));
             _shortcutList.Add(new Shortcut(":bookmark", Lang.T("Bookmark the selected file or directory (Jump menu)"), false));
             _shortcutList.Add(new Shortcut(":bookmark name", Lang.T("... with a name: :book name jumps to it"), false));
             _shortcutList.Add(new Shortcut(":jump Ctrl+O", Lang.T("The Jump menu: files, directories and pages"), false));
@@ -735,7 +736,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("  " + Lang.T("The list"), Lang.T("Kept in favorites.txt in the data directory"), false));
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionHistory, true));
             _shortcutList.Add(new Shortcut(":board", Lang.T("The corkboard: files pinned as cards"), false));
-            _shortcutList.Add(new Shortcut(":pin", Lang.T("Pin the selected file to the corkboard"), false));
+            _shortcutList.Add(new Shortcut(":pin", Lang.T("Pin the selected file or folder to the corkboard"), false));
             _shortcutList.Add(new Shortcut(":bookmark", Lang.T("Bookmark the selected file or directory (Jump menu)"), false));
             _shortcutList.Add(new Shortcut(":bookmark name", Lang.T("... with a name: :book name jumps to it"), false));
             _shortcutList.Add(new Shortcut(":jump Ctrl+O", Lang.T("The Jump menu: files, directories and pages"), false));
@@ -790,19 +791,21 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("Tab Shift+Tab", Lang.T("Select the next/previous card"), false));
             _shortcutList.Add(new Shortcut("12 Enter", Lang.T("Select card 12"), false));
             _shortcutList.Add(new Shortcut("h j k l", Lang.T("Select the nearest card that way"), false));
-            _shortcutList.Add(new Shortcut("Enter", Lang.T("Open the file of the card (a note: edit it)"), false));
+            _shortcutList.Add(new Shortcut("Enter", Lang.T("Open the card's file or folder (a note: edit it)"), false));
             _shortcutList.Add(new Shortcut("V", Lang.T("Move the card (hjkl, HJKL: 5 steps; Esc: done)"), false));
             _shortcutList.Add(new Shortcut("T E", Lang.T("Put the card on top of/below the others"), false));
             _shortcutList.Add(new Shortcut("C X", Lang.T("Color/Title of the card"), false));
             _shortcutList.Add(new Shortcut("D u", Lang.T("Remove the card (the file stays)/Put it back"), false));
             _shortcutList.Add(new Shortcut("  u", Lang.T("Also puts the cards back where they were arranged from"), false));
             _shortcutList.Add(new Shortcut("N :new", Lang.T("Pin a file, picked in the file browser"), false));
+            _shortcutList.Add(new Shortcut("F :folder", Lang.T("Pin a folder, picked in the file browser"), false));
             _shortcutList.Add(new Shortcut("A :note", Lang.T("A note card: its text written in the editor"), false));
             _shortcutList.Add(new Shortcut("I :info", Lang.T("Information about the card and its file"), false));
             _shortcutList.Add(new Shortcut("P :peek", Lang.T("Peek of the selected card on/off"), false));
             _shortcutList.Add(new Shortcut(":list", Lang.T("Boards: open, add, rename, delete"), false));
             _shortcutList.Add(new Shortcut(":board name", Lang.T("Open a board (:board main: the main board)"), false));
             _shortcutList.Add(new Shortcut(":arrange name", Lang.T("Cards in rows by number, name or color"), false));
+            _shortcutList.Add(new Shortcut(":clear", Lang.T("Take all cards off the board (asks; u: back)"), false));
             _shortcutList.Add(new Shortcut("/", Lang.T("Filter the cards by name (Esc: all)"), false));
             _shortcutList.Add(new Shortcut(":missing", Lang.T("List the entries whose file or folder is gone"), false));
             _shortcutList.Add(new Shortcut(":prune", Lang.T("Remove missing (asks; drives not connected stay)"), false));
@@ -817,6 +820,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("D :remove", Lang.T("Take the project off the list (asks first)"), false));
             _shortcutList.Add(new Shortcut("C :color", Lang.T("The color of the project in the lists"), false));
             _shortcutList.Add(new Shortcut("N :note", Lang.T("The note of the project, in the editor"), false));
+            _shortcutList.Add(new Shortcut("B :board", Lang.T("The corkboard of the project (shown at the right)"), false));
             _shortcutList.Add(new Shortcut("I :info", Lang.T("Information about the project folder"), false));
             _shortcutList.Add(new Shortcut(":path :name", Lang.T("Copy the path/the name of the folder"), false));
             _shortcutList.Add(new Shortcut("/", Lang.T("Filter the projects by name (Esc: all)"), false));

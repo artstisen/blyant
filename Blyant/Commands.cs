@@ -79,11 +79,11 @@ internal static class Commands
             "top bottom undo clearbook import path name recent missing prune board",
             "q h u ju jmp corkboard"),
         [CommandContext.Projects] = new Table(
-            "quit close help info path name color note new add remove",
+            "quit close help info path name color note board new add remove",
             "q h"),
         [CommandContext.Board] = new Table(
-            "quit close help jump book recent new note info peek list board arrange color rename remove undo top bottom " +
-            "missing prune",
+            "quit close help jump book recent new folder note info peek list board arrange color rename remove clear undo " +
+            "top bottom missing prune",
             "q h u ju jmp corkboard"),
         [CommandContext.Editor] = new Table(
             "write saveas quit quit! wq help edit edit! reload reload! undo redo delete yank replace nohlsearch " +
@@ -194,7 +194,7 @@ internal sealed class CommandCompletion
         [(CommandContext.Favorites, "import")] = () => new[] { "bookmarks", "folder" },
         [(CommandContext.Jump, "import")] = () => new[] { "favorites" },
         [(CommandContext.Board, "arrange")] = () => Corkboard.Orders,
-        [(CommandContext.Board, "list")] = () => Corkboard.Boards.Words()
+        [(CommandContext.Board, "list")] = Corkboard.BoardWords
     };
 
     /// <summary>
