@@ -26,6 +26,17 @@ A new card is placed at the first free place, row by row, with a column between 
 ## Note cards
 `A` (or `:note`) adds a note card: its text is written in the editor, and kept when the editor is closed. The first line of the text is the title of the card, unless you give it a title of its own with `X`. `Enter` on a note opens its text in the editor again. A note card has `~` along its top edge, where the card of a file has `-`. A new note left without text is not kept, also when the editor is left by a jump. The text is kept on the board it was written for, also when another board is opened from the editor (`:board name`).
 
+## Badges
+`B` (or `:badge`) adds a badge: a small round mark with an `i`, to mark a place on the board, such as a group of cards that are to do, done or new. Like a note card it has a note, written in the editor at once and read in the peek when the badge is selected, and `Enter` edits it again. Give it a color with `C` (its frame and the `i`), and move it with `V` beside the cards it is about:
+
+```
+ .-3-.
+|  i  |
+ '---'
+```
+
+A badge is as high as a card and 7 columns wide, with its number on its top edge. It is selected, moved, colored, put on top or below, removed and put back as a card is, and `h` `j` `k` `l` go to it in the row or column of the cards (a badge under a card shares its column). What is said about it names it a badge (`D` asks "Take badge 2 off the corkboard?"), and the line above the keys counts the badges apart from the cards (`Cards: 5 | Badges: 2`). It has no title, so `X` is refused, and it is kept also when its note is left empty. `:arrange` leaves the badges where they are, and the cards of a project shown beside the list of projects are only the cards. A version of Blyant before 1.4.1 shows a badge as a note card.
+
 ## On the corkboard
 - `Tab` `Shift+Tab` Select the next/previous card, by number
 - `12` and `Enter` Select card 12 (the number is shown on the line above the keys while you type it; `Esc` drops it)
@@ -37,8 +48,8 @@ A new card is placed at the first free place, row by row, with a column between 
 - `X` (or `:rename title`) Give the card a title of its own (the file keeps its name). Without one, the card shows the name of its file without the extension, or the first line of a note. The box shows the name the card has: `Enter` on its own name keeps it without a title, so it goes on following its file, and typing its own name takes a title away
 - `D` (or `:remove`) Take the card off the board, after asking. The file stays where it is. `u` (or `:undo`) puts it back
 - `:clear` Take all the cards off the board, after asking in a box where `No` is selected and a key typed by mistake does not answer. The files stay where they are, and `u` puts the cards back (a card added since keeps its number, and a card put back that had it gets a new one)
-- `I` (or `:info`) Information about the card: for a file, as `I` in the file browser shows it (its size, when it was changed ...), and for a note, its words and lines
-- `P` (or `:peek`) The peek on or off: the first lines of the selected card's file (or the text of a note) below the board. It stays on until you turn it off
+- `I` (or `:info`) Information about the card: for a file, as `I` in the file browser shows it (its size, when it was changed ...), and for a note or a badge, its words and lines
+- `P` (or `:peek`) The peek on or off: the first lines of the selected card's file (or the text of a note or badge) below the board. It is on at first, and stays as you set it (setting `boardpeek`)
 - `/` Filter the cards: the others are dimmed, and `Tab` goes through those that are left. `Esc` shows all again
 - `:missing` The cards whose file is not there any more, in a list to select one. `:prune` Remove them, after asking (those on a drive that is not connected stay)
 - `Ctrl+O` (or `:jump`) the Jump menu, `Ctrl+K` (or `:recent`) the latest files, `?` (or `:help`) the keys, `Esc` (or `Q`) close
@@ -48,7 +59,7 @@ The line below the top bar is a ruler of the columns of the board, as above the 
 The selected card is drawn on top of the others while it is selected, with its number highlighted; that does not change the order of the cards. A card whose file is gone is dimmed and marked _(missing)_.
 
 ## Arranging the cards
-`:arrange` puts the cards in rows from the top left, with a column between them, in an order:
+`:arrange` puts the cards in rows from the top left, with a column between them, in an order (the badges stay where they are):
 - `:arrange number` by their numbers
 - `:arrange name` by their titles, upper and lower case alike, and numbers by their value: _Chapter 2_ comes before _Chapter 10_
 - `:arrange color` by their colors, in the order of the color picker, and the cards without a color last

@@ -706,4 +706,96 @@ public class CorkboardTests : IDisposable
         Assert.Equal('0', Tools.Ruler(100)[99]);
         Assert.Equal('9', Tools.Ruler(100)[89]);
     }
+
+    [Fact]
+    public void ABadge_IsANote_KeptWithItsWord_WithoutATitle()
+    {
+        var badge = Corkboard.AddBadge("Chapters to rewrite\nfirst", Width, Height);
+        var empty = Corkboard.AddBadge(string.Empty, Width, Height);
+        Assert.True(badge.IsBadge && badge.IsNote);
+        Assert.Equal(Corkboard.BadgeWidth, badge.Width);
+        Assert.Equal(Lang.T("Badge"), empty.Name);
+        // A badge has no title
+        Corkboard.Rename(badge, "Rewrite");
+        Assert.Equal(string.Empty, badge.Title);
+        badge.Color = ConsoleColor.Red;
+        Assert.Equal(DialogText.Success, Corkboard.Save());
+        var text = File.ReadAllText(Corkboard.FilePath);
+        Assert.StartsWith("1\t0,0\tRed\t\t\tbadge\n", text);
+        Corkboard.Load();
+        var read = Corkboard.Numbered(1)!;
+        Assert.Equal((true, "Chapters to rewrite\nfirst", ConsoleColor.Red), (read.IsBadge, read.Text, read.Color));
+        // An empty badge is kept
+        Assert.True(Corkboard.Numbered(2)!.IsBadge);
+        // A title written in the file by hand is left out, and the word is only of a note
+        Corkboard.Parse("1\t0,0\t\tHand\t\tBADGE\n2\t0,3\t\t\t" + In("one.md") + "\tbadge\n3\t0,6\t\t\t\n");
+        Assert.Equal((true, string.Empty), (Corkboard.Numbered(1)!.IsBadge, Corkboard.Numbered(1)!.Title));
+        Assert.False(Corkboard.Numbered(2)!.IsBadge);
+        Assert.False(Corkboard.Numbered(3)!.IsBadge);
+    }
+
+    [Fact]
+    public void ABadge_IsPlacedBySizeOfItsOwn()
+    {
+        var card = Corkboard.Add(In("one.md"), Width, Height);
+        var badge = Corkboard.AddBadge(string.Empty, Width, Height);
+        // Beside the card, with a column between
+        Assert.Equal((Corkboard.CardWidth + 1, 0), (badge.X, badge.Y));
+        // It goes nearer the right side than a card can
+        Corkboard.Move(badge, Width, 0, Width, Height);
+        Assert.Equal(Width - Corkboard.BadgeWidth, badge.X);
+        Corkboard.Move(card, Width, 0, Width, Height);
+        Assert.Equal(Width - Corkboard.CardWidth, card.X);
+        badge.X = Width + 10;
+        Assert.Equal(Width - Corkboard.BadgeWidth, Corkboard.Shown(badge, Width, Height).X);
+    }
+
+    [Fact]
+    public void Arranging_LeavesTheBadges_AndTheSnapshotHasOnlyCards()
+    {
+        var badge = Corkboard.AddBadge(string.Empty, Width, Height);
+        var one = Corkboard.Add(In("one.md"), Width, Height);
+        var two = Corkboard.Add(In("two.md"), Width, Height);
+        Corkboard.Move(badge, 40, 10, Width, Height);
+        var place = (badge.X, badge.Y);
+        Assert.True(Corkboard.Arrange("number", Width, Height));
+        Assert.Equal(place, (badge.X, badge.Y));
+        Assert.Equal((0, 0, Corkboard.CardWidth + 1), (one.X, one.Y, two.X));
+        Assert.Equal(Corkboard.Undone.Places, Corkboard.Undo());
+        Assert.Equal(place, (badge.X, badge.Y));
+        Assert.Equal(DialogText.Success, Corkboard.Save());
+        Assert.Equal(new[] { 2, 3 }, Corkboard.Snapshot(string.Empty)!.Select(card => card.Number));
+    }
+
+    [Fact]
+    public void ABadge_IsInTheRowAndColumn_OfTheCards()
+    {
+        var a = Corkboard.Add(In("a.md"), Width, Height);
+        var badge = Corkboard.AddBadge(string.Empty, Width, Height);
+        var b = Corkboard.Add(In("b.md"), Width, Height);
+        var under = Corkboard.AddBadge(string.Empty, Width, Height);
+        a.X = 0;
+        a.Y = 0;
+        badge.X = 26;
+        badge.Y = 0;
+        b.X = 35;
+        b.Y = 0;
+        // Under the middle of a: in its column (half the badge's width is enough)
+        under.X = 10;
+        under.Y = 4;
+        Assert.Same(badge, Corkboard.Nearest(a, 1, 0, Width, Height));
+        Assert.Same(b, Corkboard.Nearest(badge, 1, 0, Width, Height));
+        Assert.Same(under, Corkboard.Nearest(a, 0, 1, Width, Height));
+        Assert.Same(a, Corkboard.Nearest(under, 0, -1, Width, Height));
+    }
+
+    [Theory]
+    [InlineData(3, "-3-")]
+    [InlineData(12, "12-")]
+    [InlineData(123, "123")]
+    [InlineData(1234, "234")]
+    public void TheNumberOfABadge_IsOnItsTopEdge(int number, string edge)
+    {
+        Assert.Equal(edge, CorkboardPage.BadgeEdge(number));
+    }
 }

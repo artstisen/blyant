@@ -5,7 +5,8 @@
 /// top, and below them the peek of the selected card when it is on. A card is selected with Tab, its number and
 /// Enter, or the keys of a direction (the nearest card that way), and opened with Enter (a note is edited). V moves
 /// it, T and E put it on top of the others or below them, C colors it, X gives it a title, D takes it off the board,
-/// N pins a file, F a folder, A adds a note, I shows information, P the peek. ":list" shows the boards, ":arrange"
+/// N pins a file, F a folder, A adds a note, B a badge (a small round mark with an "i" and a note, to mark a place),
+/// I shows information, P the peek. ":list" shows the boards, ":arrange"
 /// lays the cards out in an order, and ":clear" takes them all off. Opened with ":board" (":board name": another
 /// board) from every command line, ":jump board", the Jump menu, the Start tab, and B in the list of projects (the
 /// board of a project)
@@ -16,9 +17,9 @@ internal static class CorkboardPage
     private const int PeekRows = 6; // The peek: its line and the text below it
 
     /// <summary>
-    /// The peek of the selected card is shown below the board (setting "boardpeek")
+    /// The peek of the selected card is shown below the board (setting "boardpeek", on at first)
     /// </summary>
-    internal static bool PeekOn { get; set; }
+    internal static bool PeekOn { get; set; } = true;
 
     private static bool _open; // The page is open (it is not opened again on top of itself)
     private static int _selected = -1; // The number of the selected card
@@ -239,6 +240,9 @@ internal static class CorkboardPage
             case ConsoleKey.A:
                 AddNote();
                 break;
+            case ConsoleKey.B:
+                AddBadge();
+                break;
             case ConsoleKey.I:
                 ShowInfo(card);
                 break;
@@ -353,6 +357,16 @@ internal static class CorkboardPage
         }
     }
 
+    // B or ":badge": a new badge, its note written in the editor at once. It is kept without a note too: its place
+    // and color can mark something by themselves
+    private static void AddBadge()
+    {
+        var card = Corkboard.AddBadge(string.Empty, Corkboard.BoardWidth, Height);
+        _selected = card.Number;
+        SaveCards();
+        EditNote(card);
+    }
+
     // The text of a note in the editor (its first line is the title of the card, unless it has one of its own). It
     // is kept on the board and card it was written for, by number: the cards may be read again while the editor is
     // open, and another board opened (":board" in the editor)
@@ -373,7 +387,9 @@ internal static class CorkboardPage
                 // (not there, or saving it failed: told why)
                 if (result == null || result == string.Empty)
                 {
-                    _message = Lang.T("The card is no longer on the board: the note was not kept");
+                    _message = card.IsBadge
+                        ? Lang.T("The badge is no longer on the board: the note was not kept")
+                        : Lang.T("The card is no longer on the board: the note was not kept");
                 }
                 else if (result != DialogText.Success)
                 {
@@ -408,7 +424,7 @@ internal static class CorkboardPage
         }
 
         ChoiceBox.Forget();
-        ChoiceBox.ShowRows(Lang.T("Note"), new[]
+        ChoiceBox.ShowRows(card.IsBadge ? Lang.T("Badge") : Lang.T("Note"), new[]
         {
             (DialogText.InfoName, card.Name), (Lang.T("Words:"), Tools.WordCount(card.Text).ToString()),
             (Lang.T("Lines:"), Tools.LineCount(card.Text).ToString())
@@ -439,6 +455,12 @@ internal static class CorkboardPage
     private static void Rename(Corkboard.Card? card, string title)
     {
         if (card == null) return;
+        if (card.IsBadge)
+        {
+            _message = Lang.T("A badge has no title: Enter writes its note");
+            return;
+        }
+
         if (title.Trim().Length == 0)
         {
             ChoiceBox.Forget();
@@ -459,8 +481,12 @@ internal static class CorkboardPage
         var note = card.IsNote ? string.Empty
             : card.IsFolder ? Lang.T("The folder stays where it is.")
             : Lang.T("The file stays where it is.");
-        if (!ChoiceBox.Confirm(Lang.T("Remove card"), Lang.F("Take card {0} off the corkboard?", card.Number), note,
-                false))
+        var asked = card.IsBadge
+            ? ChoiceBox.Confirm(Lang.T("Remove badge"), Lang.F("Take badge {0} off the corkboard?", card.Number), note,
+                false)
+            : ChoiceBox.Confirm(Lang.T("Remove card"), Lang.F("Take card {0} off the corkboard?", card.Number), note,
+                false);
+        if (!asked)
         {
             return;
         }
@@ -600,6 +626,9 @@ internal static class CorkboardPage
                 break;
             case "note":
                 AddNote();
+                break;
+            case "badge":
+                AddBadge();
                 break;
             case "info":
                 ShowInfo(Selected);
@@ -872,13 +901,67 @@ internal static class CorkboardPage
         Tools.SetCursorEx(Init.LineCount - 1, 0);
         Menu.WriteKeyHints(_moving
             ? Lang.T("hjkl Move | HJKL Move 5 | Enter/Esc Done")
-            : Lang.T("Tab Select | Enter Open | V Move | A Note | N New | C Color | X Title | D Remove | I Info | P Peek | Esc Close"));
+            : Lang.T("Tab Select | Enter Open | V Move | A Note | B Badge | N New | C Color | X Title | D Remove | I Info | P Peek | Esc Close"));
     }
 
     private static void DrawCard(Corkboard.Card card, bool selected, bool missing, int width, int height)
     {
         var (x, y) = Corkboard.Shown(card, width, height);
-        DrawCardAt(card, BoardTop + y, x, Init.LineWidth, selected, missing || !Matches(card), missing);
+        if (card.IsBadge) DrawBadgeAt(card, BoardTop + y, x, Init.LineWidth, selected, !Matches(card));
+        else DrawCardAt(card, BoardTop + y, x, Init.LineWidth, selected, missing || !Matches(card), missing);
+    }
+
+    /// <summary>
+    /// The top edge of a badge, between its corners: its number on it (the last digits of a long one)
+    /// </summary>
+    internal static string BadgeEdge(int number)
+    {
+        var digits = number.ToString();
+        return digits.Length switch
+        {
+            1 => "-" + digits + "-",
+            2 => digits + "-",
+            _ => digits[^3..]
+        };
+    }
+
+    // A badge at a place on the screen, cut at a column: round, with its number on the top edge and an "i" (English:
+    // the same in all languages). Its corners are left as they are, so what is below shows there
+    private static void DrawBadgeAt(Corkboard.Card card, int row, int column, int end, bool selected, bool dim)
+    {
+        void Frame()
+        {
+            if (selected && _moving) ConsoleColors.SetColors(ConsoleColors.ColorPreset.AttentionInverted);
+            else if (selected) ConsoleColors.SetColors(ConsoleColors.ColorPreset.Accent);
+            else if (dim || card.Color == null) ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
+            else ConsoleColors.SetTextColor(card.Color.Value);
+        }
+
+        // Writes what fits before the end, from a column
+        void Put(int at, string text)
+        {
+            if (at >= end) return;
+            Tools.SetCursorEx(row, at);
+            Console.Write(text.Length > end - at ? text[..(end - at)] : text);
+        }
+
+        Frame();
+        Put(column + 1, ".");
+        ConsoleColors.SetColors(selected ? ConsoleColors.ColorPreset.SelectorInverted : ConsoleColors.ColorPreset.Divider);
+        Put(column + 2, BadgeEdge(card.Number));
+        Frame();
+        Put(column + 5, ".");
+        row++;
+        Put(column, "|  ");
+        if (dim) ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
+        else if (card.Color is { } color) ConsoleColors.SetTextColor(color);
+        else ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
+        Put(column + 3, "i"); // English: the mark of a badge
+        Frame();
+        Put(column + 4, "  |");
+        row++;
+        Put(column + 1, "'---'");
+        ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
     }
 
     /// <summary>
@@ -1004,7 +1087,10 @@ internal static class CorkboardPage
             : _filter.Length > 0 ? Lang.F("Filter: {0}", _filter)
             : _moving && Selected is { } moving ? Lang.F("Moving: {0}", moving.Name)
             : string.Empty;
-        var count = " " + Lang.F("Cards: {0}", Corkboard.Cards.Count) + " ";
+        // How many cards there are, and badges (when there are any)
+        var badges = Corkboard.Cards.Count(card => card.IsBadge);
+        var count = " " + Lang.F("Cards: {0}", Corkboard.Cards.Count - badges) +
+                    (badges > 0 ? " | " + Lang.F("Badges: {0}", badges) : string.Empty) + " ";
         if (text.Length > 0)
         {
             Tools.SetCursorEx(row, 2);

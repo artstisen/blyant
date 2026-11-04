@@ -353,7 +353,7 @@ backup=
         Assert.Equal("true", settings["bookmarkpeek"]);
         Assert.Equal(string.Empty, settings["favoritelist"]);
         Assert.Equal(string.Empty, settings["boardname"]);
-        Assert.Equal("false", settings["boardpeek"]);
+        Assert.Equal("true", settings["boardpeek"]);
         Assert.Equal("false", settings["favoritenumbers"]);
         Assert.Equal("false", settings["bookmarknumbers"]);
         Assert.Equal("true", settings["commandlist"]);

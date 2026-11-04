@@ -82,7 +82,7 @@ internal static class Commands
             "quit close help info path name color note board new add remove",
             "q h"),
         [CommandContext.Board] = new Table(
-            "quit close help jump book recent new folder note info peek list board arrange color rename remove clear undo " +
+            "quit close help jump book recent new folder note badge info peek list board arrange color rename remove clear undo " +
             "top bottom missing prune",
             "q h u ju jmp corkboard"),
         [CommandContext.Editor] = new Table(

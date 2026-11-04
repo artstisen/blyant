@@ -15,7 +15,7 @@ Plan a book, an article or a thesis on a corkboard: its chapters, research folde
 
 ![The corkboard of a project: chapters, a research folder, files and notes as cards in colors, with the peek of a chapter](docs/screenshots/corkboard.svg)
 
-- **Cards of files, folders and notes**: `:pin` a file or folder from the editor, the file browser or the lists, or write a note card (`A`) with your own text. `Enter` opens the file in the editor, the folder in the file browser, or the note
+- **Cards of files, folders and notes**: `:pin` a file or folder from the editor, the file browser or the lists, or write a note card (`A`) with your own text. `Enter` opens the file in the editor, the folder in the file browser, or the note. A badge (`B`), a small round `i` with a note, marks a group of cards
 - **Arrange them your way**: move a card with `V` and `h` `j` `k` `l`, put it on top of the others or below them, give it a color and a title of its own, or lay them all out in rows with `:arrange number`, `:arrange name` or `:arrange color`
 - **See without opening**: `P` shows the start of the selected card's file (or what a folder holds) below the board, and `I` tells about it
 - **A board for each project**: `B` in the list of projects opens its board, and the cards are shown beside the list; `:list` keeps more boards of your own

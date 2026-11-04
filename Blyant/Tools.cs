@@ -801,6 +801,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("N :new", Lang.T("Pin a file, picked in the file browser"), false));
             _shortcutList.Add(new Shortcut("F :folder", Lang.T("Pin a folder, picked in the file browser"), false));
             _shortcutList.Add(new Shortcut("A :note", Lang.T("A note card: its text written in the editor"), false));
+            _shortcutList.Add(new Shortcut("B :badge", Lang.T("A badge (an \"i\") with a note, to mark a place"), false));
             _shortcutList.Add(new Shortcut("I :info", Lang.T("Information about the card, its file or folder"), false));
             _shortcutList.Add(new Shortcut("P :peek", Lang.T("Peek of the selected card on/off"), false));
             _shortcutList.Add(new Shortcut(":list", Lang.T("Boards: open, add, rename, delete"), false));

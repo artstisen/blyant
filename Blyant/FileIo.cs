@@ -656,7 +656,7 @@ internal static class FileIo
         // The list of favorites that is open, with its name as its file has it (one that is not there: the main list)
         FileFavorites.CurrentList = FileFavorites.FindList(Get("favoritelist")) ?? string.Empty;
         Corkboard.CurrentBoard = Corkboard.FindBoard(Get("boardname")) ?? string.Empty;
-        CorkboardPage.PeekOn = Tools.TrimToLower(Get("boardpeek")) == DialogText.BTrue;
+        CorkboardPage.PeekOn = Tools.TrimToLower(Get("boardpeek")) != DialogText.BFalse;
         FileExplorer.FavoriteNumbers = Tools.TrimToLower(Get("favoritenumbers")) == DialogText.BTrue;
         JumpMenu.BookmarkNumbers = Tools.TrimToLower(Get("bookmarknumbers")) == DialogText.BTrue;
         FileExplorer.FileNumbers = Tools.TrimToLower(Get("filenumbers")) == DialogText.BTrue;
