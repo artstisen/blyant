@@ -1,6 +1,6 @@
 # Changes
 
-## v1.4.1 (unreleased)
+## v1.4.1 (2026-11-04)
 - **Moving between the cards of the corkboard goes along the rows**: `l` and `h` (and the arrow keys) select the next card in the row of the selected one, also when the cards are laid a little apart, and `j` and `k` the next in its column. At the end of a row or column, the nearest card that way in another one is selected, as before. It used to take a card just below as nearer than one further along the row.
 - **A ruler on the corkboard**: the line below the top bar shows the columns of the board, as the ruler above the logo in the logo editor does (a dot for each column, `:` for every 5th and the tens as digits), to line the cards up. The selected card shows its place (its column on the ruler and its row) at the right end of its top edge, also while it is moved, and a selected badge on the line above the keys.
 - **Badges on the corkboard**: `B` (or `:badge`) adds a badge, a small round mark with an `i` and a note, to mark a place on the board (a group of cards to do, done or new). Its note is written in the editor and read in the peek, and it is colored, moved and removed as a card is; what is asked and told about it names it a badge, and the line above the keys counts the badges apart from the cards. `:arrange` leaves the badges where they are, and beside the list of projects they are shown among the cards. Badges are kept in the board file with the word `badge` after the card's line; an earlier version shows them as note cards. See [Badges](Guide-to-corkboard.md#badges) in the guide.
