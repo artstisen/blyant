@@ -791,7 +791,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":board", Lang.T("The corkboard: files pinned as cards"), false));
             _shortcutList.Add(new Shortcut("Tab Shift+Tab", Lang.T("Select the next/previous card"), false));
             _shortcutList.Add(new Shortcut("12 Enter", Lang.T("Select card 12"), false));
-            _shortcutList.Add(new Shortcut("h j k l", Lang.T("Select the nearest card that way"), false));
+            _shortcutList.Add(new Shortcut("h j k l", Lang.T("Select the next card that way (its row/column first)"), false));
             _shortcutList.Add(new Shortcut("Enter", Lang.T("Open the card's file or folder (a note: edit it)"), false));
             _shortcutList.Add(new Shortcut("V", Lang.T("Move the card (hjkl, HJKL: 5 steps; Esc: done)"), false));
             _shortcutList.Add(new Shortcut("T E :top :bottom", Lang.T("Put the card on top of/below the others"), false));
@@ -1349,6 +1349,21 @@ internal static class Tools
         _rowPosition = 0;
         _columnPosition = 0;
         Refresh();
+    }
+
+    /// <summary>
+    /// A ruler of columns (above the logo of the logo editor, and the cards of the corkboard): a dot for each column,
+    /// ":" for every 5th and the tens as digits (after 90 they go on from 0)
+    /// </summary>
+    internal static string Ruler(int width)
+    {
+        var ruler = new char[Math.Max(0, width)];
+        for (var column = 1; column <= ruler.Length; column++)
+        {
+            ruler[column - 1] = column % 10 == 0 ? (char)('0' + column / 10 % 10) : column % 5 == 0 ? ':' : '.';
+        }
+
+        return new string(ruler);
     }
 
     public static void SetCursorEx(int top, int left)

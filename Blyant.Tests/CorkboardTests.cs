@@ -653,4 +653,57 @@ public class CorkboardTests : IDisposable
         Corkboard.Reload();
         Assert.Equal(Corkboard.Undone.Card, Corkboard.Undo());
     }
+
+    [Fact]
+    public void TheKeysGoAlongARow_BeforeAnotherRow()
+    {
+        // Two rows laid a little apart: the second starts two columns in and a row lower than the first would
+        var a = Corkboard.Add(In("a.md"), Width, Height);
+        var below = Corkboard.Add(In("below.md"), Width, Height);
+        var right = Corkboard.Add(In("right.md"), Width, Height);
+        var last = Corkboard.Add(In("last.md"), Width, Height);
+        Corkboard.Move(a, 0, 0, Width, Height);
+        below.X = 2;
+        below.Y = 3;
+        right.X = 25;
+        right.Y = 1;
+        last.X = 30;
+        last.Y = 4;
+        // l goes along the row (right, a row lower but beside a), not to the card below
+        Assert.Same(right, Corkboard.Nearest(a, 1, 0, Width, Height));
+        Assert.Same(a, Corkboard.Nearest(right, -1, 0, Width, Height));
+        // At the end of a row: the nearest that way in another
+        Assert.Same(last, Corkboard.Nearest(right, 1, 0, Width, Height));
+        Assert.Same(below, Corkboard.Nearest(last, -1, 0, Width, Height));
+        // j goes down the column (below, beside a), not to a card to the side
+        Assert.Same(below, Corkboard.Nearest(a, 0, 1, Width, Height));
+        Assert.Same(last, Corkboard.Nearest(right, 0, 1, Width, Height));
+        Assert.Same(a, Corkboard.Nearest(below, 0, -1, Width, Height));
+    }
+
+    [Fact]
+    public void OfTwoInTheRowAsNear_TheOneLessToTheSide_IsTaken()
+    {
+        var a = Corkboard.Add(In("a.md"), Width, Height);
+        var lower = Corkboard.Add(In("lower.md"), Width, Height);
+        var level = Corkboard.Add(In("level.md"), Width, Height);
+        a.X = 0;
+        a.Y = 2;
+        lower.X = 25;
+        lower.Y = 4;
+        level.X = 25;
+        level.Y = 2;
+        Assert.Same(level, Corkboard.Nearest(a, 1, 0, Width, Height));
+    }
+
+    [Theory]
+    [InlineData(12, "....:....1..")]
+    [InlineData(0, "")]
+    public void TheRuler_HasADotForEachColumn_AndTheTens(int width, string ruler)
+    {
+        Assert.Equal(ruler, Tools.Ruler(width));
+        // After 90, the tens go on from 0
+        Assert.Equal('0', Tools.Ruler(100)[99]);
+        Assert.Equal('9', Tools.Ruler(100)[89]);
+    }
 }

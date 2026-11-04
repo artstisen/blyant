@@ -846,9 +846,10 @@ internal static class CorkboardPage
             ? Lang.F("{0}: {1}", Lang.T("Corkboard"), Corkboard.NameOf(Corkboard.CurrentBoard))
             : Lang.T("Corkboard"), string.Empty, 0);
         Menu.WriteNameInTopBar();
+        // A ruler of the columns of the board, as above the logo of the logo editor (to line the cards up)
         Tools.SetCursorEx(1, 0);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
-        Console.Write(new string('-', Init.LineWidth - 1));
+        Console.Write(Tools.Ruler(Init.LineWidth - 1));
 
         var width = Corkboard.BoardWidth;
         var check = new MissingPlaces.Checker();

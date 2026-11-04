@@ -29,7 +29,7 @@ A new card is placed at the first free place, row by row, with a column between 
 ## On the corkboard
 - `Tab` `Shift+Tab` Select the next/previous card, by number
 - `12` and `Enter` Select card 12 (the number is shown on the line above the keys while you type it; `Esc` drops it)
-- `h` `j` `k` `l` (or the arrow keys) Select the nearest card that way
+- `h` `j` `k` `l` (or the arrow keys) Select the next card that way. `h` and `l` go along the row of the selected card first (the cards that share at least two of its three rows, so a card laid a little lower is in it), and `j` and `k` along its column (the cards that share at least half its width). At the end of a row or column, the nearest card that way in another one is selected
 - `Enter` Open the file of the selected card in the editor (a note: edit its text). It is a jump: `Ctrl+K` and `Enter` in the editor take you back to the file you were in
 - `V` Move the selected card: `h` `j` `k` `l` (or the arrow keys) move it one step, `H` `J` `K` `L` five steps, and `Esc` (or `Enter`, `V`) ends the moving
 - `T` (or `:top`) Put the card on top of the others, `E` (or `:bottom`) below them. Where cards overlap, the one on top covers the others
@@ -42,6 +42,8 @@ A new card is placed at the first free place, row by row, with a column between 
 - `/` Filter the cards: the others are dimmed, and `Tab` goes through those that are left. `Esc` shows all again
 - `:missing` The cards whose file is not there any more, in a list to select one. `:prune` Remove them, after asking (those on a drive that is not connected stay)
 - `Ctrl+O` (or `:jump`) the Jump menu, `Ctrl+K` (or `:recent`) the latest files, `?` (or `:help`) the keys, `Esc` (or `Q`) close
+
+The line below the top bar is a ruler of the columns of the board, as above the logo in the logo editor: a dot for each column, `:` for every 5th and the tens as digits, to line the cards up when you move them.
 
 The selected card is drawn on top of the others while it is selected, with its number highlighted; that does not change the order of the cards. A card whose file is gone is dimmed and marked _(missing)_.
 

@@ -767,11 +767,35 @@ internal static class Corkboard
 
     /// <summary>
     /// The card nearest to another in a direction (columns and rows: -1, 0 or 1), or null if there is none that way.
-    /// A card straight that way is nearer than one as far off to the side
+    /// A card in the same row (for left and right) or column (for up and down) comes first, so the keys go along a
+    /// row as it is read; at its end, a card straight that way is nearer than one as far off to the side
     /// </summary>
     internal static Card? Nearest(Card from, int columns, int rows, int width, int height)
     {
         var (fx, fy) = Shown(from, width, height);
+        // The cards in the same row (h, l) or column (j, k) first: those beside the card, sharing at least two of its
+        // three rows (or half its columns), so a card laid a little lower is in the row and one a row lower is not.
+        // The nearest that way, and of two as near, the one less to the side
+        Card? inLine = null;
+        (int Along, int Aside) inLineDistance = (int.MaxValue, int.MaxValue);
+        foreach (var card in _cards)
+        {
+            if (card == from) continue;
+            var (x, y) = Shown(card, width, height);
+            var beside = columns != 0
+                ? Math.Min(y, fy) + CardHeight - Math.Max(y, fy) >= (CardHeight + 1) / 2
+                : Math.Min(x, fx) + CardWidth - Math.Max(x, fx) >= CardWidth / 2;
+            var along = columns != 0 ? (x - fx) * columns : (y - fy) * rows;
+            if (!beside || along <= 0) continue;
+            var distance = (along, columns != 0 ? Math.Abs(y - fy) : Math.Abs(x - fx));
+            if (distance.CompareTo(inLineDistance) >= 0) continue;
+            inLine = card;
+            inLineDistance = distance;
+        }
+
+        if (inLine != null) return inLine;
+
+        // Else (at the end of a row or column) the nearest that way in another
         Card? best = null;
         var bestScore = double.MaxValue;
         foreach (var card in _cards)

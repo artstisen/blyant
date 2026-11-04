@@ -168,7 +168,7 @@ internal static class LogoEditor
     {
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
         Tools.SetCursorEx(gridTop - 2, gridLeft);
-        Console.Write(EditorPage.Ruler());
+        Console.Write(Tools.Ruler(LogoArt.Width));
         Tools.SetCursorEx(gridTop - 1, gridLeft - 1);
         Console.Write(AsciiStyles.GetTopCorner() + new string('-', LogoArt.Width) + AsciiStyles.GetTopCorner());
         for (var row = 0; row < LogoArt.Rows; row++)
@@ -869,20 +869,6 @@ internal static class LogoEditor
 
         // All keys are characters to draw in REPLACE mode, and after "r"
         public bool CapturesKeys => _replace || _pending == 'r';
-
-        /// <summary>
-        /// The ruler above the grid: a dot for each column, ":" for every 5th and the tens as digits
-        /// </summary>
-        internal static string Ruler()
-        {
-            var ruler = new char[LogoArt.Width];
-            for (var column = 1; column <= LogoArt.Width; column++)
-            {
-                ruler[column - 1] = column % 10 == 0 ? (char)('0' + column / 10 % 10) : column % 5 == 0 ? ':' : '.';
-            }
-
-            return new string(ruler);
-        }
 
         public void Draw(TabArea area, bool full)
         {
