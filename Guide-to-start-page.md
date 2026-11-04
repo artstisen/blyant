@@ -53,6 +53,9 @@ _Open project_ lists the projects, in alphabetical order. Two projects of the sa
 A project is worked on in the file browser: `N` makes a file in it (a Markdown file when the name has no extension), `A` a folder, and `Enter` opens a file in the editor.
 
 In the list of projects, each project can have a color, a note and a corkboard:
+
+![The projects, with the corkboard of the selected one: its cards and badges laid on each other](docs/screenshots/projects.svg)
+
 - `C` picks the **color** of the name of the project in the list (_[Default]_ takes it away). It is kept in the file `.blyant` in the project
 - `N` opens the **note** of the project in the editor: what to do next, an idea, where you are. It is the Markdown file `.blyant-note.md` in the project, and the start of it is shown to the right of what the project holds (with `...` where there is more). `:wq` saves it and goes back to the list; a note left empty is removed
 

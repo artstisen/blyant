@@ -65,9 +65,9 @@ public class CorkboardTests : IDisposable
         var one = Corkboard.Add(In("one.md"), Width, Height);
         Corkboard.Add(In("two.md"), Width, Height);
         var three = Corkboard.Add(In("three.md"), Width, Height);
-        Corkboard.ToFront(one, true);
+        Corkboard.ToFront(new[] { one }, true);
         Assert.Equal("2 3 1", Order());
-        Corkboard.ToFront(three, false);
+        Corkboard.ToFront(new[] { three }, false);
         Assert.Equal("3 2 1", Order());
         Assert.Equal(new[] { 1, 2, 3 }, Corkboard.Cards.Select(card => card.Number).Order());
     }
@@ -107,7 +107,7 @@ public class CorkboardTests : IDisposable
         one.Color = ConsoleColor.Yellow;
         Corkboard.Rename(one, "Chapter\tone");
         Corkboard.Add(In("two.md"), Width, Height);
-        Corkboard.ToFront(one, true);
+        Corkboard.ToFront(new[] { one }, true);
         Assert.Equal(DialogText.Success, Corkboard.Save());
         Corkboard.Load();
         Assert.Equal("2 1", Order());
@@ -799,7 +799,7 @@ public class CorkboardTests : IDisposable
     [InlineData(3, "-3-")]
     [InlineData(12, "12-")]
     [InlineData(123, "123")]
-    [InlineData(1234, "234")]
+    [InlineData(1234, "###")]
     public void TheNumberOfABadge_IsOnItsTopEdge(int number, string edge)
     {
         Assert.Equal(edge, CorkboardPage.BadgeEdge(number));

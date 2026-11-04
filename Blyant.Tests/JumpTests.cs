@@ -195,8 +195,7 @@ public class JumpTests : IDisposable
         }
         finally
         {
-            // (no jump left pending for the other tests)
-            Jump.OpenAtStart(null!);
+            Jump.ForgetPending();
         }
     }
 }

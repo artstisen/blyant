@@ -202,17 +202,21 @@ $ t_"next" = t_"last" + 12"h" 25"min" $
 """
 
 # The corkboard of the project (in its folder): the chapters, the research folder, files and notes as cards in
-# colors, some laid a little over others. The paths in the project are kept from its folder. The last card is on top,
-# and selected when the board is opened
+# colors, some laid a little over others, and two badges below the chapters (those drafted, and one to rewrite).
+# The paths in the project are kept from its folder. The last card is on top, and selected when the board is opened
 BOARD = "\n".join([
-    "5\t1,7\tGreen\t\tresearch/",
-    "6\t26,7\t\tOutline\toutline.md",
-    "7\t50,8\tMagenta\t\tcharacters.md",
-    "8\t73,7\t\t\t",
+    "5\t12,4\tGreen\t\t\tbadge",
+    "#Drafted: chapters 1 to 3",
+    "6\t81,4\tRed\t\t\tbadge",
+    "#Rewrite: the storm comes too soon",
+    "7\t1,7\tGreen\t\tresearch/",
+    "8\t26,7\t\tOutline\toutline.md",
+    "9\t50,8\tMagenta\t\tcharacters.md",
+    "10\t73,7\t\t\t",
     "#Why is the Teeth lit again?\\nWho winds the clock now?",
-    "9\t4,12\tDarkYellow\t\tresearch/tides.md",
-    "10\t28,13\t\t\tresearch/interview-notes.txt",
-    "11\t53,12\tCyan\t\t",
+    "11\t4,12\tDarkYellow\t\tresearch/tides.md",
+    "12\t28,13\t\t\tresearch/interview-notes.txt",
+    "13\t53,12\tCyan\t\t",
     "#Maren rows out at low water",
     "4\t69,1\tRed\tThe Teeth\tchapter-04.md",
     "2\t23,1\tCyan\tLow Water\tchapter-02.md",
@@ -515,6 +519,8 @@ SCENES = [
      [TYPST], ['<wait>', '14G'], True),
     ('corkboard', 'Blyant: the corkboard of a project, with the peek of a card',
      {'boardname': PROJECT, 'boardpeek': 'true'}, [], [':board<Enter>'], False),
+    ('projects', 'Blyant: the projects, with the corkboard of the selected one, its cards and badges', {},
+     [], [':projects<Enter>', 'j'], False),
 ]
 
 

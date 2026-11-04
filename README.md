@@ -13,7 +13,7 @@ Blyant has several features inspired by popular Neovim plugins for text navigati
 ## The corkboard
 Plan a book, an article or a thesis on a corkboard: its chapters, research folders and loose ideas are cards that you place freely, color, and lay on top of each other. Each project has a corkboard of its own, kept in the project folder, so it goes with the project when you move, copy or sync it.
 
-![The corkboard of a project: chapters, a research folder, files and notes as cards in colors, with the peek of a chapter](docs/screenshots/corkboard.svg)
+![The corkboard of a project: chapters, a research folder, files and notes as cards in colors, badges marking the chapters drafted and one to rewrite, with the peek of a chapter](docs/screenshots/corkboard.svg)
 
 - **Cards of files, folders and notes**: `:pin` a file or folder from the editor, the file browser or the lists, or write a note card (`A`) with your own text. `Enter` opens the file in the editor, the folder in the file browser, or the note. A badge (`B`), a small round `i` with a note, marks a group of cards
 - **Arrange them your way**: move a card with `V` and `h` `j` `k` `l`, put it on top of the others or below them, give it a color and a title of its own, or lay them all out in rows with `:arrange number`, `:arrange name` or `:arrange color`

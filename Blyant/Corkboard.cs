@@ -6,9 +6,9 @@ namespace Blyant;
 /// The corkboard: files pinned as cards, and notes as cards, placed freely on a page (CorkboardPage) to plan a story
 /// or keep the files worked on in view. Each card has a number that stays with it, a place (its column and row on the
 /// board), a color and a title of its own if it is given one. A note card has a text instead of a file (its title is
-/// its first line). A badge is a small round mark with an "i", and a note: it marks a place on the board (a group
-/// of cards), and its note is read in the peek. The cards are drawn in their order, so a card later in the list covers the ones before it where
-/// they overlap.
+/// its first line). A badge is a small round mark with an "i", and a note: it marks a place on the board (a group of
+/// cards), and its note is read in the peek. The cards are drawn in their order, so a card later in the list covers
+/// the ones before it where they overlap.
 ///
 /// There can be several boards: the main board is the file "board.txt" in the data directory, and the others are
 /// files of the same kind in the directory "boards" next to it, with their names. A project can have a board of its
@@ -646,12 +646,7 @@ internal static class Corkboard
     }
 
     /// <summary>
-    /// Put a card on top of the others (true), or below them
-    /// </summary>
-    internal static void ToFront(Card card, bool front) => ToFront(new[] { card }, front);
-
-    /// <summary>
-    /// Put several cards on top of the others (true), or below them, in the order they had among themselves
+    /// Put cards on top of the others (true), or below them, in the order they had among themselves
     /// </summary>
     internal static void ToFront(IReadOnlyCollection<Card> cards, bool front)
     {

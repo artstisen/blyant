@@ -2,7 +2,7 @@
 
 The corkboard is a page where files are pinned as cards, like notes on a board, and placed where you want them: to plan a story by its chapters, or to keep the files you work on in view. Each card shows the title of its file and a number, in a color you give it, and `Enter` opens the file. A card can also be a folder (research, scenes) or a note of its own, with a text you write. You can keep several boards, and each [project](Guide-to-start-page.md#projects) can have a board of its own, kept in its folder.
 
-![The corkboard of a project: chapters, a research folder, files and notes as cards in colors, with the peek of a chapter](docs/screenshots/corkboard.svg)
+![The corkboard of a project: chapters, a research folder, files and notes as cards in colors, badges marking the chapters drafted and one to rewrite, with the peek of a chapter](docs/screenshots/corkboard.svg)
 
 It is opened with `:board` (or `:corkboard`) from every command line (the start page, the file browser, the favorites, the history, the hotlist, the search results, the Jump menu and the editor), with **Corkboard** (`C`) on the Start tab of the start page, and with `:jump board` or the Blyant tab of the [Jump menu](Guide-to-jump-menu.md#jump-menu). It opens on top of the page you were on, and `Esc` takes you back there. `:board name` opens the board with that name (`:board main` the main board).
 

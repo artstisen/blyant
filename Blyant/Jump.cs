@@ -319,6 +319,15 @@ internal static class Jump
     internal static bool BackToBoard { get; private set; }
 
     /// <summary>
+    /// No jump is pending (for the tests: one made there is not left for the others)
+    /// </summary>
+    internal static void ForgetPending()
+    {
+        Pending = null;
+        BackToBoard = false;
+    }
+
+    /// <summary>
     /// Go to a place when Blyant has started (a file or directory given when it is started, see StartArgument)
     /// </summary>
     internal static void OpenAtStart(JumpTarget target)
