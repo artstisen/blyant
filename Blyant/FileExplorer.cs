@@ -133,6 +133,8 @@ internal static partial class FileExplorer
     private static string? _jumpDirectory;
     private static string? _jumpFile;
     private static (int Line, int Column)? _jumpAt; // Where in the file (a bookmark made in the editor)
+    private static bool _jumpBack; // The browser closes with the editor of the file (opened from the corkboard)
+    private static bool _edited; // The file opened was shown in the editor (not refused, nor its conversion canceled)
 
     // The file is opened at this line and column (not where it was left)
     private static (int Line, int Column)? _openAtCaret;
@@ -141,11 +143,16 @@ internal static partial class FileExplorer
     /// Open the file browser in the directory of a file, and the file in the editor (a jump), at a line and column
     /// (null: where the cursor was left)
     /// </summary>
-    internal static void RunAtFile(string path, (int Line, int Column)? at = null)
+    /// <param name="path">The file</param>
+    /// <param name="at">Where in the file (null: where it was left)</param>
+    /// <param name="back">Closing the editor closes the browser too (a card of the corkboard opened: the corkboard is
+    /// shown again)</param>
+    internal static void RunAtFile(string path, (int Line, int Column)? at = null, bool back = false)
     {
         _jumpDirectory = System.IO.Path.GetDirectoryName(path);
         _jumpFile = path;
         _jumpAt = at;
+        _jumpBack = back;
         Run();
     }
 
@@ -283,6 +290,7 @@ internal static partial class FileExplorer
         // A jump: the directory of the jump, and the file opened in the editor
         var jumpFile = _jumpFile;
         var jumpAt = _jumpAt;
+        var jumpBack = _jumpBack;
         if (mode == BrowseMode.Edit && _jumpDirectory != null && System.IO.Directory.Exists(_jumpDirectory))
         {
             StartPaneIn(ActivePane, _jumpDirectory);
@@ -291,13 +299,14 @@ internal static partial class FileExplorer
         _jumpDirectory = null;
         _jumpFile = null;
         _jumpAt = null;
+        _jumpBack = false;
         // The places of the panes are saved however the browser is left: closed, a jump (to another page), or
         // exiting Blyant (Tools.ExitApplication)
         _browsing = mode == BrowseMode.Edit;
         string? result = null;
         try
         {
-            result = BrowseLoop(mode, jumpFile, jumpAt);
+            result = BrowseLoop(mode, jumpFile, jumpAt, jumpBack);
             return result;
         }
         finally
@@ -402,7 +411,7 @@ internal static partial class FileExplorer
         return pane.Items[pane.Index].Name;
     }
 
-    private static string? BrowseLoop(BrowseMode mode, string? jumpFile, (int Line, int Column)? jumpAt)
+    private static string? BrowseLoop(BrowseMode mode, string? jumpFile, (int Line, int Column)? jumpAt, bool jumpBack)
     {
         Init.ApplyAutoSize();
         if (mode == BrowseMode.Edit && jumpFile != null && File.Exists(jumpFile))
@@ -413,10 +422,13 @@ internal static partial class FileExplorer
             var info = new FileInfo(jumpFile);
             _openAtCaret = jumpAt;
             _notDrawn = true;
+            _edited = false;
             var close = Open(new Item(info.Name, info.FullName, false, info.Length));
             _notDrawn = false;
             _openAtCaret = null;
             if (close) return _picked;
+            // (opened from the corkboard: back to it, without the browser)
+            if (jumpBack && _edited) return null;
             LoadItems(info.Name);
             Draw(true);
             if (Tools.TakeRedrawRequest()) Draw(true);
@@ -1005,6 +1017,7 @@ internal static partial class FileExplorer
             converted = true;
         }
 
+        _edited = true;
         Edit(file, converted);
         // The file is selected (by the name it has now, if it was renamed in the editor), or the last file written
         // with ":w name" or ":saveas name" (they are in the same directory; a filter that hides it is taken away)

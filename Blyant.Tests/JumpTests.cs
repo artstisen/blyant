@@ -175,4 +175,28 @@ public class JumpTests : IDisposable
         Assert.Equal(EditorMode.Normal, editor.Mode);
         Assert.Equal("one two", editor.Buffer.GetText());
     }
+
+    [Fact]
+    public void AJumpFromTheCorkboard_GoesBackToIt_UntilAnotherJump()
+    {
+        var file = In("chapter.md");
+        File.WriteAllText(file, "text");
+        try
+        {
+            Assert.Throws<NavigationException>(() =>
+                Jump.ToPlace(new JumpTarget(JumpKind.File, file), null, true));
+            Assert.Equal(file, Jump.Pending!.Target);
+            Assert.True(Jump.BackToBoard);
+            // Another jump (here: the place given at startup) does not go back
+            Jump.OpenAtStart(new JumpTarget(JumpKind.Directory, _root));
+            Assert.False(Jump.BackToBoard);
+            Assert.Throws<NavigationException>(() => Jump.ToPlace(new JumpTarget(JumpKind.File, file)));
+            Assert.False(Jump.BackToBoard);
+        }
+        finally
+        {
+            // (no jump left pending for the other tests)
+            Jump.OpenAtStart(null!);
+        }
+    }
 }

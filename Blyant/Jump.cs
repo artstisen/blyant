@@ -313,11 +313,18 @@ internal static class Jump
     internal static JumpTarget? Pending { get; private set; }
 
     /// <summary>
+    /// The pending jump was made from the corkboard (a card opened): when the place is closed (the editor of the file,
+    /// or the file browser of the folder), the corkboard is shown again. Another jump made there forgets it
+    /// </summary>
+    internal static bool BackToBoard { get; private set; }
+
+    /// <summary>
     /// Go to a place when Blyant has started (a file or directory given when it is started, see StartArgument)
     /// </summary>
     internal static void OpenAtStart(JumpTarget target)
     {
         Pending = target;
+        BackToBoard = false;
     }
 
     /// <summary>
@@ -417,6 +424,7 @@ internal static class Jump
         if (!MayLeave(beforeLeaving)) return;
         Remember(target);
         Pending = target;
+        BackToBoard = false;
         Navigation.Wait();
     }
 
@@ -485,10 +493,14 @@ internal static class Jump
     /// Go to a place picked elsewhere than in the Jump menu (a project, from the editor). It is not kept in the jump
     /// history. Returns when the page is not left (beforeLeaving says to stay)
     /// </summary>
-    internal static void ToPlace(JumpTarget target, Func<bool>? beforeLeaving = null)
+    /// <param name="target">The place</param>
+    /// <param name="beforeLeaving">Asked before the page is left (false: stay)</param>
+    /// <param name="backToBoard">Made from the corkboard: it is shown again when the place is closed</param>
+    internal static void ToPlace(JumpTarget target, Func<bool>? beforeLeaving = null, bool backToBoard = false)
     {
         if (!MayLeave(beforeLeaving)) return;
         Pending = target;
+        BackToBoard = backToBoard;
         Navigation.Wait();
     }
 
@@ -576,12 +588,14 @@ internal static class Jump
 
     /// <summary>
     /// Make the pending jump (called by the main loop). Afterwards the start page is shown (or a page of its
-    /// Configuration tab)
+    /// Configuration tab), or the corkboard first when the jump was made from it
     /// </summary>
     internal static void RunPending()
     {
         var target = Pending;
+        var back = BackToBoard;
         Pending = null;
+        BackToBoard = false;
         if (target == null) return;
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
         Tools.ClearScreen();
@@ -592,14 +606,27 @@ internal static class Jump
                 if (!target.Exists)
                 {
                     NotFound(target);
+                    if (back) CorkboardPage.Show();
                     StartMenu.Open();
                     break;
                 }
 
                 // The file browser, in the directory of the file (which is opened in the editor), or in the
-                // directory. Closing it shows the start page, as when it is closed there
-                if (target.Kind == JumpKind.File) FileExplorer.RunAtFile(target.FullPath, target.At);
-                else FileExplorer.RunAtDirectory(target.FullPath);
+                // directory. Closing it shows the start page, as when it is closed there, or the corkboard the jump
+                // was made from (closing the editor of a file opened from it closes the browser too)
+                try
+                {
+                    if (target.Kind == JumpKind.File) FileExplorer.RunAtFile(target.FullPath, target.At, back);
+                    else FileExplorer.RunAtDirectory(target.FullPath);
+                }
+                catch (NavigationException) when (back)
+                {
+                    // Another jump was made: the corkboard is not gone back to, and its marks are forgotten
+                    CorkboardPage.ForgetMarks();
+                    throw;
+                }
+
+                if (back) CorkboardPage.Show();
                 StartMenu.Open();
                 break;
             default:

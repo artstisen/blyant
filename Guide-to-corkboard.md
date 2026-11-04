@@ -19,7 +19,7 @@ The card of a folder has a tab along its top edge, and its name with a `/` after
 '----------------------'
 ```
 
-`Enter` on it opens the folder in the file browser, the peek shows what it holds, and `I` tells about it as `I` in the file browser does.
+`Enter` on it opens the folder in the file browser (closing the file browser brings you back to the corkboard), the peek shows what it holds, and `I` tells about it as `I` in the file browser does.
 
 A new card is placed at the first free place, row by row, with a column between the cards; on a full board it is put on top of the others, a step from the last one. Its number is the lowest one that is free, and it keeps it.
 
@@ -41,7 +41,7 @@ A badge is as high as a card and 7 columns wide, with its number on its top edge
 - `Tab` `Shift+Tab` Select the next/previous card, by number
 - `12` and `Enter` Select card 12 (the number is shown on the line above the keys while you type it; `Esc` drops it)
 - `h` `j` `k` `l` (or the arrow keys) Select the next card that way. `h` and `l` go along the row of the selected card first (the cards that share at least two of its three rows, so a card laid a little lower is in it), and `j` and `k` along its column (the cards that share at least half its width). At the end of a row or column, the nearest card that way in another one is selected
-- `Enter` Open the file of the selected card in the editor (a note: edit its text). It is a jump: `Ctrl+K` and `Enter` in the editor take you back to the file you were in
+- `Enter` Open the file of the selected card in the editor (a note: edit its text). Closing the editor (`:q`, `:wq`) brings you back to the corkboard, with the same card selected and the cards still marked. It is a jump: a jump made in the editor (`Ctrl+O`) goes on from there without coming back, and `Ctrl+K` and `Enter` in the editor take you back to the file you were in
 - `Space` Mark the card, to move, color, order or remove several together (see [Several cards at a time](#several-cards-at-a-time))
 - `V` Move the selected card: `h` `j` `k` `l` (or the arrow keys) move it one step, `H` `J` `K` `L` five steps, and `Esc` (or `Enter`, `V`) ends the moving
 - `T` (or `:top`) Put the card on top of the others, `E` (or `:bottom`) below them. Where cards overlap, the one on top covers the others

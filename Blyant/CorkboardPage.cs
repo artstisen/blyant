@@ -46,7 +46,8 @@ internal static class CorkboardPage
             _open = false;
             _moving = false;
             _typed = string.Empty;
-            _marks.Clear();
+            // (kept for a card opened: the page is shown again when its file or folder is closed)
+            if (!Jump.BackToBoard) _marks.Clear();
         }
     }
 
@@ -90,6 +91,11 @@ internal static class CorkboardPage
     private static void SelectLast() => _selected = Corkboard.Cards.Count > 0 ? Corkboard.Cards[^1].Number : -1;
 
     private static Corkboard.Card? Selected => Corkboard.Numbered(_selected);
+
+    /// <summary>
+    /// The marks of the cards are not kept: the page was left for a card's file or folder, and not gone back to
+    /// </summary>
+    internal static void ForgetMarks() => _marks.Clear();
 
     /// <summary>
     /// The cards that keys work on: the marked ones and the selected one, in the order they are drawn (only the
@@ -329,7 +335,8 @@ internal static class CorkboardPage
     }
 
     // Enter: open the file of the card in the editor, or its folder in the file browser (as a jump: the page is
-    // left), or edit the text of a note
+    // left, and shown again when the editor or the file browser is closed, with the marks), or edit the text of a
+    // note
     private static void Open(Corkboard.Card? card)
     {
         if (card == null) return;
@@ -341,7 +348,7 @@ internal static class CorkboardPage
 
         if (card.IsFolder)
         {
-            if (Directory.Exists(card.Path)) Jump.ToPlace(new JumpTarget(JumpKind.Directory, card.Path));
+            if (Directory.Exists(card.Path)) Jump.ToPlace(new JumpTarget(JumpKind.Directory, card.Path), null, true);
             else _message = DialogText.DirectoryNotFound;
             return;
         }
@@ -352,7 +359,7 @@ internal static class CorkboardPage
             return;
         }
 
-        Jump.ToPlace(new JumpTarget(JumpKind.File, card.Path));
+        Jump.ToPlace(new JumpTarget(JumpKind.File, card.Path), null, true);
     }
 
     // A or ":note": a new note card, its text written in the editor at once
