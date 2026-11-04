@@ -492,8 +492,7 @@ internal static class Corkboard
     {
         if (!File.Exists(BoardFile(key))) return null;
         var cards = new List<Card>();
-        // (the badges mark places on the board: only the cards are shown)
-        WithBoard(key, () => cards.AddRange(_cards.Where(card => !card.IsBadge).OrderBy(card => card.Number)));
+        WithBoard(key, () => cards.AddRange(_cards.OrderBy(card => card.Number)));
         return cards;
     }
 

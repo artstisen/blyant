@@ -447,6 +447,11 @@ public class CorkboardTests : IDisposable
         Assert.Equal(new string('-', 22), CorkboardPage.TopEdge(file, 22));
         Assert.Equal("-///" + new string('-', 18), CorkboardPage.TopEdge(folder, 22));
         Assert.Equal(new string('~', 22), CorkboardPage.TopEdge(note, 22));
+        // The selected card: its place at the right end, counted from 1 (as the ruler)
+        Assert.Equal(new string('~', 15) + " 26,4 ~", CorkboardPage.TopEdge(note, 22, (25, 3)));
+        Assert.Equal("-///" + new string('-', 11) + " 1,12 -", CorkboardPage.TopEdge(folder, 22, (0, 11)));
+        // Where it does not fit, the edge stays as it is
+        Assert.Equal(new string('-', 8), CorkboardPage.TopEdge(file, 8, (99, 99)));
     }
 
     [Fact]
@@ -751,7 +756,7 @@ public class CorkboardTests : IDisposable
     }
 
     [Fact]
-    public void Arranging_LeavesTheBadges_AndTheSnapshotHasOnlyCards()
+    public void Arranging_LeavesTheBadges_AndTheSnapshotHasThemToo()
     {
         var badge = Corkboard.AddBadge(string.Empty, Width, Height);
         var one = Corkboard.Add(In("one.md"), Width, Height);
@@ -764,7 +769,8 @@ public class CorkboardTests : IDisposable
         Assert.Equal(Corkboard.Undone.Places, Corkboard.Undo());
         Assert.Equal(place, (badge.X, badge.Y));
         Assert.Equal(DialogText.Success, Corkboard.Save());
-        Assert.Equal(new[] { 2, 3 }, Corkboard.Snapshot(string.Empty)!.Select(card => card.Number));
+        Assert.Equal(new[] { 1, 2, 3 }, Corkboard.Snapshot(string.Empty)!.Select(card => card.Number));
+        Assert.True(Corkboard.Snapshot(string.Empty)![0].IsBadge);
     }
 
     [Fact]

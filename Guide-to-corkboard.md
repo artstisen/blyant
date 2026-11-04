@@ -35,7 +35,7 @@ A new card is placed at the first free place, row by row, with a column between 
  '---'
 ```
 
-A badge is as high as a card and 7 columns wide, with its number on its top edge. It is selected, moved, colored, put on top or below, removed and put back as a card is, and `h` `j` `k` `l` go to it in the row or column of the cards (a badge under a card shares its column). What is said about it names it a badge (`D` asks "Take badge 2 off the corkboard?"), and the line above the keys counts the badges apart from the cards (`Cards: 5 | Badges: 2`). It has no title, so `X` is refused, and it is kept also when its note is left empty. `:arrange` leaves the badges where they are, and the cards of a project shown beside the list of projects are only the cards. A version of Blyant before 1.4.1 shows a badge as a note card.
+A badge is as high as a card and 7 columns wide, with its number on its top edge. It is selected, moved, colored, put on top or below, removed and put back as a card is, and `h` `j` `k` `l` go to it in the row or column of the cards (a badge under a card shares its column). What is said about it names it a badge (`D` asks "Take badge 2 off the corkboard?"), and the line above the keys counts the badges apart from the cards (`Cards: 5 | Badges: 2`). It has no title, so `X` is refused, and it is kept also when its note is left empty. `:arrange` leaves the badges where they are. Beside the list of projects, the badges of a project's board are shown among its cards, by their numbers. A version of Blyant before 1.4.1 shows a badge as a note card.
 
 ## On the corkboard
 - `Tab` `Shift+Tab` Select the next/previous card, by number
@@ -55,7 +55,7 @@ A badge is as high as a card and 7 columns wide, with its number on its top edge
 - `:missing` The cards whose file is not there any more, in a list to select one. `:prune` Remove them, after asking (those on a drive that is not connected stay)
 - `Ctrl+O` (or `:jump`) the Jump menu, `Ctrl+K` (or `:recent`) the latest files, `?` (or `:help`) the keys, `Esc` (or `Q`) close
 
-The line below the top bar is a ruler of the columns of the board, as above the logo in the logo editor: a dot for each column, `:` for every 5th and the tens as digits, to line the cards up when you move them.
+The line below the top bar is a ruler of the columns of the board, as above the logo in the logo editor: a dot for each column, `:` for every 5th and the tens as digits, to line the cards up when you move them. The selected card shows its place at the right end of its top edge: its column on the ruler and its row on the board (`.~~~~~~~~~~~~~~ 26,4 ~.`), and a selected badge shows it on the line above the keys (`Badge at 26,4`), as it has no room for it.
 
 The selected card is drawn on top of the others while it is selected, with its number highlighted; that does not change the order of the cards. A card whose file is gone is dimmed and marked _(missing)_.
 

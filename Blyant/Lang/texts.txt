@@ -101,6 +101,7 @@ en: "Tab/hjkl Select | Enter Open | Space Mark | V Move | A Note | B Badge | N N
 en: "No corkboard: B makes one"
 en: "Corkboard ({0})"
 en: "Peek"
+en: "Badge at {0}"
 en: "Card: {0}"
 en: "Filter: {0}"
 en: "Moving: {0} cards"

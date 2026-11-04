@@ -957,7 +957,26 @@ internal static class CorkboardPage
         var (x, y) = Corkboard.Shown(card, width, height);
         var marked = _marks.Contains(card.Number);
         if (card.IsBadge) DrawBadgeAt(card, BoardTop + y, x, Init.LineWidth, selected, !Matches(card), marked);
-        else DrawCardAt(card, BoardTop + y, x, Init.LineWidth, selected, missing || !Matches(card), missing, marked);
+        else DrawCardAt(card, BoardTop + y, x, Init.LineWidth, selected, missing || !Matches(card), missing, marked,
+            selected ? (x, y) : null);
+    }
+
+    /// <summary>
+    /// Where a card is, as it is shown on the selected one: its column on the ruler and its row on the board, both
+    /// counted from 1
+    /// </summary>
+    internal static string PlaceText(int x, int y) => (x + 1) + "," + (y + 1);
+
+    /// <summary>
+    /// The top edge of the selected card: its place at the right end ("-- 26,4 -"), where it fits
+    /// </summary>
+    internal static string TopEdge(Corkboard.Card card, int inner, (int X, int Y) place)
+    {
+        var edge = TopEdge(card, inner);
+        var text = " " + PlaceText(place.X, place.Y) + " ";
+        // (the start of the edge stays: a folder's tab)
+        if (text.Length + 5 > inner) return edge;
+        return edge[..(inner - text.Length - 1)] + text + edge[^1];
     }
 
     /// <summary>
@@ -1027,7 +1046,7 @@ internal static class CorkboardPage
     // A card at a place on the screen, cut at a column (the part from it on is not drawn). A marked one has a "*" at
     // its top left
     private static void DrawCardAt(Corkboard.Card card, int row, int column, int end, bool selected, bool dim,
-        bool missing, bool marked = false)
+        bool missing, bool marked = false, (int X, int Y)? place = null)
     {
         var inner = Corkboard.CardWidth - 2;
         var at = column;
@@ -1052,18 +1071,20 @@ internal static class CorkboardPage
 
         if (column >= end) return;
         var top = AsciiStyles.GetTopCorner();
+        // (the selected card shows its place on its top edge)
+        var edge = place is { } shownAt ? TopEdge(card, inner, shownAt) : TopEdge(card, inner);
         Tools.SetCursorEx(row, column);
         if (marked)
         {
             ConsoleColors.SetColors(ConsoleColors.ColorPreset.AttentionInverted);
             Put("*");
             Frame();
-            Put(TopEdge(card, inner) + top);
+            Put(edge + top);
         }
         else
         {
             Frame();
-            Put(top + TopEdge(card, inner) + top);
+            Put(top + edge + top);
         }
 
         Tools.SetCursorEx(row + 1, column);
@@ -1116,7 +1137,8 @@ internal static class CorkboardPage
         {
             var row = top + 1 + i * 2;
             if (row + Corkboard.CardHeight > top + height) break;
-            DrawCardAt(cards[i], row, left + i * 2, left + width, false, false, false);
+            if (cards[i].IsBadge) DrawBadgeAt(cards[i], row, left + i * 2, left + width, false, false, false);
+            else DrawCardAt(cards[i], row, left + i * 2, left + width, false, false, false);
         }
     }
 
@@ -1139,6 +1161,13 @@ internal static class CorkboardPage
         }
     }
 
+    // The place of a selected badge (as the place on the top edge of a card: a badge has no room for it)
+    private static string BadgePlace(Corkboard.Card badge)
+    {
+        var (x, y) = Corkboard.Shown(badge, Corkboard.BoardWidth, Height);
+        return Lang.F("Badge at {0}", PlaceText(x, y));
+    }
+
     // The line above the keys: a message, the number typed or the filter, and how many cards there are
     private static void DrawStatus()
     {
@@ -1152,6 +1181,7 @@ internal static class CorkboardPage
             : _moving && Group() is { Count: > 1 } group ? Lang.F("Moving: {0} cards", group.Count)
             : _moving && Selected is { } moving ? Lang.F("Moving: {0}", moving.Name)
             : _marks.Count > 0 ? Lang.F("Marked: {0}", _marks.Count)
+            : Selected is { IsBadge: true } badge ? BadgePlace(badge)
             : string.Empty;
         // How many cards there are, and badges (when there are any)
         var badges = Corkboard.Cards.Count(card => card.IsBadge);
