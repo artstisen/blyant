@@ -798,4 +798,54 @@ public class CorkboardTests : IDisposable
     {
         Assert.Equal(edge, CorkboardPage.BadgeEdge(number));
     }
+
+    [Fact]
+    public void CardsMovedTogether_KeepTheirPlaces_AndStopTogetherAtTheEdge()
+    {
+        var a = Corkboard.Add(In("a.md"), Width, Height);
+        var b = Corkboard.Add(In("b.md"), Width, Height);
+        var badge = Corkboard.AddBadge(string.Empty, Width, Height);
+        Corkboard.Add(In("other.md"), Width, Height);
+        (a.X, a.Y, b.X, b.Y, badge.X, badge.Y) = (10, 2, 40, 5, 30, 2);
+        var group = new[] { a, b, badge };
+        Corkboard.Move(group, 5, 1, Width, Height);
+        Assert.Equal((15, 3, 45, 6, 35, 3), (a.X, a.Y, b.X, b.Y, badge.X, badge.Y));
+        // b reaches the right side first: all stop there, as far apart as they were
+        Corkboard.Move(group, 50, 0, Width, Height);
+        Assert.Equal(Width - Corkboard.CardWidth, b.X);
+        Assert.Equal((b.X - 30, b.X - 10), (a.X, badge.X));
+        // a reaches the top first
+        Corkboard.Move(group, 0, -10, Width, Height);
+        Assert.Equal((0, 3, 0), (a.Y, b.Y, badge.Y));
+    }
+
+    [Fact]
+    public void CardsPutOnTopTogether_KeepTheirOrder()
+    {
+        for (var i = 1; i <= 4; i++) Corkboard.Add(In(i + ".md"), Width, Height);
+        var three = Corkboard.Numbered(3)!;
+        var one = Corkboard.Numbered(1)!;
+        Corkboard.ToFront(new[] { three, one }, true);
+        Assert.Equal("2 4 1 3", Order());
+        Corkboard.ToFront(new[] { Corkboard.Numbered(4)!, three }, false);
+        Assert.Equal("4 3 2 1", Order());
+    }
+
+    [Fact]
+    public void CardsRemovedTogether_ArePutBackTogether_WhereTheyWere()
+    {
+        for (var i = 1; i <= 4; i++) Corkboard.Add(In(i + ".md"), Width, Height);
+        Assert.Equal(2, Corkboard.Remove(new[] { Corkboard.Numbered(2)!, Corkboard.Numbered(4)! }));
+        Assert.Equal("1 3", Order());
+        Assert.Equal(Corkboard.Undone.Cards, Corkboard.Undo());
+        Assert.Equal(2, Corkboard.UndoneCount);
+        Assert.Equal("1 2 3 4", Order());
+        // A card added since keeps its number: the one put back gets a new one
+        Corkboard.Remove(new[] { Corkboard.Numbered(2)!, Corkboard.Numbered(3)! });
+        var added = Corkboard.Add(In("new.md"), Width, Height);
+        Assert.Equal(2, added.Number);
+        Assert.Equal(Corkboard.Undone.Cards, Corkboard.Undo());
+        Assert.Equal(new[] { 1, 2, 3, 4, 5 }, Corkboard.Cards.Select(card => card.Number).Order());
+        Assert.Same(added, Corkboard.Numbered(2));
+    }
 }

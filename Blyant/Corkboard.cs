@@ -221,9 +221,9 @@ internal static class Corkboard
     // The file was there, but could not be read: it is not written over until it is read
     private static bool _unreadable;
 
-    // What u puts back: the card removed last and where it was in the order, the cards taken off by ":clear", or the
-    // places of the cards before they were arranged
-    private static (Card Card, int Index)? _removed;
+    // What u puts back: the cards removed last (one, or those marked) and where they were in the order, the cards
+    // taken off by ":clear", or the places of the cards before they were arranged
+    private static List<(Card Card, int Index)>? _removed;
     private static List<Card>? _cleared;
     private static List<(Card Card, int X, int Y)>? _arranged;
 
@@ -619,6 +619,24 @@ internal static class Corkboard
         (Math.Clamp(card.X, 0, Math.Max(0, width - card.Width)), Math.Clamp(card.Y, 0, Math.Max(0, height - CardHeight)));
 
     /// <summary>
+    /// Move several cards together by columns and rows, inside a board of a size: they keep their places to each
+    /// other, so at the edge of the board they all stop
+    /// </summary>
+    internal static void Move(IReadOnlyCollection<Card> cards, int columns, int rows, int width, int height)
+    {
+        if (cards.Count == 0) return;
+        foreach (var card in cards) (card.X, card.Y) = Shown(card, width, height);
+        columns = Math.Clamp(columns, -cards.Min(card => card.X),
+            cards.Min(card => Math.Max(0, width - card.Width) - card.X));
+        rows = Math.Clamp(rows, -cards.Min(card => card.Y), cards.Min(card => Math.Max(0, height - CardHeight) - card.Y));
+        foreach (var card in cards)
+        {
+            card.X += columns;
+            card.Y += rows;
+        }
+    }
+
+    /// <summary>
     /// Move a card by columns and rows, inside a board of a size
     /// </summary>
     internal static void Move(Card card, int columns, int rows, int width, int height)
@@ -631,24 +649,48 @@ internal static class Corkboard
     /// <summary>
     /// Put a card on top of the others (true), or below them
     /// </summary>
-    internal static void ToFront(Card card, bool front)
+    internal static void ToFront(Card card, bool front) => ToFront(new[] { card }, front);
+
+    /// <summary>
+    /// Put several cards on top of the others (true), or below them, in the order they had among themselves
+    /// </summary>
+    internal static void ToFront(IReadOnlyCollection<Card> cards, bool front)
     {
-        if (!_cards.Remove(card)) return;
-        if (front) _cards.Add(card);
-        else _cards.Insert(0, card);
+        var moving = _cards.Where(cards.Contains).ToList();
+        _cards.RemoveAll(moving.Contains);
+        if (front) _cards.AddRange(moving);
+        else _cards.InsertRange(0, moving);
     }
 
     /// <summary>
     /// Take a card off the board (its file stays). It can be put back with Undo
     /// </summary>
-    internal static void Remove(Card card)
+    internal static void Remove(Card card) => Remove(new[] { card });
+
+    /// <summary>
+    /// Take several cards off the board (their files stay). Undo puts them all back, where they were
+    /// </summary>
+    /// <returns>How many were taken off</returns>
+    internal static int Remove(IReadOnlyCollection<Card> cards)
     {
-        var index = _cards.IndexOf(card);
-        if (index < 0) return;
-        _cards.RemoveAt(index);
-        _removed = (card, index);
+        var removed = _cards.Select((card, index) => (Card: card, Index: index))
+            .Where(pair => cards.Contains(pair.Card)).ToList();
+        if (removed.Count == 0) return 0;
+        _cards.RemoveAll(card => cards.Contains(card));
+        _removed = removed;
         _cleared = null;
         _arranged = null;
+        return removed.Count;
+    }
+
+    // Cards put back that have the number of a card added since get a new number (the lowest free one)
+    private static void Renumber(IEnumerable<Card> putBack, List<Card> taken)
+    {
+        foreach (var card in putBack.Where(card => taken.Any(other => other.Number == card.Number)))
+        {
+            card.Number = 1;
+            while (_cards.Any(other => other != card && other.Number == card.Number)) card.Number++;
+        }
     }
 
     /// <summary>
@@ -732,7 +774,7 @@ internal static class Corkboard
     {
         Nothing,
         Card, // The card removed last (UndoneCard)
-        Cards, // The cards taken off by ":clear" (as many as UndoneCount)
+        Cards, // The cards removed together, or taken off by ":clear" (as many as UndoneCount)
         Places // The places of the cards before they were arranged
     }
 
@@ -747,8 +789,9 @@ internal static class Corkboard
     internal static int UndoneCount { get; private set; }
 
     /// <summary>
-    /// Put back what was done last: the card removed, where it was, the cards taken off by ":clear" (with those added
-    /// since on top of them), or the places of the cards before they were arranged
+    /// Put back what was done last: the cards removed (one or several), where they were, the cards taken off by
+    /// ":clear" (with those added since on top of them), or the places of the cards before they were arranged. A card
+    /// added since keeps its number: one put back that had it gets a new one
     /// </summary>
     internal static Undone Undo()
     {
@@ -756,14 +799,9 @@ internal static class Corkboard
         UndoneCount = 0;
         if (_cleared is { } cleared)
         {
-            // (a card added since keeps its number: one put back that had it gets a new one)
             var taken = _cards.ToList();
             _cards.InsertRange(0, cleared);
-            foreach (var card in cleared.Where(card => taken.Any(other => other.Number == card.Number)))
-            {
-                card.Number = 1;
-                while (_cards.Any(other => other != card && other.Number == card.Number)) card.Number++;
-            }
+            Renumber(cleared, taken);
 
             _cleared = null;
             UndoneCount = cleared.Count;
@@ -782,10 +820,19 @@ internal static class Corkboard
             return Undone.Places;
         }
 
-        if (_removed is not { } removed || _cards.Any(card => card.Number == removed.Card.Number)) return Undone.Nothing;
-        _cards.Insert(Math.Min(removed.Index, _cards.Count), removed.Card);
+        if (_removed is not { } removed) return Undone.Nothing;
+        // (in the order they were in, so each goes back to its place)
+        var before = _cards.ToList();
+        foreach (var (card, index) in removed) _cards.Insert(Math.Min(index, _cards.Count), card);
+        Renumber(removed.Select(pair => pair.Card), before);
         _removed = null;
-        UndoneCard = removed.Card;
+        if (removed.Count > 1)
+        {
+            UndoneCount = removed.Count;
+            return Undone.Cards;
+        }
+
+        UndoneCard = removed[0].Card;
         return Undone.Card;
     }
 

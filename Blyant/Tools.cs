@@ -793,6 +793,8 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("12 Enter", Lang.T("Select card 12"), false));
             _shortcutList.Add(new Shortcut("h j k l", Lang.T("Select the next card that way (its row/column first)"), false));
             _shortcutList.Add(new Shortcut("Enter", Lang.T("Open the card's file or folder (a note: edit it)"), false));
+            _shortcutList.Add(new Shortcut("Space", Lang.T("Mark/Unmark: V C T E D work on all marked"), false));
+            _shortcutList.Add(new Shortcut("  Esc", Lang.T("Unmark all (before closing the board)"), false));
             _shortcutList.Add(new Shortcut("V", Lang.T("Move the card (hjkl, HJKL: 5 steps; Esc: done)"), false));
             _shortcutList.Add(new Shortcut("T E :top :bottom", Lang.T("Put the card on top of/below the others"), false));
             _shortcutList.Add(new Shortcut("C X :color :rename", Lang.T("Color/Title of the card"), false));

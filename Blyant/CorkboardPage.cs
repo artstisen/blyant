@@ -6,7 +6,8 @@
 /// Enter, or the keys of a direction (the nearest card that way), and opened with Enter (a note is edited). V moves
 /// it, T and E put it on top of the others or below them, C colors it, X gives it a title, D takes it off the board,
 /// N pins a file, F a folder, A adds a note, B a badge (a small round mark with an "i" and a note, to mark a place),
-/// I shows information, P the peek. ":list" shows the boards, ":arrange"
+/// I shows information, P the peek. Space marks cards: V, C, T, E and D work on the marked ones and the selected one
+/// together. ":list" shows the boards, ":arrange"
 /// lays the cards out in an order, and ":clear" takes them all off. Opened with ":board" (":board name": another
 /// board) from every command line, ":jump board", the Jump menu, the Start tab, and B in the list of projects (the
 /// board of a project)
@@ -26,6 +27,7 @@ internal static class CorkboardPage
     private static bool _moving; // The selected card is moved with the keys of the directions
     private static string _typed = string.Empty; // The number typed to select a card
     private static string _filter = string.Empty; // Only the cards with it in their names or paths are not dimmed
+    private static readonly HashSet<int> _marks = new(); // The numbers of the marked cards (while the board is open)
     private static string _message = string.Empty;
 
     /// <summary>
@@ -44,6 +46,7 @@ internal static class CorkboardPage
             _open = false;
             _moving = false;
             _typed = string.Empty;
+            _marks.Clear();
         }
     }
 
@@ -79,6 +82,7 @@ internal static class CorkboardPage
         Corkboard.UseBoard(key);
         FileIo.SaveSettings();
         _filter = string.Empty;
+        _marks.Clear();
         SelectLast();
     }
 
@@ -86,6 +90,17 @@ internal static class CorkboardPage
     private static void SelectLast() => _selected = Corkboard.Cards.Count > 0 ? Corkboard.Cards[^1].Number : -1;
 
     private static Corkboard.Card? Selected => Corkboard.Numbered(_selected);
+
+    /// <summary>
+    /// The cards that keys work on: the marked ones and the selected one, in the order they are drawn (only the
+    /// selected one when none is marked)
+    /// </summary>
+    private static List<Corkboard.Card> Group()
+    {
+        // (a card that is gone, removed or on a board read again, is no longer marked)
+        _marks.RemoveWhere(number => Corkboard.Numbered(number) == null);
+        return Corkboard.Cards.Where(card => card.Number == _selected || _marks.Contains(card.Number)).ToList();
+    }
 
     /// <summary>
     /// The height of the board: less with the peek below it
@@ -143,10 +158,12 @@ internal static class CorkboardPage
                 continue;
             }
 
-            if (key.Key == ConsoleKey.Escape && (_typed.Length > 0 || _filter.Length > 0))
+            _marks.RemoveWhere(number => Corkboard.Numbered(number) == null);
+            if (key.Key == ConsoleKey.Escape && (_typed.Length > 0 || _marks.Count > 0 || _filter.Length > 0))
             {
-                // Esc takes the number typed away first, then the filter
+                // Esc takes the number typed away first, then the marks, then the filter
                 if (_typed.Length > 0) _typed = string.Empty;
+                else if (_marks.Count > 0) _marks.Clear();
                 else _filter = string.Empty;
                 continue;
             }
@@ -215,10 +232,13 @@ internal static class CorkboardPage
             case ConsoleKey.V:
                 if (card != null) _moving = true;
                 break;
+            case ConsoleKey.Spacebar:
+                if (card != null && !_marks.Remove(card.Number)) _marks.Add(card.Number);
+                break;
             case ConsoleKey.T:
             case ConsoleKey.E:
                 if (card == null) break;
-                Corkboard.ToFront(card, key.Key == ConsoleKey.T);
+                Corkboard.ToFront(Group(), key.Key == ConsoleKey.T);
                 _message = key.Key == ConsoleKey.T ? Lang.T("On top of the other cards") : Lang.T("Below the other cards");
                 SaveCards();
                 break;
@@ -271,7 +291,8 @@ internal static class CorkboardPage
         _selected = at < 0 ? numbers[0] : numbers[(at + (back ? numbers.Count - 1 : 1)) % numbers.Count];
     }
 
-    // V: the selected card is moved with the keys of the directions (H J K L: five steps), until Esc or Enter
+    // V: the selected card (and the marked ones, together) is moved with the keys of the directions (H J K L: five
+    // steps), until Esc or Enter
     private static void Move(ConsoleKeyInfo key)
     {
         var card = Selected;
@@ -283,7 +304,7 @@ internal static class CorkboardPage
         }
 
         if (MoveOf(key) is not { } move) return;
-        Corkboard.Move(card, move.Columns, move.Rows, Corkboard.BoardWidth, Height);
+        Corkboard.Move(Group(), move.Columns, move.Rows, Corkboard.BoardWidth, Height);
     }
 
     /// <summary>
@@ -447,7 +468,8 @@ internal static class CorkboardPage
             return;
         }
 
-        card.Color = picked;
+        // (the marked cards too)
+        foreach (var colored in Group()) colored.Color = picked;
         SaveCards();
     }
 
@@ -473,11 +495,29 @@ internal static class CorkboardPage
         SaveCards();
     }
 
-    // D or ":remove": take the card off the board, after asking (u puts it back)
+    // D or ":remove": take the card off the board, after asking (u puts it back), or the marked ones with it
     private static void Remove(Corkboard.Card? card)
     {
         if (card == null) return;
         ChoiceBox.Forget();
+        var group = Group();
+        if (group.Count > 1)
+        {
+            // The marked cards, with the selected one
+            if (!ChoiceBox.Confirm(Lang.T("Remove cards"), Lang.F("Take {0} cards off the corkboard?", group.Count),
+                    Lang.T("The files stay where they are."), false))
+            {
+                return;
+            }
+
+            var count = Corkboard.Remove(group);
+            _marks.Clear();
+            SelectLast();
+            _message = Lang.F("Cards taken off: {0} (u puts them back)", count);
+            SaveCards();
+            return;
+        }
+
         var note = card.IsNote ? string.Empty
             : card.IsFolder ? Lang.T("The folder stays where it is.")
             : Lang.T("The file stays where it is.");
@@ -554,6 +594,7 @@ internal static class CorkboardPage
         }
 
         Corkboard.Clear();
+        _marks.Clear();
         _selected = -1;
         _message = Lang.F("Cards taken off: {0} (u puts them back)", count);
         SaveCards();
@@ -659,8 +700,8 @@ internal static class CorkboardPage
                 break;
             case "top":
             case "bottom":
-                if (Selected is not { } card) break;
-                Corkboard.ToFront(card, name == "top");
+                if (Selected == null) break;
+                Corkboard.ToFront(Group(), name == "top");
                 SaveCards();
                 break;
             case "missing":
@@ -901,14 +942,15 @@ internal static class CorkboardPage
         Tools.SetCursorEx(Init.LineCount - 1, 0);
         Menu.WriteKeyHints(_moving
             ? Lang.T("hjkl Move | HJKL Move 5 | Enter/Esc Done")
-            : Lang.T("Tab Select | Enter Open | V Move | A Note | B Badge | N New | C Color | X Title | D Remove | I Info | P Peek | Esc Close"));
+            : Lang.T("Tab/hjkl Select | Enter Open | Space Mark | V Move | A Note | B Badge | N New | C Color | X Title | I Info | P Peek | Esc Close"));
     }
 
     private static void DrawCard(Corkboard.Card card, bool selected, bool missing, int width, int height)
     {
         var (x, y) = Corkboard.Shown(card, width, height);
-        if (card.IsBadge) DrawBadgeAt(card, BoardTop + y, x, Init.LineWidth, selected, !Matches(card));
-        else DrawCardAt(card, BoardTop + y, x, Init.LineWidth, selected, missing || !Matches(card), missing);
+        var marked = _marks.Contains(card.Number);
+        if (card.IsBadge) DrawBadgeAt(card, BoardTop + y, x, Init.LineWidth, selected, !Matches(card), marked);
+        else DrawCardAt(card, BoardTop + y, x, Init.LineWidth, selected, missing || !Matches(card), missing, marked);
     }
 
     /// <summary>
@@ -926,8 +968,10 @@ internal static class CorkboardPage
     }
 
     // A badge at a place on the screen, cut at a column: round, with its number on the top edge and an "i" (English:
-    // the same in all languages). Its corners are left as they are, so what is below shows there
-    private static void DrawBadgeAt(Corkboard.Card card, int row, int column, int end, bool selected, bool dim)
+    // the same in all languages). Its corners are left as they are, so what is below shows there. A marked one has
+    // a "*" at its top left
+    private static void DrawBadgeAt(Corkboard.Card card, int row, int column, int end, bool selected, bool dim,
+        bool marked)
     {
         void Frame()
         {
@@ -945,8 +989,9 @@ internal static class CorkboardPage
             Console.Write(text.Length > end - at ? text[..(end - at)] : text);
         }
 
-        Frame();
-        Put(column + 1, ".");
+        if (marked) ConsoleColors.SetColors(ConsoleColors.ColorPreset.AttentionInverted);
+        else Frame();
+        Put(column + 1, marked ? "*" : ".");
         ConsoleColors.SetColors(selected ? ConsoleColors.ColorPreset.SelectorInverted : ConsoleColors.ColorPreset.Divider);
         Put(column + 2, BadgeEdge(card.Number));
         Frame();
@@ -972,9 +1017,10 @@ internal static class CorkboardPage
         : card.IsFolder ? "-///" + new string('-', Math.Max(0, inner - 4))
         : new string('-', inner);
 
-    // A card at a place on the screen, cut at a column (the part from it on is not drawn)
+    // A card at a place on the screen, cut at a column (the part from it on is not drawn). A marked one has a "*" at
+    // its top left
     private static void DrawCardAt(Corkboard.Card card, int row, int column, int end, bool selected, bool dim,
-        bool missing)
+        bool missing, bool marked = false)
     {
         var inner = Corkboard.CardWidth - 2;
         var at = column;
@@ -1000,8 +1046,19 @@ internal static class CorkboardPage
         if (column >= end) return;
         var top = AsciiStyles.GetTopCorner();
         Tools.SetCursorEx(row, column);
-        Frame();
-        Put(top + TopEdge(card, inner) + top);
+        if (marked)
+        {
+            ConsoleColors.SetColors(ConsoleColors.ColorPreset.AttentionInverted);
+            Put("*");
+            Frame();
+            Put(TopEdge(card, inner) + top);
+        }
+        else
+        {
+            Frame();
+            Put(top + TopEdge(card, inner) + top);
+        }
+
         Tools.SetCursorEx(row + 1, column);
         at = column;
         Put("|");
@@ -1085,7 +1142,9 @@ internal static class CorkboardPage
         var text = _message.Length > 0 ? _message
             : _typed.Length > 0 ? Lang.F("Card: {0}", _typed)
             : _filter.Length > 0 ? Lang.F("Filter: {0}", _filter)
+            : _moving && Group() is { Count: > 1 } group ? Lang.F("Moving: {0} cards", group.Count)
             : _moving && Selected is { } moving ? Lang.F("Moving: {0}", moving.Name)
+            : _marks.Count > 0 ? Lang.F("Marked: {0}", _marks.Count)
             : string.Empty;
         // How many cards there are, and badges (when there are any)
         var badges = Corkboard.Cards.Count(card => card.IsBadge);

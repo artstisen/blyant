@@ -42,6 +42,7 @@ A badge is as high as a card and 7 columns wide, with its number on its top edge
 - `12` and `Enter` Select card 12 (the number is shown on the line above the keys while you type it; `Esc` drops it)
 - `h` `j` `k` `l` (or the arrow keys) Select the next card that way. `h` and `l` go along the row of the selected card first (the cards that share at least two of its three rows, so a card laid a little lower is in it), and `j` and `k` along its column (the cards that share at least half its width). At the end of a row or column, the nearest card that way in another one is selected
 - `Enter` Open the file of the selected card in the editor (a note: edit its text). It is a jump: `Ctrl+K` and `Enter` in the editor take you back to the file you were in
+- `Space` Mark the card, to move, color, order or remove several together (see [Several cards at a time](#several-cards-at-a-time))
 - `V` Move the selected card: `h` `j` `k` `l` (or the arrow keys) move it one step, `H` `J` `K` `L` five steps, and `Esc` (or `Enter`, `V`) ends the moving
 - `T` (or `:top`) Put the card on top of the others, `E` (or `:bottom`) below them. Where cards overlap, the one on top covers the others
 - `C` (or `:color`) Pick the color of the card, its frame and title, from the 16 colors
@@ -57,6 +58,16 @@ A badge is as high as a card and 7 columns wide, with its number on its top edge
 The line below the top bar is a ruler of the columns of the board, as above the logo in the logo editor: a dot for each column, `:` for every 5th and the tens as digits, to line the cards up when you move them.
 
 The selected card is drawn on top of the others while it is selected, with its number highlighted; that does not change the order of the cards. A card whose file is gone is dimmed and marked _(missing)_.
+
+## Several cards at a time
+`Space` marks the selected card (or badge), and again unmarks it: select another with `h` `j` `k` `l`, `Tab` or its number, and mark it too. A marked card has a `*` at its top left corner, and the line above the keys tells how many are marked. These keys then work on the marked cards and the selected one together:
+
+- `V` Move them together: they keep their places to each other, and when one reaches the edge of the board, they all stop
+- `C` Give them all the color picked
+- `T` and `E` Put them on top of the others or below them, in the order they had among themselves
+- `D` Take them all off the board, after asking. `u` puts them all back where they were (one whose number a card added since has, gets a new number)
+
+`Enter`, `X` and `I` work on the selected card only. `Esc` unmarks them all (before it closes the board). The marks are not kept: they go when another board is opened or the corkboard is closed.
 
 ## Arranging the cards
 `:arrange` puts the cards in rows from the top left, with a column between them, in an order (the badges stay where they are):
