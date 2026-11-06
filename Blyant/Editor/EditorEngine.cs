@@ -75,6 +75,7 @@ internal enum EditorRequest
     OnlyPane, // ":only": close the other pane of a split
     NewDocument, // ":new name": a new file next to this one, opened in its place
     LineEndings, // ":lineendings lf": the line endings of the file (LineEndingsArgument: lf, crlf, or empty to tell)
+    Bom, // ":bom on": the byte order mark of the file (BomArgument: on, off, or empty to show it)
     WhitespaceToggle, // ":whitespace": blank space shown as . > $, or not
     Favorite // ":favorite": the file a favorite of the file browser (or not)
 }
@@ -416,6 +417,11 @@ internal sealed partial class EditorEngine
     /// ":lineendings lf": what follows the command (lowercase), for the host
     /// </summary>
     internal string LineEndingsArgument { get; private set; } = string.Empty;
+
+    /// <summary>
+    /// ":bom on": what follows the command (lowercase), for the host
+    /// </summary>
+    internal string BomArgument { get; private set; } = string.Empty;
 
     /// <summary>
     /// ":bookmark name": the name the bookmark is given (empty: none), and with "!" the name is moved to it from the
@@ -1116,6 +1122,16 @@ internal sealed partial class EditorEngine
         {
             LineEndingsArgument = lineEndings.Groups[1].Value.Trim().ToLowerInvariant();
             if (!SingleLine) _request = EditorRequest.LineEndings;
+            return;
+        }
+
+        // ":bom on" (or off): the host saves the file with the byte order mark of UTF-8 or without it; alone: it
+        // shows what the file has
+        var bom = Regex.Match(command, "^bom(?: +(.*))?$");
+        if (bom.Success)
+        {
+            BomArgument = bom.Groups[1].Value.Trim().ToLowerInvariant();
+            if (!SingleLine) _request = EditorRequest.Bom;
             return;
         }
 

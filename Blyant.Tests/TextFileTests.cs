@@ -34,6 +34,23 @@ public class TextFileTests
     }
 
     [Fact]
+    public void TheByteOrderMark_IsPutOnAndTakenOff()
+    {
+        var plain = Encoding.UTF8.GetBytes("text\n");
+        var file = TextFile.Read(plain);
+        Assert.False(file.HasBom);
+        Assert.Equal("UTF-8", file.EncodingLabel);
+        Assert.True(file.SetBom(true));
+        Assert.False(file.SetBom(true));
+        Assert.Equal("UTF-8 (BOM)", file.EncodingLabel);
+        Assert.Equal(Utf8Bom.Concat(plain).ToArray(), file.GetBytes(file.Text));
+        // Kept under another name (":saveas"), and taken off again
+        Assert.True(file.WithPath("other.md").HasBom);
+        Assert.True(file.SetBom(false));
+        Assert.Equal(plain, file.GetBytes(file.Text));
+    }
+
+    [Fact]
     public void EmptyFile_IsUtf8WithTheLineEndingOfTheSystem()
     {
         var file = TextFile.Read(Array.Empty<byte>());

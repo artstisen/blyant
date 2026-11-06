@@ -9,7 +9,7 @@ The editor works in the style of Vim. It is always in one of these modes, shown 
 
 The line above the text also tells what the keys do: **NAVIGATE** in Normal mode, **EDIT** in Insert mode, **SELECT** in the Visual modes and **COMMAND** while a command or search is typed (these words follow the language of Blyant; the names of the modes at the bottom are always in English). The top row shows _EDITOR_ at the left, followed by the name of the file, and the label _Unsaved_ (or _Read only_) at the right; the line of the mode is right below it, so the text has all the rows down to the bottom line. A long name is cut short. When the editor opens, the bottom line says that `:help` shows the keys of the editor (until the first key).
 
-When a text file is edited (from the file browser), the bottom line shows its type, encoding and line endings, like `HTML UTF-8 (BOM) CRLF` or `TXT Windows-1252 LF` (a file in another encoding than UTF-8 becomes UTF-8 when it is saved; the line endings are kept: `CRLF` as used by Windows, `LF` as used by Linux and macOS; `:lineendings lf` or `:lineendings crlf` changes them, see [Line endings](#line-endings)). The bottom line also shows messages, the current memory string, the cursor position as `line:column` and how far into the text the cursor is. Inside Blyant, `:help` shows the list of keys.
+When a text file is edited (from the file browser), the bottom line shows its type, encoding and line endings, like `HTML UTF-8 (BOM) CRLF` or `TXT Windows-1252 LF` (a file in another encoding than UTF-8 becomes UTF-8 when it is saved, and `(BOM)` tells that it starts with a byte order mark, see [Byte order mark (BOM)](#byte-order-mark-bom); the line endings are kept: `CRLF` as used by Windows, `LF` as used by Linux and macOS; `:lineendings lf` or `:lineendings crlf` changes them, see [Line endings](#line-endings)). The bottom line also shows messages, the current memory string, the cursor position as `line:column` and how far into the text the cursor is. Inside Blyant, `:help` shows the list of keys.
 
 ## Save and close
 ![Split view, and the commands listed while one is typed](docs/screenshots/split-view.svg)
@@ -457,6 +457,21 @@ A line of a text file ends with a line ending: `CRLF` on Windows, `LF` on Linux 
 - `:lineendings lf` or `:lineendings crlf` Save the file with other line endings: the text has changes (_Unsaved_), and the line endings are written when you save it. `:lineendings` alone tells which the file has
 - A file with more than one kind of line endings (lines from Windows and from Linux) is saved with the kind found most: when it is opened, the bottom line tells which (`Mixed line endings: saved as CRLF`)
 - New files and blank pages get the line endings set in _Line endings of new files_ on the General page of Configuration: those of the system (from the start), `LF` or `CRLF`. When the same files are edited on Windows and on Linux (in a folder that is synced, or in Git), `LF` on both keeps them alike
+
+## Byte order mark (BOM)
+A byte order mark (BOM) is three bytes (`EF BB BF`) at the very start of a file that mark it as UTF-8. UTF-8 does not need one, as its bytes are read the same on every computer, and most programs do without it. Some Windows programs add it (Notepad before 2019, Excel when it saves CSV) or want it, while a script that starts with `#!` does not run with one on Linux and macOS, and some tools read the three bytes as part of the first word or heading.
+
+What Blyant does:
+- A file that starts with a BOM is read without it: it is not part of the text you edit, so it is never seen as odd characters. The bottom line of the editor shows `UTF-8 (BOM)`
+- A file is saved as it was: with a BOM if it had one, without one if it had none. Blyant does not add or take away a BOM by itself. `:saveas` and `:w name` keep it, as the line endings
+- New files and blank pages have no BOM, which is best for Markdown and Typst (Pandoc, Typst and Git all work without one)
+- Files in UTF-16 and UTF-32 are known by their BOM, and saved as UTF-8 (without a BOM)
+- Comparing two files (`:diff`) tells when they differ in encoding, such as `UTF-8/UTF-8 (BOM)`
+- Blyant's own files (lists, boards, settings) are read with or without a BOM, so one edited in Notepad still works, and are written without one
+
+Commands:
+- `:bom` shows a box with the name of the file, its encoding, whether it has a BOM, what a BOM is, and the commands
+- `:bom on` Save the file with a BOM, `:bom off` without one. The text has changes (_Unsaved_), and the BOM is written or left out when you save it
 
 ## Other commands
 ![Another file read only beside the text](docs/screenshots/split-file.svg)

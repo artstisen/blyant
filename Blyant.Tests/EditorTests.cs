@@ -1297,6 +1297,10 @@ public class EditorTests
         Assert.Equal(EditorRequest.LineEndings, editor.Type(":lineendings<CR>"));
         Assert.Equal(string.Empty, editor.LineEndingsArgument);
         Assert.Equal(EditorRequest.WhitespaceToggle, editor.Type(":whitespace<CR>"));
+        Assert.Equal(EditorRequest.Bom, editor.Type(":bom ON<CR>"));
+        Assert.Equal("on", editor.BomArgument);
+        Assert.Equal(EditorRequest.Bom, editor.Type(":bom<CR>"));
+        Assert.Equal(string.Empty, editor.BomArgument);
     }
 
     [Fact]

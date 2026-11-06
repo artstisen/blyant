@@ -1539,6 +1539,22 @@ internal static partial class FileExplorer
     }
 
     /// <summary>
+    /// The file being edited has the byte order mark of UTF-8 (false if no file is edited)
+    /// </summary>
+    internal static bool CurrentHasBom => _file?.HasBom ?? false;
+
+    /// <summary>
+    /// The encoding of the file being edited, as the bottom line of the editor shows it: "UTF-8 (BOM)"
+    /// </summary>
+    internal static string CurrentEncodingLabel => _file?.EncodingLabel ?? string.Empty;
+
+    /// <summary>
+    /// Save the file being edited with the byte order mark of UTF-8, or without it, from now on (":bom on"). False if
+    /// it is so already, or no file is edited
+    /// </summary>
+    internal static bool SetBom(bool on) => _file != null && _file.SetBom(on);
+
+    /// <summary>
     /// What the editor tells when the file was read with more than one kind of line endings (null: one kind)
     /// </summary>
     internal static string? MixedLineEndingsNote => _file is { MixedLineEndings: true } file
