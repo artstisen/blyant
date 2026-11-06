@@ -1155,4 +1155,69 @@ public class CorkboardTests : IDisposable
             CorkboardPage.Mode = saved;
         }
     }
+
+    [Fact]
+    public void TheFilter_SelectsACardFound_AlsoFromALineOrFrame()
+    {
+        var plot = Corkboard.AddNote("Plot", Width, Height);
+        var tides = Corkboard.Add(In("tides.md"), Width, Height);
+        var badge = Corkboard.AddBadge("tides to check", Width, Height);
+        var line = Corkboard.AddLine(0, 0, Width, Height);
+        var frame = Corkboard.AddFrame(0, 0, 30, 8, Width, Height);
+        bool CardsAndBadges(Corkboard.Card card) => !card.IsShape;
+        bool Cards(Corkboard.Card card) => !card.IsShape && !card.IsBadge;
+        // From a line or a frame (never dimmed) to the card found on top
+        Assert.Same(badge, CorkboardPage.FilterPick(Corkboard.Cards, line, "tides", CardsAndBadges));
+        Assert.Same(badge, CorkboardPage.FilterPick(Corkboard.Cards, frame, "tides", CardsAndBadges));
+        // Of those the mode takes
+        Assert.Same(tides, CorkboardPage.FilterPick(Corkboard.Cards, frame, "tides", Cards));
+        // The selected card stays when it is found; nothing found: the selection stays
+        Assert.Same(tides, CorkboardPage.FilterPick(Corkboard.Cards, tides, "tides", CardsAndBadges));
+        Assert.Same(plot, CorkboardPage.FilterPick(Corkboard.Cards, tides, "plot", CardsAndBadges));
+        Assert.Null(CorkboardPage.FilterPick(Corkboard.Cards, line, "nothing", CardsAndBadges));
+        Assert.Null(CorkboardPage.FilterPick(Corkboard.Cards, line, string.Empty, CardsAndBadges));
+        // A mode that takes none of those found: still a card found
+        Assert.Same(badge, CorkboardPage.FilterPick(Corkboard.Cards, line, "tides", card => card.IsShape));
+    }
+
+    [Fact]
+    public void ACardAddedOrFound_ChangesTheModeToOneThatTakesIt()
+    {
+        var card = Corkboard.Add(In("a.md"), Width, Height);
+        var badge = Corkboard.AddBadge(string.Empty, Width, Height);
+        var line = Corkboard.AddLine(0, 0, Width, Height);
+        var frame = Corkboard.AddFrame(0, 0, 30, 8, Width, Height);
+        var divider = Corkboard.AddDivider(40, Width);
+        foreach (var shape in new[] { line, frame, divider })
+        {
+            Assert.Equal(CorkboardPage.SelectMode.Lines, CorkboardPage.ModeFor(shape, CorkboardPage.SelectMode.Both));
+            Assert.Equal(CorkboardPage.SelectMode.Lines, CorkboardPage.ModeFor(shape, CorkboardPage.SelectMode.Cards));
+            // (a mode that takes it stays)
+            Assert.Null(CorkboardPage.ModeFor(shape, CorkboardPage.SelectMode.All));
+            Assert.Null(CorkboardPage.ModeFor(shape, CorkboardPage.SelectMode.Lines));
+        }
+
+        Assert.Equal(CorkboardPage.SelectMode.Both, CorkboardPage.ModeFor(card, CorkboardPage.SelectMode.Lines));
+        Assert.Equal(CorkboardPage.SelectMode.Both, CorkboardPage.ModeFor(badge, CorkboardPage.SelectMode.Cards));
+        Assert.Null(CorkboardPage.ModeFor(card, CorkboardPage.SelectMode.Cards));
+        Assert.Null(CorkboardPage.ModeFor(badge, CorkboardPage.SelectMode.Both));
+    }
+
+    [Fact]
+    public void TheFilter_FindsAFrameByItsTitle()
+    {
+        var note = Corkboard.AddNote("Storm", Width, Height);
+        var frame = Corkboard.AddFrame(0, 0, 30, 8, Width, Height);
+        var line = Corkboard.AddLine(0, 0, Width, Height);
+        Corkboard.Rename(frame, "Act two");
+        bool CardsAndBadges(Corkboard.Card card) => !card.IsShape;
+        Assert.Same(frame, CorkboardPage.FilterPick(Corkboard.Cards, line, "act", CardsAndBadges));
+        // Not by the name it has without a title
+        Corkboard.Rename(frame, string.Empty);
+        Assert.Null(CorkboardPage.FilterPick(Corkboard.Cards, line, "frame", CardsAndBadges));
+        // A card found and taken by the mode comes before a frame
+        Corkboard.Rename(frame, "Storm");
+        Assert.Same(note, CorkboardPage.FilterPick(Corkboard.Cards, line, "storm", CardsAndBadges));
+        Assert.Same(frame, CorkboardPage.FilterPick(Corkboard.Cards, line, "storm", card => card.IsShape));
+    }
 }

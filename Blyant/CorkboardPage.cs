@@ -71,7 +71,10 @@ internal static class CorkboardPage
     /// <summary>
     /// A card is one the mode selects
     /// </summary>
-    internal static bool InMode(Corkboard.Card card) => Mode switch
+    internal static bool InMode(Corkboard.Card card) => Takes(Mode, card);
+
+    // A mode takes a card
+    private static bool Takes(SelectMode mode, Corkboard.Card card) => mode switch
     {
         SelectMode.Cards => !card.IsBadge && !card.IsShape,
         SelectMode.Badges => card.IsBadge,
@@ -161,6 +164,25 @@ internal static class CorkboardPage
 
     private static Corkboard.Card? Selected => Corkboard.Numbered(_selected);
 
+    // A card added or found selected: the mode is changed to one that takes it, when it does not (a divider, line or
+    // frame: Lines; a card or badge: Cards and badges), so the keys go on from it
+    private static void Select(Corkboard.Card card)
+    {
+        _selected = card.Number;
+        if (ModeFor(card, Mode) is not { } mode) return;
+        Mode = mode;
+        FileIo.SaveSettings();
+    }
+
+    /// <summary>
+    /// The mode to change to for a card selected (added or found) that a mode does not take, or null: the mode takes it
+    /// </summary>
+    internal static SelectMode? ModeFor(Corkboard.Card card, SelectMode mode)
+    {
+        if (Takes(mode, card)) return null;
+        return card.IsShape ? SelectMode.Lines : SelectMode.Both;
+    }
+
     /// <summary>
     /// The marks of the cards are not kept: the page was left for a card's file or folder, and not gone back to
     /// </summary>
@@ -198,10 +220,30 @@ internal static class CorkboardPage
     private static List<Corkboard.Card> Matching() => Corkboard.Cards.Where(Matches).ToList();
 
     // (a divider, line or frame is not dimmed: it is about the board)
-    private static bool Matches(Corkboard.Card card) => _filter.Length == 0 || card.IsShape ||
-                                                        card.Name.Contains(_filter, StringComparison.OrdinalIgnoreCase) ||
-                                                        card.Path.Contains(_filter, StringComparison.OrdinalIgnoreCase) ||
-                                                        card.Text.Contains(_filter, StringComparison.OrdinalIgnoreCase);
+    private static bool Matches(Corkboard.Card card) => _filter.Length == 0 || card.IsShape || Found(card, _filter);
+
+    // A card with a filter in its name, path or text (a frame: in its title)
+    private static bool Found(Corkboard.Card card, string filter) => card.IsFrame
+        ? card.Title.Contains(filter, StringComparison.OrdinalIgnoreCase)
+        : card.Name.Contains(filter, StringComparison.OrdinalIgnoreCase) ||
+        card.Path.Contains(filter, StringComparison.OrdinalIgnoreCase) ||
+        card.Text.Contains(filter, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// The card to select after filtering ("/"): the selected one when it is a card found and one the mode takes, or
+    /// else the card found on top that the mode takes (or any card found). A frame is found by its title; a divider
+    /// or line is not found, as it is not dimmed, so one selected gives way to a card found. Null: the selection stays
+    /// (nothing found)
+    /// </summary>
+    internal static Corkboard.Card? FilterPick(IReadOnlyList<Corkboard.Card> cards, Corkboard.Card? selected,
+        string filter, Func<Corkboard.Card, bool> inMode)
+    {
+        if (filter.Length == 0) return null;
+        var found = cards.Where(card => (!card.IsShape || card.IsFrame) && Found(card, filter)).ToList();
+        if (found.Count == 0) return null;
+        if (selected != null && found.Contains(selected) && inMode(selected)) return selected;
+        return found.LastOrDefault(inMode) ?? found[^1];
+    }
 
     private static void Run()
     {
@@ -313,7 +355,7 @@ internal static class CorkboardPage
                 return RunCommand();
             case '/':
                 _filter = CommandLine.Read('/', false) ?? string.Empty;
-                if (Matching().Count > 0 && (card == null || !Matches(card))) _selected = Matching()[^1].Number;
+                if (FilterPick(Corkboard.Cards, card, _filter, InMode) is { } found) Select(found);
                 return true;
             case 'u':
                 Undo();
@@ -511,7 +553,7 @@ internal static class CorkboardPage
     {
         var card = Corkboard.AddNote(string.Empty, Corkboard.BoardWidth, Height);
         var board = Corkboard.CurrentBoard;
-        _selected = card.Number;
+        Select(card);
         SaveCards();
         try
         {
@@ -534,7 +576,7 @@ internal static class CorkboardPage
     private static void AddBadge()
     {
         var card = Corkboard.AddBadge(string.Empty, Corkboard.BoardWidth, Height);
-        _selected = card.Number;
+        Select(card);
         SaveCards();
         EditNote(card);
     }
@@ -551,7 +593,7 @@ internal static class CorkboardPage
             column = right;
         }
 
-        _selected = Corkboard.AddDivider(column, width).Number;
+        Select(Corkboard.AddDivider(column, width));
         _message = Lang.T("Divider added: V and h/l move it");
         SaveCards();
     }
@@ -568,7 +610,7 @@ internal static class CorkboardPage
             (x, y) = (cardX + card.Width, cardY + 1);
         }
 
-        _selected = Corkboard.AddLine(x, y, width, Height).Number;
+        Select(Corkboard.AddLine(x, y, width, Height));
         _message = Lang.T("Line added: V moves it, r turns it, + and - size it");
         SaveCards();
     }
@@ -579,7 +621,7 @@ internal static class CorkboardPage
         var width = Corkboard.BoardWidth;
         var around = Selected is { IsShape: false } ? Corkboard.FrameAround(Group(), width, Height) : null;
         var (x, y, frameWidth, frameHeight) = around ?? (Math.Max(0, (width - 30) / 2), Math.Max(0, (Height - 8) / 2), 30, 8);
-        _selected = Corkboard.AddFrame(x, y, frameWidth, frameHeight, width, Height).Number;
+        Select(Corkboard.AddFrame(x, y, frameWidth, frameHeight, width, Height));
         _marks.Clear();
         _message = Lang.T("Frame added: X gives it a title, V moves it, s sizes it");
         SaveCards();
@@ -877,7 +919,7 @@ internal static class CorkboardPage
         Corkboard.Reload();
         if (path == null) return;
         _message = Corkboard.PinWithMessage(path, Height);
-        if (Corkboard.CardOf(path) is { } card) _selected = card.Number;
+        if (Corkboard.CardOf(path) is { } card) Select(card);
     }
 
     // N or ":new": pin a file picked in the file browser
@@ -887,7 +929,7 @@ internal static class CorkboardPage
         Corkboard.Reload();
         if (path == null) return;
         _message = Corkboard.PinWithMessage(path, Height);
-        if (Corkboard.CardOf(path) is { } card) _selected = card.Number;
+        if (Corkboard.CardOf(path) is { } card) Select(card);
     }
 
     private static void SaveCards()
