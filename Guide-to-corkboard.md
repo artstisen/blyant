@@ -100,7 +100,7 @@ The lines and frames are lines of their own in the file of the board; a version 
 
 `:mode both` (`all`, `cards`, `badges`, `lines`) picks one, and `Tab` completes them. The mode is kept (setting `boardmode`). A number and `Enter` select any card or badge, whatever the mode.
 
-What you add is selected, and the mode changes to one that takes it, when it does not: a new divider, line or frame changes it to **Lines**, a new card, note or badge to **Cards and badges**. The same goes for what `/` finds.
+What you add is selected, and the mode changes to one that takes it, when it does not: a new divider, line or frame changes it to **Lines**, a new card, note or badge to **Cards and badges**. The same goes for what `/` finds and what `u` puts back.
 
 ## On an empty board
 A board without cards shows the keys to start with in a box in its middle: pinning files and folders, adding notes, badges, dividers, lines and frames, selecting, the modes, marking and moving, `T` `E`, and `?` for all the keys. The box is gone when the first card is on the board.
@@ -119,7 +119,7 @@ A board without cards shows the keys to start with in a box in its middle: pinni
 - `:clear` Take all the cards off the board, after asking in a box where `No` is selected and a key typed by mistake does not answer. The files stay where they are, and `u` puts the cards back (a card added since keeps its number, and a card put back that had it gets a new one)
 - `I` (or `:info`) Information about the card: for a file, as `I` in the file browser shows it (its size, when it was changed ...), and for a note or a badge, its words and lines
 - `P` (or `:peek`) The peek on or off: the first lines of the selected card's file (or the text of a note or badge) below the board. It is on at first, and stays as you set it (setting `boardpeek`)
-- `/` Filter the cards: the others are dimmed, and `Tab` goes through those that are left. The card found on top is selected (of those the mode takes), and frames are found by their titles. `Esc` shows all again
+- `/` Filter the cards: the others are dimmed, and `Tab` goes through those that are left. The card found on top is selected (of those the mode takes), and frames are found by their titles (the others are dimmed too). `Esc` shows all again
 - `:missing` The cards whose file is not there any more, in a list to select one. `:prune` Remove them, after asking (those on a drive that is not connected stay)
 - `Ctrl+O` (or `:jump`) the Jump menu, `Ctrl+K` (or `:recent`) the latest files, `?` (or `:help`) the keys, `Esc` (or `Q`) close
 

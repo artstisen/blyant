@@ -465,12 +465,12 @@ What Blyant does:
 - A file that starts with a BOM is read without it: it is not part of the text you edit, so it is never seen as odd characters. The bottom line of the editor shows `UTF-8 (BOM)`
 - A file is saved as it was: with a BOM if it had one, without one if it had none. Blyant does not add or take away a BOM by itself. `:saveas` and `:w name` keep it, as the line endings
 - New files and blank pages have no BOM, which is best for Markdown and Typst (Pandoc, Typst and Git all work without one)
-- Files in UTF-16 and UTF-32 are known by their BOM, and saved as UTF-8 (without a BOM)
+- Files in UTF-16 and UTF-32 are known by their own BOM, and saved as UTF-8 without a BOM (with one after `:bom on`)
 - Comparing two files (`:diff`) tells when they differ in encoding, such as `UTF-8/UTF-8 (BOM)`
 - Blyant's own files (lists, boards, settings) are read with or without a BOM, so one edited in Notepad still works, and are written without one
 
 Commands:
-- `:bom` shows a box with the name of the file, its encoding, whether it has a BOM, what a BOM is, and the commands
+- `:bom` shows a box with the name of the file, its encoding as it was read, how it is saved (`UTF-8 with a BOM` or `UTF-8 without a BOM`), what a BOM is, and the commands
 - `:bom on` Save the file with a BOM, `:bom off` without one. The text has changes (_Unsaved_), and the BOM is written or left out when you save it
 
 ## Other commands

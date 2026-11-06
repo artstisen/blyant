@@ -51,6 +51,19 @@ public class TextFileTests
     }
 
     [Fact]
+    public void AFileInUtf16_IsSavedAsUtf8_WithABomOnlyWhenItIsAskedFor()
+    {
+        var file = TextFile.Read(new byte[] { 0xFF, 0xFE }.Concat(Encoding.Unicode.GetBytes("text")).ToArray());
+        Assert.False(file.HasBom);
+        Assert.Equal("UTF-16", file.EncodingLabel);
+        Assert.Equal(Encoding.UTF8.GetBytes("text"), file.GetBytes(file.Text));
+        // (the label tells how it was read until it is saved)
+        file.SetBom(true);
+        Assert.Equal("UTF-16", file.EncodingLabel);
+        Assert.Equal(Utf8Bom.Concat(Encoding.UTF8.GetBytes("text")).ToArray(), file.GetBytes(file.Text));
+    }
+
+    [Fact]
     public void EmptyFile_IsUtf8WithTheLineEndingOfTheSystem()
     {
         var file = TextFile.Read(Array.Empty<byte>());

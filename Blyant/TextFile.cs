@@ -67,7 +67,7 @@ internal sealed class TextFile
     /// <summary>
     /// The encoding of the file as shown to the user: "UTF-8", "UTF-8 (BOM)", "UTF-16", "Windows-1252" ...
     /// </summary>
-    internal string EncodingLabel => EncodingName + (_hasUtf8Bom ? " (BOM)" : string.Empty);
+    internal string EncodingLabel => EncodingName + (_hasUtf8Bom && IsUtf8 ? " (BOM)" : string.Empty);
 
     /// <summary>
     /// The line endings of the file as shown to the user: "CRLF" (Windows), "LF" (Linux, macOS) or "CR"

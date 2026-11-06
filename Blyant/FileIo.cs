@@ -431,7 +431,7 @@ internal static class FileIo
         // The board of the corkboard that is open, and its peek
         _tempSettings += "boardname=" + Corkboard.CurrentBoard + '\n';
         _tempSettings += "boardpeek=" + (CorkboardPage.PeekOn ? DialogText.BTrue : DialogText.BFalse) + '\n';
-        // What the keys of the corkboard select: all, cards, badges or dividers
+        // What the keys of the corkboard select: both (cards and badges), all, cards, badges or lines
         _tempSettings += "boardmode=" + CorkboardPage.ModeWord + '\n';
         // The rows of the favorites numbered (and below, of the bookmarks)
         _tempSettings += "favoritenumbers=" + (FileExplorer.FavoriteNumbers ? DialogText.BTrue : DialogText.BFalse) + '\n';

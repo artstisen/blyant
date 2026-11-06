@@ -8,9 +8,9 @@ namespace Blyant;
 /// board), a color and a title of its own if it is given one. A note card has a text instead of a file (its title is
 /// its first line). A badge is a small round mark with an "i", and a note: it marks a place on the board (a group of
 /// cards), and its note is read in the peek. A divider is a line from the top of the board to the bottom at a column,
-/// to tile the board: it is drawn behind the cards, and has no number of its own (inside it gets one below 0, which
-/// is not kept). The cards are drawn in their order, so a card later in the list covers the ones before it where
-/// they overlap.
+/// to tile the board; a line points from card to card, and a frame marks off an area. They are drawn behind the
+/// cards, and have no numbers of their own (inside they get numbers below 0 in their order, which are not kept). The
+/// cards are drawn in their order, so a card later in the list covers the ones before it where they overlap.
 ///
 /// There can be several boards: the main board is the file "board.txt" in the data directory, and the others are
 /// files of the same kind in the directory "boards" next to it, with their names. A project can have a board of its
@@ -23,7 +23,10 @@ namespace Blyant;
 /// (or nothing) and the path of its file or folder (nothing for a note; a folder ends with a separator), with a tab
 /// character between them; a badge has the word "badge" after them (a version without badges reads it as a note).
 /// The text of a note is on the line after it, after a "#" (as the notes of the favorites). A divider is a line of
-/// its own: "|", its column and its color (or nothing), with tabs between them (a version without dividers skips it).
+/// its own: "|", its column and its color (or nothing), with tabs between them. A line: "-", its start ("column,row"),
+/// its color, the way it goes ("-", "\", "|" or "/"), its length and its arrowheads ("end", "start", "both" or
+/// nothing). A frame: "+", its top left corner, its color, its size ("30x8") and its title. A version without them
+/// skips these lines.
 /// It does not touch the console, so it can be tested
 /// </summary>
 internal static class Corkboard
@@ -76,6 +79,12 @@ internal static class Corkboard
     internal const int SmallestFrameWidth = 6;
     internal const int SmallestFrameHeight = 3;
 
+    /// <summary>
+    /// The longest line, and the widest and highest frame, read from the file of a board (one written by hand or
+    /// damaged cannot make a line or frame too large to draw)
+    /// </summary>
+    internal const int LargestShape = 1000;
+
     internal sealed class Card
     {
         internal int Number;
@@ -123,7 +132,7 @@ internal static class Corkboard
         internal int Left => IsLine ? Math.Min(0, Step.X * (Length - 1)) : 0;
 
         /// <summary>
-        /// Its height on the board (a divider's is the board's)
+        /// Its height on the board (not used for a divider: it goes from the top of the board to the bottom)
         /// </summary>
         internal int Height => IsLine ? Step.Y * (Length - 1) + 1 : IsFrame ? FrameHeight : CardHeight;
 
@@ -440,7 +449,7 @@ internal static class Corkboard
             if (turn < 0 || parts.Length < 5 || !int.TryParse(parts[4], out var length)) return;
             card.IsLine = true;
             card.Turn = turn;
-            card.Length = Math.Max(ShortestLine, length);
+            card.Length = Math.Clamp(length, ShortestLine, LargestShape);
             card.Arrow = parts.Length > 5 ? Math.Max(0, Array.IndexOf(ArrowWords, parts[5].Trim().ToLowerInvariant())) : 0;
             // (a line to the left of its start is kept from where it is: X is its start)
             card.X = x;
@@ -454,8 +463,8 @@ internal static class Corkboard
             }
 
             card.IsFrame = true;
-            card.FrameWidth = Math.Max(SmallestFrameWidth, frameWidth);
-            card.FrameHeight = Math.Max(SmallestFrameHeight, frameHeight);
+            card.FrameWidth = Math.Clamp(frameWidth, SmallestFrameWidth, LargestShape);
+            card.FrameHeight = Math.Clamp(frameHeight, SmallestFrameHeight, LargestShape);
             card.Title = parts.Length > 4 ? parts[4].Trim() : string.Empty;
         }
 
@@ -551,6 +560,7 @@ internal static class Corkboard
     /// <returns>DialogText.Success or an error message</returns>
     internal static string Save()
     {
+        NumberShapes();
         if (_unreadable) return DialogText.ListNotRead;
         try
         {
@@ -711,6 +721,17 @@ internal static class Corkboard
         var number = 1;
         while (_cards.Any(card => card.Number == number)) number++;
         return number;
+    }
+
+    /// <summary>
+    /// Number the dividers, lines and frames in their order (-1, -2 ...), as they are numbered when the board is read:
+    /// a new one is put first, so it would else have another number after the board is read again (and the selection
+    /// or a mark kept by its number would go to another one)
+    /// </summary>
+    internal static void NumberShapes()
+    {
+        var number = -1;
+        foreach (var card in _cards.Where(card => card.IsShape)) card.Number = number--;
     }
 
     // The number a divider, line or frame gets inside (below 0, so it is not a card's number, and not kept)

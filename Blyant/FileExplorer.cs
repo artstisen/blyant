@@ -1544,6 +1544,11 @@ internal static partial class FileExplorer
     internal static bool CurrentHasBom => _file?.HasBom ?? false;
 
     /// <summary>
+    /// The file being edited was read as UTF-8 (one read in another encoding is saved as UTF-8)
+    /// </summary>
+    internal static bool CurrentIsUtf8 => _file?.IsUtf8 ?? true;
+
+    /// <summary>
     /// The encoding of the file being edited, as the bottom line of the editor shows it: "UTF-8 (BOM)"
     /// </summary>
     internal static string CurrentEncodingLabel => _file?.EncodingLabel ?? string.Empty;

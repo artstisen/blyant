@@ -30,7 +30,7 @@ internal static class CorkboardPage
     /// </summary>
     internal enum SelectMode
     {
-        Both, // Cards and badges: all but the dividers
+        Both, // Cards and badges: all but the dividers, lines and frames
         All,
         Cards, // Of files, folders and notes
         Badges,
@@ -219,8 +219,9 @@ internal static class CorkboardPage
     // The cards the filter leaves (all without a filter), in the order they are drawn
     private static List<Corkboard.Card> Matching() => Corkboard.Cards.Where(Matches).ToList();
 
-    // (a divider, line or frame is not dimmed: it is about the board)
-    private static bool Matches(Corkboard.Card card) => _filter.Length == 0 || card.IsShape || Found(card, _filter);
+    // (a divider or line is not dimmed: it is about the board; a frame is found by its title)
+    private static bool Matches(Corkboard.Card card) =>
+        _filter.Length == 0 || (card.IsShape && !card.IsFrame) || Found(card, _filter);
 
     // A card with a filter in its name, path or text (a frame: in its title)
     private static bool Found(Corkboard.Card card, string filter) => card.IsFrame
@@ -806,8 +807,12 @@ internal static class CorkboardPage
         {
             // The marked cards, with the selected one
             var files = group.Any(marked => marked.HasPlace) ? Lang.T("The files stay where they are.") : string.Empty;
-            if (!ChoiceBox.Confirm(Lang.T("Remove cards"), Lang.F("Take {0} cards off the corkboard?", group.Count),
-                    files, false))
+            // (badges, dividers, lines and frames counted apart from the cards)
+            var onlyCards = group.All(marked => !marked.IsBadge && !marked.IsShape);
+            var counted = Counts(group, false);
+            if (!ChoiceBox.Confirm(Lang.T("Remove cards"), onlyCards
+                    ? Lang.F("Take {0} cards off the corkboard?", group.Count)
+                    : Lang.F("Take them off the corkboard ({0})?", counted), files, false))
             {
                 return;
             }
@@ -815,7 +820,9 @@ internal static class CorkboardPage
             var count = Corkboard.Remove(group);
             _marks.Clear();
             SelectLast();
-            _message = Lang.F("Cards taken off: {0} (u puts them back)", count);
+            _message = onlyCards
+                ? Lang.F("Cards taken off: {0} (u puts them back)", count)
+                : Lang.F("Taken off: {0} (u puts them back)", counted);
             SaveCards();
             return;
         }
@@ -851,8 +858,8 @@ internal static class CorkboardPage
         switch (Corkboard.Undo())
         {
             case Corkboard.Undone.Card:
-                _selected = Corkboard.UndoneCard!.Number;
-                _message = Lang.F("Put back: {0}", Corkboard.UndoneCard.Name);
+                Select(Corkboard.UndoneCard!);
+                _message = Lang.F("Put back: {0}", Corkboard.UndoneCard!.Name);
                 break;
             case Corkboard.Undone.Places:
                 _message = Lang.T("The cards are back in their places");
@@ -896,9 +903,11 @@ internal static class CorkboardPage
         Draw();
         ChoiceBox.Forget();
         // (the cards, badges, dividers, lines and frames counted apart, as on the line above the keys)
-        var question = Corkboard.Cards.Any(card => card.IsBadge || card.IsShape)
-            ? Lang.F("Take everything off the board ({0})?", Counts())
-            : Lang.F("Take all the cards ({0}) off the board?", count);
+        var onlyCards = !Corkboard.Cards.Any(card => card.IsBadge || card.IsShape);
+        var counted = Counts(Corkboard.Cards, false);
+        var question = onlyCards
+            ? Lang.F("Take all the cards ({0}) off the board?", count)
+            : Lang.F("Take everything off the board ({0})?", counted);
         var files = Corkboard.Cards.Any(card => card.HasPlace) ? Lang.T("The files stay where they are.") : string.Empty;
         if (!ChoiceBox.ConfirmGuarded(Lang.T("Clear board"), question, files))
         {
@@ -908,7 +917,9 @@ internal static class CorkboardPage
         Corkboard.Clear();
         _marks.Clear();
         _selected = NoCard;
-        _message = Lang.F("Cards taken off: {0} (u puts them back)", count);
+        _message = onlyCards
+            ? Lang.F("Cards taken off: {0} (u puts them back)", count)
+            : Lang.F("Taken off: {0} (u puts them back)", counted);
         SaveCards();
     }
 
@@ -932,9 +943,16 @@ internal static class CorkboardPage
         if (Corkboard.CardOf(path) is { } card) Select(card);
     }
 
+    // The cards written to the file of the board. The dividers, lines and frames are numbered in their order when
+    // they are saved: the selected one and the marked ones keep being so
     private static void SaveCards()
     {
+        var selected = Selected;
+        var marked = Corkboard.Cards.Where(IsMarked).ToList();
         var status = Corkboard.Save();
+        if (selected != null) _selected = selected.Number;
+        _marks.Clear();
+        foreach (var card in marked) _marks[card.Number] = MarkOf(card);
         if (status != DialogText.Success) _message = status;
     }
 
@@ -1264,7 +1282,10 @@ internal static class CorkboardPage
         var selected = Selected;
         // The frames, dividers and lines first, behind the cards; the column of the selected divider shown on the ruler.
         // A selected line or frame is drawn over the cards, to be seen whole
-        foreach (var frame in Corkboard.Cards.Where(card => card.IsFrame && card != selected)) DrawFrame(frame, false, width);
+        foreach (var frame in Corkboard.Cards.Where(card => card.IsFrame && card != selected))
+        {
+            DrawFrame(frame, false, width, !Matches(frame));
+        }
         foreach (var divider in Corkboard.Cards.Where(card => card.IsDivider))
         {
             DrawDivider(divider, divider == selected, width);
@@ -1318,11 +1339,11 @@ internal static class CorkboardPage
 
     // The color of a divider, line or frame: the selected one in the accent color (while moved, inverted), else its
     // own color, or the color of lines
-    private static void ShapeColor(Corkboard.Card shape, bool selected)
+    private static void ShapeColor(Corkboard.Card shape, bool selected, bool dim = false)
     {
         if (selected && _moving) ConsoleColors.SetColors(ConsoleColors.ColorPreset.AttentionInverted);
         else if (selected) ConsoleColors.SetColors(ConsoleColors.ColorPreset.Accent);
-        else if (shape.Color is { } color) ConsoleColors.SetTextColor(color);
+        else if (!dim && shape.Color is { } color) ConsoleColors.SetTextColor(color);
         else ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
     }
 
@@ -1381,8 +1402,9 @@ internal static class CorkboardPage
         return new string(line, 2) + title + new string(line, Math.Max(0, inner - 2 - TextMetrics.WidthOf(title)));
     }
 
-    // A frame: its edges (the cards in it are drawn on top), a marked one with a "*" at its top left corner
-    private static void DrawFrame(Corkboard.Card frame, bool selected, int width)
+    // A frame: its edges (the cards in it are drawn on top), a marked one with a "*" at its top left corner. Dimmed: its
+    // title does not have the filter
+    private static void DrawFrame(Corkboard.Card frame, bool selected, int width, bool dim = false)
     {
         var (x, y) = Corkboard.Shown(frame, width, Height);
         var side = selected ? ":" : "|";
@@ -1399,9 +1421,9 @@ internal static class CorkboardPage
         }
 
         if (IsMarked(frame)) ConsoleColors.SetColors(ConsoleColors.ColorPreset.AttentionInverted);
-        else ShapeColor(frame, selected);
+        else ShapeColor(frame, selected, dim);
         Put(y, x, IsMarked(frame) ? "*" : top);
-        ShapeColor(frame, selected);
+        ShapeColor(frame, selected, dim);
         Put(y, x + 1, FrameTop(frame, selected) + top);
         for (var row = 1; row < frame.FrameHeight - 1; row++)
         {
@@ -1592,7 +1614,7 @@ internal static class CorkboardPage
     /// <summary>
     /// The sides of a card: ":" for the selected card, "|" for the others
     /// </summary>
-    internal static string Side(Corkboard.Card card, bool selected = false) => selected ? ":" : "|";
+    internal static string Side(bool selected) => selected ? ":" : "|";
 
     // A card at a place on the screen, cut at a column (the part from it on is not drawn). A marked one has a "*" at
     // its top left
@@ -1624,7 +1646,7 @@ internal static class CorkboardPage
         var top = AsciiStyles.GetTopCorner();
         // (the selected card shows its place on its top edge)
         var edge = place is { } shownAt ? TopEdge(card, inner, shownAt, selected) : TopEdge(card, inner, selected);
-        var side = Side(card, selected);
+        var side = Side(selected);
         Tools.SetCursorEx(row, column);
         if (marked)
         {
@@ -1715,14 +1737,8 @@ internal static class CorkboardPage
         }
     }
 
-    // The place of a badge being moved (as the place on the top edge of a card: a badge has no room for it)
-    private static string BadgePlace(Corkboard.Card badge)
-    {
-        var (x, y) = Corkboard.Shown(badge, Corkboard.BoardWidth, Height);
-        return Lang.F("Badge at {0}", PlaceText(x, y));
-    }
-
-    // Where a card is shown, counted from 1 (as the ruler)
+    // Where a card is shown, counted from 1 (as the ruler; a badge, line or frame being moved shows it on the line above
+    // the keys, as it has no room for it on its top edge)
     private static string PlaceOf(Corkboard.Card card)
     {
         var (x, y) = Corkboard.Shown(card, Corkboard.BoardWidth, Height);
@@ -1730,18 +1746,20 @@ internal static class CorkboardPage
     }
 
     // How many cards there are, and badges, dividers, lines and frames (those there are any of)
-    private static string Counts()
+    private static string Counts(IReadOnlyCollection<Corkboard.Card> cards, bool cardsAlways = true)
     {
-        var cards = Corkboard.Cards;
         var badges = cards.Count(card => card.IsBadge);
         var dividers = cards.Count(card => card.IsDivider);
         var lines = cards.Count(card => card.IsLine);
         var frames = cards.Count(card => card.IsFrame);
-        return Lang.F("Cards: {0}", cards.Count - badges - dividers - lines - frames) +
-               (badges > 0 ? " | " + Lang.F("Badges: {0}", badges) : string.Empty) +
-               (dividers > 0 ? " | " + Lang.F("Dividers: {0}", dividers) : string.Empty) +
-               (lines > 0 ? " | " + Lang.F("Drawn lines: {0}", lines) : string.Empty) +
-               (frames > 0 ? " | " + Lang.F("Frames: {0}", frames) : string.Empty);
+        var plain = cards.Count - badges - dividers - lines - frames;
+        var parts = new List<string>();
+        if (plain > 0 || cardsAlways) parts.Add(Lang.F("Cards: {0}", plain));
+        if (badges > 0) parts.Add(Lang.F("Badges: {0}", badges));
+        if (dividers > 0) parts.Add(Lang.F("Dividers: {0}", dividers));
+        if (lines > 0) parts.Add(Lang.F("Drawn lines: {0}", lines));
+        if (frames > 0) parts.Add(Lang.F("Frames: {0}", frames));
+        return string.Join(" | ", parts);
     }
 
     // The line above the keys: a message, the number typed or the filter, and how many cards there are
@@ -1759,14 +1777,14 @@ internal static class CorkboardPage
             : _moving && _sizing && Selected is { IsFrame: true } sized
                 ? Lang.F("Frame size: {0}", sized.FrameWidth + "x" + sized.FrameHeight)
             : _moving && Selected is { IsFrame: true } frame ? Lang.F("Frame at {0}", PlaceOf(frame))
-            : _moving && Selected is { IsBadge: true } badge ? BadgePlace(badge)
+            : _moving && Selected is { IsBadge: true } badge ? Lang.F("Badge at {0}", PlaceOf(badge))
             : _moving && Selected is { IsDivider: true } divider
                 ? Lang.F("Divider at {0}", Corkboard.Shown(divider, Corkboard.BoardWidth, Height).X + 1)
             : _moving && Selected is { } moving ? Lang.F("Moving: {0}", moving.Name)
             : _marks.Count > 0 ? Lang.F("Marked: {0}", _marks.Count)
             : string.Empty;
         // How many cards there are, and badges, dividers, lines and frames (when there are any)
-        var count = " " + Counts() + " ";
+        var count = " " + Counts(Corkboard.Cards) + " ";
         if (text.Length > 0)
         {
             Tools.SetCursorEx(row, 2);

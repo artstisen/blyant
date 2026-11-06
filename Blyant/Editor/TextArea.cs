@@ -1854,9 +1854,9 @@ public partial class TextArea
         var rows = new List<(string Label, string Value)>
         {
             (DialogText.InfoName, name),
+            // (as it was read: a file in UTF-16 or another encoding is saved as UTF-8, with a BOM only after :bom on)
             (Lang.T("Encoding:"), FileExplorer.CurrentEncodingLabel),
-            (Lang.T("BOM:"), FileExplorer.CurrentHasBom ? Lang.T("Yes: the file starts with one")
-                : Lang.T("No")),
+            (Lang.T("Saved as:"), FileExplorer.CurrentHasBom ? Lang.T("UTF-8 with a BOM") : Lang.T("UTF-8 without a BOM")),
             (string.Empty, string.Empty),
             (Lang.T("What:"), Lang.T("A byte order mark (BOM) is three bytes (EF BB BF) at the start of a file that " +
                                      "mark it as UTF-8. UTF-8 does not need it, and most programs do without; some " +

@@ -466,12 +466,11 @@ public class CorkboardTests : IDisposable
         // (where the gaps do not fit, the edges of a note are lines)
         Assert.Equal("------", CorkboardPage.BottomEdge(note, 6));
         Assert.Equal("------", CorkboardPage.TopEdge(note, 6));
-        Assert.Equal("|", CorkboardPage.Side(file));
-        Assert.Equal("|", CorkboardPage.Side(note));
+        Assert.Equal("|", CorkboardPage.Side(false));
         // The selected card is of ":", a folder keeping its tab
         foreach (var card in new[] { file, folder, note })
         {
-            Assert.Equal(":", CorkboardPage.Side(card, true));
+            Assert.Equal(":", CorkboardPage.Side(true));
             Assert.Equal(new string(':', 6), CorkboardPage.BottomEdge(card, 6, true));
         }
 
@@ -1148,7 +1147,7 @@ public class CorkboardTests : IDisposable
             CorkboardPage.Mode = CorkboardPage.SelectMode.Both;
             Assert.True(!shapes.Any(CorkboardPage.InMode) && CorkboardPage.InMode(card));
             CorkboardPage.Mode = CorkboardPage.SelectMode.Cards;
-            Assert.False(shapes.Any(CorkboardPage.InMode));
+            Assert.DoesNotContain(shapes, CorkboardPage.InMode);
         }
         finally
         {
@@ -1219,5 +1218,30 @@ public class CorkboardTests : IDisposable
         Corkboard.Rename(frame, "Storm");
         Assert.Same(note, CorkboardPage.FilterPick(Corkboard.Cards, line, "storm", CardsAndBadges));
         Assert.Same(frame, CorkboardPage.FilterPick(Corkboard.Cards, line, "storm", card => card.IsShape));
+    }
+
+    [Fact]
+    public void Dividers_Lines_AndFrames_KeepTheirNumbers_WhenTheBoardIsReadAgain()
+    {
+        // A new one is put first: numbered in their order when saved, as when the board is read
+        var divider = Corkboard.AddDivider(30, Width);
+        var line = Corkboard.AddLine(0, 0, Width, Height);
+        var frame = Corkboard.AddFrame(0, 0, 20, 5, Width, Height);
+        Assert.Equal(DialogText.Success, Corkboard.Save());
+        var numbers = (Divider: divider.Number, Line: line.Number, Frame: frame.Number);
+        Corkboard.Load();
+        Assert.True(Corkboard.Numbered(numbers.Divider)!.IsDivider);
+        Assert.True(Corkboard.Numbered(numbers.Line)!.IsLine);
+        Assert.True(Corkboard.Numbered(numbers.Frame)!.IsFrame);
+    }
+
+    [Fact]
+    public void ALineOrFrameReadFromTheFile_IsNotTooLargeToDraw()
+    {
+        Corkboard.Parse("-\t0,0\t\t-\t2000000000\t\n+\t0,0\t\t99999x99999\tBig\n-\t0,0\t\t|\t-5\t\n");
+        var lines = Corkboard.Cards.Where(card => card.IsLine).ToList();
+        var frame = Corkboard.Cards.Single(card => card.IsFrame);
+        Assert.Equal(new[] { Corkboard.LargestShape, Corkboard.ShortestLine }, lines.Select(card => card.Length));
+        Assert.Equal((Corkboard.LargestShape, Corkboard.LargestShape), (frame.FrameWidth, frame.FrameHeight));
     }
 }
