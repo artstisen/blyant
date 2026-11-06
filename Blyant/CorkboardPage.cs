@@ -1202,12 +1202,12 @@ internal static class CorkboardPage
     /// <summary>
     /// The top edge of the card being moved: its place at the right end ("-- 26,4 -"), where it fits
     /// </summary>
-    internal static string TopEdge(Corkboard.Card card, int inner, (int X, int Y) place)
+    internal static string TopEdge(Corkboard.Card card, int inner, (int X, int Y) place, bool selected = false)
     {
-        var edge = TopEdge(card, inner);
+        var edge = TopEdge(card, inner, selected);
         var text = " " + PlaceText(place.X, place.Y) + " ";
         // (the start of the edge stays: a folder's tab)
-        if (text.Length + 5 > inner) return edge;
+        if (text.Length + FolderTab.Length + 1 > inner) return edge;
         return edge[..(inner - text.Length - 1)] + text + edge[^1];
     }
 
@@ -1270,13 +1270,38 @@ internal static class CorkboardPage
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
     }
 
+    // The tab at the start of the top edge of a folder's card
+    private const string FolderTab = "~~[+]";
+
+    // The edge of a note: dashes with gaps ("- - -")
+    private static string Dashed(int inner) =>
+        new(Enumerable.Range(0, Math.Max(0, inner)).Select(i => i % 2 == 0 ? '-' : ' ').ToArray());
+
     /// <summary>
-    /// The top edge of a card: a note has "~" along it, and a folder a tab ("-///"), in both styles of corners
+    /// The top edge of a card, between its corners: a note's is dashed ("- - -"), a file's has "~" along it, and a
+    /// folder's a tab at its start ("~~[+]~~"). The selected card's is of "#" (a folder keeping its tab), to be seen
+    /// among cards of many colors
     /// </summary>
-    internal static string TopEdge(Corkboard.Card card, int inner) =>
-        card.IsNote ? new string('~', inner)
-        : card.IsFolder ? "-///" + new string('-', Math.Max(0, inner - 4))
-        : new string('-', inner);
+    internal static string TopEdge(Corkboard.Card card, int inner, bool selected = false)
+    {
+        var line = selected ? '#' : '~';
+        if (card.IsFolder)
+            return (FolderTab.Replace('~', line) + new string(line, Math.Max(0, inner - FolderTab.Length)))[..Math.Max(0, inner)];
+        return card.IsNote && !selected ? Dashed(inner) : new string(line, Math.Max(0, inner));
+    }
+
+    /// <summary>
+    /// The bottom edge of a card, between its corners: a note's is dashed, a file's and a folder's of "=", the
+    /// selected card's of "#"
+    /// </summary>
+    internal static string BottomEdge(Corkboard.Card card, int inner, bool selected = false) =>
+        selected ? new string('#', inner) : card.IsNote ? Dashed(inner) : new string('=', inner);
+
+    /// <summary>
+    /// The sides of a card: ":" for a note, "|" for a file or a folder, "#" for the selected card
+    /// </summary>
+    internal static string Side(Corkboard.Card card, bool selected = false) =>
+        selected ? "#" : card.IsNote ? ":" : "|";
 
     // A card at a place on the screen, cut at a column (the part from it on is not drawn). A marked one has a "*" at
     // its top left
@@ -1307,7 +1332,8 @@ internal static class CorkboardPage
         if (column >= end) return;
         var top = AsciiStyles.GetTopCorner();
         // (the selected card shows its place on its top edge)
-        var edge = place is { } shownAt ? TopEdge(card, inner, shownAt) : TopEdge(card, inner);
+        var edge = place is { } shownAt ? TopEdge(card, inner, shownAt, selected) : TopEdge(card, inner, selected);
+        var side = Side(card, selected);
         Tools.SetCursorEx(row, column);
         if (marked)
         {
@@ -1324,7 +1350,7 @@ internal static class CorkboardPage
 
         Tools.SetCursorEx(row + 1, column);
         at = column;
-        Put("|");
+        Put(side);
         // The number (highlighted on the selected card), and the name
         var number = " " + card.Number + " ";
         ConsoleColors.SetColors(selected ? ConsoleColors.ColorPreset.SelectorInverted : ConsoleColors.ColorPreset.Divider);
@@ -1336,11 +1362,11 @@ internal static class CorkboardPage
             inner - TextMetrics.WidthOf(number), true);
         Put(name + new string(' ', Math.Max(0, inner - TextMetrics.WidthOf(number) - TextMetrics.WidthOf(name))));
         Frame();
-        Put("|");
+        Put(side);
         var bottom = AsciiStyles.GetBottomCorner();
         Tools.SetCursorEx(row + 2, column);
         at = column;
-        Put(bottom + new string('-', inner) + bottom);
+        Put(bottom + BottomEdge(card, inner, selected) + bottom);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
     }
 

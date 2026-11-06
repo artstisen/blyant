@@ -444,14 +444,37 @@ public class CorkboardTests : IDisposable
         var file = Corkboard.Add(In("one.md"), Width, Height);
         var folder = Corkboard.Add(In("research"), Width, Height, true);
         var note = Corkboard.AddNote("Note", Width, Height);
-        Assert.Equal(new string('-', 22), CorkboardPage.TopEdge(file, 22));
-        Assert.Equal("-///" + new string('-', 18), CorkboardPage.TopEdge(folder, 22));
-        Assert.Equal(new string('~', 22), CorkboardPage.TopEdge(note, 22));
-        // The selected card: its place at the right end, counted from 1 (as the ruler)
-        Assert.Equal(new string('~', 15) + " 26,4 ~", CorkboardPage.TopEdge(note, 22, (25, 3)));
-        Assert.Equal("-///" + new string('-', 11) + " 1,12 -", CorkboardPage.TopEdge(folder, 22, (0, 11)));
+        Assert.Equal(new string('~', 22), CorkboardPage.TopEdge(file, 22));
+        Assert.Equal("~~[+]" + new string('~', 17), CorkboardPage.TopEdge(folder, 22));
+        Assert.Equal("- - - - - - - - - - - ", CorkboardPage.TopEdge(note, 22));
+        // The card being moved: its place at the right end, counted from 1 (as the ruler)
+        Assert.Equal(new string('~', 15) + " 26,4 ~", CorkboardPage.TopEdge(file, 22, (25, 3)));
+        Assert.Equal("~~[+]" + new string('~', 10) + " 1,12 ~", CorkboardPage.TopEdge(folder, 22, (0, 11)));
         // Where it does not fit, the edge stays as it is
-        Assert.Equal(new string('-', 8), CorkboardPage.TopEdge(file, 8, (99, 99)));
+        Assert.Equal(new string('~', 8), CorkboardPage.TopEdge(file, 8, (99, 99)));
+    }
+
+    [Fact]
+    public void TheEdges_TellANoteFromAFile_AndTheSelectedCard()
+    {
+        var file = Corkboard.Add(In("one.md"), Width, Height);
+        var folder = Corkboard.Add(In("research"), Width, Height, true);
+        var note = Corkboard.AddNote("Note", Width, Height);
+        Assert.Equal(new string('=', 6), CorkboardPage.BottomEdge(file, 6));
+        Assert.Equal(new string('=', 6), CorkboardPage.BottomEdge(folder, 6));
+        Assert.Equal("- - - ", CorkboardPage.BottomEdge(note, 6));
+        Assert.Equal("|", CorkboardPage.Side(file));
+        Assert.Equal(":", CorkboardPage.Side(note));
+        // The selected card is of "#", a folder keeping its tab
+        foreach (var card in new[] { file, folder, note })
+        {
+            Assert.Equal("#", CorkboardPage.Side(card, true));
+            Assert.Equal(new string('#', 6), CorkboardPage.BottomEdge(card, 6, true));
+        }
+
+        Assert.Equal(new string('#', 8), CorkboardPage.TopEdge(note, 8, true));
+        Assert.Equal("##[+]###", CorkboardPage.TopEdge(folder, 8, true));
+        Assert.Equal("##[+]####### 1,12 #", CorkboardPage.TopEdge(folder, 19, (0, 11), true));
     }
 
     [Fact]

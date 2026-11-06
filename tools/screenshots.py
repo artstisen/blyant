@@ -205,6 +205,8 @@ $ t_"next" = t_"last" + 12"h" 25"min" $
 # colors, some laid a little over others, and two badges below the chapters (those drafted, and one to rewrite).
 # The paths in the project are kept from its folder. The last card is on top, and selected when the board is opened
 BOARD = "\n".join([
+    "|\t79\tBlue",
+    "|\t98\t",
     "5\t12,4\tGreen\t\t\tbadge",
     "#Drafted: chapters 1 to 3",
     "6\t81,4\tRed\t\t\tbadge",
