@@ -792,7 +792,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("Tab Shift+Tab", Lang.T("Select the next/previous card"), false));
             _shortcutList.Add(new Shortcut("12 Enter", Lang.T("Select card 12"), false));
             _shortcutList.Add(new Shortcut("h j k l", Lang.T("Select the next card that way (its row/column first)"), false));
-            _shortcutList.Add(new Shortcut("M :mode", Lang.T("Select only cards, badges or dividers, or all"), false));
+            _shortcutList.Add(new Shortcut("M :mode", Lang.T("Select cards and badges, one kind of them, or all"), false));
             _shortcutList.Add(new Shortcut("Enter", Lang.T("Open the card's file or folder (a note: edit it)"), false));
             _shortcutList.Add(new Shortcut("  Enter", Lang.T("Back to the board when the file or folder is closed"), false));
             _shortcutList.Add(new Shortcut("Space", Lang.T("Mark/Unmark: V C T E D work on all marked"), false));

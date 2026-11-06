@@ -659,7 +659,7 @@ internal static class FileIo
         FileFavorites.CurrentList = FileFavorites.FindList(Get("favoritelist")) ?? string.Empty;
         Corkboard.CurrentBoard = Corkboard.FindBoard(Get("boardname")) ?? string.Empty;
         CorkboardPage.PeekOn = Tools.TrimToLower(Get("boardpeek")) != DialogText.BFalse;
-        CorkboardPage.Mode = CorkboardPage.ModeOf(Get("boardmode")) ?? CorkboardPage.SelectMode.All;
+        CorkboardPage.Mode = CorkboardPage.ModeOf(Get("boardmode")) ?? CorkboardPage.SelectMode.Both;
         FileExplorer.FavoriteNumbers = Tools.TrimToLower(Get("favoritenumbers")) == DialogText.BTrue;
         JumpMenu.BookmarkNumbers = Tools.TrimToLower(Get("bookmarknumbers")) == DialogText.BTrue;
         FileExplorer.FileNumbers = Tools.TrimToLower(Get("filenumbers")) == DialogText.BTrue;

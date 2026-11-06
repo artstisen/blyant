@@ -11,15 +11,15 @@ It is opened with `:board` (or `:corkboard`) from every command line (the start 
 - `N` (or `:new`) on the corkboard: pick a file in the file browser to pin
 - `F` (or `:folder`) on the corkboard: pick a folder in the file browser to pin (go to it and press `S`)
 
-The card of a file has `~` along its top edge and `=` along its bottom edge, and the card of a folder a tab (`[+]`) on its top edge, and its name with a `/` after it, as in the file browser:
+The card of a file is edged in lines, and the card of a folder has a tab (`<>`) on its top edge, and its name with a `/` after it, as in the file browser:
 
 ```
-.~~~~~~~~~~~~~~~~~~~~~~.
+.----------------------.
 | 3  Chapter one       |
-'======================'
-.~~[+]~~~~~~~~~~~~~~~~~.
+'----------------------'
+.--<>------------------.
 | 4  research/         |
-'======================'
+'----------------------'
 ```
 
 `Enter` on it opens the folder in the file browser (closing the file browser brings you back to the corkboard), the peek shows what it holds, and `I` tells about it as `I` in the file browser does.
@@ -27,7 +27,15 @@ The card of a file has `~` along its top edge and `=` along its bottom edge, and
 A new card is placed at the first free place, row by row, with a column between the cards; on a full board it is put on top of the others, a step from the last one. Its number is the lowest one that is free, and it keeps it.
 
 ## Note cards
-`A` (or `:note`) adds a note card: its text is written in the editor, and kept when the editor is closed. The first line of the text is the title of the card, unless you give it a title of its own with `X`. `Enter` on a note opens its text in the editor again. A note card is drawn with dashes and `:` (`.- - - - - - - - - - - .`), to tell it from the card of a file. A new note left without text is not kept, also when the editor is left by a jump. The text is kept on the board it was written for, also when another board is opened from the editor (`:board name`).
+`A` (or `:note`) adds a note card: its text is written in the editor, and kept when the editor is closed. The first line of the text is the title of the card, unless you give it a title of its own with `X`. `Enter` on a note opens its text in the editor again. A note card has gaps in its top and bottom edges, to tell it from the card of a file:
+
+```
+.----------- - - - ----.
+| 5  Act two           |
+'--- - - - ------------'
+```
+
+A new note left without text is not kept, also when the editor is left by a jump. The text is kept on the board it was written for, also when another board is opened from the editor (`:board name`).
 
 ## Badges
 `B` (or `:badge`) adds a badge: a small round mark with an `i`, to mark a place on the board, such as a group of cards that are to do, done or new. Like a note card it has a note, written in the editor at once and read in the peek when the badge is selected, and `Enter` edits it again. Give it a color with `C` (its frame and the `i`), and move it with `V` beside the cards it is about:
@@ -46,13 +54,14 @@ A badge is as high as a card and 5 columns wide, with its number on its top edge
 A selected divider is highlighted, and its column on the ruler too. `V` and `h` `l` move it left and right (`H` `L`: five steps), and the line above the keys tells its column while it is moved (`Divider at 41`). `C` colors it, `D` removes it (`u` puts it back), `I` tells its column and `Space` marks it, so it can be moved with the cards of its column. A divider has no number and no title: the numbers stay those of the cards. `:arrange` and `/` leave the dividers as they are, and the line above the keys counts them (`Dividers: 3`). A divider is a line of its own in the file of the board; a version of Blyant before 1.4.2 leaves it out.
 
 ## Selecting cards, badges or dividers
-`M` (or `:mode`) changes what `h` `j` `k` `l` and `Tab` select, and the top bar shows it after the name of the board:
+`M` (or `:mode`) changes what `h` `j` `k` `l` and `Tab` select, and the top bar shows it after the name of the board (where they do not fit, the name of the board is cut, not the mode):
+- **Cards and badges** (at first): the cards and the badges, past the dividers
 - **All**: everything they pass, the dividers too (as they go from top to bottom, only `h` and `l` go to a divider or from it)
 - **Cards**: the cards of files, folders and notes
 - **Badges**: only the badges
 - **Dividers**: only the dividers, with `h` and `l`
 
-`:mode cards` (`badges`, `dividers`, `all`) picks one, and `Tab` completes them. The mode is kept (setting `boardmode`). A number and `Enter` select any card or badge, whatever the mode.
+`:mode both` (`all`, `cards`, `badges`, `dividers`) picks one, and `Tab` completes them. The mode is kept (setting `boardmode`). A number and `Enter` select any card or badge, whatever the mode.
 
 ## On an empty board
 A board without cards shows the keys to start with in a box in its middle: pinning files and folders, adding notes, badges and dividers, selecting, the modes, marking and moving, `T` `E`, and `?` for all the keys. The box is gone when the first card is on the board.
@@ -75,14 +84,14 @@ A board without cards shows the keys to start with in a box in its middle: pinni
 - `:missing` The cards whose file is not there any more, in a list to select one. `:prune` Remove them, after asking (those on a drive that is not connected stay)
 - `Ctrl+O` (or `:jump`) the Jump menu, `Ctrl+K` (or `:recent`) the latest files, `?` (or `:help`) the keys, `Esc` (or `Q`) close
 
-The line below the top bar is a ruler of the columns of the board, as above the logo in the logo editor: a dot for each column, `:` for every 5th and the tens as digits, to line the cards up when you move them. A card being moved (`V`) shows its place at the right end of its top edge: its column on the ruler and its row on the board (`.~~~~~~~~~~~~~~~ 26,4 ~.`), and a badge being moved shows it on the line above the keys (`Badge at 26,4`), as it has no room for it.
+The line below the top bar is a ruler of the columns of the board, as above the logo in the logo editor: a dot for each column, `:` for every 5th and the tens as digits, to line the cards up when you move them. A card being moved (`V`) shows its place at the right end of its top edge: its column on the ruler and its row on the board (`.--------------- 26,4 -.`), and a badge being moved shows it on the line above the keys (`Badge at 26,4`), as it has no room for it.
 
-The selected card is drawn on top of the others while it is selected, with its edges of `#` (a folder keeps its tab) and its number highlighted, so it is seen among cards of many colors; that does not change the order of the cards.
+The selected card is drawn on top of the others while it is selected, with its edges of `:` (a folder keeps its tab) and its number highlighted, so it is seen among cards of many colors; that does not change the order of the cards. A selected badge is edged in `:` too (`.:5:.`).
 
 ```
-.######################.
-# 5  Chapter five      #
-'######################'
+.::::::::::::::::::::::.
+: 5  Chapter five      :
+'::::::::::::::::::::::'
 ```
 
 A card whose file is gone is dimmed and marked _(missing)_.
@@ -115,13 +124,13 @@ The board that is open is shown in the top bar and remembered (setting `boardnam
 
 ```
 Corkboard (5)
-.~~~~~~~~~~~~~~~~~~~~~~.
+.----------------------.
 | 1  one               |
-'=.~~~~~~~~~~~~~~~~~~~~~~.
+'-.----------------------.
   | 2  two               |
-  '=.~~[+]~~~~~~~~~~~~~~~~~.
+  '-.--<>------------------.
     | 3  research/         |
-    '======================'
+    '----------------------'
 ```
 
 The paths of the files and folders in the project are kept from the project folder (`chapters/one.md`, with `/` on all systems), so the board goes with the project when it is moved, renamed, copied or synced to another computer. A file outside the project is kept with its full path. The boards of the projects are in the box of `:list` after the others, with the name of the project and _(project)_; `:board name` opens one by the name of its project. Such a board has the name of its folder, so `R` does not rename it, and `D` deletes only the file of the board. When the project folder is gone, the main board is opened.

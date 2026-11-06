@@ -354,7 +354,7 @@ backup=
         Assert.Equal(string.Empty, settings["favoritelist"]);
         Assert.Equal(string.Empty, settings["boardname"]);
         Assert.Equal("true", settings["boardpeek"]);
-        Assert.Equal("all", settings["boardmode"]);
+        Assert.Equal("both", settings["boardmode"]);
         Assert.Equal("false", settings["favoritenumbers"]);
         Assert.Equal("false", settings["bookmarknumbers"]);
         Assert.Equal("true", settings["commandlist"]);

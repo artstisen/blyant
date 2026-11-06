@@ -8,7 +8,8 @@
 /// N pins a file, F a folder, A adds a note, B a badge (a small round mark with an "i" and a note, to mark a place),
 /// I shows information, P the peek. Space marks cards: V, C, T, E and D work on the marked ones and the selected one
 /// together. | adds a divider (a line from top to bottom, behind the cards, moved left and right), and M changes what
-/// the keys of the directions and Tab select: cards, badges, dividers or all (setting "boardmode"). ":list" shows the
+/// the keys of the directions and Tab select: cards and badges (at first), all, cards, badges or dividers (setting
+/// "boardmode"). ":list" shows the
 /// boards, ":arrange" lays the cards out in an order, and ":clear" takes them all off. Opened with ":board" (":board name": another
 /// board) from every command line, ":jump board", the Jump menu, the Start tab, and B in the list of projects (the
 /// board of a project)
@@ -28,19 +29,20 @@ internal static class CorkboardPage
     /// </summary>
     internal enum SelectMode
     {
+        Both, // Cards and badges: all but the dividers
         All,
         Cards, // Of files, folders and notes
         Badges,
         Dividers
     }
 
-    internal static SelectMode Mode { get; set; } = SelectMode.All;
+    internal static SelectMode Mode { get; set; } = SelectMode.Both;
 
     /// <summary>
     /// The modes as they are written (":mode cards", the setting; English: the words of commands), in the order M
     /// goes through them
     /// </summary>
-    internal static readonly string[] ModeWords = { "all", "cards", "badges", "dividers" };
+    internal static readonly string[] ModeWords = { "both", "all", "cards", "badges", "dividers" };
 
     internal static string ModeWord => ModeWords[(int)Mode];
 
@@ -55,6 +57,7 @@ internal static class CorkboardPage
 
     private static string ModeName(SelectMode mode) => mode switch
     {
+        SelectMode.Both => Lang.T("Cards and badges"),
         SelectMode.Cards => Lang.T("Cards"),
         SelectMode.Badges => Lang.T("Badges"),
         SelectMode.Dividers => Lang.T("Dividers"),
@@ -69,6 +72,7 @@ internal static class CorkboardPage
         SelectMode.Cards => !card.IsBadge && !card.IsDivider,
         SelectMode.Badges => card.IsBadge,
         SelectMode.Dividers => card.IsDivider,
+        SelectMode.Both => !card.IsDivider,
         _ => true
     };
 
@@ -1067,14 +1071,27 @@ internal static class CorkboardPage
 
     #region Drawing
 
+    /// <summary>
+    /// The title in the top bar: the board (null: the main board) and the mode, which is always shown whole. Where
+    /// they do not fit in the room, "Corkboard" is left out before the name of the board, and then the name is cut
+    /// </summary>
+    internal static string TopBarTitle(string? board, string mode, int room)
+    {
+        var tail = " | " + mode;
+        var whole = (board == null ? Lang.T("Corkboard") : Lang.F("{0}: {1}", Lang.T("Corkboard"), board)) + tail;
+        if (board == null || TextMetrics.WidthOf(whole) <= room) return whole;
+        var left = room - TextMetrics.WidthOf(tail);
+        if (left < 4) return whole; // (no room for a name: cut at the end as before)
+        return Tools.TruncateString(board, left, true) + tail;
+    }
+
     private static void Draw()
     {
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
         Tools.ClearScreen();
         // The board, and what the keys select
-        Menu.WriteModeLabel((Corkboard.CurrentBoard.Length > 0
-            ? Lang.F("{0}: {1}", Lang.T("Corkboard"), Corkboard.NameOf(Corkboard.CurrentBoard))
-            : Lang.T("Corkboard")) + " | " + ModeName(Mode), string.Empty, 0);
+        Menu.WriteModeLabel(TopBarTitle(Corkboard.CurrentBoard.Length > 0 ? Corkboard.NameOf(Corkboard.CurrentBoard) : null,
+            ModeName(Mode), Menu.CaptionRoom), string.Empty, 0);
         Menu.WriteNameInTopBar();
         // A ruler of the columns of the board, as above the logo of the logo editor (to line the cards up)
         Tools.SetCursorEx(1, 0);
@@ -1215,13 +1232,14 @@ internal static class CorkboardPage
     /// The top edge of a badge, between its corners: its number on it ("###" for one too long for it, rather than
     /// a part that could be the number of another card)
     /// </summary>
-    internal static string BadgeEdge(int number)
+    internal static string BadgeEdge(int number, bool selected = false)
     {
         var digits = number.ToString();
+        var line = selected ? ":" : "-";
         return digits.Length switch
         {
-            1 => "-" + digits + "-",
-            2 => digits + "-",
+            1 => line + digits + line,
+            2 => digits + line,
             3 => digits,
             _ => "###"
         };
@@ -1254,54 +1272,63 @@ internal static class CorkboardPage
         else Frame();
         Put(column, marked ? "*" : top);
         ConsoleColors.SetColors(selected ? ConsoleColors.ColorPreset.SelectorInverted : ConsoleColors.ColorPreset.Divider);
-        Put(column + 1, BadgeEdge(card.Number));
+        Put(column + 1, BadgeEdge(card.Number, selected));
         Frame();
         Put(column + 4, top);
         row++;
-        Put(column, "| ");
+        // (the selected badge is edged in ":", as the selected card)
+        var side = selected ? ":" : "|";
+        Put(column, side + " ");
         if (dim) ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
         else if (card.Color is { } color) ConsoleColors.SetTextColor(color);
         else ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
         Put(column + 2, "i"); // English: the mark of a badge
         Frame();
-        Put(column + 3, " |");
+        Put(column + 3, " " + side);
         row++;
-        Put(column, bottom + "---" + bottom);
+        Put(column, bottom + (selected ? ":::" : "---") + bottom);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
     }
 
     // The tab at the start of the top edge of a folder's card
-    private const string FolderTab = "~~[+]";
+    private const string FolderTab = "--<>";
 
-    // The edge of a note: dashes with gaps ("- - -")
-    private static string Dashed(int inner) =>
-        new(Enumerable.Range(0, Math.Max(0, inner)).Select(i => i % 2 == 0 ? '-' : ' ').ToArray());
+    // The gaps in the edges of a note
+    private const string NoteGap = " - - - ";
+
+    // The edge of a note: a line with gaps in it ("--- - - - ---"), from a column of the edge (left as a line where
+    // they do not fit)
+    private static string Dashed(int inner, int at)
+    {
+        var edge = new string('-', Math.Max(0, inner));
+        if (at < 1 || at + NoteGap.Length >= inner) return edge;
+        return edge[..at] + NoteGap + edge[(at + NoteGap.Length)..];
+    }
 
     /// <summary>
-    /// The top edge of a card, between its corners: a note's is dashed ("- - -"), a file's has "~" along it, and a
-    /// folder's a tab at its start ("~~[+]~~"). The selected card's is of "#" (a folder keeping its tab), to be seen
+    /// The top edge of a card, between its corners: a note's a line with gaps near its right end ("--- - - - ----"), a file's is a line ("---"), and a
+    /// folder's has a tab at its start ("--<>--"). The selected card's is of ":" (a folder keeping its tab), to be seen
     /// among cards of many colors
     /// </summary>
     internal static string TopEdge(Corkboard.Card card, int inner, bool selected = false)
     {
-        var line = selected ? '#' : '~';
+        var line = selected ? ':' : '-';
         if (card.IsFolder)
-            return (FolderTab.Replace('~', line) + new string(line, Math.Max(0, inner - FolderTab.Length)))[..Math.Max(0, inner)];
-        return card.IsNote && !selected ? Dashed(inner) : new string(line, Math.Max(0, inner));
+            return (FolderTab.Replace('-', line) + new string(line, Math.Max(0, inner - FolderTab.Length)))[..Math.Max(0, inner)];
+        return card.IsNote && !selected ? Dashed(inner, inner - NoteGap.Length - 4) : new string(line, Math.Max(0, inner));
     }
 
     /// <summary>
-    /// The bottom edge of a card, between its corners: a note's is dashed, a file's and a folder's of "=", the
-    /// selected card's of "#"
+    /// The bottom edge of a card, between its corners: a note's a line with gaps near its left end ("--- - - - ----"), a file's and a folder's a line, the
+    /// selected card's of ":"
     /// </summary>
     internal static string BottomEdge(Corkboard.Card card, int inner, bool selected = false) =>
-        selected ? new string('#', inner) : card.IsNote ? Dashed(inner) : new string('=', inner);
+        selected ? new string(':', inner) : card.IsNote ? Dashed(inner, 3) : new string('-', inner);
 
     /// <summary>
-    /// The sides of a card: ":" for a note, "|" for a file or a folder, "#" for the selected card
+    /// The sides of a card: ":" for the selected card, "|" for the others
     /// </summary>
-    internal static string Side(Corkboard.Card card, bool selected = false) =>
-        selected ? "#" : card.IsNote ? ":" : "|";
+    internal static string Side(Corkboard.Card card, bool selected = false) => selected ? ":" : "|";
 
     // A card at a place on the screen, cut at a column (the part from it on is not drawn). A marked one has a "*" at
     // its top left

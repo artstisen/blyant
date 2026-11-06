@@ -444,14 +444,15 @@ public class CorkboardTests : IDisposable
         var file = Corkboard.Add(In("one.md"), Width, Height);
         var folder = Corkboard.Add(In("research"), Width, Height, true);
         var note = Corkboard.AddNote("Note", Width, Height);
-        Assert.Equal(new string('~', 22), CorkboardPage.TopEdge(file, 22));
-        Assert.Equal("~~[+]" + new string('~', 17), CorkboardPage.TopEdge(folder, 22));
-        Assert.Equal("- - - - - - - - - - - ", CorkboardPage.TopEdge(note, 22));
+        Assert.Equal(new string('-', 22), CorkboardPage.TopEdge(file, 22));
+        Assert.Equal("--<>" + new string('-', 18), CorkboardPage.TopEdge(folder, 22));
+        Assert.Equal("----------- - - - ----", CorkboardPage.TopEdge(note, 22));
+        Assert.Equal("--- - - - ------------", CorkboardPage.BottomEdge(note, 22));
         // The card being moved: its place at the right end, counted from 1 (as the ruler)
-        Assert.Equal(new string('~', 15) + " 26,4 ~", CorkboardPage.TopEdge(file, 22, (25, 3)));
-        Assert.Equal("~~[+]" + new string('~', 10) + " 1,12 ~", CorkboardPage.TopEdge(folder, 22, (0, 11)));
+        Assert.Equal(new string('-', 15) + " 26,4 -", CorkboardPage.TopEdge(file, 22, (25, 3)));
+        Assert.Equal("--<>" + new string('-', 11) + " 1,12 -", CorkboardPage.TopEdge(folder, 22, (0, 11)));
         // Where it does not fit, the edge stays as it is
-        Assert.Equal(new string('~', 8), CorkboardPage.TopEdge(file, 8, (99, 99)));
+        Assert.Equal(new string('-', 8), CorkboardPage.TopEdge(file, 8, (99, 99)));
     }
 
     [Fact]
@@ -460,21 +461,26 @@ public class CorkboardTests : IDisposable
         var file = Corkboard.Add(In("one.md"), Width, Height);
         var folder = Corkboard.Add(In("research"), Width, Height, true);
         var note = Corkboard.AddNote("Note", Width, Height);
-        Assert.Equal(new string('=', 6), CorkboardPage.BottomEdge(file, 6));
-        Assert.Equal(new string('=', 6), CorkboardPage.BottomEdge(folder, 6));
-        Assert.Equal("- - - ", CorkboardPage.BottomEdge(note, 6));
+        Assert.Equal(new string('-', 6), CorkboardPage.BottomEdge(file, 6));
+        Assert.Equal(new string('-', 6), CorkboardPage.BottomEdge(folder, 6));
+        // (where the gaps do not fit, the edges of a note are lines)
+        Assert.Equal("------", CorkboardPage.BottomEdge(note, 6));
+        Assert.Equal("------", CorkboardPage.TopEdge(note, 6));
         Assert.Equal("|", CorkboardPage.Side(file));
-        Assert.Equal(":", CorkboardPage.Side(note));
-        // The selected card is of "#", a folder keeping its tab
+        Assert.Equal("|", CorkboardPage.Side(note));
+        // The selected card is of ":", a folder keeping its tab
         foreach (var card in new[] { file, folder, note })
         {
-            Assert.Equal("#", CorkboardPage.Side(card, true));
-            Assert.Equal(new string('#', 6), CorkboardPage.BottomEdge(card, 6, true));
+            Assert.Equal(":", CorkboardPage.Side(card, true));
+            Assert.Equal(new string(':', 6), CorkboardPage.BottomEdge(card, 6, true));
         }
 
-        Assert.Equal(new string('#', 8), CorkboardPage.TopEdge(note, 8, true));
-        Assert.Equal("##[+]###", CorkboardPage.TopEdge(folder, 8, true));
-        Assert.Equal("##[+]####### 1,12 #", CorkboardPage.TopEdge(folder, 19, (0, 11), true));
+        Assert.Equal(new string(':', 8), CorkboardPage.TopEdge(note, 8, true));
+        Assert.Equal("::<>::::", CorkboardPage.TopEdge(folder, 8, true));
+        Assert.Equal("::<>:::::::: 1,12 :", CorkboardPage.TopEdge(folder, 19, (0, 11), true));
+        // and so is the selected badge
+        Assert.Equal(":3:", CorkboardPage.BadgeEdge(3, true));
+        Assert.Equal("12:", CorkboardPage.BadgeEdge(12, true));
     }
 
     [Fact]
@@ -964,15 +970,27 @@ public class CorkboardTests : IDisposable
     }
 
     [Theory]
-    [InlineData("all", 0)]
-    [InlineData(" Cards", 1)]
-    [InlineData("badges", 2)]
-    [InlineData("DIVIDERS", 3)]
+    [InlineData("both", 0)]
+    [InlineData("all", 1)]
+    [InlineData(" Cards", 2)]
+    [InlineData("badges", 3)]
+    [InlineData("DIVIDERS", 4)]
     [InlineData("other", null)]
     public void TheModes_AreWrittenAsWords(string word, int? mode)
     {
-        // (in the order M goes through them: all, cards, badges, dividers)
+        // (in the order M goes through them: both, all, cards, badges, dividers)
         Assert.Equal(mode, (int?)CorkboardPage.ModeOf(word));
+    }
+
+    [Fact]
+    public void TheTopBar_AlwaysShowsTheWholeMode()
+    {
+        Assert.Equal("Corkboard | Cards and badges", CorkboardPage.TopBarTitle(null, "Cards and badges", 32));
+        Assert.Equal("Corkboard: Harbour Lights | All", CorkboardPage.TopBarTitle("Harbour Lights", "All", 32));
+        // Where it does not fit: the name of the board alone, and then cut
+        Assert.Equal("Harbour Lights | Cards", CorkboardPage.TopBarTitle("Harbour Lights", "Cards", 24));
+        Assert.Equal("Harbour L... | Cards and badges",
+            CorkboardPage.TopBarTitle("Harbour Lights", "Cards and badges", 31));
     }
 
     [Fact]
@@ -994,6 +1012,9 @@ public class CorkboardTests : IDisposable
             Assert.Equal("False False False True", Taken());
             CorkboardPage.Mode = CorkboardPage.SelectMode.All;
             Assert.Equal("True True True True", Taken());
+            // Cards and badges: all but the dividers, at first
+            CorkboardPage.Mode = CorkboardPage.SelectMode.Both;
+            Assert.Equal("True True True False", Taken());
         }
         finally
         {

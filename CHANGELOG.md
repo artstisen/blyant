@@ -2,10 +2,10 @@
 
 ## v1.4.2 (unreleased)
 - **Dividers on the corkboard**: `|` (or `:divider`) adds a line from the top of the board to the bottom, to tile the board when you plan (a column for each act). It is drawn behind the cards and badges, put right of the selected card, and moved left and right with `V` and `h` `l`; `C` colors it, `D` removes it and `Space` marks it to move it with its cards. Dividers take no numbers, so the numbers of the cards stay as they are. They are kept on lines of their own in the file of the board, which a version before 1.4.2 leaves out. See [Dividers](Guide-to-corkboard.md#dividers) in the guide.
-- **Selecting cards, badges or dividers**: `M` (or `:mode cards`, `badges`, `dividers`, `all`) changes what `h` `j` `k` `l` and `Tab` select on the corkboard, shown in the top bar after the name of the board and kept in the setting `boardmode`. In **All** they stop at everything they pass.
+- **Selecting cards, badges or dividers**: `M` (or `:mode both`, `all`, `cards`, `badges`, `dividers`) changes what `h` `j` `k` `l` and `Tab` select on the corkboard, shown in the top bar after the name of the board and kept in the setting `boardmode`. At first it is **Cards and badges**, which goes past the dividers; in **All** they stop at everything they pass.
 - **The keys of an empty corkboard**: a board without cards shows the keys to start with in a box in its middle (pinning, notes, badges and dividers, selecting, the modes, marking, moving, `T` and `E`).
-- **Cards drawn by their kind**: the card of a file has `~` along its top edge and `=` along its bottom edge, the card of a folder a tab on its top edge (`.~~[+]~~~`), and a note card is drawn with dashes and `:` (`.- - - -.`).
-- **The selected card is easier to see**: its edges are of `#` (a folder keeps its tab), so it stands out among cards of many colors.
+- **Cards drawn by their kind**: the card of a file is edged in lines, the card of a folder has a tab on its top edge (`.--<>---`), and a note card has gaps in its top and bottom edges (`.------- - - - ----.`).
+- **The selected card is easier to see**: its edges are of `:` (a folder keeps its tab), so it stands out among cards of many colors. A selected badge is edged in `:` too (`.:5:.` / `: i :` / `':::'`).
 - **A smaller badge**: a badge is drawn `.-3-.` / `| i |` / `'---'`, 5 columns wide, with its corners in the style of the boxes (`+` with Classic ASCII).
 - **The place of a card while it is moved**: the column and row on the top edge of a card (and `Badge at` on the line above the keys) are shown only while the card is moved with `V`, not all the time it is selected.
 - **`:clear` counts the dividers too**: it asks to take all the cards, badges and dividers off, with how many there are of each.
