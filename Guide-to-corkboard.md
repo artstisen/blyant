@@ -53,26 +53,63 @@ A badge is as high as a card and 5 columns wide, with its number on its top edge
 
 A selected divider is highlighted, and its column on the ruler too. `V` and `h` `l` move it left and right (`H` `L`: five steps), and the line above the keys tells its column while it is moved (`Divider at 41`). `C` colors it, `D` removes it (`u` puts it back), `I` tells its column and `Space` marks it, so it can be moved with the cards of its column. A divider has no number and no title: the numbers stay those of the cards. `:arrange` and `/` leave the dividers as they are, and the line above the keys counts them (`Dividers: 3`). A divider is a line of its own in the file of the board; a version of Blyant before 1.4.2 leaves it out.
 
-## Selecting cards, badges or dividers
+## Lines
+`\` (or `:line`) adds a line, to point from one card to another: it starts in the column right of the selected card, at its middle row (or in the middle of the board), and goes to the right with an arrowhead at its end (`----->`). Like the dividers, the lines are drawn behind the cards; the selected one is drawn over them, of `:`, so it is seen whole.
+
+A line has a start, a way it goes and a length. In `V` (Move) the line selected alone is changed with keys of its own, and the key hints show them:
+- `h` `j` `k` `l` Move it (`H` `J` `K` `L`: five steps)
+- `r` Turn it around its start: `-` to the right, `\` down to the right, `|` down, `/` down to the left, and round again (`R` turns it back)
+- `+` `-` Make it longer/shorter (at least two, and as long as fits on the board)
+- `a` Arrowheads: at its end, at its start, at both ends, none. On a line across they are `>` `<`, on one down `v` `^`, and `*` on a slanted one
+
+```
+.------------------.
+| 2  Low Water     |
+'------------------'
+          |
+          v
+.------------------.
+| 8  Outline       |
+'------------------'
+```
+
+The line above the keys tells where it starts and how long it is while it is moved (`Line at 37,5, 3 long`). `C` colors it, `D` removes it (`u` puts it back), `I` tells its place, the way it goes and its length, and `Space` marks it, so it moves with the marked cards. A line has no number and no title. The line above the keys counts them (`Drawn lines: 2`).
+
+## Frames
+`O` (or `:frame`) adds a frame, to mark off an area of the board, such as the cards of an act: it is put around the selected card and the marked ones (with a column of room at their sides and a row above and below them), or in the middle of the board, 30 columns by 8 rows. `X` gives it a title on its top edge:
+
+```
+.-- Act two ------------------------------------.
+| .----------------------. .------------------. |
+| | 4  The storm         | | 5  The lamp      | |
+| '----------------------' '------------------' |
+'-----------------------------------------------'
+```
+
+The frames are drawn first, behind the dividers, lines and cards; the selected one is drawn over them, of `:`. In `V` (Move) the frame selected alone is moved with `h` `j` `k` `l`, and `s` changes to sizing it: then `h` `j` `k` `l` (`H` `J` `K` `L`: five steps) move its lower right corner, and `s` again moves it. The line above the keys tells where it is (`Frame at 3,12`), or its size while it is sized (`Frame size: 51x6`). To move a frame with the cards in it, mark them (`Space`) and move them together. `C` colors it, `D` removes it (`u` puts it back), and `I` tells its title, place and size. A frame has no number. The line above the keys counts them (`Frames: 1`).
+
+The lines and frames are lines of their own in the file of the board; a version of Blyant before 1.4.2 leaves them out.
+
+## Selecting cards, badges or lines
 `M` (or `:mode`) changes what `h` `j` `k` `l` and `Tab` select, and the top bar shows it after the name of the board (where they do not fit, the name of the board is cut, not the mode):
-- **Cards and badges** (at first): the cards and the badges, past the dividers
-- **All**: everything they pass, the dividers too (as they go from top to bottom, only `h` and `l` go to a divider or from it)
+- **Cards and badges** (at first): the cards and the badges, past the dividers, lines and frames
+- **All**: everything they pass, the dividers, lines and frames too (as a divider goes from top to bottom, only `h` and `l` go to a divider or from it; a line is gone to by its start, a frame by its top left corner)
 - **Cards**: the cards of files, folders and notes
 - **Badges**: only the badges
-- **Dividers**: only the dividers, with `h` and `l`
+- **Lines**: only the dividers, lines and frames
 
-`:mode both` (`all`, `cards`, `badges`, `dividers`) picks one, and `Tab` completes them. The mode is kept (setting `boardmode`). A number and `Enter` select any card or badge, whatever the mode.
+`:mode both` (`all`, `cards`, `badges`, `lines`) picks one, and `Tab` completes them. The mode is kept (setting `boardmode`). A number and `Enter` select any card or badge, whatever the mode.
 
 ## On an empty board
-A board without cards shows the keys to start with in a box in its middle: pinning files and folders, adding notes, badges and dividers, selecting, the modes, marking and moving, `T` `E`, and `?` for all the keys. The box is gone when the first card is on the board.
+A board without cards shows the keys to start with in a box in its middle: pinning files and folders, adding notes, badges, dividers, lines and frames, selecting, the modes, marking and moving, `T` `E`, and `?` for all the keys. The box is gone when the first card is on the board.
 
 ## On the corkboard
-- `Tab` `Shift+Tab` Select the next/previous card, by number (the dividers after the cards, from the left), of those the mode selects
+- `Tab` `Shift+Tab` Select the next/previous card, by number (the dividers, lines and frames after the cards, from the left), of those the mode selects
 - `12` and `Enter` Select card 12 (the number is shown on the line above the keys while you type it; `Esc` drops it)
 - `h` `j` `k` `l` (or the arrow keys) Select the next card that way. `h` and `l` go along the row of the selected card first (the cards that share at least two of its three rows, so a card laid a little lower is in it), and `j` and `k` along its column (the cards that share at least half its width). At the end of a row or column, the nearest card that way in another one is selected
 - `Enter` Open the file of the selected card in the editor (a note: edit its text). Closing the editor (`:q`, `:wq`) brings you back to the corkboard, with the same card selected and the cards still marked. It is a jump: a jump made in the editor (`Ctrl+O`) goes on from there without coming back, and `Ctrl+K` and `Enter` in the editor take you back to the file you were in
 - `Space` Mark the card, to move, color, order or remove several together (see [Several cards at a time](#several-cards-at-a-time))
-- `V` Move the selected card: `h` `j` `k` `l` (or the arrow keys) move it one step, `H` `J` `K` `L` five steps, and `Esc` (or `Enter`, `V`) ends the moving
+- `V` Move the selected card: `h` `j` `k` `l` (or the arrow keys) move it one step, `H` `J` `K` `L` five steps, and `Esc` (or `Enter`, `V`) ends the moving. A line is also turned (`r`), made longer and shorter (`+` `-`) and given arrowheads (`a`), and a frame sized (`s`): see [Lines](#lines) and [Frames](#frames)
 - `T` (or `:top`) Put the card on top of the others, `E` (or `:bottom`) below them. Where cards overlap, the one on top covers the others
 - `C` (or `:color`) Pick the color of the card, its frame and title, from the 16 colors
 - `X` (or `:rename title`) Give the card a title of its own (the file keeps its name). Without one, the card shows the name of its file without the extension, or the first line of a note. The box shows the name the card has: `Enter` on its own name keeps it without a title, so it goes on following its file, and typing its own name takes a title away

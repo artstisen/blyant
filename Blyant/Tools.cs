@@ -807,6 +807,10 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("A :note", Lang.T("A note card: its text written in the editor"), false));
             _shortcutList.Add(new Shortcut("B :badge", Lang.T("A badge (an \"i\") with a note, to mark a place"), false));
             _shortcutList.Add(new Shortcut("| :divider", Lang.T("A divider: a line top to bottom (V h/l moves it)"), false));
+            _shortcutList.Add(new Shortcut("\\ :line", Lang.T("A line, to point from card to card"), false));
+            _shortcutList.Add(new Shortcut("  V r R + - a", Lang.T("Move, Turn (R: back), Longer/Shorter, Arrowheads"), false));
+            _shortcutList.Add(new Shortcut("O :frame", Lang.T("A frame around the card and the marked ones"), false));
+            _shortcutList.Add(new Shortcut("  V s", Lang.T("Move, s: Size it (hjkl move its lower right corner)"), false));
             _shortcutList.Add(new Shortcut("I :info", Lang.T("Information about the card, its file or folder"), false));
             _shortcutList.Add(new Shortcut("P :peek", Lang.T("Peek of the selected card on/off"), false));
             _shortcutList.Add(new Shortcut(":list", Lang.T("Boards: open, add, rename, delete"), false));

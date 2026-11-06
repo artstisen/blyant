@@ -207,6 +207,8 @@ $ t_"next" = t_"last" + 12"h" 25"min" $
 BOARD = "\n".join([
     "|\t79\tBlue",
     "|\t98\t",
+    "+\t2,11\tDarkGray\t51x6\tResearch",
+    "-\t36,4\tYellow\t|\t3\tend",
     "5\t12,4\tGreen\t\t\tbadge",
     "#Drafted: chapters 1 to 3",
     "6\t81,4\tRed\t\t\tbadge",

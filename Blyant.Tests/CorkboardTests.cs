@@ -974,11 +974,12 @@ public class CorkboardTests : IDisposable
     [InlineData("all", 1)]
     [InlineData(" Cards", 2)]
     [InlineData("badges", 3)]
-    [InlineData("DIVIDERS", 4)]
+    [InlineData("LINES", 4)]
+    [InlineData("dividers", 4)]
     [InlineData("other", null)]
     public void TheModes_AreWrittenAsWords(string word, int? mode)
     {
-        // (in the order M goes through them: both, all, cards, badges, dividers)
+        // (in the order M goes through them: both, all, cards, badges, lines; "dividers" as before there were lines)
         Assert.Equal(mode, (int?)CorkboardPage.ModeOf(word));
     }
 
@@ -1008,13 +1009,146 @@ public class CorkboardTests : IDisposable
             Assert.Equal("True True False False", Taken());
             CorkboardPage.Mode = CorkboardPage.SelectMode.Badges;
             Assert.Equal("False False True False", Taken());
-            CorkboardPage.Mode = CorkboardPage.SelectMode.Dividers;
+            CorkboardPage.Mode = CorkboardPage.SelectMode.Lines;
             Assert.Equal("False False False True", Taken());
             CorkboardPage.Mode = CorkboardPage.SelectMode.All;
             Assert.Equal("True True True True", Taken());
             // Cards and badges: all but the dividers, at first
             CorkboardPage.Mode = CorkboardPage.SelectMode.Both;
             Assert.Equal("True True True False", Taken());
+        }
+        finally
+        {
+            CorkboardPage.Mode = saved;
+        }
+    }
+
+    [Fact]
+    public void ALineAndAFrame_TakeNoNumbersOfTheCards_AndAreKeptOnLinesOfTheirOwn()
+    {
+        Corkboard.Add(In("one.md"), Width, Height);
+        var line = Corkboard.AddLine(10, 4, Width, Height);
+        var frame = Corkboard.AddFrame(0, 0, 30, 8, Width, Height);
+        Assert.True(line.Number < 0 && frame.Number < 0 && line.Number != frame.Number);
+        Assert.False(line.IsNote || frame.IsNote || line.HasPlace || frame.HasPlace);
+        // A new line goes to the right, with an arrowhead at its end
+        Assert.Equal((0, 6, 1), (line.Turn, line.Length, line.Arrow));
+        Assert.Equal(Lang.T("Drawn line"), line.Name);
+        Assert.Equal(Lang.T("Frame"), frame.Name);
+        // A frame has a title, a line has none
+        Corkboard.Rename(frame, "Act two");
+        Corkboard.Rename(line, "Arrow");
+        Assert.Equal(("Act two", string.Empty), (frame.Title, line.Title));
+        Corkboard.TurnLine(line, 3, Width, Height);
+        line.Color = ConsoleColor.Red;
+        Assert.Equal(DialogText.Success, Corkboard.Save());
+        var text = File.ReadAllText(Corkboard.FilePath);
+        Assert.StartsWith("+\t0,0\t\t30x8\tAct two\n-\t10,4\tRed\t/\t6\tend\n1\t", text);
+        Corkboard.Load();
+        var readLine = Corkboard.Cards.Single(card => card.IsLine);
+        var readFrame = Corkboard.Cards.Single(card => card.IsFrame);
+        Assert.Equal((10, 4, 3, 6, 1, ConsoleColor.Red),
+            (readLine.X, readLine.Y, readLine.Turn, readLine.Length, readLine.Arrow, readLine.Color));
+        Assert.Equal((0, 0, 30, 8, "Act two"),
+            (readFrame.X, readFrame.Y, readFrame.FrameWidth, readFrame.FrameHeight, readFrame.Title));
+        Assert.Equal(new[] { 1 }, Corkboard.Cards.Where(card => !card.IsShape).Select(card => card.Number));
+        // They are not in the list of the boards, nor beside the projects
+        Assert.Equal("1  one", Corkboard.BoardPreview(string.Empty));
+        Assert.Equal(new[] { 1 }, Corkboard.Snapshot(string.Empty)!.Select(card => card.Number));
+        // Lines that are not a line's or a frame's are left out
+        Corkboard.Parse("-\t1,2\t\t?\t5\n-\t1\t\t-\t5\n+\t1,2\t\tbig\n");
+        Assert.Empty(Corkboard.Cards);
+    }
+
+    [Fact]
+    public void ALine_TurnsAroundItsStart_AndStaysOnTheBoard()
+    {
+        var line = Corkboard.AddLine(0, 0, Width, Height);
+        Assert.Equal((0, 0), (line.X, line.Y));
+        // Turned back, it goes down to the left of its start: moved in, so it is on the board
+        Corkboard.TurnLine(line, -1, Width, Height);
+        Assert.Equal('/', Corkboard.LineMarks[line.Turn]);
+        Assert.Equal((5, 0, 6, 6), (line.X, line.Y, line.Width, line.Height));
+        Corkboard.TurnLine(line, 1, Width, Height);
+        Assert.Equal('-', Corkboard.LineMarks[line.Turn]);
+        // At least two long, and as long as fits on the board
+        Corkboard.Lengthen(line, -10, Width, Height);
+        Assert.Equal(Corkboard.ShortestLine, line.Length);
+        Corkboard.TurnLine(line, 2, Width, Height);
+        Corkboard.Lengthen(line, 100, Width, Height);
+        Assert.Equal((Height, 0), (line.Length, line.Y));
+        Corkboard.Move(line, 0, 5, Width, Height);
+        Assert.Equal(0, line.Y);
+        // The arrowheads: at the end, at the start, at both ends, none
+        var arrows = new List<int>();
+        for (var i = 0; i < 4; i++)
+        {
+            Corkboard.NextArrow(line);
+            arrows.Add(line.Arrow);
+        }
+
+        Assert.Equal(new[] { 2, 3, 0, 1 }, arrows);
+    }
+
+    [Fact]
+    public void ALine_IsDrawnWithItsArrowheads()
+    {
+        var line = Corkboard.AddLine(0, 0, Width, Height);
+        line.Length = 5;
+        Assert.Equal("---->", CorkboardPage.LineText(line, false));
+        line.Arrow = 3;
+        Assert.Equal("<--->", CorkboardPage.LineText(line, false));
+        line.Turn = 2;
+        Assert.Equal("^|||v", CorkboardPage.LineText(line, false));
+        line.Turn = 1;
+        line.Arrow = 2;
+        Assert.Equal("*\\\\\\\\", CorkboardPage.LineText(line, false));
+        // The selected one is of ":", with its arrowheads
+        Assert.Equal("*::::", CorkboardPage.LineText(line, true));
+    }
+
+    [Fact]
+    public void AFrame_GoesAroundTheCards_AndIsSizedOnTheBoard()
+    {
+        var one = Corkboard.Add(In("one.md"), Width, Height);
+        Corkboard.Move(one, 10, 5, Width, Height);
+        // Two columns of room at its left, one at its right, and a row above and below it
+        Assert.Equal((8, 4, 28, 5), Corkboard.FrameAround(new[] { one }, Width, Height));
+        Assert.Null(Corkboard.FrameAround(new[] { Corkboard.AddLine(0, 0, Width, Height) }, Width, Height));
+        // A frame that would go off the board is moved in, and sized inside it
+        var frame = Corkboard.AddFrame(70, 15, 30, 8, Width, Height);
+        Assert.Equal((Width - 30, Height - 8), (frame.X, frame.Y));
+        Corkboard.Resize(frame, 100, 100, Width, Height);
+        Assert.Equal((30, 8), (frame.FrameWidth, frame.FrameHeight));
+        Corkboard.Resize(frame, -100, -100, Width, Height);
+        Assert.Equal((Corkboard.SmallestFrameWidth, Corkboard.SmallestFrameHeight), (frame.FrameWidth, frame.FrameHeight));
+        // Its title on its top edge
+        frame.FrameWidth = 20;
+        frame.Title = "Act two";
+        Assert.Equal("-- Act two -------", CorkboardPage.FrameTop(frame, false));
+        Assert.Equal(":: Act two :::::::", CorkboardPage.FrameTop(frame, true));
+        frame.Title = string.Empty;
+        Assert.Equal(new string('-', 18), CorkboardPage.FrameTop(frame, false));
+    }
+
+    [Fact]
+    public void TheModeOfLines_TakesTheDividersLinesAndFrames()
+    {
+        var card = Corkboard.Add(In("a.md"), Width, Height);
+        var shapes = new[]
+        {
+            Corkboard.AddDivider(30, Width), Corkboard.AddLine(0, 0, Width, Height),
+            Corkboard.AddFrame(0, 0, 10, 4, Width, Height)
+        };
+        var saved = CorkboardPage.Mode;
+        try
+        {
+            CorkboardPage.Mode = CorkboardPage.SelectMode.Lines;
+            Assert.True(shapes.All(CorkboardPage.InMode) && !CorkboardPage.InMode(card));
+            CorkboardPage.Mode = CorkboardPage.SelectMode.Both;
+            Assert.True(!shapes.Any(CorkboardPage.InMode) && CorkboardPage.InMode(card));
+            CorkboardPage.Mode = CorkboardPage.SelectMode.Cards;
+            Assert.False(shapes.Any(CorkboardPage.InMode));
         }
         finally
         {

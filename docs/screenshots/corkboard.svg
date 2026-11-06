@@ -40,16 +40,19 @@
 <text x="114.8" y="162.8" fill="#16C60C" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">.</text>
 <text x="123.2" y="162.8" fill="#767676" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">-5-</text>
 <text x="148.4" y="162.8" fill="#16C60C" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">.</text>
+<text x="316.4" y="162.8" fill="#F9F1A5" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="677.6" y="162.8" fill="#3B78FF" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="694.4" y="162.8" fill="#E74856" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">.</text>
 <text x="702.8" y="162.8" fill="#767676" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">-6-</text>
 <text x="728.0" y="162.8" fill="#E74856" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">.</text>
 <text x="828.8" y="162.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="114.8" y="179.8" fill="#16C60C" textLength="42.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">| i |</text>
+<text x="316.4" y="179.8" fill="#F9F1A5" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="677.6" y="179.8" fill="#3B78FF" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="694.4" y="179.8" fill="#E74856" textLength="42.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">| i |</text>
 <text x="828.8" y="179.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="114.8" y="196.8" fill="#16C60C" textLength="42.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&#x27;---&#x27;</text>
+<text x="316.4" y="196.8" fill="#F9F1A5" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">v</text>
 <text x="677.6" y="196.8" fill="#3B78FF" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="694.4" y="196.8" fill="#E74856" textLength="42.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&#x27;---&#x27;</text>
 <text x="828.8" y="196.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
@@ -75,31 +78,38 @@
 <text x="434.0" y="264.8" fill="#B4009E" textLength="201.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&#x27;----------------------&#x27;</text>
 <text x="677.6" y="264.8" fill="#3B78FF" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="828.8" y="264.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="30.8" y="281.8" fill="#767676" textLength="428.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">.-- Research -------------------------------------.</text>
 <text x="677.6" y="281.8" fill="#3B78FF" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="828.8" y="281.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="30.8" y="298.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="47.6" y="298.8" fill="#C19C00" textLength="201.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">.----------------------.</text>
+<text x="450.8" y="298.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="459.2" y="298.8" fill="#61D6D6" textLength="201.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">.----------- - - - ----.</text>
 <text x="677.6" y="298.8" fill="#3B78FF" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="828.8" y="298.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="30.8" y="315.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="47.6" y="315.8" fill="#C19C00" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="56.0" y="315.8" fill="#767676" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 11</text>
 <text x="89.6" y="315.8" fill="#C19C00" textLength="159.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> tides            |</text>
-<text x="249.2" y="315.8" fill="#767676" textLength="201.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">.----------------------.</text>
+<text x="249.2" y="315.8" fill="#767676" textLength="210.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">.----------------------.|</text>
 <text x="459.2" y="315.8" fill="#61D6D6" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="467.6" y="315.8" fill="#767676" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 13</text>
 <text x="501.2" y="315.8" fill="#61D6D6" textLength="159.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Maren rows out...|</text>
 <text x="677.6" y="315.8" fill="#3B78FF" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="828.8" y="315.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="30.8" y="332.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="47.6" y="332.8" fill="#C19C00" textLength="201.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&#x27;----------------------&#x27;</text>
 <text x="249.2" y="332.8" fill="#767676" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">| 12</text>
 <text x="291.2" y="332.8" fill="#CCCCCC" textLength="134.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> interview-notes</text>
-<text x="442.4" y="332.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="442.4" y="332.8" fill="#767676" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">||</text>
 <text x="459.2" y="332.8" fill="#61D6D6" textLength="201.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&#x27;--- - - - ------------&#x27;</text>
 <text x="677.6" y="332.8" fill="#3B78FF" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="828.8" y="332.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
-<text x="249.2" y="349.8" fill="#767676" textLength="201.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&#x27;----------------------&#x27;</text>
+<text x="30.8" y="349.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="249.2" y="349.8" fill="#767676" textLength="210.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&#x27;----------------------&#x27;|</text>
 <text x="677.6" y="349.8" fill="#3B78FF" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="828.8" y="349.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
+<text x="30.8" y="366.8" fill="#767676" textLength="428.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&#x27;-------------------------------------------------&#x27;</text>
 <text x="677.6" y="366.8" fill="#3B78FF" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="828.8" y="366.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="677.6" y="383.8" fill="#3B78FF" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
@@ -110,7 +120,7 @@
 <text x="14.0" y="434.8" fill="#CCCCCC" textLength="210.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> # Chapter 3: The Logbook</text>
 <text x="14.0" y="468.8" fill="#CCCCCC" textLength="646.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> The logbook was in the drawer of the chart table, under a tin of matches and</text>
 <text x="14.0" y="485.8" fill="#CCCCCC" textLength="462.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> a pair of reading glasses with one arm mended in wire.</text>
-<text x="14.0" y="519.8" fill="#767676" textLength="823.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">----------------------------------------------------------- Cards: 11 | Badges: 2 | Dividers: 2 --</text>
+<text x="14.0" y="519.8" fill="#767676" textLength="823.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">------------------------------ Cards: 11 | Badges: 2 | Dividers: 2 | Drawn lines: 1 | Frames: 1 --</text>
 <rect x="22.4" y="524" width="84.0" height="17" fill="#CCCCCC"/>
 <rect x="173.6" y="524" width="25.2" height="17" fill="#CCCCCC"/>
 <rect x="249.2" y="524" width="58.8" height="17" fill="#CCCCCC"/>
