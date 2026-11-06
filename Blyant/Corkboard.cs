@@ -7,8 +7,10 @@ namespace Blyant;
 /// or keep the files worked on in view. Each card has a number that stays with it, a place (its column and row on the
 /// board), a color and a title of its own if it is given one. A note card has a text instead of a file (its title is
 /// its first line). A badge is a small round mark with an "i", and a note: it marks a place on the board (a group of
-/// cards), and its note is read in the peek. The cards are drawn in their order, so a card later in the list covers
-/// the ones before it where they overlap.
+/// cards), and its note is read in the peek. A divider is a line from the top of the board to the bottom at a column,
+/// to tile the board: it is drawn behind the cards, and has no number of its own (inside it gets one below 0, which
+/// is not kept). The cards are drawn in their order, so a card later in the list covers the ones before it where
+/// they overlap.
 ///
 /// There can be several boards: the main board is the file "board.txt" in the data directory, and the others are
 /// files of the same kind in the directory "boards" next to it, with their names. A project can have a board of its
@@ -20,7 +22,8 @@ namespace Blyant;
 /// A board is kept as a line for each card: its number, its place ("column,row"), its color (or nothing), its title
 /// (or nothing) and the path of its file or folder (nothing for a note; a folder ends with a separator), with a tab
 /// character between them; a badge has the word "badge" after them (a version without badges reads it as a note).
-/// The text of a note is on the line after it, after a "#" (as the notes of the favorites).
+/// The text of a note is on the line after it, after a "#" (as the notes of the favorites). A divider is a line of
+/// its own: "|", its column and its color (or nothing), with tabs between them (a version without dividers skips it).
 /// It does not touch the console, so it can be tested
 /// </summary>
 internal static class Corkboard
@@ -42,10 +45,13 @@ internal static class Corkboard
     /// <summary>
     /// The width of a badge (as high as a card)
     /// </summary>
-    internal const int BadgeWidth = 7;
+    internal const int BadgeWidth = 5;
 
     // The word a badge is kept with, after the parts of its line (English: a word of the file)
     private const string BadgeWord = "badge";
+
+    // The mark a divider's line starts with (English: a part of the file)
+    private const string DividerMark = "|";
 
     internal sealed class Card
     {
@@ -58,16 +64,22 @@ internal static class Corkboard
         internal string Text = string.Empty; // The text of a note
         internal bool IsFolder; // The path is of a folder
         internal bool IsBadge; // A badge: a note shown as a small round mark (it has no title)
+        internal bool IsDivider; // A divider: a line from top to bottom at its column (X), behind the cards
 
         /// <summary>
         /// A card with a text of its own instead of a file (a badge too)
         /// </summary>
-        internal bool IsNote => Path.Length == 0;
+        internal bool IsNote => Path.Length == 0 && !IsDivider;
+
+        /// <summary>
+        /// The card is of a file or folder
+        /// </summary>
+        internal bool HasPlace => Path.Length > 0;
 
         /// <summary>
         /// Its width on the board
         /// </summary>
-        internal int Width => IsBadge ? BadgeWidth : CardWidth;
+        internal int Width => IsDivider ? 1 : IsBadge ? BadgeWidth : CardWidth;
 
         /// <summary>
         /// What the card shows: its title, or else its own name
@@ -79,7 +91,8 @@ internal static class Corkboard
         /// "/" after it (as in the file browser), or the first line of its text (a tab in it as blank space, so the
         /// card keeps its frame)
         /// </summary>
-        internal string OwnName => (IsFolder ? FolderName(Path)
+        internal string OwnName => (IsDivider ? Lang.T("Divider")
+            : IsFolder ? FolderName(Path)
             : !IsNote ? System.IO.Path.GetFileNameWithoutExtension(Path)
             : Text.Split('\n').Select(line => line.Trim()).FirstOrDefault(line => line.Length > 0) ??
               (IsBadge ? Lang.T("Badge") : Lang.T("Note")))
@@ -303,6 +316,12 @@ internal static class Corkboard
             }
 
             last = null;
+            if (line.StartsWith(DividerMark + "\t", StringComparison.Ordinal))
+            {
+                ReadDivider(line);
+                continue;
+            }
+
             var parts = line.Split('\t');
             if (parts.Length < 5 || !int.TryParse(parts[0], out var number) || number < 1) continue;
             var place = parts[1].Split(',');
@@ -321,6 +340,18 @@ internal static class Corkboard
             };
             _cards.Add(last);
         }
+    }
+
+    // A divider's line: "|", its column, and its color (or nothing)
+    private static void ReadDivider(string line)
+    {
+        var parts = line.Split('\t');
+        if (parts.Length < 2 || !int.TryParse(parts[1], out var column)) return;
+        ConsoleColor? color = parts.Length > 2 && Enum.TryParse<ConsoleColor>(parts[2].Trim(), true, out var parsed) &&
+                              Enum.IsDefined(parsed)
+            ? parsed
+            : null;
+        _cards.Add(new Card { Number = FreeDividerNumber(), X = Math.Max(0, column), Color = color, IsDivider = true });
     }
 
     // A path as it is kept: a folder ends with a separator, and in a project, what is in it is kept from its folder
@@ -372,6 +403,13 @@ internal static class Corkboard
         var text = new StringBuilder();
         foreach (var card in _cards)
         {
+            if (card.IsDivider)
+            {
+                text.Append(DividerMark).Append('\t').Append(card.X).Append('\t')
+                    .Append(card.Color?.ToString() ?? string.Empty).Append('\n');
+                continue;
+            }
+
             text.Append(card.Number).Append('\t').Append(card.X).Append(',').Append(card.Y).Append('\t')
                 .Append(card.Color?.ToString() ?? string.Empty).Append('\t').Append(card.Title).Append('\t')
                 .Append(WritePath(card, root)).Append(card.IsBadge ? "\t" + BadgeWord : string.Empty).Append('\n');
@@ -480,7 +518,7 @@ internal static class Corkboard
     internal static string BoardPreview(string key)
     {
         var lines = new List<string>();
-        WithBoard(key, () => lines.AddRange(_cards.OrderBy(card => card.Number)
+        WithBoard(key, () => lines.AddRange(_cards.Where(card => !card.IsDivider).OrderBy(card => card.Number)
             .Select(card => card.Number + "  " + card.Name)));
         return string.Join("\n", lines);
     }
@@ -492,7 +530,8 @@ internal static class Corkboard
     {
         if (!File.Exists(BoardFile(key))) return null;
         var cards = new List<Card>();
-        WithBoard(key, () => cards.AddRange(_cards.OrderBy(card => card.Number)));
+        // (the dividers tile the board: they are not laid on the cards)
+        WithBoard(key, () => cards.AddRange(_cards.Where(card => !card.IsDivider).OrderBy(card => card.Number)));
         return cards;
     }
 
@@ -533,7 +572,7 @@ internal static class Corkboard
     /// The card of a file or folder, or null if it is not pinned
     /// </summary>
     internal static Card? CardOf(string path) =>
-        _cards.FirstOrDefault(card => !card.IsNote && FileOperations.SamePath(card.Path, path));
+        _cards.FirstOrDefault(card => card.HasPlace && FileOperations.SamePath(card.Path, path));
 
     /// <summary>
     /// The card with a number, or null
@@ -546,6 +585,27 @@ internal static class Corkboard
         var number = 1;
         while (_cards.Any(card => card.Number == number)) number++;
         return number;
+    }
+
+    // The number a divider gets inside (below 0, so it is not a card's number, and not kept)
+    private static int FreeDividerNumber()
+    {
+        var number = -1;
+        while (_cards.Any(card => card.Number == number)) number--;
+        return number;
+    }
+
+    /// <summary>
+    /// A new divider at a column of a board of a width, below the cards
+    /// </summary>
+    internal static Card AddDivider(int column, int width)
+    {
+        var card = new Card
+        {
+            Number = FreeDividerNumber(), X = Math.Clamp(column, 0, Math.Max(0, width - 1)), IsDivider = true
+        };
+        _cards.Insert(0, card);
+        return card;
     }
 
     /// <summary>
@@ -596,12 +656,12 @@ internal static class Corkboard
         {
             for (var x = 0; x + cardWidth <= Math.Max(cardWidth, width); x += step)
             {
-                if (!_cards.Any(card => Overlap(card, x, y, cardWidth))) return (x, y);
+                if (!_cards.Any(card => !card.IsDivider && Overlap(card, x, y, cardWidth))) return (x, y);
             }
         }
 
-        // The board is full: on top of the others, a step from the last one
-        var last = _cards.Count > 0 ? _cards[^1] : null;
+        // The board is full: on top of the others, a step from the last one (a new card can be laid over a divider)
+        var last = _cards.LastOrDefault(card => !card.IsDivider);
         return last == null
             ? (0, 0)
             : (Math.Min(last.X + 2, Math.Max(0, width - cardWidth)), Math.Min(last.Y + 1, Math.Max(0, height - CardHeight)));
@@ -615,11 +675,12 @@ internal static class Corkboard
     /// of a smaller one, and keeps its place)
     /// </summary>
     internal static (int X, int Y) Shown(Card card, int width, int height) =>
-        (Math.Clamp(card.X, 0, Math.Max(0, width - card.Width)), Math.Clamp(card.Y, 0, Math.Max(0, height - CardHeight)));
+        (Math.Clamp(card.X, 0, Math.Max(0, width - card.Width)),
+            card.IsDivider ? 0 : Math.Clamp(card.Y, 0, Math.Max(0, height - CardHeight)));
 
     /// <summary>
     /// Move several cards together by columns and rows, inside a board of a size: they keep their places to each
-    /// other, so at the edge of the board they all stop
+    /// other, so at the edge of the board they all stop. A divider only goes left and right
     /// </summary>
     internal static void Move(IReadOnlyCollection<Card> cards, int columns, int rows, int width, int height)
     {
@@ -627,23 +688,23 @@ internal static class Corkboard
         foreach (var card in cards) (card.X, card.Y) = Shown(card, width, height);
         columns = Math.Clamp(columns, -cards.Min(card => card.X),
             cards.Min(card => Math.Max(0, width - card.Width) - card.X));
-        rows = Math.Clamp(rows, -cards.Min(card => card.Y), cards.Min(card => Math.Max(0, height - CardHeight) - card.Y));
+        var placed = cards.Where(card => !card.IsDivider).ToList();
+        rows = placed.Count == 0
+            ? 0
+            : Math.Clamp(rows, -placed.Min(card => card.Y),
+                placed.Min(card => Math.Max(0, height - CardHeight) - card.Y));
         foreach (var card in cards)
         {
             card.X += columns;
-            card.Y += rows;
+            if (!card.IsDivider) card.Y += rows;
         }
     }
 
     /// <summary>
     /// Move a card by columns and rows, inside a board of a size
     /// </summary>
-    internal static void Move(Card card, int columns, int rows, int width, int height)
-    {
-        var (x, y) = Shown(card, width, height);
-        card.X = Math.Clamp(x + columns, 0, Math.Max(0, width - card.Width));
-        card.Y = Math.Clamp(y + rows, 0, Math.Max(0, height - CardHeight));
-    }
+    internal static void Move(Card card, int columns, int rows, int width, int height) =>
+        Move(new[] { card }, columns, rows, width, height);
 
     /// <summary>
     /// Put cards on top of the others (true), or below them, in the order they had among themselves
@@ -677,13 +738,15 @@ internal static class Corkboard
         return removed.Count;
     }
 
-    // Cards put back that have the number of a card added since get a new number (the lowest free one)
+    // Cards put back that have the number of a card added since get a new number (the lowest free one; a divider's
+    // below 0)
     private static void Renumber(IEnumerable<Card> putBack, List<Card> taken)
     {
         foreach (var card in putBack.Where(card => taken.Any(other => other.Number == card.Number)))
         {
-            card.Number = 1;
-            while (_cards.Any(other => other != card && other.Number == card.Number)) card.Number++;
+            var step = card.IsDivider ? -1 : 1;
+            card.Number = step;
+            while (_cards.Any(other => other != card && other.Number == card.Number)) card.Number += step;
         }
     }
 
@@ -727,13 +790,13 @@ internal static class Corkboard
     /// <summary>
     /// Arrange the cards in rows from the top left, in an order: by number, by name (upper and lower case alike,
     /// numbers by their value: "Chapter 2" before "Chapter 10"), or by color (in the order of the colors, the cards
-    /// without one last; by number within a color). The badges stay where they are: they mark places. The order they
-    /// are drawn in stays. It can be undone with Undo
+    /// without one last; by number within a color). The badges and the dividers stay where they are: they mark
+    /// places. The order they are drawn in stays. It can be undone with Undo
     /// </summary>
     /// <returns>False if the order is not known</returns>
     internal static bool Arrange(string order, int width, int height)
     {
-        var cards = _cards.Where(card => !card.IsBadge).ToList();
+        var cards = _cards.Where(card => !card.IsBadge && !card.IsDivider).ToList();
         IEnumerable<Card> sorted = order switch
         {
             "number" => cards.OrderBy(card => card.Number),
@@ -836,7 +899,7 @@ internal static class Corkboard
     /// </summary>
     internal static void Rename(Card card, string title)
     {
-        if (card.IsBadge) return; // (a badge has no title)
+        if (card.IsBadge || card.IsDivider) return; // (a badge and a divider have no title)
         title = string.Join(' ', title.Split('\t', '\r', '\n')).Trim();
         // (the name it has without one: no title of its own, so it follows its file or text)
         card.Title = title == card.OwnName ? string.Empty : title;
@@ -845,11 +908,15 @@ internal static class Corkboard
     /// <summary>
     /// The card nearest to another in a direction (columns and rows: -1, 0 or 1), or null if there is none that way.
     /// A card in the same row (for left and right) or column (for up and down) comes first, so the keys go along a
-    /// row as it is read; at its end, a card straight that way is nearer than one as far off to the side
+    /// row as it is read; at its end, a card straight that way is nearer than one as far off to the side. A divider
+    /// is in every row, and only left and right lead to it or from it. Only the cards it takes are gone to (the
+    /// selection modes of the page; null: all)
     /// </summary>
-    internal static Card? Nearest(Card from, int columns, int rows, int width, int height)
+    internal static Card? Nearest(Card from, int columns, int rows, int width, int height, Func<Card, bool>? takes = null)
     {
+        if (columns == 0 && from.IsDivider) return null;
         var (fx, fy) = Shown(from, width, height);
+        bool Skipped(Card card) => card == from || (takes != null && !takes(card)) || (columns == 0 && card.IsDivider);
         // The cards in the same row (h, l) or column (j, k) first: those beside the card, sharing at least two of its
         // three rows (or half the columns of the narrower: a badge under a card), so a card laid a little lower is in
         // the row and one a row lower is not.
@@ -858,10 +925,10 @@ internal static class Corkboard
         (int Along, int Aside) inLineDistance = (int.MaxValue, int.MaxValue);
         foreach (var card in _cards)
         {
-            if (card == from) continue;
+            if (Skipped(card)) continue;
             var (x, y) = Shown(card, width, height);
             var beside = columns != 0
-                ? Math.Min(y, fy) + CardHeight - Math.Max(y, fy) >= (CardHeight + 1) / 2
+                ? card.IsDivider || from.IsDivider || Math.Min(y, fy) + CardHeight - Math.Max(y, fy) >= (CardHeight + 1) / 2
                 : Math.Min(x + card.Width, fx + from.Width) - Math.Max(x, fx) >= Math.Min(card.Width, from.Width) / 2;
             var along = columns != 0 ? (x - fx) * columns : (y - fy) * rows;
             if (!beside || along <= 0) continue;
@@ -878,7 +945,7 @@ internal static class Corkboard
         var bestScore = double.MaxValue;
         foreach (var card in _cards)
         {
-            if (card == from) continue;
+            if (Skipped(card)) continue;
             var (x, y) = Shown(card, width, height);
             // (the distance in rows counts as much as three columns: a row on the screen is about that high)
             var along = columns != 0 ? (x - fx) * columns : (y - fy) * rows * 3.0;
@@ -898,7 +965,7 @@ internal static class Corkboard
     {
         var changed = false;
         if (!CanKeep(newPath)) return false;
-        foreach (var card in _cards.Where(card => !card.IsNote))
+        foreach (var card in _cards.Where(card => card.HasPlace))
         {
             if (FileOperations.SamePath(card.Path, oldPath))
             {

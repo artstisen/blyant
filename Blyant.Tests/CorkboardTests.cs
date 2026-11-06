@@ -854,4 +854,127 @@ public class CorkboardTests : IDisposable
         Assert.Equal(new[] { 1, 2, 3, 4, 5 }, Corkboard.Cards.Select(card => card.Number).Order());
         Assert.Same(added, Corkboard.Numbered(2));
     }
+
+    [Fact]
+    public void ADivider_TakesNoNumberOfTheCards_AndIsKeptOnALineOfItsOwn()
+    {
+        var one = Corkboard.Add(In("one.md"), Width, Height);
+        var divider = Corkboard.AddDivider(30, Width);
+        var two = Corkboard.Add(In("two.md"), Width, Height);
+        Assert.Equal((1, 2), (one.Number, two.Number));
+        Assert.True(divider.Number < 0);
+        Assert.False(divider.IsNote || divider.HasPlace);
+        Assert.Equal(Lang.T("Divider"), divider.Name);
+        // It is drawn behind the cards: first in the order
+        Assert.Same(divider, Corkboard.Cards[0]);
+        divider.Color = ConsoleColor.Blue;
+        Corkboard.AddDivider(60, Width);
+        Assert.Equal(DialogText.Success, Corkboard.Save());
+        var text = File.ReadAllText(Corkboard.FilePath);
+        Assert.StartsWith("|\t60\t\n|\t30\tBlue\n1\t", text);
+        Corkboard.Load();
+        var read = Corkboard.Cards.Where(card => card.IsDivider).ToList();
+        Assert.Equal(new[] { 60, 30 }, read.Select(card => card.X));
+        Assert.Equal(ConsoleColor.Blue, read[1].Color);
+        Assert.Equal(new[] { 1, 2 }, Corkboard.Cards.Where(card => !card.IsDivider).Select(card => card.Number));
+        // They are not in the list of the boards, nor beside the projects, and a file is not pinned as one
+        Assert.Equal("1  one\n2  two", Corkboard.BoardPreview(string.Empty));
+        Assert.Equal(new[] { 1, 2 }, Corkboard.Snapshot(string.Empty)!.Select(card => card.Number));
+        Assert.Null(Corkboard.CardOf(string.Empty));
+        // A line that is not a divider's is left out
+        Corkboard.Parse("|\tx\n|\n");
+        Assert.Empty(Corkboard.Cards);
+    }
+
+    [Fact]
+    public void ADivider_GoesLeftAndRight_FromTopToBottom()
+    {
+        var divider = Corkboard.AddDivider(30, Width);
+        var card = Corkboard.Add(In("one.md"), Width, Height);
+        Corkboard.Move(divider, 5, 3, Width, Height);
+        Assert.Equal((35, 0), (divider.X, divider.Y));
+        Corkboard.Move(divider, 100, 0, Width, Height);
+        Assert.Equal(Width - 1, divider.X);
+        // Moved with a card: the card goes up and down, the divider stays at the top
+        Corkboard.Move(divider, -40, 0, Width, Height);
+        Corkboard.Move(new[] { divider, card }, 2, 4, Width, Height);
+        Assert.Equal((Width - 39, 0, 2, 4), (divider.X, divider.Y, card.X, card.Y));
+        // New cards are laid where they would be without it, and :arrange leaves it
+        divider.X = 0;
+        Assert.Equal((0, 0), Corkboard.FreePlace(Width, Height));
+        var place = divider.X;
+        Assert.True(Corkboard.Arrange("number", Width, Height));
+        Assert.Equal(place, divider.X);
+        Corkboard.Rename(divider, "Act one");
+        Assert.Equal(string.Empty, divider.Title);
+    }
+
+    [Fact]
+    public void ARemovedDivider_IsPutBack_WithANumberOfItsOwn()
+    {
+        var first = Corkboard.AddDivider(10, Width);
+        Corkboard.Remove(first);
+        var second = Corkboard.AddDivider(20, Width);
+        Assert.Equal(first.Number, second.Number);
+        Assert.Equal(Corkboard.Undone.Card, Corkboard.Undo());
+        Assert.True(first.Number < 0 && first.Number != second.Number);
+    }
+
+    [Fact]
+    public void TheKeys_GoToTheDividers_LeftAndRightOnly_AndToWhatTheModeTakes()
+    {
+        var a = Corkboard.Add(In("a.md"), Width, Height);
+        var b = Corkboard.Add(In("b.md"), Width, Height);
+        var badge = Corkboard.AddBadge(string.Empty, Width, Height);
+        var divider = Corkboard.AddDivider(24, Width);
+        (a.X, a.Y, b.X, b.Y, badge.X, badge.Y) = (0, 5, 25, 5, 0, 10);
+        // l passes the divider between a and b
+        Assert.Same(divider, Corkboard.Nearest(a, 1, 0, Width, Height));
+        Assert.Same(b, Corkboard.Nearest(divider, 1, 0, Width, Height));
+        Assert.Same(a, Corkboard.Nearest(divider, -1, 0, Width, Height));
+        // Up and down go past it, and not from it
+        Assert.Same(badge, Corkboard.Nearest(a, 0, 1, Width, Height));
+        Assert.Null(Corkboard.Nearest(divider, 0, 1, Width, Height));
+        // Only what is taken: the cards, the badges
+        Assert.Same(b, Corkboard.Nearest(a, 1, 0, Width, Height, card => !card.IsBadge && !card.IsDivider));
+        Assert.Null(Corkboard.Nearest(a, 0, 1, Width, Height, card => !card.IsBadge && !card.IsDivider));
+    }
+
+    [Theory]
+    [InlineData("all", 0)]
+    [InlineData(" Cards", 1)]
+    [InlineData("badges", 2)]
+    [InlineData("DIVIDERS", 3)]
+    [InlineData("other", null)]
+    public void TheModes_AreWrittenAsWords(string word, int? mode)
+    {
+        // (in the order M goes through them: all, cards, badges, dividers)
+        Assert.Equal(mode, (int?)CorkboardPage.ModeOf(word));
+    }
+
+    [Fact]
+    public void AMode_TakesItsKindOfCard()
+    {
+        var file = Corkboard.Add(In("a.md"), Width, Height);
+        var note = Corkboard.AddNote("Note", Width, Height);
+        var badge = Corkboard.AddBadge(string.Empty, Width, Height);
+        var divider = Corkboard.AddDivider(30, Width);
+        var saved = CorkboardPage.Mode;
+        try
+        {
+            string Taken() => string.Join(" ", new[] { file, note, badge, divider }.Select(CorkboardPage.InMode));
+            CorkboardPage.Mode = CorkboardPage.SelectMode.Cards;
+            Assert.Equal("True True False False", Taken());
+            CorkboardPage.Mode = CorkboardPage.SelectMode.Badges;
+            Assert.Equal("False False True False", Taken());
+            CorkboardPage.Mode = CorkboardPage.SelectMode.Dividers;
+            Assert.Equal("False False False True", Taken());
+            CorkboardPage.Mode = CorkboardPage.SelectMode.All;
+            Assert.Equal("True True True True", Taken());
+        }
+        finally
+        {
+            CorkboardPage.Mode = saved;
+        }
+    }
 }

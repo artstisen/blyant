@@ -7,7 +7,9 @@
 /// it, T and E put it on top of the others or below them, C colors it, X gives it a title, D takes it off the board,
 /// N pins a file, F a folder, A adds a note, B a badge (a small round mark with an "i" and a note, to mark a place),
 /// I shows information, P the peek. Space marks cards: V, C, T, E and D work on the marked ones and the selected one
-/// together. ":list" shows the boards, ":arrange" lays the cards out in an order, and ":clear" takes them all off. Opened with ":board" (":board name": another
+/// together. | adds a divider (a line from top to bottom, behind the cards, moved left and right), and M changes what
+/// the keys of the directions and Tab select: cards, badges, dividers or all (setting "boardmode"). ":list" shows the
+/// boards, ":arrange" lays the cards out in an order, and ":clear" takes them all off. Opened with ":board" (":board name": another
 /// board) from every command line, ":jump board", the Jump menu, the Start tab, and B in the list of projects (the
 /// board of a project)
 /// </summary>
@@ -21,8 +23,58 @@ internal static class CorkboardPage
     /// </summary>
     internal static bool PeekOn { get; set; } = true;
 
+    /// <summary>
+    /// What the keys of the directions and Tab select (setting "boardmode")
+    /// </summary>
+    internal enum SelectMode
+    {
+        All,
+        Cards, // Of files, folders and notes
+        Badges,
+        Dividers
+    }
+
+    internal static SelectMode Mode { get; set; } = SelectMode.All;
+
+    /// <summary>
+    /// The modes as they are written (":mode cards", the setting; English: the words of commands), in the order M
+    /// goes through them
+    /// </summary>
+    internal static readonly string[] ModeWords = { "all", "cards", "badges", "dividers" };
+
+    internal static string ModeWord => ModeWords[(int)Mode];
+
+    /// <summary>
+    /// The mode written (null: not one)
+    /// </summary>
+    internal static SelectMode? ModeOf(string word)
+    {
+        var at = Array.IndexOf(ModeWords, word.Trim().ToLowerInvariant());
+        return at < 0 ? null : (SelectMode)at;
+    }
+
+    private static string ModeName(SelectMode mode) => mode switch
+    {
+        SelectMode.Cards => Lang.T("Cards"),
+        SelectMode.Badges => Lang.T("Badges"),
+        SelectMode.Dividers => Lang.T("Dividers"),
+        _ => Lang.T("All")
+    };
+
+    /// <summary>
+    /// A card is one the mode selects
+    /// </summary>
+    internal static bool InMode(Corkboard.Card card) => Mode switch
+    {
+        SelectMode.Cards => !card.IsBadge && !card.IsDivider,
+        SelectMode.Badges => card.IsBadge,
+        SelectMode.Dividers => card.IsDivider,
+        _ => true
+    };
+
     private static bool _open; // The page is open (it is not opened again on top of itself)
-    private static int _selected = -1; // The number of the selected card
+    private const int NoCard = 0; // No card is selected (a card's number is above 0, a divider's below)
+    private static int _selected = NoCard; // The number of the selected card, badge or divider
     private static bool _moving; // The selected card is moved with the keys of the directions
     private static string _typed = string.Empty; // The number typed to select a card
     private static string _filter = string.Empty; // Only the cards with it in their names or paths are not dimmed
@@ -88,8 +140,13 @@ internal static class CorkboardPage
         SelectLast();
     }
 
-    // The card on top selected (none on an empty board)
-    private static void SelectLast() => _selected = Corkboard.Cards.Count > 0 ? Corkboard.Cards[^1].Number : -1;
+    // The card on top selected (of those the mode selects, if there are any; a divider when there is nothing else)
+    private static void SelectLast()
+    {
+        var cards = Corkboard.Cards;
+        _selected = (cards.LastOrDefault(card => !card.IsDivider && InMode(card)) ?? cards.LastOrDefault(InMode) ??
+                     cards.LastOrDefault(card => !card.IsDivider) ?? cards.LastOrDefault())?.Number ?? NoCard;
+    }
 
     private static Corkboard.Card? Selected => Corkboard.Numbered(_selected);
 
@@ -99,7 +156,8 @@ internal static class CorkboardPage
     internal static void ForgetMarks() => _marks.Clear();
 
     // What a card is, as its mark keeps it: its file or folder, or a note or a badge (English: not shown)
-    private static string MarkOf(Corkboard.Card card) => card.IsBadge ? "\tbadge" : card.IsNote ? "\tnote" : card.Path;
+    private static string MarkOf(Corkboard.Card card) =>
+        card.IsDivider ? "\tdivider" : card.IsBadge ? "\tbadge" : card.IsNote ? "\tnote" : card.Path;
 
     private static bool IsMarked(Corkboard.Card card) =>
         _marks.TryGetValue(card.Number, out var mark) && mark == MarkOf(card);
@@ -128,7 +186,8 @@ internal static class CorkboardPage
     // The cards the filter leaves (all without a filter), in the order they are drawn
     private static List<Corkboard.Card> Matching() => Corkboard.Cards.Where(Matches).ToList();
 
-    private static bool Matches(Corkboard.Card card) => _filter.Length == 0 ||
+    // (a divider is not dimmed: it tiles the board)
+    private static bool Matches(Corkboard.Card card) => _filter.Length == 0 || card.IsDivider ||
                                                         card.Name.Contains(_filter, StringComparison.OrdinalIgnoreCase) ||
                                                         card.Path.Contains(_filter, StringComparison.OrdinalIgnoreCase) ||
                                                         card.Text.Contains(_filter, StringComparison.OrdinalIgnoreCase);
@@ -221,7 +280,10 @@ internal static class CorkboardPage
             // The nearest card that way
             if (card == null) return true;
             var (columns, rows) = Direction(navigation);
-            if (Corkboard.Nearest(card, columns, rows, Corkboard.BoardWidth, Height) is { } next) _selected = next.Number;
+            if (Corkboard.Nearest(card, columns, rows, Corkboard.BoardWidth, Height, InMode) is { } next)
+            {
+                _selected = next.Number;
+            }
             return true;
         }
 
@@ -229,6 +291,9 @@ internal static class CorkboardPage
         {
             case '?':
                 Tools.WriteEditorHelp(Tools.HelpTopic.Board);
+                return true;
+            case '|':
+                AddDivider();
                 return true;
             case ':':
                 return RunCommand();
@@ -281,6 +346,9 @@ internal static class CorkboardPage
             case ConsoleKey.B:
                 AddBadge();
                 break;
+            case ConsoleKey.M:
+                ChangeMode(string.Empty);
+                break;
             case ConsoleKey.I:
                 ShowInfo(card);
                 break;
@@ -300,10 +368,12 @@ internal static class CorkboardPage
         _ => (0, 1)
     };
 
-    // Tab and Shift+Tab: the next/previous card by number (of those the filter leaves), going round
+    // Tab and Shift+Tab: the next/previous card by number (of those the filter leaves and the mode selects), going
+    // round; the dividers after the cards, from the left
     private static void SelectNext(bool back)
     {
-        var numbers = Matching().Select(card => card.Number).Order().ToList();
+        var numbers = Matching().Where(InMode).OrderBy(card => card.IsDivider)
+            .ThenBy(card => card.IsDivider ? card.X : card.Number).Select(card => card.Number).ToList();
         if (numbers.Count == 0) return;
         var at = numbers.IndexOf(_selected);
         _selected = at < 0 ? numbers[0] : numbers[(at + (back ? numbers.Count - 1 : 1)) % numbers.Count];
@@ -351,7 +421,7 @@ internal static class CorkboardPage
     // note
     private static void Open(Corkboard.Card? card)
     {
-        if (card == null) return;
+        if (card == null || card.IsDivider) return;
         if (card.IsNote)
         {
             EditNote(card);
@@ -407,6 +477,44 @@ internal static class CorkboardPage
         EditNote(card);
     }
 
+    // | or ":divider": a new divider, in the column right of the selected card (between it and the next, as the
+    // cards are laid a column apart), or in the middle of the board
+    private static void AddDivider()
+    {
+        var width = Corkboard.BoardWidth;
+        var column = width / 2;
+        if (Selected is { IsDivider: false } card && Corkboard.Shown(card, width, Height).X + card.Width is var right &&
+            right < width)
+        {
+            column = right;
+        }
+
+        _selected = Corkboard.AddDivider(column, width).Number;
+        _message = Lang.T("Divider added: V and h/l move it");
+        SaveCards();
+    }
+
+    // M or ":mode name": what the keys select, the next mode or the one named (kept in the settings)
+    private static void ChangeMode(string word)
+    {
+        if (word.Trim().Length == 0)
+        {
+            Mode = (SelectMode)(((int)Mode + 1) % ModeWords.Length);
+        }
+        else if (ModeOf(word) is { } mode)
+        {
+            Mode = mode;
+        }
+        else
+        {
+            _message = Lang.T(":mode cards, :mode badges, :mode dividers or :mode all");
+            return;
+        }
+
+        _message = Lang.F("Select: {0}", ModeName(Mode));
+        FileIo.SaveSettings();
+    }
+
     // The text of a note in the editor (its first line is the title of the card, unless it has one of its own). It
     // is kept on the board and card it was written for, by number: the cards may be read again while the editor is
     // open, and another board opened (":board" in the editor)
@@ -443,6 +551,16 @@ internal static class CorkboardPage
     private static void ShowInfo(Corkboard.Card? card)
     {
         if (card == null) return;
+        if (card.IsDivider)
+        {
+            ChoiceBox.Forget();
+            ChoiceBox.ShowRows(Lang.T("Divider"), new[]
+            {
+                (Lang.T("Column:"), (Corkboard.Shown(card, Corkboard.BoardWidth, Height).X + 1).ToString())
+            });
+            return;
+        }
+
         if (card.IsFolder)
         {
             _message = Directory.Exists(card.Path)
@@ -502,6 +620,12 @@ internal static class CorkboardPage
             return;
         }
 
+        if (card.IsDivider)
+        {
+            _message = Lang.T("A divider has no title");
+            return;
+        }
+
         if (title.Trim().Length == 0)
         {
             ChoiceBox.Forget();
@@ -523,7 +647,7 @@ internal static class CorkboardPage
         if (group.Count > 1)
         {
             // The marked cards, with the selected one
-            var files = group.Any(marked => !marked.IsNote) ? Lang.T("The files stay where they are.") : string.Empty;
+            var files = group.Any(marked => marked.HasPlace) ? Lang.T("The files stay where they are.") : string.Empty;
             if (!ChoiceBox.Confirm(Lang.T("Remove cards"), Lang.F("Take {0} cards off the corkboard?", group.Count),
                     files, false))
             {
@@ -538,10 +662,12 @@ internal static class CorkboardPage
             return;
         }
 
-        var note = card.IsNote ? string.Empty
+        var note = !card.HasPlace ? string.Empty
             : card.IsFolder ? Lang.T("The folder stays where it is.")
             : Lang.T("The file stays where it is.");
-        var asked = card.IsBadge
+        var asked = card.IsDivider
+            ? ChoiceBox.Confirm(Lang.T("Remove divider"), Lang.T("Take the divider off the corkboard?"), note, false)
+            : card.IsBadge
             ? ChoiceBox.Confirm(Lang.T("Remove badge"), Lang.F("Take badge {0} off the corkboard?", card.Number), note,
                 false)
             : ChoiceBox.Confirm(Lang.T("Remove card"), Lang.F("Take card {0} off the corkboard?", card.Number), note,
@@ -607,12 +733,14 @@ internal static class CorkboardPage
 
         Draw();
         ChoiceBox.Forget();
-        // (the cards and the badges counted apart, as on the line above the keys)
+        // (the cards, the badges and the dividers counted apart, as on the line above the keys)
         var badges = Corkboard.Cards.Count(card => card.IsBadge);
-        var question = badges > 0
-            ? Lang.F("Take all the cards ({0}) and badges ({1}) off the board?", count - badges, badges)
+        var dividers = Corkboard.Cards.Count(card => card.IsDivider);
+        var question = badges + dividers > 0
+            ? Lang.F("Take all the cards ({0}), badges ({1}) and dividers ({2}) off the board?",
+                count - badges - dividers, badges, dividers)
             : Lang.F("Take all the cards ({0}) off the board?", count);
-        var files = Corkboard.Cards.Any(card => !card.IsNote) ? Lang.T("The files stay where they are.") : string.Empty;
+        var files = Corkboard.Cards.Any(card => card.HasPlace) ? Lang.T("The files stay where they are.") : string.Empty;
         if (!ChoiceBox.ConfirmGuarded(Lang.T("Clear board"), question, files))
         {
             return;
@@ -620,7 +748,7 @@ internal static class CorkboardPage
 
         Corkboard.Clear();
         _marks.Clear();
-        _selected = -1;
+        _selected = NoCard;
         _message = Lang.F("Cards taken off: {0} (u puts them back)", count);
         SaveCards();
     }
@@ -695,6 +823,12 @@ internal static class CorkboardPage
                 break;
             case "badge":
                 AddBadge();
+                break;
+            case "divider":
+                AddDivider();
+                break;
+            case "mode":
+                ChangeMode(argument);
                 break;
             case "info":
                 ShowInfo(Selected);
@@ -892,7 +1026,7 @@ internal static class CorkboardPage
         Corkboard.Cards.Where(card => IsMissing(card, check)).ToList();
 
     private static bool IsMissing(Corkboard.Card card, MissingPlaces.Checker check) =>
-        !card.IsNote && check.IsMissing(card.Path, !card.IsFolder);
+        card.HasPlace && check.IsMissing(card.Path, !card.IsFolder);
 
     // ":missing": the cards whose file or folder is gone, to select one
     private static void ShowMissing()
@@ -937,9 +1071,10 @@ internal static class CorkboardPage
     {
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
         Tools.ClearScreen();
-        Menu.WriteModeLabel(Corkboard.CurrentBoard.Length > 0
+        // The board, and what the keys select
+        Menu.WriteModeLabel((Corkboard.CurrentBoard.Length > 0
             ? Lang.F("{0}: {1}", Lang.T("Corkboard"), Corkboard.NameOf(Corkboard.CurrentBoard))
-            : Lang.T("Corkboard"), string.Empty, 0);
+            : Lang.T("Corkboard")) + " | " + ModeName(Mode), string.Empty, 0);
         Menu.WriteNameInTopBar();
         // A ruler of the columns of the board, as above the logo of the logo editor (to line the cards up)
         Tools.SetCursorEx(1, 0);
@@ -949,25 +1084,104 @@ internal static class CorkboardPage
         var width = Corkboard.BoardWidth;
         var check = new MissingPlaces.Checker();
         var selected = Selected;
-        foreach (var card in Corkboard.Cards.Where(card => card != selected).Append(selected))
+        // The dividers first, behind the cards; the column of the selected one shown on the ruler
+        foreach (var divider in Corkboard.Cards.Where(card => card.IsDivider))
+        {
+            DrawDivider(divider, divider == selected, width);
+        }
+
+        foreach (var card in Corkboard.Cards.Where(card => !card.IsDivider && card != selected)
+                     .Append(selected is { IsDivider: false } ? selected : null))
         {
             if (card != null) DrawCard(card, card == selected, IsMissing(card, check), width, Height);
         }
 
-        if (Corkboard.Cards.Count == 0)
-        {
-            Tools.SetCursorEx(BoardTop + 1, 2);
-            ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
-            Console.Write(Tools.TruncateString(Lang.T("No cards yet: :pin a file in the file browser or the editor, or N here"),
-                width - 4, true));
-        }
+        if (Corkboard.Cards.Count == 0) DrawFirstKeys(width);
 
         if (PeekOn) DrawPeek(selected);
         DrawStatus();
         Tools.SetCursorEx(Init.LineCount - 1, 0);
         Menu.WriteKeyHints(_moving
             ? Lang.T("hjkl Move | HJKL Move 5 | Enter/Esc Done")
-            : Lang.T("Tab/hjkl Select | Enter Open | Space Mark | V Move | A Note | B Badge | N New | C Color | X Title | I Info | P Peek | Esc Close"));
+            : Lang.T("Tab/hjkl Select | M Mode | Enter Open | Space Mark | V Move | A Note | B Badge | N New | C Color | X Title | I Info | P Peek | Esc Close"));
+    }
+
+    // A divider: a line from the top of the board to the bottom at its column (a marked one with a "*" at its top), and
+    // the column of the selected one highlighted on the ruler
+    private static void DrawDivider(Corkboard.Card divider, bool selected, int width)
+    {
+        var (x, _) = Corkboard.Shown(divider, width, Height);
+        if (selected)
+        {
+            Tools.SetCursorEx(1, x);
+            ConsoleColors.SetColors(ConsoleColors.ColorPreset.SelectorInverted);
+            Console.Write(Tools.Ruler(x + 1)[x]);
+        }
+
+        for (var row = 0; row < Height; row++)
+        {
+            Tools.SetCursorEx(BoardTop + row, x);
+            if (row == 0 && IsMarked(divider)) ConsoleColors.SetColors(ConsoleColors.ColorPreset.AttentionInverted);
+            else if (selected && _moving) ConsoleColors.SetColors(ConsoleColors.ColorPreset.AttentionInverted);
+            else if (selected) ConsoleColors.SetColors(ConsoleColors.ColorPreset.Accent);
+            else if (divider.Color is { } color) ConsoleColors.SetTextColor(color);
+            else ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
+            Console.Write(row == 0 && IsMarked(divider) ? '*' : '|');
+        }
+
+        ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
+    }
+
+    // An empty board: the keys to start with, in a box in its middle (or a line, on a board too low for it)
+    private static void DrawFirstKeys(int width)
+    {
+        // English: the keys
+        var rows = new (string Keys, string Text)[]
+        {
+            ("N F", Lang.T("Pin a file / a folder")),
+            ("A B |", Lang.T("Add a note / a badge / a divider")),
+            ("Tab hjkl", Lang.T("Select")),
+            ("M", Lang.T("Select cards, badges, dividers or all")),
+            ("Space V", Lang.T("Mark / Move (hjkl, HJKL: 5 steps)")),
+            ("T E", Lang.T("On top of / below the others")),
+            ("C X D u", Lang.T("Color / Title / Remove / Put back")),
+            ("?", Lang.T("All keys"))
+        };
+        if (Height < rows.Length + 2 || width < 40)
+        {
+            Tools.SetCursorEx(BoardTop + 1, 2);
+            ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
+            Console.Write(Tools.TruncateString(Lang.T("No cards yet: :pin a file in the file browser or the editor, or N here"),
+                width - 4, true));
+            return;
+        }
+
+        const int keysWidth = 10;
+        var inner = Math.Min(width - 4, 58);
+        var left = (width - inner - 2) / 2;
+        var top = BoardTop + (Height - rows.Length - 2) / 2;
+        var title = Tools.TruncateString(" " + Lang.T("An empty corkboard") + " ", inner - 2, true);
+        Tools.SetCursorEx(top, left);
+        ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
+        Console.Write(AsciiStyles.GetTopCorner() + "-" + title +
+                      new string('-', Math.Max(0, inner - 1 - TextMetrics.WidthOf(title))) + AsciiStyles.GetTopCorner());
+        for (var i = 0; i < rows.Length; i++)
+        {
+            Tools.SetCursorEx(top + 1 + i, left);
+            ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
+            Console.Write("| ");
+            ConsoleColors.SetColors(ConsoleColors.ColorPreset.Accent);
+            Console.Write(rows[i].Keys.PadRight(keysWidth));
+            ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
+            var text = Tools.TruncateString(rows[i].Text, inner - keysWidth - 2, true);
+            Console.Write(text + new string(' ', Math.Max(0, inner - keysWidth - 2 - TextMetrics.WidthOf(text))));
+            ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
+            Console.Write(" |");
+        }
+
+        Tools.SetCursorEx(top + 1 + rows.Length, left);
+        Console.Write(AsciiStyles.GetBottomCorner() + new string('-', inner) + AsciiStyles.GetBottomCorner());
+        ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
     }
 
     private static void DrawCard(Corkboard.Card card, bool selected, bool missing, int width, int height)
@@ -976,7 +1190,7 @@ internal static class CorkboardPage
         var marked = IsMarked(card);
         if (card.IsBadge) DrawBadgeAt(card, BoardTop + y, x, Init.LineWidth, selected, !Matches(card), marked);
         else DrawCardAt(card, BoardTop + y, x, Init.LineWidth, selected, missing || !Matches(card), missing, marked,
-            selected ? (x, y) : null);
+            selected && _moving ? (x, y) : null);
     }
 
     /// <summary>
@@ -986,7 +1200,7 @@ internal static class CorkboardPage
     internal static string PlaceText(int x, int y) => (x + 1) + "," + (y + 1);
 
     /// <summary>
-    /// The top edge of the selected card: its place at the right end ("-- 26,4 -"), where it fits
+    /// The top edge of the card being moved: its place at the right end ("-- 26,4 -"), where it fits
     /// </summary>
     internal static string TopEdge(Corkboard.Card card, int inner, (int X, int Y) place)
     {
@@ -1013,9 +1227,8 @@ internal static class CorkboardPage
         };
     }
 
-    // A badge at a place on the screen, cut at a column: round, with its number on the top edge and an "i" (English:
-    // the same in all languages). Its corners are left as they are, so what is below shows there. A marked one has
-    // a "*" at its top left
+    // A badge at a place on the screen, cut at a column: small, with its number on the top edge and an "i" (English:
+    // the same in all languages), its corners in the style of the boxes. A marked one has a "*" at its top left
     private static void DrawBadgeAt(Corkboard.Card card, int row, int column, int end, bool selected, bool dim,
         bool marked)
     {
@@ -1035,23 +1248,25 @@ internal static class CorkboardPage
             Console.Write(text.Length > end - at ? text[..(end - at)] : text);
         }
 
+        var top = AsciiStyles.GetTopCorner().ToString();
+        var bottom = AsciiStyles.GetBottomCorner().ToString();
         if (marked) ConsoleColors.SetColors(ConsoleColors.ColorPreset.AttentionInverted);
         else Frame();
-        Put(column + 1, marked ? "*" : ".");
+        Put(column, marked ? "*" : top);
         ConsoleColors.SetColors(selected ? ConsoleColors.ColorPreset.SelectorInverted : ConsoleColors.ColorPreset.Divider);
-        Put(column + 2, BadgeEdge(card.Number));
+        Put(column + 1, BadgeEdge(card.Number));
         Frame();
-        Put(column + 5, ".");
+        Put(column + 4, top);
         row++;
-        Put(column, "|  ");
+        Put(column, "| ");
         if (dim) ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
         else if (card.Color is { } color) ConsoleColors.SetTextColor(color);
         else ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
-        Put(column + 3, "i"); // English: the mark of a badge
+        Put(column + 2, "i"); // English: the mark of a badge
         Frame();
-        Put(column + 4, "  |");
+        Put(column + 3, " |");
         row++;
-        Put(column + 1, "'---'");
+        Put(column, bottom + "---" + bottom);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
     }
 
@@ -1172,7 +1387,9 @@ internal static class CorkboardPage
             Init.LineWidth - 1, true);
         Console.Write(label + new string('-', Math.Max(0, Init.LineWidth - 1 - TextMetrics.WidthOf(label))));
         if (card == null) return;
-        var lines = card.IsNote ? card.Text.Split('\n').ToList() : NotePanes.PeekPlace(card.Path, PeekRows - 1);
+        var lines = card.IsDivider ? new List<string>()
+            : card.IsNote ? card.Text.Split('\n').ToList()
+            : NotePanes.PeekPlace(card.Path, PeekRows - 1);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
         for (var i = 0; i < PeekRows - 1 && i < lines.Count; i++)
         {
@@ -1181,7 +1398,7 @@ internal static class CorkboardPage
         }
     }
 
-    // The place of a selected badge (as the place on the top edge of a card: a badge has no room for it)
+    // The place of a badge being moved (as the place on the top edge of a card: a badge has no room for it)
     private static string BadgePlace(Corkboard.Card badge)
     {
         var (x, y) = Corkboard.Shown(badge, Corkboard.BoardWidth, Height);
@@ -1199,14 +1416,18 @@ internal static class CorkboardPage
             : _typed.Length > 0 ? Lang.F("Card: {0}", _typed)
             : _filter.Length > 0 ? Lang.F("Filter: {0}", _filter)
             : _moving && Group() is { Count: > 1 } group ? Lang.F("Moving: {0} cards", group.Count)
+            : _moving && Selected is { IsBadge: true } badge ? BadgePlace(badge)
+            : _moving && Selected is { IsDivider: true } divider
+                ? Lang.F("Divider at {0}", Corkboard.Shown(divider, Corkboard.BoardWidth, Height).X + 1)
             : _moving && Selected is { } moving ? Lang.F("Moving: {0}", moving.Name)
             : _marks.Count > 0 ? Lang.F("Marked: {0}", _marks.Count)
-            : Selected is { IsBadge: true } badge ? BadgePlace(badge)
             : string.Empty;
-        // How many cards there are, and badges (when there are any)
+        // How many cards there are, and badges and dividers (when there are any)
         var badges = Corkboard.Cards.Count(card => card.IsBadge);
-        var count = " " + Lang.F("Cards: {0}", Corkboard.Cards.Count - badges) +
-                    (badges > 0 ? " | " + Lang.F("Badges: {0}", badges) : string.Empty) + " ";
+        var dividers = Corkboard.Cards.Count(card => card.IsDivider);
+        var count = " " + Lang.F("Cards: {0}", Corkboard.Cards.Count - badges - dividers) +
+                    (badges > 0 ? " | " + Lang.F("Badges: {0}", badges) : string.Empty) +
+                    (dividers > 0 ? " | " + Lang.F("Dividers: {0}", dividers) : string.Empty) + " ";
         if (text.Length > 0)
         {
             Tools.SetCursorEx(row, 2);

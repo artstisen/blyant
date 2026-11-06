@@ -1,5 +1,13 @@
 # Changes
 
+## v1.4.2 (unreleased)
+- **Dividers on the corkboard**: `|` (or `:divider`) adds a line from the top of the board to the bottom, to tile the board when you plan (a column for each act). It is drawn behind the cards and badges, put right of the selected card, and moved left and right with `V` and `h` `l`; `C` colors it, `D` removes it and `Space` marks it to move it with its cards. Dividers take no numbers, so the numbers of the cards stay as they are. They are kept on lines of their own in the file of the board, which a version before 1.4.2 leaves out. See [Dividers](Guide-to-corkboard.md#dividers) in the guide.
+- **Selecting cards, badges or dividers**: `M` (or `:mode cards`, `badges`, `dividers`, `all`) changes what `h` `j` `k` `l` and `Tab` select on the corkboard, shown in the top bar after the name of the board and kept in the setting `boardmode`. In **All** they stop at everything they pass.
+- **The keys of an empty corkboard**: a board without cards shows the keys to start with in a box in its middle (pinning, notes, badges and dividers, selecting, the modes, marking, moving, `T` and `E`).
+- **A smaller badge**: a badge is drawn `.-3-.` / `| i |` / `'---'`, 5 columns wide, with its corners in the style of the boxes (`+` with Classic ASCII).
+- **The place of a card while it is moved**: the column and row on the top edge of a card (and `Badge at` on the line above the keys) are shown only while the card is moved with `V`, not all the time it is selected.
+- **`:clear` counts the dividers too**: it asks to take all the cards, badges and dividers off, with how many there are of each.
+
 ## v1.4.1 (2026-11-04)
 - **Moving between the cards of the corkboard goes along the rows**: `l` and `h` (and the arrow keys) select the next card in the row of the selected one, also when the cards are laid a little apart, and `j` and `k` the next in its column. At the end of a row or column, the nearest card that way in another one is selected, as before. It used to take a card just below as nearer than one further along the row.
 - **A ruler on the corkboard**: the line below the top bar shows the columns of the board, as the ruler above the logo in the logo editor does (a dot for each column, `:` for every 5th and the tens as digits), to line the cards up. The selected card shows its place (its column on the ruler and its row) at the right end of its top edge, also while it is moved, and a selected badge on the line above the keys.

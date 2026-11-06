@@ -8,12 +8,12 @@
 <circle cx="40" cy="17" r="6" fill="#FEBC2E"/>
 <circle cx="60" cy="17" r="6" fill="#28C840"/>
 <text x="434.0" y="22" fill="#A0A0A0" text-anchor="middle">Blyant: the corkboard of a project, with the peek of a card</text>
-<rect x="14.0" y="48" width="226.8" height="17" fill="#61D6D6"/>
-<text x="14.0" y="60.8" fill="#0C0C0C" textLength="218.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> CORKBOARD: HARBOUR LIGHTS</text>
+<rect x="14.0" y="48" width="277.2" height="17" fill="#61D6D6"/>
+<text x="14.0" y="60.8" fill="#0C0C0C" textLength="268.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> CORKBOARD: HARBOUR LIGHTS | ALL</text>
 <text x="392.0" y="60.8" fill="#61D6D6" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Blyant</text>
 <text x="14.0" y="77.8" fill="#767676" textLength="823.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">....:....1....:....2....:....3....:....4....:....5....:....6....:....7....:....8....:....9....:...</text>
 <text x="14.0" y="94.8" fill="#F9F1A5" textLength="201.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">.----------------------.</text>
-<text x="400.4" y="94.8" fill="#F9F1A5" textLength="201.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">.--------------- 47,1 -.</text>
+<text x="400.4" y="94.8" fill="#F9F1A5" textLength="201.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">.----------------------.</text>
 <rect x="408.8" y="99" width="25.2" height="17" fill="#61D6D6"/>
 <text x="14.0" y="111.8" fill="#F9F1A5" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="22.4" y="111.8" fill="#767676" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> 1</text>
@@ -32,16 +32,16 @@
 <text x="627.2" y="128.8" fill="#E74856" textLength="168.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> The Teeth         |</text>
 <text x="207.2" y="145.8" fill="#61D6D6" textLength="201.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&#x27;----------------------&#x27;</text>
 <text x="593.6" y="145.8" fill="#E74856" textLength="201.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&#x27;----------------------&#x27;</text>
-<text x="123.2" y="162.8" fill="#16C60C" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">.</text>
-<text x="131.6" y="162.8" fill="#767676" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">-5-</text>
-<text x="156.8" y="162.8" fill="#16C60C" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">.</text>
-<text x="702.8" y="162.8" fill="#E74856" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">.</text>
-<text x="711.2" y="162.8" fill="#767676" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">-6-</text>
-<text x="736.4" y="162.8" fill="#E74856" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">.</text>
-<text x="114.8" y="179.8" fill="#16C60C" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|  i  |</text>
-<text x="694.4" y="179.8" fill="#E74856" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|  i  |</text>
-<text x="123.2" y="196.8" fill="#16C60C" textLength="42.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&#x27;---&#x27;</text>
-<text x="702.8" y="196.8" fill="#E74856" textLength="42.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&#x27;---&#x27;</text>
+<text x="114.8" y="162.8" fill="#16C60C" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">.</text>
+<text x="123.2" y="162.8" fill="#767676" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">-5-</text>
+<text x="148.4" y="162.8" fill="#16C60C" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">.</text>
+<text x="694.4" y="162.8" fill="#E74856" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">.</text>
+<text x="702.8" y="162.8" fill="#767676" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">-6-</text>
+<text x="728.0" y="162.8" fill="#E74856" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">.</text>
+<text x="114.8" y="179.8" fill="#16C60C" textLength="42.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">| i |</text>
+<text x="694.4" y="179.8" fill="#E74856" textLength="42.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">| i |</text>
+<text x="114.8" y="196.8" fill="#16C60C" textLength="42.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&#x27;---&#x27;</text>
+<text x="694.4" y="196.8" fill="#E74856" textLength="42.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&#x27;---&#x27;</text>
 <text x="22.4" y="213.8" fill="#16C60C" textLength="201.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">.-///------------------.</text>
 <text x="232.4" y="213.8" fill="#767676" textLength="201.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">.----------------------.</text>
 <text x="627.2" y="213.8" fill="#767676" textLength="201.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">.~~~~~~~~~~~~~~~~~~~~~~.</text>
@@ -83,27 +83,27 @@
 <text x="14.0" y="485.8" fill="#CCCCCC" textLength="462.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> a pair of reading glasses with one arm mended in wire.</text>
 <text x="14.0" y="519.8" fill="#767676" textLength="823.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">------------------------------------------------------------------------- Cards: 11 | Badges: 2 --</text>
 <rect x="22.4" y="524" width="84.0" height="17" fill="#CCCCCC"/>
-<rect x="173.6" y="524" width="58.8" height="17" fill="#CCCCCC"/>
-<rect x="282.8" y="524" width="58.8" height="17" fill="#CCCCCC"/>
-<rect x="392.0" y="524" width="25.2" height="17" fill="#CCCCCC"/>
+<rect x="173.6" y="524" width="25.2" height="17" fill="#CCCCCC"/>
+<rect x="249.2" y="524" width="58.8" height="17" fill="#CCCCCC"/>
+<rect x="358.4" y="524" width="58.8" height="17" fill="#CCCCCC"/>
 <rect x="467.6" y="524" width="25.2" height="17" fill="#CCCCCC"/>
 <rect x="543.2" y="524" width="25.2" height="17" fill="#CCCCCC"/>
-<rect x="627.2" y="524" width="25.2" height="17" fill="#CCCCCC"/>
-<rect x="694.4" y="524" width="25.2" height="17" fill="#CCCCCC"/>
+<rect x="618.8" y="524" width="25.2" height="17" fill="#CCCCCC"/>
+<rect x="702.8" y="524" width="25.2" height="17" fill="#CCCCCC"/>
 <text x="22.4" y="536.8" fill="#0C0C0C" textLength="75.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Tab/hjkl</text>
 <text x="106.4" y="536.8" fill="#CCCCCC" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Select</text>
-<text x="173.6" y="536.8" fill="#0C0C0C" textLength="50.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Enter</text>
-<text x="232.4" y="536.8" fill="#CCCCCC" textLength="42.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Open</text>
-<text x="282.8" y="536.8" fill="#0C0C0C" textLength="50.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Space</text>
-<text x="341.6" y="536.8" fill="#CCCCCC" textLength="42.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Mark</text>
-<text x="392.0" y="536.8" fill="#0C0C0C" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> V</text>
-<text x="417.2" y="536.8" fill="#CCCCCC" textLength="42.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Move</text>
-<text x="467.6" y="536.8" fill="#0C0C0C" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> A</text>
-<text x="492.8" y="536.8" fill="#CCCCCC" textLength="42.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Note</text>
-<text x="543.2" y="536.8" fill="#0C0C0C" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> B</text>
-<text x="568.4" y="536.8" fill="#CCCCCC" textLength="50.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Badge</text>
-<text x="627.2" y="536.8" fill="#0C0C0C" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> N</text>
-<text x="652.4" y="536.8" fill="#CCCCCC" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> New</text>
-<text x="694.4" y="536.8" fill="#0C0C0C" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> C</text>
-<text x="719.6" y="536.8" fill="#CCCCCC" textLength="50.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Color</text>
+<text x="173.6" y="536.8" fill="#0C0C0C" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> M</text>
+<text x="198.8" y="536.8" fill="#CCCCCC" textLength="42.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Mode</text>
+<text x="249.2" y="536.8" fill="#0C0C0C" textLength="50.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Enter</text>
+<text x="308.0" y="536.8" fill="#CCCCCC" textLength="42.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Open</text>
+<text x="358.4" y="536.8" fill="#0C0C0C" textLength="50.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Space</text>
+<text x="417.2" y="536.8" fill="#CCCCCC" textLength="42.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Mark</text>
+<text x="467.6" y="536.8" fill="#0C0C0C" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> V</text>
+<text x="492.8" y="536.8" fill="#CCCCCC" textLength="42.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Move</text>
+<text x="543.2" y="536.8" fill="#0C0C0C" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> A</text>
+<text x="568.4" y="536.8" fill="#CCCCCC" textLength="42.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Note</text>
+<text x="618.8" y="536.8" fill="#0C0C0C" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> B</text>
+<text x="644.0" y="536.8" fill="#CCCCCC" textLength="50.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> Badge</text>
+<text x="702.8" y="536.8" fill="#0C0C0C" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> N</text>
+<text x="728.0" y="536.8" fill="#CCCCCC" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> New</text>
 </svg>

@@ -792,6 +792,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("Tab Shift+Tab", Lang.T("Select the next/previous card"), false));
             _shortcutList.Add(new Shortcut("12 Enter", Lang.T("Select card 12"), false));
             _shortcutList.Add(new Shortcut("h j k l", Lang.T("Select the next card that way (its row/column first)"), false));
+            _shortcutList.Add(new Shortcut("M :mode", Lang.T("Select only cards, badges or dividers, or all"), false));
             _shortcutList.Add(new Shortcut("Enter", Lang.T("Open the card's file or folder (a note: edit it)"), false));
             _shortcutList.Add(new Shortcut("  Enter", Lang.T("Back to the board when the file or folder is closed"), false));
             _shortcutList.Add(new Shortcut("Space", Lang.T("Mark/Unmark: V C T E D work on all marked"), false));
@@ -805,6 +806,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("F :folder", Lang.T("Pin a folder, picked in the file browser"), false));
             _shortcutList.Add(new Shortcut("A :note", Lang.T("A note card: its text written in the editor"), false));
             _shortcutList.Add(new Shortcut("B :badge", Lang.T("A badge (an \"i\") with a note, to mark a place"), false));
+            _shortcutList.Add(new Shortcut("| :divider", Lang.T("A divider: a line top to bottom (V h/l moves it)"), false));
             _shortcutList.Add(new Shortcut("I :info", Lang.T("Information about the card, its file or folder"), false));
             _shortcutList.Add(new Shortcut("P :peek", Lang.T("Peek of the selected card on/off"), false));
             _shortcutList.Add(new Shortcut(":list", Lang.T("Boards: open, add, rename, delete"), false));

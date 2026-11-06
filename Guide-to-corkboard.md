@@ -30,15 +30,32 @@ A new card is placed at the first free place, row by row, with a column between 
 `B` (or `:badge`) adds a badge: a small round mark with an `i`, to mark a place on the board, such as a group of cards that are to do, done or new. Like a note card it has a note, written in the editor at once and read in the peek when the badge is selected, and `Enter` edits it again. Give it a color with `C` (its frame and the `i`), and move it with `V` beside the cards it is about:
 
 ```
- .-3-.
-|  i  |
- '---'
+.-3-.
+| i |
+'---'
 ```
 
-A badge is as high as a card and 7 columns wide, with its number on its top edge. It is selected, moved, colored, put on top or below, removed and put back as a card is, and `h` `j` `k` `l` go to it in the row or column of the cards (a badge under a card shares its column). What is said about it names it a badge (`D` asks "Take badge 2 off the corkboard?"), and the line above the keys counts the badges apart from the cards (`Cards: 5 | Badges: 2`). It has no title, so `X` is refused, and it is kept also when its note is left empty. `:arrange` leaves the badges where they are. Beside the list of projects, the badges of a project's board are shown among its cards, by their numbers. A version of Blyant before 1.4.1 shows a badge as a note card.
+A badge is as high as a card and 5 columns wide, with its number on its top edge, and its corners in the style of the boxes (`+` with Classic ASCII). It is selected, moved, colored, put on top or below, removed and put back as a card is, and `h` `j` `k` `l` go to it in the row or column of the cards (a badge under a card shares its column). What is said about it names it a badge (`D` asks "Take badge 2 off the corkboard?"), and the line above the keys counts the badges apart from the cards (`Cards: 5 | Badges: 2`). It has no title, so `X` is refused, and it is kept also when its note is left empty. `:arrange` leaves the badges where they are. Beside the list of projects, the badges of a project's board are shown among its cards, by their numbers. A version of Blyant before 1.4.1 shows a badge as a note card.
+
+## Dividers
+`|` (or `:divider`) adds a divider: a line from the top of the board to the bottom, to tile the board when you plan, such as a column for each act. It is put in the column right of the selected card (between it and the next, as the cards are laid a column apart), or in the middle of the board. The dividers are drawn first, so the cards and badges are on top of them.
+
+A selected divider is highlighted, and its column on the ruler too. `V` and `h` `l` move it left and right (`H` `L`: five steps), and the line above the keys tells its column while it is moved (`Divider at 41`). `C` colors it, `D` removes it (`u` puts it back), `I` tells its column and `Space` marks it, so it can be moved with the cards of its column. A divider has no number and no title: the numbers stay those of the cards. `:arrange` and `/` leave the dividers as they are, and the line above the keys counts them (`Dividers: 3`). A divider is a line of its own in the file of the board; a version of Blyant before 1.4.2 leaves it out.
+
+## Selecting cards, badges or dividers
+`M` (or `:mode`) changes what `h` `j` `k` `l` and `Tab` select, and the top bar shows it after the name of the board:
+- **All**: everything they pass, the dividers too (as they go from top to bottom, only `h` and `l` go to a divider or from it)
+- **Cards**: the cards of files, folders and notes
+- **Badges**: only the badges
+- **Dividers**: only the dividers, with `h` and `l`
+
+`:mode cards` (`badges`, `dividers`, `all`) picks one, and `Tab` completes them. The mode is kept (setting `boardmode`). A number and `Enter` select any card or badge, whatever the mode.
+
+## On an empty board
+A board without cards shows the keys to start with in a box in its middle: pinning files and folders, adding notes, badges and dividers, selecting, the modes, marking and moving, `T` `E`, and `?` for all the keys. The box is gone when the first card is on the board.
 
 ## On the corkboard
-- `Tab` `Shift+Tab` Select the next/previous card, by number
+- `Tab` `Shift+Tab` Select the next/previous card, by number (the dividers after the cards, from the left), of those the mode selects
 - `12` and `Enter` Select card 12 (the number is shown on the line above the keys while you type it; `Esc` drops it)
 - `h` `j` `k` `l` (or the arrow keys) Select the next card that way. `h` and `l` go along the row of the selected card first (the cards that share at least two of its three rows, so a card laid a little lower is in it), and `j` and `k` along its column (the cards that share at least half its width). At the end of a row or column, the nearest card that way in another one is selected
 - `Enter` Open the file of the selected card in the editor (a note: edit its text). Closing the editor (`:q`, `:wq`) brings you back to the corkboard, with the same card selected and the cards still marked. It is a jump: a jump made in the editor (`Ctrl+O`) goes on from there without coming back, and `Ctrl+K` and `Enter` in the editor take you back to the file you were in
@@ -55,7 +72,7 @@ A badge is as high as a card and 7 columns wide, with its number on its top edge
 - `:missing` The cards whose file is not there any more, in a list to select one. `:prune` Remove them, after asking (those on a drive that is not connected stay)
 - `Ctrl+O` (or `:jump`) the Jump menu, `Ctrl+K` (or `:recent`) the latest files, `?` (or `:help`) the keys, `Esc` (or `Q`) close
 
-The line below the top bar is a ruler of the columns of the board, as above the logo in the logo editor: a dot for each column, `:` for every 5th and the tens as digits, to line the cards up when you move them. The selected card shows its place at the right end of its top edge: its column on the ruler and its row on the board (`.~~~~~~~~~~~~~~ 26,4 ~.`), and a selected badge shows it on the line above the keys (`Badge at 26,4`), as it has no room for it.
+The line below the top bar is a ruler of the columns of the board, as above the logo in the logo editor: a dot for each column, `:` for every 5th and the tens as digits, to line the cards up when you move them. A card being moved (`V`) shows its place at the right end of its top edge: its column on the ruler and its row on the board (`.~~~~~~~~~~~~~~ 26,4 ~.`), and a badge being moved shows it on the line above the keys (`Badge at 26,4`), as it has no room for it.
 
 The selected card is drawn on top of the others while it is selected, with its number highlighted; that does not change the order of the cards. A card whose file is gone is dimmed and marked _(missing)_.
 

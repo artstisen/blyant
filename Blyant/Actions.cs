@@ -225,6 +225,7 @@ internal static class Actions
         FileFavorites.CurrentList = string.Empty;
         Corkboard.CurrentBoard = string.Empty;
         CorkboardPage.PeekOn = true;
+        CorkboardPage.Mode = CorkboardPage.SelectMode.All;
         JumpMenu.BookmarkNumbers = false;
         FileExplorer.FileNumbers = false;
         FileExplorer.HistoryNumbers = false;

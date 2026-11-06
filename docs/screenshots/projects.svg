@@ -8,7 +8,7 @@
 <circle cx="40" cy="17" r="6" fill="#FEBC2E"/>
 <circle cx="60" cy="17" r="6" fill="#28C840"/>
 <text x="434.0" y="22" fill="#A0A0A0" text-anchor="middle">Blyant: the projects, with the corkboard of the selected one, its cards and badges</text>
-<text x="30.8" y="60.8" fill="#767676" textLength="50.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">v1.4.1</text>
+<text x="30.8" y="60.8" fill="#767676" textLength="50.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">v1.4.2</text>
 <text x="30.8" y="77.8" fill="#F2F2F2" textLength="134.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">.--------------.</text>
 <text x="165.2" y="77.8" fill="#61D6D6" textLength="352.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">      MMM  MMM &quot;&quot;&quot;&quot;&quot;MM_ M_   MMM &quot;&quot;&quot;MMM&quot;&quot;&quot;</text>
 <text x="30.8" y="94.8" fill="#F2F2F2" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
@@ -79,34 +79,34 @@
 <text x="828.8" y="298.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="22.4" y="315.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="30.8" y="315.8" fill="#F2F2F2" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
-<text x="618.8" y="315.8" fill="#E74856" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&#x27;--</text>
-<text x="644.0" y="315.8" fill="#16C60C" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">.</text>
-<text x="652.4" y="315.8" fill="#767676" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">-5-</text>
-<text x="677.6" y="315.8" fill="#16C60C" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">.</text>
-<text x="686.0" y="315.8" fill="#E74856" textLength="117.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">--------------</text>
+<text x="618.8" y="315.8" fill="#E74856" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&#x27;-</text>
+<text x="635.6" y="315.8" fill="#16C60C" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">.</text>
+<text x="644.0" y="315.8" fill="#767676" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">-5-</text>
+<text x="669.2" y="315.8" fill="#16C60C" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">.</text>
+<text x="677.6" y="315.8" fill="#E74856" textLength="126.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">---------------</text>
 <text x="820.4" y="315.8" fill="#F2F2F2" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="828.8" y="315.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="22.4" y="332.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="30.8" y="332.8" fill="#F2F2F2" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
-<text x="635.6" y="332.8" fill="#16C60C" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|  i  |</text>
+<text x="635.6" y="332.8" fill="#16C60C" textLength="42.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">| i |</text>
 <text x="820.4" y="332.8" fill="#F2F2F2" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="828.8" y="332.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="22.4" y="349.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="30.8" y="349.8" fill="#F2F2F2" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
-<text x="644.0" y="349.8" fill="#16C60C" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&#x27;-</text>
-<text x="660.8" y="349.8" fill="#E74856" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">.</text>
-<text x="669.2" y="349.8" fill="#767676" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">-6-</text>
-<text x="694.4" y="349.8" fill="#E74856" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">.</text>
+<text x="635.6" y="349.8" fill="#16C60C" textLength="16.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&#x27;-</text>
+<text x="652.4" y="349.8" fill="#E74856" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">.</text>
+<text x="660.8" y="349.8" fill="#767676" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">-6-</text>
+<text x="686.0" y="349.8" fill="#E74856" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">.</text>
 <text x="820.4" y="349.8" fill="#F2F2F2" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="828.8" y="349.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="22.4" y="366.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="30.8" y="366.8" fill="#F2F2F2" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
-<text x="652.4" y="366.8" fill="#E74856" textLength="58.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|  i  |</text>
+<text x="652.4" y="366.8" fill="#E74856" textLength="42.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">| i |</text>
 <text x="820.4" y="366.8" fill="#F2F2F2" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="828.8" y="366.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="22.4" y="383.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="30.8" y="383.8" fill="#F2F2F2" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
-<text x="660.8" y="383.8" fill="#E74856" textLength="42.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&#x27;---&#x27;</text>
+<text x="652.4" y="383.8" fill="#E74856" textLength="42.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&#x27;---&#x27;</text>
 <text x="820.4" y="383.8" fill="#F2F2F2" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="828.8" y="383.8" fill="#767676" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>
 <text x="30.8" y="400.8" fill="#F2F2F2" textLength="8.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">|</text>

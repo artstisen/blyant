@@ -82,7 +82,7 @@ internal static class Commands
             "quit close help info path name color note board new add remove",
             "q h"),
         [CommandContext.Board] = new Table(
-            "quit close help jump book recent new folder note badge info peek list board arrange color rename remove clear undo " +
+            "quit close help jump book recent new folder note badge divider mode info peek list board arrange color rename remove clear undo " +
             "top bottom missing prune",
             "q h u ju jmp corkboard"),
         [CommandContext.Editor] = new Table(
@@ -194,7 +194,8 @@ internal sealed class CommandCompletion
         [(CommandContext.Favorites, "import")] = () => new[] { "bookmarks", "folder" },
         [(CommandContext.Jump, "import")] = () => new[] { "favorites" },
         [(CommandContext.Board, "arrange")] = () => Corkboard.Orders,
-        [(CommandContext.Board, "list")] = Corkboard.BoardWords
+        [(CommandContext.Board, "list")] = Corkboard.BoardWords,
+        [(CommandContext.Board, "mode")] = () => CorkboardPage.ModeWords
     };
 
     /// <summary>
