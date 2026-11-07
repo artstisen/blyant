@@ -297,6 +297,10 @@ internal static class ProjectsBox
                 return _commandResult != null ? CommandResult.Opened : CommandResult.None;
             case "add":
                 return AddFolder() != null ? CommandResult.Reload : CommandResult.None;
+            case "log":
+                // The log (the page behind the list is drawn again when the list is closed, as after the help)
+                Jump.ShowLog();
+                return CommandResult.None;
             case "colorscheme":
             case "colo":
             {

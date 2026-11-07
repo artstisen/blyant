@@ -618,6 +618,12 @@ public partial class TextArea
             case EditorRequest.View:
                 View();
                 break;
+            case EditorRequest.Log:
+                // The log on top of the text, which is then drawn again
+                Tools.HideCursor();
+                Jump.ShowLog();
+                RedrawAll();
+                break;
             case EditorRequest.Recent:
             {
                 // The latest files, without this one: the one picked is opened as a jump (changes are asked about).

@@ -479,6 +479,7 @@ Commands:
 ![The latest files at a key](docs/screenshots/recent-files.svg)
 
 - `:ts` Insert an ISO timestamp (YYYY-MM-DD HH:MM:SS)
+- `:log` The [log](Guide-to-start-page.md#the-log) of what Blyant has done, on top of the editor (`Esc` goes back to the text)
 - [`:colorscheme name`](Guide-to-jump-menu.md#changing-the-scheme-by-command) (or `:colo`) Use another color scheme, saved in the settings, and `:colorscheme` alone tells the one in use. `Tab` completes the names
 - `:trim` Remove the blank space (spaces and tabs) at the end of the lines: of the selected lines (select them and type `:trim`), or all the lines without a selection, or `:2,9trim` lines 2 to 9. The indentation at the start of the lines is kept. In a Markdown file (and a blank page), two spaces or more at the end of a line of text with another line of text after it are a line break: they are kept, and the message tells how many. `:trim!` removes them too. One `u` undoes it
 - `:whitespace` Show blank space, or hide it again: a space as `.`, a tab as `>` and the end of a line as `$`, in the color of the line numbers, and the blank space at the end of a line highlighted (in a Markdown file, the two spaces of a line break that `:trim` keeps are only dimmed). Each mark takes the place of the character it marks, so nothing moves. Kept as the setting `whitespace` (_Show blank space as . > $_ on the Editor page of Configuration). Not in a peek or a comparison

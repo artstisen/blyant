@@ -206,9 +206,7 @@ internal static partial class FileExplorer
                 if (command != null && CommandLine.Name(command) is "jump" or "ju" or "jmp" or "board" or "corkboard")
                 {
                     // The Jump menu, or ":jump general": a page of Blyant at once (":board": the corkboard)
-                    Jump.ToPage(CommandLine.Name(command) is "board" or "corkboard"
-                        ? Jump.BoardPage(CommandLine.Argument(command))
-                        : CommandLine.Argument(command));
+                    Jump.ToPage(Jump.PageOf(command));
                     FindFavoriteMarks();
                     continue;
                 }
@@ -218,6 +216,13 @@ internal static partial class FileExplorer
                     // ":book 3": jump to bookmark 3
                     Jump.ToBookmark(CommandLine.Argument(command));
                     FindFavoriteMarks();
+                    continue;
+                }
+
+                if (command != null && CommandLine.Name(command) == "log")
+                {
+                    // The log, on top of the page
+                    Jump.ShowLog();
                     continue;
                 }
 

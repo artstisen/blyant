@@ -984,6 +984,10 @@ internal static class CorkboardPage
                 Jump.ToBookmark(CommandLine.Argument(command));
                 Corkboard.Reload();
                 break;
+            case "log":
+                // The log, on top of the board
+                Jump.ShowLog();
+                break;
             case "colorscheme":
             case "colo":
                 // ":colorscheme name": another color scheme, the board drawn again in it

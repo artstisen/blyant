@@ -1305,6 +1305,8 @@ public class EditorTests
         Assert.Equal(EditorRequest.ColorScheme, editor.Type(":colorscheme Deep Blue<CR>"));
         Assert.Equal("Deep Blue", editor.ColorSchemeArgument);
         Assert.Equal(EditorRequest.ColorScheme, editor.Type(":colo<CR>"));
+        // ":log": the log, on top of the editor
+        Assert.Equal(EditorRequest.Log, editor.Type(":log<CR>"));
         Assert.Equal(string.Empty, editor.ColorSchemeArgument);
         Assert.Equal("text", editor.GetText());
     }

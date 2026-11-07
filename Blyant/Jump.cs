@@ -81,7 +81,7 @@ internal static class JumpPages
     {
         "config/general", "config/layout", "config/editor", "config/lists", "config/system", "board", "schemes", "logos",
         "clipboard",
-        "snippets", "completions", "help", "about"
+        "snippets", "completions", "log", "help", "about"
     };
 
     // The name of a page in ":jump general"
@@ -129,6 +129,7 @@ internal static class JumpPages
             "clipboard" => Lang.T("Clipboard"),
             "snippets" => Lang.T("Snippet editor"),
             "completions" => Lang.T("Completions editor"),
+            "log" => DialogText.LogReview,
             "help" => Lang.T("Help"),
             "about" => Lang.T("About"),
             _ => id
@@ -414,6 +415,20 @@ internal static class Jump
             string.Join(", ", JumpPages.Names));
     }
 
+    /// <summary>
+    /// What a command that goes to a page goes to, for ToPage: ":board name" the corkboard (one of its boards), and
+    /// ":jump name" the page named (or the Jump menu)
+    /// </summary>
+    internal static string PageOf(string command) => CommandLine.Name(command) is "board" or "corkboard"
+        ? BoardPage(CommandLine.Argument(command))
+        : CommandLine.Argument(command);
+
+    /// <summary>
+    /// ":log": the log, on top of the page (which must then be drawn again). Not a jump: as the help, it is not kept
+    /// in the jump history (":jump log" and the Jump menu are)
+    /// </summary>
+    internal static void ShowLog() => OpenInPlace("log");
+
     // Go to a place: on the page itself, on top of it, or leaving it
     private static void Go(JumpTarget target, Func<bool>? beforeLeaving, Func<bool>? hasChanges,
         Func<JumpTarget, bool>? here)
@@ -582,6 +597,9 @@ internal static class Jump
                 break;
             case "completions":
                 FileExplorer.EditCompletions();
+                break;
+            case "log":
+                EventLog.Show();
                 break;
             case "help":
                 Tools.WriteEditorHelp();

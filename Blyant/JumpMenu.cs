@@ -1623,6 +1623,13 @@ internal static class JumpMenu
             return JumpToBookmark(CommandLine.Argument(command));
         }
 
+        if (CommandLine.Name(command) == "log")
+        {
+            // The log, over the menu (as the help): the menu stays open
+            Jump.ShowLog();
+            return false;
+        }
+
         if (CommandLine.Name(command) is "colorscheme" or "colo")
         {
             // ":colorscheme name": another color scheme, the menu drawn again in it

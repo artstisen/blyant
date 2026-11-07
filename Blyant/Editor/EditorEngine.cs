@@ -70,6 +70,7 @@ internal enum EditorRequest
     View, // ":view": pick a file to show read only at the right (":view name": that file, SplitArgument)
     Splits, // ":splits": the files closed with another beside them, to open one as it was
     Recent, // Ctrl+K (Normal mode) or ":recent": the latest files, to switch to one
+    Log, // ":log": the log, shown on top of the editor
     SwitchPane, // Tab (Shift+Tab) in Normal mode: the other pane of a split gets the keys
     ClosePane, // ":q" in a split: close this pane (the other shows the text)
     OnlyPane, // ":only": close the other pane of a split
@@ -1381,6 +1382,9 @@ internal sealed partial class EditorEngine
                 break;
             case "recent":
                 if (!SingleLine) _request = EditorRequest.Recent;
+                break;
+            case "log":
+                if (!SingleLine) _request = EditorRequest.Log;
                 break;
             case "q!":
             case "quit!":

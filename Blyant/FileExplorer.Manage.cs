@@ -78,6 +78,10 @@ internal static partial class FileExplorer
             case "corkboard":
                 Jump.ToPage(Jump.BoardPage(argument));
                 break;
+            case "log":
+                // The log, on top of the browser
+                Jump.ShowLog();
+                break;
             case "pin":
                 // The selected file or folder to the corkboard (not "..")
                 if (SelectedItem() is { } item && item.Name != ParentName) _message = PinFile(item.Path);

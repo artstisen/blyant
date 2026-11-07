@@ -7,19 +7,22 @@ Blyant has several features inspired by popular Neovim plugins for text navigati
 
 **My favorite feature? – Using bookmarks to create custom jump points and open them from anywhere via the command line.**
 
-![The editor in split view, with the commands listed while one is typed](docs/screenshots/split-view.svg)
+![The editor in split view, with command suggestions](docs/screenshots/split-view.svg)
 
 
 ## The corkboard
-Plan a book, an article or a thesis on a corkboard: its chapters, research folders and loose ideas are cards that you place freely, color, and lay on top of each other. Each project has a corkboard of its own, kept in the project folder, so it goes with the project when you move, copy or sync it.
+Plan a book, an article or a thesis on a corkboard: chapters, research folders and loose ideas are cards that you place freely, color, and lay on top of each other. Each project has its own corkboard, kept in the project folder, so it goes with the project when you move, copy or sync it.
 
-![The corkboard of a project: chapters, a research folder, files and notes as cards in colors, badges marking the chapters drafted and one to rewrite, with the peek of a chapter](docs/screenshots/corkboard.svg)
+![Corkboard of a project: chapters, a research folder, files and notes as cards in colors, badges marking the chapters drafted and one to rewrite, with a peek into the selected chapter](docs/screenshots/corkboard.svg)
 
 - **Cards of files, folders and notes**: `:pin` a file or folder from the editor, the file browser or the lists, or write a note card (`A`) with your own text. `Enter` opens the file in the editor, the folder in the file browser, or the note. A badge (`B`), a small round `i` with a note, marks a group of cards
 - **Arrange them your way**: move a card with `V` and `h` `j` `k` `l`, put it on top of the others or below them, give it a color and a title of its own, or lay them all out in rows with `:arrange number`, `:arrange name` or `:arrange color`
+- **Dividers, lines and frames**: split the board into columns, draw lines and arrows between cards, and put a frame with a title around a group
 - **See without opening**: `P` shows the start of the selected card's file (or what a folder holds) below the board, and `I` tells about it
 - **A board for each project**: `B` in the list of projects opens its board, and the cards are shown beside the list; `:list` keeps more boards of your own
 - **Safe to try**: `D` takes a card off (the file stays), `:clear` takes them all off after asking, and `u` puts them back. Cards follow their files when you rename or move them in Blyant
+
+![The list of projects, with the corkboard of the selected project beside it: its cards and badges in their colors](docs/screenshots/projects.svg)
 
 See the [guide to the corkboard](Guide-to-corkboard.md).
 
@@ -54,7 +57,7 @@ See the [guide to the corkboard](Guide-to-corkboard.md).
 
 **At home in any terminal**
 - Pure 7-bit ASCII interface that works with any monospaced font
-- Color schemes and logos, which you can edit and make your own
+- Color schemes and logos, which you can edit and make your own; `:colorscheme name` changes the scheme from any command line
 - English built in, and ten more languages as files that can be changed or added to
 - Runs on Windows, Linux (also Raspberry Pi) and macOS, as a single file with nothing else to install
 

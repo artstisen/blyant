@@ -60,7 +60,7 @@ public class CommandTests
     {
         var names = Commands.Names(CommandContext.Search);
         Assert.Equal(new[] { "board", "book", "bookmark", "bookmark!", "close", "colorscheme", "favorite", "find", "goto", "help", "info",
-            "jump", "nonumber", "number", "pin", "quit", "recent" }, names);
+            "jump", "log", "nonumber", "number", "pin", "quit", "recent" }, names);
         Assert.Equal(string.Join(" ", names) + "  board", Tabs(CommandContext.Search, "", names.Count + 2));
     }
 
