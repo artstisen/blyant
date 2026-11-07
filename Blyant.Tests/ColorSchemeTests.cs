@@ -299,6 +299,12 @@ public class ColorSchemeTests : IDisposable
         // A name that is whole goes before those that start with it
         Assert.Equal("Gray", ColorSchemes.Find("gray", names, out several));
         Assert.False(several);
+        // As typed first, letter case too (on Linux names can differ only in case), then in any case
+        var cased = new[] { "Mine", "mine" };
+        Assert.Equal("mine", ColorSchemes.Find("mine", cased, out _));
+        Assert.Equal("Mine", ColorSchemes.Find("Mine", cased, out _));
+        Assert.Equal("Mine", ColorSchemes.Find("MINE", cased, out several));
+        Assert.False(several);
         // Not known
         Assert.Null(ColorSchemes.Find("Mauve", names, out several));
         Assert.False(several);

@@ -192,7 +192,12 @@ internal sealed class CommandCompletion
     /// The commands that take one name that can have spaces in it (":colorscheme Deep Blue"): what is typed after the
     /// command is completed and listed as a whole, also after a space
     /// </summary>
-    internal static bool TakesNameWithSpaces(string command) => command is "colorscheme" or "colo";
+    internal static bool TakesNameWithSpaces(string command) => SchemeCommands.Contains(command);
+
+    /// <summary>
+    /// The names of ":colorscheme" (its short form too), which takes the name of a color scheme
+    /// </summary>
+    internal static readonly string[] SchemeCommands = { "colorscheme", "colo" };
 
     // What follows a command that takes other words in one place than in another (English: as the commands)
     private static readonly Dictionary<(CommandContext, string), Func<IEnumerable<string>>> PlaceArguments = new()

@@ -186,6 +186,9 @@ internal static class SchemeEditor
         if (scheme == null) return Lang.F("No color scheme named {0}", argument);
         UseLogoOf(scheme);
         Use(scheme);
+        // Run in the Jump menu opened on the Color schemes page: the colors shown there are those of this scheme,
+        // unless they have been changed (those changes stay, and are asked about when the page is left)
+        if (_open && !_changed) ConsoleColors.Preview = scheme.Clone();
         used = true;
         return Lang.F("Color scheme: {0}", ColorSchemes.DisplayName(scheme.Name));
     }
