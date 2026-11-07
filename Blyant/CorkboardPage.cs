@@ -37,7 +37,7 @@ internal static class CorkboardPage
         Lines // Dividers, lines and frames
     }
 
-    internal static SelectMode Mode { get; set; } = SelectMode.Both;
+    internal static SelectMode Mode { get; set; } = SelectMode.All;
 
     /// <summary>
     /// The modes as they are written (":mode cards", the setting; English: the words of commands), in the order M
@@ -594,7 +594,8 @@ internal static class CorkboardPage
             column = right;
         }
 
-        Select(Corkboard.AddDivider(column, width));
+        // (the mode stays: a new divider, line or frame is selected, also in a mode that does not take it)
+        _selected = Corkboard.AddDivider(column, width).Number;
         _message = Lang.T("Divider added: V and h/l move it");
         SaveCards();
     }
@@ -611,7 +612,7 @@ internal static class CorkboardPage
             (x, y) = (cardX + card.Width, cardY + 1);
         }
 
-        Select(Corkboard.AddLine(x, y, width, Height));
+        _selected = Corkboard.AddLine(x, y, width, Height).Number;
         _message = Lang.T("Line added: V moves it, r turns it, + and - size it");
         SaveCards();
     }
@@ -622,7 +623,7 @@ internal static class CorkboardPage
         var width = Corkboard.BoardWidth;
         var around = Selected is { IsShape: false } ? Corkboard.FrameAround(Group(), width, Height) : null;
         var (x, y, frameWidth, frameHeight) = around ?? (Math.Max(0, (width - 30) / 2), Math.Max(0, (Height - 8) / 2), 30, 8);
-        Select(Corkboard.AddFrame(x, y, frameWidth, frameHeight, width, Height));
+        _selected = Corkboard.AddFrame(x, y, frameWidth, frameHeight, width, Height).Number;
         _marks.Clear();
         _message = Lang.T("Frame added: X gives it a title, V moves it, s sizes it");
         SaveCards();
@@ -1444,7 +1445,7 @@ internal static class CorkboardPage
             ("N F", Lang.T("Pin a file / a folder")),
             ("A B | \\ O", Lang.T("Note / badge / divider / line / frame")),
             ("Tab hjkl", Lang.T("Select")),
-            ("M", Lang.T("Change what Tab and hjkl select")),
+            ("M", Lang.T("Mode: Change what Tab and hjkl select")),
             ("Space V", Lang.T("Mark / Move (hjkl, HJKL: 5 steps)")),
             ("T E", Lang.T("On top of / below the others")),
             ("C X D u", Lang.T("Color / Title / Remove / Put back")),
@@ -1579,37 +1580,29 @@ internal static class CorkboardPage
     // The tab at the start of the top edge of a folder's card
     private const string FolderTab = "--<>";
 
-    // The gaps in the edges of a note
-    private const string NoteGap = " - - - ";
-
-    // The edge of a note: a line with gaps in it ("--- - - - ---"), from a column of the edge (left as a line where
-    // they do not fit)
-    private static string Dashed(int inner, int at)
-    {
-        var edge = new string('-', Math.Max(0, inner));
-        if (at < 1 || at + NoteGap.Length >= inner) return edge;
-        return edge[..at] + NoteGap + edge[(at + NoteGap.Length)..];
-    }
+    // The mark in the middle of the top edge of a note's card
+    private const string NoteMark = "~*~";
 
     /// <summary>
-    /// The top edge of a card, between its corners: a note's a line with gaps near its right end ("--- - - - ----"), a file's is a line ("---"), and a
-    /// folder's has a tab at its start ("--<>--"). The selected card's is of ":" (a folder keeping its tab), to be seen
-    /// among cards of many colors
+    /// The top edge of a card, between its corners: a file's is a line ("---"), a folder's has a tab at its start
+    /// ("--<>--"), and a note's a mark in its middle ("---~*~---"). The selected card's is of ":" (a folder and a note
+    /// keeping their marks), to be seen among cards of many colors
     /// </summary>
     internal static string TopEdge(Corkboard.Card card, int inner, bool selected = false)
     {
         var line = selected ? ':' : '-';
+        var edge = new string(line, Math.Max(0, inner));
         if (card.IsFolder)
             return (FolderTab.Replace('-', line) + new string(line, Math.Max(0, inner - FolderTab.Length)))[..Math.Max(0, inner)];
-        return card.IsNote && !selected ? Dashed(inner, inner - NoteGap.Length - 4) : new string(line, Math.Max(0, inner));
+        if (!card.IsNote || inner < NoteMark.Length + 2) return edge;
+        var at = (inner - NoteMark.Length + 1) / 2;
+        return edge[..at] + NoteMark + edge[(at + NoteMark.Length)..];
     }
 
     /// <summary>
-    /// The bottom edge of a card, between its corners: a note's a line with gaps near its left end ("--- - - - ----"), a file's and a folder's a line, the
-    /// selected card's of ":"
+    /// The bottom edge of a card, between its corners: a line, the selected card's of ":"
     /// </summary>
-    internal static string BottomEdge(Corkboard.Card card, int inner, bool selected = false) =>
-        selected ? new string(':', inner) : card.IsNote ? Dashed(inner, 3) : new string('-', inner);
+    internal static string BottomEdge(int inner, bool selected = false) => new(selected ? ':' : '-', Math.Max(0, inner));
 
     /// <summary>
     /// The sides of a card: ":" for the selected card, "|" for the others
@@ -1679,7 +1672,7 @@ internal static class CorkboardPage
         var bottom = AsciiStyles.GetBottomCorner();
         Tools.SetCursorEx(row + 2, column);
         at = column;
-        Put(bottom + BottomEdge(card, inner, selected) + bottom);
+        Put(bottom + BottomEdge(inner, selected) + bottom);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
     }
 

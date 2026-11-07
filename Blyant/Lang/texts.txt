@@ -133,7 +133,7 @@ en: "Tab/hjkl Select | M Mode | Enter Open | Space Mark | V Move | A Note | B Ba
 en: "Pin a file / a folder"
 en: "Note / badge / divider / line / frame"
 en: "Select"
-en: "Change what Tab and hjkl select"
+en: "Mode: Change what Tab and hjkl select"
 en: "Mark / Move (hjkl, HJKL: 5 steps)"
 en: "On top of / below the others"
 en: "Color / Title / Remove / Put back"

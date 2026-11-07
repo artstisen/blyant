@@ -1,5 +1,11 @@
 # Changes
 
+## v1.4.3 (unreleased)
+- **The corkboard selects all at first**: the selection mode is **All** at first (setting `boardmode`, `all`), so `h` `j` `k` `l` and `Tab` go to everything on the board. A mode chosen with `M` is kept as before.
+- **Adding a divider, line or frame keeps the mode**: the new one is selected (and `V` moves it), but the mode no longer changes to **Lines**. A card, note or badge added, what `/` finds and what `u` puts back still change the mode when it does not take them.
+- **A note card has a mark on its top edge**: `.----------~*~---------.`, in place of the gaps in its edges; its bottom edge is a line, as a file's. The selected note keeps the mark (`::::~*~::::`).
+- **The keys of an empty corkboard**: the row of `M` reads "Mode: Change what Tab and hjkl select".
+
 ## v1.4.2 (2026-11-06)
 - **The byte order mark of a file**: `:bom` in the editor shows a box with the encoding of the file, whether it is saved with a byte order mark (BOM), what a BOM is and the commands; `:bom on` and `:bom off` save the file with one or without it. Blyant still keeps the BOM a file has, and gives new files none. See [Byte order mark (BOM)](Guide-to-editor.md#byte-order-mark-bom) in the guide.
 - **Dividers on the corkboard**: `|` (or `:divider`) adds a line from the top of the board to the bottom, to tile the board when you plan (a column for each act). It is drawn behind the cards and badges, put right of the selected card, and moved left and right with `V` and `h` `l`; `C` colors it, `D` removes it and `Space` marks it to move it with its cards. Dividers take no numbers, so the numbers of the cards stay as they are. They are kept on lines of their own in the file of the board, which a version before 1.4.2 leaves out. See [Dividers](Guide-to-corkboard.md#dividers) in the guide.

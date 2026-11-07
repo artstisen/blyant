@@ -27,12 +27,12 @@ The card of a file is edged in lines, and the card of a folder has a tab (`<>`) 
 A new card is placed at the first free place, row by row, with a column between the cards; on a full board it is put on top of the others, a step from the last one. Its number is the lowest one that is free, and it keeps it.
 
 ## Note cards
-`A` (or `:note`) adds a note card: its text is written in the editor, and kept when the editor is closed. The first line of the text is the title of the card, unless you give it a title of its own with `X`. `Enter` on a note opens its text in the editor again. A note card has gaps in its top and bottom edges, to tell it from the card of a file:
+`A` (or `:note`) adds a note card: its text is written in the editor, and kept when the editor is closed. The first line of the text is the title of the card, unless you give it a title of its own with `X`. `Enter` on a note opens its text in the editor again. A note card has a mark (`~*~`) in the middle of its top edge, to tell it from the card of a file:
 
 ```
-.----------- - - - ----.
+.----------~*~---------.
 | 5  Act two           |
-'--- - - - ------------'
+'----------------------'
 ```
 
 A new note left without text is not kept, also when the editor is left by a jump. The text is kept on the board it was written for, also when another board is opened from the editor (`:board name`).
@@ -92,15 +92,15 @@ The lines and frames are lines of their own in the file of the board; a version 
 
 ## Selecting cards, badges or lines
 `M` (or `:mode`) changes what `h` `j` `k` `l` and `Tab` select, and the top bar shows it after the name of the board (where they do not fit, the name of the board is cut, not the mode):
-- **Cards and badges** (at first): the cards and the badges, past the dividers, lines and frames
-- **All**: everything they pass, the dividers, lines and frames too (as a divider goes from top to bottom, only `h` and `l` go to a divider or from it; a line is gone to by its start, a frame by its top left corner)
+- **Cards and badges**: the cards and the badges, past the dividers, lines and frames
+- **All** (at first): everything they pass, the dividers, lines and frames too (as a divider goes from top to bottom, only `h` and `l` go to a divider or from it; a line is gone to by its start, a frame by its top left corner)
 - **Cards**: the cards of files, folders and notes
 - **Badges**: only the badges
 - **Lines**: only the dividers, lines and frames
 
 `:mode both` (`all`, `cards`, `badges`, `lines`) picks one, and `Tab` completes them. The mode is kept (setting `boardmode`). A number and `Enter` select any card or badge, whatever the mode.
 
-What you add is selected, and the mode changes to one that takes it, when it does not: a new divider, line or frame changes it to **Lines**, a new card, note or badge to **Cards and badges**. The same goes for what `/` finds and what `u` puts back.
+What you add is selected. A new card, note or badge changes the mode to **Cards and badges** when the mode does not take it, and so does what `/` finds and what `u` puts back (a divider, line or frame: to **Lines**). A new divider, line or frame leaves the mode as it is: it is selected, and `V` moves it, also in a mode that does not take it.
 
 ## On an empty board
 A board without cards shows the keys to start with in a box in its middle: pinning files and folders, adding notes, badges, dividers, lines and frames, selecting, the modes, marking and moving, `T` `E`, and `?` for all the keys. The box is gone when the first card is on the board.

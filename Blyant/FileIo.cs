@@ -431,7 +431,7 @@ internal static class FileIo
         // The board of the corkboard that is open, and its peek
         _tempSettings += "boardname=" + Corkboard.CurrentBoard + '\n';
         _tempSettings += "boardpeek=" + (CorkboardPage.PeekOn ? DialogText.BTrue : DialogText.BFalse) + '\n';
-        // What the keys of the corkboard select: both (cards and badges), all, cards, badges or lines
+        // What the keys of the corkboard select: all (at first), both (cards and badges), cards, badges or lines
         _tempSettings += "boardmode=" + CorkboardPage.ModeWord + '\n';
         // The rows of the favorites numbered (and below, of the bookmarks)
         _tempSettings += "favoritenumbers=" + (FileExplorer.FavoriteNumbers ? DialogText.BTrue : DialogText.BFalse) + '\n';
@@ -659,7 +659,7 @@ internal static class FileIo
         FileFavorites.CurrentList = FileFavorites.FindList(Get("favoritelist")) ?? string.Empty;
         Corkboard.CurrentBoard = Corkboard.FindBoard(Get("boardname")) ?? string.Empty;
         CorkboardPage.PeekOn = Tools.TrimToLower(Get("boardpeek")) != DialogText.BFalse;
-        CorkboardPage.Mode = CorkboardPage.ModeOf(Get("boardmode")) ?? CorkboardPage.SelectMode.Both;
+        CorkboardPage.Mode = CorkboardPage.ModeOf(Get("boardmode")) ?? CorkboardPage.SelectMode.All;
         FileExplorer.FavoriteNumbers = Tools.TrimToLower(Get("favoritenumbers")) == DialogText.BTrue;
         JumpMenu.BookmarkNumbers = Tools.TrimToLower(Get("bookmarknumbers")) == DialogText.BTrue;
         FileExplorer.FileNumbers = Tools.TrimToLower(Get("filenumbers")) == DialogText.BTrue;
