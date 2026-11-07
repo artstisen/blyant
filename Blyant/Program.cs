@@ -88,6 +88,8 @@ class Program
         CommandCompletion.Arguments["board"] = Corkboard.BoardWords;
         CommandCompletion.Arguments["corkboard"] = Corkboard.BoardWords;
         foreach (var jump in new[] { "jump", "ju", "jmp" }) CommandCompletion.Arguments[jump] = () => JumpPages.Names;
+        // ... and after ":colorscheme " the names of the color schemes (which can have spaces in them)
+        foreach (var scheme in new[] { "colorscheme", "colo" }) CommandCompletion.Arguments[scheme] = ColorSchemes.AllNames;
         while (true)
         {
             try

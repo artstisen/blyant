@@ -1301,6 +1301,12 @@ public class EditorTests
         Assert.Equal("on", editor.BomArgument);
         Assert.Equal(EditorRequest.Bom, editor.Type(":bom<CR>"));
         Assert.Equal(string.Empty, editor.BomArgument);
+        // ":colorscheme name" (or ":colo"): the name as typed, with its spaces
+        Assert.Equal(EditorRequest.ColorScheme, editor.Type(":colorscheme Deep Blue<CR>"));
+        Assert.Equal("Deep Blue", editor.ColorSchemeArgument);
+        Assert.Equal(EditorRequest.ColorScheme, editor.Type(":colo<CR>"));
+        Assert.Equal(string.Empty, editor.ColorSchemeArgument);
+        Assert.Equal("text", editor.GetText());
     }
 
     [Fact]

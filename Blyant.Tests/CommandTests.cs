@@ -43,13 +43,13 @@ public class CommandTests
     public void Tab_CompletesTheCommand_AndGoesThroughTheOnesThatStartTheSame()
     {
         // After the last of them, what was typed is shown again
-        Assert.Equal("collapse color co collapse", Tabs(CommandContext.Favorites, "co", 4));
+        Assert.Equal("collapse color colorscheme co collapse", Tabs(CommandContext.Favorites, "co", 5));
         Assert.Equal("expand ex expand", Tabs(CommandContext.Favorites, "ex", 3));
         // Shift+Tab goes the other way
-        Assert.Equal("color collapse co color", Tabs(CommandContext.Favorites, "co", 4, false));
+        Assert.Equal("colorscheme color collapse co colorscheme", Tabs(CommandContext.Favorites, "co", 5, false));
         // Each place has its own commands
         Assert.Equal("scheme sc", Tabs(CommandContext.Start, "sc", 2));
-        Assert.Equal("copy co", Tabs(CommandContext.Files, "co", 2));
+        Assert.Equal("colorscheme copy co", Tabs(CommandContext.Files, "co", 3));
         // Capital letters are completed too
         Assert.Equal("clipboard", Tabs(CommandContext.Start, "CLIP", 1));
         Assert.Equal("completions", Tabs(CommandContext.Start, "COMPL", 1));
@@ -59,7 +59,7 @@ public class CommandTests
     public void Tab_WithNothingTyped_GoesThroughAllTheCommands()
     {
         var names = Commands.Names(CommandContext.Search);
-        Assert.Equal(new[] { "board", "book", "bookmark", "bookmark!", "close", "favorite", "find", "goto", "help", "info",
+        Assert.Equal(new[] { "board", "book", "bookmark", "bookmark!", "close", "colorscheme", "favorite", "find", "goto", "help", "info",
             "jump", "nonumber", "number", "pin", "quit", "recent" }, names);
         Assert.Equal(string.Join(" ", names) + "  board", Tabs(CommandContext.Search, "", names.Count + 2));
     }
@@ -228,12 +228,12 @@ public class CommandTests
     public void TheTables_HaveTheCommandsOfTheEditor()
     {
         // (":s/old/new/" is found by its first letter, and ":diff", ":book", ":jump", ":bookmark", ":play", ":macro", ":new",
-        // ":saveas", ":lineendings", ":bom", ":split" and ":view" by a pattern, as they can have something after them; the marks are run by
+        // ":saveas", ":lineendings", ":bom", ":colorscheme", ":split" and ":view" by a pattern, as they can have something after them; the marks are run by
         // MarkCommand)
         AssertSame(CommandContext.Editor, Compared(Method("Editor/EditorEngine.cs", "ExecuteCommand"),
                 Method("Editor/EditorEngine.Marks.cs", "MarkCommand")), "s", "diff", "book", "jump", "ju", "jmp", "board", "corkboard", "bookmark",
             "bookmark!", "play", "macro", "new", "sur", "saveas", "lineendings", "bom", "mark", "k", "delmarks", "delmarks!", "split",
-            "view", "sview", "sv");
+            "view", "sview", "sv", "colorscheme", "colo");
     }
 
     [Fact]

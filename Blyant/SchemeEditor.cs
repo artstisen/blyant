@@ -168,6 +168,28 @@ internal static class SchemeEditor
         if (Logos.Load(scheme.UseLogo) is { } logo) Logo.Current = logo;
     }
 
+    /// <summary>
+    /// ":colorscheme name" on a page: the scheme is used (with its logo, if it has one) and saved in the settings, as
+    /// by Enter on the Schemes tab. Without a name: the name of the scheme in use. The page is drawn again by the caller
+    /// </summary>
+    /// <param name="argument">The name typed, or a start of it</param>
+    /// <param name="used">True when a scheme was used</param>
+    /// <returns>The message to show</returns>
+    internal static string UseByName(string argument, out bool used)
+    {
+        used = false;
+        argument = argument.Trim();
+        if (argument.Length == 0) return Lang.F("Color scheme: {0}", ColorSchemes.DisplayName(ConsoleColors.Current.Name));
+        var name = ColorSchemes.Find(argument, ColorSchemes.AllNames(), out var several);
+        if (several) return Lang.F("Several color schemes start with {0}", argument);
+        var scheme = name == null ? null : ColorSchemes.Load(name);
+        if (scheme == null) return Lang.F("No color scheme named {0}", argument);
+        UseLogoOf(scheme);
+        Use(scheme);
+        used = true;
+        return Lang.F("Color scheme: {0}", ColorSchemes.DisplayName(scheme.Name));
+    }
+
     // Use a scheme: it is shown at once, and its name is saved in the settings
     private static void Use(ColorScheme scheme)
     {

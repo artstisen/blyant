@@ -76,6 +76,7 @@ internal enum EditorRequest
     NewDocument, // ":new name": a new file next to this one, opened in its place
     LineEndings, // ":lineendings lf": the line endings of the file (LineEndingsArgument: lf, crlf, or empty to tell)
     Bom, // ":bom on": the byte order mark of the file (BomArgument: on, off, or empty to show it)
+    ColorScheme, // ":colorscheme name": another color scheme (ColorSchemeArgument: the name, or empty to tell it)
     WhitespaceToggle, // ":whitespace": blank space shown as . > $, or not
     Favorite // ":favorite": the file a favorite of the file browser (or not)
 }
@@ -422,6 +423,11 @@ internal sealed partial class EditorEngine
     /// ":bom on": what follows the command (lowercase), for the host
     /// </summary>
     internal string BomArgument { get; private set; } = string.Empty;
+
+    /// <summary>
+    /// The name typed after ":colorscheme" (empty: the name of the scheme in use is told)
+    /// </summary>
+    internal string ColorSchemeArgument { get; private set; } = string.Empty;
 
     /// <summary>
     /// ":bookmark name": the name the bookmark is given (empty: none), and with "!" the name is moved to it from the
@@ -1132,6 +1138,15 @@ internal sealed partial class EditorEngine
         {
             BomArgument = bom.Groups[1].Value.Trim().ToLowerInvariant();
             if (!SingleLine) _request = EditorRequest.Bom;
+            return;
+        }
+
+        // ":colorscheme name" (or ":colo"): the host uses another color scheme, and draws all again in it
+        var colorScheme = Regex.Match(command, "^(?:colorscheme|colo)(?: +(.*))?$");
+        if (colorScheme.Success)
+        {
+            ColorSchemeArgument = colorScheme.Groups[1].Value.Trim();
+            if (!SingleLine) _request = EditorRequest.ColorScheme;
             return;
         }
 

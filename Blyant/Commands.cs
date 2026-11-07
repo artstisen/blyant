@@ -50,46 +50,46 @@ internal static class Commands
     private static readonly Dictionary<CommandContext, Table> Tables = new()
     {
         [CommandContext.Files] = new Table(
-            "quit close exit home data help jump book peek diff cd new info mkdir rename copy duplicate move delete favorite favorites history hotlist hotadd bookmark board pin refresh panes match path name find projects trash recovery project protect number nonumber bookmark! splits recent",
-            "q h fav favs hist hot ju jmp proj pro corkboard"),
+            "quit close exit home data help jump book peek diff cd new info mkdir rename copy duplicate move delete favorite favorites history hotlist hotadd bookmark board pin refresh panes match path name find projects trash recovery project protect number nonumber bookmark! splits recent colorscheme",
+            "q h fav favs hist hot ju jmp proj pro corkboard colo"),
         [CommandContext.FilePicker] = new Table(
             "quit close home data help cd number nonumber",
             "q h"),
         [CommandContext.Favorites] = new Table(
             "quit close help jump book new color info remove move top bottom undo folder subfolder note panes peek number nonumber expand collapse rename import goto " +
-            "path name recent missing prune list bookmark bookmark! board pin",
-            "q h u ju jmp corkboard"),
+            "path name recent missing prune list bookmark bookmark! board pin colorscheme",
+            "q h u ju jmp corkboard colo"),
         [CommandContext.History] = new Table(
             "quit close help jump book info goto favorite remove clear path name number nonumber recent missing prune " +
-            "bookmark bookmark! board pin",
-            "q h fav ju jmp corkboard"),
+            "bookmark bookmark! board pin colorscheme",
+            "q h fav ju jmp corkboard colo"),
         [CommandContext.Hotlist] = new Table(
             "quit close help jump book info remove undo top bottom move rename clear path name number nonumber recent " +
-            "missing prune bookmark bookmark! board pin",
-            "q h u ju jmp corkboard"),
+            "missing prune bookmark bookmark! board pin colorscheme",
+            "q h u ju jmp corkboard colo"),
         [CommandContext.Search] = new Table(
-            "quit close help jump book find info goto favorite number nonumber recent bookmark bookmark! board pin",
-            "q h fav ju jmp corkboard"),
+            "quit close help jump book find info goto favorite number nonumber recent bookmark bookmark! board pin colorscheme",
+            "q h fav ju jmp corkboard colo"),
         [CommandContext.Start] = new Table(
             "new blank recover file open favorites project projects start config general layout editor lists system jump book splits recent help about " +
-            "quick scheme logo snippet completions clipboard log restart reset quit exit board",
-            "browse favs newproject proj pro ju jmp h guide snip comp q corkboard"),
+            "quick scheme logo snippet completions clipboard log restart reset quit exit board colorscheme",
+            "browse favs newproject proj pro ju jmp h guide snip comp q corkboard colo"),
         [CommandContext.Jump] = new Table(
             "quit close help info jump book new note panes peek number nonumber folder subfolder expand collapse rename color remove move " +
-            "top bottom undo clearbook import path name recent missing prune board",
-            "q h u ju jmp corkboard"),
+            "top bottom undo clearbook import path name recent missing prune board colorscheme",
+            "q h u ju jmp corkboard colo"),
         [CommandContext.Projects] = new Table(
-            "quit close help info path name color note board new add remove",
-            "q h"),
+            "quit close help info path name color note board new add remove colorscheme",
+            "q h colo"),
         [CommandContext.Board] = new Table(
             "quit close help jump book recent new folder note badge divider line frame mode info peek list board arrange color rename remove clear undo " +
-            "top bottom missing prune",
-            "q h u ju jmp corkboard"),
+            "top bottom missing prune colorscheme",
+            "q h u ju jmp corkboard colo"),
         [CommandContext.Editor] = new Table(
             "write saveas quit quit! wq help edit edit! reload reload! undo redo delete yank replace nohlsearch " +
             "spell nospell spellnext spellprev suggest spelladd syntax number nonumber timestamp " +
-            "favorite record play macro trim trim! lineendings bom whitespace mark marks delmarks delmarks! bookmark! view splits recent clear registers reglist regclear putall vsel vline block ol ul dup duplicate surround pb pbappend pbread pbclear pbpath clipboard path sort sort! wrap nowrap snip complete diff scrolloff info jump book bookmark yankall rename split only new projects board pin",
-            "w q q! wq! x h e e! u red d y s rep noh set spellsuggest spellgood nu nonu ts reg sn ju jmp fav proj pro sur k sview sv corkboard")
+            "favorite record play macro trim trim! lineendings bom whitespace mark marks delmarks delmarks! bookmark! view splits recent clear registers reglist regclear putall vsel vline block ol ul dup duplicate surround pb pbappend pbread pbclear pbpath clipboard path sort sort! wrap nowrap snip complete diff scrolloff info jump book bookmark yankall rename split only new projects board pin colorscheme",
+            "w q q! wq! x h e e! u red d y s rep noh set spellsuggest spellgood nu nonu ts reg sn ju jmp fav proj pro sur k sview sv corkboard colo")
     };
 
     /// <summary>
@@ -188,6 +188,12 @@ internal sealed class CommandCompletion
     /// </summary>
     internal static Dictionary<string, Func<IEnumerable<string>>> Arguments { get; } = new(StringComparer.Ordinal);
 
+    /// <summary>
+    /// The commands that take one name that can have spaces in it (":colorscheme Deep Blue"): what is typed after the
+    /// command is completed and listed as a whole, also after a space
+    /// </summary>
+    internal static bool TakesNameWithSpaces(string command) => command is "colorscheme" or "colo";
+
     // What follows a command that takes other words in one place than in another (English: as the commands)
     private static readonly Dictionary<(CommandContext, string), Func<IEnumerable<string>>> PlaceArguments = new()
     {
@@ -223,7 +229,7 @@ internal sealed class CommandCompletion
         {
             _before = text[..(space + 1)];
             _typed = text[(space + 1)..];
-            if (_typed.Contains(' ')) return false;
+            if (_typed.Contains(' ') && !TakesNameWithSpaces(name)) return false;
             _matches = words().Where(word => word.StartsWith(_typed, StringComparison.OrdinalIgnoreCase) &&
                                              !string.Equals(word, _typed, StringComparison.OrdinalIgnoreCase)).ToList();
             return _matches.Count > 0;

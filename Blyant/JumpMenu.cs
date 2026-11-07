@@ -1623,6 +1623,14 @@ internal static class JumpMenu
             return JumpToBookmark(CommandLine.Argument(command));
         }
 
+        if (CommandLine.Name(command) is "colorscheme" or "colo")
+        {
+            // ":colorscheme name": another color scheme, the menu drawn again in it
+            _message = SchemeEditor.UseByName(CommandLine.Argument(command), out _);
+            Tools.ClearScreen();
+            return false;
+        }
+
         if (CommandLine.Name(command) is "jump" or "ju" or "jmp")
         {
             // ":jump general": a page of Blyant at once (":jump" alone: the menu is open)

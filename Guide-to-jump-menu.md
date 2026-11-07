@@ -106,13 +106,21 @@ The jumps are kept in the file `jump.txt` in the data directory, one line for ea
 
 The colors of Blyant are chosen and edited on a page of their own, _COLOR SCHEMES_, opened with `:scheme` on the start page or from its Configuration tab (select _Color scheme_ on the Layout page and press `Enter`). It is a frame with three tabs, as the start page: **Schemes**, **Colors** (with the sub-tabs _Page 1_ to _Page 4_) and **Preview**. `Tab` goes from tab to tab, and `Shift+Tab` the other way. `h` and `l` (or `Left`/`Right`) go through the pages of Colors.
 
-**Schemes** lists the color schemes: the nine built-in ones (Default, Deep Blue, Blyant Quest, Tasty Bytes, Yellow Monochrome, Green Monochrome, Ice Warp, Gray Box and Bright Typist, black text on a white background, as on paper), and below them the ones you have saved yourself. The one in use is marked `[x]`. A scheme can have a logo that goes with it: _Default_, _Deep Blue_ and _Gray Box_ have the logo _Blyant_, and _Blyant Quest_ and _Tasty Bytes_ the logo _Reflections_, which is used too when the scheme is selected (in a scheme file this is the line `uselogo=Reflections`, with the name of a logo; the logo can be changed afterwards as usual).
+**Schemes** lists the color schemes: the ten built-in ones (Default, Deep Blue, Lush Blue, Blyant Quest, Tasty Bytes, Yellow Monochrome, Green Monochrome, Ice Warp, Gray Box and Bright Typist, black text on a white background, as on paper), and below them the ones you have saved yourself. The one in use is marked `[x]`. A scheme can have a logo that goes with it: _Default_, _Deep Blue_, _Lush Blue_ and _Gray Box_ have the logo _Blyant_, and _Blyant Quest_ and _Tasty Bytes_ the logo _Reflections_, which is used too when the scheme is selected (in a scheme file this is the line `uselogo=Reflections`, with the name of a logo; the logo can be changed afterwards as usual).
 
 - `j` `k` (or `Up`/`Down`, `gg` `G`) Select a scheme
 - `Enter` (or `Space`, `l`) Use the selected scheme: it is used at once, and its name is saved (`colorscheme` in the settings file). Its colors are then the ones edited on the Colors tab
 - `Y` Duplicate the selected scheme (a built-in one too) as a scheme of your own: type a name for the copy and press `Enter` (the name with ` 2` is suggested). The copy is selected in the list, and the scheme in use stays as it is. A name that is taken, or that of a built-in scheme, cannot be used
 - `R` Rename a scheme of your own: type the new name and press `Enter`. Its file is renamed, and if it is the scheme in use, the setting follows. The name of a built-in scheme or of another scheme of yours cannot be used, and the built-in schemes cannot be renamed
 - `D` Delete a scheme of your own (you are asked first). The built-in schemes cannot be deleted
+
+### Changing the scheme by command
+`:colorscheme name` (or `:colo name`) uses another scheme without opening this page, from every command line: the start page, the file browser, the favorites, the history, the hotlist, the search results, the Jump menu, the list of projects, the corkboard and the editor. As `Enter` on the Schemes tab, it is used at once, with its logo if it has one, and its name is saved in the settings.
+
+- The name can be typed in any case, and the start of a name is enough when only one scheme starts with it: `:colo lush` is _Lush Blue_, while `:colo d` could be _Default_ or _Deep Blue_, and is told about
+- `Tab` after `:colorscheme ` completes the names of the schemes, the built-in ones and your own, also after a space (`:colo Deep B` and `Tab`). The box above the command line lists them
+- `:colorscheme` alone tells the name of the scheme in use
+- A name that is not known is told about, and the scheme stays as it is
 
 **Colors** shows the colors of the scheme being edited, each group with a sample and the names of its colors. _Page 1_ has Text, Logo and labels, Dividers, Favorites, Accent, Editor title, Line numbers, Current line number, Key hints, Unsaved label and Background; _Page 2_ has Highlight, Attention, Warning, Selector, Tab text, Tab frames, Tab corner, Tab highlight, Tab focus and Other tabs, and _Highlight focused tabs_; _Page 3_ has Box borders, Box corner, Box and Box title, with a small box below them in these colors; _Page 4_ has Command line, Command box borders, Command box corner, Command box, Typed part, Whole command, Command hints and Command error, with a small command line and its box below them in these colors; _Page 5_ has the colors of colored text in the editor, Syntax 1 to 12.
 

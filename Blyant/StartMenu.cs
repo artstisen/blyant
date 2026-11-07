@@ -199,6 +199,20 @@ internal static class StartMenu
                 // ":book 3": jump to bookmark 3
                 Blyant.Jump.ToBookmark(argument);
                 break;
+            case "colorscheme":
+            case "colo":
+            {
+                // ":colorscheme name": another color scheme, the page drawn again in it (the page has no line for
+                // messages: a box tells the scheme in use, or that the name is not known)
+                var message = SchemeEditor.UseByName(argument, out var used);
+                if (!used)
+                {
+                    _frame?.Redraw();
+                    ChoiceBox.Message(DialogText.CaptionsColorScheme, message, string.Empty);
+                }
+
+                break;
+            }
             case "recent":
                 // The latest files, to open one (the page drawn first: the box of commands has just been taken away)
                 _frame?.Redraw();

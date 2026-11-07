@@ -86,6 +86,11 @@ internal static partial class FileExplorer
                 // ":book 3": jump to bookmark 3
                 Jump.ToBookmark(argument);
                 break;
+            case "colorscheme":
+            case "colo":
+                // ":colorscheme name": another color scheme, the browser drawn again in it
+                _message = SchemeEditor.UseByName(argument, out _);
+                break;
             case "recent":
                 // The latest files, to open one (the browser drawn first: the box of commands has just been taken away)
                 Draw(true);

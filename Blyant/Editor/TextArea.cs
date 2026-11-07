@@ -984,6 +984,13 @@ public partial class TextArea
             case EditorRequest.Bom:
                 ChangeBom(_engine.BomArgument);
                 break;
+            case EditorRequest.ColorScheme:
+            {
+                var message = SchemeEditor.UseByName(_engine.ColorSchemeArgument, out var used);
+                RedrawAll();
+                _engine.ShowMessage(message, !used && _engine.ColorSchemeArgument.Length > 0);
+                break;
+            }
             case EditorRequest.WrapChanged:
                 if (_peek?.NoWrap == true) break;
                 WordWrap = _engine.Wrap;

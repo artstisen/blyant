@@ -984,6 +984,11 @@ internal static class CorkboardPage
                 Jump.ToBookmark(CommandLine.Argument(command));
                 Corkboard.Reload();
                 break;
+            case "colorscheme":
+            case "colo":
+                // ":colorscheme name": another color scheme, the board drawn again in it
+                _message = SchemeEditor.UseByName(CommandLine.Argument(command), out _);
+                break;
             case "recent":
                 RecentBox.Open();
                 break;

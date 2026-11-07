@@ -141,6 +141,13 @@ internal static partial class FileExplorer
                     continue;
                 }
 
+                if (command != null && CommandLine.Name(command) is "colorscheme" or "colo")
+                {
+                    // ":colorscheme name": another color scheme, the page drawn again in it
+                    _hotlistMessage = SchemeEditor.UseByName(CommandLine.Argument(command), out _);
+                    continue;
+                }
+
                 // A name can follow ":rename" and ":bookmark"
                 if (command != null && CommandLine.Name(command) is "rename" or "bookmark" or "bookmark!")
                 {

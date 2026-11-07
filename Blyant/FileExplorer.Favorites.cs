@@ -221,6 +221,13 @@ internal static partial class FileExplorer
                     continue;
                 }
 
+                if (command != null && CommandLine.Name(command) is "colorscheme" or "colo")
+                {
+                    // ":colorscheme name": another color scheme, the page drawn again in it
+                    _favoriteMessage = SchemeEditor.UseByName(CommandLine.Argument(command), out _);
+                    continue;
+                }
+
                 // A name can follow the command
                 if (command != null && CommandLine.Name(command) is "folder" or "subfolder" or "rename" or "new" or "import" or "list"
                     or "bookmark" or "bookmark!")

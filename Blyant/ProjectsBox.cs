@@ -297,6 +297,16 @@ internal static class ProjectsBox
                 return _commandResult != null ? CommandResult.Opened : CommandResult.None;
             case "add":
                 return AddFolder() != null ? CommandResult.Reload : CommandResult.None;
+            case "colorscheme":
+            case "colo":
+            {
+                // ":colorscheme name": another color scheme, the list drawn again in it (the page behind it is drawn
+                // again when the list is closed, as after the help)
+                var message = SchemeEditor.UseByName(argument, out var used);
+                if (used) Tools.ClearScreen();
+                PickListBox.ShowMessage(message);
+                return CommandResult.None;
+            }
         }
 
         if (project == null)

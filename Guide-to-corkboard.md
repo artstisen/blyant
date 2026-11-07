@@ -122,6 +122,7 @@ A board without cards shows the keys to start with in a box in its middle: pinni
 - `/` Filter the cards: the others are dimmed, and `Tab` goes through those that are left. The card found on top is selected (of those the mode takes), and frames are found by their titles (the others are dimmed too). `Esc` shows all again
 - `:missing` The cards whose file is not there any more, in a list to select one. `:prune` Remove them, after asking (those on a drive that is not connected stay)
 - `Ctrl+O` (or `:jump`) the Jump menu, `Ctrl+K` (or `:recent`) the latest files, `?` (or `:help`) the keys, `Esc` (or `Q`) close
+- [`:colorscheme name`](Guide-to-jump-menu.md#changing-the-scheme-by-command) Use another color scheme (`Tab` completes the names)
 
 The line below the top bar is a ruler of the columns of the board, as above the logo in the logo editor: a dot for each column, `:` for every 5th and the tens as digits, to line the cards up when you move them. A card being moved (`V`) shows its place at the right end of its top edge: its column on the ruler and its row on the board (`.--------------- 26,4 -.`), and a badge being moved shows it on the line above the keys (`Badge at 26,4`), as it has no room for it.
 

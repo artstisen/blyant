@@ -1,6 +1,8 @@
 # Changes
 
 ## v1.4.3 (unreleased)
+- **A new color scheme, Lush Blue**: in Color schemes, on the Schemes tab, after Deep Blue. Like Deep Blue it has a dark blue background, with green, cyan and magenta, and the logo _Blyant_.
+- **`:colorscheme name`, on every command line**: uses another color scheme without opening Color schemes, and saves it, as `Enter` on the Schemes tab does (also `:colo`). `Tab` completes the names of the schemes, also after a space (`:colo Deep B`), the start of a name is enough when only one scheme has it, and `:colorscheme` alone tells the scheme in use. See [Changing the scheme by command](Guide-to-jump-menu.md#changing-the-scheme-by-command).
 - **The corkboard selects all at first**: the selection mode is **All** at first (setting `boardmode`, `all`), so `h` `j` `k` `l` and `Tab` go to everything on the board. A mode chosen with `M` is kept as before.
 - **Adding a divider, line or frame keeps the mode**: the new one is selected (and `V` moves it), but the mode no longer changes to **Lines**. A card, note or badge added, what `/` finds and what `u` puts back still change the mode when it does not take them.
 - **A note card has a mark on its top edge**: `.----------~*~---------.`, in place of the gaps in its edges; its bottom edge is a line, as a file's. The selected note keeps the mark (`::::~*~::::`).
