@@ -12,6 +12,9 @@
 # Windows and the portable version (Blyant-1.4.4-win-x64.zip), and a tar.gz for Linux and macOS
 # (Blyant-1.4.4-linux-x64.tar.gz), where the program is marked as one that can be run. Each has a folder "Blyant"
 # with the files in it. The language pack is Blyant-languages-1.4.4.zip
+# The user manual is made from the guides first (tools/manual.py, which needs Python, and Typst for the PDF): the
+# Markdown version (Blyant-User-Manual.md) goes in every archive next to the program, and the PDF is a download of
+# its own (Blyant-User-Manual-1.4.4.pdf)
 # The tests are run first (nothing is published when one fails), and the version must be the same in all the
 # places it is set: Version, AssemblyVersion and FileVersion in Blyant.csproj, and DialogText.ApplicationVersion.
 # The archives of a version that is published again are replaced, also those of an earlier version of Blyant
@@ -69,6 +72,18 @@ foreach ($platform in $Platforms) {
 }
 
 Add-Type -AssemblyName System.IO.Compression, System.IO.Compression.FileSystem
+
+# The user manual, made from the guides: the Markdown version for the archives, and the PDF for the release (the PDF
+# of an earlier version is replaced)
+$manual = Join-Path $output "manual"
+if ($Platforms | Where-Object { $_ -ne "languages" }) {
+    Write-Host "Making the user manual..."
+    python (Join-Path $PSScriptRoot "tools/manual.py") --pdf --out $manual
+    if ($LASTEXITCODE -ne 0) { throw "The user manual could not be made: nothing was published" }
+    New-Item -ItemType Directory -Force $release | Out-Null
+    Get-ChildItem $release -Filter "Blyant-User-Manual-*.pdf" -File | Remove-Item
+    Copy-Item (Join-Path $manual "Blyant-User-Manual.pdf") (Join-Path $release "Blyant-User-Manual-$version.pdf")
+}
 
 # Pack the files of a version for a release, in a folder "Blyant": a tar.gz for Linux and macOS (the program
 # marked as one that can be run, which a zip made on Windows cannot tell), else a zip
@@ -153,6 +168,8 @@ foreach ($platform in $Platforms) {
             -o (Join-Path $output $platform) --nologo -v quiet
     }
     if ($LASTEXITCODE -ne 0) { throw "Publishing $platform failed" }
+    # The user manual next to the program
+    Copy-Item (Join-Path $manual "Blyant-User-Manual.md") $folder
     New-ReleaseArchive $platform $folder
 }
 

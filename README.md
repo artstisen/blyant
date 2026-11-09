@@ -108,6 +108,8 @@ Blyant is operated in the style of Vim: the editor has Normal, Insert and Visual
 - [Writing with Typst](Guide-to-typst.md)
 - [Changes](CHANGELOG.md)
 
+The guides are also put together as a user manual, in the release archives (`Blyant-User-Manual.md`) and as a PDF on the releases page.
+
 Inside Blyant, press `?` for the list of keys.
 
 ## Specifications

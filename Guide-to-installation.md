@@ -5,7 +5,7 @@ Blyant comes in two kinds of builds, so pick the one that suits you:
 - **The portable version**: a small version (about 1 MB) that runs on every platform, but needs the .NET 10 runtime to be installed (see [Install .NET](#install-net) below)
 
 ## Download and run Blyant
-Download the latest Blyant archive for your platform from the [releases page](https://github.com/artstisen/blyant/releases), and unpack it in a directory of your choosing: it holds a folder _Blyant_ with the program in it. Keep the folder _lang_ next to the program: it holds the languages other than English and German.
+Download the latest Blyant archive for your platform from the [releases page](https://github.com/artstisen/blyant/releases), and unpack it in a directory of your choosing: it holds a folder _Blyant_ with the program in it. Keep the folder _lang_ next to the program: it holds the languages other than English. Next to the program is also _Blyant-User-Manual.md_, the user manual (all the guides of Blyant in one file), which can be read in Blyant itself. The manual is also on the releases page as a PDF (`Blyant-User-Manual-1.4.4.pdf`), to read or print.
 
 | Platform | Download |
 |---|---|
