@@ -45,6 +45,20 @@ internal static class CommandLine
     /// <returns>The text, or null if canceled or empty</returns>
     internal static string? Read(char prefix, bool isCommand, CommandContext? context = null)
     {
+        var text = ReadText(prefix, isCommand, context);
+        // A command of the Jump menu while it is turned off (Configuration: Modules): told in a box, and not given
+        // to the page (which draws itself again, as after a command)
+        if (context != null && text != null && Modules.RefusesJumpCommand(Name(text).ToLowerInvariant()) &&
+            Modules.JumpTurnedOff())
+        {
+            return null;
+        }
+
+        return text;
+    }
+
+    private static string? ReadText(char prefix, bool isCommand, CommandContext? context)
+    {
         // (the bottom line, also when a box is shown)
         using var outside = ConsoleColors.OutsideBox();
         var command = string.Empty;

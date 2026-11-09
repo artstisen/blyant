@@ -538,6 +538,7 @@ internal static class StartMenu
         BookmarkPeek, // Below BookmarkPanes
         ModuleProjects,
         ModuleBoard,
+        ModuleJump,
         Hints,
         Reset,
         EditSettings,
@@ -596,6 +597,7 @@ internal static class StartMenu
         // Modules
         settings.Add(Setting.ModuleProjects);
         settings.Add(Setting.ModuleBoard);
+        settings.Add(Setting.ModuleJump);
         // System
         settings.Add(Setting.Hints);
         settings.Add(Setting.Reset);
@@ -646,6 +648,7 @@ internal static class StartMenu
             Setting.Zen => Check(TextArea.Zen) + Lang.T("Zen mode: only mode, name and line (:zen)"),
             Setting.ModuleProjects => Check(Modules.Projects) + Lang.T("Projects: New project, Open project, list of projects"),
             Setting.ModuleBoard => Check(Modules.Board) + Lang.T("Corkboard: files and notes as cards"),
+            Setting.ModuleJump => Check(Modules.Jump) + Lang.T("Jump menu: bookmarks, recent places and pages"),
             Setting.MarksApostrophe => Check(EditorEngine.MarksApostrophe) + Lang.T("Marks: ' jumps to the exact place"),
             Setting.ScrollOff => Check(TextArea.ScrollOff) +
                                  Lang.F("Lines kept around cursor: {0}", TextArea.ScrollOffLines),
@@ -698,7 +701,7 @@ internal static class StartMenu
             Setting.FileNumbers or Setting.FavoriteNumbers or Setting.HistoryNumbers or Setting.HotlistNumbers
                 or Setting.SearchNumbers or Setting.BookmarkNumbers or Setting.FavoritePanes or Setting.FavoritePeek
                 or Setting.BookmarkPanes or Setting.BookmarkPeek => 3,
-            Setting.ModuleProjects or Setting.ModuleBoard => 4,
+            Setting.ModuleProjects or Setting.ModuleBoard or Setting.ModuleJump => 4,
             _ => 5
         };
     }
@@ -831,7 +834,7 @@ internal static class StartMenu
             // (and none of a module turned off: Configuration, Modules)
             return Enum.GetValues<Choice>().Where(choice => (choice != Choice.Recover || recover) &&
                 (choice is not (Choice.NewProject or Choice.OpenProject) || Modules.Projects) &&
-                (choice != Choice.Board || Modules.Board)).ToArray();
+                (choice != Choice.Board || Modules.Board) && (choice != Choice.Jump || Modules.Jump)).ToArray();
         }
 
         // The keys that open a choice at once (the same in all languages; the numbers only select). A new file: N,
@@ -927,7 +930,7 @@ internal static class StartMenu
             var (text, number) = Hints.Current();
             var lines = TextMetrics.Wrap(text, inner);
             if (lines.Count + 2 > area.Height) return false;
-            var title = Lang.F("Hint {0} of {1}", number, Hints.All().Length);
+            var title = Lang.F("Hint {0} of {1}", number, Hints.ShownCount);
             var hide = Lang.T("Hide hints");
             var corner = AsciiStyles.GetTopCorner();
             var bottomCorner = AsciiStyles.GetBottomCorner();
@@ -1369,6 +1372,9 @@ internal static class StartMenu
                 break;
             case Setting.ModuleBoard:
                 Modules.Board = !Modules.Board;
+                break;
+            case Setting.ModuleJump:
+                Modules.Jump = !Modules.Jump;
                 break;
             case Setting.MarksApostrophe:
                 EditorEngine.MarksApostrophe = !EditorEngine.MarksApostrophe;

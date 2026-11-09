@@ -523,6 +523,7 @@ internal sealed partial class EditorEngine
             if (Mode == EditorMode.Insert) HandleInsert(new ConsoleKeyInfo('\u001b', ConsoleKey.Escape, false, false, false));
             Buffer.EndStep(Cursor);
             JumpArgument = string.Empty;
+            JumpMenuAsked = true;
             _request = EditorRequest.Jump;
             RecordMacroCommandDone(true);
             ClampCursor();
@@ -1119,6 +1120,7 @@ internal sealed partial class EditorEngine
         if (board.Success)
         {
             JumpArgument = ("board " + board.Groups[1].Value.Trim()).Trim();
+            JumpMenuAsked = false;
             if (!SingleLine) _request = EditorRequest.Jump;
             return;
         }
@@ -1127,6 +1129,7 @@ internal sealed partial class EditorEngine
         if (jump.Success)
         {
             JumpArgument = jump.Groups[1].Value.Trim();
+            JumpMenuAsked = true;
             if (!SingleLine) _request = EditorRequest.Jump;
             return;
         }
@@ -1525,9 +1528,11 @@ internal sealed partial class EditorEngine
             case "hotlist":
             case "hot":
             case "browse":
+            case "file":
                 // The file browser, or one of its lists alone: a page of Blyant, as ":jump favorites" (the editor is
                 // left)
                 JumpArgument = JumpPages.ListPageOf(command) ?? string.Empty;
+                JumpMenuAsked = false;
                 if (!SingleLine) _request = EditorRequest.Jump;
                 break;
             case "snip":

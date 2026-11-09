@@ -217,6 +217,7 @@ internal static class Actions
         TextArea.Zen = false;
         Modules.Projects = true;
         Modules.Board = true;
+        Modules.Jump = true;
         EditorEngine.MarksApostrophe = false;
         TextFile.NewFileLineEndings = "system";
         TextArea.ScrollOff = true;

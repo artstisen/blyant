@@ -579,6 +579,8 @@ internal static class Bookmarks
         out bool isError)
     {
         isError = true;
+        // The bookmarks are kept in the Jump menu: off with it (Configuration: Modules)
+        if (!Modules.Jump) return Modules.JumpOff;
         if (reload) Load();
         name = name.Replace('\t', ' ').Replace('\r', ' ').Replace('\n', ' ').Trim();
         if (target.Kind is JumpKind.File or JumpKind.Directory)

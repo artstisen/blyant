@@ -986,6 +986,11 @@ public partial class TextArea
                 // Leaving would throw the macro away: it is stopped first (Esc)
                 _engine.SetMessage(Lang.T("Stop recording the macro first (Esc)"), true);
                 break;
+            case EditorRequest.Jump when _engine.JumpMenuAsked && !Modules.Jump:
+            case EditorRequest.JumpToBookmark when !Modules.Jump:
+                // Turned off (Configuration: Modules)
+                _engine.ShowMessage(Modules.JumpOff, true);
+                break;
             case EditorRequest.Jump:
                 // (":jump general" can show a box at once: the page drawn first, without the list of commands)
                 if (_engine.JumpArgument.Length > 0) Draw();

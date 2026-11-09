@@ -38,6 +38,31 @@ public class HintsTests : IDisposable
     }
 
     [Fact]
+    public void TheHintsOfAModuleThatIsOff_AreNotShown()
+    {
+        try
+        {
+            Modules.Jump = false;
+            Modules.Projects = false;
+            Assert.Equal(8, Hints.ShownCount);
+            // The hint about bookmarks (the 4th) is passed over for the next one shown: the 6th, the 3rd shown
+            Hints.Index = 3;
+            Assert.Equal((Hints.All()[5], 3), Hints.Current());
+            for (var i = 0; i < Hints.All().Length; i++)
+            {
+                Hints.Index = i;
+                Assert.DoesNotContain("Jump menu", Hints.Current().Text);
+                Assert.DoesNotContain("list of projects", Hints.Current().Text);
+            }
+        }
+        finally
+        {
+            Modules.Jump = true;
+            Modules.Projects = true;
+        }
+    }
+
+    [Fact]
     public void EachStart_ShowsTheNextHint_AndSavesWhichOne()
     {
         Hints.Enabled = true;

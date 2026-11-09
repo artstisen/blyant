@@ -87,14 +87,14 @@ internal static class JumpPages
 
     /// <summary>
     /// The page of the file browser a command goes to: ":favorites" (":favs"), ":history" (":hist"), ":hotlist"
-    /// (":hot") or ":browse", or null for another command
+    /// (":hot") or ":browse" (":file", as on the start page), or null for another command
     /// </summary>
     internal static string? ListPageOf(string command) => command switch
     {
         "favorites" or "favs" => "favorites",
         "history" or "hist" => "history",
         "hotlist" or "hot" => "hotlist",
-        "browse" => "browse",
+        "browse" or "file" => "browse",
         _ => null
     };
 
@@ -391,6 +391,8 @@ internal static class Jump
     internal static void Open(Func<bool>? beforeLeaving = null, Func<bool>? hasChanges = null,
         Func<JumpTarget, bool>? here = null, string? current = null)
     {
+        // Turned off (Configuration: Modules): told in a box (Ctrl+O and ":jump" come here)
+        if (Modules.JumpTurnedOff()) return;
         var target = JumpMenu.Pick(current);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
         if (target != null) Go(target, beforeLeaving, hasChanges, here);
@@ -494,6 +496,8 @@ internal static class Jump
     internal static void ToBookmark(string argument, Func<bool>? beforeLeaving = null, Func<bool>? hasChanges = null,
         Func<JumpTarget, bool>? here = null)
     {
+        // The bookmarks are kept in the Jump menu: off with it
+        if (Modules.JumpTurnedOff()) return;
         argument = argument.Trim();
         if (argument.Length == 0)
         {

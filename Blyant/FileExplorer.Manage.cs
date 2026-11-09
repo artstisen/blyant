@@ -68,6 +68,11 @@ internal static partial class FileExplorer
     {
         switch (name)
         {
+            case "browse":
+            case "file":
+                // (as on the other pages: here it is shown already)
+                _message = Lang.T("This is the file browser");
+                break;
             case "jump":
             case "ju":
             case "jmp":

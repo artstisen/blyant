@@ -29,6 +29,12 @@ internal sealed partial class EditorEngine
     internal string JumpArgument { get; private set; } = string.Empty;
 
     /// <summary>
+    /// The jump was asked for with Ctrl+O or ":jump" (the Jump menu, or a page by its name), not by ":board" or a
+    /// command of the lists of the file browser: refused while the Jump menu is turned off
+    /// </summary>
+    internal bool JumpMenuAsked { get; private set; }
+
+    /// <summary>
     /// The name of the file "gf" opens (EditorRequest.GoToFile): at the cursor, or the text selected
     /// </summary>
     internal string GoToFileName { get; private set; } = string.Empty;

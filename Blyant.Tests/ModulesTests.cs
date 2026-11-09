@@ -11,6 +11,7 @@ public class ModulesTests : IDisposable
     {
         Modules.Projects = true;
         Modules.Board = true;
+        Modules.Jump = true;
     }
 
     [Fact]
@@ -60,11 +61,47 @@ public class ModulesTests : IDisposable
     }
 
     [Fact]
+    public void TheJumpMenuOff_TakesTheBookmarksWithIt_ButNotThePages()
+    {
+        Assert.False(Modules.RefusesJumpCommand("jump"));
+        Modules.Jump = false;
+        Assert.True(Modules.RefusesJumpCommand("jump"));
+        Assert.True(Modules.RefusesJumpCommand("ju"));
+        Assert.True(Modules.RefusesJumpCommand("book"));
+        // The pages have their own commands, which stay
+        Assert.False(Modules.RefusesJumpCommand("board"));
+        Assert.False(Modules.RefusesJumpCommand("favorites"));
+        Assert.DoesNotContain("jump", Commands.Names(CommandContext.Files));
+        Assert.DoesNotContain("bookmark", Commands.Names(CommandContext.Editor));
+        Assert.Contains("board", Commands.Names(CommandContext.Files));
+        Assert.Contains("log", Commands.Names(CommandContext.Editor));
+        // No bookmark is added
+        Assert.Equal(Modules.JumpOff,
+            Bookmarks.AddWithMessage(new JumpTarget(JumpKind.Directory, Path.GetTempPath()), false));
+        Assert.True(Modules.HidesHelp(DialogText.HelpSectionJump, "x"));
+        Assert.True(Modules.HidesHelp(DialogText.HelpSectionFiles,
+            Lang.T("Jump to bookmark 3 (:book alone: the bookmarks)")));
+    }
+
+    [Fact]
+    public void TheEditor_TellsTheMenuFromAPage()
+    {
+        // Ctrl+O and ":jump" ask for the Jump menu; ":board" and the lists only go to a page
+        var editor = new EditorEngine("text", 40, 10, false);
+        Assert.Equal(EditorRequest.Jump, editor.Type(":jump logos<CR>"));
+        Assert.True(editor.JumpMenuAsked);
+        Assert.Equal(EditorRequest.Jump, editor.Type(":board<CR>"));
+        Assert.False(editor.JumpMenuAsked);
+        Assert.Equal(EditorRequest.Jump, editor.Type(":history<CR>"));
+        Assert.False(editor.JumpMenuAsked);
+    }
+
+    [Fact]
     public void TheRowsOfTheModules_AreRowsOfTheHelp()
     {
         // Each text is that of a row of the help (Tools.cs), so a row changed there is not left in the help by mistake
         var help = File.ReadAllText(Path.Combine(SourceDirectory(), "Tools.cs"));
-        foreach (var text in Modules.ProjectHelp.Concat(Modules.BoardHelp))
+        foreach (var text in Modules.ProjectHelp.Concat(Modules.BoardHelp).Concat(Modules.JumpHelp))
         {
             Assert.Contains("Lang.T(\"" + text + "\")", help);
         }

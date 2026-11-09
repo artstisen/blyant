@@ -3,6 +3,8 @@
 /// <summary>
 /// ":changes": the steps of the undo history told as changes (ChangeHistory), newest first
 /// </summary>
+// (the edits yank to the string memory, which other tests check)
+[Collection("Static state")]
 public class ChangeHistoryTests
 {
     private static EditorEngine Editor(string text) => new(text, 40, 10, false);

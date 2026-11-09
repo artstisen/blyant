@@ -143,18 +143,21 @@ backup=
     [Fact]
     public void TheModules_AreLoadedAndSaved()
     {
-        File.WriteAllText(SettingsFile, LegacySettings + "\nmoduleprojects=false\nmoduleboard=false\n");
+        File.WriteAllText(SettingsFile, LegacySettings + "\nmoduleprojects=false\nmoduleboard=false\nmodulejump=false\n");
         Assert.True(FileIo.LoadSettings());
         Assert.False(Modules.Projects);
         Assert.False(Modules.Board);
+        Assert.False(Modules.Jump);
         FileIo.SaveSettings();
         var saved = FileIo.ParseSettings(File.ReadAllText(SettingsFile));
         Assert.Equal("false", saved["moduleprojects"]);
         Assert.Equal("false", saved["moduleboard"]);
+        Assert.Equal("false", saved["modulejump"]);
         // The defaults: on
         Actions.ApplyDefaultSettings();
         Assert.True(Modules.Projects);
         Assert.True(Modules.Board);
+        Assert.True(Modules.Jump);
     }
 
     [Fact]
@@ -380,7 +383,8 @@ backup=
         Assert.False(settings.ContainsKey("stayloggedin"));
         Assert.False(settings.ContainsKey("projectsdir"));
         Assert.False(settings.ContainsKey("projectsask"));
-        Assert.Equal(58, settings.Count);
+        Assert.Equal(59, settings.Count);
+        Assert.Equal("true", settings["modulejump"]);
         // The modules are on unless turned off
         Assert.Equal("true", settings["moduleprojects"]);
         Assert.Equal("true", settings["moduleboard"]);

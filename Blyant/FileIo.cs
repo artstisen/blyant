@@ -511,6 +511,7 @@ internal static class FileIo
         // The modules (Configuration: Modules): the projects and the corkboard, on unless turned off
         _tempSettings += "moduleprojects=" + (Modules.Projects ? DialogText.BTrue : DialogText.BFalse) + '\n';
         _tempSettings += "moduleboard=" + (Modules.Board ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        _tempSettings += "modulejump=" + (Modules.Jump ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // ' jumps to the place of a mark, as ` (for keyboards where ` is hard to type)
         _tempSettings += "marksapostrophe=" + (EditorEngine.MarksApostrophe ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // Lines kept above and below the cursor when the editor scrolls (on or off, and how many)
@@ -704,6 +705,7 @@ internal static class FileIo
         // On unless turned off
         Modules.Projects = Tools.TrimToLower(Get("moduleprojects")) != DialogText.BFalse;
         Modules.Board = Tools.TrimToLower(Get("moduleboard")) != DialogText.BFalse;
+        Modules.Jump = Tools.TrimToLower(Get("modulejump")) != DialogText.BFalse;
         EditorEngine.MarksApostrophe = Tools.TrimToLower(Get("marksapostrophe")) == DialogText.BTrue;
         // On unless turned off
         TextArea.ScrollOff = Tools.TrimToLower(Get("scrolloff")) != DialogText.BFalse;

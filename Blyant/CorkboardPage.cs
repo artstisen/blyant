@@ -1060,6 +1060,7 @@ internal static class CorkboardPage
             case "hotlist":
             case "hot":
             case "browse":
+            case "file":
                 // The file browser, or one of its lists alone (the board is left)
                 Jump.ToPage(Jump.PageOf(command));
                 Corkboard.Reload();

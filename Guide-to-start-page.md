@@ -129,10 +129,11 @@ The settings of the lists of the file browser and of the [bookmarks](Guide-to-ju
 
 **Modules**
 
-The parts of Blyant you may not need can be turned off, so the start page, the menus and the help show only what you use. A module turned off is not on the start page, in the Jump menu, in the box of commands above the command line or in the help; its keys and commands tell that it is off (_Configuration: Modules_). Nothing of it is deleted: your projects and boards are there again, as they were, when it is turned on. `:modules` on the start page goes to this page.
+The parts of Blyant you may not need can be turned off, so the start page, the menus and the help show only what you use. A module turned off is not on the start page, in the Jump menu, in the box of commands above the command line, in the help or in the hints of the start page; its keys and commands tell that it is off (_Configuration: Modules_). Nothing of it is deleted: your projects and boards are there again, as they were, when it is turned on. `:modules` on the start page goes to this page.
 
 - **Projects: New project, Open project, list of projects**: The [projects](#projects): _New project_ and _Open project_ on the Start tab, the list of projects (`E` and `:projects` in the file browser, `:projects` in the editor) and the Projects tab of the Jump menu (on from the start). Saved as `moduleprojects` in the settings file
 - **Corkboard: files and notes as cards**: The [corkboard](Guide-to-corkboard.md): _Corkboard_ on the Start tab, `:board` on every command line, `:pin`, the boards of the projects (`B` and the board beside the list of projects) and the Corkboard page of the Jump menu (on from the start). Saved as `moduleboard` in the settings file
+- **Jump menu: bookmarks, recent places and pages**: The [Jump menu](Guide-to-jump-menu.md#jump-menu): `Ctrl+O` on every page, _Jump menu_ on the Start tab, `:jump` (also `:jump name`), and the bookmarks, which are kept in it (`:book`, `:bookmark`). With the Jump menu off there are no bookmarks: they stay in `bookmarks.txt`, and are there again when it is turned on. The pages it goes to keep their own commands (`:board`, `:favorites`, `:history`, `:hotlist`, `:browse`, `:log`, `:colorscheme`, and on the start page `:scheme`, `:logo`, `:clipboard`, `:modules` ...) (on from the start). Saved as `modulejump` in the settings file
 
 **System**
 

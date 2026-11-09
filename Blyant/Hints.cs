@@ -49,15 +49,36 @@ internal static class Hints
                "to do and ideas for the project there.")
     ];
 
+    // A hint about a module that is turned off (Configuration: Modules) is not shown: those about the Jump menu and its
+    // bookmarks (the 2nd, 4th and 5th of All, by their place there) and the one about the projects (the 12th)
+    private static bool IsShown(int index) => index switch
+    {
+        1 or 3 or 4 => Modules.Jump,
+        11 => Modules.Projects,
+        _ => true
+    };
+
     /// <summary>
-    /// The hint shown, and its number (from 1)
+    /// How many hints are shown (not those of a module that is turned off)
+    /// </summary>
+    internal static int ShownCount => Enumerable.Range(0, All().Length).Count(IsShown);
+
+    /// <summary>
+    /// The hint shown, and its number (from 1) among the hints shown. One of a module that is turned off is passed
+    /// over for the next
     /// </summary>
     internal static (string Text, int Number) Current()
     {
         var all = All();
         // (before the first start, -1: the first)
-        var index = Math.Max(0, Index) % all.Length;
-        return (all[index], index + 1);
+        var start = Math.Max(0, Index) % all.Length;
+        for (var step = 0; step < all.Length; step++)
+        {
+            var index = (start + step) % all.Length;
+            if (IsShown(index)) return (all[index], Enumerable.Range(0, index + 1).Count(IsShown));
+        }
+
+        return (all[0], 1);
     }
 
     // The hint has gone on in this session
