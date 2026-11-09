@@ -89,7 +89,7 @@ A number before a movement or command repeats it: `5j` moves 5 rows down and `3w
 - `J` Join the line with the next
 - `>>` `<<` Indent/Unindent the line
 - `~` Switch the case of the character, `gUU` `guu` Line to UPPERCASE/lowercase, `gUw` `guw` Word to UPPERCASE/lowercase
-- `u` Undo (500 steps), `U` or `CTRL+R` Redo
+- `u` Undo (500 steps), `U` or `CTRL+R` Redo. `:changes` lists them: see [Edit history](#edit-history)
 - `.` Repeat the last change
 
 ## Visual mode
@@ -206,6 +206,14 @@ With line numbers on, a line with a mark shows the letter of the mark in place o
 The marks follow the text: lines put in above a mark move it down with its line, lines taken out above it move it up, and a mark in text that is deleted stays where the text was. Undo and redo move them too. They are kept while Blyant runs: a file closed and opened again in the same session has its marks still, but they are not saved (a [bookmark](Guide-to-jump-menu.md#bookmarks) is the place to keep, and is reached from anywhere).
 
 **A keyboard where ` is hard to type:** on many keyboards outside the US (Danish, Norwegian, Swedish, German, French, Spanish ...) the backtick is a dead key, which waits for a letter to put an accent on (`` ` `` and `a` make `à`), so `` `a `` does not reach the mark. Turn on **Marks: ' jumps to the exact place** on the Editor page of Configuration (setting `marksapostrophe`): `'a` then jumps to the place of mark `a`, and `''` back. The jump to the start of the line is then `'a` followed by `0` or `^`. `` ` `` still works where it can be typed.
+
+## Edit history
+`:changes` shows the edits of the text in a list, the newest first: the steps that `u` undoes, one row each, so you can see what you have done lately and go back to it. Each row tells where the change is (`line:column`, where it is now: it follows the edits made after it), what it did (_Inserted_, _Deleted_, _Replaced_, or _Changes: 14_ for a step that changed several places, as `:%s`), the start of its text (`colour -> color` for a replacement) and the time it was made. Below the list, the text the selected change removed is shown with `-` in front, and the text it inserted with `+`.
+
+- Text typed from `i` (or `a`, `o` ...) to `Esc` is one row, also when you deleted some of it with `Backspace` while typing. A macro played is one row too, as it is one step of `u`
+- Steps undone with `u` are at the top of the list, dimmed and marked _undone_: `CTRL+R` makes them again
+- `Enter` jumps to the place of the selected change (``` `` ``` goes back), `/` filters the list and `Esc` closes it. The list itself changes nothing
+- The list holds as many steps as undo does (500), and is forgotten when the file is closed
 
 ## Line numbers
 - `:number` (or `:nu`) Show or hide line numbers (they are off until turned on). `:set number` and `:set nonumber` do one of the two

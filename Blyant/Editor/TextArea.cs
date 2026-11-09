@@ -851,6 +851,12 @@ public partial class TextArea
                 MacroBoxes.Stop(_engine, RedrawAll);
                 RedrawAll();
                 break;
+            case EditorRequest.Changes:
+                Tools.HideCursor();
+                DrawStatusLine();
+                ShowChanges();
+                RedrawAll();
+                break;
             case EditorRequest.Marks:
                 Tools.HideCursor();
                 DrawStatusLine();
@@ -1897,6 +1903,78 @@ public partial class TextArea
             if (picked >= 0) _engine.JumpToMark(marks[picked].Name);
             return;
         }
+    }
+
+    // ":changes": the edit history, newest first (the steps undone at the top, dimmed): where each change is now,
+    // what it did, the start of its text and when it was made. Below the list: the text removed (-) and inserted (+).
+    // Enter jumps to the place of the change
+    private void ShowChanges()
+    {
+        var changes = ChangeHistory.Of(_engine.Buffer.History());
+        if (changes.Count == 0)
+        {
+            _engine.ShowMessage(Lang.T("No edits yet"), false);
+            return;
+        }
+
+        var kinds = changes.Select(KindOf).ToList();
+        var places = changes.Select(change => PlaceOf(change.Place)).ToList();
+        var times = changes.Select(change => change.Undone ? Lang.T("undone") : change.Time.ToString("HH:mm:ss"))
+            .ToList();
+        var kindWidth = kinds.Max(TextMetrics.WidthOf);
+        var placeWidth = places.Max(TextMetrics.WidthOf);
+        var timeWidth = times.Max(TextMetrics.WidthOf);
+        // The room of a row in the box (PickListBox), and the text in what is left
+        var textWidth = Math.Max(8, Init.LineWidth - 14 - placeWidth - kindWidth - timeWidth - 6);
+        var rows = changes.Select((change, i) =>
+            Pad(places[i], placeWidth) + "  " + Pad(kinds[i], kindWidth) + "  " +
+            Pad(Tools.TruncateString(TextOf(change), textWidth, true), textWidth) + "  " + times[i]).ToList();
+        var picked = PickListBox.Show(Lang.T("Edit history"), rows, i => Preview(changes[i]), 0,
+            Lang.T("j/k Select | Enter Jump | / Filter | Esc Close"), new PickListBox.Extras
+            {
+                RowColor = i => changes[i].Undone ? ConsoleColor.DarkGray : null
+            });
+        if (picked >= 0) _engine.JumpToPlace(changes[picked].Place);
+        return;
+
+        static string Pad(string text, int width) => text + new string(' ', Math.Max(0, width - TextMetrics.WidthOf(text)));
+    }
+
+    // What a change did, as the list of ":changes" shows it
+    private static string KindOf(ChangeHistory.Change change) => change.Kind switch
+    {
+        ChangeHistory.ChangeKind.Inserted => Lang.T("Inserted"),
+        ChangeHistory.ChangeKind.Deleted => Lang.T("Deleted"),
+        ChangeHistory.ChangeKind.Replaced => Lang.T("Replaced"),
+        ChangeHistory.ChangeKind.Several => Lang.F("Changes: {0}", change.Count),
+        _ => Lang.T("No change")
+    };
+
+    // The text of a change in a row: the start of the text inserted or deleted, or both ("colour -> color")
+    private static string TextOf(ChangeHistory.Change change)
+    {
+        var removed = ChangeHistory.Excerpt(change.Removed);
+        var inserted = ChangeHistory.Excerpt(change.Inserted);
+        if (removed.Length == 0) return inserted;
+        return inserted.Length == 0 ? removed : removed + " -> " + inserted;
+    }
+
+    // The place of a change as line:column (the column on the screen, as on the bottom line)
+    private string PlaceOf(TextPos place)
+    {
+        var at = _engine.Buffer.Clamp(place);
+        return at.Line + 1 + ":" + (TextMetrics.WidthOfRange(_engine.Buffer[at.Line], 0, at.Col) + 1);
+    }
+
+    // Below the list: the lines removed (-) and inserted (+) by the change (its first part)
+    private static string Preview(ChangeHistory.Change change)
+    {
+        var lines = new List<string>();
+        if (change.Removed.Length > 0) lines.AddRange(change.Removed.TrimEnd(TextBuffer.NewLine).Split(TextBuffer.NewLine)
+            .Select(line => "- " + line.Replace("\t", "    ")));
+        if (change.Inserted.Length > 0) lines.AddRange(change.Inserted.TrimEnd(TextBuffer.NewLine).Split(TextBuffer.NewLine)
+            .Select(line => "+ " + line.Replace("\t", "    ")));
+        return string.Join("\n", lines.Take(8));
     }
 
     /// <summary>

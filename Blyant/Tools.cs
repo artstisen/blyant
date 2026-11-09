@@ -1169,6 +1169,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("`` ''", Lang.T("Back to where the last jump was made from"), false));
             _shortcutList.Add(new Shortcut("  ` " + Lang.T("alternate key"), Lang.T("Configuration, Editor: ' to the exact place"), false));
             _shortcutList.Add(new Shortcut(":marks", Lang.T("The marks in a list: Enter jumps, D deletes"), false));
+            _shortcutList.Add(new Shortcut(":changes", Lang.T("Edit history: the latest edits, Enter jumps to one"), false));
             _shortcutList.Add(new Shortcut(":mark a :k a", Lang.T("Set mark a (:delmarks a b, a-c, or ! all)"), false));
             _shortcutList.Add(new Shortcut(":favorite :fav", Lang.T("Add/remove the file as a favorite"), false));
             _shortcutList.Add(new Shortcut(":diff :diff -w", Lang.T("Compare with the saved text (-w: not blank space)"), false));

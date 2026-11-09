@@ -1395,6 +1395,7 @@ public class EditorTests
         Assert.Equal(new[] { 'a', 'c' }, editor.MarkList.Select(mark => mark.Name));
         Assert.Equal(1, editor.MarkList[0].At.Line);
         Assert.Equal(EditorRequest.Marks, editor.Type(":marks<CR>"));
+        Assert.Equal(EditorRequest.Changes, editor.Type(":changes<CR>"));
         editor.Type(":mark A<CR>");
         Assert.True(editor.MessageIsError);
         editor.Type(":delmarks a-b<CR>");

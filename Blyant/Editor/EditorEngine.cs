@@ -61,6 +61,7 @@ internal enum EditorRequest
     SaveAs, // ":saveas name": save the text as a new file, and edit that file from now on
     Bookmark, // ":bookmark name": keep the place of the cursor as a bookmark of the Jump menu (BookmarkName)
     Marks, // ":marks": the marks of the text, to jump to one
+    Changes, // ":changes": the edit history (the steps of undo and redo), to jump to one
     JumpToBookmark, // ":book 3": jump to bookmark 3 (BookArgument)
     StringMemory, // ":reglist": show the strings of the string memory, to pick one to insert
     MacroRecord, // ":record": start recording a macro

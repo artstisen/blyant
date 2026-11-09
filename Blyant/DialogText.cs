@@ -425,7 +425,7 @@ internal static class DialogText
     public static string HistoryEmpty => Lang.T("No files yet: the files opened from the file browser are listed here");
     public static string HelpSectionHotlist => Lang.T("Directory hotlist");
     public static string CaptionsHotlist => Lang.T("Hotlist");
-    public static string HotlistEmpty => Lang.T("No directories yet: B in the file browser adds the one shown");
+    public static string HotlistEmpty => Lang.T("No directories yet: B in the file browser adds one");
     public static string HotlistKeys => Lang.T("Enter Go | V Move | T Top | E End | D Remove | / Filter | Esc Close");
     // Shown while an item of a list is moved (the favorites, the hotlist, the bookmarks)
     public static string Moving => Lang.T("Moving: j/k, then Esc");
