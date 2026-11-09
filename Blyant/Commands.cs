@@ -57,39 +57,39 @@ internal static class Commands
             "q h"),
         [CommandContext.Favorites] = new Table(
             "quit close help jump book new color info remove move top bottom undo folder subfolder note panes peek number nonumber expand collapse rename import goto " +
-            "path name recent missing prune list bookmark bookmark! board pin colorscheme log",
-            "q h u ju jmp corkboard colo"),
+            "path name recent missing prune list bookmark bookmark! board pin colorscheme log favorites history hotlist browse",
+            "q h u ju jmp corkboard colo favs hist hot"),
         [CommandContext.History] = new Table(
             "quit close help jump book info goto favorite remove clear path name number nonumber recent missing prune " +
-            "bookmark bookmark! board pin colorscheme log",
-            "q h fav ju jmp corkboard colo"),
+            "bookmark bookmark! board pin colorscheme log favorites history hotlist browse",
+            "q h fav ju jmp corkboard colo favs hist hot"),
         [CommandContext.Hotlist] = new Table(
             "quit close help jump book info remove undo top bottom move rename clear path name number nonumber recent " +
-            "missing prune bookmark bookmark! board pin colorscheme log",
-            "q h u ju jmp corkboard colo"),
+            "missing prune bookmark bookmark! board pin colorscheme log favorites history hotlist browse",
+            "q h u ju jmp corkboard colo favs hist hot"),
         [CommandContext.Search] = new Table(
-            "quit close help jump book find info goto favorite number nonumber recent bookmark bookmark! board pin colorscheme log",
-            "q h fav ju jmp corkboard colo"),
+            "quit close help jump book find info goto favorite number nonumber recent bookmark bookmark! board pin colorscheme log favorites history hotlist browse",
+            "q h fav ju jmp corkboard colo favs hist hot"),
         [CommandContext.Start] = new Table(
-            "new blank recover file open favorites project projects start config general layout editor lists system jump book splits recent help about " +
-            "quick scheme logo snippet completions clipboard log restart reset quit exit board colorscheme",
-            "browse favs newproject proj pro ju jmp h guide snip comp q corkboard colo"),
+            "new blank recover file open browse favorites project projects start config general layout editor lists system jump book splits recent help about " +
+            "quick scheme logo snippet completions clipboard log restart reset quit exit board colorscheme history hotlist",
+            "favs newproject proj pro ju jmp h guide snip comp q corkboard colo hist hot"),
         [CommandContext.Jump] = new Table(
             "quit close help info jump book new note panes peek number nonumber folder subfolder expand collapse rename color remove move " +
-            "top bottom undo clearbook import path name recent missing prune board colorscheme log",
-            "q h u ju jmp corkboard colo"),
+            "top bottom undo clearbook import path name recent missing prune board colorscheme log favorites history hotlist browse",
+            "q h u ju jmp corkboard colo favs hist hot"),
         [CommandContext.Projects] = new Table(
-            "quit close help info path name color note board new add remove colorscheme log",
-            "q h colo"),
+            "quit close help info path name color note board new add remove colorscheme log favorites history hotlist browse",
+            "q h colo favs hist hot"),
         [CommandContext.Board] = new Table(
             "quit close help jump book recent new folder note badge divider line frame mode info peek list board arrange color rename remove clear undo " +
-            "top bottom missing prune colorscheme log",
-            "q h u ju jmp corkboard colo"),
+            "top bottom missing prune colorscheme log favorites history hotlist browse",
+            "q h u ju jmp corkboard colo favs hist hot"),
         [CommandContext.Editor] = new Table(
             "write saveas quit quit! wq help edit edit! reload reload! undo redo delete yank replace nohlsearch " +
             "spell nospell spellnext spellprev suggest spelladd syntax number nonumber timestamp " +
-            "favorite record play macro trim trim! lineendings bom whitespace mark marks delmarks delmarks! bookmark! view splits recent clear registers reglist regclear putall vsel vline block ol ul dup duplicate surround pb pbappend pbread pbclear pbpath clipboard path sort sort! wrap nowrap snip complete diff scrolloff info jump book bookmark yankall rename split only new projects board pin colorscheme log",
-            "w q q! wq! x h e e! u red d y s rep noh set spellsuggest spellgood nu nonu ts reg sn ju jmp fav proj pro sur k sview sv corkboard colo")
+            "favorite record play macro trim trim! lineendings bom whitespace mark marks delmarks delmarks! bookmark! view splits recent clear registers reglist regclear putall vsel vline block ol ul dup duplicate surround pb pbappend pbread pbclear pbpath clipboard path sort sort! wrap nowrap snip complete diff scrolloff info jump book bookmark yankall rename split only new projects board pin colorscheme log zen favorites history hotlist browse",
+            "w q q! wq! x h e e! u red d y s rep noh set spellsuggest spellgood nu nonu ts reg sn ju jmp fav proj pro sur k sview sv corkboard colo favs hist hot")
     };
 
     /// <summary>

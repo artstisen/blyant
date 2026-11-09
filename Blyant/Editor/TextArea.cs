@@ -48,6 +48,12 @@ public partial class TextArea
     internal static bool LineNumbers { get; set; }
 
     /// <summary>
+    /// A blank gutter in front of the text when the line numbers are off (setting "gutter"): the room of the numbers,
+    /// as a margin
+    /// </summary>
+    internal static bool BlankGutter { get; set; }
+
+    /// <summary>
     /// Long lines are wrapped (setting "wrap", on unless turned off)
     /// </summary>
     internal static bool WordWrap { get; set; } = true;
@@ -58,6 +64,12 @@ public partial class TextArea
     /// ASCII, so every terminal shows it, and each mark takes the place of what it marks
     /// </summary>
     internal static bool ShowWhitespace { get; set; }
+
+    /// <summary>
+    /// Zen mode (setting "zen", ":zen"): the editor of a file shows only the mode and the name above the text and the
+    /// line and column below it (ZenFrame)
+    /// </summary>
+    internal static bool Zen { get; set; }
 
     // Not in a peek, or a field of one line
     private bool ShowsWhitespace => ShowWhitespace && _peek == null && !_singleLine;
@@ -81,7 +93,7 @@ public partial class TextArea
 
     // The editor of the text (in a split: of the pane with the focus, TextArea.Split.cs), and its place
     private EditorEngine _engine;
-    private readonly int _top;
+    private int _top; // Changed when the frame changes (":zen")
     private int _left;
     private int _width;
     private int _height; // Changed when the terminal window is resized (TextArea.Resize.cs)
@@ -126,6 +138,11 @@ public partial class TextArea
         /// Tab in Normal mode closes it, as Esc does (the peek of the file browser, which Tab went into)
         /// </summary>
         internal bool TabCloses { get; init; }
+
+        /// <summary>
+        /// The peek of the file read only beside a file in Zen mode: its bottom line is that of Zen mode
+        /// </summary>
+        internal bool Zen { get; init; }
 
         /// <summary>
         /// The text can be changed (a macro edited in its box), and ":w" gives it to this, which returns null when
@@ -200,6 +217,51 @@ public partial class TextArea
     // What is around the text: the rows above it and the bottom line (EditorFrame)
     private EditorFrame _frame = new StandardFrame();
 
+    // ":favorites", ":history", ":hotlist" or ":browse": the editor is left (changes that are not saved are asked
+    // about first). ":browse" shows the file browser in the directory of the file being edited
+    private void JumpToList(string page)
+    {
+        if (page == "browse" && _saveMode == SaveAsFile && !FileExplorer.IsUntitled &&
+            Path.GetDirectoryName(FileExplorer.CurrentFilePath) is { Length: > 0 } directory)
+        {
+            Jump.ToPlace(new JumpTarget(JumpKind.Directory, directory), LeaveForJump);
+            return;
+        }
+
+        Jump.ToPage(page, LeaveForJump, () => _engine.IsModified, MoveToBookmark, RecentCurrent);
+    }
+
+    // The editor of a file (or a blank page) on the whole window: it can be in Zen mode
+    private bool IsFileEditor => _saveMode == SaveAsFile && _peek == null && !_singleLine && !_readOnly;
+
+    // ":zen": Zen mode on or off, as the setting (saved), and for this editor: the text moves up or down a row
+    private void ToggleZen()
+    {
+        if (!IsFileEditor)
+        {
+            _engine.ShowMessage(Lang.T("Zen mode is for the editor of files"), true);
+            return;
+        }
+
+        Zen = !Zen;
+        FileIo.SaveSettings();
+        RedrawAll();
+        _engine.ShowMessage(Zen ? Lang.T("Zen mode on (:zen turns it off)") : Lang.T("Zen mode off"), false);
+    }
+
+    // The frame of the setting Zen mode (it can also be changed in Configuration, opened from the Jump menu): when it
+    // is not the one in use, the text moves up or down a row. Called when all is drawn again
+    private void FollowZenSetting()
+    {
+        if (!IsFileEditor || _frame is ZenFrame == Zen) return;
+        EditorFrame frame = Zen ? new ZenFrame() : new StandardFrame();
+        var shift = frame.RowsAbove - _frame.RowsAbove;
+        _frame = frame;
+        _top += shift;
+        SetTextHeight(_height - shift);
+        EventLog.Add(DialogText.LogEditorCommand + ": frame " + _frame.Name);
+    }
+
     /// <summary>
     /// True if the editor was closed without accepting or saving the text
     /// </summary>
@@ -253,6 +315,18 @@ public partial class TextArea
         _singleLine = height == 1;
         _readOnly = readOnly;
         _saveMode = saveMode;
+        // The editor of a file in Zen mode has the frame of Zen mode, and the text starts higher: it is laid out by
+        // the page for the standard frame
+        if (peek?.Zen == true) _frame = new ZenFrame();
+        if (IsFileEditor && Zen)
+        {
+            _frame = new ZenFrame();
+            _top += ZenFrame.Rows - StandardFrame.Rows;
+            _height -= ZenFrame.Rows - StandardFrame.Rows;
+            // The page drew what is around the text of the standard frame (Actions.DrawEditFileMenu)
+            _redrawWhole = true;
+        }
+
         _leftMargin = _singleLine ? " " : string.Empty;
         _shownRows = new string?[_height];
         _shownCells = new int[_height];
@@ -266,6 +340,7 @@ public partial class TextArea
             MaxCells = width - 3,
             // A peek is narrow: no line numbers
             LineNumbers = LineNumbers && !_singleLine && !readOnly && peek == null,
+            BlankGutter = BlankGutter && !_singleLine && !readOnly && peek == null,
             Wrap = _singleLine || (WordWrap && peek?.NoWrap != true),
             ScrollOffLines = ScrollOffLines,
             ScrollOff = ScrollOff && !_singleLine && !readOnly ? ScrollOffLines : 0,
@@ -910,7 +985,8 @@ public partial class TextArea
                 if (_engine.JumpArgument.Length > 0) Draw();
                 Tools.HideCursor();
                 // Leaving the text asks about changes that are not saved
-                Jump.ToPage(_engine.JumpArgument, LeaveForJump, () => _engine.IsModified, MoveToBookmark, RecentCurrent);
+                if (_engine.JumpArgument == "browse") JumpToList("browse");
+                else Jump.ToPage(_engine.JumpArgument, LeaveForJump, () => _engine.IsModified, MoveToBookmark, RecentCurrent);
                 // (a page opened on top of the editor can be the clipboard settings)
                 _engine.ClipboardEveryYank = SystemClipboard.EveryYank;
                 RedrawAll();
@@ -924,6 +1000,9 @@ public partial class TextArea
                 {
                     Jump.ToPlace(new JumpTarget(JumpKind.Directory, project), LeaveForJump);
                 }
+
+                // ":favorites" in the list (":history", ":hotlist", ":browse"): as in the editor
+                if (ProjectsBox.TakePage() is { } page) JumpToList(page);
 
                 RedrawAll();
                 break;
@@ -978,6 +1057,9 @@ public partial class TextArea
                 // Remembered (but not while the settings file itself is being edited)
                 LineNumbers = _engine.LineNumbers;
                 if (_saveMode != SaveAsSettings) FileIo.SaveSettings();
+                break;
+            case EditorRequest.Zen:
+                ToggleZen();
                 break;
             case EditorRequest.WhitespaceToggle:
                 ShowWhitespace = !ShowWhitespace;
@@ -2068,6 +2150,7 @@ public partial class TextArea
             return;
         }
 
+        FollowZenSetting();
         _frame.DrawAround(Facts());
         Array.Fill(_shownRows, null);
         Array.Fill(_shownCells, 0);
@@ -2083,6 +2166,12 @@ public partial class TextArea
         if (_engine.LineNumbers)
         {
             gutter = Math.Max(MinNumberWidth, _engine.Buffer.LineCount.ToString().Length) + GutterGap;
+        }
+        else if (_engine.BlankGutter)
+        {
+            // The room of two digits and the gap, whatever the length of the text (the text does not move sideways
+            // when the text gets more lines)
+            gutter = MinNumberWidth + GutterGap;
         }
 
         if (gutter == _gutter) return;
@@ -2187,9 +2276,12 @@ public partial class TextArea
     {
         if (_gutter == 0) return BuildTextRow(row, line, segment);
         // The number of the line on its first row (the following rows of a long line have none); a line with a mark
-        // shows its letter instead
+        // shows its letter instead. A blank gutter shows only the letters of the marks
         var mark = segment == 0 ? _engine.MarkOnLine(line) : '\0';
-        var number = segment != 0 ? string.Empty : mark != '\0' ? mark.ToString() : (line + 1).ToString();
+        var number = segment != 0 ? string.Empty
+            : mark != '\0' ? mark.ToString()
+            : _engine.LineNumbers ? (line + 1).ToString()
+            : string.Empty;
         row.Append(StyleMarker)
             .Append((char)('0' + (line == _engine.Cursor.Line ? StyleCurrentLineNumber : StyleLineNumber)))
             .Append(number.PadLeft(_gutter - GutterGap)).Append(' ', GutterGap);

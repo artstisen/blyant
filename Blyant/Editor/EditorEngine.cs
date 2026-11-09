@@ -79,6 +79,7 @@ internal enum EditorRequest
     Bom, // ":bom on": the byte order mark of the file (BomArgument: on, off, or empty to show it)
     ColorScheme, // ":colorscheme name": another color scheme (ColorSchemeArgument: the name, or empty to tell it)
     WhitespaceToggle, // ":whitespace": blank space shown as . > $, or not
+    Zen, // ":zen": Zen mode on or off (only the mode and the name above the text, the line and column below it)
     Favorite // ":favorite": the file a favorite of the file browser (or not)
 }
 
@@ -249,6 +250,12 @@ internal sealed partial class EditorEngine
     /// width that is left)
     /// </summary>
     internal bool LineNumbers { get; set; }
+
+    /// <summary>
+    /// True to keep the room of the line numbers in front of the text when they are not shown: a blank gutter, as a
+    /// margin (a mark is shown there by its letter, as with line numbers). Line numbers take its place when they are on
+    /// </summary>
+    internal bool BlankGutter { get; set; }
 
     /// <summary>
     /// Change the width the text is wrapped in
@@ -1423,6 +1430,9 @@ internal sealed partial class EditorEngine
             case "whitespace":
                 if (!SingleLine) _request = EditorRequest.WhitespaceToggle;
                 break;
+            case "zen":
+                if (!SingleLine) _request = EditorRequest.Zen;
+                break;
             case "dup":
             case "duplicate":
                 Duplicate(Cursor.Line, Cursor.Line, false, copies);
@@ -1506,6 +1516,18 @@ internal sealed partial class EditorEngine
             case "fav":
             case "favorite":
                 if (!SingleLine) _request = EditorRequest.Favorite;
+                break;
+            case "favorites":
+            case "favs":
+            case "history":
+            case "hist":
+            case "hotlist":
+            case "hot":
+            case "browse":
+                // The file browser, or one of its lists alone: a page of Blyant, as ":jump favorites" (the editor is
+                // left)
+                JumpArgument = JumpPages.ListPageOf(command) ?? string.Empty;
+                if (!SingleLine) _request = EditorRequest.Jump;
                 break;
             case "snip":
                 SnippetText = string.Empty;

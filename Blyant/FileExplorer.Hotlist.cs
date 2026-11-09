@@ -125,9 +125,11 @@ internal static partial class FileExplorer
             if (key.KeyChar == ':')
             {
                 var command = CommandLine.Read(CommandContext.Hotlist);
-                if (command != null && CommandLine.Name(command) is "jump" or "ju" or "jmp" or "board" or "corkboard")
+                if (command != null && CommandLine.Name(command) is "jump" or "ju" or "jmp" or "board" or "corkboard"
+                        or "favorites" or "favs" or "history" or "hist" or "hotlist" or "hot" or "browse")
                 {
-                    // The Jump menu, or ":jump general": a page of Blyant at once (":board": the corkboard)
+                    // The Jump menu, or ":jump general": a page of Blyant at once (":board": the corkboard;
+                    // ":favorites", ":history", ":hotlist" and ":browse": the list alone, or the file browser)
                     Jump.ToPage(Jump.PageOf(command));
                     continue;
                 }
@@ -166,7 +168,7 @@ internal static partial class FileExplorer
                     case "q":
                     case "quit":
                     case "close":
-                        return KeyResult.Handled;
+                        return ListClosed;
                     case "h":
                     case "help":
                         Tools.WriteEditorHelp(Tools.HelpTopic.Hotlist);
@@ -266,7 +268,7 @@ internal static partial class FileExplorer
                 }
                 else
                 {
-                    return KeyResult.Handled;
+                    return ListClosed;
                 }
             }
             else if (navigation == ConsoleKey.DownArrow)
@@ -304,7 +306,7 @@ internal static partial class FileExplorer
             }
             else if (key.Key == ConsoleKey.Enter || navigation == ConsoleKey.RightArrow)
             {
-                if (GoToHotlistDirectory(selected)) return KeyResult.Handled;
+                if (GoToHotlistDirectory(selected)) return ShownInBrowser();
             }
             else if (key.Key == ConsoleKey.V)
             {

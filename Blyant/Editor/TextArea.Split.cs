@@ -411,6 +411,7 @@ public partial class TextArea
             {
                 NoWrap = !WordWrap,
                 TabCloses = true,
+                Zen = _frame is ZenFrame,
                 Hint = Lang.F("{0}: read only, Tab back, Enter opens it", Path.GetFileName(path)),
                 ReadOnlyText = Lang.T("Read only: Enter opens the file in the editor")
             });

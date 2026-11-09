@@ -500,10 +500,14 @@ internal static class FileIo
         _tempSettings += "syntaxcolors=" + (SyntaxHighlighter.ColorFiles ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // Line numbers in the editor (the editor command :number turns them on and off)
         _tempSettings += "linenumbers=" + (TextArea.LineNumbers ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        // A blank gutter in front of the text when the line numbers are off, as a margin
+        _tempSettings += "gutter=" + (TextArea.BlankGutter ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // Long lines in the editor wrapped (on unless turned off)
         _tempSettings += "wrap=" + (TextArea.WordWrap ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // Blank space shown in the editor as . (space), > (tab) and $ (line end) (:whitespace)
         _tempSettings += "whitespace=" + (TextArea.ShowWhitespace ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        // Zen mode: the editor of a file shows only the mode and the name above the text, the line and column below (:zen)
+        _tempSettings += "zen=" + (TextArea.Zen ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // ' jumps to the place of a mark, as ` (for keyboards where ` is hard to type)
         _tempSettings += "marksapostrophe=" + (EditorEngine.MarksApostrophe ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // Lines kept above and below the cursor when the editor scrolls (on or off, and how many)
@@ -690,8 +694,10 @@ internal static class FileIo
                                        Tools.TrimToLower(Get("mdcolors")) != DialogText.BFalse;
         // On unless turned off
         TextArea.LineNumbers = Tools.TrimToLower(Get("linenumbers")) == DialogText.BTrue;
+        TextArea.BlankGutter = Tools.TrimToLower(Get("gutter")) == DialogText.BTrue;
         TextArea.WordWrap = Tools.TrimToLower(Get("wrap")) != DialogText.BFalse;
         TextArea.ShowWhitespace = Tools.TrimToLower(Get("whitespace")) == DialogText.BTrue;
+        TextArea.Zen = Tools.TrimToLower(Get("zen")) == DialogText.BTrue;
         EditorEngine.MarksApostrophe = Tools.TrimToLower(Get("marksapostrophe")) == DialogText.BTrue;
         // On unless turned off
         TextArea.ScrollOff = Tools.TrimToLower(Get("scrolloff")) != DialogText.BFalse;

@@ -277,6 +277,20 @@ internal static class ProjectsBox
 
     private static string? _commandResult;
 
+    // A page asked for with a command (":favorites"), for the page that opened the list
+    private static string? _pageAsked;
+
+    /// <summary>
+    /// The page asked for in the list with a command (":favorites", ":history", ":hotlist", ":browse"), once; null if
+    /// none. The page that opened the list goes there (Jump.ToPage), asking about its changes first
+    /// </summary>
+    internal static string? TakePage()
+    {
+        var page = _pageAsked;
+        _pageAsked = null;
+        return page;
+    }
+
     // ":" in the list: a command, on the selected project (null: the list is empty)
     private static CommandResult RunCommand(Projects.Project? project)
     {
@@ -301,6 +315,17 @@ internal static class ProjectsBox
                 // The log (the page behind the list is drawn again when the list is closed, as after the help)
                 Jump.ShowLog();
                 return CommandResult.None;
+            case "favorites":
+            case "favs":
+            case "history":
+            case "hist":
+            case "hotlist":
+            case "hot":
+            case "browse":
+                // The file browser, or one of its lists alone: the list is closed, and the page that opened it goes
+                // there (TakePage)
+                _pageAsked = Jump.PageOf(command);
+                return CommandResult.Close;
             case "colorscheme":
             case "colo":
             {

@@ -68,6 +68,7 @@ The files are in the folder of the project, so they go with it when it is copied
 - `:info` Information about the project, as `I`
 - `:path` and `:name` Copy the full path of the project folder, or its name, to the clipboard (and the string memory, as set in the clipboard settings)
 - `:color`, `:note` and `:board` The color, the note and the corkboard, as `C`, `N` and `B`
+- `:favorites`, `:history`, `:hotlist` and `:browse` Close the list and show the favorites, file history or directory hotlist of the file browser alone, or the file browser (from the editor: changes that are not saved are asked about first). See [the guide to the Jump menu](Guide-to-jump-menu.md#jump-menu)
 - `:new name`, `:add` and `:remove` A new project, a folder added, and a project off the list, as `P`, `A` and `D`
 - `:help` (or `?`) The keys of the list
 - `:q` (`:quit`, `:close`) Close the list, as `Esc`
@@ -103,8 +104,10 @@ The settings are on five pages. `j` `k` (and `gg` `G`) select a setting on the p
 **Editor**
 
 - **Line numbers**: Show line numbers to the left of the text (off from the start)
+- **Gutter: left margin without line numbers**: Keep the room of the line numbers in front of the text when they are off, as a blank margin of four columns (off from the start). A line with a mark shows its letter there. Line numbers take its place when they are on. See [Line numbers](Guide-to-editor.md#line-numbers). Saved as `gutter` in the settings file
 - **Wrap long lines**: Long lines go on to the next rows (on from the start). When off, the view scrolls sideways (see [the guide to the editor](Guide-to-editor.md#long-lines))
 - **Show blank space as . > $ (:whitespace)**: Show a space as `.`, a tab as `>` and the end of a line as `$`, with the blank space at the end of a line highlighted (off from the start). `:whitespace` in the editor changes it too. Saved as `whitespace` in the settings file
+- **Zen mode: only mode, name and line (:zen)**: The editor of a file shows only the mode and the name of the file above the text (`[I]test1.md*`) and the line and column of the cursor below it (off from the start). `:zen` in the editor changes it too. See [Zen mode](Guide-to-editor.md#zen-mode). Saved as `zen` in the settings file
 - **Marks: ' jumps to the exact place**: `'a` jumps to the place of mark `a`, as `` `a ``, and `''` back (off from the start: as in Vim, `'a` goes to the start of the line). For keyboards where the backtick is hard to type, or a dead key (see [Marks](Guide-to-editor.md#marks)). Saved as `marksapostrophe` in the settings file
 - **Keep 12 lines around cursor**: When the cursor comes within 12 lines of the top or the bottom of the editor, the text scrolls, so you see what comes next (on from the start). The number is set with `:scrolloff 8` in the editor (see [the guide to the editor](Guide-to-editor.md#scrolling))
 - **Clipboard and paste bin**: `Enter` opens the clipboard settings: where yanked text goes out of Blyant (see [the guide to the editor](Guide-to-editor.md#system-clipboard-and-paste-bin))
@@ -137,7 +140,7 @@ The settings of the lists of the file browser and of the [bookmarks](Guide-to-ju
 On every tab of the start page (Start, the pages of Configuration, Help), `:` opens the command line on the bottom line. `Tab` completes the command you are typing, from the commands of this page, and `Up`/`Down` bring back the commands given here before:
 
 - `:blank` A blank page, as `B`; `:recover` Recover unsaved text, as `R`
-- `:new` (or `:new name`) New file, as `N` (with `:new name`, the box is shown with the name filled in, so the folder can be changed: `Enter` makes it); `:file` (or `:open`, `:browse`) The file browser, as _File browser_; `:favorites` (or `:favs`) The [favorites](#favorites) of the file browser at once, as _Favorites_ (closing them returns to the start page)
+- `:new` (or `:new name`) New file, as `N` (with `:new name`, the box is shown with the name filled in, so the folder can be changed: `Enter` makes it); `:file` (or `:open`, `:browse`) The file browser, as _File browser_; `:favorites` (or `:favs`), `:history` (`:hist`) and `:hotlist` (`:hot`) The [favorites](#favorites), the [file history](#file-history) and the [directory hotlist](#directory-hotlist) of the file browser at once, as _Favorites_ (closing them returns to the start page)
 - `:project` (or `:project name`, `:newproject`) New project, as `P`; `:projects` (`:pro`, `:proj`) The list of projects, as _Open project_
 - `:start` The Start tab; `:config` (or `:general`), `:layout`, `:editor`, `:lists` and `:system` The pages of the Configuration tab (`:editor` is the Editor page of Configuration, not the text editor)
 - `:jump` (or `:ju`, `:jmp`) The [Jump menu](Guide-to-jump-menu.md#jump-menu), and `:jump general` a page of Blyant at once; `:book 3` Jump to bookmark 3; [`:colorscheme name`](Guide-to-jump-menu.md#changing-the-scheme-by-command) Use another color scheme; `:splits` The files closed with another file beside them, to open one with it again (see [the guide to the editor](Guide-to-editor.md#other-commands))
@@ -342,7 +345,7 @@ The main list is `favorites.txt`, and the others are files of the same kind in t
 ### File history
 The list has three columns, as the favorites: _Name_, _Path_ (the directory the file is in) and _Opened_ (when it was opened last, or _(missing)_ for a file that is gone).
 
-The file history lists the files you have opened in the editor from the file browser (also from the favorites, the search and the history itself), the last opened first, with the time each was opened. A file opened again moves to the top. It is practical when you work on many files over several days.
+The file history lists the files you have opened in the editor from the file browser (also from the favorites, the search and the history itself), the last opened first, with the time each was opened. A file opened again moves to the top. It is practical when you work on many files over several days. `O` in the file browser shows it, and `:history` (or `:hist`) on every command line shows it alone: closing it then shows the start page.
 
 - `O` or `:history` (in the file browser) Show the file history
 - `j` `k` Select, `gg` `G` First/Last, `PgUp` `PgDn` One page up/down. With a count: `5j` `5k` move 5 rows down/up, `5gg` (or `5G`) goes to row 5 (the rows shown, as numbered at the bottom right); the count shows there while you type it, and `Esc` drops it. `:number` numbers the rows, in the colors of the line numbers of the editor (the selected row in the color of the current line number), and `:nonumber` takes them away (setting `historynumbers`, off from the start, also on the Lists page of Configuration; the History tab of the Jump menu follows it)
@@ -365,7 +368,7 @@ The history holds the last 100 files: when it is full, the file opened longest a
 ### Directory hotlist
 The list has two columns, as the favorites: _Name_ (the name of the directory, or the name you gave it) and _Path_ (with _(missing)_ at the end for one that is gone).
 
-The directory hotlist keeps directories you want to go back to. `B` (or `:hotadd`) in the file browser adds the directory shown in the pane with the focus, whatever file or directory is selected in it, at the end of the list. A directory that is in the list already stays where it is. Taking directories out is done on the page of the list.
+The directory hotlist keeps directories you want to go back to. `B` (or `:hotadd`) in the file browser adds the directory shown in the pane with the focus, whatever file or directory is selected in it, at the end of the list. A directory that is in the list already stays where it is. Taking directories out is done on the page of the list. `W` in the file browser shows the list, and `:hotlist` (or `:hot`) on every command line shows it alone: closing it then shows the start page.
 
 - `W` or `:hotlist` (or `:hot`) in the file browser: Show the hotlist. Each row has the name of the directory (or the name you gave it), and its path after it. The hotlist is also a tab of the [Jump menu](Guide-to-jump-menu.md#jump-menu)
 - `j` `k` Select, `gg` `G` First/Last, `PgUp` `PgDn` One page up/down. With a count: `5j` `5k` move 5 rows down/up, `5gg` (or `5G`) goes to row 5 (the rows shown, as numbered at the bottom right); the count shows there while you type it, and `Esc` drops it. `:number` numbers the rows, in the colors of the line numbers of the editor (the selected row in the color of the current line number), and `:nonumber` takes them away (setting `hotlistnumbers`, off from the start, also on the Lists page of Configuration; the Hotlist tab of the Jump menu follows it)

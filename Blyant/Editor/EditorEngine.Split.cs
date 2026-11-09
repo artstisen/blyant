@@ -33,6 +33,7 @@ internal sealed partial class EditorEngine
         Height = Math.Max(1, height);
         Mode = EditorMode.Normal;
         LineNumbers = shown.LineNumbers;
+        BlankGutter = shown.BlankGutter;
         ScrollOffLines = shown.ScrollOffLines;
         ScrollOff = shown.ScrollOff;
         AutoComplete = shown.AutoComplete;

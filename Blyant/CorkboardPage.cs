@@ -984,6 +984,17 @@ internal static class CorkboardPage
                 Jump.ToBookmark(CommandLine.Argument(command));
                 Corkboard.Reload();
                 break;
+            case "favorites":
+            case "favs":
+            case "history":
+            case "hist":
+            case "hotlist":
+            case "hot":
+            case "browse":
+                // The file browser, or one of its lists alone (the board is left)
+                Jump.ToPage(Jump.PageOf(command));
+                Corkboard.Reload();
+                break;
             case "log":
                 // The log, on top of the board
                 Jump.ShowLog();

@@ -214,9 +214,10 @@ internal abstract class EditorFrame
 
     /// <summary>
     /// The completions of the word before the cursor on a row, from a column: the one chosen with Tab is
-    /// highlighted, and the keys are shown at the right. The row is written from the column to its end
+    /// highlighted, and the keys are shown at the right. The row is written from the column to its end, with the
+    /// fill (dashes on the divider)
     /// </summary>
-    protected static void DrawCompletions(EditorFacts facts, int row, int start)
+    protected static void DrawCompletions(EditorFacts facts, int row, int start, char fill = '-')
     {
         var list = facts.Completions;
         var chosen = facts.CompletionIndex;
@@ -225,10 +226,10 @@ internal abstract class EditorFrame
         var width = Init.LineWidth - 1;
         Tools.SetCursorEx(row, start);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
-        Console.Write(new string('-', Math.Max(0, width - start)));
+        Console.Write(new string(fill, Math.Max(0, width - start)));
         // The keys at the right (as Menu.WriteKeyHints draws them: each with three cells around it)
         var hintsWidth = hints.Split(" | ").Sum(hint => TextMetrics.WidthOf(hint) + 3) + 1;
-        var hintsAt = Math.Max(0, width - 2 - hintsWidth);
+        var hintsAt = Math.Max(start, width - 2 - hintsWidth);
         var column = start + 2;
         for (var i = 0; i < list.Count; i++)
         {

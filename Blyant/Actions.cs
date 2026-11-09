@@ -157,6 +157,14 @@ internal static class Actions
     internal static void DrawEditFileMenu()
     {
         Tools.CursorTopLeft();
+        // Zen mode: the editor draws its own row above the text (ZenFrame). The cursor is left where the text of the
+        // standard frame starts, as the editor is laid out for it
+        if (TextArea.Zen)
+        {
+            Tools.SetCursorEx(StandardFrame.Rows, 0);
+            return;
+        }
+
         // (a blank page is not named until it is saved)
         DrawEditorFrame(DialogText.CaptionsEditor,
             FileExplorer.IsUntitled ? DialogText.Untitled : FileExplorer.CurrentFileName, string.Empty);
@@ -203,8 +211,10 @@ internal static class Actions
         Completions.Enabled = true;
         FileExplorer.DualPane = true;
         TextArea.LineNumbers = false;
+        TextArea.BlankGutter = false;
         TextArea.WordWrap = true;
         TextArea.ShowWhitespace = false;
+        TextArea.Zen = false;
         EditorEngine.MarksApostrophe = false;
         TextFile.NewFileLineEndings = "system";
         TextArea.ScrollOff = true;

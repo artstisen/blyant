@@ -106,8 +106,15 @@ public class JumpTests : IDisposable
         }
 
         Assert.False(Jump.OpensInPlace(new JumpTarget(JumpKind.Page, "config/system")));
+        // The file browser and its lists leave the page (a file opened from them opens the editor)
+        foreach (var page in new[] { "favorites", "history", "hotlist", "browse" })
+        {
+            Assert.False(Jump.OpensInPlace(new JumpTarget(JumpKind.Page, page)));
+            Assert.True(JumpPages.Leaves(page));
+        }
+
         Assert.False(Jump.OpensInPlace(new JumpTarget(JumpKind.File, In("a.md"))));
-        Assert.Equal(14, JumpPages.Ids.Count);
+        Assert.Equal(18, JumpPages.Ids.Count);
         Assert.All(JumpPages.Ids, id => Assert.NotEqual(id, JumpPages.Label(id)));
     }
 

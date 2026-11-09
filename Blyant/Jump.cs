@@ -79,10 +79,30 @@ internal static class JumpPages
 {
     internal static readonly IReadOnlyList<string> Ids = new[]
     {
-        "config/general", "config/layout", "config/editor", "config/lists", "config/system", "board", "schemes", "logos",
-        "clipboard",
+        "config/general", "config/layout", "config/editor", "config/lists", "config/system", "board", "favorites",
+        "history", "hotlist", "browse", "schemes", "logos", "clipboard",
         "snippets", "completions", "log", "help", "about"
     };
+
+    /// <summary>
+    /// The page of the file browser a command goes to: ":favorites" (":favs"), ":history" (":hist"), ":hotlist"
+    /// (":hot") or ":browse", or null for another command
+    /// </summary>
+    internal static string? ListPageOf(string command) => command switch
+    {
+        "favorites" or "favs" => "favorites",
+        "history" or "hist" => "history",
+        "hotlist" or "hot" => "hotlist",
+        "browse" => "browse",
+        _ => null
+    };
+
+    /// <summary>
+    /// True for the pages that leave the page the jump was made from: the pages of the Configuration tab, and the
+    /// file browser and its lists (a file opened from them opens the editor, which cannot be on top of another)
+    /// </summary>
+    internal static bool Leaves(string id) => ConfigurationPage(id) >= 0 || id is "favorites" or "history" or "hotlist"
+        or "browse";
 
     // The name of a page in ":jump general"
     private static string NameOf(string id) => id == "schemes" ? "colors" : id[(id.IndexOf('/') + 1)..];
@@ -124,6 +144,10 @@ internal static class JumpPages
             "config/lists" => Lang.F("{0}: {1}", DialogText.StartConfiguration, Lang.T("Lists")),
             "config/system" => Lang.F("{0}: {1}", DialogText.StartConfiguration, Lang.T("System")),
             "board" => Lang.T("Corkboard"),
+            "favorites" => DialogText.HelpSectionFavorites,
+            "history" => DialogText.HelpSectionHistory,
+            "hotlist" => DialogText.HelpSectionHotlist,
+            "browse" => DialogText.HelpSectionFiles,
             "schemes" => DialogText.CaptionsColorScheme,
             "logos" => DialogText.CaptionsLogos,
             "clipboard" => Lang.T("Clipboard"),
@@ -348,7 +372,7 @@ internal static class Jump
     /// True for the places that are opened where the jump was made from (the page is not left)
     /// </summary>
     internal static bool OpensInPlace(JumpTarget target) =>
-        target.Kind == JumpKind.Page && JumpPages.ConfigurationPage(target.Target) < 0;
+        target.Kind == JumpKind.Page && !JumpPages.Leaves(target.Target);
 
     /// <summary>
     /// Show the Jump menu and go to the place picked. Returns when nothing was picked, or the place was opened
@@ -416,12 +440,13 @@ internal static class Jump
     }
 
     /// <summary>
-    /// What a command that goes to a page goes to, for ToPage: ":board name" the corkboard (one of its boards), and
-    /// ":jump name" the page named (or the Jump menu)
+    /// What a command that goes to a page goes to, for ToPage: ":board name" the corkboard (one of its boards),
+    /// ":favorites", ":history", ":hotlist" and ":browse" the file browser and its lists, and ":jump name" the page
+    /// named (or the Jump menu)
     /// </summary>
     internal static string PageOf(string command) => CommandLine.Name(command) is "board" or "corkboard"
         ? BoardPage(CommandLine.Argument(command))
-        : CommandLine.Argument(command);
+        : JumpPages.ListPageOf(CommandLine.Name(command)) ?? CommandLine.Argument(command);
 
     /// <summary>
     /// ":log": the log, on top of the page (which must then be drawn again). Not a jump: as the help, it is not kept
@@ -653,6 +678,14 @@ internal static class Jump
                     throw;
                 }
 
+                if (back) CorkboardPage.Show();
+                StartMenu.Open();
+                break;
+            case JumpKind.Page when target.Target is "favorites" or "history" or "hotlist" or "browse":
+                // The file browser, or one of its lists alone: closing it shows the start page, as when it is
+                // closed there (or the corkboard the jump was made from)
+                if (target.Target == "browse") FileExplorer.Run();
+                else FileExplorer.RunList(target.Target);
                 if (back) CorkboardPage.Show();
                 StartMenu.Open();
                 break;

@@ -11,6 +11,16 @@ The line above the text also tells what the keys do: **NAVIGATE** in Normal mode
 
 When a text file is edited (from the file browser), the bottom line shows its type, encoding and line endings, like `HTML UTF-8 (BOM) CRLF` or `TXT Windows-1252 LF` (a file in another encoding than UTF-8 becomes UTF-8 when it is saved, and `(BOM)` tells that it starts with a byte order mark, see [Byte order mark (BOM)](#byte-order-mark-bom); the line endings are kept: `CRLF` as used by Windows, `LF` as used by Linux and macOS; `:lineendings lf` or `:lineendings crlf` changes them, see [Line endings](#line-endings)). The bottom line also shows messages, the current memory string, the cursor position as `line:column` and how far into the text the cursor is. Inside Blyant, `:help` shows the list of keys.
 
+## Zen mode
+For writing with as little as possible around the text, `:zen` turns on Zen mode, and `:zen` again turns it off. It is kept as the setting `zen` (_Zen mode: only mode, name and line_ on the Editor page of Configuration), so the next file opens in it too. Zen mode is for the editor of files and blank pages; the settings file, a peek and a comparison look as before.
+
+- **The top row** shows the mode and the name of the file, at the left: `[I]test1.md*`. The star tells that there are changes that are not saved. The mode is `[N]` (Normal), `[I]` (Insert), `[V]` (Visual, V-Line and V-Block), `[C]` (a command or a search being typed) or `[J]` (jumping to a word). The letters are always in English. A file that is read only gets the label _Read only_ after its name.
+- **The line of the mode is gone**, so the text has one row more.
+- **The bottom line** shows only the line and column of the cursor, in the middle: `312:17`. A message is shown at the left until the next key; a message too long to fit before the line and column takes their place. While a macro is recorded, `REC` is shown at the right, and so is the search count (`[2/12]`) while a search is highlighted. The type of the file, its encoding, the string memory, the spell check and the keys of a command not yet complete are not shown: Zen mode off shows them again.
+- **The command line** works as usual.
+- **Completions** of the word you type are shown on the top row, after the name.
+- **In a split** each pane has its name above it, and the mode is shown over the pane with the cursor. A file read only beside the text (`:split name`, `:view`) has its name highlighted while `Tab` has taken you into it.
+
 ## Save and close
 ![Split view, and the commands listed while one is typed](docs/screenshots/split-view.svg)
 
@@ -203,6 +213,8 @@ The marks follow the text: lines put in above a mark move it down with its line,
 The numbers are shown to the left of the text, with a small gap. A long line that continues on the next row has its number on the first row only, so the numbers are the ones used by `:5` and shown as `line:column` on the bottom line. The number of the line the cursor is on stands out. Line numbers are on from the start. The choice is remembered (`linenumbers` in the settings file) and is used for all your files alike. It can also be set on the Configuration page of the start page, and with `:number` on page 2 of the main menu.
 
 When text is copied from the terminal window with the mouse, the line numbers are copied too: turn them off first (`:nu`). Text yanked in the editor never has them.
+
+Without line numbers, the text starts at the left edge of the window. For a margin there, turn on _Gutter: left margin without line numbers_ on the Editor page of Configuration (the setting `gutter`): the text keeps four blank columns in front of it, the room of the line numbers, also in [Zen mode](#zen-mode). A line with a mark shows its letter in the gutter, as it does with line numbers. When line numbers are on, they fill the gutter, and `:nu` switches between the two.
 
 ## Snippets
 Snippets are pieces of text (a tag, a block of CSS, a whole page) with a title, kept for inserting again. They are kept in `snippets.txt` in the data directory, for all your files alike.
@@ -480,8 +492,10 @@ Commands:
 
 - `:ts` Insert an ISO timestamp (YYYY-MM-DD HH:MM:SS)
 - `:log` The [log](Guide-to-start-page.md#the-log) of what Blyant has done, on top of the editor (`Esc` goes back to the text)
+- `:favorites` (or `:favs`), `:history` (`:hist`) and `:hotlist` (`:hot`) The favorites, file history or directory hotlist of the file browser, shown alone; `:browse` The file browser, in the directory of the file. They leave the editor (changes that are not saved are asked about first), and closing them shows the start page. (`:fav` adds the file to the favorites)
 - [`:colorscheme name`](Guide-to-jump-menu.md#changing-the-scheme-by-command) (or `:colo`) Use another color scheme, saved in the settings, and `:colorscheme` alone tells the one in use. `Tab` completes the names
 - `:trim` Remove the blank space (spaces and tabs) at the end of the lines: of the selected lines (select them and type `:trim`), or all the lines without a selection, or `:2,9trim` lines 2 to 9. The indentation at the start of the lines is kept. In a Markdown file (and a blank page), two spaces or more at the end of a line of text with another line of text after it are a line break: they are kept, and the message tells how many. `:trim!` removes them too. One `u` undoes it
+- `:zen` [Zen mode](#zen-mode) on or off: only the mode and the name above the text, and the line and column below it. Kept as the setting `zen`
 - `:whitespace` Show blank space, or hide it again: a space as `.`, a tab as `>` and the end of a line as `$`, in the color of the line numbers, and the blank space at the end of a line highlighted (in a Markdown file, the two spaces of a line break that `:trim` keeps are only dimmed). Each mark takes the place of the character it marks, so nothing moves. Kept as the setting `whitespace` (_Show blank space as . > $_ on the Editor page of Configuration). Not in a peek or a comparison
 - `:ol` Make the selected lines a numbered list (`1. `, `2. ` ...), and `:ul` a bulleted list (`- `). Select the lines with `V` (or `v`, `Q`) and type the command: the command line then starts with `'<,'>`, which stands for the selected lines. Without a selection the command works on the line of the cursor, and `:2,5ol` on lines 2 to 5. Lines that are a list of the other kind are changed to this kind, and when all the lines already are a list of the kind asked for, the list marks are removed again. Blank lines are left as they are, the indentation is kept, and indented lines are numbered as a list of their own (1, 2 ... again under each item). One `u` undoes it
 - `:sort` Sort the selected lines (select them and type `:sort`), or all the lines without a selection, or `:2,9sort` lines 2 to 9. `:sort!` sorts them the other way, and `:sort i` (or `:sort! i`) does not tell upper and lower case apart. The lines are sorted by the values of their characters (uppercase before lowercase, æøå after z). One `u` undoes it

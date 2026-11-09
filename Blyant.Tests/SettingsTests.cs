@@ -128,6 +128,32 @@ backup=
     }
 
     [Fact]
+    public void ZenMode_IsLoadedAndSaved()
+    {
+        File.WriteAllText(SettingsFile, LegacySettings + "\nzen=true\n");
+        Assert.True(FileIo.LoadSettings());
+        Assert.True(TextArea.Zen);
+        FileIo.SaveSettings();
+        Assert.Equal("true", FileIo.ParseSettings(File.ReadAllText(SettingsFile))["zen"]);
+        // The defaults: off
+        Actions.ApplyDefaultSettings();
+        Assert.False(TextArea.Zen);
+    }
+
+    [Fact]
+    public void TheBlankGutter_IsLoadedAndSaved()
+    {
+        File.WriteAllText(SettingsFile, LegacySettings + "\ngutter=true\n");
+        Assert.True(FileIo.LoadSettings());
+        Assert.True(TextArea.BlankGutter);
+        FileIo.SaveSettings();
+        Assert.Equal("true", FileIo.ParseSettings(File.ReadAllText(SettingsFile))["gutter"]);
+        // The defaults: off
+        Actions.ApplyDefaultSettings();
+        Assert.False(TextArea.BlankGutter);
+    }
+
+    [Fact]
     public void TheKindOfNewFiles_AndStartingOnABlankPage_AreLoadedAndSaved()
     {
         File.WriteAllText(SettingsFile, LegacySettings + "\nfiletype=txt\nstartmode=blank\n");
@@ -337,7 +363,11 @@ backup=
         Assert.False(settings.ContainsKey("stayloggedin"));
         Assert.False(settings.ContainsKey("projectsdir"));
         Assert.False(settings.ContainsKey("projectsask"));
-        Assert.Equal(54, settings.Count);
+        Assert.Equal(56, settings.Count);
+        // No blank gutter unless turned on
+        Assert.Equal("false", settings["gutter"]);
+        // Zen mode is off unless turned on
+        Assert.Equal("false", settings["zen"]);
         Assert.Equal("false", settings["marksapostrophe"]);
         Assert.Equal("false", settings["filenumbers"]);
         Assert.Equal("false", settings["searchnumbers"]);

@@ -27,6 +27,18 @@ public class SplitTests
     }
 
     [Fact]
+    public void ASecondPane_HasTheGutterOfTheFirst()
+    {
+        var editor = new EditorEngine("one", 30, 10, false) { BlankGutter = true };
+        Assert.True(new EditorEngine(editor, 30, 10).BlankGutter);
+        editor.LineNumbers = true;
+        editor.BlankGutter = false;
+        var other = new EditorEngine(editor, 30, 10);
+        Assert.True(other.LineNumbers);
+        Assert.False(other.BlankGutter);
+    }
+
+    [Fact]
     public void ThePaneWithoutTheFocus_KeepsItsPlace_WhenLinesAreAddedOrRemovedAboveIt()
     {
         var editor = new EditorEngine(Text(50), 30, 10, false);

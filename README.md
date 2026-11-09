@@ -39,6 +39,7 @@ See the [guide to the corkboard](Guide-to-corkboard.md).
 **A Vim-style editor**
 - Normal, Insert and Visual modes (also block selection), counts, text objects, registers and undo
 - Split view: the same text in two panes side by side, remembered when you open it again
+- Zen mode (`:zen`): only the mode and the file name above the text, and the line and column below it
 - Syntax highlighting for Markdown, Typst, HTML, PHP, CSS, JavaScript, JSON, XML, C#, C and C++, Rust, Python, PowerShell, shell scripts, Windows batch files, settings files (INI) and diffs ([which files](Guide-to-editor.md#colors))
 - Spell checking and word completion
 - Typst: colors, completions (`/h1`, `/figure`, `/math` ...) and a [guide to writing with Typst and its CLI](Guide-to-typst.md)

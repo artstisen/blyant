@@ -104,7 +104,7 @@ internal static partial class FileExplorer
     /// <param name="favorites">True to open the favorites list first</param>
     internal static void Run(bool favorites = false)
     {
-        _openFavorites = favorites;
+        _openList = favorites ? ListKey("favorites") : null;
         Browse(BrowseMode.Edit, DialogText.CaptionsFiles);
     }
 
@@ -113,21 +113,47 @@ internal static partial class FileExplorer
     /// where they were opened from. A file or directory shown from them (B, a directory opened) shows the file
     /// browser, which is then closed as usual
     /// </summary>
-    internal static void RunFavorites()
+    internal static void RunFavorites() => RunList("favorites");
+
+    /// <summary>
+    /// Show a list of the file browser alone: "favorites", "history" or "hotlist" (":favorites", ":history" and
+    /// ":hotlist" on a command line). Closing it returns to where it was opened from; a file or directory shown from
+    /// it (B, a directory opened) shows the file browser, which is then closed as usual
+    /// </summary>
+    internal static void RunList(string list)
     {
-        _favoritesOnly = true;
+        _listOnly = true;
         try
         {
-            Run(true);
+            _openList = ListKey(list);
+            Browse(BrowseMode.Edit, DialogText.CaptionsFiles);
         }
         finally
         {
-            _favoritesOnly = false;
+            _listOnly = false;
         }
     }
 
-    // The favorites are shown alone (RunFavorites): closing them closes the file browser too
-    private static bool _favoritesOnly;
+    // The key of the file browser that opens a list (F, O or W)
+    private static ConsoleKeyInfo ListKey(string list) => list switch
+    {
+        "history" => new ConsoleKeyInfo('O', ConsoleKey.O, true, false, false),
+        "hotlist" => new ConsoleKeyInfo('W', ConsoleKey.W, true, false, false),
+        _ => new ConsoleKeyInfo('F', ConsoleKey.F, true, false, false)
+    };
+
+    // A list is shown alone (RunList): closing it closes the file browser too
+    private static bool _listOnly;
+
+    // How a list closes: back to the file browser, or with it when the list is shown alone
+    private static KeyResult ListClosed => _listOnly ? KeyResult.Close : KeyResult.Handled;
+
+    // A directory was shown from a list: the file browser is shown now, and closed as usual
+    private static KeyResult ShownInBrowser()
+    {
+        _listOnly = false;
+        return KeyResult.Handled;
+    }
 
     // A jump: the directory to show, and the file to open in the editor when the browser is shown
     private static string? _jumpDirectory;
@@ -166,7 +192,7 @@ internal static partial class FileExplorer
         Run();
     }
 
-    private static bool _openFavorites; // The favorites list is opened as soon as the file browser is shown
+    private static ConsoleKeyInfo? _openList; // The key of a list opened as soon as the file browser is shown
 
     /// <summary>
     /// Let the user select a file
@@ -441,11 +467,9 @@ internal static partial class FileExplorer
 
         while (true)
         {
-            // Starting in the favorites list is the same as pressing F (closing the list shows the file browser)
-            var key = _openFavorites && _mode == BrowseMode.Edit
-                ? new ConsoleKeyInfo('F', ConsoleKey.F, true, false, false)
-                : Keyboard.ReadKey();
-            _openFavorites = false;
+            // Starting in a list is the same as pressing its key: F, O or W (closing the list shows the file browser)
+            var key = _openList is { } first && _mode == BrowseMode.Edit ? first : Keyboard.ReadKey();
+            _openList = null;
             // The window was resized (or Blyant went on after Ctrl+Z): all is drawn again, with the message (nothing
             // on the disk changed: the panes are not read again)
             if (Keyboard.IsRedraw(key))
@@ -1757,6 +1781,7 @@ internal static partial class FileExplorer
     private static void OpenProject()
     {
         if (ProjectsBox.Pick() is { } path && Directory.Exists(path)) ChangeDirectory(path, null);
+        if (ProjectsBox.TakePage() is { } page) Jump.ToPage(page);
     }
 
     // Create a file in the directory shown and open it in the editor. The name is asked for if it is not given; a

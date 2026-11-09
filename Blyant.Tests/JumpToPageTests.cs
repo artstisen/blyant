@@ -13,8 +13,8 @@ public class JumpToPageTests
     {
         Assert.Equal(new[]
         {
-            "general", "layout", "editor", "lists", "system", "board", "colors", "logos", "clipboard", "snippets",
-            "completions", "log", "help", "about"
+            "general", "layout", "editor", "lists", "system", "board", "favorites", "history", "hotlist", "browse",
+            "colors", "logos", "clipboard", "snippets", "completions", "log", "help", "about"
         }, JumpPages.Names);
         Assert.Equal("config/general", JumpPages.IdOf("general"));
         Assert.Equal("schemes", JumpPages.IdOf("colors"));
@@ -25,6 +25,22 @@ public class JumpToPageTests
         Assert.Null(JumpPages.IdOf("config/general"));
         Assert.Null(JumpPages.IdOf("schemes"));
         Assert.Null(JumpPages.IdOf("nothing"));
+    }
+
+    [Fact]
+    public void TheCommandsOfTheLists_GoToTheirPages()
+    {
+        Assert.Equal("favorites", JumpPages.ListPageOf("favorites"));
+        Assert.Equal("favorites", JumpPages.ListPageOf("favs"));
+        Assert.Equal("history", JumpPages.ListPageOf("hist"));
+        Assert.Equal("hotlist", JumpPages.ListPageOf("hot"));
+        Assert.Equal("browse", JumpPages.ListPageOf("browse"));
+        // ":fav" adds a favorite: not a page
+        Assert.Null(JumpPages.ListPageOf("fav"));
+        Assert.Equal("history", Jump.PageOf("history"));
+        Assert.Equal("hotlist", Jump.PageOf("hot"));
+        Assert.Equal("board main", Jump.PageOf("board main"));
+        Assert.Equal("logos", Jump.PageOf("jump logos"));
     }
 
     [Fact]

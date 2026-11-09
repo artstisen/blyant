@@ -1649,6 +1649,12 @@ internal static class JumpMenu
             return JumpToPage(Jump.BoardPage(CommandLine.Argument(command)));
         }
 
+        if (CommandLine.Name(command) is "favorites" or "favs" or "history" or "hist" or "hotlist" or "hot" or "browse")
+        {
+            // The file browser, or one of its lists alone (the page is left)
+            return JumpToPage(Jump.PageOf(command));
+        }
+
         if (command is "q" or "quit" or "close") return true;
         if (command is "h" or "help")
         {

@@ -565,8 +565,9 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":new :new name", Lang.T("New file (Tab in the box: another folder)"), false));
             _shortcutList.Add(new Shortcut(":blank", Lang.T("Blank page: write first, the name and folder when saved"), false));
             _shortcutList.Add(new Shortcut(":recover", Lang.T("Recover unsaved text (shown when there is some)"), false));
-            _shortcutList.Add(new Shortcut(":file :open", Lang.T("File browser: open, make and manage files"), false));
+            _shortcutList.Add(new Shortcut(":file :browse", Lang.T("File browser: open, make and manage files"), false));
             _shortcutList.Add(new Shortcut(":favorites :favs", Lang.T("The favorites of the file browser at once"), false));
+            _shortcutList.Add(new Shortcut(":history :hotlist", Lang.T("File history/directory hotlist at once"), false));
             _shortcutList.Add(new Shortcut(":project name", Lang.T("New project (asks for the name if not given)"), false));
             _shortcutList.Add(new Shortcut(":projects :pro", Lang.T("Open project: the list of projects"), false));
             _shortcutList.Add(new Shortcut(":start :config", Lang.T("The Start tab/Configuration (General)"), false));
@@ -673,6 +674,8 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":book 3", Lang.T("Jump to bookmark 3 (:book alone: the bookmarks)"), false));
             _shortcutList.Add(new Shortcut(":colorscheme name", Lang.T("Use a color scheme (alone: the one in use)"), false));
             _shortcutList.Add(new Shortcut(":log", Lang.T("View log"), false));
+            _shortcutList.Add(new Shortcut(":favorites :history", Lang.T("Favorites/file history of file browser"), false));
+            _shortcutList.Add(new Shortcut(":hotlist :browse", Lang.T("Directory hotlist/file browser"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Name"), Lang.T("Part of the name, or with * and ? (*.md)"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Text in files"), Lang.T("Text files containing the text"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Regular expr."), Lang.T("Name and text are regular expressions"), false));
@@ -702,6 +705,8 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":book 3", Lang.T("Jump to bookmark 3 (:book alone: the bookmarks)"), false));
             _shortcutList.Add(new Shortcut(":colorscheme name", Lang.T("Use a color scheme (alone: the one in use)"), false));
             _shortcutList.Add(new Shortcut(":log", Lang.T("View log"), false));
+            _shortcutList.Add(new Shortcut(":favorites :history", Lang.T("Favorites/file history of file browser"), false));
+            _shortcutList.Add(new Shortcut(":hotlist :browse", Lang.T("Directory hotlist/file browser"), false));
             _shortcutList.Add(new Shortcut("j k gg G", Lang.T("Select"), false));
             _shortcutList.Add(new Shortcut("5j 5k 5gg 5G", Lang.T("With a count: 5 rows down/up, to row 5"), false));
             _shortcutList.Add(new Shortcut("l Enter", Lang.T("Open the file (a directory: go to it)"), false));
@@ -753,6 +758,8 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":book 3", Lang.T("Jump to bookmark 3 (:book alone: the bookmarks)"), false));
             _shortcutList.Add(new Shortcut(":colorscheme name", Lang.T("Use a color scheme (alone: the one in use)"), false));
             _shortcutList.Add(new Shortcut(":log", Lang.T("View log"), false));
+            _shortcutList.Add(new Shortcut(":favorites :history", Lang.T("Favorites/file history of file browser"), false));
+            _shortcutList.Add(new Shortcut(":hotlist :browse", Lang.T("Directory hotlist/file browser"), false));
             _shortcutList.Add(new Shortcut("j k gg G", Lang.T("Select"), false));
             _shortcutList.Add(new Shortcut("5j 5k 5gg 5G", Lang.T("With a count: 5 rows down/up, to row 5"), false));
             _shortcutList.Add(new Shortcut("l Enter", Lang.T("Open the file in the editor"), false));
@@ -780,6 +787,8 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":book 3", Lang.T("Jump to bookmark 3 (:book alone: the bookmarks)"), false));
             _shortcutList.Add(new Shortcut(":colorscheme name", Lang.T("Use a color scheme (alone: the one in use)"), false));
             _shortcutList.Add(new Shortcut(":log", Lang.T("View log"), false));
+            _shortcutList.Add(new Shortcut(":favorites :history", Lang.T("Favorites/file history of file browser"), false));
+            _shortcutList.Add(new Shortcut(":hotlist :browse", Lang.T("Directory hotlist/file browser"), false));
             _shortcutList.Add(new Shortcut("j k gg G", Lang.T("Select"), false));
             _shortcutList.Add(new Shortcut("5j 5k 5gg 5G", Lang.T("With a count: 5 rows down/up, to row 5"), false));
             _shortcutList.Add(new Shortcut("l Enter", Lang.T("Go to the directory (in the pane with the focus)"), false));
@@ -835,6 +844,8 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":book 3", Lang.T("Jump to bookmark 3 (:book alone: the bookmarks)"), false));
             _shortcutList.Add(new Shortcut(":colorscheme name", Lang.T("Use a color scheme (alone: the one in use)"), false));
             _shortcutList.Add(new Shortcut(":log", Lang.T("View log"), false));
+            _shortcutList.Add(new Shortcut(":favorites :history", Lang.T("Favorites/file history of file browser"), false));
+            _shortcutList.Add(new Shortcut(":hotlist :browse", Lang.T("Directory hotlist/file browser"), false));
             _shortcutList.Add(new Shortcut("Ctrl+K :recent", Lang.T("The latest files: Enter or 1-9 opens one"), false));
             _shortcutList.Add(new Shortcut(":", Lang.T("Command line (Tab completes the command)"), false));
             _shortcutList.Add(new Shortcut("  Up Down", Lang.T("Earlier commands of this page"), false));
@@ -854,6 +865,8 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":path :name", Lang.T("Copy the path/the name of the folder"), false));
             _shortcutList.Add(new Shortcut(":colorscheme name", Lang.T("Use a color scheme (alone: the one in use)"), false));
             _shortcutList.Add(new Shortcut(":log", Lang.T("View log"), false));
+            _shortcutList.Add(new Shortcut(":favorites :history", Lang.T("Favorites/file history of file browser"), false));
+            _shortcutList.Add(new Shortcut(":hotlist :browse", Lang.T("Directory hotlist/file browser"), false));
             _shortcutList.Add(new Shortcut("/", Lang.T("Filter the projects by name (Esc: all)"), false));
             _shortcutList.Add(new Shortcut(":", Lang.T("Command line (Tab completes the command)"), false));
             _shortcutList.Add(new Shortcut("  Up Down", Lang.T("Earlier commands of this page"), false));
@@ -901,6 +914,8 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":book 3", Lang.T("Jump to bookmark 3 (:book alone: the bookmarks)"), false));
             _shortcutList.Add(new Shortcut(":colorscheme name", Lang.T("Use a color scheme (alone: the one in use)"), false));
             _shortcutList.Add(new Shortcut(":log", Lang.T("View log"), false));
+            _shortcutList.Add(new Shortcut(":favorites :history", Lang.T("Favorites/file history of file browser"), false));
+            _shortcutList.Add(new Shortcut(":hotlist :browse", Lang.T("Directory hotlist/file browser"), false));
             _shortcutList.Add(new Shortcut("  :book 3", Lang.T("The number is shown at the right of the bookmark"), false));
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionClipboard, true));
             _shortcutList.Add(new Shortcut("\"+y \"+yy", Lang.T("Editor: yank to the clipboard (and/or the paste bin)"), false));
@@ -966,6 +981,8 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":book 3", Lang.T("Jump to bookmark 3 (:book alone: the bookmarks)"), false));
             _shortcutList.Add(new Shortcut(":colorscheme name", Lang.T("Use a color scheme (alone: the one in use)"), false));
             _shortcutList.Add(new Shortcut(":log", Lang.T("View log"), false));
+            _shortcutList.Add(new Shortcut(":favorites :history", Lang.T("Favorites/file history of file browser"), false));
+            _shortcutList.Add(new Shortcut(":hotlist :browse", Lang.T("Directory hotlist/file browser"), false));
             _shortcutList.Add(new Shortcut(string.Empty, Lang.T("Modes"), true));
             _shortcutList.Add(new Shortcut("Esc", Lang.T("Normal mode (navigate and give commands)"), false));
             _shortcutList.Add(new Shortcut("i a", Lang.T("Insert mode before/after the cursor"), false));
@@ -1099,6 +1116,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":lineendings lf", Lang.T("Line endings of the file: lf or crlf (alone: tell)"), false));
             _shortcutList.Add(new Shortcut(":bom on :bom off", Lang.T("Byte order mark of the file (alone: what it is)"), false));
             _shortcutList.Add(new Shortcut(":whitespace", Lang.T("Show blank space as . > $ (again: hide it)"), false));
+            _shortcutList.Add(new Shortcut(":zen", Lang.T("Zen mode: only mode, name and line (again: off)"), false));
             _shortcutList.Add(new Shortcut(":ol :ul", Lang.T("Numbered/Bulleted list (selected lines)"), false));
             _shortcutList.Add(new Shortcut(":dup", Lang.T("Duplicate the selection (or the line)"), false));
             _shortcutList.Add(new Shortcut(":dup 5", Lang.T("Make 5 copies of the selection (or the line)"), false));

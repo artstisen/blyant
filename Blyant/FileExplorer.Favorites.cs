@@ -32,7 +32,7 @@ internal static partial class FileExplorer
         {
             var action = ShowFavorites(out var path);
             // Shown alone (from the start page): closed back there
-            if (action == FavoriteAction.Close) return _favoritesOnly ? KeyResult.Close : KeyResult.Handled;
+            if (action == FavoriteAction.Close) return ListClosed;
             var isDirectory = Directory.Exists(path);
             if (!isDirectory && !File.Exists(path))
             {
@@ -54,7 +54,7 @@ internal static partial class FileExplorer
 
                 ChangeDirectory(parent, isDirectory && action == FavoriteAction.Open ? null : path);
                 // The file browser is shown now, and closed as usual
-                _favoritesOnly = false;
+                _listOnly = false;
                 return KeyResult.Handled;
             }
 
@@ -203,9 +203,11 @@ internal static partial class FileExplorer
             if (key.KeyChar == ':')
             {
                 var command = CommandLine.Read(CommandContext.Favorites);
-                if (command != null && CommandLine.Name(command) is "jump" or "ju" or "jmp" or "board" or "corkboard")
+                if (command != null && CommandLine.Name(command) is "jump" or "ju" or "jmp" or "board" or "corkboard"
+                        or "favorites" or "favs" or "history" or "hist" or "hotlist" or "hot" or "browse")
                 {
-                    // The Jump menu, or ":jump general": a page of Blyant at once (":board": the corkboard)
+                    // The Jump menu, or ":jump general": a page of Blyant at once (":board": the corkboard;
+                    // ":favorites", ":history", ":hotlist" and ":browse": the list alone, or the file browser)
                     Jump.ToPage(Jump.PageOf(command));
                     FindFavoriteMarks();
                     continue;
