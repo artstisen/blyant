@@ -320,15 +320,17 @@ internal static class Corkboard
 
     /// <summary>
     /// The name a note is given as a file (W, ":tofile"), without an extension: its title, or else its first line
-    /// that is not blank, without the marks of a Markdown heading in front, and without the characters a file name
-    /// cannot have on any system. At most 60 characters; "Note" when nothing is left
+    /// that is not blank, without the marks of a Markdown heading in front, the characters a file name cannot have on
+    /// any system, and the dots in front (a hidden file on Linux and macOS). At most 60 characters (whole ones, so an
+    /// emoji is not cut in two); "Note" when nothing is left
     /// </summary>
     internal static string FileNameOf(Card card)
     {
         var name = card.Name.Trim().TrimStart('#', ' ', '\t').Trim();
         var kept = new string(name.Where(c => !char.IsControl(c) && "<>:\"/\\|?*".IndexOf(c) < 0).ToArray());
-        kept = string.Join(' ', kept.Split(' ', StringSplitOptions.RemoveEmptyEntries));
-        if (kept.Length > 60) kept = kept[..60];
+        kept = string.Join(' ', kept.Split(' ', StringSplitOptions.RemoveEmptyEntries)).TrimStart('.', ' ');
+        var info = new System.Globalization.StringInfo(kept);
+        if (info.LengthInTextElements > 60) kept = info.SubstringByTextElements(0, 60);
         kept = kept.Trim().TrimEnd('.', ' ');
         return kept.Length > 0 ? kept : "Note";
     }
@@ -1169,7 +1171,6 @@ internal static class Corkboard
             }
 
             _arranged = null;
-        _converted = null;
             return Undone.Places;
         }
 

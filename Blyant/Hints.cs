@@ -102,7 +102,16 @@ internal static class Hints
     internal static void Advance()
     {
         if (!Enabled || FileIo.SettingsUnread) return;
-        Index = (Math.Max(-1, Index) + 1) % All().Length;
+        // (past the hints of a module that is turned off, so a hint is not shown again in its place)
+        var count = All().Length;
+        var index = Math.Max(-1, Index);
+        for (var step = 0; step < count; step++)
+        {
+            index = (index + 1) % count;
+            if (IsShown(index)) break;
+        }
+
+        Index = index;
         FileIo.SaveSettings();
     }
 }

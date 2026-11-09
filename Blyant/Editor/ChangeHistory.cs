@@ -22,8 +22,8 @@ internal static class ChangeHistory
     }
 
     /// <summary>
-    /// A step of the history: its first part (where it is now, the text removed and inserted there), how many
-    /// parts it changed, when it was made, and whether it was undone
+    /// A step of the history: its first part in the text (where it is now, the text removed and inserted there), how
+    /// many parts it changed, when it was made, and whether it was undone
     /// </summary>
     internal sealed record Change(ChangeKind Kind, TextPos Place, string Removed, string Inserted, int Count,
         DateTime Time, bool Undone);
@@ -76,20 +76,24 @@ internal static class ChangeHistory
 
     // The edits of a step, joined where they follow each other: an edit within the text a part inserted (a letter
     // typed or deleted in it), one that ends where the part starts (Backspace before it), or one that starts where
-    // its text ends (a letter deleted after it). The parts that changed nothing are left out
+    // its text ends (a letter deleted after it). The other parts move with each edit (":%s" replaces from the last
+    // line up: a line break put in above a part moves it down), so they are where they are when the step is done.
+    // The parts that changed nothing are left out, and the others are in the order of the text
     private static List<Part> Parts(IReadOnlyList<TextBuffer.Edit> edits)
     {
         var parts = new List<Part>();
         foreach (var edit in edits)
         {
-            if (!parts.Any(part => Join(part, edit)))
+            var joined = parts.FirstOrDefault(part => Join(part, edit));
+            foreach (var part in parts.Where(part => part != joined)) part.Start = Shift(part.Start, edit);
+            if (joined == null)
             {
                 parts.Add(new Part { Start = edit.Start, Removed = edit.Removed, Inserted = edit.Inserted });
             }
         }
 
         parts.RemoveAll(part => part.Removed == part.Inserted);
-        return parts;
+        return parts.OrderBy(part => part.Start).ToList();
     }
 
     private static bool Join(Part part, TextBuffer.Edit edit)

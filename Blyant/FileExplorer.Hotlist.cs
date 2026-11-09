@@ -127,7 +127,7 @@ internal static partial class FileExplorer
                 var command = CommandLine.Read(CommandContext.Hotlist);
                 if (command != null && CommandLine.Name(command) is "jump" or "ju" or "jmp" or "board" or "corkboard"
                         or "favorites" or "favs" or "history" or "hist" or "hotlist" or "hot" or "browse"
-                        or "file")
+                        or "file" or "open")
                 {
                     // The Jump menu, or ":jump general": a page of Blyant at once (":board": the corkboard;
                     // ":favorites", ":history", ":hotlist" and ":browse": the list alone, or the file browser)

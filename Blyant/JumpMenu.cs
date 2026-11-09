@@ -1651,7 +1651,7 @@ internal static class JumpMenu
         }
 
         if (CommandLine.Name(command) is "favorites" or "favs" or "history" or "hist" or "hotlist" or "hot" or "browse"
-            or "file")
+            or "file" or "open")
         {
             // The file browser, or one of its lists alone (the page is left)
             return JumpToPage(Jump.PageOf(command));

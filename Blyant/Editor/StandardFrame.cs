@@ -26,7 +26,7 @@ internal sealed class StandardFrame : EditorFrame
                 Actions.DrawEditSettingsMenu();
                 break;
             case EditorKind.File:
-                Actions.DrawEditFileMenu();
+                Actions.DrawEditFileFrame();
                 break;
             default:
                 Tools.CursorTopLeft();

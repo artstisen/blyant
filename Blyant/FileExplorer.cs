@@ -586,7 +586,12 @@ internal static partial class FileExplorer
                 {
                     // ":project add": the directory shown is added to the projects
                     var argument = command!.Length > name.Length ? command[name.Length..].Trim() : string.Empty;
-                    if (!argument.Equals("add", StringComparison.OrdinalIgnoreCase))
+                    if (!Modules.Projects)
+                    {
+                        // Turned off (Configuration: Modules)
+                        _message = Modules.ProjectsOff;
+                    }
+                    else if (!argument.Equals("add", StringComparison.OrdinalIgnoreCase))
                     {
                         _message = Lang.T(":project add  adds the directory shown to the projects");
                     }

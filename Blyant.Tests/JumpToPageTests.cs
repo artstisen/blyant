@@ -36,6 +36,7 @@ public class JumpToPageTests
         Assert.Equal("hotlist", JumpPages.ListPageOf("hot"));
         Assert.Equal("browse", JumpPages.ListPageOf("browse"));
         Assert.Equal("browse", JumpPages.ListPageOf("file"));
+        Assert.Equal("browse", JumpPages.ListPageOf("open"));
         // ":fav" adds a favorite: not a page
         Assert.Null(JumpPages.ListPageOf("fav"));
         Assert.Equal("history", Jump.PageOf("history"));

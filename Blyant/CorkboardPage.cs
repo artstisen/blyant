@@ -725,7 +725,9 @@ internal static class CorkboardPage
         }
 
         ChoiceBox.Forget();
-        var path = StartMenu.AskNewFile(Lang.T("Note to file"), Corkboard.FileNameOf(card), Corkboard.ProjectFolder);
+        // (with the extension of new files: a name with a dot in it, "Plan v1.2", is not taken as having one)
+        var path = StartMenu.AskNewFile(Lang.T("Note to file"),
+            Corkboard.FileNameOf(card) + FileOperations.DefaultExtension, Corkboard.ProjectFolder);
         Tools.ClearScreen();
         if (path == null) return;
         // The text as it is, ending with a line break, with the line endings of new files
@@ -739,12 +741,27 @@ internal static class CorkboardPage
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or NotSupportedException)
         {
             _message = e.Message;
+            RemoveIfEmpty(path);
             return;
         }
 
         Corkboard.ToFile(card, path);
         SaveCards();
         _message = Lang.F("The note is the file {0} now (u: a note again)", Path.GetFileName(path));
+    }
+
+    // The file made for a note that could not be written: taken away again while it is empty (it was made a moment ago,
+    // and the text is still in the note)
+    private static void RemoveIfEmpty(string path)
+    {
+        try
+        {
+            if (File.Exists(path) && new FileInfo(path).Length == 0) FileIo.DeleteFile(path);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            // (it stays: told in the log by FileIo)
+        }
     }
 
     // I or ":info": what the card is, and its file
@@ -1061,6 +1078,7 @@ internal static class CorkboardPage
             case "hot":
             case "browse":
             case "file":
+            case "open":
                 // The file browser, or one of its lists alone (the board is left)
                 Jump.ToPage(Jump.PageOf(command));
                 Corkboard.Reload();

@@ -87,14 +87,14 @@ internal static class JumpPages
 
     /// <summary>
     /// The page of the file browser a command goes to: ":favorites" (":favs"), ":history" (":hist"), ":hotlist"
-    /// (":hot") or ":browse" (":file", as on the start page), or null for another command
+    /// (":hot") or ":browse" (":file", ":open", as on the start page), or null for another command
     /// </summary>
     internal static string? ListPageOf(string command) => command switch
     {
         "favorites" or "favs" => "favorites",
         "history" or "hist" => "history",
         "hotlist" or "hot" => "hotlist",
-        "browse" or "file" => "browse",
+        "browse" or "file" or "open" => "browse",
         _ => null
     };
 
@@ -120,7 +120,7 @@ internal static class JumpPages
         Ids.FirstOrDefault(id => NameOf(id).Equals(name, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
-    /// The page of the Configuration tab (0 to 4) of a page, or -1 if it is not one
+    /// The page of the Configuration tab (0 to 5) of a page, or -1 if it is not one
     /// </summary>
     internal static int ConfigurationPage(string id) => id switch
     {
@@ -568,7 +568,8 @@ internal static class Jump
     // A page shown on top of the page the jump was made from, which is one of the pages below while it is shown
     private static void OpenOnTop(JumpTarget target, Func<bool>? hasChanges)
     {
-        Remember(target);
+        // (not the corkboard while it is turned off: it tells so, and is not gone to)
+        if (target.Target != "board" || Modules.Board) Remember(target);
         PagesBelow.Add(hasChanges ?? (() => false));
         try
         {
@@ -690,10 +691,9 @@ internal static class Jump
                 break;
             case JumpKind.Page when target.Target is "favorites" or "history" or "hotlist" or "browse":
                 // The file browser, or one of its lists alone: closing it shows the start page, as when it is
-                // closed there (or the corkboard the jump was made from)
+                // closed there
                 if (target.Target == "browse") FileExplorer.Run();
                 else FileExplorer.RunList(target.Target);
-                if (back) CorkboardPage.Show();
                 StartMenu.Open();
                 break;
             default:

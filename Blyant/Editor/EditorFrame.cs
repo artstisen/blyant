@@ -38,7 +38,6 @@ internal sealed record EditorFacts
     /// </summary>
     internal string CommandLinePrefix { get; init; } = string.Empty;
 
-    internal char CommandPrefix { get; init; }
     internal string CommandText { get; init; } = string.Empty;
 
     /// <summary>
@@ -212,6 +211,9 @@ internal abstract class EditorFrame
     // The longest a completion is shown
     private const int MaxCompletionWidth = 24;
 
+    // The room the keys must leave for the completions: one of the longest, with the columns around it
+    private const int MinCompletionsRoom = MaxCompletionWidth + 6;
+
     /// <summary>
     /// The completions of the word before the cursor on a row, from a column: the one chosen with Tab is
     /// highlighted, and the keys are shown at the right. The row is written from the column to its end, with the
@@ -230,6 +232,10 @@ internal abstract class EditorFrame
         // The keys at the right (as Menu.WriteKeyHints draws them: each with three cells around it)
         var hintsWidth = hints.Split(" | ").Sum(hint => TextMetrics.WidthOf(hint) + 3) + 1;
         var hintsAt = Math.Max(start, width - 2 - hintsWidth);
+        // Without the keys when they would leave no room for a completion (after a long name in Zen mode, over the
+        // pane at the right of a split)
+        var withHints = hintsAt - start >= MinCompletionsRoom;
+        if (!withHints) hintsAt = width;
         var column = start + 2;
         for (var i = 0; i < list.Count; i++)
         {
@@ -244,8 +250,12 @@ internal abstract class EditorFrame
             column += cells + 1;
         }
 
-        Tools.SetCursorEx(row, hintsAt);
-        Menu.WriteKeyHints(hints);
+        if (withHints)
+        {
+            Tools.SetCursorEx(row, hintsAt);
+            Menu.WriteKeyHints(hints);
+        }
+
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
     }
 

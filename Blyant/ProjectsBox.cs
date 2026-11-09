@@ -336,6 +336,7 @@ internal static class ProjectsBox
             case "hot":
             case "browse":
             case "file":
+            case "open":
                 // The file browser, or one of its lists alone: the list is closed, and the page that opened it goes
                 // there (TakePage)
                 _pageAsked = Jump.PageOf(command);

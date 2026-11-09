@@ -53,7 +53,7 @@ public class GuideTests
 
     [Theory]
     [InlineData(0)] // The quick guide
-    [InlineData(3)] // The editor guide
+    [InlineData(4)] // The editor guide
     public void ThePictureOfHjkl_IsBelowTheTextsOfTheItems(int index)
     {
         var lines = QuickGuide.Lines(Init.MinLineWidth, QuickGuide.All[index]);

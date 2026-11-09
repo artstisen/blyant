@@ -161,8 +161,8 @@ The command names are the same in all languages.
 ### Help
 - `1` **Help**: All the keys and commands of Blyant, as `:help` (`?` on a page shows the keys of that page)
 - `2` **Quick guide**: The short introduction to Blyant: files and projects, the keys for moving around, and the modes of the editor. `Esc` closes it, and `?` shows the help with all the keys
-- `3` **Projects guide**, `4` **File browser guide**, `5` **Text editor guide**, `6` **Jump menu guide**: A short guide to each part: what it is for and its most used keys. They are shown as the quick guide: `h`/`l` page, `j`/`k` line, `Esc` closes, and `?` shows all the keys of that part
-- `7` **About**: General information about Blyant, and its license on the next page. `Esc` closes it
+- `3` **Projects guide**, `4` **Corkboard guide**, `5` **File browser guide**, `6` **Text editor guide**, `7` **Jump menu guide**: A short guide to each part: what it is for and its most used keys. The guide of a module turned off (Configuration: Modules) is not in the list, and the numbers follow. They are shown as the quick guide: `h`/`l` page, `j`/`k` line, `Esc` closes, and `?` shows all the keys of that part
+- `8` **About**: General information about Blyant, and its license on the next page. `Esc` closes it
 
 Select with `j`/`k` or the number and press `Enter`. `Esc` goes back to the Start tab.
 

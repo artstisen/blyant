@@ -1529,6 +1529,7 @@ internal sealed partial class EditorEngine
             case "hot":
             case "browse":
             case "file":
+            case "open":
                 // The file browser, or one of its lists alone: a page of Blyant, as ":jump favorites" (the editor is
                 // left)
                 JumpArgument = JumpPages.ListPageOf(command) ?? string.Empty;

@@ -4,7 +4,7 @@
 /// The quick guide: a short introduction to Blyant for a new user, shown on a page of its own.
 /// It tells how to start (files and projects), how to move around, and how the modes of the editor work.
 /// It is kept short on purpose: the help ("?") has all the keys. The short guides of the Help tab (the Jump menu,
-/// the file browser, the text editor and projects) are shown the same way (QuickGuide.Guides.cs).
+/// the file browser, the text editor, projects and the corkboard) are shown the same way (QuickGuide.Guides.cs).
 /// </summary>
 internal static partial class QuickGuide
 {
@@ -17,10 +17,23 @@ internal static partial class QuickGuide
         Jump,
         Files,
         Editor,
-        Projects
+        Projects,
+        Board
     }
 
-    internal static readonly Guide[] All = { Guide.Quick, Guide.Projects, Guide.Files, Guide.Editor, Guide.Jump };
+    internal static readonly Guide[] All =
+        { Guide.Quick, Guide.Projects, Guide.Board, Guide.Files, Guide.Editor, Guide.Jump };
+
+    /// <summary>
+    /// The guides of the Help tab: not those of a module that is turned off (Configuration: Modules)
+    /// </summary>
+    internal static Guide[] Shown => All.Where(guide => guide switch
+    {
+        Guide.Projects => Modules.Projects,
+        Guide.Board => Modules.Board,
+        Guide.Jump => Modules.Jump,
+        _ => true
+    }).ToArray();
 
     /// <summary>
     /// The name of a guide, in the language in use
@@ -31,6 +44,7 @@ internal static partial class QuickGuide
         Guide.Files => Lang.T("File browser guide"),
         Guide.Editor => Lang.T("Text editor guide"),
         Guide.Projects => Lang.T("Projects guide"),
+        Guide.Board => Lang.T("Corkboard guide"),
         _ => DialogText.QuickGuide
     };
 
@@ -41,6 +55,7 @@ internal static partial class QuickGuide
         Guide.Files => Tools.HelpTopic.Files,
         Guide.Editor => Tools.HelpTopic.Editor,
         Guide.Projects => Tools.HelpTopic.Start,
+        Guide.Board => Tools.HelpTopic.Board,
         _ => Tools.HelpTopic.All
     };
 
@@ -50,6 +65,7 @@ internal static partial class QuickGuide
         Guide.Files => FilesGuide(),
         Guide.Editor => EditorGuide(),
         Guide.Projects => ProjectsGuide(),
+        Guide.Board => BoardGuide(),
         _ => Paragraphs()
     };
 

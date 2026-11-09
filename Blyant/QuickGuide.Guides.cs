@@ -1,7 +1,7 @@
 ﻿namespace Blyant;
 
 /// <summary>
-/// The short guides of the Help tab: projects, the file browser, the text editor and the Jump menu. Each
+/// The short guides of the Help tab: projects, the corkboard, the file browser, the text editor and the Jump menu. Each
 /// tells what the part is for and its most used keys; "?" shows all of them. Many of the texts are those of the
 /// help, so they read (and are translated) the same.
 /// </summary>
@@ -165,6 +165,45 @@ internal static partial class QuickGuide
         (Kind.Item, "E  :projects", Lang.T("The projects: Enter shows one in this pane")),
         (Kind.Item, ":home", Lang.T("Go to the home directory")),
         (Kind.Item, ":bookmark", Lang.T("Bookmark the selected file or directory (Jump menu)")),
+        (Kind.Text, "", ""),
+        (Kind.Text, "", Lang.T("There is more: press ? here or on the page to see all its keys."))
+    };
+
+    private static List<(Kind Kind, string Key, string Text)> BoardGuide() => new()
+    {
+        (Kind.Title, "", Title(Guide.Board)),
+        (Kind.Text, "", ""),
+        (Kind.Text, "", Lang.T("The corkboard shows your files, folders and notes as cards, placed where you want " +
+                               "them: a card for each chapter of a book, with notes of what to write. Color them, " +
+                               "and group them with dividers, lines and frames. Each project has a board of its " +
+                               "own, and the files stay where they are.")),
+        (Kind.Text, "", ""),
+        (Kind.Heading, "", Lang.T("Opening it")),
+        (Kind.Item, ":board", Lang.T("The corkboard: files pinned as cards")),
+        (Kind.Item, ":pin", Lang.T("Pin the selected file or folder to the corkboard")),
+        (Kind.Item, "  B", Lang.T("In the list: the corkboard of the project")),
+        (Kind.Text, "", ""),
+        (Kind.Heading, "", Lang.T("Cards")),
+        (Kind.Item, "N", Lang.T("Pin a file, picked in the file browser")),
+        (Kind.Item, "F", Lang.T("Pin a folder, picked in the file browser")),
+        (Kind.Item, "A", Lang.T("A note card: its text written in the editor")),
+        (Kind.Item, "W", Lang.T("Note to a file: its text written to a new file")),
+        (Kind.Item, "Enter", Lang.T("Open the card's file or folder (a note: edit it)")),
+        (Kind.Item, "C  X", Lang.T("Color/Title of the card")),
+        (Kind.Item, "D  u", Lang.T("Remove the card (the file stays)/Put it back")),
+        (Kind.Text, "", ""),
+        (Kind.Heading, "", Lang.T("Moving around")),
+        (Kind.Item, "h  j  k  l", Lang.T("Select the next card that way (its row/column first)")),
+        (Kind.Item, "12  Enter", Lang.T("Select card 12")),
+        (Kind.Item, "V", Lang.T("Move the card (hjkl, HJKL: 5 steps; Esc: done)")),
+        (Kind.Item, "Space", Lang.T("Mark/Unmark: V C T E D work on all marked")),
+        (Kind.Text, "", ""),
+        (Kind.Heading, "", Lang.T("Planning")),
+        (Kind.Item, "|", Lang.T("A divider: a line top to bottom (V h/l moves it)")),
+        (Kind.Item, "\\", Lang.T("A line, to point from card to card")),
+        (Kind.Item, "O", Lang.T("A frame around the card and the marked ones")),
+        (Kind.Item, ":arrange name", Lang.T("Cards in rows by number, name or color")),
+        (Kind.Item, ":list", Lang.T("Boards: open, add, rename, delete")),
         (Kind.Text, "", ""),
         (Kind.Text, "", Lang.T("There is more: press ? here or on the page to see all its keys."))
     };

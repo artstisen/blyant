@@ -1251,6 +1251,12 @@ public class CorkboardTests : IDisposable
         Assert.Equal("Plan AB", Corkboard.FileNameOf(note));
         Assert.Equal(60, Corkboard.FileNameOf(Corkboard.AddNote(new string('x', 80), Width, Height)).Length);
         Assert.Equal("Note", Corkboard.FileNameOf(Corkboard.AddNote("???", Width, Height)));
+        // No dots in front (a hidden file on Linux and macOS); the dots in it stay
+        Assert.Equal("hidden", Corkboard.FileNameOf(Corkboard.AddNote("...hidden", Width, Height)));
+        Assert.Equal("Plan v1.2", Corkboard.FileNameOf(Corkboard.AddNote("Plan v1.2", Width, Height)));
+        // Cut by whole characters: an emoji at the end is kept whole
+        var cut = Corkboard.FileNameOf(Corkboard.AddNote(new string('x', 59) + "\U0001F600yz", Width, Height));
+        Assert.Equal(new string('x', 59) + "\U0001F600", cut);
     }
 
     [Fact]

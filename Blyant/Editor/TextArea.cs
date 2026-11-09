@@ -996,7 +996,7 @@ public partial class TextArea
                 if (_engine.JumpArgument.Length > 0) Draw();
                 Tools.HideCursor();
                 // Leaving the text asks about changes that are not saved
-                if (_engine.JumpArgument == "browse") JumpToList("browse");
+                if (_engine.JumpArgument == "browse" && !_engine.JumpMenuAsked) JumpToList("browse");
                 else Jump.ToPage(_engine.JumpArgument, LeaveForJump, () => _engine.IsModified, MoveToBookmark, RecentCurrent);
                 // (a page opened on top of the editor can be the clipboard settings)
                 _engine.ClipboardEveryYank = SystemClipboard.EveryYank;
@@ -2778,7 +2778,6 @@ public partial class TextArea
             Mode = _engine.Mode,
             Jumping = _engine.IsJumping,
             CommandLinePrefix = CommandLinePrefix,
-            CommandPrefix = _engine.CommandPrefix,
             CommandText = _engine.CommandText,
             Message = _engine.Message,
             MessageIsError = _engine.MessageIsError,

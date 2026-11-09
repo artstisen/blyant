@@ -97,6 +97,18 @@ public class ModulesTests : IDisposable
     }
 
     [Fact]
+    public void TheGuidesOfTheModulesThatAreOff_AreNotOnTheHelpTab()
+    {
+        Assert.Equal(QuickGuide.All, QuickGuide.Shown);
+        Modules.Board = false;
+        Modules.Jump = false;
+        Assert.Equal(QuickGuide.All.Length - 2, QuickGuide.Shown.Length);
+        Assert.Contains(QuickGuide.Guide.Projects, QuickGuide.Shown);
+        Assert.DoesNotContain(QuickGuide.Guide.Board, QuickGuide.Shown);
+        Assert.DoesNotContain(QuickGuide.Guide.Jump, QuickGuide.Shown);
+    }
+
+    [Fact]
     public void TheRowsOfTheModules_AreRowsOfTheHelp()
     {
         // Each text is that of a row of the help (Tools.cs), so a row changed there is not left in the help by mistake

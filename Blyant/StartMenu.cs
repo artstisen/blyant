@@ -161,7 +161,7 @@ internal static class StartMenu
             case "hotlist":
             case "hot":
                 // The file history or the directory hotlist at once (closing it returns here)
-                FileExplorer.RunList(JumpPages.ListPageOf(CommandLine.Name(command)) ?? "history");
+                FileExplorer.RunList(JumpPages.ListPageOf(CommandLine.Name(command))!);
                 break;
             case "project":
             case "newproject":
@@ -990,7 +990,8 @@ internal static class StartMenu
             };
             if (direct is { } choice && (key.Modifiers & (ConsoleModifiers.Control | ConsoleModifiers.Alt)) == 0)
             {
-                _selected = Array.IndexOf(_shown, choice);
+                // (a choice of a module turned off is not shown: the selection stays, and Open tells that it is off)
+                if (Array.IndexOf(_shown, choice) is var at and >= 0) _selected = at;
                 return Open(choice);
             }
 
@@ -1097,10 +1098,19 @@ internal static class StartMenu
     private sealed class HelpPage : ITabPage
     {
         private int _selected;
+        private string? _selectedName; // The entry selected: the list changes when a module is turned on or off
+
+        // The selection on the entry it was on (or in the list), when the guides of the modules have changed
+        private void KeepSelection(string[] choices)
+        {
+            if (_selectedName != null && Array.IndexOf(choices, _selectedName) is var at and >= 0) _selected = at;
+            _selected = Math.Clamp(_selected, 0, choices.Length - 1);
+            _selectedName = choices[_selected];
+        }
 
         // In the language in use
         private static string[] Choices =>
-            new[] { Lang.T("Help") }.Concat(QuickGuide.All.Select(QuickGuide.Title)).Append(Lang.T("About")).ToArray();
+            new[] { Lang.T("Help") }.Concat(QuickGuide.Shown.Select(QuickGuide.Title)).Append(Lang.T("About")).ToArray();
 
         public string Title => Lang.T("Help");
         public string Keys => DialogText.StartHelpKeys;
@@ -1109,6 +1119,7 @@ internal static class StartMenu
         public void Draw(TabArea area, bool full)
         {
             var choices = Choices;
+            KeepSelection(choices);
             if (full)
             {
                 for (var i = 0; i < choices.Length; i++)
@@ -1129,7 +1140,9 @@ internal static class StartMenu
 
         public TabResult HandleKey(ConsoleKeyInfo key)
         {
-            var count = Choices.Length;
+            var choices = Choices;
+            KeepSelection(choices);
+            var count = choices.Length;
             // Back to the Start tab
             if (key.Key is ConsoleKey.Escape or ConsoleKey.Q) return TabResult.FirstTab;
             if (key.Key is ConsoleKey.Enter or ConsoleKey.Spacebar or ConsoleKey.L or ConsoleKey.RightArrow)
@@ -1139,9 +1152,9 @@ internal static class StartMenu
                     // As ":help": all the keys
                     Tools.WriteEditorHelp();
                 }
-                else if (_selected <= QuickGuide.All.Length)
+                else if (_selected <= QuickGuide.Shown.Length)
                 {
-                    QuickGuide.Show(QuickGuide.All[_selected - 1]);
+                    QuickGuide.Show(QuickGuide.Shown[_selected - 1]);
                 }
                 else
                 {
@@ -1174,6 +1187,7 @@ internal static class StartMenu
                 _selected = 0;
             }
 
+            _selectedName = choices[_selected];
             return TabResult.None;
         }
     }

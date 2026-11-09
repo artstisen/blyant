@@ -48,6 +48,13 @@ public class HintsTests : IDisposable
             // The hint about bookmarks (the 4th) is passed over for the next one shown: the 6th, the 3rd shown
             Hints.Index = 3;
             Assert.Equal((Hints.All()[5], 3), Hints.Current());
+            // The next hint is the next one shown: from the 3rd past the 4th and 5th to the 6th, then the 7th
+            Hints.Enabled = true;
+            Hints.Index = 2;
+            Hints.Advance();
+            Assert.Equal(5, Hints.Index);
+            Hints.Advance();
+            Assert.Equal(6, Hints.Index);
             for (var i = 0; i < Hints.All().Length; i++)
             {
                 Hints.Index = i;

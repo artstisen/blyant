@@ -70,6 +70,7 @@ internal static partial class FileExplorer
         {
             case "browse":
             case "file":
+            case "open":
                 // (as on the other pages: here it is shown already)
                 _message = Lang.T("This is the file browser");
                 break;

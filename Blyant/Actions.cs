@@ -153,18 +153,24 @@ internal static class Actions
         }
     }
 
-    // The editor frame for a plain text file opened from the file browser
+    // Before the editor of a file is opened (by a page): its frame, or in Zen mode nothing, as the editor draws its
+    // own row above the text (ZenFrame). The cursor is left where the text of the standard frame starts, as the
+    // editor is laid out for it
     internal static void DrawEditFileMenu()
     {
-        Tools.CursorTopLeft();
-        // Zen mode: the editor draws its own row above the text (ZenFrame). The cursor is left where the text of the
-        // standard frame starts, as the editor is laid out for it
         if (TextArea.Zen)
         {
             Tools.SetCursorEx(StandardFrame.Rows, 0);
             return;
         }
 
+        DrawEditFileFrame();
+    }
+
+    // The standard frame of the editor of a file (StandardFrame, also when the editor draws itself again)
+    internal static void DrawEditFileFrame()
+    {
+        Tools.CursorTopLeft();
         // (a blank page is not named until it is saved)
         DrawEditorFrame(DialogText.CaptionsEditor,
             FileExplorer.IsUntitled ? DialogText.Untitled : FileExplorer.CurrentFileName, string.Empty);

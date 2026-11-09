@@ -113,6 +113,21 @@ public class ChangeHistoryTests
     }
 
     [Fact]
+    public void AReplaceWithLineBreaks_IsToldAtItsFirstPlace()
+    {
+        // ":%s" replaces from the last line up: the line breaks put in above move the lower parts down, and the step
+        // is told at its first part in the text
+        var editor = Editor("x\ny\nx");
+        editor.Type(":%s/x/a\\rb/<CR>");
+        Assert.Equal("a\nb\ny\na\nb", editor.GetText());
+        var change = Assert.Single(Changes(editor));
+        Assert.Equal(ChangeHistory.ChangeKind.Several, change.Kind);
+        Assert.Equal(2, change.Count);
+        Assert.Equal(new TextPos(0, 0), change.Place);
+        Assert.Equal("x", change.Removed);
+    }
+
+    [Fact]
     public void TheTimeOfAStep_IsKept()
     {
         var editor = Editor("text");
