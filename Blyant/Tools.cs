@@ -824,6 +824,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("  u", Lang.T("Also puts the cards back where they were arranged from"), false));
             _shortcutList.Add(new Shortcut("N :new", Lang.T("Pin a file, picked in the file browser"), false));
             _shortcutList.Add(new Shortcut("F :folder", Lang.T("Pin a folder, picked in the file browser"), false));
+            _shortcutList.Add(new Shortcut("W :tofile", Lang.T("Note to a file: its text written to a new file"), false));
             _shortcutList.Add(new Shortcut("A :note", Lang.T("A note card: its text written in the editor"), false));
             _shortcutList.Add(new Shortcut("B :badge", Lang.T("A badge (an \"i\") with a note, to mark a place"), false));
             _shortcutList.Add(new Shortcut("| :divider", Lang.T("A divider: a line top to bottom (V h/l moves it)"), false));

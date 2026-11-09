@@ -310,6 +310,43 @@ internal static class Corkboard
     private static List<Card>? _cleared;
     private static List<(Card Card, int X, int Y)>? _arranged;
 
+    // The note made a file last (W, ":tofile"), with its text: u makes it a note again
+    private static (Card Card, string Text)? _converted;
+
+    /// <summary>
+    /// The folder of the project of the open board, or null when it is not the board of a project
+    /// </summary>
+    internal static string? ProjectFolder => IsProjectBoard(_currentBoard) ? _currentBoard : null;
+
+    /// <summary>
+    /// The name a note is given as a file (W, ":tofile"), without an extension: its title, or else its first line
+    /// that is not blank, without the marks of a Markdown heading in front, and without the characters a file name
+    /// cannot have on any system. At most 60 characters; "Note" when nothing is left
+    /// </summary>
+    internal static string FileNameOf(Card card)
+    {
+        var name = card.Name.Trim().TrimStart('#', ' ', '\t').Trim();
+        var kept = new string(name.Where(c => !char.IsControl(c) && "<>:\"/\\|?*".IndexOf(c) < 0).ToArray());
+        kept = string.Join(' ', kept.Split(' ', StringSplitOptions.RemoveEmptyEntries));
+        if (kept.Length > 60) kept = kept[..60];
+        kept = kept.Trim().TrimEnd('.', ' ');
+        return kept.Length > 0 ? kept : "Note";
+    }
+
+    /// <summary>
+    /// A note becomes the card of a file (its text was written to the file): it keeps its place, number, color and
+    /// title. u makes it a note again, with its text (the file stays)
+    /// </summary>
+    internal static void ToFile(Card card, string path)
+    {
+        _converted = (card, card.Text);
+        _removed = null;
+        _cleared = null;
+        _arranged = null;
+        card.Path = path;
+        card.Text = string.Empty;
+    }
+
     /// <summary>
     /// Read the cards of the open board from its file
     /// </summary>
@@ -319,6 +356,7 @@ internal static class Corkboard
         _removed = null;
         _cleared = null;
         _arranged = null;
+        _converted = null;
         _unreadable = false;
         // A board that is gone (deleted outside Blyant, or its project folder): the main board. A project without a
         // board yet has an empty one
@@ -975,6 +1013,7 @@ internal static class Corkboard
         _removed = removed;
         _cleared = null;
         _arranged = null;
+        _converted = null;
         return removed.Count;
     }
 
@@ -1000,6 +1039,7 @@ internal static class Corkboard
         _cleared = _cards.ToList();
         _removed = null;
         _arranged = null;
+        _converted = null;
         _cards.Clear();
         return _cleared.Count;
     }
@@ -1019,6 +1059,7 @@ internal static class Corkboard
         _removed = null;
         _cleared = null;
         _arranged = null;
+        _converted = null;
         return _cards.RemoveAll(gone.Contains);
     }
 
@@ -1047,6 +1088,7 @@ internal static class Corkboard
         };
         if (!Orders.Contains(order)) return false;
         _arranged = cards.Select(card => (card, card.X, card.Y)).ToList();
+        _converted = null;
         _removed = null;
         _cleared = null;
         var perRow = Math.Max(1, (Math.Max(CardWidth, width) + 1) / (CardWidth + 1));
@@ -1072,7 +1114,8 @@ internal static class Corkboard
         Nothing,
         Card, // The card removed last (UndoneCard)
         Cards, // The cards removed together, or taken off by ":clear" (as many as UndoneCount)
-        Places // The places of the cards before they were arranged
+        Places, // The places of the cards before they were arranged
+        Note // The card of a file made from a note is a note again (UndoneCard)
     }
 
     /// <summary>
@@ -1094,6 +1137,18 @@ internal static class Corkboard
     {
         UndoneCard = null;
         UndoneCount = 0;
+        if (_converted is { } done)
+        {
+            var (converted, text) = done;
+            _converted = null;
+            if (!_cards.Contains(converted)) return Undone.Nothing;
+            converted.Path = string.Empty;
+            converted.IsFolder = false;
+            converted.Text = text;
+            UndoneCard = converted;
+            return Undone.Note;
+        }
+
         if (_cleared is { } cleared)
         {
             var taken = _cards.ToList();
@@ -1114,6 +1169,7 @@ internal static class Corkboard
             }
 
             _arranged = null;
+        _converted = null;
             return Undone.Places;
         }
 

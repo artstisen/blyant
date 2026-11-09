@@ -83,7 +83,7 @@ internal static class Commands
             "q h colo favs hist hot"),
         [CommandContext.Board] = new Table(
             "quit close help jump book recent new folder note badge divider line frame mode info peek list board arrange color rename remove clear undo " +
-            "top bottom missing prune colorscheme log favorites history hotlist browse",
+            "top bottom missing prune tofile colorscheme log favorites history hotlist browse",
             "q h u ju jmp corkboard colo favs hist hot"),
         [CommandContext.Editor] = new Table(
             "write saveas quit quit! wq help edit edit! reload reload! undo redo delete yank replace nohlsearch " +

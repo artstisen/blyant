@@ -400,6 +400,9 @@ internal static class CorkboardPage
             case ConsoleKey.A:
                 AddNote();
                 break;
+            case ConsoleKey.W:
+                NoteToFile(card);
+                break;
             case ConsoleKey.B:
                 AddBadge();
                 break;
@@ -682,6 +685,54 @@ internal static class CorkboardPage
         if (error != null) _message = error;
     }
 
+    // W or ":tofile": the text of the selected note is written to a new file (Markdown unless another extension is
+    // given), and the card becomes the card of that file, where it is, with its number, color and title. The name
+    // and the folder are asked for: the name of the note, in the folder of the project (on the board of a project),
+    // or where the file browser was. u makes it a note again; the file stays
+    private static void NoteToFile(Corkboard.Card? card)
+    {
+        if (card == null) return;
+        if (!card.IsNote)
+        {
+            _message = Lang.T("Only a note can become a file");
+            return;
+        }
+
+        if (card.IsBadge)
+        {
+            _message = Lang.T("A badge stays a note: only a note card can become a file");
+            return;
+        }
+
+        if (card.Text.Trim().Length == 0)
+        {
+            _message = Lang.T("The note is empty: Enter writes it");
+            return;
+        }
+
+        ChoiceBox.Forget();
+        var path = StartMenu.AskNewFile(Lang.T("Note to file"), Corkboard.FileNameOf(card), Corkboard.ProjectFolder);
+        Tools.ClearScreen();
+        if (path == null) return;
+        // The text as it is, ending with a line break, with the line endings of new files
+        var text = card.Text.EndsWith('\n') ? card.Text : card.Text + "\n";
+        try
+        {
+            // Only a new file: one that was made in the meantime is not written over (it is logged, or why it failed)
+            FileIo.CreateNewFile(path);
+            FileIo.WriteAllBytesSafe(path, TextFile.Create(path).GetBytes(text));
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or NotSupportedException)
+        {
+            _message = e.Message;
+            return;
+        }
+
+        Corkboard.ToFile(card, path);
+        SaveCards();
+        _message = Lang.F("The note is the file {0} now (u: a note again)", Path.GetFileName(path));
+    }
+
     // I or ":info": what the card is, and its file
     private static void ShowInfo(Corkboard.Card? card)
     {
@@ -865,6 +916,10 @@ internal static class CorkboardPage
             case Corkboard.Undone.Places:
                 _message = Lang.T("The cards are back in their places");
                 break;
+            case Corkboard.Undone.Note:
+                Select(Corkboard.UndoneCard!);
+                _message = Lang.F("A note again: {0} (the file stays)", Corkboard.UndoneCard!.Name);
+                break;
             case Corkboard.Undone.Cards:
                 SelectLast();
                 _message = Lang.F("Cards put back: {0}", Corkboard.UndoneCount);
@@ -1018,6 +1073,9 @@ internal static class CorkboardPage
                 break;
             case "note":
                 AddNote();
+                break;
+            case "tofile":
+                NoteToFile(Selected);
                 break;
             case "badge":
                 AddBadge();

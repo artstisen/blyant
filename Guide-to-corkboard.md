@@ -37,6 +37,14 @@ A new card is placed at the first free place, row by row, with a column between 
 
 A new note left without text is not kept, also when the editor is left by a jump. The text is kept on the board it was written for, also when another board is opened from the editor (`:board name`).
 
+### A note becomes a file
+When a note has grown into more than a note, `W` (or `:tofile`) on it writes its text to a new file, and the card becomes the card of that file: it stays where it is, with its number, its color and its title. A box asks for the name and the folder, as _New file_ does:
+
+- The name is the title of the note, or else its first line (without the `#` of a Markdown heading, and without the characters a file name cannot have). Without an extension the file is a Markdown file (`.md`)
+- The folder is the folder of the project on the [board of a project](#the-board-of-a-project), and else the folder the file browser was in last. `Tab` in the box picks another
+- The text is written as it is, with the line endings of new files. A file that is there already is never written over: you are told, and can give another name
+- `u` (or `:undo`) makes the card a note again, with its text; the file stays on the disk. A badge stays a note, and an empty note has nothing to write
+
 ## Badges
 `B` (or `:badge`) adds a badge: a small round mark with an `i`, to mark a place on the board, such as a group of cards that are to do, done or new. Like a note card it has a note, written in the editor at once and read in the peek when the badge is selected, and `Enter` edits it again. Give it a color with `C` (its frame and the `i`), and move it with `V` beside the cards it is about:
 

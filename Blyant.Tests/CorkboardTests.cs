@@ -1240,4 +1240,56 @@ public class CorkboardTests : IDisposable
         Assert.Equal(new[] { Corkboard.LargestShape, Corkboard.ShortestLine }, lines.Select(card => card.Length));
         Assert.Equal((Corkboard.LargestShape, Corkboard.LargestShape), (frame.FrameWidth, frame.FrameHeight));
     }
+
+    [Fact]
+    public void ANote_IsNamedAsAFile_ByItsTitleOrFirstLine()
+    {
+        var note = Corkboard.AddNote("\n# Chapter one\nIt was a dark night", Width, Height);
+        Assert.Equal("Chapter one", Corkboard.FileNameOf(note));
+        // A title of its own comes first, without the characters a file name cannot have
+        Corkboard.Rename(note, "Plan: A/B?");
+        Assert.Equal("Plan AB", Corkboard.FileNameOf(note));
+        Assert.Equal(60, Corkboard.FileNameOf(Corkboard.AddNote(new string('x', 80), Width, Height)).Length);
+        Assert.Equal("Note", Corkboard.FileNameOf(Corkboard.AddNote("???", Width, Height)));
+    }
+
+    [Fact]
+    public void ANoteMadeAFile_KeepsItsPlace_AndUndoMakesItANoteAgain()
+    {
+        var note = Corkboard.AddNote("A long text\nwith more", Width, Height);
+        note.Color = ConsoleColor.Green;
+        Corkboard.Rename(note, "Plan");
+        var (number, x, y) = (note.Number, note.X, note.Y);
+        Corkboard.ToFile(note, In("Plan.md"));
+        Assert.False(note.IsNote);
+        Assert.Equal(In("Plan.md"), note.Path);
+        Assert.Equal(string.Empty, note.Text);
+        Assert.Equal((number, x, y, ConsoleColor.Green, "Plan"), (note.Number, note.X, note.Y, note.Color, note.Title));
+        // Saved and read again: the card of the file
+        Assert.Equal(DialogText.Success, Corkboard.Save());
+        Corkboard.Load();
+        var card = Corkboard.Cards.Single();
+        Assert.Equal((In("Plan.md"), number, x, y), (card.Path, card.Number, card.X, card.Y));
+
+        // u: a note again, with its text
+        note = Corkboard.AddNote("Text", Width, Height);
+        Corkboard.ToFile(note, In("Text.md"));
+        Assert.Equal(Corkboard.Undone.Note, Corkboard.Undo());
+        Assert.Same(note, Corkboard.UndoneCard);
+        Assert.True(note.IsNote);
+        Assert.Equal("Text", note.Text);
+        Assert.Equal(Corkboard.Undone.Nothing, Corkboard.Undo());
+    }
+
+    [Fact]
+    public void WhatIsDoneAfterANoteMadeAFile_IsUndoneInstead()
+    {
+        var note = Corkboard.AddNote("Text", Width, Height);
+        var other = Corkboard.Add(In("other.md"), Width, Height);
+        Corkboard.ToFile(note, In("Text.md"));
+        Corkboard.Remove(other);
+        Assert.Equal(Corkboard.Undone.Card, Corkboard.Undo());
+        Assert.Equal(Corkboard.Undone.Nothing, Corkboard.Undo());
+        Assert.False(note.IsNote);
+    }
 }
