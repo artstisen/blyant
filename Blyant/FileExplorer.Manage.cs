@@ -1044,7 +1044,8 @@ internal static partial class FileExplorer
     /// ":pin" in the file browser, its lists and the editor: a file or folder to the corkboard
     /// </summary>
     /// <returns>The message that tells what was done (with the number of the card)</returns>
-    internal static string PinFile(string path) => Corkboard.PinWithMessage(path, CorkboardPage.Height);
+    internal static string PinFile(string path) =>
+        Modules.Board ? Corkboard.PinWithMessage(path, CorkboardPage.Height) : Modules.BoardOff;
 
     /// <summary>
     /// I on the corkboard: information about a file or folder, as in the file browser

@@ -215,6 +215,8 @@ internal static class Actions
         TextArea.WordWrap = true;
         TextArea.ShowWhitespace = false;
         TextArea.Zen = false;
+        Modules.Projects = true;
+        Modules.Board = true;
         EditorEngine.MarksApostrophe = false;
         TextFile.NewFileLineEndings = "system";
         TextArea.ScrollOff = true;

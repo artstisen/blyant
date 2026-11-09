@@ -78,7 +78,7 @@ internal static class StartMenu
     internal static void Open(int configurationPage = -1)
     {
         _starting = false;
-        _showConfiguration = Math.Clamp(configurationPage, -1, 4);
+        _showConfiguration = Math.Clamp(configurationPage, -1, 5);
     }
 
     /// <summary>
@@ -103,7 +103,7 @@ internal static class StartMenu
             },
             new TabItem(() => DialogText.StartTab, start),
             new TabItem(() => DialogText.StartConfiguration, new SettingsPage(0), new SettingsPage(1),
-                new SettingsPage(2), new SettingsPage(3), new SettingsPage(4)),
+                new SettingsPage(2), new SettingsPage(3), new SettingsPage(4), new SettingsPage(5)),
             new TabItem(() => Lang.T("Help"), new HelpPage()))
         {
             Commands = ReadCommand,
@@ -189,8 +189,11 @@ internal static class StartMenu
             case "lists":
                 ShowPage(4);
                 break;
-            case "system":
+            case "modules":
                 ShowPage(5);
+                break;
+            case "system":
+                ShowPage(6);
                 break;
             case "jump":
             case "ju":
@@ -291,7 +294,7 @@ internal static class StartMenu
         return TabResult.Redraw;
     }
 
-    // Go to a page of the frame (0 Start, 1 to 4 the pages of Configuration)
+    // Go to a page of the frame (0 Start, 1 to 6 the pages of Configuration)
     private static void ShowPage(int page)
     {
         if (_frame != null) _frame.Selected = page;
@@ -533,6 +536,8 @@ internal static class StartMenu
         BookmarkNumbers,
         BookmarkPanes,
         BookmarkPeek, // Below BookmarkPanes
+        ModuleProjects,
+        ModuleBoard,
         Hints,
         Reset,
         EditSettings,
@@ -588,6 +593,9 @@ internal static class StartMenu
         settings.Add(Setting.FavoritePeek);
         settings.Add(Setting.BookmarkPanes);
         settings.Add(Setting.BookmarkPeek);
+        // Modules
+        settings.Add(Setting.ModuleProjects);
+        settings.Add(Setting.ModuleBoard);
         // System
         settings.Add(Setting.Hints);
         settings.Add(Setting.Reset);
@@ -636,6 +644,8 @@ internal static class StartMenu
             Setting.WordWrap => Check(TextArea.WordWrap) + Lang.T("Wrap long lines"),
             Setting.Whitespace => Check(TextArea.ShowWhitespace) + Lang.T("Show blank space as . > $ (:whitespace)"),
             Setting.Zen => Check(TextArea.Zen) + Lang.T("Zen mode: only mode, name and line (:zen)"),
+            Setting.ModuleProjects => Check(Modules.Projects) + Lang.T("Projects: New project, Open project, list of projects"),
+            Setting.ModuleBoard => Check(Modules.Board) + Lang.T("Corkboard: files and notes as cards"),
             Setting.MarksApostrophe => Check(EditorEngine.MarksApostrophe) + Lang.T("Marks: ' jumps to the exact place"),
             Setting.ScrollOff => Check(TextArea.ScrollOff) +
                                  Lang.F("Lines kept around cursor: {0}", TextArea.ScrollOffLines),
@@ -672,7 +682,7 @@ internal static class StartMenu
             : Lang.F("Spell checker: {0}", SpellChecker.Languages);
     }
 
-    // The settings are shown on five pages: General, Layout, Editor, Lists and System
+    // The settings are shown on six pages: General, Layout, Editor, Lists, Modules and System
     private static int PageOf(Setting setting)
     {
         return setting switch
@@ -688,7 +698,8 @@ internal static class StartMenu
             Setting.FileNumbers or Setting.FavoriteNumbers or Setting.HistoryNumbers or Setting.HotlistNumbers
                 or Setting.SearchNumbers or Setting.BookmarkNumbers or Setting.FavoritePanes or Setting.FavoritePeek
                 or Setting.BookmarkPanes or Setting.BookmarkPeek => 3,
-            _ => 4
+            Setting.ModuleProjects or Setting.ModuleBoard => 4,
+            _ => 5
         };
     }
 
@@ -701,6 +712,7 @@ internal static class StartMenu
             1 => Lang.T("Layout"),
             2 => Lang.T("Editor"),
             3 => Lang.T("Lists"),
+            4 => Lang.T("Modules"),
             _ => Lang.T("System")
         };
     }
@@ -816,7 +828,10 @@ internal static class StartMenu
         private static Choice[] Shown()
         {
             var recover = Recovery.All().Count > 0;
-            return Enum.GetValues<Choice>().Where(choice => choice != Choice.Recover || recover).ToArray();
+            // (and none of a module turned off: Configuration, Modules)
+            return Enum.GetValues<Choice>().Where(choice => (choice != Choice.Recover || recover) &&
+                (choice is not (Choice.NewProject or Choice.OpenProject) || Modules.Projects) &&
+                (choice != Choice.Board || Modules.Board)).ToArray();
         }
 
         // The keys that open a choice at once (the same in all languages; the numbers only select). A new file: N,
@@ -1348,6 +1363,12 @@ internal static class StartMenu
                 break;
             case Setting.Zen:
                 TextArea.Zen = !TextArea.Zen;
+                break;
+            case Setting.ModuleProjects:
+                Modules.Projects = !Modules.Projects;
+                break;
+            case Setting.ModuleBoard:
+                Modules.Board = !Modules.Board;
                 break;
             case Setting.MarksApostrophe:
                 EditorEngine.MarksApostrophe = !EditorEngine.MarksApostrophe;

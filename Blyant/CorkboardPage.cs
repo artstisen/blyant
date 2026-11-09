@@ -100,6 +100,14 @@ internal static class CorkboardPage
     /// </summary>
     internal static void Show()
     {
+        // Turned off (Configuration: Modules): told in a box (all the ways to the board come here)
+        if (!Modules.Board)
+        {
+            ChoiceBox.Forget();
+            ChoiceBox.Message(Lang.T("Corkboard"), Modules.BoardOff, string.Empty);
+            return;
+        }
+
         if (_open) return;
         _open = true;
         try
@@ -139,6 +147,12 @@ internal static class CorkboardPage
     /// </summary>
     internal static void ShowProjectBoard(string project)
     {
+        if (!Modules.Board)
+        {
+            Show();
+            return;
+        }
+
         OpenBoard(Path.GetFullPath(project));
         Show();
     }

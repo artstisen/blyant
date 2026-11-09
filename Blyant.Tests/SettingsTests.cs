@@ -141,6 +141,23 @@ backup=
     }
 
     [Fact]
+    public void TheModules_AreLoadedAndSaved()
+    {
+        File.WriteAllText(SettingsFile, LegacySettings + "\nmoduleprojects=false\nmoduleboard=false\n");
+        Assert.True(FileIo.LoadSettings());
+        Assert.False(Modules.Projects);
+        Assert.False(Modules.Board);
+        FileIo.SaveSettings();
+        var saved = FileIo.ParseSettings(File.ReadAllText(SettingsFile));
+        Assert.Equal("false", saved["moduleprojects"]);
+        Assert.Equal("false", saved["moduleboard"]);
+        // The defaults: on
+        Actions.ApplyDefaultSettings();
+        Assert.True(Modules.Projects);
+        Assert.True(Modules.Board);
+    }
+
+    [Fact]
     public void TheBlankGutter_IsLoadedAndSaved()
     {
         File.WriteAllText(SettingsFile, LegacySettings + "\ngutter=true\n");
@@ -363,7 +380,10 @@ backup=
         Assert.False(settings.ContainsKey("stayloggedin"));
         Assert.False(settings.ContainsKey("projectsdir"));
         Assert.False(settings.ContainsKey("projectsask"));
-        Assert.Equal(56, settings.Count);
+        Assert.Equal(58, settings.Count);
+        // The modules are on unless turned off
+        Assert.Equal("true", settings["moduleprojects"]);
+        Assert.Equal("true", settings["moduleboard"]);
         // No blank gutter unless turned on
         Assert.Equal("false", settings["gutter"]);
         // Zen mode is off unless turned on

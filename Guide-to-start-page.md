@@ -3,7 +3,7 @@
 ## Start page
 ![The start page](docs/screenshots/start-page.svg)
 
-Blyant is a text editor for writing: files, and projects of files. When it starts, the start page is shown in a frame with three tabs at its top: **Start**, where you make or open a file or a project, **Configuration**, with the settings, and **Help**, with the help, the guides and the about page. The settings are on five pages, shown as the sub-tabs **General**, **Layout**, **Editor**, **Lists** and **System** in a row at the top of the frame. The tab and sub-tab shown are highlighted in the color of the frame. The start page is shown again when the file browser is closed.
+Blyant is a text editor for writing: files, and projects of files. When it starts, the start page is shown in a frame with three tabs at its top: **Start**, where you make or open a file or a project, **Configuration**, with the settings, and **Help**, with the help, the guides and the about page. The settings are on six pages, shown as the sub-tabs **General**, **Layout**, **Editor**, **Lists**, **Modules** and **System** in a row at the top of the frame. The tab and sub-tab shown are highlighted in the color of the frame. The start page is shown again when the file browser is closed.
 
 `Tab` goes to the next tab (Start, Configuration, Help, and round to Start again), and `Shift+Tab` the other way. `h` and `l` (or `Left`/`Right`) go to the previous and the next sub-tab of the tab shown, going round, so in Configuration they go through General, Layout, Editor and System. The keys are shown at the right ends of the two rows: `Tab` after the tabs and `h/l` after the sub-tabs, in the color of the frame. A tab opens with the sub-tab it showed last. This is the same in all the frames with tabs (the color schemes, the logos).
 
@@ -76,7 +76,7 @@ The files are in the folder of the project, so they go with it when it is copied
 The list of projects can also be opened from the file browser (`E` or `:projects`, `:pro`: the project picked is shown in the pane with the focus) and from the editor (`:projects`, `:pro`: the project picked is shown in the file browser, as a jump, after asking about changes that are not saved).
 
 ### Configuration
-The settings are on five pages. `j` `k` (and `gg` `G`) select a setting on the page, and the number of a row selects it (`1` to `9`, and `0` the tenth). A page with more settings than the window has rows for scrolls as the selection moves, with `^` at the right of the first row when there are more above, and `v` at the last when there are more below. `Enter` or `Space` changes it. `Esc` or `Q` goes back to the Start tab. Changes are saved at once.
+The settings are on six pages. `j` `k` (and `gg` `G`) select a setting on the page, and the number of a row selects it (`1` to `9`, and `0` the tenth). A page with more settings than the window has rows for scrolls as the selection moves, with `^` at the right of the first row when there are more above, and `v` at the last when there are more below. `Enter` or `Space` changes it. `Esc` or `Q` goes back to the Start tab. Changes are saved at once.
 
 **General**
 
@@ -127,6 +127,13 @@ The settings of the lists of the file browser and of the [bookmarks](Guide-to-ju
 - **Peek in Favorites**: The Peek pane, next to the Note pane (on from the start; dimmed while the panes are off). Setting `favoritepeek`
 - **Panes in Bookmarks (note and peek)**, **Peek in Bookmarks**: The same for the Bookmarks tab of the Jump menu. Settings `bookmarkpanes`, `bookmarkpeek`
 
+**Modules**
+
+The parts of Blyant you may not need can be turned off, so the start page, the menus and the help show only what you use. A module turned off is not on the start page, in the Jump menu, in the box of commands above the command line or in the help; its keys and commands tell that it is off (_Configuration: Modules_). Nothing of it is deleted: your projects and boards are there again, as they were, when it is turned on. `:modules` on the start page goes to this page.
+
+- **Projects: New project, Open project, list of projects**: The [projects](#projects): _New project_ and _Open project_ on the Start tab, the list of projects (`E` and `:projects` in the file browser, `:projects` in the editor) and the Projects tab of the Jump menu (on from the start). Saved as `moduleprojects` in the settings file
+- **Corkboard: files and notes as cards**: The [corkboard](Guide-to-corkboard.md): _Corkboard_ on the Start tab, `:board` on every command line, `:pin`, the boards of the projects (`B` and the board beside the list of projects) and the Corkboard page of the Jump menu (on from the start). Saved as `moduleboard` in the settings file
+
 **System**
 
 - **Show hints on start page**: A hint about a feature of Blyant to the right of the menu of the Start tab, the next one each time Blyant starts (on from the start; `X` on the Start tab hides them). Setting `hints`
@@ -142,7 +149,7 @@ On every tab of the start page (Start, the pages of Configuration, Help), `:` op
 - `:blank` A blank page, as `B`; `:recover` Recover unsaved text, as `R`
 - `:new` (or `:new name`) New file, as `N` (with `:new name`, the box is shown with the name filled in, so the folder can be changed: `Enter` makes it); `:file` (or `:open`, `:browse`) The file browser, as _File browser_; `:favorites` (or `:favs`), `:history` (`:hist`) and `:hotlist` (`:hot`) The [favorites](#favorites), the [file history](#file-history) and the [directory hotlist](#directory-hotlist) of the file browser at once, as _Favorites_ (closing them returns to the start page)
 - `:project` (or `:project name`, `:newproject`) New project, as `P`; `:projects` (`:pro`, `:proj`) The list of projects, as _Open project_
-- `:start` The Start tab; `:config` (or `:general`), `:layout`, `:editor`, `:lists` and `:system` The pages of the Configuration tab (`:editor` is the Editor page of Configuration, not the text editor)
+- `:start` The Start tab; `:config` (or `:general`), `:layout`, `:editor`, `:lists`, `:modules` and `:system` The pages of the Configuration tab (`:editor` is the Editor page of Configuration, not the text editor)
 - `:jump` (or `:ju`, `:jmp`) The [Jump menu](Guide-to-jump-menu.md#jump-menu), and `:jump general` a page of Blyant at once; `:book 3` Jump to bookmark 3; [`:colorscheme name`](Guide-to-jump-menu.md#changing-the-scheme-by-command) Use another color scheme; `:splits` The files closed with another file beside them, to open one with it again (see [the guide to the editor](Guide-to-editor.md#other-commands))
 - `:help` (or `:h`) The help of the start page, as `?`; `:about` The about page; `:quick` (or `:guide`) The quick guide
 - `:scheme` The color schemes; `:logo` The logos; `:snippet` (or `:snip`) The snippet editor; `:completions` (or `:comp`) The completions editor; `:clipboard` The clipboard settings; `:log` The log

@@ -242,9 +242,13 @@ internal static class DialogText
     public static string MonochromeIsOn => Lang.T("Black and white is on: the colors are used when it is turned off");
     public static string Drives => Lang.T("Drives");
     public const string DirectoryMark = "<DIR>";
-    public static string FileBrowserKeys => Lang.T("j/k Select | l Open | V Peek | E Projects | F Faves | O History | W Hotlist");
+    public static string FileBrowserKeys => Modules.Projects
+        ? Lang.T("j/k Select | l Open | V Peek | E Projects | F Faves | O History | W Hotlist")
+        : Lang.T("j/k Select | l Open | V Peek | F Faves | O History | W Hotlist");
 
-    public static string FileBrowserDualKeys => Lang.T("Tab Pane | l Open | V Peek | E Projects | F Faves | O History | W Hotlist");
+    public static string FileBrowserDualKeys => Modules.Projects
+        ? Lang.T("Tab Pane | l Open | V Peek | E Projects | F Faves | O History | W Hotlist")
+        : Lang.T("Tab Pane | l Open | V Peek | F Faves | O History | W Hotlist");
     public static string FileTargetDualKeys => Lang.T("Tab Pane | l Open | h Up | / Filter | S {0} | Esc Cancel");
     public static string FileTargetKeys => Lang.T("j/k Select | l Open | h Up | / Filter | S {0} | Esc Cancel");
     public static string FileCopyHere => Lang.T("Copy here");

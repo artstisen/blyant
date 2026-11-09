@@ -79,7 +79,8 @@ internal static class JumpPages
 {
     internal static readonly IReadOnlyList<string> Ids = new[]
     {
-        "config/general", "config/layout", "config/editor", "config/lists", "config/system", "board", "favorites",
+        "config/general", "config/layout", "config/editor", "config/lists", "config/modules", "config/system", "board",
+        "favorites",
         "history", "hotlist", "browse", "schemes", "logos", "clipboard",
         "snippets", "completions", "log", "help", "about"
     };
@@ -127,7 +128,8 @@ internal static class JumpPages
         "config/layout" => 1,
         "config/editor" => 2,
         "config/lists" => 3,
-        "config/system" => 4,
+        "config/modules" => 4,
+        "config/system" => 5,
         _ => -1
     };
 
@@ -141,6 +143,7 @@ internal static class JumpPages
             "config/general" => Lang.F("{0}: {1}", DialogText.StartConfiguration, Lang.T("General")),
             "config/layout" => Lang.F("{0}: {1}", DialogText.StartConfiguration, Lang.T("Layout")),
             "config/editor" => Lang.F("{0}: {1}", DialogText.StartConfiguration, Lang.T("Editor")),
+            "config/modules" => Lang.F("{0}: {1}", DialogText.StartConfiguration, Lang.T("Modules")),
             "config/lists" => Lang.F("{0}: {1}", DialogText.StartConfiguration, Lang.T("Lists")),
             "config/system" => Lang.F("{0}: {1}", DialogText.StartConfiguration, Lang.T("System")),
             "board" => Lang.T("Corkboard"),

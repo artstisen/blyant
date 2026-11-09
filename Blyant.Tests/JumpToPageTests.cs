@@ -13,7 +13,7 @@ public class JumpToPageTests
     {
         Assert.Equal(new[]
         {
-            "general", "layout", "editor", "lists", "system", "board", "favorites", "history", "hotlist", "browse",
+            "general", "layout", "editor", "lists", "modules", "system", "board", "favorites", "history", "hotlist", "browse",
             "colors", "logos", "clipboard", "snippets", "completions", "log", "help", "about"
         }, JumpPages.Names);
         Assert.Equal("config/general", JumpPages.IdOf("general"));

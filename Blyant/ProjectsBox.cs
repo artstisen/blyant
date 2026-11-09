@@ -11,8 +11,9 @@
 internal static class ProjectsBox
 {
     // The key hints of the list
-    private static string Keys() =>
-        Lang.T("j/k Select | Enter Open | B Board | P New | A Add | D Remove | C Color | N Note | ? Help");
+    private static string Keys() => Modules.Board
+        ? Lang.T("j/k Select | Enter Open | B Board | P New | A Add | D Remove | C Color | N Note | ? Help")
+        : Lang.T("j/k Select | Enter Open | P New | A Add | D Remove | C Color | N Note | ? Help");
 
     // The width of the cards of a board beside the list: a card, and the steps of three on top of it (cut)
     private const int BoardColumnWidth = Corkboard.CardWidth + 4;
@@ -23,6 +24,7 @@ internal static class ProjectsBox
     /// <returns>The full path of the project picked, or null</returns>
     internal static string? Pick()
     {
+        if (TurnedOff()) return null;
         string? select = null;
         while (true)
         {
@@ -40,7 +42,8 @@ internal static class ProjectsBox
                 Side = i => info[i].Note,
                 // To the right of the list: the corkboard of the project (nothing when there is no project, or it is
                 // missing)
-                Beside = (i, top, left, width, height) =>
+                // (none while the corkboard is turned off)
+                Beside = !Modules.Board ? null : (i, top, left, width, height) =>
                     CorkboardPage.DrawSnapshot(i >= 0 ? info[i].Board : null, top, left, width, height,
                         i >= 0 && !projects[i].Missing),
                 BesideWidth = BoardColumnWidth,
@@ -164,6 +167,7 @@ internal static class ProjectsBox
     /// <returns>The full path of the project made, or null</returns>
     internal static string? NewProject(string name)
     {
+        if (TurnedOff()) return null;
         ChoiceBox.Forget();
         var parent = FileExplorer.PickDirectory(Lang.T("Where to make the project"));
         Tools.ClearScreen();
@@ -276,6 +280,15 @@ internal static class ProjectsBox
     }
 
     private static string? _commandResult;
+
+    // The projects are turned off (Configuration: Modules): told in a box
+    private static bool TurnedOff()
+    {
+        if (Modules.Projects) return false;
+        ChoiceBox.Forget();
+        ChoiceBox.Message(Lang.T("Projects"), Modules.ProjectsOff, string.Empty);
+        return true;
+    }
 
     // A page asked for with a command (":favorites"), for the page that opened the list
     private static string? _pageAsked;

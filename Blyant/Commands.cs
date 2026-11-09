@@ -71,7 +71,7 @@ internal static class Commands
             "quit close help jump book find info goto favorite number nonumber recent bookmark bookmark! board pin colorscheme log favorites history hotlist browse",
             "q h fav ju jmp corkboard colo favs hist hot"),
         [CommandContext.Start] = new Table(
-            "new blank recover file open browse favorites project projects start config general layout editor lists system jump book splits recent help about " +
+            "new blank recover file open browse favorites project projects start config general layout editor lists modules system jump book splits recent help about " +
             "quick scheme logo snippet completions clipboard log restart reset quit exit board colorscheme history hotlist",
             "favs newproject proj pro ju jmp h guide snip comp q corkboard colo hist hot"),
         [CommandContext.Jump] = new Table(
@@ -97,7 +97,9 @@ internal static class Commands
     /// </summary>
     internal static IReadOnlyList<string> Names(CommandContext context)
     {
-        return Tables[context].Names;
+        // (not those of a module turned off: typed whole, they tell that it is off)
+        var names = Tables[context].Names;
+        return names.Any(Modules.Hides) ? names.Where(name => !Modules.Hides(name)).ToList() : names;
     }
 
     /// <summary>

@@ -190,7 +190,8 @@ internal static class JumpMenu
     /// <summary>
     /// The lists that are shown, in the order h and l go through them
     /// </summary>
-    internal static List<Tab> Tabs() => Enum.GetValues<Tab>().ToList();
+    internal static List<Tab> Tabs() =>
+        Enum.GetValues<Tab>().Where(tab => tab != Tab.Projects || Modules.Projects).ToList();
 
     // The name of a sub-tab, in the language in use
     private static string TabName(Tab tab) => tab switch
@@ -239,8 +240,8 @@ internal static class JumpMenu
                         Label = entry.Name.Length > 0 ? entry.Name : null
                     }).ToList();
             default:
-                return JumpPages.Ids.Select(id => new Row(new JumpTarget(JumpKind.Page, id), DateTime.MinValue))
-                    .ToList();
+                return JumpPages.Ids.Where(id => id != "board" || Modules.Board)
+                    .Select(id => new Row(new JumpTarget(JumpKind.Page, id), DateTime.MinValue)).ToList();
         }
     }
 

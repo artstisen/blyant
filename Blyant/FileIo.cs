@@ -508,6 +508,9 @@ internal static class FileIo
         _tempSettings += "whitespace=" + (TextArea.ShowWhitespace ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // Zen mode: the editor of a file shows only the mode and the name above the text, the line and column below (:zen)
         _tempSettings += "zen=" + (TextArea.Zen ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        // The modules (Configuration: Modules): the projects and the corkboard, on unless turned off
+        _tempSettings += "moduleprojects=" + (Modules.Projects ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        _tempSettings += "moduleboard=" + (Modules.Board ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // ' jumps to the place of a mark, as ` (for keyboards where ` is hard to type)
         _tempSettings += "marksapostrophe=" + (EditorEngine.MarksApostrophe ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // Lines kept above and below the cursor when the editor scrolls (on or off, and how many)
@@ -698,6 +701,9 @@ internal static class FileIo
         TextArea.WordWrap = Tools.TrimToLower(Get("wrap")) != DialogText.BFalse;
         TextArea.ShowWhitespace = Tools.TrimToLower(Get("whitespace")) == DialogText.BTrue;
         TextArea.Zen = Tools.TrimToLower(Get("zen")) == DialogText.BTrue;
+        // On unless turned off
+        Modules.Projects = Tools.TrimToLower(Get("moduleprojects")) != DialogText.BFalse;
+        Modules.Board = Tools.TrimToLower(Get("moduleboard")) != DialogText.BFalse;
         EditorEngine.MarksApostrophe = Tools.TrimToLower(Get("marksapostrophe")) == DialogText.BTrue;
         // On unless turned off
         TextArea.ScrollOff = Tools.TrimToLower(Get("scrolloff")) != DialogText.BFalse;

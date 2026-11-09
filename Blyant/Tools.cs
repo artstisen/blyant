@@ -1180,6 +1180,15 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":rename", Lang.T("Rename the file"), false));
             _shortcutList.Add(new Shortcut(":%y :%d :2,9d", Lang.T("Yank all/Delete all/Delete line 2 to 9"), false));
             _shortcutList.Add(new Shortcut(":clear", Lang.T("Clear all"), false));
+
+            // Without the rows of the modules that are off (Configuration: Modules), by the part of the help they are
+            // in and what they say
+            var section = string.Empty;
+            _shortcutList = _shortcutList.Where(row =>
+            {
+                if (row.IsHeadline) section = row.GetDescription();
+                return !Modules.HidesHelp(section, row.GetDescription());
+            }).ToList();
         }
     }
 
