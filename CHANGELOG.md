@@ -1,5 +1,7 @@
 # Changes
 
+## v1.4.4 (2026-11-09)
+
 ## v1.4.3 (2026-11-07)
 - **A new color scheme, Lush Blue**: in Color schemes, on the Schemes tab, after Deep Blue. Like Deep Blue it has a dark blue background, with green, cyan and magenta, and the logo _Blyant_.
 - **`:colorscheme name`, on every command line**: uses another color scheme without opening Color schemes, and saves it, as `Enter` on the Schemes tab does (also `:colo`). `Tab` completes the names of the schemes, also after a space (`:colo Deep B`), the start of a name is enough when only one scheme has it, and `:colorscheme` alone tells the scheme in use. See [Changing the scheme by command](Guide-to-jump-menu.md#changing-the-scheme-by-command).

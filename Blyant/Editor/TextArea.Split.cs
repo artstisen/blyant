@@ -32,6 +32,9 @@ public partial class TextArea
     // The file shown read only in the other pane (":split name"), or null when the split shows this text
     private string? _referencePath;
 
+    // The keys go to the file read only in the other pane (FocusReference)
+    private bool _referenceFocused;
+
     // The place of the text area when it is not split
     private int _wholeLeft;
     private int _wholeWidth;
@@ -195,8 +198,8 @@ public partial class TextArea
         _engine.StopFollowing();
         _engine.TakeSmallRegister(_otherPane.Engine);
         // The mode is written over this pane, and the cursor is shown in it
-        _shownModeLabel = null;
-        _shownStatus = null;
+        _frame.ForgetTop();
+        _frame.ForgetStatus();
     }
 
     // ":q" in a split (also ":q!" and ZQ; ":wq", ":x" and ZZ save first): the pane with the focus is closed, and the
@@ -397,13 +400,12 @@ public partial class TextArea
         var path = _referencePath!;
         var text = pane.Engine.Buffer.GetText();
         Tools.HideCursor();
-        // The divider tells that the keys go to the file at the right: its name is highlighted, and the mode of
-        // the text at the left is not shown
-        Tools.SetCursorEx(_top - 1, 0);
-        ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
-        Console.Write(new string('-', Init.LineWidth - 1));
-        DrawReferenceName(true);
-        ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
+        // The frame tells that the keys go to the file at the right: its name is highlighted, and the mode of the
+        // text at the left is not shown
+        _referenceFocused = true;
+        _frame.ForgetTop();
+        DrawModeDivider();
+        _referenceFocused = false;
         var peek = new TextArea(pane.Left, _top, pane.Width, _height, text, pane.Engine.GetCursorIndex(), false, false,
             false, SaveAsFile, false, new PeekOptions(pane.Engine.SyntaxDefault, RedrawAll)
             {
@@ -412,7 +414,7 @@ public partial class TextArea
                 Hint = Lang.F("{0}: read only, Tab back, Enter opens it", Path.GetFileName(path)),
                 ReadOnlyText = Lang.T("Read only: Enter opens the file in the editor")
             });
-        _shownModeLabel = null;
+        _frame.ForgetTop();
         var index = peek.GetCursorIndex();
         pane.Engine.SetCursorIndex(index);
         Tools.HideCursor();
@@ -423,18 +425,6 @@ public partial class TextArea
         }
 
         RedrawAll();
-    }
-
-    // The name of the file read only at the right, on the divider over it: highlighted while it has the keys
-    private void DrawReferenceName(bool focused)
-    {
-        if (_referencePath == null || _otherPane == null) return;
-        var name = Tools.TruncateString(" " + Lang.F("{0}, read only", Path.GetFileName(_referencePath)) + " ",
-            Math.Max(0, _otherPane.Width - 2), true);
-        Tools.SetCursorEx(_top - 1,
-            Math.Max(0, _otherPane.Left + _otherPane.Width / 2 - TextMetrics.WidthOf(name) / 2));
-        ConsoleColors.SetColors(focused ? ConsoleColors.ColorPreset.EditorTitle : ConsoleColors.ColorPreset.OtherTabs);
-        Console.Write(name);
     }
 
     /// <summary>
@@ -457,7 +447,4 @@ public partial class TextArea
             return Array.Empty<string>();
         }
     }
-
-    // The column the mode is centered on: the middle of the pane with the focus (of the window when not split)
-    private int ModeCenter => _otherPane == null ? Init.LineWidth / 2 : _left + _width / 2;
 }
