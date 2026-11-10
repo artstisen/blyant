@@ -43,6 +43,12 @@ internal sealed record JumpTarget(JumpKind Kind, string Target)
     internal (int Line, int Column)? At { get; init; }
 
     /// <summary>
+    /// The file selected in a directory shown in the file browser (":browse" in the editor: the file edited). Null:
+    /// the first entry
+    /// </summary>
+    internal string? Select { get; init; }
+
+    /// <summary>
     /// True if what it goes to is there (a page always is)
     /// </summary>
     internal bool Exists => Kind switch
@@ -677,7 +683,7 @@ internal static class Jump
                 try
                 {
                     if (target.Kind == JumpKind.File) FileExplorer.RunAtFile(target.FullPath, target.At, back);
-                    else FileExplorer.RunAtDirectory(target.FullPath);
+                    else FileExplorer.RunAtDirectory(target.FullPath, target.Select);
                 }
                 catch (NavigationException) when (back)
                 {

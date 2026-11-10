@@ -12,7 +12,7 @@ Blyant has several features inspired by popular Neovim plugins for text navigati
 ![The editor in split view, with command suggestions](docs/screenshots/split-view.svg)
 
 
-## The corkboard
+## Corkboard
 Plan a book, an article or a thesis on a corkboard: chapters, research folders and loose ideas are cards that you place freely, color, and lay on top of each other. Each project has its own corkboard, kept in the project folder, so it goes with the project when you move, copy or sync it.
 
 ![Corkboard of a project: chapters, a research folder, files and notes as cards in colors, badges marking the chapters drafted and one to rewrite, with a peek into the selected chapter](docs/screenshots/corkboard.svg)
@@ -44,6 +44,7 @@ See the [guide to the corkboard](Guide-to-corkboard.md).
 - Spell checking and word completion
 - Typst: colors, completions (`/h1`, `/figure`, `/math` ...) and a [guide to writing with Typst and its CLI](Guide-to-typst.md)
 - Search and replace with regular expressions, file comparison (diff), snippets, and a macro recorder whose macros can be edited as text
+- An edit history (`:changes`): the latest edits in a list, to see what you did and jump back to it
 - A command line with `Tab` completion and command history on every page
 
 **A file manager**
@@ -56,13 +57,17 @@ See the [guide to the corkboard](Guide-to-corkboard.md).
 - `gf` on a file name or a Markdown link in your text opens that file, so a table of contents leads to the chapters
 - Use bookmarks to create custom jump points in files, folders, projects, pages, and settings, and open them from anywhere using the command `:book number`
 - The same keys everywhere: `h` `j` `k` `l` to move, `/` to search, `?` for help and `:` for commands
-- Built-in guides: a quick guide and short guides to each part of Blyant
+- Built-in guides: a quick guide and short guides to each part of Blyant, and a user manual (Markdown in the download, PDF on the releases page)
 
 **At home in any terminal**
 - Pure 7-bit ASCII interface that works with any monospaced font
+- Modules: turn off the projects, the corkboard or the Jump menu when you do not need them, and Blyant shows only what you use
 - Color schemes and logos, which you can edit and make your own; `:colorscheme name` changes the scheme from any command line
 - English built in, and ten more languages as files that can be changed or added to
 - Runs on Windows, Linux (also Raspberry Pi) and macOS, as a single file with nothing else to install
+
+## Blyant Validator
+**[Blyant Validator](https://github.com/artstisen/blyant-validator)** is a companion tool, which also works on its own: validate and format HTML, CSS, XML and Markdown, side by side with your editor, in any terminal.
 
 ## Screenshots
 The screenshots are of the real program, made with [tools/screenshots.py](tools/screenshots.py) from a made-up writing project, in the color schemes Default, Deep Blue and Tasty Bytes.
@@ -108,7 +113,9 @@ Blyant is operated in the style of Vim: the editor has Normal, Insert and Visual
 - [Writing with Typst](Guide-to-typst.md)
 - [Changes](CHANGELOG.md)
 
-The guides are also put together as a user manual, in the release archives (`Blyant-User-Manual.md`) and as a PDF on the releases page.
+The guides are also put together as a **user manual**, in two forms:
+- **Markdown** (`Blyant-User-Manual.md`), in every release archive next to the program, to read in Blyant itself
+- **PDF** (`Blyant-User-Manual-1.4.4.pdf`), made with [Typst](https://typst.app), with a contents page and page numbers: a download of its own on the [releases page](https://github.com/artstisen/blyant/releases), to read or print
 
 Inside Blyant, press `?` for the list of keys.
 

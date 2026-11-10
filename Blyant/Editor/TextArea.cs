@@ -218,13 +218,15 @@ public partial class TextArea
     private EditorFrame _frame = new StandardFrame();
 
     // ":favorites", ":history", ":hotlist" or ":browse": the editor is left (changes that are not saved are asked
-    // about first). ":browse" shows the file browser in the directory of the file being edited
+    // about first). ":browse" shows the file browser in the directory of the file being edited, with the file
+    // selected (to make a new file next to it with N)
     private void JumpToList(string page)
     {
         if (page == "browse" && _saveMode == SaveAsFile && !FileExplorer.IsUntitled &&
             Path.GetDirectoryName(FileExplorer.CurrentFilePath) is { Length: > 0 } directory)
         {
-            Jump.ToPlace(new JumpTarget(JumpKind.Directory, directory), LeaveForJump);
+            Jump.ToPlace(new JumpTarget(JumpKind.Directory, directory) { Select = FileExplorer.CurrentFilePath },
+                LeaveForJump);
             return;
         }
 

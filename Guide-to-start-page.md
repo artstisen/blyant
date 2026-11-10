@@ -3,33 +3,53 @@
 ## Start page
 ![The start page](docs/screenshots/start-page.svg)
 
-Blyant is a text editor for writing: files, and projects of files. When it starts, the start page is shown in a frame with three tabs at its top: **Start**, where you make or open a file or a project, **Configuration**, with the settings, and **Help**, with the help, the guides and the about page. The settings are on six pages, shown as the sub-tabs **General**, **Layout**, **Editor**, **Lists**, **Modules** and **System** in a row at the top of the frame. The tab and sub-tab shown are highlighted in the color of the frame. The start page is shown again when the file browser is closed.
+Blyant is a text editor for writing: files, and projects of files. When it starts, the start page is shown in a frame with three tabs at its top: **Start**, where you make or open a file or a project, **Configuration**, with the settings, and **Help**, with the help, the guides and the about page.
 
-`Tab` goes to the next tab (Start, Configuration, Help, and round to Start again), and `Shift+Tab` the other way. `h` and `l` (or `Left`/`Right`) go to the previous and the next sub-tab of the tab shown, going round, so in Configuration they go through General, Layout, Editor and System. The keys are shown at the right ends of the two rows: `Tab` after the tabs and `h/l` after the sub-tabs, in the color of the frame. A tab opens with the sub-tab it showed last. This is the same in all the frames with tabs (the color schemes, the logos).
+The settings are on six pages, shown as the sub-tabs **General**, **Layout**, **Editor**, **Lists**, **Modules** and **System** in a row at the top of the frame. The tab and sub-tab shown are highlighted in the color of the frame. The start page is shown again when the file browser is closed.
+
+`Tab` goes to the next tab (Start, Configuration, Help, and round to Start again), and `Shift+Tab` the other way. `h` and `l` (or `Left`/`Right`) go to the previous and the next sub-tab of the tab shown, going round, so in Configuration they go through General, Layout, Editor and System.
+
+The keys are shown at the right ends of the two rows: `Tab` after the tabs and `h/l` after the sub-tabs, in the color of the frame. A tab opens with the sub-tab it showed last. This is the same in all the frames with tabs (the color schemes, the logos).
 
 
 ### Start
 Each choice has a number and a key, shown in front of it. The number selects the choice (then `Enter` opens it), and the key opens it at once. The keys are the same in all languages.
 
-- `1` `N` **New file**: Make a new, empty file and open it in the editor, with the [file browser](#file-browser) behind it. You are asked for its name; a name without an extension gets the extension of the kind set for new files (Markdown, `.md`, from the start: `chapter 1` is `chapter 1.md`; see _New files and blank pages_ in [Configuration](#configuration)). The file is made in the directory the file browser was in last (shown in the box, with a line telling that `Tab` chooses another folder). `Tab` in the box chooses another folder, and the name you typed is kept:
+- `1` `N` **New file**: Make a new, empty file and open it in the editor, with the [file browser](#file-browser) behind it
+  - You are asked for its name; a name without an extension gets the extension of the kind set for new files (Markdown, `.md`, from the start: `chapter 1` is `chapter 1.md`; see _New files and blank pages_ in [Configuration](#configuration))
+  - The file is made in the directory the file browser was in last (shown in the box, with a line telling that `Tab` chooses another folder)
+  - `Tab` in the box chooses another folder, and the name you typed is kept:
 
     - `1` to `3`: the folder of pane 1 and pane 2 of the file browser, and the folder picked last (when adding a project, for instance). Only those that are there, each once, with the end of the path and what the place is after it. `j`/`k` (and `gg`/`G`) select, `Enter` chooses
     - `B` **Browse...**: pick the folder in the file browser (it opens where a folder was picked last)
     - `Esc` Back to the name, in the same folder
 
   With one place or none, `Tab` opens the file browser at once. `Enter` makes the file and opens it
-- `2` `B` **Blank page**: Open the editor at once on an empty page, to write first and decide later what and where to save it as. It is of the kind set for new files (Markdown from the start), and colored as that kind. When you save it (`:w`, `:wq`, `:x`), you are asked for the name and the folder in the same box as for a new file (with `Tab` for another folder), and from then on it is an ordinary file. `:w name` saves it with that name in the box. `:q` asks what to do with the text (an empty page closes at once). Until it is saved, `:e`, `:rename`, `:new`, `:path` and `:snip edit` tell you to save it first. While you write, a recovery copy is kept, as for a file (see below)
-- `3` `R` **Recover unsaved text**: Shown only when there are [recovery copies](Guide-to-editor.md#recovery-copies) of text that was not saved (the choices below it then have a number more). It lists them, the newest first, with the start of the text below the list: blank pages that were not saved, and files. `Enter` opens one: a blank page as a blank page with its text, a file in the editor, where you are asked what to do with the copy (a file that is gone is opened as a blank page with the text). `D` deletes a copy, after asking. Blyant stopped while a blank page had text in it (the terminal closed, the computer turned off): this is where you find it
+- `2` `B` **Blank page**: Open the editor at once on an empty page, to write first and decide later what and where to save it as
+  - It is of the kind set for new files (Markdown from the start), and colored as that kind
+  - When you save it (`:w`, `:wq`, `:x`), you are asked for the name and the folder in the same box as for a new file (with `Tab` for another folder), and from then on it is an ordinary file
+  - `:w name` saves it with that name in the box. `:q` asks what to do with the text (an empty page closes at once)
+  - Until it is saved, `:e`, `:rename`, `:new`, `:path` and `:snip edit` tell you to save it first
+  - While you write, a recovery copy is kept, as for a file (see below)
+- `3` `R` **Recover unsaved text**: Shown only when there are [recovery copies](Guide-to-editor.md#recovery-copies) of text that was not saved (the choices below it then have a number more)
+  - It lists them, the newest first, with the start of the text below the list: blank pages that were not saved, and files
+  - `Enter` opens one: a blank page as a blank page with its text, a file in the editor, where you are asked what to do with the copy (a file that is gone is opened as a blank page with the text)
+  - `D` deletes a copy, after asking
+  - Blyant stopped while a blank page had text in it (the terminal closed, the computer turned off): this is where you find it
 - `3` `F` **File browser**: Open the [file browser](#file-browser), where `Enter` opens a file in the editor, and files and folders are made, renamed, copied, moved and deleted. Closing the file browser returns here
 - `4` `P` **New project**: Make a new [project](#projects): you pick the folder it goes in, you are asked for its name, a folder of that name is made there, and it is shown in the file browser
-- `5` `O` **Open project**: The [projects](#projects) in a list to pick from, with what each holds below the list and the start of its note to the right of that. `Enter` shows the project picked in the file browser, `B` opens its [corkboard](Guide-to-corkboard.md#the-board-of-a-project), `C` picks the color of the project, `N` opens its note in the editor, `I` shows information about it, `/` filters the list, `:` is its command line, `?` shows its keys and `Esc` closes it
+- `5` `O` **Open project**: The [projects](#projects) in a list to pick from, with what each holds below the list and the start of its note to the right of that. `Enter` shows the project picked in the file browser, `B` opens its [corkboard](Guide-to-corkboard.md#project-boards), `C` picks the color of the project, `N` opens its note in the editor, `I` shows information about it, `/` filters the list, `:` is its command line, `?` shows its keys and `Esc` closes it
 - `6` `E` **Recent files**: The latest files you opened, newest first, in a small box (the 9 newest of the [file history](#file-history)): `Enter` or `1` to `9` opens one in the editor, where it was left, and `Esc` closes the box. Also with `Ctrl+K`, on every tab and page of the start page, in the file browser and its lists (favorites, history, hotlist, search results) and in the Jump menu (in the editor, in Normal mode), and with `:recent`
 - `7` `V` **Favorites**: The [favorites](#favorites) of the file browser at once, with their folders, notes and peek. `Enter` opens a file in the editor (and the favorites come back after), and `B` shows a file or directory in the file browser. `Esc` closes them and returns here (from the file browser shown with `B`: closing it returns here)
 - `8` `C` **Corkboard**: The [corkboard](Guide-to-corkboard.md), where files are pinned as cards and placed where you want them, to plan a story or keep the files you work on in view. It opens on top of the start page, and `Esc` comes back here
 - `9` `M` **Jump menu**: Open the [Jump menu](Guide-to-jump-menu.md#jump-menu), to go straight to a file, a directory or a page of Blyant (also with `Ctrl+O`, on every tab and page of the start page: Start, the pages of Configuration and Help). Pages such as Color schemes and Help open on top of the start page
 - `0` `Q` **Exit**: Close Blyant at once (`Enter` on it; with Recover shown, it has no number). `Q` exits too, after asking
 
-To the right of the menu a **hint** tells about one of the features of Blyant: the command line, the Jump menu, the latest files (`Ctrl+K` and `:recent`), bookmarks and `:book`, favorites, writing Markdown with completions and `:surround`, recovery copies, the trash, splitting and comparing, a file beside your text to read (`:split name`, `:view`), peeking at files and the notes of projects. Each time Blyant starts the next one is shown, twelve in all, and then the first again (setting `hintindex`). `X` hides them; **Show hints on start page** in Configuration (System) shows them again, and they go on where they were (while they are hidden, the hint does not change). In a window too narrow for it, no hint is shown.
+To the right of the menu a **hint** tells about one of the features of Blyant: the command line, the Jump menu, the latest files (`Ctrl+K` and `:recent`), bookmarks and `:book`, favorites, writing Markdown with completions and `:surround`, recovery copies, the trash, splitting and comparing, a file beside your text to read (`:split name`, `:view`), peeking at files and the notes of projects.
+
+Each time Blyant starts the next one is shown, twelve in all, and then the first again (setting `hintindex`).
+
+`X` hides them; **Show hints on start page** in Configuration (System) shows them again, and they go on where they were (while they are hidden, the hint does not change). In a window too narrow for it, no hint is shown.
 
 Move the selection with `j`/`k` (or the arrow keys) or the number, and press `Enter`. `?` shows the help, and `Q` (or `Esc`) exits Blyant after asking in a box on top of the page (`Y`/`N`, or `j`/`k` and `Enter`; `Esc` cancels).
 
@@ -38,13 +58,17 @@ A project is a folder with the files of a piece of writing in it: the chapters o
 
 When you make a new project, you pick the folder it goes in, in the file browser (go to it and press `S`), and then you are asked for its name. A folder of that name is made there, and it is added to the projects.
 
-A folder you already have (a book you started in another program, a folder in a synced folder) is **added** to the projects with `A` in the list of projects, or with `:project add` in the file browser (the directory shown in the pane with the focus). The projects are kept in `projects.txt` in the data directory, a folder on each line. A project stays where it is: renaming or moving it in the file browser updates the list, and one that is gone (moved, renamed or deleted outside Blyant) is shown as _(missing)_ until you take it off the list.
+A folder you already have (a book you started in another program, a folder in a synced folder) is **added** to the projects with `A` in the list of projects, or with `:project add` in the file browser (the directory shown in the pane with the focus).
+
+The projects are kept in `projects.txt` in the data directory, a folder on each line.
+
+A project stays where it is: renaming or moving it in the file browser updates the list, and one that is gone (moved, renamed or deleted outside Blyant) is shown as _(missing)_ until you take it off the list.
 
 When a folder is picked in the file browser (a folder to add, or where to make a project), the browser opens where the last folder was picked, with that folder selected, so the folders next to it are near. If you cancel with `Esc`, the next one opens where you were. This place is kept in the settings file (`pickdir`), apart from the places of the two panes of the file browser.
 
 A project can be made on Windows, macOS and Linux alike, and synced between them: its name may not have the characters `\ / : * ? " < > |` in it, and may not be the name of another project in other upper or lower case (`novel` when there is `Novel`).
 
-_Open project_ lists the projects, in alphabetical order. Two projects of the same name have the name of the folder they are in after it. Below the list, under _Files_, is where the selected project is and what it holds, and to the right of it, under _Note_, the start of its note. To the right of the list are the cards of the project's [corkboard](Guide-to-corkboard.md#the-board-of-a-project), laid on each other, or _No corkboard: B makes one_.
+_Open project_ lists the projects, in alphabetical order. Two projects of the same name have the name of the folder they are in after it. Below the list, under _Files_, is where the selected project is and what it holds, and to the right of it, under _Note_, the start of its note. To the right of the list are the cards of the project's [corkboard](Guide-to-corkboard.md#project-boards), laid on each other, or _No corkboard: B makes one_.
 
 - `P` (`:new`) makes a **new project**, in a folder you pick in the file browser
 - `A` (`:add`) **adds** a folder you pick in the file browser. A folder that is a project already is not added
@@ -59,7 +83,7 @@ In the list of projects, each project can have a color, a note and a corkboard:
 - `C` picks the **color** of the name of the project in the list (_[Default]_ takes it away). It is kept in the file `.blyant` in the project
 - `N` opens the **note** of the project in the editor: what to do next, an idea, where you are. It is the Markdown file `.blyant-note.md` in the project, and the start of it is shown to the right of what the project holds (with `...` where there is more). `:wq` saves it and goes back to the list; a note left empty is removed
 
-- `B` opens the **corkboard** of the project, to plan it with cards of its files, folders and notes. It is the file `.blyant-board.txt` in the project (see the [guide to the corkboard](Guide-to-corkboard.md#the-board-of-a-project))
+- `B` opens the **corkboard** of the project, to plan it with cards of its files, folders and notes. It is the file `.blyant-board.txt` in the project (see the [guide to the corkboard](Guide-to-corkboard.md#project-boards))
 
 The files are in the folder of the project, so they go with it when it is copied, moved or synced. They start with a dot, so they are not shown with what the project holds.
 
@@ -85,11 +109,17 @@ The settings are on six pages. `j` `k` (and `gg` `G`) select a setting on the pa
   - **Open favorites list first** (shown when starting in the file browser): Start in the [favorites](#favorites) of the file browser. Closing the list shows the file browser. Saved as `startfavorites` in the settings file
 - **Start on a blank page**: Go directly to a [blank page](#start), to write at once. When it is closed, the start page is shown
   - The choice is saved as `startmode` (`select`, `editor` or `blank`) in the settings file
-- **New files and blank pages**: The assumed file type of a new file whose name has no extension, and of a [blank page](#start) (the name it is saved with decides in the end): `Enter` picks it in a list (`1` to `9`, then `A` and `B`, or `j`/`k` and `Enter`): Markdown (`.md`, the default), Typst (`.typ`), plain text (`.txt`), HTML, CSS, JavaScript, JSON, XML, C#, PHP or INI. A blank page is colored as that kind, and saved with its extension when the name has none. Saved as `filetype` (`md`, `txt` ...) in the settings file
+- **New files and blank pages**: The assumed file type of a new file whose name has no extension, and of a [blank page](#start) (the name it is saved with decides in the end)
+  - `Enter` picks it in a list (`1` to `9`, then `A` and `B`, or `j`/`k` and `Enter`): Markdown (`.md`, the default), Typst (`.typ`), plain text (`.txt`), HTML, CSS, JavaScript, JSON, XML, C#, PHP or INI
+  - A blank page is colored as that kind, and saved with its extension when the name has none
+  - Saved as `filetype` (`md`, `txt` ...) in the settings file
 - **Line endings of new files**: The line endings of new files and blank pages: _System_ (those of the computer: `CRLF` on Windows, `LF` on Linux and macOS, the default), `LF` or `CRLF`. `Enter` changes it. A file that is there keeps its own (`:lineendings` in the editor changes them; see [the guide to the editor](Guide-to-editor.md#line-endings)). Saved as `newlineendings` (`system`, `lf` or `crlf`) in the settings file
-- **Delete to trash**: Deleting in the file browser moves to the [trash](#the-trash) (on from the start). Off: deleted files cannot be recovered
+- **Delete to trash**: Deleting in the file browser moves to the [trash](#trash) (on from the start). Off: deleted files cannot be recovered
 - **List commands above command line**: While a command is typed (after `:`), a box above the command line lists the commands of the page, narrowed while you type, with what the command typed does (on from the start). Setting `commandlist`
-- **Language**: The language of the menus, help and messages. English is built in; Deutsch (German), Dansk (Danish), Norsk bokmål (Norwegian), Svenska (Swedish), Español (Spanish), Français (French), Italiano (Italian), Polski (Polish), Nederlands (Dutch) and Suomi (Finnish) are language files in the folder `lang` next to Blyant (see [Language files](Guide-to-installation.md#language-files)). `Enter` shows the languages in a box to pick from (with the keys `1` to `9`, and then letters); a language from a file shows how much of it is translated (`Polski (pl)  98%`). Commands, keys and the names of the editor modes (NORMAL, INSERT, VISUAL ...) are English in all languages, so they can be talked about the same way everywhere. The guides, the settings file and the log are in English
+- **Language**: The language of the menus, help and messages
+  - English is built in; Deutsch (German), Dansk (Danish), Norsk bokmål (Norwegian), Svenska (Swedish), Español (Spanish), Français (French), Italiano (Italian), Polski (Polish), Nederlands (Dutch) and Suomi (Finnish) are language files in the folder `lang` next to Blyant (see [Language files](Guide-to-installation.md#language-files))
+  - `Enter` shows the languages in a box to pick from (with the keys `1` to `9`, and then letters); a language from a file shows how much of it is translated (`Polski (pl)  98%`)
+  - Commands, keys and the names of the editor modes (NORMAL, INSERT, VISUAL ...) are English in all languages, so they can be talked about the same way everywhere. The guides, the settings file and the log are in English
 
 **Layout**
 
@@ -129,11 +159,18 @@ The settings of the lists of the file browser and of the [bookmarks](Guide-to-ju
 
 **Modules**
 
-The parts of Blyant you may not need can be turned off, so the start page, the menus and the help show only what you use. A module turned off is not on the start page, in the Jump menu, in the box of commands above the command line, in the help or in the hints of the start page; its keys and commands tell that it is off (_Configuration: Modules_). Nothing of it is deleted: your projects and boards are there again, as they were, when it is turned on. `:modules` on the start page goes to this page.
+The parts of Blyant you may not need can be turned off, so the start page, the menus and the help show only what you use.
+
+A module turned off is not on the start page, in the Jump menu, in the box of commands above the command line, in the help or in the hints of the start page; its keys and commands tell that it is off (_Configuration: Modules_).
+
+Nothing of it is deleted: your projects and boards are there again, as they were, when it is turned on. `:modules` on the start page goes to this page.
 
 - **Projects: New project, Open project, list of projects**: The [projects](#projects): _New project_ and _Open project_ on the Start tab, the list of projects (`E` and `:projects` in the file browser, `:projects` in the editor) and the Projects tab of the Jump menu (on from the start). Saved as `moduleprojects` in the settings file
 - **Corkboard: files and notes as cards**: The [corkboard](Guide-to-corkboard.md): _Corkboard_ on the Start tab, `:board` on every command line, `:pin`, the boards of the projects (`B` and the board beside the list of projects) and the Corkboard page of the Jump menu (on from the start). Saved as `moduleboard` in the settings file
-- **Jump menu: bookmarks, recent places and pages**: The [Jump menu](Guide-to-jump-menu.md#jump-menu): `Ctrl+O` on every page, _Jump menu_ on the Start tab, `:jump` (also `:jump name`), and the bookmarks, which are kept in it (`:book`, `:bookmark`). With the Jump menu off there are no bookmarks: they stay in `bookmarks.txt`, and are there again when it is turned on. The pages it goes to keep their own commands (`:board`, `:favorites`, `:history`, `:hotlist`, `:browse`, `:log`, `:colorscheme`, and on the start page `:scheme`, `:logo`, `:clipboard`, `:modules` ...) (on from the start). Saved as `modulejump` in the settings file
+- **Jump menu: bookmarks, recent places and pages**: The [Jump menu](Guide-to-jump-menu.md#jump-menu): `Ctrl+O` on every page, _Jump menu_ on the Start tab, `:jump` (also `:jump name`), and the bookmarks, which are kept in it (`:book`, `:bookmark`)
+  - With the Jump menu off there are no bookmarks: they stay in `bookmarks.txt`, and are there again when it is turned on
+  - The pages it goes to keep their own commands (`:board`, `:favorites`, `:history`, `:hotlist`, `:browse`, `:log`, `:colorscheme`, and on the start page `:scheme`, `:logo`, `:clipboard`, `:modules` ...) (on from the start)
+  - Saved as `modulejump` in the settings file
 
 **System**
 
@@ -142,7 +179,7 @@ The parts of Blyant you may not need can be turned off, so the start page, the m
 - **Edit settings.ini**: Open the settings file in the editor (it can also be edited from the file system). When the file is saved, Blyant starts over and reads the settings again; closing it without saving returns to the page
 - **Restart Blyant**: Start Blyant over: the settings are read again and the start page is shown as at startup (you are asked first, in a box)
 - **Info**: Show the version of Blyant, the directory of the program, the data directory and the settings file in a box. Any key closes it
-- **View log**: Show the [log](#the-log)
+- **View log**: Show the [log](#log)
 
 ### Commands
 On every tab of the start page (Start, the pages of Configuration, Help), `:` opens the command line on the bottom line. `Tab` completes the command you are typing, from the commands of this page, and `Up`/`Down` bring back the commands given here before:
@@ -178,16 +215,33 @@ The browser shows two panes side by side, each with its own directory. The pane 
 
 The type column shows the extension of a file in capitals (`MD`, `TXT`), and for a name that starts with a dot and has no other, the name itself: `.blyant` is `BLYANT`, as in the information of `I`. In a pane that is narrow, as when the window is 80 columns wide, the type column is left out and long names are shortened. With one pane, or a wide window, all columns are shown.
 
-The browser starts in your home directory the first time, and remembers the directories of both panes, the file or directory selected in each, the pane that had the focus and whether one or two panes were shown (`browsedir1`, `browsedir2`, `browsesel1`, `browsesel2`, `browsepane` and `browsedual` in the settings file). Picking a folder (for the projects) has a place of its own (`pickdir`), and does not change these. They are saved however the browser is left (closed, a jump to another page, or exiting Blyant), and also when a file is opened in the editor. The selection is remembered by name: if the file is gone, the first row is selected.
+The browser starts in your home directory the first time, and remembers the directories of both panes, the file or directory selected in each, the pane that had the focus and whether one or two panes were shown (`browsedir1`, `browsedir2`, `browsesel1`, `browsesel2`, `browsepane` and `browsedual` in the settings file).
 
-- `j` `k` Select, `gg` `G` First/Last, `PgUp` `PgDn` One page up/down. With a count, in the pane with the focus: `5j` `5k` move 5 rows down/up, `5gg` (or `5G`) goes to row 5 (as numbered below the pane, `..` is row 1); the count shows below the pane while you type it, and `Esc` drops it. A peek shows the file the selection lands on. Other keys do what they do once with a count (`3D` is one delete, asked about as always). `:number` numbers the rows of the panes, in the colors of the line numbers of the editor (the selected row in the color of the current line number), with `..` as row 1, and `:nonumber` takes the numbers away. Off from the start; kept in the setting `filenumbers`, also on the Lists page of Configuration
+Picking a folder (for the projects) has a place of its own (`pickdir`), and does not change these.
+
+They are saved however the browser is left (closed, a jump to another page, or exiting Blyant), and also when a file is opened in the editor. The selection is remembered by name: if the file is gone, the first row is selected.
+
+- `j` `k` Select, `gg` `G` First/Last, `PgUp` `PgDn` One page up/down
+  - With a count, in the pane with the focus: `5j` `5k` move 5 rows down/up, `5gg` (or `5G`) goes to row 5 (as numbered below the pane, `..` is row 1); the count shows below the pane while you type it, and `Esc` drops it
+  - A peek shows the file the selection lands on. Other keys do what they do once with a count (`3D` is one delete, asked about as always)
+  - `:number` numbers the rows of the panes, in the colors of the line numbers of the editor (the selected row in the color of the current line number), with `..` as row 1, and `:nonumber` takes the numbers away
+  - Off from the start; kept in the setting `filenumbers`, also on the Lists page of Configuration
 - `l` or `Enter` Open the selected directory or file. A file is opened in the editor where the cursor was when you closed it the last time (see [Where the cursor was](#where-the-cursor-was))
 - `h`, `-` or `Backspace` Go to the directory above (above the root of a drive on Windows: the list of drives)
 - `/text` Only show the names containing "text". `Esc` shows all again
 - `N` or `:new name` Create a new file in the directory and open it. Without a name (`N` or `:new`) you are asked for it. A name without an extension gets the extension of the kind set for new files (Markdown from the start: `chapter 1` is `chapter 1.md`; a name that starts with a dot, as `.gitignore`, is kept as it is)
 - `E` or `:projects` (`:pro`, `:proj`) Show the [projects](#projects) in a list: `Enter` shows the one picked in the pane with the focus, `/` filters and `Esc` closes. While the place to copy or move to is selected, it takes you to a project too
 - `I` or `:info` (also in the list of favorites) Show information about the selected file or directory: type, size (for a directory: the number of files and directories in it), when it was created and last changed, and the full path. Any key closes the box
-- `V` or `:peek` Peek on or off: the selected file is shown read-only in the other pane (with one pane shown, the second pane is shown while you peek), and the focus stays in the list. The pane of the peek is labeled _peek_ (_PEEK_, highlighted, while the focus is in it), with the name of the file at its top in place of the directory; when the peek ends, the pane has its own label and directory again. The peek follows the selection, so you can go through the files with `j` and `k` (and the other keys that move in the list, also into and out of directories); a file that is not text is told about in the peek pane. A directory is shown as what is in it, as the pane will show it: its directories first (ending in `/`), then its files, without hidden ones, in the same order as in the pane, and the last row telling how many more there are; on `..` the directory above is shown. `Tab` on the peek of a directory opens the directory in the other pane, with its first file or directory selected and the focus there: the peek ends, and two panes stay shown (`:panes` shows one again). `Tab` goes into the peek: move and search in it with the keys of the editor (`j` `k`, `gg` `G`, `Ctrl+D`, `/text`, `y` to yank to the clipboard ...); what would change the text is refused. The file is shown without word wrap, also when word wrap is on in the editor (`h` `l`, `0` `$` move along a long line); `:wrap` turns it on for this peek only. In the peek, `Enter` opens the file in the editor at the line of the cursor, and `Tab` or `Esc` (or `:q`) goes back to the list. `V` or `Esc` in the list ends the peek, and so do the keys and commands that use the other pane (copy, move, compare ...), before they do what they do. A large file is shown up to about 2000 lines (100 KB), with a last line telling that there is more
+- `V` or `:peek` Peek on or off: the selected file is shown read-only in the other pane (with one pane shown, the second pane is shown while you peek), and the focus stays in the list
+  - The pane of the peek is labeled _peek_ (_PEEK_, highlighted, while the focus is in it), with the name of the file at its top in place of the directory; when the peek ends, the pane has its own label and directory again
+  - The peek follows the selection, so you can go through the files with `j` and `k` (and the other keys that move in the list, also into and out of directories); a file that is not text is told about in the peek pane
+  - A directory is shown as what is in it, as the pane will show it: its directories first (ending in `/`), then its files, without hidden ones, in the same order as in the pane, and the last row telling how many more there are; on `..` the directory above is shown
+  - `Tab` on the peek of a directory opens the directory in the other pane, with its first file or directory selected and the focus there: the peek ends, and two panes stay shown (`:panes` shows one again)
+  - `Tab` goes into the peek: move and search in it with the keys of the editor (`j` `k`, `gg` `G`, `Ctrl+D`, `/text`, `y` to yank to the clipboard ...); what would change the text is refused
+  - The file is shown without word wrap, also when word wrap is on in the editor (`h` `l`, `0` `$` move along a long line); `:wrap` turns it on for this peek only
+  - In the peek, `Enter` opens the file in the editor at the line of the cursor, and `Tab` or `Esc` (or `:q`) goes back to the list
+  - `V` or `Esc` in the list ends the peek, and so do the keys and commands that use the other pane (copy, move, compare ...), before they do what they do
+  - A large file is shown up to about 2000 lines (100 KB), with a last line telling that there is more
 - See [Managing files](#managing-files), [Favorites](#favorites), [File history](#file-history) and [Directory hotlist](#directory-hotlist) below for the other keys
 - `B` or `:hotadd` Add the directory shown to the [directory hotlist](#directory-hotlist), whatever file is selected in it. `W` or `:hotlist` shows the hotlist
 - `R` or `:refresh` Refresh: read the directories again (the selection stays)
@@ -195,15 +249,20 @@ The browser starts in your home directory the first time, and remembers the dire
 - `:book 3` Jump to bookmark 3 of the [Jump menu](Guide-to-jump-menu.md#bookmarks) (`:book` alone shows the bookmarks). Also on the start page, and on the pages of the favorites, the history, the hotlist and the search results
 - `:splits` The files closed with another file beside them in the editor, to open one with it again (see [the guide to the editor](Guide-to-editor.md#other-commands))
 - `Ctrl+K` or `:recent` The latest files you opened, in a small box: `Enter` or `1` to `9` opens one, and `Esc` goes back to the list. Also on the start page, in the favorites, the history, the hotlist and the search results, and in the [Jump menu](Guide-to-jump-menu.md#jump-menu) (see [the guide to the editor](Guide-to-editor.md#other-commands))
-- `:log` The [log](#the-log), on top of the browser
+- `:log` The [log](#log), on top of the browser
 - [`:colorscheme name`](Guide-to-jump-menu.md#changing-the-scheme-by-command) (or `:colo`) Use another color scheme, saved in the settings (`Tab` completes the names). Also in the favorites, the history, the hotlist and the search results
 - `:bookmark` Bookmark the selected file or directory (on `..`: the directory shown) on the Bookmarks tab of the [Jump menu](Guide-to-jump-menu.md#bookmarks). `:bookmark name` gives it a name, so `:book name` jumps to it ([Jumping by a name](Guide-to-jump-menu.md#bookmarks))
-- `:diff` Compare two text files: the two marked with `Space`, or (without marks, with two panes) the file selected in each pane. `:diff name` compares the selected file with the file of that name in the directory (or a path). The older file, by the time it was last changed, is the old one, so `+` is what was added since. The comparison is shown as in the editor (see [Comparing](Guide-to-editor.md#comparing)): `n` `N` (or `]c` `[c`) go to the changes, `Enter` opens the file at the line, `Esc` returns here. `:diff -w` does not count blank space. If the line endings or the encodings differ, the line at the top says so (they are not compared). Directories and files that are not text are not compared
+- `:diff` Compare two text files: the two marked with `Space`, or (without marks, with two panes) the file selected in each pane
+  - `:diff name` compares the selected file with the file of that name in the directory (or a path)
+  - The older file, by the time it was last changed, is the old one, so `+` is what was added since
+  - The comparison is shown as in the editor (see [Comparing](Guide-to-editor.md#comparing)): `n` `N` (or `]c` `[c`) go to the changes, `Enter` opens the file at the line, `Esc` returns here
+  - `:diff -w` does not count blank space. If the line endings or the encodings differ, the line at the top says so (they are not compared)
+  - Directories and files that are not text are not compared
 - `:name` Copy the name of the selected file or directory (on `..`: of the directory shown) in the same way: `notes.md`, not the whole path
 - `:path` and `:name` also put the path or name in the [string memory](Guide-to-editor.md#string-memory) of the editor, as the current string: `p` in the editor (or `CTRL+R` in Insert mode) puts it in the text. This works also when the clipboard and the paste bin are turned off
 - `:match` With two panes: the other pane shows the directory of the pane with the focus (with the same file or directory selected). The focus stays where it is
 - `:cd path` Go to a directory. `:home` Go to your home directory
-- `:trash` Go to the [trash](#the-trash), with what was deleted
+- `:trash` Go to the [trash](#trash), with what was deleted
 - `:recovery` Go to the [recovery copies](Guide-to-editor.md#recovery-copies) of text that was not saved
 - `:project add` Add the directory shown to the [projects](#projects)
 - `:protect off` and `:protect on` Lift or restore the protection of the files Blyant uses (see [Managing files](#managing-files)), for this session
@@ -225,25 +284,47 @@ These work on the selected file or directory. Duplicate, copy, move, favorite an
 - `Y` or `:duplicate` Make a copy in the same directory (named `name-copy`)
 - `C` or `:copy` Copy to another directory
 - `M` or `:move` Move to another directory
-- `D` or `:delete` Delete: move to the [trash](#the-trash) (or delete for good, when that is turned off). You are asked first, and for a directory you are told how many files and directories it contains
-- `Space` Mark (or unmark) the selected file or directory and go to the next. A marked one has a `+` in front of its name, and the number marked is shown at the bottom right of the pane. While some are marked, `Y` `C` `M` `P` and `D` work on all the marked ones instead of the selected one: they are duplicated, copied or moved to the directory you select, made favorites (or, if they all are favorites already, removed from the favorites), or deleted after one question that tells how many files and directories are deleted in all. The marks stay while the pane shows the same directory (also with a filter), and `Esc` clears them. If one of them fails, the operation stops there and the message tells which one; those not done stay marked. `X` (rename) and `I` (info) always work on the selected one
+- `D` or `:delete` Delete: move to the [trash](#trash) (or delete for good, when that is turned off). You are asked first, and for a directory you are told how many files and directories it contains
+- `Space` Mark (or unmark) the selected file or directory and go to the next
+  - A marked one has a `+` in front of its name, and the number marked is shown at the bottom right of the pane
+  - While some are marked, `Y` `C` `M` `P` and `D` work on all the marked ones instead of the selected one: they are duplicated, copied or moved to the directory you select, made favorites (or, if they all are favorites already, removed from the favorites), or deleted after one question that tells how many files and directories are deleted in all
+  - The marks stay while the pane shows the same directory (also with a filter), and `Esc` clears them
+  - If one of them fails, the operation stops there and the message tells which one; those not done stay marked
+  - `X` (rename) and `I` (info) always work on the selected one
 
-Names (of a new file or directory, a new name for one, and the name of a favorites folder) are typed in a box on top of the list: `Enter` accepts, `Esc` cancels. Questions (delete, converting a file that is not UTF-8, and removing favorites) are asked in a box too: `Y` or `N` answers at once, or select with `j` `k` and press `Enter`. `Esc` cancels. When something cannot be undone, the question is highlighted as a warning and _No_ is selected first. The question before deleting cannot be answered with `Y`, and only `Enter` answers it: select _Yes_ with `k` (or the arrow key `Up`) and press `Enter`. `Esc`, `Q`, `h` or `Enter` on _No_ cancels. That way text typed in the browser by mistake, meant for the editor, is unlikely to answer it: in "today", `d` asks to delete and `y` would have answered yes, and in "dark " the `k` selects _Yes_ but the space does not pick it.
+Names (of a new file or directory, a new name for one, and the name of a favorites folder) are typed in a box on top of the list: `Enter` accepts, `Esc` cancels.
+
+Questions (delete, converting a file that is not UTF-8, and removing favorites) are asked in a box too: `Y` or `N` answers at once, or select with `j` `k` and press `Enter`. `Esc` cancels. When something cannot be undone, the question is highlighted as a warning and _No_ is selected first.
+
+The question before deleting cannot be answered with `Y`, and only `Enter` answers it: select _Yes_ with `k` (or the arrow key `Up`) and press `Enter`. `Esc`, `Q`, `h` or `Enter` on _No_ cancels.
+
+That way text typed in the browser by mistake, meant for the editor, is unlikely to answer it: in "today", `d` asks to delete and `y` would have answered yes, and in "dark " the `k` selects _Yes_ but the space does not pick it.
 
 A new name (of a file or a directory) follows the same rules on all platforms, so files can be copied between Windows, macOS and Linux: it cannot contain `\ / : * ? " < > |` or control characters, cannot end with a dot or a space, can be at most 255 characters long, and cannot be a name Windows keeps for devices (`CON`, `PRN`, `AUX`, `NUL`, `COM1`-`COM9`, `LPT1`-`LPT9`, also with an extension, as `con.txt`). If a name cannot be used, the message tells why, or that a file or directory with that name already exists.
 
-For copy and move you select where to: after `C` or `M` the browser stays as it is, with the name of the file (or the number marked) at the top left, in the attention color (as the name of the pane with the focus). Go to the directory, in either pane, and press `S` to copy or move the file to the directory shown in the pane with the focus. `Esc` cancels. With two panes the focus goes to the other pane, so pressing `S` at once copies or moves to it, and `Tab` takes you back if the place is in the first pane. With one pane you go to the directory in that pane. While you are selecting, the other file keys and commands are not in use (`E`, `:cd`, `:home`, `:data` and `:projects` are). Both panes are updated afterwards, and the focus stays in the pane copied or moved to, with the (last) file copied or moved selected. While a directory is being copied the name of the current file is shown, and `Esc` cancels the copy (what was copied so far is removed).
+For copy and move you select where to: after `C` or `M` the browser stays as it is, with the name of the file (or the number marked) at the top left, in the attention color (as the name of the pane with the focus). Go to the directory, in either pane, and press `S` to copy or move the file to the directory shown in the pane with the focus. `Esc` cancels.
+
+With two panes the focus goes to the other pane, so pressing `S` at once copies or moves to it, and `Tab` takes you back if the place is in the first pane. With one pane you go to the directory in that pane.
+
+While you are selecting, the other file keys and commands are not in use (`E`, `:cd`, `:home`, `:data` and `:projects` are). Both panes are updated afterwards, and the focus stays in the pane copied or moved to, with the (last) file copied or moved selected.
+
+While a directory is being copied the name of the current file is shown, and `Esc` cancels the copy (what was copied so far is removed).
 
 Things to know:
 
 - **Deleted files go to the trash** of Blyant (see below), not to the recycle bin of the system. With _Delete to trash_ turned off, deleted files cannot be recovered.
 - Nothing is overwritten. An operation is refused if something with the same name is already in the target directory.
 - A directory cannot be copied or moved into itself.
-- What Blyant is using cannot be renamed, moved or deleted here: the data directory (and the directories it is in), `settings.ini`, the favorites list and the file history. `:protect off` lifts this, for this session only (it is on again when Blyant starts), and `:protect on` puts it back; `:protect` tells which it is. While it is off, _UNPROTECTED_ is shown at the top right of the file browser, and the question before deleting one of these tells that Blyant uses it. A list that is deleted or renamed is made new (empty) when Blyant needs it, `settings.ini` gives the default settings at the next start, and the data directory cannot go to the trash (the trash is in it): it is deleted for good
+- What Blyant is using cannot be renamed, moved or deleted here: the data directory (and the directories it is in), `settings.ini`, the favorites list and the file history
+  - `:protect off` lifts this, for this session only (it is on again when Blyant starts), and `:protect on` puts it back; `:protect` tells which it is
+  - While it is off, _UNPROTECTED_ is shown at the top right of the file browser, and the question before deleting one of these tells that Blyant uses it
+  - A list that is deleted or renamed is made new (empty) when Blyant needs it, `settings.ini` gives the default settings at the next start, and the data directory cannot go to the trash (the trash is in it): it is deleted for good
 - Hidden files are not shown in the browser, but they are included when a directory is copied, moved or deleted.
 
-### The trash
-What is deleted in the file browser is moved to the trash: the directory `trash` in the data directory, for all that is deleted, in a project or not. It is made when the first file is deleted, and goes with the data directory when Blyant is copied or backed up. Something deleted on another drive than the data directory is copied to the trash, and then removed (a large directory takes a while; `Esc` cancels). `:trash` goes there, and a file is restored by moving it back (`M`, or `X` to give it its old name).
+### Trash
+What is deleted in the file browser is moved to the trash: the directory `trash` in the data directory, for all that is deleted, in a project or not. It is made when the first file is deleted, and goes with the data directory when Blyant is copied or backed up.
+
+Something deleted on another drive than the data directory is copied to the trash, and then removed (a large directory takes a while; `Esc` cancels). `:trash` goes there, and a file is restored by moving it back (`M`, or `X` to give it its old name).
 
 - Each file or directory gets the time it was deleted in front of its name: `2026-10-22 14.03.11 chapter 1.md`. So a file deleted twice is kept twice
 - The list `trash.txt` in the trash tells where each one was: its name in the trash, when it was deleted, and the folder it came from (separated by tab characters)
@@ -293,7 +374,9 @@ Files and directories you use often can be marked as favorites:
 
 The list has three columns, with lines between them and their labels at the top: _Name_ (the name of the file or directory), _Path_ (the directory it is in; the end of a long path is shown) and _Info_ (the size of a file, `<DIR>` for a directory, _(missing)_ for one that is gone, and the number of favorites in a favorites folder).
 
-Below the list are two panes for the selected item, **Note** and **Peek**: its note, and the top of the file (what is in a directory, or in a folder of favorites). They follow the selection; nothing in them can be selected or scrolled, and the peek only reads the start of the file, never writes it. `:panes` hides them (and shows them again), and `:peek` hides the peek, so the note takes the whole width. Both are kept in the settings (`favoritepanes`, `favoritepeek`). In a window that is too low, the panes are not shown.
+Below the list are two panes for the selected item, **Note** and **Peek**: its note, and the top of the file (what is in a directory, or in a folder of favorites). They follow the selection; nothing in them can be selected or scrolled, and the peek only reads the start of the file, never writes it.
+
+`:panes` hides them (and shows them again), and `:peek` hides the peek, so the note takes the whole width. Both are kept in the settings (`favoritepanes`, `favoritepeek`). In a window that is too low, the panes are not shown.
 
 `:number` numbers the rows of the list, at the left in the colors of the line numbers of the editor (the selected row in the color of the current line number), as `12gg` and `5j` count them (the rows shown: not those in a closed folder; with a filter, the rows found), and `:nonumber` takes the numbers away. Off from the start; kept in the setting `favoritenumbers`, also on the Lists page of Configuration. The Favorites tab of the Jump menu follows it.
 
@@ -308,12 +391,32 @@ In the list of favorites:
 - `u` or `:undo` Put back the favorite, or the folder with its favorites, that was removed last
 - `:bookmark` Bookmark the selected file or directory in the [Jump menu](Guide-to-jump-menu.md#bookmarks), as in the file browser (`:bookmark name` with a name). A folder of favorites is not a place, and is not bookmarked
 - `:missing` The favorites whose file or directory is not there any more, in a box with the full path of each: `Enter` selects the one picked in the list (opening its folder), `Esc` closes the box
-- `:prune` Remove the missing favorites from the list, after asking (the question tells how many, and if they have notes); `u` puts them back. The folders stay. An entry on a drive that is not connected (a drive letter or network share that is not there, a drive not mounted in `/media`, `/run/media`, `/mnt` or `/Volumes`, or a network share of GNOME (in `/run/user/.../gvfs`) or autofs (in `/net`) that is not mounted) is listed, but kept: it is only missing until the drive is back. Each drive is looked at once, so a share that does not answer makes you wait only once. A file directly in one of those folders (`/mnt/notes.md`) is not a drive, and is removed
-- `W` or `:new` (`:new name` fills in the name) Make a new file, in the same box as _New file_ on the start page. It starts in the folder of the selected favorite: the directory of a file, the selected directory, or for a folder of favorites the directory of the first file in it (else the folder the file browser was in last). `Tab` chooses another folder, where the folder of the favorite is one of the places. The new file is opened in the editor, and becomes a favorite below the selected item (first in a folder that is selected), so the list shows it when the editor is closed
+- `:prune` Remove the missing favorites from the list, after asking (the question tells how many, and if they have notes); `u` puts them back. The folders stay
+  - An entry on a drive that is not connected (a drive letter or network share that is not there, a drive not mounted in `/media`, `/run/media`, `/mnt` or `/Volumes`, or a network share of GNOME (in `/run/user/.../gvfs`) or autofs (in `/net`) that is not mounted) is listed, but kept: it is only missing until the drive is back
+  - Each drive is looked at once, so a share that does not answer makes you wait only once
+  - A file directly in one of those folders (`/mnt/notes.md`) is not a drive, and is removed
+- `W` or `:new` (`:new name` fills in the name) Make a new file, in the same box as _New file_ on the start page
+  - It starts in the folder of the selected favorite: the directory of a file, the selected directory, or for a folder of favorites the directory of the first file in it (else the folder the file browser was in last)
+  - `Tab` chooses another folder, where the folder of the favorite is one of the places
+  - The new file is opened in the editor, and becomes a favorite below the selected item (first in a folder that is selected), so the list shows it when the editor is closed
 - `A` or `:folder name` Create a folder, and `S` or `:subfolder name` a subfolder (see below)
 - `N` or `:note` Write the note of the favorite or folder (see below)
-- `:import bookmarks` (`:import ` and `Tab` completes the word, as for `:import folder`) Copy the bookmarks of the Jump menu into the favorites. You are told first what will be added: the files and directories, in their order, after the favorites there are; the bookmark folders as folders and their subfolders as subfolders, with their colors and closed if they are; a folder with the name of a folder of the favorites is added to it (and a subfolder to a subfolder of the same name in it); the notes, also to a favorite or folder that is there without a note (a note a favorite has is kept); and a place that is a favorite already is left out. A bookmark of a page of Blyant is left out, as a favorite is a file or a directory, and the name given to a bookmark is not copied: a favorite shows the name of its file. The bookmarks stay as they are
-- `:import folder` Add a folder (a directory) to the favorites with all its text files, so they are at hand and found quickly with `/`: you pick the folder in the file browser, or give it: `:import folder C:\Writing\Book` (a path in quotes, as copied in Explorer, works too, and a path without its start is taken from the folder shown, as with `:cd`; a long path is easier to pick, as the command line holds one line). When there are files in its subfolders, you are asked whether to include them too, at any depth, with how many files there are each way; with more than 2000 below it, only its own files can be added. Then you are told what will be done, and asked: how many files are added, the folder they go in, how many are favorites already (they stay where they are), and how many folders could not be read. The files go in one folder of the favorites, named after the directory, at the end of the list; when the favorites have a folder of that name already (also one of your own, in other letters), the files are added to it, and you are told so. Its own files come first, by name, then those of each subfolder in turn, so the files of a subfolder stay together (the Path column tells where each is). Text files are told by their names, and no file is opened: the kinds Blyant colors (`.md`, `.typ`, `.html`, `.svg` ... see [Colors](Guide-to-editor.md#colors)), and `.txt`, `.log`, `.csv`, `.tsv`, `.yaml`, `.yml`, `.toml`, `.tex`, `.bib`, `.rst`, `.adoc` and `.org`. Other files (images, PDF files, files of other programs, files without an extension) are left out and counted, and so nothing is downloaded from OneDrive or Dropbox. Hidden files and folders (also those whose names start with `.`, as `.git`), links to other folders (symbolic links and junctions) and links to files that are not there are left out too, and so are folders that cannot be read. While a large folder or a slow drive is read, the bottom line shows how many files are found, and `Esc` stops it. A folder of more than 2000 text files is not added. The folder is a copy of what is there now: `:import folder` on the same directory again adds its new files to the folder there. `D` on the folder removes it with its favorites, and `u` puts them back
+- `:import bookmarks` (`:import ` and `Tab` completes the word, as for `:import folder`) Copy the bookmarks of the Jump menu into the favorites
+  - You are told first what will be added: the files and directories, in their order, after the favorites there are; the bookmark folders as folders and their subfolders as subfolders, with their colors and closed if they are; a folder with the name of a folder of the favorites is added to it (and a subfolder to a subfolder of the same name in it); the notes, also to a favorite or folder that is there without a note (a note a favorite has is kept); and a place that is a favorite already is left out
+  - A bookmark of a page of Blyant is left out, as a favorite is a file or a directory, and the name given to a bookmark is not copied: a favorite shows the name of its file
+  - The bookmarks stay as they are
+- `:import folder` Add a folder (a directory) to the favorites with all its text files, so they are at hand and found quickly with `/`
+  - you pick the folder in the file browser, or give it: `:import folder C:\Writing\Book` (a path in quotes, as copied in Explorer, works too, and a path without its start is taken from the folder shown, as with `:cd`; a long path is easier to pick, as the command line holds one line)
+  - When there are files in its subfolders, you are asked whether to include them too, at any depth, with how many files there are each way; with more than 2000 below it, only its own files can be added
+  - Then you are told what will be done, and asked: how many files are added, the folder they go in, how many are favorites already (they stay where they are), and how many folders could not be read
+  - The files go in one folder of the favorites, named after the directory, at the end of the list; when the favorites have a folder of that name already (also one of your own, in other letters), the files are added to it, and you are told so
+  - Its own files come first, by name, then those of each subfolder in turn, so the files of a subfolder stay together (the Path column tells where each is)
+  - Text files are told by their names, and no file is opened: the kinds Blyant colors (`.md`, `.typ`, `.html`, `.svg` ... see [Colors](Guide-to-editor.md#colors)), and `.txt`, `.log`, `.csv`, `.tsv`, `.yaml`, `.yml`, `.toml`, `.tex`, `.bib`, `.rst`, `.adoc` and `.org`
+  - Other files (images, PDF files, files of other programs, files without an extension) are left out and counted, and so nothing is downloaded from OneDrive or Dropbox
+  - Hidden files and folders (also those whose names start with `.`, as `.git`), links to other folders (symbolic links and junctions) and links to files that are not there are left out too, and so are folders that cannot be read
+  - While a large folder or a slow drive is read, the bottom line shows how many files are found, and `Esc` stops it. A folder of more than 2000 text files is not added
+  - The folder is a copy of what is there now: `:import folder` on the same directory again adds its new files to the folder there
+  - `D` on the folder removes it with its favorites, and `u` puts them back
 - `/text` Only show the favorites and folders whose path, name or note contains "text". `Esc` shows all again
 - `?` Help
 - `Esc`, `Q`, `F`, `h` or `-` Return to the browser
@@ -324,23 +427,42 @@ In the list of favorites:
 - `S` or `:subfolder name` Create a subfolder in a folder: first in the folder when the folder is selected, else in front of the selected favorite (or of the subfolder it is in). A folder can hold subfolders and favorites, and a subfolder holds favorites (there are no subfolders in subfolders), as _Article_ with _Pending_ and _Done_. A subfolder has a color, is opened and closed, renamed, moved and removed as a folder
 - `l` or `Enter` on a folder: Open or close it. The favorites in an open folder are shown below it, two spaces in (and those in a subfolder four)
 - `:expand` Open all the folders, `:collapse` Close all the folders
-- **Several at once:** Mark the favorites with `Space` (it marks or unmarks the selected favorite and goes to the next; a marked favorite has a `+` in front, and the number of marked is shown at the bottom right). Then press `M` and pick where they go from the list: one of your folders, _New folder..._ (you are asked for its name, and it is placed where the first of the favorites is) or _(No folder)_. Without marks, `M` moves the selected favorite. With marks, `D` removes all the marked favorites (you are asked first), and `u` puts them back. `Esc` clears the marks
+- **Several at once:** Mark the favorites with `Space` (it marks or unmarks the selected favorite and goes to the next; a marked favorite has a `+` in front, and the number of marked is shown at the bottom right)
+  - Then press `M` and pick where they go from the list: one of your folders, _New folder..._ (you are asked for its name, and it is placed where the first of the favorites is) or _(No folder)_
+  - Without marks, `M` moves the selected favorite
+  - With marks, `D` removes all the marked favorites (you are asked first), and `u` puts them back. `Esc` clears the marks
 - **To the top or the end:** `T` (or `:top`) moves the marked favorites to the top of the list, and `E` (or `:bottom`) to the end, in the order they have. Without marks it moves the selected favorite, or the selected folder with its favorites. A favorite in a folder goes to the top or the end of its folder (`M` moves it out of the folder)
 - **Into a folder:** Move a favorite (`V`, then `j` `k`) onto the folder. Moving down onto a folder puts it first in the folder, moving up from below puts it last. A closed folder opens. In a folder, a favorite goes into a subfolder the same way. `M` lists the subfolders below their folders
 - **Out of a folder:** Move the favorite on, past the first or the last favorite in the folder (from a subfolder: into its folder, and then out of the folder)
-- A folder is moved like a favorite. It is closed first, and moves with its favorites and subfolders past the favorite or folder next to it. A subfolder moves among the favorites and subfolders of its folder, and past the first or last of them into the folder above or below (it stays in a folder). `M` on a folder (selected, nothing marked) moves the folder, with everything in it: into another folder, last in it as a subfolder (its color, note and whether it is open go with it), or, for a subfolder, _(No folder)_: out of its folder, a folder again right after the one it was in. _New folder..._ puts it in a new folder, made where it is. There are two levels of folders, so a folder that has subfolders of its own does not go into another (you are told so); `V` keeps moving folders past each other, as before
+- A folder is moved like a favorite
+  - It is closed first, and moves with its favorites and subfolders past the favorite or folder next to it
+  - A subfolder moves among the favorites and subfolders of its folder, and past the first or last of them into the folder above or below (it stays in a folder)
+  - `M` on a folder (selected, nothing marked) moves the folder, with everything in it: into another folder, last in it as a subfolder (its color, note and whether it is open go with it), or, for a subfolder, _(No folder)_: out of its folder, a folder again right after the one it was in. _New folder..._ puts it in a new folder, made where it is
+  - There are two levels of folders, so a folder that has subfolders of its own does not go into another (you are told so); `V` keeps moving folders past each other, as before
 - `X` or `:rename name` Rename the folder
 - `C` Pick a color for the folder
 - `P`, `D` or `:remove` Remove the folder, with the favorites and subfolders in it, after asking (the files stay)
 
-**Notes:** A favorite or a folder can have a note, for what a file is waiting for, a reference or a link. `N` (or `:note`) opens the note in the editor, where it can have as many lines as you like; save it (`:w`) and close the editor, and the note is shown in the Note pane below the list. A note left empty is removed. The notes are kept in `favorites.txt` with the list, never next to your files, so nothing is added to a folder that is synced or in a Git repository (for the editor, the note is written in a file of its own in the data directory, `favorite-note-` and a code for the favorite, which is removed when the editor is closed; a jump from the editor with `Ctrl+O` or `:book` keeps the note too, if you saved it). While a note is written, `:fav` and `:bookmark` in the editor are refused, as the note is not a file of yours. A note goes with its favorite when it is moved, when its file is renamed in the browser, and when it is removed and put back with `u`. Taking a favorite with a note out of the favorites with `P` (or `:fav`) in the file browser, the history, the search results or the editor asks first, as the note goes with it. `:import favorites` in the Jump menu copies the notes to the bookmarks too.
+**Notes:** A favorite or a folder can have a note, for what a file is waiting for, a reference or a link. `N` (or `:note`) opens the note in the editor, where it can have as many lines as you like; save it (`:w`) and close the editor, and the note is shown in the Note pane below the list. A note left empty is removed.
+
+The notes are kept in `favorites.txt` with the list, never next to your files, so nothing is added to a folder that is synced or in a Git repository (for the editor, the note is written in a file of its own in the data directory, `favorite-note-` and a code for the favorite, which is removed when the editor is closed; a jump from the editor with `Ctrl+O` or `:book` keeps the note too, if you saved it).
+
+While a note is written, `:fav` and `:bookmark` in the editor are refused, as the note is not a file of yours.
+
+A note goes with its favorite when it is moved, when its file is renamed in the browser, and when it is removed and put back with `u`. Taking a favorite with a note out of the favorites with `P` (or `:fav`) in the file browser, the history, the search results or the editor asks first, as the note goes with it. `:import favorites` in the Jump menu copies the notes to the bookmarks too.
 
 While the list is filtered with `/text` the favorites and folders found are shown without the folders they are in, and nothing can be moved.
 
-The list is kept in the file `favorites.txt` in the data directory (one line per favorite: the color, a tab character and the path; a folder has its name in brackets instead of a path, and the favorites in it start with a blank space; a folder line with a blank space in front, in a folder, is a subfolder, and the favorites in it start with two). A note is on the line after its favorite or folder, after a `#`, with its line breaks written as `\n` (a backslash as `\\`, a tab as `\t`). A file that has been closed in the editor has the line and column of the cursor before its path (`3:12` and a tab character). Favorites follow when you rename or move a file or directory in the browser, and are removed when you delete it. A favorite whose file is gone is shown as _(missing)_.
+The list is kept in the file `favorites.txt` in the data directory (one line per favorite: the color, a tab character and the path; a folder has its name in brackets instead of a path, and the favorites in it start with a blank space; a folder line with a blank space in front, in a folder, is a subfolder, and the favorites in it start with two).
+
+A note is on the line after its favorite or folder, after a `#`, with its line breaks written as `\n` (a backslash as `\\`, a tab as `\t`). A file that has been closed in the editor has the line and column of the cursor before its path (`3:12` and a tab character).
+
+Favorites follow when you rename or move a file or directory in the browser, and are removed when you delete it. A favorite whose file is gone is shown as _(missing)_.
 
 #### Lists of favorites
-You can keep several lists of favorites, as one for each client or for writing and for technical work, and see only the one you work on. One list is open at a time, and it is the one used all over Blyant: `P` adds to it, the `*` in the file browser marks what is in it, and the Favorites tab of the [Jump menu](Guide-to-jump-menu.md#jump-menu) shows it, with its name. The name is also in the top bar, as _FAVORITES: WORK_; the main list shows none. Blyant remembers the list that is open (setting `favoritelist`).
+You can keep several lists of favorites, as one for each client or for writing and for technical work, and see only the one you work on.
+
+One list is open at a time, and it is the one used all over Blyant: `P` adds to it, the `*` in the file browser marks what is in it, and the Favorites tab of the [Jump menu](Guide-to-jump-menu.md#jump-menu) shows it, with its name. The name is also in the top bar, as _FAVORITES: WORK_; the main list shows none. Blyant remembers the list that is open (setting `favoritelist`).
 
 - `:list` in the favorites Show the lists in a box, with what is in the selected one below them. `Enter` opens the selected list and `/` filters them
   - `N` A new list: type its name (at most 20 characters), and it is opened. A name a file cannot have, or that another list has, is refused
@@ -356,7 +478,9 @@ The list has three columns, as the favorites: _Name_, _Path_ (the directory the 
 The file history lists the files you have opened in the editor from the file browser (also from the favorites, the search and the history itself), the last opened first, with the time each was opened. A file opened again moves to the top. It is practical when you work on many files over several days. `O` in the file browser shows it, and `:history` (or `:hist`) on every command line shows it alone: closing it then shows the start page.
 
 - `O` or `:history` (in the file browser) Show the file history
-- `j` `k` Select, `gg` `G` First/Last, `PgUp` `PgDn` One page up/down. With a count: `5j` `5k` move 5 rows down/up, `5gg` (or `5G`) goes to row 5 (the rows shown, as numbered at the bottom right); the count shows there while you type it, and `Esc` drops it. `:number` numbers the rows, in the colors of the line numbers of the editor (the selected row in the color of the current line number), and `:nonumber` takes them away (setting `historynumbers`, off from the start, also on the Lists page of Configuration; the History tab of the Jump menu follows it)
+- `j` `k` Select, `gg` `G` First/Last, `PgUp` `PgDn` One page up/down
+  - With a count: `5j` `5k` move 5 rows down/up, `5gg` (or `5G`) goes to row 5 (the rows shown, as numbered at the bottom right); the count shows there while you type it, and `Esc` drops it
+  - `:number` numbers the rows, in the colors of the line numbers of the editor (the selected row in the color of the current line number), and `:nonumber` takes them away (setting `historynumbers`, off from the start, also on the Lists page of Configuration; the History tab of the Jump menu follows it)
 - `l` or `Enter` Open the file in the editor (`:q` returns to the history)
 - `B` or `:goto` Show the file in the file browser: its directory, with the file selected
 - `P` or `:fav` Add the file to the favorites, or remove it. A favorite has a `*` after its name
@@ -364,7 +488,10 @@ The file history lists the files you have opened in the editor from the file bro
 - `D` or `:remove` Take the file out of the history (the file itself stays)
 - `X` or `:clear` Clear the file history. You are asked first, in a box on top of the list
 - `:missing` The files of the history that are not there any more, in a box: `Enter` selects the one picked in the list
-- `:prune` Remove the missing files from the history, after asking (as `:clear`, this cannot be undone). An entry on a drive that is not connected (a drive letter or network share that is not there, a drive not mounted in `/media`, `/run/media`, `/mnt` or `/Volumes`, or a network share of GNOME (in `/run/user/.../gvfs`) or autofs (in `/net`) that is not mounted) is listed, but kept: it is only missing until the drive is back. Each drive is looked at once, so a share that does not answer makes you wait only once. A file directly in one of those folders (`/mnt/notes.md`) is not a drive, and is removed
+- `:prune` Remove the missing files from the history, after asking (as `:clear`, this cannot be undone)
+  - An entry on a drive that is not connected (a drive letter or network share that is not there, a drive not mounted in `/media`, `/run/media`, `/mnt` or `/Volumes`, or a network share of GNOME (in `/run/user/.../gvfs`) or autofs (in `/net`) that is not mounted) is listed, but kept: it is only missing until the drive is back
+  - Each drive is looked at once, so a share that does not answer makes you wait only once
+  - A file directly in one of those folders (`/mnt/notes.md`) is not a drive, and is removed
 - `:bookmark` Bookmark the selected file in the [Jump menu](Guide-to-jump-menu.md#bookmarks), as in the file browser (`:bookmark name` with a name)
 - `:name` Copy the name of the file, `:path` its full path, as in the file browser: to the system clipboard and/or the paste bin, as set, and to the string memory (so `p` in the editor puts it in)
 - `/text` Only show the files whose path contains "text". `Esc` shows all again
@@ -379,7 +506,9 @@ The list has two columns, as the favorites: _Name_ (the name of the directory, o
 The directory hotlist keeps directories you want to go back to. `B` (or `:hotadd`) in the file browser adds the directory shown in the pane with the focus, whatever file or directory is selected in it, at the end of the list. A directory that is in the list already stays where it is. Taking directories out is done on the page of the list. `W` in the file browser shows the list, and `:hotlist` (or `:hot`) on every command line shows it alone: closing it then shows the start page.
 
 - `W` or `:hotlist` (or `:hot`) in the file browser: Show the hotlist. Each row has the name of the directory (or the name you gave it), and its path after it. The hotlist is also a tab of the [Jump menu](Guide-to-jump-menu.md#jump-menu)
-- `j` `k` Select, `gg` `G` First/Last, `PgUp` `PgDn` One page up/down. With a count: `5j` `5k` move 5 rows down/up, `5gg` (or `5G`) goes to row 5 (the rows shown, as numbered at the bottom right); the count shows there while you type it, and `Esc` drops it. `:number` numbers the rows, in the colors of the line numbers of the editor (the selected row in the color of the current line number), and `:nonumber` takes them away (setting `hotlistnumbers`, off from the start, also on the Lists page of Configuration; the Hotlist tab of the Jump menu follows it)
+- `j` `k` Select, `gg` `G` First/Last, `PgUp` `PgDn` One page up/down
+  - With a count: `5j` `5k` move 5 rows down/up, `5gg` (or `5G`) goes to row 5 (the rows shown, as numbered at the bottom right); the count shows there while you type it, and `Esc` drops it
+  - `:number` numbers the rows, in the colors of the line numbers of the editor (the selected row in the color of the current line number), and `:nonumber` takes them away (setting `hotlistnumbers`, off from the start, also on the Lists page of Configuration; the Hotlist tab of the Jump menu follows it)
 - `l` or `Enter` Go to the directory, in the pane with the focus (the hotlist closes)
 - `V` (or `:move`) Move the directory in the list: it is marked `<>` and highlighted, `j` `k` move it, and `Esc` (or `Enter`, `V`) ends the moving. Not while a filter shows only some of the list
 - `T` or `:top` Move the directory to the top, `E` or `:bottom` to the end
@@ -388,7 +517,10 @@ The directory hotlist keeps directories you want to go back to. `B` (or `:hotadd
 - `D` or `:remove` Take the directory out of the hotlist (the directory itself stays). `u` or `:undo` puts it back
 - `:clear` Clear the hotlist. You are asked first
 - `:missing` The directories of the hotlist that are not there any more, in a box: `Enter` selects the one picked in the list
-- `:prune` Remove the missing directories from the hotlist, after asking; `u` puts them back. An entry on a drive that is not connected (a drive letter or network share that is not there, a drive not mounted in `/media`, `/run/media`, `/mnt` or `/Volumes`, or a network share of GNOME (in `/run/user/.../gvfs`) or autofs (in `/net`) that is not mounted) is listed, but kept: it is only missing until the drive is back. Each drive is looked at once, so a share that does not answer makes you wait only once. A file directly in one of those folders (`/mnt/notes.md`) is not a drive, and is removed
+- `:prune` Remove the missing directories from the hotlist, after asking; `u` puts them back
+  - An entry on a drive that is not connected (a drive letter or network share that is not there, a drive not mounted in `/media`, `/run/media`, `/mnt` or `/Volumes`, or a network share of GNOME (in `/run/user/.../gvfs`) or autofs (in `/net`) that is not mounted) is listed, but kept: it is only missing until the drive is back
+  - Each drive is looked at once, so a share that does not answer makes you wait only once
+  - A file directly in one of those folders (`/mnt/notes.md`) is not a drive, and is removed
 - `:bookmark` Bookmark the selected directory in the [Jump menu](Guide-to-jump-menu.md#bookmarks), as in the file browser (`:bookmark name` with a name)
 - `:name` Copy the name the directory is shown with (the name you gave it, or its own), `:path` its full path, as in the file browser (also to the string memory, for `p` in the editor)
 - `/text` Only show the directories whose path contains "text". `Esc` shows all again
@@ -398,10 +530,14 @@ The directory hotlist keeps directories you want to go back to. `B` (or `:hotadd
 The hotlist holds at most 100 directories. A directory that is gone is shown as _(missing)_. When a directory is renamed or moved in the file browser, the hotlist follows it (also the directories in it). The list is kept in `hotlist.txt` in the data directory, with the path of a directory on each line (and after it a tab character and the name you gave it, if any), so it can also be edited by hand (`:data` in the file browser goes there).
 
 ### Where the cursor was
-When a file is closed in the editor, the line and column of the cursor are kept: in the history, and in the favorites if the file is one. The next time the file is opened, the cursor is placed there, so you go on where you left off. The favorites are looked in first, as the history holds only the last 100 files. If the file has changed since and the line or column is no longer there, the cursor goes to the end of the line or of the text. A file opened from the results of a [search](#searching-for-files) is opened at the line found instead.
+When a file is closed in the editor, the line and column of the cursor are kept: in the history, and in the favorites if the file is one. The next time the file is opened, the cursor is placed there, so you go on where you left off.
 
-## The log
-The log lists what has happened since Blyant was started: the startup, commands, and the file operations of the file browser and the start page (new, open, rename, copy, move and delete, with the reason if one failed). It is shown from the System page of Configuration (_View log_), with `:log` on every command line (the start page, the file browser and its lists, the Jump menu, the list of projects, the corkboard and the editor), with `:jump log`, or with _Log review_ on the Blyant tab of the [Jump menu](Guide-to-jump-menu.md#jump-menu). It opens on top of the page you were on, and `Esc` takes you back there. A deletion tells whether it went to the trash, and where.
+The favorites are looked in first, as the history holds only the last 100 files. If the file has changed since and the line or column is no longer there, the cursor goes to the end of the line or of the text. A file opened from the results of a [search](#searching-for-files) is opened at the line found instead.
+
+## Log
+The log lists what has happened since Blyant was started: the startup, commands, and the file operations of the file browser and the start page (new, open, rename, copy, move and delete, with the reason if one failed).
+
+It is shown from the System page of Configuration (_View log_), with `:log` on every command line (the start page, the file browser and its lists, the Jump menu, the list of projects, the corkboard and the editor), with `:jump log`, or with _Log review_ on the Blyant tab of the [Jump menu](Guide-to-jump-menu.md#jump-menu). It opens on top of the page you were on, and `Esc` takes you back there. A deletion tells whether it went to the trash, and where.
 
 All that Blyant does with files by itself is logged too, with the path: `New:` (a file made), `Write:` (a file saved: your text with `:w`, the settings, the lists, the recovery copies), `Append:` (added to the end: the paste bin, the words added to the spell checker, `trash.txt`), `New directory:` (the data directory, a project, `trash`, `recovery` ...), `Rename:`, `Copy:` and `Delete:`. One that failed has ` - FAILED:` and the reason after it. What is written in the files is never logged.
 
@@ -418,4 +554,8 @@ As the log can be read by anyone at the screen, commands are logged by name only
 The logo is drawn with a sweep when Blyant starts. Any key ends the sweep. Its speed is set with _Logo animation_ on the Layout page of the Configuration tab, where it can also be turned off.
 
 ## Directories
-Blyant keeps its settings and lists in the directory `data`: in the directory it is started from, if there is one there, else next to the program (and where the program directory cannot be written to, `Blyant/data` in the application data of the user). The data directory holds `settings.ini`, the lists of the file browser and the Jump menu, the snippets, the completions, the macros, the color schemes and the logos of your own, the log (`log.txt`), the recovery copies of text that was not saved (`recovery`) and the [trash](#the-trash) (`trash`). Your projects are not kept there, but wherever you choose: only the list of [projects](#projects) (`projects.txt`) is.
+Blyant keeps its settings and lists in the directory `data`: in the directory it is started from, if there is one there, else next to the program (and where the program directory cannot be written to, `Blyant/data` in the application data of the user).
+
+The data directory holds `settings.ini`, the lists of the file browser and the Jump menu, the snippets, the completions, the macros, the color schemes and the logos of your own, the log (`log.txt`), the recovery copies of text that was not saved (`recovery`) and the [trash](#trash) (`trash`).
+
+Your projects are not kept there, but wherever you choose: only the list of [projects](#projects) (`projects.txt`) is.

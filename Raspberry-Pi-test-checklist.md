@@ -34,7 +34,7 @@ Write down what differs, and copy `data/log.txt` afterwards: it tells what Blyan
 - [ ] In the file browser, `V` to peek at a file, `Tab` into the peek, then `Esc` and `j` quickly: the peek closes and the selection moves down (the `j` is not lost)
 - [ ] Keys with `AltGr` (on a keyboard that has it): `@ { } [ ] \ |` are typed as text
 
-## 4. The window
+## 4. Window
 
 - [ ] Make the desktop terminal smaller than 80 columns: a box asks to make it larger, and nothing is drawn past the edge (on every page, not only the editor)
 - [ ] Make it larger again: the page follows

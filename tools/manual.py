@@ -40,18 +40,18 @@ CHAPTERS = [
         (INSTALL, 'Good to know', 'all', None),
         (INSTALL, 'Starting Blyant with a file', 'all', None),
         (JUMP, 'Guide to the Jump menu, color schemes and logos', 'intro', 'Keys used everywhere'),
-        (START, 'Start page', 'intro', 'The start page'),
-        (START, 'Start', 'all', 'The Start tab'),
-        (START, 'Commands', 'all', 'Commands of the start page'),
-        (START, 'Help', 'all', 'The Help tab'),
+        (START, 'Start page', 'intro', None),
+        (START, 'Start', 'all', 'Start tab'),
+        (START, 'Commands', 'all', 'Start page commands'),
+        (START, 'Help', 'all', 'Help tab'),
     ]),
     ('Configuration', [
         (START, 'Configuration', 'body', None),
     ]),
-    ('The file browser', [
+    ('File browser', [
         (START, 'File browser', 'lead', None),
         (START, 'Managing files', 'all', None),
-        (START, 'The trash', 'all', None),
+        (START, 'Trash', 'all', None),
         (START, 'Searching for files', 'all', None),
         (START, 'Where the cursor was', 'all', None),
     ]),
@@ -60,8 +60,8 @@ CHAPTERS = [
         (START, 'File history', 'all', None),
         (START, 'Directory hotlist', 'all', None),
     ]),
-    ('The editor', [
-        (EDITOR, 'Guide to the editor', 'intro', 'The modes of the editor'),
+    ('Editor', [
+        (EDITOR, 'Guide to the editor', 'intro', 'Editor modes'),
         (EDITOR, 'Save and close', 'all', None),
         (EDITOR, 'Entering Insert mode', 'all', None),
         (EDITOR, 'Moving the cursor (Normal and Visual mode)', 'all', None),
@@ -77,10 +77,10 @@ CHAPTERS = [
         (EDITOR, 'Scrolling', 'all', None),
         (EDITOR, 'Zen mode', 'all', None),
         (EDITOR, 'Emoji and wide characters', 'all', None),
-        (EDITOR, 'Colors', 'all', 'Colors of the text'),
+        (EDITOR, 'Colors', 'all', 'Syntax colors'),
         (EDITOR, 'Line endings', 'all', None),
         (EDITOR, 'Byte order mark (BOM)', 'all', None),
-        (EDITOR, 'Other commands', 'all', 'Other commands of the editor'),
+        (EDITOR, 'Other commands', 'all', 'Other editor commands'),
         (EDITOR, 'Title and other single line fields', 'all', None),
     ]),
     ('Writing tools', [
@@ -91,13 +91,13 @@ CHAPTERS = [
         (EDITOR, 'String memory', 'all', None),
         (EDITOR, 'System clipboard and paste bin', 'all', None),
     ]),
-    ('The Jump menu and bookmarks', [
+    ('Jump menu and bookmarks', [
         (JUMP, 'Jump menu', 'body', None),
     ]),
     ('Projects', [
         (START, 'Projects', 'body', None),
     ]),
-    ('The corkboard', [
+    ('Corkboard', [
         (BOARD, 'Guide to the corkboard', 'body', None),
     ]),
     ('Color schemes and logos', [
@@ -109,8 +109,8 @@ CHAPTERS = [
         (TYPST, 'Guide to writing with Typst', 'body', None),
     ]),
     ('Appendix', [
-        (START, 'The log', 'all', None),
-        (START, 'Directories', 'all', 'The data directory'),
+        (START, 'Log', 'all', None),
+        (START, 'Directories', 'all', 'Data directory'),
         (INSTALL, 'Language files', 'all', None),
         (INSTALL, 'Building from source', 'all', None),
     ]),
@@ -494,7 +494,7 @@ TYPST_HEAD = r'''#set document(title: "Blyant User Manual")
 
 // The cover
 #page(numbering: none, align(center + horizon)[
-  #box(align(left, stack(spacing: 7pt, ..LOGO.map(line => raw(line)))))
+COVER_LOGO
   #v(1.5cm)
   #text(size: 34pt, weight: "bold")[User Manual]
   #v(0.6cm)
@@ -515,8 +515,19 @@ TYPST_HEAD = r'''#set document(title: "Blyant User Manual")
 '''
 
 
-def to_typst(sections, targets, version):
-    head = TYPST_HEAD.replace('LOGO', '(' + ', '.join(typst_string(line) for line in LOGO) + ',)')
+LOGO_IMAGE = os.path.join(ROOT, 'docs', 'screenshots', 'logo.svg')
+
+# The logo on the cover: the picture of it in Blyant (tools/screenshots.py makes it from the start page, in the colors
+# of the Default scheme on the background of the terminal), or else its text, in bold
+COVER_IMAGE = '  #image("logo.svg", width: 78%)'
+COVER_TEXT = '''  // (bold and a little larger than code, so the thin lines of the logo read as they do in a terminal)
+  #show raw: set text(size: 10.5pt, weight: "bold")
+  #box(align(left, stack(spacing: 8pt, ..LOGO.map(line => raw(line)))))'''
+
+
+def to_typst(sections, targets, version, with_image):
+    head = TYPST_HEAD.replace('COVER_LOGO', COVER_IMAGE if with_image else COVER_TEXT)
+    head = head.replace('LOGO', '(' + ', '.join(typst_string(line) for line in LOGO) + ',)')
     head = head.replace('VERSION', escape(version))
     head = head.replace('WEBSITE_TEXT', escape(WEBSITE.split('//')[1])).replace('WEBSITE', WEBSITE)
     out = [head]
@@ -565,8 +576,12 @@ def main():
     if not pdf:
         return
     typ_path = os.path.join(out_dir, NAME + '.typ')
+    # The picture of the logo next to the Typst file (Typst reads files from its folder)
+    with_image = os.path.exists(LOGO_IMAGE)
+    if with_image:
+        shutil.copyfile(LOGO_IMAGE, os.path.join(out_dir, 'logo.svg'))
     with open(typ_path, 'w', encoding='utf-8', newline='\n') as f:
-        f.write(to_typst(sections, targets, version))
+        f.write(to_typst(sections, targets, version, with_image))
     program = typst_program()
     if program is None:
         sys.exit('manual.py: typst was not found (install it, or set TYPST to the program)')

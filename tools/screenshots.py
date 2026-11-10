@@ -495,6 +495,45 @@ def svg(screen, title, show_cursor):
     return '\n'.join(out) + '\n'
 
 
+def logo_svg(screen):
+    """The logo of the start page alone, on the background of the terminal, as it is shown there: for the cover of
+    the user manual (tools/manual.py)"""
+    lines = [''.join(screen.buffer[y][x].data or ' ' for x in range(COLS)) for y in range(ROWS)]
+    # (the lines of the logo near the top are those with many M in them)
+    rows = [y for y in range(min(8, ROWS)) if lines[y].count('M') >= 8]
+    if not rows:
+        sys.exit('The logo was not found on the start page')
+    first = min(len(lines[y]) - len(lines[y].lstrip()) for y in rows)
+    last = max(len(lines[y].rstrip()) for y in rows)
+    pad = 18
+    width = pad * 2 + (last - first) * CELL_W
+    height = pad * 2 + len(rows) * CELL_H
+    out = ['<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="%d" viewBox="0 0 %d %d">'
+           % (width, height, width, height),
+           '<title>Blyant</title>',
+           '<style>text{font-family:"Cascadia Mono","Cascadia Code",Consolas,"DejaVu Sans Mono",Menlo,'
+           'monospace;font-size:%dpx;white-space:pre}</style>' % FONT_SIZE,
+           '<rect width="100%%" height="100%%" rx="10" fill="%s"/>' % DEFAULT_BG]
+    for i, y in enumerate(rows):
+        row = screen.buffer[y]
+        x = first
+        while x < last:
+            fg, bold = color(row[x].fg, DEFAULT_FG), row[x].bold
+            end = x
+            while end < last and color(row[end].fg, DEFAULT_FG) == fg and row[end].bold == bold:
+                end += 1
+            text = ''.join(row[k].data or ' ' for k in range(x, end))
+            if text.strip():
+                stripped = text.rstrip()
+                out.append('<text x="%.1f" y="%.1f" fill="%s"%s textLength="%.1f" lengthAdjust="spacingAndGlyphs"'
+                           ' xml:space="preserve">%s</text>'
+                           % (pad + (x - first) * CELL_W, pad + i * CELL_H + CELL_H * 0.75, fg,
+                              ' font-weight="bold"' if bold else '', len(stripped) * CELL_W, html.escape(stripped)))
+            x = end
+    out.append('</svg>')
+    return '\n'.join(out) + '\n'
+
+
 # ---------------------------------------------------------------------------------------------------------------
 # The scenes: a name, a title, the settings, the arguments of Blyant, the keys, and if the cursor is drawn
 
@@ -547,6 +586,11 @@ def main():
         with open(os.path.join(OUT, name + '.svg'), 'w', encoding='utf-8', newline='\n') as f:
             f.write(svg(screen, title, show_cursor))
         print(name)
+        # The logo alone, from the start page (in the Default colors): for the cover of the user manual
+        if name == 'start-page':
+            with open(os.path.join(OUT, 'logo.svg'), 'w', encoding='utf-8', newline='\n') as f:
+                f.write(logo_svg(screen))
+            print('logo')
 
 
 if __name__ == '__main__':

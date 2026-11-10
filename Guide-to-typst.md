@@ -73,7 +73,7 @@ A start for `main.typ`:
 #include "chapters/harbor.typ"
 ```
 
-## The syntax in short
+## Syntax in short
 Typst has three modes. You write in **markup**, the text with its marks. `$` starts **math**, and `#` starts **code**: a function, a setting or a variable. In code, `[...]` holds markup again.
 
 ### Markup

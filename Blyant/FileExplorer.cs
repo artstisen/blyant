@@ -158,6 +158,7 @@ internal static partial class FileExplorer
     // A jump: the directory to show, and the file to open in the editor when the browser is shown
     private static string? _jumpDirectory;
     private static string? _jumpFile;
+    private static string? _jumpSelect; // The file selected in the directory of a jump (RunAtDirectory)
     private static (int Line, int Column)? _jumpAt; // Where in the file (a bookmark made in the editor)
     private static bool _jumpBack; // The browser closes with the editor of the file (opened from the corkboard)
     private static bool _edited; // The file opened was shown in the editor (not refused, nor its conversion canceled)
@@ -185,10 +186,11 @@ internal static partial class FileExplorer
     /// <summary>
     /// Open the file browser in a directory (a jump)
     /// </summary>
-    internal static void RunAtDirectory(string path)
+    internal static void RunAtDirectory(string path, string? select = null)
     {
         _jumpDirectory = path;
         _jumpFile = null;
+        _jumpSelect = select;
         Run();
     }
 
@@ -319,11 +321,12 @@ internal static partial class FileExplorer
         var jumpBack = _jumpBack;
         if (mode == BrowseMode.Edit && _jumpDirectory != null && System.IO.Directory.Exists(_jumpDirectory))
         {
-            StartPaneIn(ActivePane, _jumpDirectory);
+            StartPaneIn(ActivePane, _jumpDirectory, _jumpSelect);
         }
 
         _jumpDirectory = null;
         _jumpFile = null;
+        _jumpSelect = null;
         _jumpAt = null;
         _jumpBack = false;
         // The places of the panes are saved however the browser is left: closed, a jump (to another page), or
