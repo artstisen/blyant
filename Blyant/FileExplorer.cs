@@ -948,7 +948,15 @@ internal static partial class FileExplorer
         if (pane.MarksDirectory != pane.Directory) pane.Marks.Clear();
         pane.Marks.RemoveWhere(path => !File.Exists(path) && !Directory.Exists(path));
         pane.MarksDirectory = pane.Directory;
-        pane.Index = Math.Max(0, select == null ? 0 : items.FindIndex(i => i.Name == select || i.Path == select));
+        // The entry to select: by its name or path as written, else by a path as the file system compares them (a file
+        // opened by a name in other capitals, on Windows and macOS: on Linux they are other files)
+        var index = select == null ? 0 : items.FindIndex(i => i.Name == select || i.Path == select);
+        if (index < 0 && select != null && System.IO.Path.IsPathRooted(select))
+        {
+            index = items.FindIndex(i => FileOperations.SamePath(i.Path, select));
+        }
+
+        pane.Index = Math.Max(0, index);
         pane.Top = 0;
         return true;
     }

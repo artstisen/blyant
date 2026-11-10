@@ -33,6 +33,13 @@ Open your favorite terminal, go to the Blyant directory and start the program:
 ### Portable version
 Unzip `Blyant-1.4.4-portable.zip`: its folder _Blyant_ has _Blyant.dll_, _Blyant.deps.json_, _Blyant.runtimeconfig.json_ and the folder _lang_. Open your favorite terminal, go to the Blyant directory and type ```dotnet Blyant.dll``` (Linux and macOS are case sensitive).
 
+### Check the download
+The releases page also has `Blyant-1.4.4-checksums.txt`: the SHA256 checksum of each file of the release. It tells whether a file arrived whole and unchanged. Put it in the folder of your download, and:
+
+- **Linux**: `sha256sum -c Blyant-1.4.4-checksums.txt --ignore-missing` checks the files you downloaded, and says `OK` for each
+- **macOS**: `shasum -a 256 -c Blyant-1.4.4-checksums.txt --ignore-missing` does the same
+- **Windows**: `Get-FileHash Blyant-1.4.4-win-x64.zip` in PowerShell shows the checksum: compare it with the line of the file in `Blyant-1.4.4-checksums.txt` (upper or lower case alike)
+
 ## Install .NET
 Only the portable version needs this. Ensure that you have the .NET 10 runtime installed on your system. If not you can get it here:
 

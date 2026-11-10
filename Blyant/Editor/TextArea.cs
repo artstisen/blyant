@@ -219,10 +219,12 @@ public partial class TextArea
 
     // ":favorites", ":history", ":hotlist" or ":browse": the editor is left (changes that are not saved are asked
     // about first). ":browse" shows the file browser in the directory of the file being edited, with the file
-    // selected (to make a new file next to it with N)
+    // selected (to make a new file next to it with N); not for the note of a favorite, a bookmark
+    // or a card, which is written in a file of Blyant's own in the data directory: the file browser is shown where it
+    // was (a note of a project is in the folder of the project, and is as a file)
     private void JumpToList(string page)
     {
-        if (page == "browse" && _saveMode == SaveAsFile && !FileExplorer.IsUntitled &&
+        if (page == "browse" && _saveMode == SaveAsFile && !FileExplorer.IsUntitled && !FileExplorer.EditingListNote &&
             Path.GetDirectoryName(FileExplorer.CurrentFilePath) is { Length: > 0 } directory)
         {
             Jump.ToPlace(new JumpTarget(JumpKind.Directory, directory) { Select = FileExplorer.CurrentFilePath },

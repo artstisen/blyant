@@ -15,6 +15,8 @@
 # The user manual is made from the guides first (tools/manual.py, which needs Python, and Typst for the PDF): the
 # Markdown version (Blyant-User-Manual.md) goes in every archive next to the program, and the PDF is a download of
 # its own (Blyant-User-Manual-1.4.4.pdf)
+# Last, Blyant-1.4.4-checksums.txt lists the SHA256 checksum of each file of the release, so a download can be
+# checked: sha256sum -c (Linux), shasum -a 256 -c (macOS), or Get-FileHash (Windows)
 # The tests are run first (nothing is published when one fails), and the version must be the same in all the
 # places it is set: Version, AssemblyVersion and FileVersion in Blyant.csproj, and DialogText.ApplicationVersion.
 # The archives of a version that is published again are replaced, also those of an earlier version of Blyant
@@ -171,6 +173,22 @@ foreach ($platform in $Platforms) {
     # The user manual next to the program
     Copy-Item (Join-Path $manual "Blyant-User-Manual.md") $folder
     New-ReleaseArchive $platform $folder
+}
+
+# The SHA256 checksums of the files of the release of this version, one line each in the form sha256sum reads
+# ("<hash>  <name>", lowercase, LF), made again from the files there now (the file of an earlier version is removed)
+if (Test-Path $release) {
+    Get-ChildItem $release -Filter "Blyant-*-checksums.txt" -File | Remove-Item
+    $released = Get-ChildItem $release -File | Where-Object {
+        $_.Name -like "Blyant-$version-*" -or $_.Name -eq "Blyant-languages-$version.zip" -or
+        $_.Name -eq "Blyant-User-Manual-$version.pdf"
+    } | Sort-Object Name
+    $lines = $released | ForEach-Object { (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant() + "  " + $_.Name }
+    if ($lines) {
+        $sums = Join-Path $release "Blyant-$version-checksums.txt"
+        [System.IO.File]::WriteAllText($sums, (($lines -join "`n") + "`n"), [System.Text.UTF8Encoding]::new($false))
+        Write-Host "Checksums: $sums"
+    }
 }
 
 Get-ChildItem $output -Recurse -File |
