@@ -2256,6 +2256,10 @@ it: "Ancora nessuna: chiudi un file con un altro accanto (:view)"
 en: "j/k Select | Enter Open | D Remove | / Filter | Esc Close"
 it: "j/k Seleziona | Enter Apri | D Rimuovi | / Filtro | Esc Chiudi"
 
+# StartArgument.cs
+en: "One file or directory at a time: {0}"
+it: "Un file o una cartella alla volta: {0}"
+
 # StartMenu.cs
 en: "This cannot be undone"
 it: "Non si può annullare"

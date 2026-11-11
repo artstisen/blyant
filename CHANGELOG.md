@@ -1,5 +1,8 @@
 # Changes
 
+## v1.4.5 (2026-11-11)
+- **A line to open a file at**: `blyant +12 notes.md` opens the file at line 12 (the `+` before or after the file), as Vim and other editors are started. Tools that open a file in an editor at a line, such as [Blyant Validator](https://github.com/artstisen/blyant-validator) (`:editor "C:\path\to\Blyant.exe" +{line}`), can open it in Blyant. See [Starting Blyant with a file](Guide-to-installation.md#starting-blyant-with-a-file).
+
 ## v1.4.4 (2026-11-10)
 - **Checksums of the downloads**: the release has `Blyant-1.4.4-checksums.txt`, the SHA256 checksum of each archive, the language pack and the manual, to check that a download arrived whole (`sha256sum -c`, `shasum -a 256 -c` or `Get-FileHash`). See [Check the download](Guide-to-installation.md#check-the-download).
 - **A user manual**: the guides put together as one manual, with a contents page, chapters in the order of use (getting started, configuration, the file browser, the editor, the writing tools, the Jump menu, projects, the corkboard, color schemes and logos, Typst) and no pictures. `Blyant-User-Manual.md` is in every release archive, next to the program, and the PDF (`Blyant-User-Manual-1.4.4.pdf`, with page numbers) is on the releases page. It is made by `tools/manual.py` when the release is built.

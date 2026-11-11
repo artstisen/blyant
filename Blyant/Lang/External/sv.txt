@@ -2256,6 +2256,10 @@ sv: "Inga än: stäng en fil med en annan bredvid (:view)"
 en: "j/k Select | Enter Open | D Remove | / Filter | Esc Close"
 sv: "j/k Välj | Enter Öppna | D Ta bort | / Filter | Esc Stäng"
 
+# StartArgument.cs
+en: "One file or directory at a time: {0}"
+sv: "En fil eller mapp i taget: {0}"
+
 # StartMenu.cs
 en: "This cannot be undone"
 sv: "Kan inte ångras"

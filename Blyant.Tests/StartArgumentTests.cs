@@ -28,6 +28,34 @@ public class StartArgumentTests : IDisposable
     private StartArgument.Result Resolve(string argument) => StartArgument.Resolve(argument, _root);
 
     [Fact]
+    public void APlusLine_OpensTheFileAtTheLine_BeforeOrAfterIt()
+    {
+        var file = Path.Combine("notes", "a.md");
+        Assert.Equal(new StartArgument.Arguments(file, 12), StartArgument.Parse(new[] { "+12", file }, _root));
+        Assert.Equal(new StartArgument.Arguments(file, 3), StartArgument.Parse(new[] { file, "+3" }, _root));
+        Assert.Equal(new StartArgument.Arguments(file, null), StartArgument.Parse(new[] { file }, _root));
+        Assert.Equal(new StartArgument.Arguments(null, 5), StartArgument.Parse(new[] { "+5" }, _root));
+        // A line before the first is the first; a number too large for a line is the end
+        Assert.Equal(1, StartArgument.Parse(new[] { "+0", file }, _root).Line);
+        Assert.Equal(int.MaxValue, StartArgument.Parse(new[] { "+99999999999", file }, _root).Line);
+        // The line goes with the file, not with a directory
+        Assert.Equal((12, 1), StartArgument.Resolve(file, _root, 12).Target!.At);
+        Assert.Null(StartArgument.Resolve("notes", _root, 12).Target!.At);
+        // Not a line: "+" alone, or with more than digits
+        Assert.Equal("+x", StartArgument.Parse(new[] { "+x" }, _root).Path);
+        Assert.Equal("+", StartArgument.Parse(new[] { "+" }, _root).Path);
+        // Two paths: told
+        Assert.NotEqual(string.Empty, StartArgument.Parse(new[] { file, "notes" }, _root).Message);
+    }
+
+    [Fact]
+    public void AFileNamedAsALine_IsTheFile()
+    {
+        File.WriteAllText(Path.Combine(_root, "+7"), "x");
+        Assert.Equal(new StartArgument.Arguments("+7", null), StartArgument.Parse(new[] { "+7" }, _root));
+    }
+
+    [Fact]
     public void AFile_IsOpened_AndARelativePathIsFromTheStartDirectory()
     {
         var result = Resolve(Path.Combine("notes", "a.md"));

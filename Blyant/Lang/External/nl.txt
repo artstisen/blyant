@@ -2256,6 +2256,10 @@ nl: "Nog geen: sluit een bestand met een ander ernaast (:view)"
 en: "j/k Select | Enter Open | D Remove | / Filter | Esc Close"
 nl: "j/k Kiezen | Enter Openen | D Verwijderen | / Filter | Esc Sluiten"
 
+# StartArgument.cs
+en: "One file or directory at a time: {0}"
+nl: "Eén bestand of map tegelijk: {0}"
+
 # StartMenu.cs
 en: "This cannot be undone"
 nl: "Niet terug te draaien"

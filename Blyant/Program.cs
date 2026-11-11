@@ -31,8 +31,16 @@ class Program
                 Lang.T("Put it in the folder lang next to Blyant (or in the data directory)."));
         }
 
-        // Started with a file or directory ("blyant notes.md"): it is opened as a jump, without the start page
-        if (args.Length > 0 && OpenArgument(args[0], currentDirectory) is { } target)
+        // Started with a file or directory ("blyant notes.md", "blyant +12 notes.md" at line 12): it is opened as a
+        // jump, without the start page
+        var start = StartArgument.Parse(args, currentDirectory);
+        if (start.Message.Length > 0)
+        {
+            Tools.ClearScreen();
+            ChoiceBox.Message(DialogText.ApplicationName, start.Message, string.Empty);
+            StartMenu.Start();
+        }
+        else if (start.Path != null && OpenArgument(start.Path, start.Line, currentDirectory) is { } target)
         {
             Jump.OpenAtStart(target);
         }
@@ -46,9 +54,9 @@ class Program
 
     // The place a path given at startup leads to, or null (a message tells why, or the user did not want a file
     // that is not there to be made)
-    private static JumpTarget? OpenArgument(string argument, string currentDirectory)
+    private static JumpTarget? OpenArgument(string argument, int? line, string currentDirectory)
     {
-        var result = StartArgument.Resolve(argument, currentDirectory);
+        var result = StartArgument.Resolve(argument, currentDirectory, line);
         if (result.Message.Length > 0)
         {
             Tools.ClearScreen();

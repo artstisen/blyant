@@ -2256,6 +2256,10 @@ es: "Aún no hay: cierra un archivo con otro al lado (:view)"
 en: "j/k Select | Enter Open | D Remove | / Filter | Esc Close"
 es: "j/k Elegir | Enter Abrir | D Quitar | / Filtro | Esc Cerrar"
 
+# StartArgument.cs
+en: "One file or directory at a time: {0}"
+es: "Un archivo o carpeta a la vez: {0}"
+
 # StartMenu.cs
 en: "This cannot be undone"
 es: "No se puede deshacer"

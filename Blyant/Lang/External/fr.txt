@@ -2256,6 +2256,10 @@ fr: "Aucune encore : fermez un fichier avec un autre à côté (:view)"
 en: "j/k Select | Enter Open | D Remove | / Filter | Esc Close"
 fr: "j/k Choisir | Enter Ouvrir | D Retirer | / Filtre | Esc Fermer"
 
+# StartArgument.cs
+en: "One file or directory at a time: {0}"
+fr: "Un fichier ou dossier à la fois : {0}"
+
 # StartMenu.cs
 en: "This cannot be undone"
 fr: "Irréversible"

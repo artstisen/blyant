@@ -9,20 +9,20 @@ Download the latest Blyant archive for your platform from the [releases page](ht
 
 Keep the folder _lang_ next to the program: it holds the languages other than English.
 
-Next to the program is also _Blyant-User-Manual.md_, the user manual (all the guides of Blyant in one file), which can be read in Blyant itself. The manual is also on the releases page as a PDF (`Blyant-User-Manual-1.4.4.pdf`), to read or print.
+Next to the program is also _Blyant-User-Manual.md_, the user manual (all the guides of Blyant in one file), which can be read in Blyant itself. The manual is also on the releases page as a PDF (`Blyant-User-Manual-1.4.5.pdf`), to read or print.
 
 | Platform | Download |
 |---|---|
-| Windows (most PCs) | `Blyant-1.4.4-win-x64.zip` |
-| Windows on ARM | `Blyant-1.4.4-win-arm64.zip` |
-| Linux (most PCs) | `Blyant-1.4.4-linux-x64.tar.gz` |
-| Linux on 64-bit ARM (Raspberry Pi with a 64-bit system) | `Blyant-1.4.4-linux-arm64.tar.gz` |
-| Linux on 32-bit ARM (Raspberry Pi with a 32-bit system) | `Blyant-1.4.4-linux-arm.tar.gz` |
-| macOS on Apple silicon (M1 and later) | `Blyant-1.4.4-osx-arm64.tar.gz` |
-| macOS on Intel | `Blyant-1.4.4-osx-x64.tar.gz` |
-| Any platform, with .NET 10 installed | `Blyant-1.4.4-portable.zip` |
+| Windows (most PCs) | `Blyant-1.4.5-win-x64.zip` |
+| Windows on ARM | `Blyant-1.4.5-win-arm64.zip` |
+| Linux (most PCs) | `Blyant-1.4.5-linux-x64.tar.gz` |
+| Linux on 64-bit ARM (Raspberry Pi with a 64-bit system) | `Blyant-1.4.5-linux-arm64.tar.gz` |
+| Linux on 32-bit ARM (Raspberry Pi with a 32-bit system) | `Blyant-1.4.5-linux-arm.tar.gz` |
+| macOS on Apple silicon (M1 and later) | `Blyant-1.4.5-osx-arm64.tar.gz` |
+| macOS on Intel | `Blyant-1.4.5-osx-x64.tar.gz` |
+| Any platform, with .NET 10 installed | `Blyant-1.4.5-portable.zip` |
 
-On Linux and macOS, unpack it with ```tar -xzf Blyant-1.4.4-linux-x64.tar.gz``` (with the name of the file you downloaded): the program can then be run as it is.
+On Linux and macOS, unpack it with ```tar -xzf Blyant-1.4.5-linux-x64.tar.gz``` (with the name of the file you downloaded): the program can then be run as it is.
 
 ### Single file
 Open your favorite terminal, go to the Blyant directory and start the program:
@@ -31,14 +31,14 @@ Open your favorite terminal, go to the Blyant directory and start the program:
 - **Linux and macOS**: type ```./Blyant``` (Linux and macOS are case sensitive). If it was not unpacked with `tar` (some programs leave out that it can be run), make it executable once with ```chmod +x Blyant```. On macOS the program is not signed: if macOS refuses to open it, allow it once with ```xattr -d com.apple.quarantine Blyant```
 
 ### Portable version
-Unzip `Blyant-1.4.4-portable.zip`: its folder _Blyant_ has _Blyant.dll_, _Blyant.deps.json_, _Blyant.runtimeconfig.json_ and the folder _lang_. Open your favorite terminal, go to the Blyant directory and type ```dotnet Blyant.dll``` (Linux and macOS are case sensitive).
+Unzip `Blyant-1.4.5-portable.zip`: its folder _Blyant_ has _Blyant.dll_, _Blyant.deps.json_, _Blyant.runtimeconfig.json_ and the folder _lang_. Open your favorite terminal, go to the Blyant directory and type ```dotnet Blyant.dll``` (Linux and macOS are case sensitive).
 
 ### Check the download
-The releases page also has `Blyant-1.4.4-checksums.txt`: the SHA256 checksum of each file of the release. It tells whether a file arrived whole and unchanged. Put it in the folder of your download, and:
+The releases page also has `Blyant-1.4.5-checksums.txt`: the SHA256 checksum of each file of the release. It tells whether a file arrived whole and unchanged. Put it in the folder of your download, and:
 
-- **Linux**: `sha256sum -c Blyant-1.4.4-checksums.txt --ignore-missing` checks the files you downloaded, and says `OK` for each
-- **macOS**: `shasum -a 256 -c Blyant-1.4.4-checksums.txt --ignore-missing` does the same
-- **Windows**: `Get-FileHash Blyant-1.4.4-win-x64.zip` in PowerShell shows the checksum: compare it with the line of the file in `Blyant-1.4.4-checksums.txt` (upper or lower case alike)
+- **Linux**: `sha256sum -c Blyant-1.4.5-checksums.txt --ignore-missing` checks the files you downloaded, and says `OK` for each
+- **macOS**: `shasum -a 256 -c Blyant-1.4.5-checksums.txt --ignore-missing` does the same
+- **Windows**: `Get-FileHash Blyant-1.4.5-win-x64.zip` in PowerShell shows the checksum: compare it with the line of the file in `Blyant-1.4.5-checksums.txt` (upper or lower case alike)
 
 ## Install .NET
 Only the portable version needs this. Ensure that you have the .NET 10 runtime installed on your system. If not you can get it here:
@@ -64,13 +64,16 @@ Give a file or a directory when you start Blyant, and it is opened at once, with
 
 ```
 blyant notes.md                Open notes.md in the editor (the file browser is in its directory behind it)
+blyant +12 notes.md            Open notes.md at line 12 (also blyant notes.md +12)
 blyant ~/projects/site         Show the directory in the file browser
 blyant .                       Show the directory you are in, in the file browser
 blyant --help                  Show how Blyant is started (also -h)
 blyant --version               Show the version (also -v)
 ```
 
-A path that is not a full path is taken from the directory you are in. Closing the editor (`:q`) shows the file browser in the directory of the file, and closing the file browser the start page, as after a jump from the [Jump menu](Guide-to-jump-menu.md#jump-menu); `:exit` leaves Blyant.
+A path that is not a full path is taken from the directory you are in. `+12` is the line the file is opened at, as Vim and other editors are started: a line past the end of the file is its last line, and a file named `+12` that is there is opened as that file. One file or directory is given at a time.
+
+Programs that open a file in your editor at a line can use Blyant this way. In [Blyant Validator](https://github.com/artstisen/blyant-validator), for example, set Blyant as the editor with `:editor "C:\path\to\Blyant.exe" +{line}` (on Linux and macOS the path of `Blyant`): it opens the file at the line of the problem. Closing the editor (`:q`) shows the file browser in the directory of the file, and closing the file browser the start page, as after a jump from the [Jump menu](Guide-to-jump-menu.md#jump-menu); `:exit` leaves Blyant.
 
 A file that is not there yet (in a directory that is) is made if you want that: Blyant asks first. A word starting with `-` is an option, not a file to make (unless a file or directory of that name is there): an option Blyant does not know is told, with the usage.
 
@@ -81,7 +84,7 @@ English is built into Blyant. The other languages are text files in a folder nam
 
 They come with Blyant; keep the folder next to the program when you copy or move it. If it is missing, those languages are not offered (and Blyant starts in English if one of them was chosen, keeping the choice for when the file is back).
 
-The language files can also be downloaded on their own, as the **language file pack** on the [releases page](https://github.com/artstisen/blyant/releases) (`Blyant-languages-1.4.4.zip`): the folder `lang` with the language files, and a read-me. Unzip it next to the Blyant program to put the folder `lang` in place. In the source, the files are in `Blyant/Lang/External`, and `./publish.ps1 languages` makes the pack in _publish/languages_.
+The language files can also be downloaded on their own, as the **language file pack** on the [releases page](https://github.com/artstisen/blyant/releases) (`Blyant-languages-1.4.5.zip`): the folder `lang` with the language files, and a read-me. Unzip it next to the Blyant program to put the folder `lang` in place. In the source, the files are in `Blyant/Lang/External`, and `./publish.ps1 languages` makes the pack in _publish/languages_.
 
 Blyant also looks for a folder `lang` in the data directory, which is used first. A language file there (or next to the program):
 
@@ -108,7 +111,7 @@ The files to run are then found in _Blyant/bin/Release/net10.0_.
 
 To build executables that include the .NET runtime (so nothing has to be installed to run them), run ```./publish.ps1``` with PowerShell. It creates a single file for each platform in the directory _publish_, and the lightweight version for all platforms (which needs the .NET runtime, and is started with ```dotnet Blyant.dll```) in _publish/portable_.
 
-It also packs each of them for a release in _publish/release_: a zip for Windows and the portable version, and a tar.gz for Linux and macOS (where the program is marked as one that can be run), each with a folder _Blyant_, and the language file pack (`Blyant-languages-1.4.4.zip`). `./publish.ps1 win-x64,languages` builds only the ones named.
+It also packs each of them for a release in _publish/release_: a zip for Windows and the portable version, and a tar.gz for Linux and macOS (where the program is marked as one that can be run), each with a folder _Blyant_, and the language file pack (`Blyant-languages-1.4.5.zip`). `./publish.ps1 win-x64,languages` builds only the ones named.
 
 It needs PowerShell 7.3 or later. The tests are run first, and nothing is published when one fails (`-SkipTests` leaves them out); the version must be the same in `Blyant.csproj` (`Version`, `AssemblyVersion`, `FileVersion`) and in `DialogText.ApplicationVersion`.
 

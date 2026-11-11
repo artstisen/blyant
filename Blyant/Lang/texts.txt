@@ -1163,6 +1163,9 @@ en: "Splits"
 en: "No splits yet: close a file with another beside it (:view)"
 en: "j/k Select | Enter Open | D Remove | / Filter | Esc Close"
 
+# StartArgument.cs
+en: "One file or directory at a time: {0}"
+
 # StartMenu.cs
 en: "This cannot be undone"
 en: "Recover unsaved text ({0})"

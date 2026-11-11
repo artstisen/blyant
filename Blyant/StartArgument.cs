@@ -2,8 +2,9 @@
 
 /// <summary>
 /// What Blyant opens when it is started with a file or directory, as "blyant notes.md" in a terminal (a path that
-/// is not a full path is taken from the directory Blyant is started in):
-///   a text file      opened in the editor, with the file browser in its directory behind it
+/// is not a full path is taken from the directory Blyant is started in), and "+12" to open the file at line 12 (as
+/// Vim and other editors are started by other programs: "blyant +12 notes.md"):
+///   a text file      opened in the editor, at the line if one is given, with the file browser in its directory behind it
 ///   a directory      shown in the file browser
 ///   a file that is not there, in a directory that is: Blyant asks to make it
 /// The place is opened as a jump of the Jump menu (Jump.Pending). This class does not touch the console.
@@ -15,6 +16,52 @@ internal static class StartArgument
     /// or a message (the path cannot be used)
     /// </summary>
     internal sealed record Result(JumpTarget? Target, string Path, bool AskToCreate = false, string Message = "");
+
+    /// <summary>
+    /// The arguments Blyant is started with: the file or directory (null: none), the line to open a file at (null:
+    /// where it was left), or a message when they cannot be used
+    /// </summary>
+    internal sealed record Arguments(string? Path, int? Line, string Message = "");
+
+    /// <summary>
+    /// Read the arguments (after the options are answered): one file or directory, and "+12", the line to open the
+    /// file at, before it or after it. A file or directory named "+12" that is there is that file or directory
+    /// </summary>
+    internal static Arguments Parse(IReadOnlyList<string> arguments, string currentDirectory)
+    {
+        string? path = null;
+        int? line = null;
+        foreach (var argument in arguments)
+        {
+            if (LineOf(argument, currentDirectory) is { } number)
+            {
+                line = number;
+                continue;
+            }
+
+            if (path != null) return new Arguments(null, null, Lang.F("One file or directory at a time: {0}", argument));
+            path = argument;
+        }
+
+        return new Arguments(path, line);
+    }
+
+    // "+12": the line 12 (a line before the first is the first), or null for another argument
+    private static int? LineOf(string argument, string currentDirectory)
+    {
+        if (argument.Length < 2 || argument[0] != '+' || !argument[1..].All(char.IsAsciiDigit)) return null;
+        try
+        {
+            var path = System.IO.Path.GetFullPath(argument, currentDirectory);
+            if (File.Exists(path) || Directory.Exists(path)) return null;
+        }
+        catch (Exception e) when (e is ArgumentException or NotSupportedException or IOException)
+        {
+            // (not a path: a line)
+        }
+
+        return int.TryParse(argument[1..], out var line) ? Math.Max(1, line) : int.MaxValue;
+    }
 
     /// <summary>
     /// True if the argument is an option ("--help", "-v" ...): it starts with "-" and is not a file or directory
@@ -57,10 +104,11 @@ internal static class StartArgument
 
     // English: see AnswerOption
     private const string Usage =
-        "Usage: blyant [file or directory]\n" +
+        "Usage: blyant [+line] [file or directory]\n" +
         "  A file is opened in the editor, a directory in the file browser. A file that\n" +
         "  is not there (in a directory that is) can be made. Without a path, Blyant\n" +
         "  starts as it is set to.\n" +
+        "  +12           Open the file at line 12\n" +
         "  --help, -h    Show this text\n" +
         "  --version, -v Show the version";
 
@@ -69,7 +117,17 @@ internal static class StartArgument
     /// </summary>
     /// <param name="argument">The path, as given</param>
     /// <param name="currentDirectory">The directory Blyant is started in</param>
-    internal static Result Resolve(string argument, string currentDirectory)
+    /// <param name="line">The line to open a file at ("+12"), or null</param>
+    internal static Result Resolve(string argument, string currentDirectory, int? line = null)
+    {
+        var result = ResolvePath(argument, currentDirectory);
+        // A file opened at the line (a directory has none)
+        return line is { } at && result.Target is { Kind: JumpKind.File } target
+            ? result with { Target = target with { At = (at, 1) } }
+            : result;
+    }
+
+    private static Result ResolvePath(string argument, string currentDirectory)
     {
         string path;
         try

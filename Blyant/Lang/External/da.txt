@@ -2256,6 +2256,10 @@ da: "Ingen endnu: luk en fil med en anden ved siden af (:view)"
 en: "j/k Select | Enter Open | D Remove | / Filter | Esc Close"
 da: "j/k Vælg | Enter Åbn | D Fjern | / Filter | Esc Luk"
 
+# StartArgument.cs
+en: "One file or directory at a time: {0}"
+da: "Én fil eller mappe ad gangen: {0}"
+
 # StartMenu.cs
 en: "This cannot be undone"
 da: "Det kan ikke fortrydes"

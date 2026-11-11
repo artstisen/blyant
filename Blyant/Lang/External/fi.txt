@@ -2256,6 +2256,10 @@ fi: "Ei vielä: sulje tiedosto toinen vieressään (:view)"
 en: "j/k Select | Enter Open | D Remove | / Filter | Esc Close"
 fi: "j/k Valitse | Enter Avaa | D Poista | / Suodata | Esc Sulje"
 
+# StartArgument.cs
+en: "One file or directory at a time: {0}"
+fi: "Yksi tiedosto tai kansio kerrallaan: {0}"
+
 # StartMenu.cs
 en: "This cannot be undone"
 fi: "Ei voi perua"
