@@ -1056,6 +1056,11 @@ internal static class CorkboardPage
             case "quit":
             case "close":
                 return false;
+            case "exit":
+            case "qa":
+                // Leave Blyant (not while the page below the board has changes that are not saved)
+                Jump.Exit();
+                break;
             case "h":
             case "help":
                 Tools.WriteEditorHelp(Tools.HelpTopic.Board);

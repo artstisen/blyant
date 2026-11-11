@@ -145,7 +145,7 @@ A board without cards shows the keys to start with in a box in its middle: pinni
 - `P` (or `:peek`) The peek on or off: the first lines of the selected card's file (or the text of a note or badge) below the board. It is on at first, and stays as you set it (setting `boardpeek`)
 - `/` Filter the cards: the others are dimmed, and `Tab` goes through those that are left. The card found on top is selected (of those the mode takes), and frames are found by their titles (the others are dimmed too). `Esc` shows all again
 - `:missing` The cards whose file is not there any more, in a list to select one. `:prune` Remove them, after asking (those on a drive that is not connected stay)
-- `Ctrl+O` (or `:jump`) the Jump menu, `Ctrl+K` (or `:recent`) the latest files, `?` (or `:help`) the keys, `:log` the [log](Guide-to-start-page.md#log), `:favorites`, `:history`, `:hotlist` and `:browse` the lists of the file browser alone, or the file browser (they leave the board), `Esc` (or `Q`) close
+- `Ctrl+O` (or `:jump`) the Jump menu, `Ctrl+K` (or `:recent`) the latest files, `?` (or `:help`) the keys, `:log` the [log](Guide-to-start-page.md#log), `:favorites`, `:history`, `:hotlist` and `:browse` the lists of the file browser alone, or the file browser (they leave the board), `Esc` (or `Q`) close, `:exit` (or `:qa`) exit Blyant (asks first)
 - [`:colorscheme name`](Guide-to-jump-menu.md#changing-the-scheme-by-command) Use another color scheme (`Tab` completes the names)
 
 The line below the top bar is a ruler of the columns of the board, as above the logo in the logo editor: a dot for each column, `:` for every 5th and the tens as digits, to line the cards up when you move them.

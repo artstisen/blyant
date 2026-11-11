@@ -1011,7 +1011,7 @@ public partial class TextArea
                 DrawStatusLine(); // Remove the command from the bottom line
                 // The project picked is shown in the file browser, as a jump: changes that are not saved are asked
                 // about first
-                if (ProjectsBox.Pick() is { } project)
+                if (Jump.OnTop(() => _engine.IsModified, ProjectsBox.Pick) is { } project)
                 {
                     Jump.ToPlace(new JumpTarget(JumpKind.Directory, project), LeaveForJump);
                 }
@@ -1075,6 +1075,17 @@ public partial class TextArea
                 break;
             case EditorRequest.Zen:
                 ToggleZen();
+                break;
+            case EditorRequest.Exit:
+                // Blyant is left: changes that are not saved are asked about (Save, Discard, Cancel), else the usual
+                // question; where the cursor is, is kept as when the file is closed. (The text is drawn first, without
+                // the box of commands above the command line)
+                Draw();
+                Tools.HideCursor();
+                Jump.Exit(() => (_engine.IsModified ||
+                                 ChoiceBox.Confirm(DialogText.Exit, DialogText.ExitQuestion, string.Empty, false)) &&
+                                LeaveForJump());
+                RedrawAll();
                 break;
             case EditorRequest.WhitespaceToggle:
                 ShowWhitespace = !ShowWhitespace;

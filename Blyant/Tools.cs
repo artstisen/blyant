@@ -582,7 +582,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":completions", Lang.T("Completions editor"), false));
             _shortcutList.Add(new Shortcut(":log :restart", Lang.T("View log/Restart Blyant"), false));
             _shortcutList.Add(new Shortcut(":reset", DialogText.ConfigReset, false));
-            _shortcutList.Add(new Shortcut(":q :exit", Lang.T("Exit Blyant (asks first)"), false));
+            _shortcutList.Add(new Shortcut(":q :exit :qa", Lang.T("Exit Blyant (asks first)"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Configuration"), Lang.T("The pages General, Layout, Editor and System"), false));
             _shortcutList.Add(new Shortcut("j k 1-9", Lang.T("Select a setting (or the number of its row)"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Startup"), Lang.T("The start page, the file browser or a blank page"), false));
@@ -660,7 +660,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":", Lang.T("Command line (Tab completes the command)"), false));
             _shortcutList.Add(new Shortcut("  Up Down", Lang.T("Earlier commands of this page"), false));
             _shortcutList.Add(new Shortcut("Esc Q :q", Lang.T("Close the file browser"), false));
-            _shortcutList.Add(new Shortcut(":exit", Lang.T("Exit Blyant (asks first)"), false));
+            _shortcutList.Add(new Shortcut(":exit :qa", Lang.T("Exit Blyant (asks first)"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Text files"), Lang.T("Opened in the editor"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Saving"), Lang.T("As UTF-8, with the line endings of the file"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Not UTF-8"), Lang.T("Can be converted (replace file or save copy)"), false));
@@ -691,6 +691,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":", Lang.T("Command line (Tab completes the command)"), false));
             _shortcutList.Add(new Shortcut("  Up Down", Lang.T("Earlier commands of this page"), false));
             _shortcutList.Add(new Shortcut("Esc Q h -", Lang.T("Back to the file browser"), false));
+            _shortcutList.Add(new Shortcut(":exit :qa", Lang.T("Exit Blyant (asks first)"), false));
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionFavorites, true));
             _shortcutList.Add(new Shortcut(":board", Lang.T("The corkboard: files pinned as cards"), false));
             _shortcutList.Add(new Shortcut(":pin", Lang.T("Pin the selected file or folder to the corkboard"), false));
@@ -745,6 +746,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":", Lang.T("Command line (Tab completes the command)"), false));
             _shortcutList.Add(new Shortcut("  Up Down", Lang.T("Earlier commands of this page"), false));
             _shortcutList.Add(new Shortcut("Esc Q F h -", Lang.T("Back to the file browser"), false));
+            _shortcutList.Add(new Shortcut(":exit :qa", Lang.T("Exit Blyant (asks first)"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("The list"), Lang.T("Kept in favorites.txt in the data directory"), false));
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionHistory, true));
             _shortcutList.Add(new Shortcut(":board", Lang.T("The corkboard: files pinned as cards"), false));
@@ -774,6 +776,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":", Lang.T("Command line (Tab completes the command)"), false));
             _shortcutList.Add(new Shortcut("  Up Down", Lang.T("Earlier commands of this page"), false));
             _shortcutList.Add(new Shortcut("Esc Q O h -", Lang.T("Back to the file browser"), false));
+            _shortcutList.Add(new Shortcut(":exit :qa", Lang.T("Exit Blyant (asks first)"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("The list"), Lang.F("The last {0} files opened, kept in history.txt", FileHistory.MaxCount), false));
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionHotlist, true));
             _shortcutList.Add(new Shortcut(":board", Lang.T("The corkboard: files pinned as cards"), false));
@@ -806,6 +809,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":", Lang.T("Command line (Tab completes the command)"), false));
             _shortcutList.Add(new Shortcut("  Up Down", Lang.T("Earlier commands of this page"), false));
             _shortcutList.Add(new Shortcut("Esc Q W h -", Lang.T("Back to the file browser"), false));
+            _shortcutList.Add(new Shortcut(":exit :qa", Lang.T("Exit Blyant (asks first)"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("The list"), Lang.F("At most {0} directories, kept in hotlist.txt", DirectoryHotlist.MaxCount), false));
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionBoard, true));
             _shortcutList.Add(new Shortcut(":board", Lang.T("The corkboard: files pinned as cards"), false));
@@ -852,6 +856,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("  Up Down", Lang.T("Earlier commands of this page"), false));
             _shortcutList.Add(new Shortcut("? :help", Lang.T("Show this help"), false));
             _shortcutList.Add(new Shortcut("Esc Q :q", Lang.T("Close the corkboard"), false));
+            _shortcutList.Add(new Shortcut(":exit :qa", Lang.T("Exit Blyant (asks first)"), false));
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionProjects, true));
             _shortcutList.Add(new Shortcut("O :projects :pro", Lang.T("Open project (start page; E in the file browser)"), false));
             _shortcutList.Add(new Shortcut("j k gg G", Lang.T("Select a project"), false));
@@ -873,6 +878,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("  Up Down", Lang.T("Earlier commands of this page"), false));
             _shortcutList.Add(new Shortcut("? :help", Lang.T("The keys of the list (this help)"), false));
             _shortcutList.Add(new Shortcut("Esc Q :q", Lang.T("Close the list"), false));
+            _shortcutList.Add(new Shortcut(":exit :qa", Lang.T("Exit Blyant (asks first)"), false));
             _shortcutList.Add(new Shortcut(string.Empty, DialogText.HelpSectionJump, true));
             _shortcutList.Add(new Shortcut(":board", Lang.T("The corkboard: files pinned as cards"), false));
             _shortcutList.Add(new Shortcut(":jump :ju :jmp", Lang.T("Open the Jump menu (from most places)"), false));
@@ -889,6 +895,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("B", Lang.T("Bookmark the selected place (bookmarks.txt)"), false));
             _shortcutList.Add(new Shortcut("I D", Lang.T("Info/Remove (from Recent or Bookmarks)"), false));
             _shortcutList.Add(new Shortcut("Esc Q", Lang.T("Close the Jump menu"), false));
+            _shortcutList.Add(new Shortcut(":exit :qa", Lang.T("Exit Blyant (asks first)"), false));
             _shortcutList.Add(new Shortcut("Ctrl+K :recent", Lang.T("The latest files: Enter or 1-9 opens one"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Recent"), Lang.T("The places jumped to, the latest first (jump.txt)"), false));
             _shortcutList.Add(new Shortcut("  " + Lang.T("Projects"), Lang.T("The projects: Enter shows one in the file browser"), false));
@@ -1003,6 +1010,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":wq :x ZZ", Lang.T("Save and close editor"), false));
             _shortcutList.Add(new Shortcut(":q Esc", Lang.T("Close editor (asks to save changes)"), false));
             _shortcutList.Add(new Shortcut(":q! ZQ", Lang.T("Close editor without saving"), false));
+            _shortcutList.Add(new Shortcut(":exit :qa", Lang.T("Exit Blyant (asks to save changes first)"), false));
             _shortcutList.Add(new Shortcut("Ctrl+C", Lang.T("Does not close the editor (it tells how to)"), false));
             _shortcutList.Add(new Shortcut(":e :e!", Lang.T("Read the file again (!: drop changes)"), false));
             _shortcutList.Add(new Shortcut(":help", Lang.T("Show this help"), false));

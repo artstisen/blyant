@@ -277,11 +277,9 @@ internal static class StartMenu
             case "quit":
             case "exit":
             case "q":
+            case "qa":
                 // As Q on the Start tab: asked first
-                if (ChoiceBox.Confirm(DialogText.Exit, DialogText.ExitQuestion, string.Empty, false))
-                {
-                    Tools.ExitApplication();
-                }
+                Blyant.Jump.Exit();
 
                 break;
             default:

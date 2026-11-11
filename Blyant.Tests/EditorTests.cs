@@ -1298,6 +1298,9 @@ public class EditorTests
         Assert.Equal(string.Empty, editor.LineEndingsArgument);
         Assert.Equal(EditorRequest.WhitespaceToggle, editor.Type(":whitespace<CR>"));
         Assert.Equal(EditorRequest.Zen, editor.Type(":zen<CR>"));
+        // ":exit" (":qa"): leave Blyant (the host asks about the changes)
+        Assert.Equal(EditorRequest.Exit, editor.Type(":exit<CR>"));
+        Assert.Equal(EditorRequest.Exit, editor.Type(":qa<CR>"));
         Assert.Equal(EditorRequest.Bom, editor.Type(":bom ON<CR>"));
         Assert.Equal("on", editor.BomArgument);
         Assert.Equal(EditorRequest.Bom, editor.Type(":bom<CR>"));

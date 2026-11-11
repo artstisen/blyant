@@ -328,6 +328,12 @@ internal static class ProjectsBox
                 // The log (the page behind the list is drawn again when the list is closed, as after the help)
                 Jump.ShowLog();
                 return CommandResult.None;
+            case "exit":
+            case "qa":
+                // Leave Blyant (not while the editor it was opened from has changes that are not saved)
+                Jump.Exit();
+                Tools.ClearScreen();
+                return CommandResult.None;
             case "favorites":
             case "favs":
             case "history":

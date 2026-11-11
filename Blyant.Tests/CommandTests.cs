@@ -44,7 +44,7 @@ public class CommandTests
     {
         // After the last of them, what was typed is shown again
         Assert.Equal("collapse color colorscheme co collapse", Tabs(CommandContext.Favorites, "co", 5));
-        Assert.Equal("expand ex expand", Tabs(CommandContext.Favorites, "ex", 3));
+        Assert.Equal("exit expand ex", Tabs(CommandContext.Favorites, "ex", 3));
         // Shift+Tab goes the other way
         Assert.Equal("colorscheme color collapse co colorscheme", Tabs(CommandContext.Favorites, "co", 5, false));
         // Each place has its own commands
@@ -59,7 +59,7 @@ public class CommandTests
     public void Tab_WithNothingTyped_GoesThroughAllTheCommands()
     {
         var names = Commands.Names(CommandContext.Search);
-        Assert.Equal(new[] { "board", "book", "bookmark", "bookmark!", "browse", "close", "colorscheme", "favorite", "favorites", "file", "find",
+        Assert.Equal(new[] { "board", "book", "bookmark", "bookmark!", "browse", "close", "colorscheme", "exit", "favorite", "favorites", "file", "find",
             "goto", "help", "history", "hotlist", "info", "jump", "log", "nonumber", "number", "open", "pin", "quit", "recent" }, names);
         Assert.Equal(string.Join(" ", names) + "  board", Tabs(CommandContext.Search, "", names.Count + 2));
     }

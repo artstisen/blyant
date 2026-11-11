@@ -203,6 +203,13 @@ internal static partial class FileExplorer
             if (key.KeyChar == ':')
             {
                 var command = CommandLine.Read(CommandContext.Favorites);
+                if (command != null && CommandLine.Name(command) is "exit" or "qa")
+                {
+                    // Leave Blyant (asked first)
+                    Jump.Exit();
+                    continue;
+                }
+
                 if (command != null && CommandLine.Name(command) is "jump" or "ju" or "jmp" or "board" or "corkboard"
                         or "favorites" or "favs" or "history" or "hist" or "hotlist" or "hot" or "browse"
                         or "file" or "open")

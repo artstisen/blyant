@@ -96,6 +96,7 @@ The files are in the folder of the project, so they go with it when it is copied
 - `:new name`, `:add` and `:remove` A new project, a folder added, and a project off the list, as `P`, `A` and `D`
 - `:help` (or `?`) The keys of the list
 - `:q` (`:quit`, `:close`) Close the list, as `Esc`
+- `:exit` (or `:qa`) Exit Blyant (asks first; from the editor, about changes that are not saved)
 
 The list of projects can also be opened from the file browser (`E` or `:projects`, `:pro`: the project picked is shown in the pane with the focus) and from the editor (`:projects`, `:pro`: the project picked is shown in the file browser, as a jump, after asking about changes that are not saved).
 
@@ -191,7 +192,7 @@ On every tab of the start page (Start, the pages of Configuration, Help), `:` op
 - `:jump` (or `:ju`, `:jmp`) The [Jump menu](Guide-to-jump-menu.md#jump-menu), and `:jump general` a page of Blyant at once; `:book 3` Jump to bookmark 3; [`:colorscheme name`](Guide-to-jump-menu.md#changing-the-scheme-by-command) Use another color scheme; `:splits` The files closed with another file beside them, to open one with it again (see [the guide to the editor](Guide-to-editor.md#other-commands))
 - `:help` (or `:h`) The help of the start page, as `?`; `:about` The about page; `:quick` (or `:guide`) The quick guide
 - `:scheme` The color schemes; `:logo` The logos; `:snippet` (or `:snip`) The snippet editor; `:completions` (or `:comp`) The completions editor; `:clipboard` The clipboard settings; `:log` The log
-- `:restart` Restart Blyant (asks first); `:reset` Reset all settings (asks first, as on the System page); `:quit`, `:exit` (or `:q`) Exit Blyant (asks first)
+- `:restart` Restart Blyant (asks first); `:reset` Reset all settings (asks first, as on the System page); `:quit`, `:exit` (or `:q`, `:qa`) Exit Blyant (asks first)
 
 The command names are the same in all languages.
 
@@ -270,7 +271,7 @@ They are saved however the browser is left (closed, a jump to another page, or e
 - `Tab` on the command line completes the command you are typing, and goes through the commands of the file browser when pressed again; `Up` and `Down` bring back the commands given in the file browser before
 - `?` Help
 - `Esc`, `Q` or `:q` Close the file browser
-- `:exit` Exit Blyant (asks first)
+- `:exit` (or `:qa`) Exit Blyant (asks first). It works on every command line: also in the lists of the file browser, the Jump menu, the list of projects, the corkboard and the editor
 
 A text file is opened in the [editor](Guide-to-editor.md), where `:w` saves it and `:q` returns to the browser. Files are saved as UTF-8 with the line endings they had. Files larger than 10 MB and files that are not text are not opened.
 

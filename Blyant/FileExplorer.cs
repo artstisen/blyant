@@ -560,14 +560,10 @@ internal static partial class FileExplorer
                     break;
                 }
 
-                if (name == "exit" && _mode == BrowseMode.Edit)
+                if (name is "exit" or "qa" && _mode == BrowseMode.Edit)
                 {
                     // Leave Blyant (if the user wants that)
-                    if (ChoiceBox.Confirm(DialogText.Exit, DialogText.ExitQuestion, string.Empty, false))
-                    {
-                        Tools.ExitApplication();
-                    }
-
+                    Jump.Exit();
                     Draw(true);
                     continue;
                 }

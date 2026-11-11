@@ -399,7 +399,8 @@ internal static class Jump
     {
         // Turned off (Configuration: Modules): told in a box (Ctrl+O and ":jump" come here)
         if (Modules.JumpTurnedOff()) return;
-        var target = JumpMenu.Pick(current);
+        // (the page it is opened from is below it while it is shown: ":exit" in the menu asks about its changes)
+        var target = OnTop(hasChanges, () => JumpMenu.Pick(current));
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
         if (target != null) Go(target, beforeLeaving, hasChanges, here);
     }
@@ -570,6 +571,43 @@ internal static class Jump
     // what tells if it has changes that are not saved. A page below cannot be asked to save from the page on top
     // (the editor saves to the file being edited, and a page on top can be another file of Blyant)
     private static readonly List<Func<bool>> PagesBelow = new();
+
+    /// <summary>
+    /// Show something on top of a page (the Jump menu, the list of projects from the editor): the page is one of the
+    /// pages below while it is shown, so ":exit" there does not leave its changes that are not saved
+    /// </summary>
+    internal static T OnTop<T>(Func<bool>? hasChanges, Func<T> show)
+    {
+        PagesBelow.Add(hasChanges ?? (() => false));
+        try
+        {
+            return show();
+        }
+        finally
+        {
+            PagesBelow.RemoveAt(PagesBelow.Count - 1);
+        }
+    }
+
+    /// <summary>
+    /// ":exit" (":qa") on a page: leave Blyant. Not while a page below has changes that are not saved (it is told,
+    /// as for a jump); else the page asks about its own changes (beforeLeaving: the editor asks to save them, or the
+    /// usual question), or the usual question is asked
+    /// </summary>
+    internal static void Exit(Func<bool>? beforeLeaving = null)
+    {
+        ChoiceBox.Forget();
+        if (PagesBelow.Any(hasChanges => hasChanges()))
+        {
+            ChoiceBox.Message(DialogText.Exit, Lang.T("A page below this one has changes that are not saved"),
+                Lang.T("Close this page, and save or discard them there first."));
+            return;
+        }
+
+        var leave = beforeLeaving?.Invoke() ??
+                    ChoiceBox.Confirm(DialogText.Exit, DialogText.ExitQuestion, string.Empty, false);
+        if (leave) Tools.ExitApplication();
+    }
 
     // A page shown on top of the page the jump was made from, which is one of the pages below while it is shown
     private static void OpenOnTop(JumpTarget target, Func<bool>? hasChanges)

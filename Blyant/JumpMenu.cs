@@ -1645,6 +1645,13 @@ internal static class JumpMenu
             return JumpToPage(CommandLine.Argument(command));
         }
 
+        if (CommandLine.Name(command) is "exit" or "qa")
+        {
+            // Leave Blyant (not while the page the menu was opened from has changes that are not saved)
+            Jump.Exit();
+            return false;
+        }
+
         if (CommandLine.Name(command) is "board" or "corkboard")
         {
             return JumpToPage(Jump.BoardPage(CommandLine.Argument(command)));
