@@ -1165,6 +1165,7 @@ en: "j/k Select | Enter Open | D Remove | / Filter | Esc Close"
 
 # StartArgument.cs
 en: "One file or directory at a time: {0}"
+en: "No file to open at line {0}"
 
 # StartMenu.cs
 en: "This cannot be undone"

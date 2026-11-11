@@ -2259,6 +2259,8 @@ fi: "j/k Valitse | Enter Avaa | D Poista | / Suodata | Esc Sulje"
 # StartArgument.cs
 en: "One file or directory at a time: {0}"
 fi: "Yksi tiedosto tai kansio kerrallaan: {0}"
+en: "No file to open at line {0}"
+fi: "Ei tiedostoa avattavaksi riviltä {0}"
 
 # StartMenu.cs
 en: "This cannot be undone"

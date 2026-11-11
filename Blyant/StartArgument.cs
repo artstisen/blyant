@@ -43,8 +43,21 @@ internal static class StartArgument
             path = argument;
         }
 
+        // A line without a file to open at it: told (Blyant starts as it is set to)
+        if (path == null && line is { } at)
+        {
+            return new Arguments(null, null, Lang.F("No file to open at line {0}", at));
+        }
+
         return new Arguments(path, line);
     }
+
+    /// <summary>
+    /// The first of the arguments that is an option ("--help", "-v" ...), wherever it is given ("blyant +12 --help",
+    /// "blyant notes.md -v"), or null
+    /// </summary>
+    internal static string? FirstOption(IReadOnlyList<string> arguments, string currentDirectory) =>
+        arguments.FirstOrDefault(argument => IsOption(argument, currentDirectory));
 
     // "+12": the line 12 (a line before the first is the first), or null for another argument
     private static int? LineOf(string argument, string currentDirectory)

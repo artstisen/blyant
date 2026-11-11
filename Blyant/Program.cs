@@ -7,10 +7,10 @@ class Program
         // A path given (relative to the directory Blyant is started in, which is read before anything else)
         var currentDirectory = Directory.GetCurrentDirectory();
         // An option (--help, --version) is answered before anything is shown (also to a pipe, as "blyant --help |
-        // less"): it is never taken for the name of a file to make
-        if (args.Length > 0 && StartArgument.IsOption(args[0], currentDirectory))
+        // less"), wherever it is given ("blyant +12 --help"): it is never taken for the name of a file to make
+        if (StartArgument.FirstOption(args, currentDirectory) is { } option)
         {
-            Environment.Exit(StartArgument.AnswerOption(args[0], Console.Out));
+            Environment.Exit(StartArgument.AnswerOption(option, Console.Out));
         }
 
         // Keys are read one at a time from the terminal: with its input from a file or a pipe Blyant cannot run

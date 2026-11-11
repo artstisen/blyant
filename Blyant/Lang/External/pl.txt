@@ -2259,6 +2259,8 @@ pl: "j/k Wybierz | Enter Otwórz | D Usuń | / Filtr | Esc Zamknij"
 # StartArgument.cs
 en: "One file or directory at a time: {0}"
 pl: "Jeden plik lub katalog naraz: {0}"
+en: "No file to open at line {0}"
+pl: "Brak pliku do otwarcia w wierszu {0}"
 
 # StartMenu.cs
 en: "This cannot be undone"

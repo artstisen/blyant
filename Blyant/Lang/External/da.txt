@@ -2259,6 +2259,8 @@ da: "j/k Vælg | Enter Åbn | D Fjern | / Filter | Esc Luk"
 # StartArgument.cs
 en: "One file or directory at a time: {0}"
 da: "Én fil eller mappe ad gangen: {0}"
+en: "No file to open at line {0}"
+da: "Ingen fil at åbne ved linje {0}"
 
 # StartMenu.cs
 en: "This cannot be undone"

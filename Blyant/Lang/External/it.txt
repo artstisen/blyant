@@ -2259,6 +2259,8 @@ it: "j/k Seleziona | Enter Apri | D Rimuovi | / Filtro | Esc Chiudi"
 # StartArgument.cs
 en: "One file or directory at a time: {0}"
 it: "Un file o una cartella alla volta: {0}"
+en: "No file to open at line {0}"
+it: "Nessun file da aprire alla riga {0}"
 
 # StartMenu.cs
 en: "This cannot be undone"

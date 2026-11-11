@@ -2259,6 +2259,8 @@ sv: "j/k Välj | Enter Öppna | D Ta bort | / Filter | Esc Stäng"
 # StartArgument.cs
 en: "One file or directory at a time: {0}"
 sv: "En fil eller mapp i taget: {0}"
+en: "No file to open at line {0}"
+sv: "Ingen fil att öppna på rad {0}"
 
 # StartMenu.cs
 en: "This cannot be undone"

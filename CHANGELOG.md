@@ -1,7 +1,7 @@
 # Changes
 
 ## v1.4.5 (2026-11-11)
-- **A line to open a file at**: `blyant +12 notes.md` opens the file at line 12 (the `+` before or after the file), as Vim and other editors are started. Tools that open a file in an editor at a line, such as [Blyant Validator](https://github.com/artstisen/blyant-validator) (`:editor "C:\path\to\Blyant.exe" +{line}`), can open it in Blyant. See [Starting Blyant with a file](Guide-to-installation.md#starting-blyant-with-a-file) and [Blyant Validator](Guide-to-installation.md#blyant-validator).
+- **A line to open a file at**: `blyant +12 notes.md` opens the file at line 12 (the `+` before or after the file), as Vim and other editors are started. An option is answered wherever it is given (`blyant +12 --help`), and `+12` without a file is told. Tools that open a file in an editor at a line, such as [Blyant Validator](https://github.com/artstisen/blyant-validator) (`:editor "C:\path\to\Blyant.exe" +{line}`), can open it in Blyant. See [Starting Blyant with a file](Guide-to-installation.md#starting-blyant-with-a-file) and [Blyant Validator](Guide-to-installation.md#blyant-validator).
 - **`:exit` on every command line** (or `:qa`, as in Vim): it exits Blyant from the editor, the lists of the file browser, the Jump menu, the list of projects and the corkboard too, not only from the start page and the file browser, asking first. In the editor, changes that are not saved are asked about (save, discard or stay); on a page opened on top of the editor it is not done while the editor has such changes. Back to the program that opened Blyant in one step, as [Blyant Validator](Guide-to-installation.md#blyant-validator).
 
 ## v1.4.4 (2026-11-10)

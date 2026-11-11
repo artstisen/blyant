@@ -2259,6 +2259,8 @@ es: "j/k Elegir | Enter Abrir | D Quitar | / Filtro | Esc Cerrar"
 # StartArgument.cs
 en: "One file or directory at a time: {0}"
 es: "Un archivo o carpeta a la vez: {0}"
+en: "No file to open at line {0}"
+es: "Ningún archivo que abrir en la línea {0}"
 
 # StartMenu.cs
 en: "This cannot be undone"

@@ -71,11 +71,11 @@ blyant --help                  Show how Blyant is started (also -h)
 blyant --version               Show the version (also -v)
 ```
 
-A path that is not a full path is taken from the directory you are in. `+12` is the line the file is opened at, as Vim and other editors are started: a line past the end of the file is its last line, and a file named `+12` that is there is opened as that file. One file or directory is given at a time.
+A path that is not a full path is taken from the directory you are in. `+12` is the line the file is opened at, as Vim and other editors are started: a line past the end of the file is its last line, and a file named `+12` that is there is opened as that file, and `+12` without a file is told. One file or directory is given at a time.
 
 Programs that open a file in your editor at a line can use Blyant this way, as [Blyant Validator](#blyant-validator) does.
 
-A file that is not there yet (in a directory that is) is made if you want that: Blyant asks first. A word starting with `-` is an option, not a file to make (unless a file or directory of that name is there): an option Blyant does not know is told, with the usage.
+A file that is not there yet (in a directory that is) is made if you want that: Blyant asks first. A word starting with `-` is an option, not a file to make (unless a file or directory of that name is there), wherever it is given (`blyant +12 --help`): an option Blyant does not know is told, with the usage.
 
 (On Windows the program is `Blyant.exe`, and the portable version is started with `dotnet Blyant.dll notes.md`.)
 

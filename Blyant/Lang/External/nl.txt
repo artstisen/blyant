@@ -2259,6 +2259,8 @@ nl: "j/k Kiezen | Enter Openen | D Verwijderen | / Filter | Esc Sluiten"
 # StartArgument.cs
 en: "One file or directory at a time: {0}"
 nl: "Eén bestand of map tegelijk: {0}"
+en: "No file to open at line {0}"
+nl: "Geen bestand om te openen op regel {0}"
 
 # StartMenu.cs
 en: "This cannot be undone"

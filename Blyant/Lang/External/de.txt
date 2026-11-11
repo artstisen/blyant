@@ -2259,6 +2259,8 @@ de: "j/k Wählen | Enter Öffnen | D Entfernen | / Filter | Esc Zu"
 # StartArgument.cs
 en: "One file or directory at a time: {0}"
 de: "Eine Datei oder ein Ordner auf einmal: {0}"
+en: "No file to open at line {0}"
+de: "Keine Datei zum Öffnen in Zeile {0}"
 
 # StartMenu.cs
 en: "This cannot be undone"
