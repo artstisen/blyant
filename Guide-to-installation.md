@@ -73,11 +73,31 @@ blyant --version               Show the version (also -v)
 
 A path that is not a full path is taken from the directory you are in. `+12` is the line the file is opened at, as Vim and other editors are started: a line past the end of the file is its last line, and a file named `+12` that is there is opened as that file. One file or directory is given at a time.
 
-Programs that open a file in your editor at a line can use Blyant this way. In [Blyant Validator](https://github.com/artstisen/blyant-validator), for example, set Blyant as the editor with `:editor "C:\path\to\Blyant.exe" +{line}` (on Linux and macOS the path of `Blyant`): it opens the file at the line of the problem. When you are done, `:wq` saves and closes the file, and `:exit` (or `:qa`) leaves Blyant at once, back to Blyant Validator. Closing the editor (`:q`) shows the file browser in the directory of the file, and closing the file browser the start page, as after a jump from the [Jump menu](Guide-to-jump-menu.md#jump-menu); `:exit` leaves Blyant.
+Programs that open a file in your editor at a line can use Blyant this way, as [Blyant Validator](#blyant-validator) does.
 
 A file that is not there yet (in a directory that is) is made if you want that: Blyant asks first. A word starting with `-` is an option, not a file to make (unless a file or directory of that name is there): an option Blyant does not know is told, with the usage.
 
 (On Windows the program is `Blyant.exe`, and the portable version is started with `dotnet Blyant.dll notes.md`.)
+
+## Blyant Validator
+[Blyant Validator](https://github.com/artstisen/blyant-validator) is a companion tool to Blyant: it validates and formats HTML, CSS, XML and Markdown in the terminal. It also works on its own, but with Blyant as its editor the two work as one: a problem it finds opens in Blyant at its line, and you are back in the validator when you are done.
+
+Set Blyant as the editor in Blyant Validator:
+
+```
+:editor "C:\path\to\Blyant.exe" +{line}
+```
+
+On Linux and macOS, give the path of `Blyant`. Blyant then opens the file at the line of the problem.
+
+When you are done:
+
+- `:wq` saves and closes the file
+- `:exit` (or `:qa`) leaves Blyant at once, back to Blyant Validator. If the file has changes that are not saved, you are asked to save or discard them first (or to stay)
+
+`:exit` works on every command line of Blyant, so it also takes you back from a page you went to while editing. The one exception is a page opened on top of the editor (the corkboard, the Jump menu): while the file has changes that are not saved, `:exit` there is refused, so close the page and save the file first.
+
+Closing the editor with `:q` instead shows the file browser in the directory of the file, and closing the file browser shows the start page, as after a jump from the [Jump menu](Guide-to-jump-menu.md#jump-menu).
 
 ## Language files
 English is built into Blyant. The other languages are text files in a folder named `lang` next to the Blyant program: `de.txt` (German), `da.txt` (Danish), `nb.txt` (Norwegian), `sv.txt` (Swedish), `es.txt` (Spanish), `fr.txt` (French), `it.txt` (Italian), `pl.txt` (Polish), `nl.txt` (Dutch) and `fi.txt` (Finnish).

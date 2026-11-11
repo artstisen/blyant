@@ -69,6 +69,14 @@ See the [guide to the corkboard](Guide-to-corkboard.md).
 ## Blyant Validator
 **[Blyant Validator](https://github.com/artstisen/blyant-validator)** is a companion tool, which also works on its own: validate and format HTML, CSS, XML and Markdown, side by side with your editor, in any terminal.
 
+The two work together. Set Blyant as the editor of Blyant Validator, and a problem it finds opens in Blyant at its line:
+
+```
+:editor "C:\path\to\Blyant.exe" +{line}
+```
+
+(On Linux and macOS, give the path of `Blyant`.) Fix the problem, then `:wq` saves and closes the file. `:exit` (or `:qa`) leaves Blyant and takes you back to Blyant Validator at once. If the file has changes that are not saved, `:exit` asks about them first. See [Blyant Validator](Guide-to-installation.md#blyant-validator) in the installation guide.
+
 ## Screenshots
 The screenshots are of the real program, made with [tools/screenshots.py](tools/screenshots.py) from a made-up writing project, in the color schemes Default, Deep Blue and Tasty Bytes.
 

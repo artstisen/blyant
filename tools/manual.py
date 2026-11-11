@@ -39,6 +39,7 @@ CHAPTERS = [
         (INSTALL, 'Install .NET', 'all', None),
         (INSTALL, 'Good to know', 'all', None),
         (INSTALL, 'Starting Blyant with a file', 'all', None),
+        (INSTALL, 'Blyant Validator', 'all', None),
         (JUMP, 'Guide to the Jump menu, color schemes and logos', 'intro', 'Keys used everywhere'),
         (START, 'Start page', 'intro', None),
         (START, 'Start', 'all', 'Start tab'),
