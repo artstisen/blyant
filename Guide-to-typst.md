@@ -120,3 +120,5 @@ The [syntax reference of Typst](https://typst.app/docs/reference/syntax/) lists 
 
 ## How Blyant reads Typst
 The colors come from a simple reading of the text, a line at a time, and not from the Typst compiler, so a few things are not found: `*strong*` and `_emphasis_` over two lines, and the marks in the middle of a word (Typst does not use them there either). Code is colored after `#` and in its brackets, also over several lines, and a statement (`#let`, `#set`, `#show` ...) goes on to the end of its line. Blyant does not run Typst or check the document: the errors are told by `typst compile` and `typst watch`.
+
+[Blyant Validator](Guide-to-installation.md#blyant-validator), the companion tool, checks Typst files too, in a terminal beside Blyant: it shows the errors of each file of a folder, checked again each time you save, and opens a problem in Blyant at its line (`:exit` takes you back). Its `:typst` makes the PDF.

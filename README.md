@@ -67,7 +67,7 @@ See the [guide to the corkboard](Guide-to-corkboard.md).
 - Runs on Windows, Linux (also Raspberry Pi) and macOS, as a single file with nothing else to install
 
 ## Blyant Validator
-**[Blyant Validator](https://github.com/artstisen/blyant-validator)** is a companion tool, which also works on its own: validate and format HTML, CSS, XML and Markdown, side by side with your editor, in any terminal.
+**[Blyant Validator](https://github.com/artstisen/blyant-validator)** is a companion tool, which also works on its own: validate HTML, CSS, XML, Markdown and Typst, and format HTML, CSS and XML, side by side with your editor, in any terminal. It checks a file again each time it is saved, and makes a Typst document into a PDF with `:typst`.
 
 The two work together. Set Blyant as the editor of Blyant Validator, and a problem it finds opens in Blyant at its line:
 
@@ -123,7 +123,7 @@ Blyant is operated in the style of Vim: the editor has Normal, Insert and Visual
 
 The guides are also put together as a **user manual**, in two forms:
 - **Markdown** (`Blyant-User-Manual.md`), in every release archive next to the program, to read in Blyant itself
-- **PDF** (`Blyant-User-Manual-1.4.5.pdf`), made with [Typst](https://typst.app), with a contents page and page numbers: a download of its own on the [releases page](https://github.com/artstisen/blyant/releases), to read or print
+- **PDF** (`Blyant-User-Manual-1.4.6.pdf`), made with [Typst](https://typst.app), with a contents page and page numbers: a download of its own on the [releases page](https://github.com/artstisen/blyant/releases), to read or print
 
 Inside Blyant, press `?` for the list of keys.
 
@@ -136,7 +136,7 @@ Inside Blyant, press `?` for the list of keys.
 | Core code base | Agnostic: no OS-specific logic, .NET handles the differences between the platforms |
 | Box drawing | Classic ASCII |
 | Console I/O encoding | UTF-8 |
-| Languages | English built in; German, Danish, Norwegian (bokmål), Swedish, Spanish, French, Italian, Polish, Dutch and Finnish as language files that can be changed, and more can be added (the commands and keys are the same in all languages). The language files are also a pack of their own on the releases page (`Blyant-languages-1.4.5.zip`) |
+| Languages | English built in; German, Danish, Norwegian (bokmål), Swedish, Spanish, French, Italian, Polish, Dutch and Finnish as language files that can be changed, and more can be added (the commands and keys are the same in all languages). The language files are also a pack of their own on the releases page (`Blyant-languages-1.4.6.zip`) |
 | Date/time format | ISO 8601 |
 | Software license | [MIT](LICENSE) |
 
