@@ -100,7 +100,7 @@ internal sealed partial class EditorEngine
     /// <summary>
     /// The widths of indent that can be set (Configuration: Editor), in spaces
     /// </summary>
-    internal static readonly int[] IndentWidths = [2, 4, 8];
+    internal static readonly IReadOnlyList<int> IndentWidths = [2, 4, 8];
 
     internal const int DefaultIndent = 4;
 
@@ -120,6 +120,13 @@ internal sealed partial class EditorEngine
     /// </summary>
     internal static int ParseIndent(string? value) =>
         int.TryParse(value?.Trim(), out var width) && IndentWidths.Contains(width) ? width : DefaultIndent;
+
+    /// <summary>
+    /// The width of indent after another (Enter in Configuration): 2, 4, 8, and round again
+    /// </summary>
+    internal static int NextIndent(int width) =>
+        IndentWidths[(IndentWidths.ToList().IndexOf(width) + 1) % IndentWidths.Count];
+
     internal const int MaxCommandLength = 64;
 
     internal TextBuffer Buffer { get; }

@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using Blyant.Format.Core;
+using System.Text;
 
 namespace Blyant;
 
@@ -259,6 +260,20 @@ public partial class TextArea
         _engine.ShowMessage(Zen ? Lang.T("Zen mode on (:zen turns it off)") : Lang.T("Zen mode off"), false);
     }
 
+    // The kind of file ":format" formats: by its name, as Blyant Validator tells it (a blank page: the kind of new
+    // files)
+    private static DocumentKind FormatKindOfFile() => SourceDocument.DetectKind(FileExplorer.IsUntitled
+        ? "new" + FileOperations.DefaultExtension
+        : FileExplorer.CurrentFileName);
+
+    // The setting indent (it can be changed in Configuration, opened from the Jump menu): Tab, ">>" and "<<" of both
+    // panes indent by the width set. Called when all is drawn again
+    private void FollowIndentSetting()
+    {
+        _engine.IndentWidth = EditorEngine.IndentSetting;
+        if (_otherPane != null) _otherPane.Engine.IndentWidth = EditorEngine.IndentSetting;
+    }
+
     // The frame of the setting Zen mode (it can also be changed in Configuration, opened from the Jump menu): when it
     // is not the one in use, the text moves up or down a row. Called when all is drawn again
     private void FollowZenSetting()
@@ -384,6 +399,10 @@ public partial class TextArea
                     ? SyntaxType.Ini
                     : SyntaxType.None;
         _engine.CompletionSyntax = fileType;
+        // ":format": the formatter of the kind of file, as Blyant Validator tells it by the name
+        _engine.FormatKind = peek == null && saveMode == SaveAsFile && !_singleLine && !readOnly
+            ? FormatKindOfFile()
+            : DocumentKind.Unknown;
         if (fileType != SyntaxType.None)
         {
             _engine.SyntaxDefault = fileType;
@@ -1439,6 +1458,7 @@ public partial class TextArea
                 var type = FileSyntax();
                 _engine.SyntaxDefault = type;
                 if (SyntaxHighlighter.ColorFiles) _engine.Syntax = type;
+                _engine.FormatKind = FormatKindOfFile();
                 _engine.SetMessage(Lang.F("Renamed to {0}", FileExplorer.CurrentFileName), false);
                 return;
             default:
@@ -1491,6 +1511,7 @@ public partial class TextArea
         _engine.SyntaxDefault = type;
         _engine.CompletionSyntax = type;
         _engine.Syntax = SyntaxHighlighter.ColorFiles ? type : SyntaxType.None;
+        _engine.FormatKind = FormatKindOfFile();
         RedrawAll();
         _engine.SetMessage(Lang.F("Saved as {0}: it is the file edited now", written), false);
     }
@@ -2240,6 +2261,7 @@ public partial class TextArea
     // Redraw the whole screen (after a dialog or message has been shown on top of the editor)
     private void RedrawAll()
     {
+        FollowIndentSetting();
         Tools.HideCursor();
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
         Tools.ClearScreen();

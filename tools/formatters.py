@@ -7,7 +7,8 @@ Their tests are copied too (Blyant.Tests/Format). The files are not changed by h
 Blyant Validator, and run this again.
 
 Usage:  python tools/formatters.py [path of Blyant Validator]   (default: ../_WEBCODER-VALIDATOR next to Blyant)
-        python tools/formatters.py --check [path]               (tells whether the copies are the same, writes nothing)
+        python tools/formatters.py --check [path]               (tells whether the copies are the same, and files
+                                                                 there that are not copies; writes nothing)
 """
 import os
 import re
@@ -87,10 +88,20 @@ def main():
             os.makedirs(os.path.dirname(path), exist_ok=True)
             with open(path, 'wb') as f:
                 f.write(data)
+    # The folders hold only the copies: a file there that is not in the lists (left from a copy before, when a file
+    # was taken off them) is told, and removed when copying
+    copies = {os.path.normcase(os.path.normpath(path)) for _, path in files}
+    stale = sorted(os.path.join(folder, name)
+                   for top in (TARGET, TESTS_TARGET) if os.path.isdir(top)
+                   for folder, _, names in os.walk(top) for name in names
+                   if os.path.normcase(os.path.normpath(os.path.join(folder, name))) not in copies)
     if check:
-        print('Blyant Validator %s: %s' % (version, ('differs: ' + ', '.join(differ)) if differ else 'the same'))
-        sys.exit(1 if differ else 0)
-    print('Blyant Validator %s: %d of %d files copied' % (version, len(differ), len(files)))
+        problems = differ + ['not a copy: ' + os.path.relpath(path, ROOT) for path in stale]
+        print('Blyant Validator %s: %s' % (version, ('differs: ' + ', '.join(problems)) if problems else 'the same'))
+        sys.exit(1 if problems else 0)
+    for path in stale:
+        os.remove(path)
+    print('Blyant Validator %s: %d of %d files copied, %d removed' % (version, len(differ), len(files), len(stale)))
 
 
 if __name__ == '__main__':

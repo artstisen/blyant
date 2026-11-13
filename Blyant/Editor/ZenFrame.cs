@@ -77,7 +77,8 @@ internal sealed class ZenFrame : EditorFrame
             other = Fit(facts.ReferenceName != null ? ReferenceLabel(facts.ReferenceName) : facts.Title, pane.Width);
         }
 
-        var key = tag + TextArea.ZenColors + "\u0001" + name + "\u0001" + readOnly + "\u0001" + other + "\u0001" + facts.ReferenceFocused +
+        var key = tag + TextArea.ZenColors + "\u0001" + name + "\u0001" + readOnly + "\u0001" + other + "\u0001" +
+                  facts.ReferenceFocused +
                   "\u0001" + facts.FocusLeft + (facts.Completions.Count > 0 ? CompletionsKey(facts) : string.Empty);
         if (key == ShownTop) return;
         ShownTop = key;
@@ -88,7 +89,9 @@ internal sealed class ZenFrame : EditorFrame
         Tools.SetCursorEx(row, facts.Other == null ? 0 : facts.FocusLeft);
         // The mode in the color of its mode, as the mode label outside Zen mode (setting "zencolors"), or in the color
         // of the name (of the text)
-        ConsoleColors.SetColors(TextArea.ZenColors && tag.Length > 0 ? ModeColor(facts) : ConsoleColors.ColorPreset.Normal);
+        ConsoleColors.SetColors(TextArea.ZenColors && tag.Length > 0
+            ? ModeColor(facts)
+            : ConsoleColors.ColorPreset.Normal);
         Console.Write(tag);
         ConsoleColors.SetColors(facts.ReferenceFocused
             ? ConsoleColors.ColorPreset.OtherTabs

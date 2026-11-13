@@ -1102,7 +1102,8 @@ internal static class Tools
             _shortcutList.Add(new Shortcut("U u ~", Lang.T("UPPERCASE/lowercase/switch case"), false));
             _shortcutList.Add(new Shortcut("O o", Lang.T("Other corner on the line/Opposite corner"), false));
             _shortcutList.Add(new Shortcut(string.Empty, Lang.T("Insert mode"), true));
-            _shortcutList.Add(new Shortcut("Tab", Lang.F("Insert blank space x {0}", EditorEngine.IndentSetting), false));
+            _shortcutList.Add(new Shortcut("Tab", Lang.F("Insert blank space x {0}", EditorEngine.IndentSetting),
+                false));
             _shortcutList.Add(new Shortcut("CTRL+W", Lang.T("Delete word before the cursor"), false));
             _shortcutList.Add(new Shortcut("CTRL+U", Lang.T("Delete line before the cursor"), false));
             _shortcutList.Add(new Shortcut("CTRL+R", Lang.T("Paste current memory string"), false));

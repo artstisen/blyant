@@ -534,6 +534,17 @@ public class EditorTests
         Assert.False(editor.IsModified);
     }
 
+    [Fact]
+    public void Indent_NextWidth_GoesRound_AndAWidthNotOfTheListIsTheDefault()
+    {
+        Assert.Equal(new[] { 2, 4, 8 }, EditorEngine.IndentWidths);
+        Assert.Equal(8, EditorEngine.NextIndent(4));
+        Assert.Equal(2, EditorEngine.NextIndent(8));
+        Assert.Equal(4, EditorEngine.NextIndent(2));
+        // (a width not of the list: the first)
+        Assert.Equal(2, EditorEngine.NextIndent(3));
+    }
+
     [Theory]
     [InlineData(2)]
     [InlineData(4)]

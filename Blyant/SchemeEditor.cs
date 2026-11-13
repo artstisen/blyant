@@ -958,7 +958,10 @@ internal static class SchemeEditor
                 (ConsoleColors.ColorPreset.AttentionInverted, " " + Lang.T("Attention") + " ")
             },
             // (with a line number, as in the box of the latest files)
-            new[] { (ConsoleColors.ColorPreset.BoxNumber, " 1"), (ConsoleColors.ColorPreset.BoxText, " " + Lang.T("Text")) },
+            new[]
+            {
+                (ConsoleColors.ColorPreset.BoxNumber, " 1"), (ConsoleColors.ColorPreset.BoxText, " " + Lang.T("Text"))
+            },
             new[]
             {
                 (ConsoleColors.ColorPreset.BoxText, " "), (ConsoleColors.ColorPreset.SelectorInverted, "->"),
@@ -1146,7 +1149,10 @@ internal static class SchemeEditor
         DrawBoxSample(boxLeft, top + 6, inner, Lang.T("Box"), new[]
         {
             // (with a line number, as in the box of the latest files)
-            new[] { (ConsoleColors.ColorPreset.BoxNumber, " 1"), (ConsoleColors.ColorPreset.BoxText, " " + Lang.T("Text")) },
+            new[]
+            {
+                (ConsoleColors.ColorPreset.BoxNumber, " 1"), (ConsoleColors.ColorPreset.BoxText, " " + Lang.T("Text"))
+            },
             Array.Empty<(ConsoleColors.ColorPreset, string)>()
         });
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);

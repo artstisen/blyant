@@ -11,31 +11,31 @@ namespace Blyant.Tests;
 /// </summary>
 public class FormatTests
 {
-    private static EditorEngine Editor(string text, SyntaxType syntax) =>
-        new(text, 60, 10, false) { CompletionSyntax = syntax };
+    // The editor of a file of this name: the kind of file is told by the name, as Blyant Validator tells it
+    private static EditorEngine Editor(string text, string fileName) =>
+        new(text, 60, 10, false) { FormatKind = SourceDocument.DetectKind(fileName) };
 
     // What the formatter of Blyant Validator makes of the text (lines ending in "\n")
     private static string Formatted(IFormatter formatter, string text, DocumentKind kind) =>
         formatter.Format(new SourceDocument(string.Empty, text, kind), new FormatOptions { NewLine = "\n" });
 
     [Theory]
-    [InlineData("Html", "<div><p>One</p><ul><li>a</li><li>b</li></ul></div>\n")]
-    [InlineData("Css", "a,b>c{color:red;margin:0 auto}\n@media (min-width:600px){.x{padding:1px 2px}}\n")]
-    [InlineData("Xml", "<urlset><url><loc>https://example.com/</loc></url></urlset>\n")]
-    public void Format_FormatsTheText_AsBlyantValidator_AndUndoTakesItBack(string type, string text)
+    [InlineData("page.html", "<div><p>One</p><ul><li>a</li><li>b</li></ul></div>\n")]
+    [InlineData("site.css", "a,b>c{color:red;margin:0 auto}\n@media (min-width:600px){.x{padding:1px 2px}}\n")]
+    [InlineData("sitemap.xml", "<urlset><url><loc>https://example.com/</loc></url></urlset>\n")]
+    public void Format_FormatsTheText_AsBlyantValidator_AndUndoTakesItBack(string fileName, string text)
     {
-        // (the kind of file by its name: SyntaxType is internal)
-        var syntax = Enum.Parse<SyntaxType>(type);
-        var (formatter, kind) = syntax switch
+        var kind = SourceDocument.DetectKind(fileName);
+        IFormatter formatter = kind switch
         {
-            SyntaxType.Html => ((IFormatter)new HtmlFormatter(), DocumentKind.Html),
-            SyntaxType.Css => (new CssFormatter(), DocumentKind.Css),
-            _ => ((IFormatter)new XmlFormatter(), DocumentKind.Xml)
+            DocumentKind.Html => new HtmlFormatter(),
+            DocumentKind.Css => new CssFormatter(),
+            _ => new XmlFormatter()
         };
         var expected = Formatted(formatter, text, kind);
         Assert.NotEqual(text, expected);
 
-        var editor = Editor(text, syntax);
+        var editor = Editor(text, fileName);
         editor.Type(":format<CR>");
         Assert.Equal(expected, editor.GetText());
         Assert.False(editor.MessageIsError);
@@ -49,12 +49,28 @@ public class FormatTests
         Assert.Equal(Lang.T("Already formatted"), editor.Message);
     }
 
+    [Theory]
+    // As Blyant Validator: XHTML is XML, and the files of other kinds are not formatted
+    [InlineData("page.xhtml", DocumentKind.Xml)]
+    [InlineData("PAGE.HTM", DocumentKind.Html)]
+    [InlineData("logo.svg", DocumentKind.Xml)]
+    [InlineData("feed.rss", DocumentKind.Xml)]
+    [InlineData("Blyant.csproj", DocumentKind.Unknown)]
+    [InlineData("notes.md", DocumentKind.Unknown)]
+    [InlineData("book.typ", DocumentKind.Unknown)]
+    [InlineData("index.php", DocumentKind.Unknown)]
+    public void Format_TellsTheKindOfFile_ByItsName_AsBlyantValidator(string fileName, DocumentKind expected)
+    {
+        var kind = SourceDocument.DetectKind(fileName);
+        Assert.Equal(expected, kind is DocumentKind.Markdown or DocumentKind.Typst ? DocumentKind.Unknown : kind);
+    }
+
     [Fact]
     public void Format_OfAFileWithCrLf_GivesTheSameLines()
     {
         // The editor keeps lines (the line endings of the file are written when it is saved)
-        var lf = Editor("<div><p>One</p></div>\n", SyntaxType.Html);
-        var crlf = Editor("<div><p>One</p></div>\r\n", SyntaxType.Html);
+        var lf = Editor("<div><p>One</p></div>\n", "a.html");
+        var crlf = Editor("<div><p>One</p></div>\r\n", "a.html");
         lf.Type(":format<CR>");
         crlf.Type(":format<CR>");
         Assert.Equal(lf.GetText(), crlf.GetText());
@@ -64,7 +80,7 @@ public class FormatTests
     [Fact]
     public void Format_KeepsTheCursorOnItsLine_AtItsFirstCharacter()
     {
-        var editor = Editor("a{color:red}\nb{color:blue}\nc{color:green}\n", SyntaxType.Css);
+        var editor = Editor("a{color:red}\nb{color:blue}\nc{color:green}\n", "a.css");
         editor.Type("jj:format<CR>");
         Assert.Equal(2, editor.Cursor.Line);
         Assert.Equal(editor.Buffer[2].Length - editor.Buffer[2].TrimStart().Length, editor.Cursor.Col);
@@ -74,12 +90,12 @@ public class FormatTests
     public void Format_LeavesTextItCannotFormatSafely_AndTellsWhy()
     {
         // A block that is never closed, and XML that is not well-formed
-        var css = Editor("a{color:red\n", SyntaxType.Css);
+        var css = Editor("a{color:red\n", "a.css");
         css.Type(":format<CR>");
         Assert.Equal("a{color:red\n", css.GetText());
         Assert.True(css.MessageIsError);
         Assert.StartsWith(Lang.F("Not formatted: {0}", string.Empty), css.Message);
-        var xml = Editor("<a><b></a>\n", SyntaxType.Xml);
+        var xml = Editor("<a><b></a>\n", "a.xml");
         xml.Type(":format<CR>");
         Assert.Equal("<a><b></a>\n", xml.GetText());
         Assert.True(xml.MessageIsError);
@@ -87,14 +103,14 @@ public class FormatTests
     }
 
     [Theory]
-    [InlineData("Markdown")]
-    [InlineData("Typst")]
-    [InlineData("Php")]
-    [InlineData("None")]
-    public void Format_OnlyFormatsHtmlCssAndXml(string type)
+    [InlineData("notes.md")]
+    [InlineData("book.typ")]
+    [InlineData("index.php")]
+    [InlineData("Blyant.csproj")]
+    [InlineData("readme.txt")]
+    public void Format_OnlyFormatsHtmlCssAndXml(string fileName)
     {
-        var syntax = Enum.Parse<SyntaxType>(type);
-        var editor = Editor("<div><p>One</p></div>\n", syntax);
+        var editor = Editor("<div><p>One</p></div>\n", fileName);
         editor.Type(":format<CR>");
         Assert.Equal("<div><p>One</p></div>\n", editor.GetText());
         Assert.True(editor.MessageIsError);
@@ -105,7 +121,7 @@ public class FormatTests
     public void Format_IsRefused_InAReadOnlyText()
     {
         var editor = new EditorEngine("a{color:red}\n", 60, 10, false)
-            { CompletionSyntax = SyntaxType.Css, ReadOnly = true };
+            { FormatKind = DocumentKind.Css, ReadOnly = true };
         editor.Type(":format<CR>");
         Assert.Equal("a{color:red}\n", editor.GetText());
         Assert.True(editor.MessageIsError);
@@ -113,14 +129,29 @@ public class FormatTests
     }
 
     [Fact]
-    public void Format_ChangesOnlyThePartThatDiffers()
+    public void Format_ChangesOnlyTheLinesThatDiffer()
     {
         // The lines before and after the change stay (and a mark on them)
         const string text = "a {\n  color: red;\n}\n\nb{color:blue}\n\nc {\n  color: green;\n}\n";
-        var editor = Editor(text, SyntaxType.Css);
+        var editor = Editor(text, "a.css");
         editor.Type("Gkkma:format<CR>"); // (the mark on "  color: green;")
         Assert.Equal(Formatted(new CssFormatter(), text, DocumentKind.Css), editor.GetText());
         editor.Type("gg'a");
         Assert.Equal("  color: green;", editor.Buffer[editor.Cursor.Line]);
+    }
+
+    [Fact]
+    public void Format_KeepsCharactersWhole_WhereTheChangeStartsAndEnds()
+    {
+        // The change starts and ends next to characters of two chars (an emoji) and a letter with a combining mark:
+        // whole lines are replaced, so none of them is cut in two, and undo gives them back whole
+        const string text = "a::after{content:\"😀\";color:red}\nb{content:\"e\u0301\"}\n";
+        var editor = Editor(text, "a.css");
+        editor.Type(":format<CR>");
+        Assert.Equal(Formatted(new CssFormatter(), text, DocumentKind.Css), editor.GetText());
+        Assert.Contains("😀", editor.GetText());
+        Assert.Contains("e\u0301", editor.GetText());
+        editor.Type("u");
+        Assert.Equal(text, editor.GetText());
     }
 }

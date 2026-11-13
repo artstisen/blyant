@@ -451,7 +451,8 @@ internal sealed class ColorScheme
             (CommandCornerColor, CommandBoxColor),
             (CommandBoxTextColor, CommandBoxColor), (CommandTypedColor, CommandBoxColor),
             (CommandHintsColor, CommandBoxColor), (BoxBorderColor, BoxBackgroundColor),
-            (BoxCornerColor, BoxBackgroundColor), (BoxTextColor, BoxBackgroundColor), (BoxTitleTextColor, BoxTitleColor),
+            (BoxCornerColor, BoxBackgroundColor), (BoxTextColor, BoxBackgroundColor),
+            (BoxTitleTextColor, BoxTitleColor),
             (BoxNumbersColor, BoxBackgroundColor)
         };
 

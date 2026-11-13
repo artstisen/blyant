@@ -1392,8 +1392,7 @@ internal static class StartMenu
                 break;
             case Setting.Indent:
                 // 2, 4, 8 spaces, and round again (the help tells the width of Tab: made again)
-                EditorEngine.IndentSetting = EditorEngine.IndentWidths[
-                    (Array.IndexOf(EditorEngine.IndentWidths, EditorEngine.IndentSetting) + 1) % EditorEngine.IndentWidths.Length];
+                EditorEngine.IndentSetting = EditorEngine.NextIndent(EditorEngine.IndentSetting);
                 Tools.ClearEditorHelpData();
                 break;
             case Setting.ModuleProjects:

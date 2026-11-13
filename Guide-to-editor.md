@@ -621,7 +621,7 @@ Commands:
   - In a Markdown file (and a blank page), two spaces or more at the end of a line of text with another line of text after it are a line break: they are kept, and the message tells how many. `:trim!` removes them too
   - One `u` undoes it
 - `:format` Format an HTML, CSS or XML file, as [Blyant Validator](Guide-to-installation.md#blyant-validator) formats it (with the same code): the indents, and where the lines break. Only blank space changes, never the content, and the whole file is formatted.
-  - The kind of file is told by its name: `.html` and `.htm`, `.css`, and `.xml`, `.svg` and the other XML files. Other files (Markdown, Typst ...) are not formatted
+  - The kind of file is told by its name, as Blyant Validator tells it: `.html` and `.htm`, `.css`, and `.xml`, `.svg`, `.rss`, `.atom` and `.xhtml` (XML: an XHTML document is left as it is, as in Blyant Validator). Other files (Markdown, Typst, `.csproj` ...) are not formatted
   - A file that cannot be formatted safely is left as it is, and the message tells why, with the line: a block that is never closed, or XML that is not well-formed. `:42` goes to line 42
   - The indent is two spaces, as in Blyant Validator, so a file is formatted alike in both. The line endings of the file are kept when it is saved
   - The cursor stays on its line. One `u` undoes it, and the file is only changed on the disk when you save it

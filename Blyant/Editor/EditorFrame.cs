@@ -137,7 +137,8 @@ internal abstract class EditorFrame
     internal static ConsoleColors.ColorPreset ModeColor(EditorFacts facts) => facts.Mode switch
     {
         EditorMode.Insert => ConsoleColors.ColorPreset.AttentionInverted,
-        EditorMode.Visual or EditorMode.VisualLine or EditorMode.VisualBlock => ConsoleColors.ColorPreset.WarningInverted,
+        EditorMode.Visual or EditorMode.VisualLine or EditorMode.VisualBlock =>
+            ConsoleColors.ColorPreset.WarningInverted,
         _ => ConsoleColors.ColorPreset.HighlightInverted
     };
 
