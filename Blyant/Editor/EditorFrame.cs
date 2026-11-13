@@ -131,6 +131,17 @@ internal sealed record EditorFacts
 internal abstract class EditorFrame
 {
     /// <summary>
+    /// The color of the mode label (and of the mode in Zen mode, when it is colored): Attention for Insert, Warning for
+    /// the Visual modes, Highlight for the others (Normal, a command or search being typed, the jump keys)
+    /// </summary>
+    internal static ConsoleColors.ColorPreset ModeColor(EditorFacts facts) => facts.Mode switch
+    {
+        EditorMode.Insert => ConsoleColors.ColorPreset.AttentionInverted,
+        EditorMode.Visual or EditorMode.VisualLine or EditorMode.VisualBlock => ConsoleColors.ColorPreset.WarningInverted,
+        _ => ConsoleColors.ColorPreset.HighlightInverted
+    };
+
+    /// <summary>
     /// The name of the frame, for the log (English)
     /// </summary>
     internal abstract string Name { get; }

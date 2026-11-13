@@ -218,13 +218,7 @@ internal sealed class StandardFrame : EditorFrame
 
         Tools.SetCursorEx(Init.LineCount - 1, 0);
         // The mode label has a color of its own for each mode
-        ConsoleColors.SetColors(facts.Mode switch
-        {
-            EditorMode.Insert => ConsoleColors.ColorPreset.AttentionInverted,
-            EditorMode.Visual or EditorMode.VisualLine or EditorMode.VisualBlock =>
-                ConsoleColors.ColorPreset.WarningInverted,
-            _ => ConsoleColors.ColorPreset.HighlightInverted
-        });
+        ConsoleColors.SetColors(ModeColor(facts));
         Console.Write(parts.Label);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
         Console.Write(parts.Gap);

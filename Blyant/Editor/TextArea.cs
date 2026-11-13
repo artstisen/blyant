@@ -71,6 +71,12 @@ public partial class TextArea
     /// </summary>
     internal static bool Zen { get; set; }
 
+    /// <summary>
+    /// The mode in Zen mode ([N], [I], [V] ...) in the color of its mode, as the mode label outside Zen mode (setting
+    /// "zencolors"): else in the color of the text
+    /// </summary>
+    internal static bool ZenColors { get; set; }
+
     // Not in a peek, or a field of one line
     private bool ShowsWhitespace => ShowWhitespace && _peek == null && !_singleLine;
 

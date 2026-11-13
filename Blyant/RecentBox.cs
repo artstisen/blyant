@@ -74,7 +74,7 @@ internal static class RecentBox
             for (var row = 0; row < files.Count; row++)
             {
                 Tools.SetCursorEx(top + 1 + row, left + 2);
-                ConsoleColors.SetColors(ConsoleColors.ColorPreset.LineNumber);
+                ConsoleColors.SetColors(ConsoleColors.ColorPreset.BoxNumber);
                 Console.Write((row + 1) + " ");
                 ConsoleColors.SetColors(row == selected
                     ? ConsoleColors.ColorPreset.SelectorInverted

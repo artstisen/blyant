@@ -501,6 +501,7 @@ internal static class StartMenu
         FileType,
         NewLineEndings,
         Indent,
+        ZenColors,
         DeleteToTrash,
         CommandList,
         Monochrome,
@@ -573,6 +574,8 @@ internal static class StartMenu
         settings.Add(Setting.Whitespace);
         settings.Add(Setting.Indent);
         settings.Add(Setting.Zen);
+        // (only while Zen mode is on)
+        if (TextArea.Zen) settings.Add(Setting.ZenColors);
         settings.Add(Setting.MarksApostrophe);
         settings.Add(Setting.ScrollOff);
         settings.Add(Setting.Clipboard);
@@ -646,6 +649,7 @@ internal static class StartMenu
             Setting.WordWrap => Check(TextArea.WordWrap) + Lang.T("Wrap long lines"),
             Setting.Whitespace => Check(TextArea.ShowWhitespace) + Lang.T("Show blank space as . > $ (:whitespace)"),
             Setting.Zen => Check(TextArea.Zen) + Lang.T("Zen mode: only mode, name and line (:zen)"),
+            Setting.ZenColors => indent + Check(TextArea.ZenColors) + Lang.T("Colored mode label (Zen mode)"),
             Setting.Indent => indent + Lang.F("Indent with Tab, >> and <<: {0} spaces (Enter: Change)",
                 EditorEngine.IndentSetting),
             Setting.ModuleProjects => Check(Modules.Projects) + Lang.T("Projects: New project, Open project, list of projects"),
@@ -697,7 +701,7 @@ internal static class StartMenu
                 or Setting.Language => 0,
             Setting.AutoSize or Setting.Size or Setting.Monochrome or Setting.ColorScheme or Setting.Logo
                 or Setting.LogoAnimation or Setting.Corners => 1,
-            Setting.LineNumbers or Setting.Gutter or Setting.WordWrap or Setting.Whitespace or Setting.Indent or Setting.Zen or Setting.MarksApostrophe or Setting.ScrollOff or Setting.Clipboard
+            Setting.LineNumbers or Setting.Gutter or Setting.WordWrap or Setting.Whitespace or Setting.Indent or Setting.Zen or Setting.ZenColors or Setting.MarksApostrophe or Setting.ScrollOff or Setting.Clipboard
                 or Setting.SyntaxColors or Setting.Spell or Setting.Snippets or Setting.AutoComplete
                 or Setting.Completions or Setting.Recovery => 2,
             Setting.FileNumbers or Setting.FavoriteNumbers or Setting.HistoryNumbers or Setting.HotlistNumbers
@@ -1382,6 +1386,9 @@ internal static class StartMenu
                 break;
             case Setting.Zen:
                 TextArea.Zen = !TextArea.Zen;
+                break;
+            case Setting.ZenColors:
+                TextArea.ZenColors = !TextArea.ZenColors;
                 break;
             case Setting.Indent:
                 // 2, 4, 8 spaces, and round again (the help tells the width of Tab: made again)

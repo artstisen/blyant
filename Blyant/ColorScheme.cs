@@ -28,6 +28,7 @@ internal enum ColorItem
     BoxText, // The text in a box (null: the text in frames with tabs)
     BoxTitle, // The background of the title of a box (null: as the tab shown; the box when it is not highlighted)
     BoxTitleText, // The title of a box (null: as the tab shown)
+    BoxNumbers, // The line numbers in a box, as in the box of the latest files (null: the line numbers of the editor)
     Tab, // The background of the tab shown (null: the color of the tab frames)
     TabText, // The text of the tab shown when it is highlighted (null: the color of TabShown)
     TabShown, // The name of the tab shown when it is not highlighted (null: the text)
@@ -106,6 +107,7 @@ internal sealed class ColorScheme
     internal ConsoleColor? BoxText { get; set; }
     internal ConsoleColor? BoxTitle { get; set; }
     internal ConsoleColor? BoxTitleText { get; set; }
+    internal ConsoleColor? BoxNumbers { get; set; }
     internal ConsoleColor? Tab { get; set; }
     internal ConsoleColor? TabText { get; set; }
     internal ConsoleColor? TabShown { get; set; }
@@ -159,6 +161,7 @@ internal sealed class ColorScheme
     internal ConsoleColor UnsavedColor => Unsaved ?? Text;
     internal ConsoleColor UnsavedTextColor => UnsavedText ?? BackgroundColor;
     internal ConsoleColor LineNumbersColor => LineNumbers ?? Dividers;
+    internal ConsoleColor BoxNumbersColor => BoxNumbers ?? LineNumbersColor;
     internal ConsoleColor CurrentLineNumberColor => CurrentLineNumber ?? Text;
     internal ConsoleColor SelectorColor => Selector ?? Highlight;
     internal ConsoleColor SelectorTextColor => SelectorText ?? HighlightText;
@@ -239,7 +242,7 @@ internal sealed class ColorScheme
     internal static bool CanBeDefault(ColorItem item) =>
         item is ColorItem.Background or ColorItem.TabFrames or ColorItem.TabCorner or ColorItem.BoxBorders
             or ColorItem.BoxCorner or ColorItem.BoxBackground or ColorItem.BoxText or ColorItem.BoxTitle
-            or ColorItem.BoxTitleText or ColorItem.Tab
+            or ColorItem.BoxTitleText or ColorItem.BoxNumbers or ColorItem.Tab
             or ColorItem.TabText or ColorItem.TabShown or ColorItem.OtherTabs or ColorItem.KeyHints
             or ColorItem.Unsaved or ColorItem.UnsavedText or ColorItem.LineNumbers or ColorItem.CurrentLineNumber
             or ColorItem.FrameText || IsCommand(item) || IsSyntax(item, out _);
@@ -270,6 +273,7 @@ internal sealed class ColorScheme
             ColorItem.BoxText => BoxText,
             ColorItem.BoxTitle => BoxTitle,
             ColorItem.BoxTitleText => BoxTitleText,
+            ColorItem.BoxNumbers => BoxNumbers,
             ColorItem.Tab => Tab,
             ColorItem.TabText => TabText,
             ColorItem.TabShown => TabShown,
@@ -314,6 +318,7 @@ internal sealed class ColorScheme
             ColorItem.BoxText => BoxTextColor,
             ColorItem.BoxTitle => BoxTitleColor,
             ColorItem.BoxTitleText => BoxTitleTextColor,
+            ColorItem.BoxNumbers => BoxNumbersColor,
             ColorItem.Tab => TabColor,
             ColorItem.TabText => TabTextColor,
             ColorItem.TabShown => TabShownColor,
@@ -377,6 +382,7 @@ internal sealed class ColorScheme
             case ColorItem.BoxText: BoxText = color; break;
             case ColorItem.BoxTitle: BoxTitle = color; break;
             case ColorItem.BoxTitleText: BoxTitleText = color; break;
+            case ColorItem.BoxNumbers: BoxNumbers = color; break;
             case ColorItem.Tab: Tab = color; break;
             case ColorItem.TabText: TabText = color; break;
             case ColorItem.TabShown: TabShown = color; break;
@@ -445,7 +451,8 @@ internal sealed class ColorScheme
             (CommandCornerColor, CommandBoxColor),
             (CommandBoxTextColor, CommandBoxColor), (CommandTypedColor, CommandBoxColor),
             (CommandHintsColor, CommandBoxColor), (BoxBorderColor, BoxBackgroundColor),
-            (BoxCornerColor, BoxBackgroundColor), (BoxTextColor, BoxBackgroundColor), (BoxTitleTextColor, BoxTitleColor)
+            (BoxCornerColor, BoxBackgroundColor), (BoxTextColor, BoxBackgroundColor), (BoxTitleTextColor, BoxTitleColor),
+            (BoxNumbersColor, BoxBackgroundColor)
         };
 
     private bool AllowedOnItsOwn(ColorItem item, ConsoleColor color)
@@ -477,7 +484,7 @@ internal sealed class ColorScheme
         ("tabframes", ColorItem.TabFrames), ("tabcorner", ColorItem.TabCorner),
         ("boxborders", ColorItem.BoxBorders), ("boxcorner", ColorItem.BoxCorner),
         ("boxbackground", ColorItem.BoxBackground), ("boxtext", ColorItem.BoxText), ("boxtitle", ColorItem.BoxTitle),
-        ("boxtitletext", ColorItem.BoxTitleText), ("tab", ColorItem.Tab),
+        ("boxtitletext", ColorItem.BoxTitleText), ("boxnumbers", ColorItem.BoxNumbers), ("tab", ColorItem.Tab),
         ("tabtext", ColorItem.TabText), ("tabshown", ColorItem.TabShown), ("othertabs", ColorItem.OtherTabs),
         ("keyhints", ColorItem.KeyHints), ("unsaved", ColorItem.Unsaved), ("unsavedtext", ColorItem.UnsavedText),
         ("linenumbers", ColorItem.LineNumbers), ("currentline", ColorItem.CurrentLineNumber),

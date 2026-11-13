@@ -43,6 +43,27 @@ public class ColorSchemeTests : IDisposable
     }
 
     [Fact]
+    public void BoxNumbers_FollowTheLineNumbers_UntilTheyHaveAColorOfTheirOwn()
+    {
+        // A scheme made before the box line numbers had a color: as the line numbers of the editor
+        var scheme = Following();
+        Assert.Null(scheme.BoxNumbers);
+        Assert.Equal(scheme.LineNumbersColor, scheme.BoxNumbersColor);
+        Assert.Equal(scheme.LineNumbersColor, scheme.Shown(ColorItem.BoxNumbers));
+        Assert.True(ColorScheme.CanBeDefault(ColorItem.BoxNumbers));
+        // A color of their own: saved and read again
+        scheme.Set(ColorItem.BoxNumbers, ConsoleColor.Yellow);
+        Assert.Equal(ConsoleColor.Yellow, scheme.BoxNumbersColor);
+        var read = ColorScheme.Parse(scheme.Serialize(), "Copy");
+        Assert.Equal(ConsoleColor.Yellow, read.BoxNumbers);
+        Assert.Contains("boxnumbers=Yellow", scheme.Serialize());
+        // Not the color of the background of the box
+        scheme.Set(ColorItem.BoxBackground, ConsoleColor.DarkBlue);
+        Assert.False(scheme.Allowed(ColorItem.BoxNumbers, ConsoleColor.DarkBlue));
+        Assert.True(scheme.Allowed(ColorItem.BoxNumbers, ConsoleColor.Cyan));
+    }
+
+    [Fact]
     public void TheBuiltInSchemes_AreTheirFiles_WithTheColorsThatFollowOthersSet()
     {
         foreach (var scheme in ColorScheme.BuiltIn)

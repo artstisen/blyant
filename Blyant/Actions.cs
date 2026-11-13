@@ -221,6 +221,7 @@ internal static class Actions
         TextArea.WordWrap = true;
         TextArea.ShowWhitespace = false;
         TextArea.Zen = false;
+        TextArea.ZenColors = false;
         EditorEngine.IndentSetting = EditorEngine.DefaultIndent;
         Modules.Projects = true;
         Modules.Board = true;

@@ -21,6 +21,7 @@ The bottom line also shows messages, the current memory string, the cursor posit
 For writing with as little as possible around the text, `:zen` turns on Zen mode, and `:zen` again turns it off. It is kept as the setting `zen` (_Zen mode: only mode, name and line_ on the Editor page of Configuration), so the next file opens in it too. Zen mode is for the editor of files and blank pages; the settings file, a peek and a comparison look as before.
 
 - **The top row** shows the mode and the name of the file, at the left: `[I]test1.md*`. The star tells that there are changes that are not saved. The mode is `[N]` (Normal), `[I]` (Insert), `[V]` (Visual, V-Line and V-Block), `[C]` (a command or a search being typed) or `[J]` (jumping to a word). The letters are always in English. A file that is read only gets the label _Read only_ after its name.
+  - The mode can have the color of its mode, as the mode label outside Zen mode (Highlight for Normal, Attention for Insert, Warning for Visual): _Colored mode label (Zen mode)_ on the Editor page of Configuration, shown while Zen mode is on (setting `zencolors`)
 - **The line of the mode is gone**, so the text has one row more.
 - **The bottom line** shows only the line and column of the cursor, in the middle: `312:17`.
   - A message is shown at the left until the next key; a message too long to fit before the line and column takes their place

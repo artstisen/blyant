@@ -138,6 +138,7 @@ internal static class ConsoleColors
         BoxBorder, // The borders of the boxes on top of a page
         BoxCorner, // The left side and the top of a box
         BoxText, // The text in a box
+        BoxNumber, // The line numbers in a box (the box of the latest files)
         TabShown, // The name of the tab shown, when the tab is not highlighted
         OtherTabs, // The names of the tabs not shown
         KeyHint, // The keys on the bottom line: what they do
@@ -363,7 +364,7 @@ internal static class ConsoleColors
                     _ => scheme.CommandBoxTextColor
                 });
                 return;
-            case ColorPreset.BoxBorder or ColorPreset.BoxCorner or ColorPreset.BoxText:
+            case ColorPreset.BoxBorder or ColorPreset.BoxCorner or ColorPreset.BoxText or ColorPreset.BoxNumber:
                 // On the background of a box (the preview of a box is drawn on any page)
                 Reset();
                 if ((scheme.BoxBackground ?? scheme.Background) is { } boxBackground) SetBackground(boxBackground);
@@ -371,6 +372,8 @@ internal static class ConsoleColors
                 {
                     ColorPreset.BoxBorder => scheme.BoxBorderColor,
                     ColorPreset.BoxCorner => scheme.BoxCornerColor,
+                    // (not in the color of the box: then in the color of its text)
+                    ColorPreset.BoxNumber => scheme.TextInBox(scheme.BoxNumbersColor),
                     _ => scheme.BoxTextColor
                 });
                 return;

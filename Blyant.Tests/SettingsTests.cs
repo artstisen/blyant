@@ -150,6 +150,19 @@ backup=
     }
 
     [Fact]
+    public void ZenColors_AreLoadedAndSaved()
+    {
+        File.WriteAllText(SettingsFile, LegacySettings + "\nzen=true\nzencolors=true\n");
+        Assert.True(FileIo.LoadSettings());
+        Assert.True(TextArea.ZenColors);
+        FileIo.SaveSettings();
+        Assert.Equal("true", FileIo.ParseSettings(File.ReadAllText(SettingsFile))["zencolors"]);
+        // The defaults: off
+        Actions.ApplyDefaultSettings();
+        Assert.False(TextArea.ZenColors);
+    }
+
+    [Fact]
     public void ZenMode_IsLoadedAndSaved()
     {
         File.WriteAllText(SettingsFile, LegacySettings + "\nzen=true\n");
@@ -405,7 +418,7 @@ backup=
         Assert.False(settings.ContainsKey("stayloggedin"));
         Assert.False(settings.ContainsKey("projectsdir"));
         Assert.False(settings.ContainsKey("projectsask"));
-        Assert.Equal(60, settings.Count);
+        Assert.Equal(61, settings.Count);
         Assert.Equal("true", settings["modulejump"]);
         // The modules are on unless turned off
         Assert.Equal("true", settings["moduleprojects"]);
@@ -414,6 +427,8 @@ backup=
         Assert.Equal("false", settings["gutter"]);
         // Zen mode is off unless turned on
         Assert.Equal("false", settings["zen"]);
+        // The mode in Zen mode is in the color of the text unless its colors are turned on
+        Assert.Equal("false", settings["zencolors"]);
         // Tab, ">>" and "<<" indent by 4 spaces unless another width is set
         Assert.Equal("4", settings["indent"]);
         Assert.Equal("false", settings["marksapostrophe"]);

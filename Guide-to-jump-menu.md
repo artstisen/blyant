@@ -200,7 +200,7 @@ A scheme can have a logo that goes with it: _Default_, _Deep Blue_, _Lush Blue_ 
 
 _Page 1_ has Text, Logo and labels, Dividers, Favorites, Accent, Editor title, Line numbers, Current line number, Key hints, Unsaved label and Background; _Page 2_ has Highlight, Attention, Warning, Selector, Tab text, Tab frames, Tab corner, Tab highlight, Tab focus and Other tabs, and _Highlight focused tabs_.
 
-_Page 3_ has Box borders, Box corner, Box and Box title, with a small box below them in these colors; _Page 4_ has Command line, Command box borders, Command box corner, Command box, Typed part, Whole command, Command hints and Command error, with a small command line and its box below them in these colors; _Page 5_ has the colors of colored text in the editor, Syntax 1 to 12.
+_Page 3_ has Box borders, Box corner, Box, Box title and Box line numbers, with a small box below them in these colors; _Page 4_ has Command line, Command box borders, Command box corner, Command box, Typed part, Whole command, Command hints and Command error, with a small command line and its box below them in these colors; _Page 5_ has the colors of colored text in the editor, Syntax 1 to 12.
 
 - `j` `k` Select a group
 - `Enter` (or `Space`) Pick its color from a list of the 16 colors: select with `j` `k` and press `Enter` (or `l`), or press the letter of the color, or `Esc` to cancel (see [The list of colors](#list-of-colors)). For Highlight, Attention, Warning, Tabs and the pairs of Page 3 (shown inverted) this is the background color, and `T` picks the text color
@@ -214,8 +214,9 @@ _Page 3_ has Box borders, Box corner, Box and Box title, with a small box below 
   - **Box**: `Enter` picks the background of a box and `T` its text. `[Default]` is the text of **Tab text** on the normal background
   - Text in another color that would not be seen on the background of the box, as dimmed text, is shown in the text color of the box
   - **Box title**: `Enter` picks the background of the title and `T` its text. `[Default]` is the colors of **Tab highlight**
+  - **Box line numbers**: the numbers in front of the rows of a box, as in the box of the latest files (`Ctrl+K`). `[Default]` is the color of **Line numbers** (the editor's), so a scheme made before has the same colors as before
   - The bottom line, the command line and pages opened from a box keep their own colors
-  - In a scheme file these are `boxborders`, `boxcorner`, `boxbackground`, `boxtext`, `boxtitle` and `boxtitletext`
+  - In a scheme file these are `boxborders`, `boxcorner`, `boxbackground`, `boxtext`, `boxtitle`, `boxtitletext` and `boxnumbers`
 - **The command line** (Page 4): the colors of the command line (`:`) and of the box of commands above it, on every page that has one, the editor too
   - They can be set apart from all other colors
   - `[Default]` is the color each had before it could be set, so a scheme of your own looks as it did; the built-in schemes have them all set to those colors (the box on the background of the scheme)

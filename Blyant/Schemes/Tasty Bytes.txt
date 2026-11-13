@@ -22,6 +22,7 @@ boxbackground=default
 boxtext=Green
 boxtitle=DarkBlue
 boxtitletext=White
+boxnumbers=default
 tab=DarkBlue
 tabtext=White
 tabshown=White

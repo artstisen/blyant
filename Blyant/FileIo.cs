@@ -510,6 +510,8 @@ internal static class FileIo
         _tempSettings += "indent=" + EditorEngine.IndentSetting + '\n';
         // Zen mode: the editor of a file shows only the mode and the name above the text, the line and column below (:zen)
         _tempSettings += "zen=" + (TextArea.Zen ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        // In Zen mode, the mode ([N], [I] ...) in the color of its mode, as the mode label outside Zen mode
+        _tempSettings += "zencolors=" + (TextArea.ZenColors ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // The modules (Configuration: Modules): the projects and the corkboard, on unless turned off
         _tempSettings += "moduleprojects=" + (Modules.Projects ? DialogText.BTrue : DialogText.BFalse) + '\n';
         _tempSettings += "moduleboard=" + (Modules.Board ? DialogText.BTrue : DialogText.BFalse) + '\n';
@@ -704,6 +706,7 @@ internal static class FileIo
         TextArea.WordWrap = Tools.TrimToLower(Get("wrap")) != DialogText.BFalse;
         TextArea.ShowWhitespace = Tools.TrimToLower(Get("whitespace")) == DialogText.BTrue;
         TextArea.Zen = Tools.TrimToLower(Get("zen")) == DialogText.BTrue;
+        TextArea.ZenColors = Tools.TrimToLower(Get("zencolors")) == DialogText.BTrue;
         // 4 spaces unless another width of the list is set
         EditorEngine.IndentSetting = EditorEngine.ParseIndent(Get("indent"));
         // On unless turned off
