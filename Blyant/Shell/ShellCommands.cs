@@ -24,6 +24,10 @@ internal sealed partial class ShellSession
         ("copy file|n dir|n", Lang.T("Copy a file or directory into a directory")),
         ("move file|n dir|n", Lang.T("Move a file or directory into a directory")),
         ("delete file|n", Lang.T("Delete a file or directory, to the trash (del)")),
+        ("info [file|n]", Lang.T("Tell about a file or directory (alone: this one)")),
+        ("format file|n", Lang.T("Format an HTML, CSS or XML file, as :format does")),
+        ("trim file|n", Lang.T("Remove blank space at line ends, as :trim does (trim!)")),
+        ("set [name [value]]", Lang.T("Show the settings, or change one")),
         ("favorites [list]", Lang.T("List the favorites (fav), or those of another list")),
         ("favorites add|remove file|n", Lang.T("Add to the favorites, or take off them")),
         ("history", Lang.T("List the files opened (hist)")),
@@ -120,6 +124,21 @@ internal sealed partial class ShellSession
             case "delete":
             case "del":
                 Delete(argument);
+                break;
+            case "info":
+                Info(argument);
+                break;
+            case "format":
+                ChangeText(argument, "format");
+                break;
+            case "trim":
+                ChangeText(argument, "trim");
+                break;
+            case "trim!":
+                ChangeText(argument, "trim!");
+                break;
+            case "set":
+                Set(argument);
                 break;
             case "bookmarks":
             case "book":
@@ -406,6 +425,7 @@ internal sealed partial class ShellSession
                 "h" => "help",
                 "q" or "quit" => "exit",
                 "del" => "delete",
+                "trim!" => "trim",
                 _ => name
             };
             var row = rows.FirstOrDefault(r => r.Command.Split(' ')[0] == full);

@@ -8,7 +8,7 @@ class Program
         var currentDirectory = Directory.GetCurrentDirectory();
         var arguments = args.ToList();
         // "--shell": Blyant on lines (and "--yes" with it)
-        var shell = StartArgument.TakeShellOptions(arguments, currentDirectory, out var yes);
+        var shell = StartArgument.TakeShellOptions(arguments, currentDirectory, out var yes, out var run);
         // An option (--help, --version) is answered before anything is shown (also to a pipe, as "blyant --help |
         // less"), wherever it is given ("blyant +12 --help"): it is never taken for the name of a file to make
         if (StartArgument.FirstOption(arguments, currentDirectory) is { } option)
@@ -26,7 +26,7 @@ class Program
         }
 
         Init.RunInitialization(shell);
-        if (shell) Environment.Exit(RunShell(arguments, currentDirectory, yes));
+        if (shell) Environment.Exit(RunShell(arguments, currentDirectory, yes, run));
         if (Lang.Missing != null)
         {
             // The language set has no file (a language file in a folder "lang" that is gone): English is used
@@ -58,7 +58,9 @@ class Program
     }
 
     // The shell, in the directory given (or of the file given), or the one Blyant is started in. Returns the exit code
-    private static int RunShell(IReadOnlyList<string> arguments, string currentDirectory, bool yes)
+    // With "--run": the commands given, as read from a file (no prompt, questions not asked), and Blyant ends
+    private static int RunShell(IReadOnlyList<string> arguments, string currentDirectory, bool yes,
+        IReadOnlyList<string> run)
     {
         if (Lang.Missing != null)
         {
@@ -92,7 +94,10 @@ class Program
             }
         }
 
-        return Shell.Run(directory, yes);
+        if (run.Count == 0) return Shell.Run(directory, yes);
+        var session = new ShellSession(new StringReader(string.Join("\n", run) + "\n"), Console.Out, Console.Error,
+            directory, false, yes);
+        return Shell.Run(session);
     }
 
     // The place a path given at startup leads to, or null (a message tells why, or the user did not want a file

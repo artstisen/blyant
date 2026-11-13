@@ -39,6 +39,8 @@ public class ShellTests : IDisposable
         DirectoryHotlist.FilePathOverride = null;
         Bookmarks.FilePathOverride = null;
         Projects.ListPathOverride = null;
+        // (set changes the settings: back to those of the start)
+        Actions.ApplyDefaultSettings();
         FileIo.DataDirectoryOverride = null;
         FileOperations.TrashOverride = null;
         FileFavorites.Parse(string.Empty);
@@ -141,7 +143,8 @@ public class ShellTests : IDisposable
         var (output, _, _, _) = Run("help\n");
         foreach (var name in Commands.Names(CommandContext.Shell))
         {
-            Assert.True(output.Contains("  " + name) || output.Contains("also " + name) || output.Contains(", " + name),
+            Assert.True(output.Contains("  " + name) || output.Contains("also " + name) || output.Contains(", " + name) ||
+                        output.Contains("(" + name + ")"),
                 "not in the help: " + name);
         }
     }
@@ -339,5 +342,90 @@ public class ShellTests : IDisposable
         DirectoryHotlist.Load();
         Assert.Single(DirectoryHotlist.Items);
         Assert.Equal(Lang.F("Not a directory: {0}", In("work", "plot.md")) + "\n", errors);
+    }
+
+    // ---- Phase 3: the text of files, info, the settings, --run
+
+    [Fact]
+    public void FormatAndTrim_ChangeTheFile_KeepingItsLineEndingsAndByteOrderMark()
+    {
+        var bom = new byte[] { 0xEF, 0xBB, 0xBF };
+        File.WriteAllBytes(In("work", "page.html"),
+            bom.Concat(System.Text.Encoding.UTF8.GetBytes("<div><p>One</p></div>\r\n")).ToArray());
+        File.WriteAllText(In("work", "poem.md"), "Roses  \r\nViolets  \r\n\r\nEnd  \r\n");
+        var (output, errors, _, _) = Run("format page.html\nformat page.html\ntrim poem.md\n");
+        Assert.Equal(string.Empty, errors);
+        var bytes = File.ReadAllBytes(In("work", "page.html"));
+        Assert.Equal(bom, bytes.Take(3));
+        Assert.Equal("<div>\r\n  <p>One</p>\r\n</div>\r\n", System.Text.Encoding.UTF8.GetString(bytes.Skip(3).ToArray()));
+        Assert.Contains(Lang.T("Already formatted"), output);
+        // A line break of Markdown (two spaces before a line of text) is kept, as by :trim
+        Assert.Equal("Roses  \r\nViolets\r\n\r\nEnd\r\n", File.ReadAllText(In("work", "poem.md")));
+        Run("trim! poem.md\n");
+        Assert.Equal("Roses\r\nViolets\r\n\r\nEnd\r\n", File.ReadAllText(In("work", "poem.md")));
+    }
+
+    [Fact]
+    public void FormatAndTrim_LeaveFilesTheyCannotChange_AndTellWhy()
+    {
+        // Not UTF-8 (Windows-1252), not of a kind that is formatted, broken, and a directory
+        File.WriteAllBytes(In("work", "old.md"), new byte[] { 0x63, 0x61, 0x66, 0xE9, 0x20, 0x20, 0x0A });
+        File.WriteAllText(In("work", "broken.css"), "a{color:red\n");
+        var before = File.ReadAllBytes(In("work", "old.md"));
+        var (_, errors, code, _) = Run("trim old.md\nformat plot.md\nformat broken.css\nformat Draft\n");
+        Assert.Equal(before, File.ReadAllBytes(In("work", "old.md")));
+        Assert.Equal("a{color:red\n", File.ReadAllText(In("work", "broken.css")));
+        var lines = errors.TrimEnd('\n').Split('\n');
+        Assert.Equal(4, lines.Length);
+        Assert.Contains(Lang.T("Only HTML, CSS and XML files can be formatted"), lines[1]);
+        Assert.Contains(Lang.F("Not formatted: {0}", string.Empty), lines[2]);
+        Assert.Equal(1, code);
+    }
+
+    [Fact]
+    public void Info_TellsAboutAFile_WithItsLinesAndEncoding_OrADirectory()
+    {
+        var (output, errors, _, _) = Run("info plot.md\ninfo Draft\ninfo\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains(Lang.T("Lines:"), output);
+        Assert.Contains("UTF-8", output);
+        Assert.Contains(DialogText.InfoContent, output);
+        Assert.Contains(In("work", "Draft"), output);
+    }
+
+    [Fact]
+    public void Set_ShowsAndChangesTheSettings_AndAValueThatCannotBe_ChangesNothing()
+    {
+        FileIo.SaveSettings();
+        var (output, errors, _, _) = Run("set\nset indent 8\nset indent 3\nset INDENT\nset nosuch 1\n");
+        Assert.Contains("indent", output);
+        Assert.Contains("  indent = 8\n", output);
+        Assert.Equal(8, EditorEngine.IndentSetting);
+        Assert.Equal("8", FileIo.ParseSettings(FileIo.ReadSettingsFile())["indent"]);
+        var lines = errors.TrimEnd('\n').Split('\n');
+        Assert.Equal(Lang.F("{0} cannot be {1}: it stays {2}", "indent", "3", "8"), lines[0]);
+        Assert.Equal(Lang.F("No setting named {0} (set lists them)", "nosuch"), lines[1]);
+        // Logged by name, never with the value
+        Assert.Contains(EventLog.All, line => line.EndsWith(DialogText.LogShell + ": setting indent"));
+    }
+
+    [Fact]
+    public void Run_TakesTheCommandsGiven_AndTheShellOptions()
+    {
+        var arguments = new List<string> { "--run", "format a.html", "notes", "--yes", "--run", "ls" };
+        Assert.True(StartArgument.TakeShellOptions(arguments, In("work"), out var yes, out var run));
+        Assert.True(yes);
+        Assert.Equal(new[] { "format a.html", "ls" }, run);
+        Assert.Equal(new[] { "notes" }, arguments);
+        // "--run" without a command after it: not taken (an option Blyant does not know, as told)
+        var alone = new List<string> { "--run" };
+        Assert.False(StartArgument.TakeShellOptions(alone, In("work"), out _, out var none));
+        Assert.Empty(none);
+        Assert.Equal(new[] { "--run" }, alone);
+        // "--yes" without the shell is not taken either
+        var noShell = new List<string> { "--yes" };
+        Assert.False(StartArgument.TakeShellOptions(noShell, In("work"), out var notYes, out _));
+        Assert.False(notYes);
+        Assert.Equal(new[] { "--yes" }, noShell);
     }
 }

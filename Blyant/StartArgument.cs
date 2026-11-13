@@ -64,9 +64,28 @@ internal static class StartArgument
     /// that is there is a file)
     /// </summary>
     /// <returns>True for the shell</returns>
-    internal static bool TakeShellOptions(List<string> arguments, string currentDirectory, out bool yes)
+    internal static bool TakeShellOptions(List<string> arguments, string currentDirectory, out bool yes) =>
+        TakeShellOptions(arguments, currentDirectory, out yes, out _);
+
+    /// <summary>
+    /// "--shell", "--run command" (a command run by the shell, as many as are given: Blyant ends after them) and
+    /// "--yes" with them: taken out of the arguments (a file of that name that is there is a file)
+    /// </summary>
+    /// <returns>True for the shell (also with --run)</returns>
+    internal static bool TakeShellOptions(List<string> arguments, string currentDirectory, out bool yes,
+        out List<string> run)
     {
-        var shell = arguments.RemoveAll(argument => argument == "--shell" && IsOption(argument, currentDirectory)) > 0;
+        run = new List<string>();
+        for (var i = 0; i < arguments.Count - 1; i++)
+        {
+            if (arguments[i] != "--run" || !IsOption(arguments[i], currentDirectory)) continue;
+            run.Add(arguments[i + 1]);
+            arguments.RemoveRange(i, 2);
+            i--;
+        }
+
+        var shell = arguments.RemoveAll(argument => argument == "--shell" && IsOption(argument, currentDirectory)) > 0 ||
+                    run.Count > 0;
         yes = shell && arguments.RemoveAll(argument => argument == "--yes" && IsOption(argument, currentDirectory)) > 0;
         return shell;
     }
@@ -136,8 +155,10 @@ internal static class StartArgument
         "  +12           Open the file at line 12\n" +
         "  --shell [dir] Use Blyant on lines: type commands at a prompt (help lists\n" +
         "                them). Commands can also be read from a file\n" +
-        "  --yes         With --shell, for commands read from a file: answer yes to\n" +
-        "                questions (else nothing is done that asks first)\n" +
+        "  --run \"cmd\"   Run a command of the shell, and end (--run can be given more\n" +
+        "                than once): blyant --run \"format page.html\"\n" +
+        "  --yes         With --shell or --run, for commands that are not typed: answer\n" +
+        "                yes to questions (else nothing is done that asks first)\n" +
         "  --help, -h    Show this text\n" +
         "  --version, -v Show the version";
 

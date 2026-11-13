@@ -1075,6 +1075,12 @@ internal sealed partial class EditorEngine
         }
     }
 
+    /// <summary>
+    /// Run a command as it is typed after ":" (the shell runs the commands of the editor on the text of a file,
+    /// without a screen: "format", "trim"). What it tells is Message
+    /// </summary>
+    internal void RunCommandLine(string command) => ExecuteCommand(command);
+
     private void ExecuteCommand(string command)
     {
         if (command.Length == 0) return;

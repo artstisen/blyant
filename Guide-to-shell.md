@@ -41,6 +41,10 @@ Every list a command shows is numbered, and a number given to the next command i
 | `copy file\|n dir\|n` | Copy a file or directory into a directory |
 | `move file\|n dir\|n` | Move a file or directory into a directory |
 | `delete file\|n` (`del`) | Delete a file or directory: to the trash, after asking |
+| `info [file\|n]` | Tell about a file or directory (alone: the one you are in): its kind, size, dates and path, and for a text file its characters, words, lines, encoding and line endings |
+| `format file\|n` | Format an HTML, CSS or XML file, as `:format` in the editor does (see [Text and settings](#text-and-settings)) |
+| `trim file\|n` | Remove the blank space at the end of the lines, as `:trim` in the editor does; `trim!` also the line breaks of Markdown |
+| `set [name [value]]` | Show the settings (`set`), one of them (`set indent`), or change one (`set indent 2`) |
 | `favorites [list]` (`fav`) | List the favorites of the file browser, with their folders as headings; `fav work` uses the list _work_ from now on, as `:list work` does |
 | `history` (`hist`) | List the files opened, the newest first, with when |
 | `recent` | List the latest files (the first nine of the history) |
@@ -68,6 +72,14 @@ The shell works on files with the rules of the file browser:
 - `find` searches the directory you are in and the directories below it, as the search of the file browser does: hidden files are left out, and at most 5000 files are found. `find plot` finds the names with _plot_ in them, `find *.md` the names that match (`*` and `?`), `find -t storm` the text files with _storm_ in a line (with the line), and `find *.md -t storm` both. `open` on a file found by its text opens it at that line
 - After `new`, `mkdir`, `rename`, `copy` and `move`, the new place is the last list: `open 1` opens it
 
+## Text and settings
+`format` and `trim` change a file without opening it: they are the commands `:format` and `:trim` of the editor, run on the text of the file, so they do just what they do there (see the [guide to the editor](Guide-to-editor.md#other-commands)). The file is saved only when its text changed, with its line endings and its byte order mark as they were, and it is told: `page.html: Formatted`, `poem.md: Lines trimmed: 3`. A file that cannot be formatted safely is left as it is, and why is told.
+
+- Only files in UTF-8 are changed: a file in another encoding (Windows-1252, say) is left as it is. Open it in the editor, which saves it in UTF-8
+- There is no undo: a file changed by `format` or `trim` is saved at once. Use them on files you can get back (a copy, a project kept in Git)
+
+`set` shows the settings as they are in the settings file (`settings.ini` in the data directory), and changes one as the pages of Configuration do: `set indent 2`, `set wrap false`, `set colorscheme Deep Blue`. The setting is read again at once, as Blyant reads it when it starts. A value the setting cannot have is told, and the setting stays as it was: `indent cannot be 3: it stays 4`. The names and values are those of the settings file, and the guide to [Configuration](Guide-to-start-page.md#configuration) tells what each setting does.
+
 ## Editing a file
 `open` shows the editor of the full screen, with all its keys and commands (see the [guide to the editor](Guide-to-editor.md)). When you close it (`:q`, `:wq`), you are back at the prompt, in the directory you were in. A file that is not there yet is made if you want that: the shell asks first.
 
@@ -90,6 +102,15 @@ printf 'ls\nhist\n' | blyant --shell
 - No prompt is shown, and what went wrong is written to the error output, so a script can tell the two apart. The exit code is 1 when a command failed, else 0
 - Questions are not asked: the answer is no, so nothing is done that would ask first. With `--yes` the answer is yes, also to deleting (to the trash): `blyant --shell --yes < commands.txt`
 - `open` does not open the editor (it needs a terminal); with `--yes` a file that is not there is still made
+
+`--run` gives the commands on the command line instead, one after each `--run`, and Blyant ends when they are done: what they show, their questions and the exit code are as for commands read from a file.
+
+```
+blyant --run "format page.html"
+blyant --run "trim notes.md" --run "format site.css" ~/projects/site
+```
+
+A directory given with them is where they run (the one you are in, if none is given).
 
 ## What stays on the full screen
 The corkboard, the Jump menu, the color schemes and logos, Configuration, split views and Zen mode are not in the shell: start Blyant without `--shell` to use them. Your settings, lists and bookmarks are the same in both, as they are kept in the data directory (see [Good to know](Guide-to-installation.md#good-to-know)).

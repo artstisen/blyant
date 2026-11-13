@@ -87,8 +87,8 @@ internal static class Commands
             "top bottom missing prune tofile colorscheme log favorites history hotlist browse file open exit",
             "q h u ju jmp corkboard colo favs hist hot qa"),
         [CommandContext.Shell] = new Table(
-            "pwd ls cd up open peek find new mkdir rename copy move delete favorites history recent hotlist bookmarks " +
-            "projects project log version help exit quit",
+            "pwd ls cd up open peek find new mkdir rename copy move delete info format trim trim! set favorites history " +
+            "recent hotlist bookmarks projects project log version help exit quit",
             "fav favs hist hot book proj h q del"),
         [CommandContext.Editor] = new Table(
             "write saveas quit quit! wq help edit edit! reload reload! undo redo delete yank replace nohlsearch " +
