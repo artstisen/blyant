@@ -1581,6 +1581,7 @@ en: "Clear string memory"
 en: "Insert ISO timestamp (YYYY-MM-DD HH:MM:SS)"
 en: "Remove blank space at line ends (selection or all)"
 en: "Also the two spaces of Markdown line breaks"
+en: "Format HTML, CSS or XML file (u undoes it)"
 en: "Line endings of the file: lf or crlf (alone: tell)"
 en: "Byte order mark of the file (alone: what it is)"
 en: "Show blank space as . > $ (again: hide it)"
@@ -1648,6 +1649,12 @@ en: "Dimensions must be at least {0}"
 
 # Editor/EditorEngine.Diff.cs
 en: "Change {0} of {1}"
+
+# Editor/EditorEngine.Format.cs
+en: "Only HTML, CSS and XML files can be formatted"
+en: "Not formatted: {0}"
+en: "Already formatted"
+en: "Formatted (u undoes it)"
 
 # Editor/EditorEngine.Jump.cs
 en: "No word to jump to on the screen"

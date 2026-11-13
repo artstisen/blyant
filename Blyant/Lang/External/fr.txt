@@ -3085,6 +3085,8 @@ en: "Remove blank space at line ends (selection or all)"
 fr: "Ôter les blancs en fin de ligne (sélection ou tout)"
 en: "Also the two spaces of Markdown line breaks"
 fr: "Aussi les deux espaces des sauts de Markdown"
+en: "Format HTML, CSS or XML file (u undoes it)"
+fr: "Formater un fichier HTML, CSS ou XML (u annule)"
 en: "Line endings of the file: lf or crlf (alone: tell)"
 fr: "Fins de ligne du fichier : lf ou crlf (seul : voir)"
 en: "Byte order mark of the file (alone: what it is)"
@@ -3217,6 +3219,16 @@ fr: "La taille doit être d'au moins {0}"
 # Editor/EditorEngine.Diff.cs
 en: "Change {0} of {1}"
 fr: "Changement {0} sur {1}"
+
+# Editor/EditorEngine.Format.cs
+en: "Only HTML, CSS and XML files can be formatted"
+fr: "Seuls les fichiers HTML, CSS et XML peuvent être formatés"
+en: "Not formatted: {0}"
+fr: "Non formaté : {0}"
+en: "Already formatted"
+fr: "Déjà formaté"
+en: "Formatted (u undoes it)"
+fr: "Formaté (u annule)"
 
 # Editor/EditorEngine.Jump.cs
 en: "No word to jump to on the screen"

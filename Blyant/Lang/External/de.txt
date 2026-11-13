@@ -3085,6 +3085,8 @@ en: "Remove blank space at line ends (selection or all)"
 de: "Leerraum am Zeilenende entfernen (Auswahl/alles)"
 en: "Also the two spaces of Markdown line breaks"
 de: "Auch die zwei Leerzeichen von Markdown-Umbrüchen"
+en: "Format HTML, CSS or XML file (u undoes it)"
+de: "HTML-, CSS- oder XML-Datei formatieren (u: zurück)"
 en: "Line endings of the file: lf or crlf (alone: tell)"
 de: "Zeilenenden der Datei: lf oder crlf (allein: zeigen)"
 en: "Byte order mark of the file (alone: what it is)"
@@ -3217,6 +3219,16 @@ de: "Die Größe muss mindestens {0} sein"
 # Editor/EditorEngine.Diff.cs
 en: "Change {0} of {1}"
 de: "Änderung {0} von {1}"
+
+# Editor/EditorEngine.Format.cs
+en: "Only HTML, CSS and XML files can be formatted"
+de: "Nur HTML-, CSS- und XML-Dateien können formatiert werden"
+en: "Not formatted: {0}"
+de: "Nicht formatiert: {0}"
+en: "Already formatted"
+de: "Bereits formatiert"
+en: "Formatted (u undoes it)"
+de: "Formatiert (u: zurück)"
 
 # Editor/EditorEngine.Jump.cs
 en: "No word to jump to on the screen"

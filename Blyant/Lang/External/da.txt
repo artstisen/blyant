@@ -3085,6 +3085,8 @@ en: "Remove blank space at line ends (selection or all)"
 da: "Fjern mellemrum ved linjeslut (markering eller alt)"
 en: "Also the two spaces of Markdown line breaks"
 da: "Også de to mellemrum i Markdowns linjeskift"
+en: "Format HTML, CSS or XML file (u undoes it)"
+da: "Formatér HTML-, CSS- eller XML-fil (u fortryder)"
 en: "Line endings of the file: lf or crlf (alone: tell)"
 da: "Filens linjeskift: lf eller crlf (alene: vis)"
 en: "Byte order mark of the file (alone: what it is)"
@@ -3217,6 +3219,16 @@ da: "Størrelsen skal være mindst {0}"
 # Editor/EditorEngine.Diff.cs
 en: "Change {0} of {1}"
 da: "Ændring {0} af {1}"
+
+# Editor/EditorEngine.Format.cs
+en: "Only HTML, CSS and XML files can be formatted"
+da: "Kun HTML-, CSS- og XML-filer kan formateres"
+en: "Not formatted: {0}"
+da: "Ikke formateret: {0}"
+en: "Already formatted"
+da: "Allerede formateret"
+en: "Formatted (u undoes it)"
+da: "Formateret (u fortryder)"
 
 # Editor/EditorEngine.Jump.cs
 en: "No word to jump to on the screen"

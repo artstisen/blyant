@@ -1,6 +1,7 @@
 # Changes
 
 ## v1.4.6 (unreleased)
+- **`:format` in the editor**: formats an HTML, CSS or XML file, as [Blyant Validator](Guide-to-installation.md#blyant-validator) does: the indents, and where the lines break (only blank space changes). It uses the formatters of Blyant Validator 0.6.0, copied into Blyant (`Blyant/Format`, by `tools/formatters.py`), so a file is formatted alike in both. A file that cannot be formatted safely (a block never closed, XML that is not well-formed) is left as it is, and the message tells why, with the line. One `u` undoes it. See [Other commands](Guide-to-editor.md#other-commands).
 - **Blyant Validator and Typst in the guides**: Blyant Validator 0.6.0 also validates Typst documents, and makes them into a PDF with `:typst`. The README, the installation guide (and so the user manual) and the guide to Typst say so. See [Blyant Validator](Guide-to-installation.md#blyant-validator).
 
 ## v1.4.5 (2026-11-11)

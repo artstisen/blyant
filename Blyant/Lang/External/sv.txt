@@ -3085,6 +3085,8 @@ en: "Remove blank space at line ends (selection or all)"
 sv: "Ta bort blanksteg vid radslut (markering eller allt)"
 en: "Also the two spaces of Markdown line breaks"
 sv: "Även de två blankstegen i Markdowns radbrytningar"
+en: "Format HTML, CSS or XML file (u undoes it)"
+sv: "Formatera HTML-, CSS- eller XML-fil (u ångrar)"
 en: "Line endings of the file: lf or crlf (alone: tell)"
 sv: "Filens radslut: lf eller crlf (ensamt: visa)"
 en: "Byte order mark of the file (alone: what it is)"
@@ -3217,6 +3219,16 @@ sv: "Storleken måste vara minst {0}"
 # Editor/EditorEngine.Diff.cs
 en: "Change {0} of {1}"
 sv: "Ändring {0} av {1}"
+
+# Editor/EditorEngine.Format.cs
+en: "Only HTML, CSS and XML files can be formatted"
+sv: "Bara HTML-, CSS- och XML-filer kan formateras"
+en: "Not formatted: {0}"
+sv: "Inte formaterad: {0}"
+en: "Already formatted"
+sv: "Redan formaterad"
+en: "Formatted (u undoes it)"
+sv: "Formaterad (u ångrar)"
 
 # Editor/EditorEngine.Jump.cs
 en: "No word to jump to on the screen"

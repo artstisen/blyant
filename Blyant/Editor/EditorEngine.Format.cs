@@ -1,0 +1,103 @@
+﻿using Blyant.Format.Core;
+using Blyant.Format.Css;
+using Blyant.Format.Html;
+using Blyant.Format.Xml;
+
+namespace Blyant;
+
+/// <summary>
+/// ":format": the text of an HTML, CSS or XML file formatted as Blyant Validator formats it (its formatters are copied
+/// into Blyant/Format by tools/formatters.py). Only blank space changes: the indents, and where the lines break. The
+/// kind of text is that of the file (its name), and the whole text is formatted, as one change that "u" undoes. A text
+/// that cannot be formatted safely (a block that is never closed, XML that is not well-formed) is left as it is, and
+/// the formatter tells why, with the line
+/// </summary>
+internal sealed partial class EditorEngine
+{
+    private void FormatText()
+    {
+        if (SingleLine) return;
+        var kind = CompletionSyntax switch
+        {
+            SyntaxType.Html => DocumentKind.Html,
+            SyntaxType.Css => DocumentKind.Css,
+            SyntaxType.Xml => DocumentKind.Xml,
+            _ => DocumentKind.Unknown
+        };
+        IFormatter? formatter = kind switch
+        {
+            DocumentKind.Html => new HtmlFormatter(),
+            DocumentKind.Css => new CssFormatter(),
+            DocumentKind.Xml => new XmlFormatter(),
+            _ => null
+        };
+        if (formatter == null)
+        {
+            SetError(Lang.T("Only HTML, CSS and XML files can be formatted"));
+            return;
+        }
+
+        if (Buffer.RefuseIfReadOnly()) return;
+        var text = Buffer.GetText();
+        string formatted;
+        try
+        {
+            // The lines of the editor end in "\n" (the line endings of the file are kept when it is saved), and the
+            // indent is that of Blyant Validator, so a file is formatted alike in both
+            formatted = TextBuffer.Normalize(formatter.Format(new SourceDocument(string.Empty, text, kind),
+                new FormatOptions { NewLine = "\n" }));
+        }
+        catch (Exception e) when (e is not OutOfMemoryException)
+        {
+            // (the message of the formatter, in English, with the line: ":42" goes there)
+            SetError(Lang.F("Not formatted: {0}", e.Message));
+            return;
+        }
+
+        if (formatted == text)
+        {
+            Message = Lang.T("Already formatted");
+            return;
+        }
+
+        var line = Cursor.Line;
+        ReplaceChanged(text, formatted);
+        // The cursor stays on its line (or the last), at its first character
+        line = Math.Min(line, Buffer.LineCount - 1);
+        Cursor = new TextPos(line, FirstNonBlank(line));
+        ClampCursor();
+        Message = Lang.T("Formatted (u undoes it)");
+    }
+
+    /// <summary>
+    /// Change the text into another by replacing only the part that differs (what is the same at the start and the
+    /// end is left, so marks and bookmarks there stay where they are). One change: one step of undo
+    /// </summary>
+    private void ReplaceChanged(string text, string replacement)
+    {
+        var start = 0;
+        var most = Math.Min(text.Length, replacement.Length);
+        while (start < most && text[start] == replacement[start]) start++;
+        var end = 0;
+        while (end < most - start && text[^(end + 1)] == replacement[^(end + 1)]) end++;
+        // (through the step of the command: the part taken out and the part put in are undone together)
+        var from = PositionOf(text, start);
+        Delete(from, PositionOf(text, text.Length - end));
+        Insert(from, replacement.Substring(start, replacement.Length - start - end));
+    }
+
+    // The line and column of an offset in the text of the buffer (lines end in "\n")
+    private static TextPos PositionOf(string text, int offset)
+    {
+        var line = 0;
+        var lineStart = 0;
+        for (var i = 0; i < offset; i++)
+        {
+            if (text[i] != '\n') continue;
+            line++;
+            lineStart = i + 1;
+        }
+
+        return new TextPos(line, offset - lineStart);
+    }
+}

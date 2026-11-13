@@ -3085,6 +3085,8 @@ en: "Remove blank space at line ends (selection or all)"
 nl: "Witruimte aan regeleinden weghalen (selectie of alles)"
 en: "Also the two spaces of Markdown line breaks"
 nl: "Ook de twee spaties van Markdown-regeleinden"
+en: "Format HTML, CSS or XML file (u undoes it)"
+nl: "HTML-, CSS- of XML-bestand opmaken (u maakt ongedaan)"
 en: "Line endings of the file: lf or crlf (alone: tell)"
 nl: "Regeleinden van het bestand: lf of crlf (alleen: tonen)"
 en: "Byte order mark of the file (alone: what it is)"
@@ -3217,6 +3219,16 @@ nl: "Afmetingen moeten minstens {0} zijn"
 # Editor/EditorEngine.Diff.cs
 en: "Change {0} of {1}"
 nl: "Wijziging {0} van {1}"
+
+# Editor/EditorEngine.Format.cs
+en: "Only HTML, CSS and XML files can be formatted"
+nl: "Alleen HTML-, CSS- en XML-bestanden kunnen worden opgemaakt"
+en: "Not formatted: {0}"
+nl: "Niet opgemaakt: {0}"
+en: "Already formatted"
+nl: "Al opgemaakt"
+en: "Formatted (u undoes it)"
+nl: "Opgemaakt (u maakt ongedaan)"
 
 # Editor/EditorEngine.Jump.cs
 en: "No word to jump to on the screen"

@@ -1431,6 +1431,10 @@ internal sealed partial class EditorEngine
             case "timestamp":
                 InsertAtCursor(IsoDateTime.GetDateTimeNow());
                 break;
+            case "format":
+                // An HTML, CSS or XML file, as Blyant Validator formats it (see EditorEngine.Format)
+                FormatText();
+                break;
             case "trim":
             case "trim!":
                 // Without a selection: all the lines

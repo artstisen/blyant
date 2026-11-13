@@ -619,6 +619,11 @@ Commands:
   - The indentation at the start of the lines is kept
   - In a Markdown file (and a blank page), two spaces or more at the end of a line of text with another line of text after it are a line break: they are kept, and the message tells how many. `:trim!` removes them too
   - One `u` undoes it
+- `:format` Format an HTML, CSS or XML file, as [Blyant Validator](Guide-to-installation.md#blyant-validator) formats it (with the same code): the indents, and where the lines break. Only blank space changes, never the content, and the whole file is formatted.
+  - The kind of file is told by its name: `.html` and `.htm`, `.css`, and `.xml`, `.svg` and the other XML files. Other files (Markdown, Typst ...) are not formatted
+  - A file that cannot be formatted safely is left as it is, and the message tells why, with the line: a block that is never closed, or XML that is not well-formed. `:42` goes to line 42
+  - The indent is two spaces, as in Blyant Validator, so a file is formatted alike in both. The line endings of the file are kept when it is saved
+  - The cursor stays on its line. One `u` undoes it, and the file is only changed on the disk when you save it
 - `:zen` [Zen mode](#zen-mode) on or off: only the mode and the name above the text, and the line and column below it. Kept as the setting `zen`
 - `:whitespace` Show blank space, or hide it again: a space as `.`, a tab as `>` and the end of a line as `$`, in the color of the line numbers, and the blank space at the end of a line highlighted (in a Markdown file, the two spaces of a line break that `:trim` keeps are only dimmed). Each mark takes the place of the character it marks, so nothing moves. Kept as the setting `whitespace` (_Show blank space as . > $_ on the Editor page of Configuration). Not in a peek or a comparison
 - `:ol` Make the selected lines a numbered list (`1. `, `2. ` ...), and `:ul` a bulleted list (`- `).

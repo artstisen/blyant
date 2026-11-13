@@ -1122,6 +1122,7 @@ internal static class Tools
             _shortcutList.Add(new Shortcut(":ts", Lang.T("Insert ISO timestamp (YYYY-MM-DD HH:MM:SS)"), false));
             _shortcutList.Add(new Shortcut(":trim", Lang.T("Remove blank space at line ends (selection or all)"), false));
             _shortcutList.Add(new Shortcut(":trim!", Lang.T("Also the two spaces of Markdown line breaks"), false));
+            _shortcutList.Add(new Shortcut(":format", Lang.T("Format HTML, CSS or XML file (u undoes it)"), false));
             _shortcutList.Add(new Shortcut(":lineendings lf", Lang.T("Line endings of the file: lf or crlf (alone: tell)"), false));
             _shortcutList.Add(new Shortcut(":bom on :bom off", Lang.T("Byte order mark of the file (alone: what it is)"), false));
             _shortcutList.Add(new Shortcut(":whitespace", Lang.T("Show blank space as . > $ (again: hide it)"), false));
