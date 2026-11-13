@@ -17,7 +17,8 @@ internal enum CommandContext
     Start, // The start page: its tabs Start, Configuration and Help
     Jump, // The Jump menu (the commands work on its Bookmarks tab)
     Projects, // The list of projects (the commands work on the selected project)
-    Board // The corkboard (the commands work on the selected card)
+    Board, // The corkboard (the commands work on the selected card)
+    Shell // The shell ("blyant --shell"): Blyant on lines
 }
 
 /// <summary>
@@ -85,6 +86,9 @@ internal static class Commands
             "quit close help jump book recent new folder note badge divider line frame mode info peek list board arrange color rename remove clear undo " +
             "top bottom missing prune tofile colorscheme log favorites history hotlist browse file open exit",
             "q h u ju jmp corkboard colo favs hist hot qa"),
+        [CommandContext.Shell] = new Table(
+            "pwd ls cd up open favorites history recent hotlist bookmarks projects project log version help exit quit",
+            "fav favs hist hot book proj h q"),
         [CommandContext.Editor] = new Table(
             "write saveas quit quit! wq help edit edit! reload reload! undo redo delete yank replace nohlsearch " +
             "spell nospell spellnext spellprev suggest spelladd syntax number nonumber timestamp " +

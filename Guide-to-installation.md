@@ -67,6 +67,7 @@ blyant notes.md                Open notes.md in the editor (the file browser is 
 blyant +12 notes.md            Open notes.md at line 12 (also blyant notes.md +12)
 blyant ~/projects/site         Show the directory in the file browser
 blyant .                       Show the directory you are in, in the file browser
+blyant --shell                 Use Blyant on lines: commands typed at a prompt (see the guide to the shell)
 blyant --help                  Show how Blyant is started (also -h)
 blyant --version               Show the version (also -v)
 ```

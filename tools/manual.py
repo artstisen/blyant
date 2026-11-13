@@ -32,6 +32,7 @@ NAME = 'Blyant-User-Manual'
 #   title        the heading in the manual (None: as in the guide)
 INSTALL, START, EDITOR = 'Guide-to-installation.md', 'Guide-to-start-page.md', 'Guide-to-editor.md'
 JUMP, BOARD, TYPST = 'Guide-to-jump-menu.md', 'Guide-to-corkboard.md', 'Guide-to-typst.md'
+SHELL = 'Guide-to-shell.md'
 CHAPTERS = [
     ('Getting started', [
         (INSTALL, 'Installing and running Blyant', 'intro', None),
@@ -108,6 +109,9 @@ CHAPTERS = [
     ]),
     ('Writing with Typst', [
         (TYPST, 'Guide to writing with Typst', 'body', None),
+    ]),
+    ('Shell', [
+        (SHELL, 'Guide to the shell', 'body', None),
     ]),
     ('Appendix', [
         (START, 'Log', 'all', None),

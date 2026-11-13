@@ -16,6 +16,7 @@ Every place with a command line (start page, file browser, favorites, history, h
 - `CommandTests` compares the tables with the code that runs the commands (it reads the source files), and fails with the names that differ. If the code that runs the commands of a place is moved or restructured, update where that test looks
 - Also add the command to the help (`Tools.cs`, the section of the place) and to the guide that covers it
 - When what a key or command does changes (a key gets another meaning, a command does more or is refused in a case), update the help rows of the place, its key hints on the bottom line, the guide and `CHANGELOG.md` in the same change, and the language files when a text changes
+- The shell (`blyant --shell`, `Blyant/Shell`) has commands of its own (`CommandContext.Shell`, run in `ShellCommands.cs`: `RunCommand`) that use the same lists and files as the pages. When a list, a file operation or a question it uses changes, try the shell too; a command added to it goes in its table, in its `help` (`HelpRows`) and in `Guide-to-shell.md`. It writes plain lines only (no colors, no cursor moved), and asks the questions of `ChoiceBox` on lines: keep both so
 - The short guides in the program (the Help tab of the start page: `QuickGuide.cs` and `QuickGuide.Guides.cs`) show the most used keys of projects, the file browser, the editor and the Jump menu. When such a key or command changes, update its guide too
 
 ## Texts and languages

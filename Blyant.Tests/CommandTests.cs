@@ -219,6 +219,12 @@ public class CommandTests
     }
 
     [Fact]
+    public void TheTables_HaveTheCommandsOfTheShell()
+    {
+        AssertSame(CommandContext.Shell, Compared(Method("Shell/ShellCommands.cs", "RunCommand")));
+    }
+
+    [Fact]
     public void TheTables_HaveTheCommandsOfTheStartPage()
     {
         AssertSame(CommandContext.Start, Compared(Method("StartMenu.cs", "RunCommand")));

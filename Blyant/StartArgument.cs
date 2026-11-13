@@ -59,6 +59,18 @@ internal static class StartArgument
     internal static string? FirstOption(IReadOnlyList<string> arguments, string currentDirectory) =>
         arguments.FirstOrDefault(argument => IsOption(argument, currentDirectory));
 
+    /// <summary>
+    /// "--shell" (Blyant on lines, see Shell), and "--yes" with it: taken out of the arguments (a file of that name
+    /// that is there is a file)
+    /// </summary>
+    /// <returns>True for the shell</returns>
+    internal static bool TakeShellOptions(List<string> arguments, string currentDirectory, out bool yes)
+    {
+        var shell = arguments.RemoveAll(argument => argument == "--shell" && IsOption(argument, currentDirectory)) > 0;
+        yes = shell && arguments.RemoveAll(argument => argument == "--yes" && IsOption(argument, currentDirectory)) > 0;
+        return shell;
+    }
+
     // "+12": the line 12 (a line before the first is the first), or null for another argument
     private static int? LineOf(string argument, string currentDirectory)
     {
@@ -122,6 +134,10 @@ internal static class StartArgument
         "  is not there (in a directory that is) can be made. Without a path, Blyant\n" +
         "  starts as it is set to.\n" +
         "  +12           Open the file at line 12\n" +
+        "  --shell [dir] Use Blyant on lines: type commands at a prompt (help lists\n" +
+        "                them). Commands can also be read from a file\n" +
+        "  --yes         With --shell, for commands read from a file: answer yes to\n" +
+        "                questions (else nothing is done that asks first)\n" +
         "  --help, -h    Show this text\n" +
         "  --version, -v Show the version";
 

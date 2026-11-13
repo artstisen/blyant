@@ -56,6 +56,9 @@ internal static class ChoiceBox
     internal static int Pick(string caption, string question, string note, IReadOnlyList<string> choices,
         IReadOnlyList<string> keys, int selected, bool warning, bool guarded = false)
     {
+        // The shell: asked on a line
+        if (Shell.Prompts is { } shell) return shell.Pick(caption, question, note, choices, keys, selected, guarded);
+
         // In the color of text in frames and boxes
         using var box = ConsoleColors.BoxScope();
 
@@ -133,6 +136,13 @@ internal static class ChoiceBox
     /// </summary>
     internal static void Message(string caption, string message, string note)
     {
+        // The shell: written on lines, nothing waited for
+        if (Shell.Prompts is { } shell)
+        {
+            shell.Message(caption, message, note);
+            return;
+        }
+
         var inner = InnerWidth(caption, message);
         ShowMessage(caption, message, note.Length == 0 ? new List<string>() : Wrap(note, inner - 4), inner,
             DialogText.HitAnyKeyToContinue);
@@ -149,6 +159,13 @@ internal static class ChoiceBox
     /// <returns>The key pressed</returns>
     internal static ConsoleKeyInfo MessageWithPath(string caption, string message, string path, string keys)
     {
+        // The shell: written on lines (as if Enter was pressed)
+        if (Shell.Prompts is { } shell)
+        {
+            shell.Message(caption, message, path);
+            return new ConsoleKeyInfo('\r', ConsoleKey.Enter, false, false, false);
+        }
+
         var inner = InnerWidth(caption, message, path, keys);
         var rows = Rows(path, inner - 4);
         // The box fits on the screen
@@ -195,6 +212,9 @@ internal static class ChoiceBox
     /// <returns>The text typed (trimmed), or null if canceled or empty</returns>
     internal static string? AskText(string caption, string prompt, string label, string text)
     {
+        // The shell: asked on a line
+        if (Shell.Prompts is { } shell) return shell.AskText(caption, prompt, label);
+
         // In the color of text in frames and boxes
         using var box = ConsoleColors.BoxScope();
 

@@ -20,6 +20,29 @@ internal static class Init
     // Set "artificial buffer size" according to general guidelines (79x23: a window of 80x24)
     // -the actual console buffer is not touched but must be set manually by the user (cross platform compat)
     // -this buffer is used to calculate the output width and height across the entire application.
+    /// <summary>
+    /// The full screen shown from the shell (the editor of a file opened there): the size of the window, a hidden
+    /// cursor and the colors of the scheme
+    /// </summary>
+    internal static void EnterScreen()
+    {
+        SetDefaultOutputDimensions();
+        ApplyAutoSize();
+        Tools.HideCursor();
+        ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
+        Tools.ClearScreen();
+    }
+
+    /// <summary>
+    /// Back to the shell from the full screen: the colors of the terminal, the cursor shown, and an empty screen
+    /// </summary>
+    internal static void LeaveScreen()
+    {
+        ConsoleColors.Reset();
+        Tools.ShowCursor();
+        Console.Clear();
+    }
+
     internal static void SetDefaultOutputDimensions()
     {
         LineWidth = MinLineWidth;
@@ -264,16 +287,27 @@ internal static class Init
         }
     }
 
-    public static void RunInitialization()
+    /// <summary>
+    /// Blyant runs on lines (the shell): nothing of the full screen is shown when it starts (no progress, no colors,
+    /// no title), so what the shell writes is plain text, also to a file or a pipe
+    /// </summary>
+    internal static bool Plain { get; private set; }
+
+    public static void RunInitialization(bool plain = false)
     {
+        Plain = plain;
         _initLines = 0;
         // Hide the cursor
-        Tools.HideCursor();
+        if (!plain) Tools.HideCursor();
         DimensionsExceptionCaught = false;
         DataDirectoryCreated = false;
         UsingDefaultSettings = false;
-        Console.Clear();
-        Console.WriteLine();
+        if (!plain)
+        {
+            Console.Clear();
+            Console.WriteLine();
+        }
+
         WriteProgressBar(1); // progress
         Log(DialogText.ApplicationName + " " + DialogText.ApplicationVersion, true);
         WriteProgressBar(1); // progress
@@ -282,7 +316,7 @@ internal static class Init
         WriteProgressBar(3); // progress
         WriteProgressBar(4); // progress
         // Set title
-        Console.Title = DialogText.ApplicationName;
+        if (!plain) Console.Title = DialogText.ApplicationName;
         WriteProgressBar(5); // progress
         WriteProgressBar(6); // progress
         Log(DialogText.InitSetEncoding, true);
@@ -321,7 +355,7 @@ internal static class Init
         Logo.AnimateNext(); // Sweep the logo when the start page is first shown
         WriteProgressBar(8); // progress
         // Set default colors
-        ConsoleColors.SetColors(ConsoleColors.ColorPreset.Reset);
+        if (!plain) ConsoleColors.SetColors(ConsoleColors.ColorPreset.Reset);
         WriteProgressBar(9); // progress
         // Ctrl+C does not close Blyant (text that is not saved would be lost): the signal is cancelled, and the
         // editor tells how to close it. Ctrl+C stays a signal (not a key, as TreatControlCAsInput would make it), so
@@ -348,7 +382,8 @@ internal static class Init
         if (!FileIo.CheckDataDirectory())
         {
             Log(DialogText.InitDirectoryCheckError + FileIo.DirectoryCheckErrorMessage, true);
-            Keyboard.AwaitAnyKey();
+            if (plain) Console.Error.WriteLine(DialogText.InitDirectoryCheckError + FileIo.DirectoryCheckErrorMessage);
+            else Keyboard.AwaitAnyKey();
         }
         else
         {
@@ -375,7 +410,8 @@ internal static class Init
             // The settings file is not written now: when a setting is changed, a copy of it is kept first
             // (settings.ini.bad)
             Log("(using the default settings)", true);
-            Keyboard.AwaitAnyKey();
+            if (plain) Console.Error.WriteLine(DialogText.InitLoadingSettingsError);
+            else Keyboard.AwaitAnyKey();
         }
         else
         {
@@ -399,7 +435,12 @@ internal static class Init
         WriteProgressBar(16); // progress
         Log("Target: " + LineWidth + "x" + LineCount, true);
         WriteProgressBar(17); // progress
-        if (TestOutputDimensions() && !DimensionsExceptionCaught)
+        // (the shell does not use the screen: its size is looked at when the editor is opened from it)
+        if (plain)
+        {
+            Log(DialogText.InitOk, true);
+        }
+        else if (TestOutputDimensions() && !DimensionsExceptionCaught)
         {
             Log(DialogText.InitOk, true);
         }
@@ -407,7 +448,8 @@ internal static class Init
         {
             Log(DialogText.InitFailed, true);
         }
-        WriteAllInitOutput();
+
+        if (!plain) WriteAllInitOutput();
         WriteProgressBar(18); // progress
         Log(DialogText.InitCompleted, true);
     }
@@ -421,7 +463,7 @@ internal static class Init
     {
         EventLog.Add(text);
         _initLines++;
-        if (writeOutput)
+        if (writeOutput && !Plain)
         {
             Console.WriteLine(Tools.TruncateString(text, 75, true));
         }
@@ -439,6 +481,7 @@ internal static class Init
 
     private static void WriteProgressBar(int value)
     {
+        if (Plain) return;
         Tools.SaveCursorPosition(0);
         Tools.CursorTopLeft();
         Console.Write(Tools.GetProgressBar(value, 18));

@@ -237,6 +237,7 @@ internal static class DialogText
     public static string LogKeys => Lang.T("| h/l Page | j/k Line | gg G First/Last | /text Filter | Esc Close");
     public const string LogCommand = "Command";
     public const string LogEditorCommand = "Editor";
+    public const string LogShell = "Shell";
     public const string LogFilesCommand = "Files";
     public const string LogFile = "File: ";
     public static string MonochromeIsOn => Lang.T("Black and white is on: the colors are used when it is turned off");

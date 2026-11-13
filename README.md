@@ -65,6 +65,7 @@ See the [guide to the corkboard](Guide-to-corkboard.md).
 - Color schemes and logos, which you can edit and make your own; `:colorscheme name` changes the scheme from any command line
 - English built in, and ten more languages as files that can be changed or added to
 - Runs on Windows, Linux (also Raspberry Pi) and macOS, as a single file with nothing else to install
+- A shell for lines of text (`blyant --shell`): your files and lists with typed commands and numbered lists, for screen readers and scripts, and the full editor a command away
 
 ## Blyant Validator
 **[Blyant Validator](https://github.com/artstisen/blyant-validator)** is a companion tool, which also works on its own: validate HTML, CSS, XML, Markdown and Typst, and format HTML, CSS and XML, side by side with your editor, in any terminal. It checks a file again each time it is saved, and makes a Typst document into a PDF with `:typst`.
@@ -119,6 +120,7 @@ Blyant is operated in the style of Vim: the editor has Normal, Insert and Visual
 - [Corkboard](Guide-to-corkboard.md)
 - [Editor](Guide-to-editor.md)
 - [Writing with Typst](Guide-to-typst.md)
+- [Shell](Guide-to-shell.md)
 - [Changes](CHANGELOG.md)
 
 The guides are also put together as a **user manual**, in two forms:

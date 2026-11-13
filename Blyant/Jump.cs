@@ -694,6 +694,15 @@ internal static class Jump
     /// Make the pending jump (called by the main loop). Afterwards the start page is shown (or a page of its
     /// Configuration tab), or the corkboard first when the jump was made from it
     /// </summary>
+    /// <summary>
+    /// Forget the jump about to be made (the shell, when the editor it opened is left for another place)
+    /// </summary>
+    internal static void DropPending()
+    {
+        Pending = null;
+        BackToBoard = false;
+    }
+
     internal static void RunPending()
     {
         var target = Pending;

@@ -6,22 +6,27 @@ class Program
     {
         // A path given (relative to the directory Blyant is started in, which is read before anything else)
         var currentDirectory = Directory.GetCurrentDirectory();
+        var arguments = args.ToList();
+        // "--shell": Blyant on lines (and "--yes" with it)
+        var shell = StartArgument.TakeShellOptions(arguments, currentDirectory, out var yes);
         // An option (--help, --version) is answered before anything is shown (also to a pipe, as "blyant --help |
         // less"), wherever it is given ("blyant +12 --help"): it is never taken for the name of a file to make
-        if (StartArgument.FirstOption(args, currentDirectory) is { } option)
+        if (StartArgument.FirstOption(arguments, currentDirectory) is { } option)
         {
             Environment.Exit(StartArgument.AnswerOption(option, Console.Out));
         }
 
-        // Keys are read one at a time from the terminal: with its input from a file or a pipe Blyant cannot run
-        if (Console.IsInputRedirected)
+        // Keys are read one at a time from the terminal: with its input from a file or a pipe Blyant cannot run (the
+        // shell can: it reads commands from it)
+        if (!shell && Console.IsInputRedirected)
         {
             // English: written before the settings (and the language) are read
             Console.Error.WriteLine("Blyant runs in a terminal: its input cannot come from a file or pipe.");
             Environment.Exit(1);
         }
 
-        Init.RunInitialization();
+        Init.RunInitialization(shell);
+        if (shell) Environment.Exit(RunShell(arguments, currentDirectory, yes));
         if (Lang.Missing != null)
         {
             // The language set has no file (a language file in a folder "lang" that is gone): English is used
@@ -33,7 +38,7 @@ class Program
 
         // Started with a file or directory ("blyant notes.md", "blyant +12 notes.md" at line 12): it is opened as a
         // jump, without the start page
-        var start = StartArgument.Parse(args, currentDirectory);
+        var start = StartArgument.Parse(arguments, currentDirectory);
         if (start.Message.Length > 0)
         {
             Tools.ClearScreen();
@@ -50,6 +55,44 @@ class Program
         }
 
         MainLoop();
+    }
+
+    // The shell, in the directory given (or of the file given), or the one Blyant is started in. Returns the exit code
+    private static int RunShell(IReadOnlyList<string> arguments, string currentDirectory, bool yes)
+    {
+        if (Lang.Missing != null)
+        {
+            Console.Error.WriteLine(Lang.F("The language file {0} was not found: English is used.",
+                Lang.Missing + ".txt"));
+        }
+
+        var start = StartArgument.Parse(arguments, currentDirectory);
+        if (start.Message.Length > 0)
+        {
+            Console.Error.WriteLine(start.Message);
+            return 1;
+        }
+
+        var directory = currentDirectory;
+        if (start.Path != null)
+        {
+            var result = StartArgument.Resolve(start.Path, currentDirectory);
+            if (result.Target is { Kind: JumpKind.Directory } folder && !result.AskToCreate)
+            {
+                directory = folder.FullPath;
+            }
+            else if (result.Target is { Kind: JumpKind.File } file && !result.AskToCreate)
+            {
+                directory = Path.GetDirectoryName(file.FullPath) ?? currentDirectory;
+            }
+            else
+            {
+                Console.Error.WriteLine(result.Message.Length > 0 ? result.Message : Lang.F("Not found: {0}", result.Path));
+                return 1;
+            }
+        }
+
+        return Shell.Run(directory, yes);
     }
 
     // The place a path given at startup leads to, or null (a message tells why, or the user did not want a file
