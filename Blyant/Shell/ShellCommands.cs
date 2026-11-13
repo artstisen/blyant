@@ -38,6 +38,7 @@ internal sealed partial class ShellSession
         ("projects", Lang.T("List the projects (proj)")),
         ("project n|name", Lang.T("Go to the directory of a project")),
         ("log [n]", Lang.T("Show the last lines of the log (20)")),
+        ("clear", Lang.T("Clear the screen (also cls)")),
         ("version", Lang.T("Show the version of Blyant")),
         ("help [command]", Lang.T("List the commands, or tell what one does")),
         ("exit", Lang.T("Leave Blyant (also quit, q)"))
@@ -156,6 +157,11 @@ internal sealed partial class ShellSession
                 break;
             case "version":
                 Line(DialogText.ApplicationName + " " + DialogText.ApplicationVersion);
+                break;
+            case "clear":
+            case "cls":
+                // (in a terminal: else there is no screen, and nothing is done)
+                ClearScreen?.Invoke();
                 break;
             case "help":
             case "h":
@@ -426,6 +432,7 @@ internal sealed partial class ShellSession
                 "q" or "quit" => "exit",
                 "del" => "delete",
                 "trim!" => "trim",
+                "cls" => "clear",
                 _ => name
             };
             var row = rows.FirstOrDefault(r => r.Command.Split(' ')[0] == full);

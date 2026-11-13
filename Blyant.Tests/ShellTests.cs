@@ -428,4 +428,18 @@ public class ShellTests : IDisposable
         Assert.False(notYes);
         Assert.Equal(new[] { "--yes" }, noShell);
     }
+
+    [Fact]
+    public void Clear_ClearsTheScreenOfTheTerminal_AndFromAFileDoesNothing()
+    {
+        var cleared = 0;
+        var session = new ShellSession(new StringReader("clear\ncls\n"), new StringWriter(), new StringWriter(),
+            In("work"), true) { ClearScreen = () => cleared++ };
+        Shell.Run(session);
+        Assert.Equal(2, cleared);
+        // Not a terminal: no screen to clear, and nothing goes wrong
+        var (output, errors, code, _) = Run("clear\n");
+        Assert.Equal(string.Empty, output + errors);
+        Assert.Equal(0, code);
+    }
 }

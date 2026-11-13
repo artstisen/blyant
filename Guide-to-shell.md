@@ -55,6 +55,7 @@ Every list a command shows is numbered, and a number given to the next command i
 | `projects` (`proj`) | List the projects |
 | `project n\|name` | Go to the directory of a project (`project 2`, `project novel`) |
 | `log [n]` | Show the last lines of the [log](Guide-to-start-page.md#log) (20, or as many as you give) |
+| `clear` (`cls`) | Clear the screen: the prompt is at the top again |
 | `version` | Show the version of Blyant |
 | `help [command]` (`h`) | List the commands, or tell what one does |
 | `exit` (`quit`, `q`) | Leave Blyant |

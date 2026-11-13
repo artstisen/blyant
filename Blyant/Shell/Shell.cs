@@ -33,7 +33,10 @@ internal static class Shell
     internal static int Run(string directory, bool yes)
     {
         var terminal = !Console.IsInputRedirected && !Console.IsOutputRedirected;
-        var session = new ShellSession(Console.In, Console.Out, Console.Error, directory, terminal, yes);
+        var session = new ShellSession(Console.In, Console.Out, Console.Error, directory, terminal, yes)
+        {
+            ClearScreen = terminal ? Console.Clear : null
+        };
         return Run(session);
     }
 

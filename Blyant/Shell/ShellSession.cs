@@ -47,6 +47,12 @@ internal sealed partial class ShellSession
     private bool _listShown; // A list has been shown (its rows can be empty)
 
     /// <summary>
+    /// Clears the screen of the terminal ("clear"): set by the shell of the terminal (a test, or commands read from a
+    /// file, have no screen to clear)
+    /// </summary>
+    internal Action? ClearScreen { get; init; }
+
+    /// <summary>
     /// The number of commands that failed (from a file, the exit code is 1 when there were any)
     /// </summary>
     internal int Failures { get; private set; }
