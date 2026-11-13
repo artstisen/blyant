@@ -542,6 +542,57 @@ internal static partial class FileExplorer
         }
     }
 
+    #region For the shell
+
+    // The shell (Blyant on lines) works on files with the same rules as the file browser, and keeps the same lists:
+    // these take a path, where the browser takes its selected item
+
+    /// <summary>
+    /// Why a file or directory cannot be renamed, moved or deleted (it is used by Blyant), or null if it can
+    /// </summary>
+    internal static string? ProtectionOf(string path, bool isDirectory) =>
+        Protection(new Item(System.IO.Path.GetFileName(System.IO.Path.TrimEndingDirectorySeparator(path)), path,
+            isDirectory, 0));
+
+    /// <summary>
+    /// Ask before deleting a file or directory, as the browser asks (what goes with it, and whether to the trash)
+    /// </summary>
+    internal static bool ConfirmDeleteOf(string path, bool isDirectory, bool toTrash) =>
+        ConfirmDelete(new List<Item>
+        {
+            new(System.IO.Path.GetFileName(System.IO.Path.TrimEndingDirectorySeparator(path)), path, isDirectory, 0)
+        }, toTrash);
+
+    /// <summary>
+    /// Add a file operation to the log, as the browser does (with what went wrong if it failed)
+    /// </summary>
+    internal static void LogFileOperation(string operation, string detail, string result) =>
+        LogOperation(operation, detail, result);
+
+    /// <summary>
+    /// A file or directory was renamed or moved: the favorites, the history, the jumps, the hotlist (a directory), the
+    /// projects and the bookmarks follow it, as when it is renamed or moved in the browser
+    /// </summary>
+    internal static void PathMoved(string oldPath, string newPath, bool isDirectory)
+    {
+        FileFavorites.Load();
+        if (FileFavorites.PathChanged(oldPath, newPath)) FileFavorites.Save();
+        HistoryFollows(oldPath, newPath);
+        if (isDirectory) HotlistPathChanged(oldPath, newPath);
+        Bookmarks.Follow(oldPath, newPath);
+    }
+
+    /// <summary>
+    /// A file or directory was deleted: it leaves the favorites, as when it is deleted in the browser
+    /// </summary>
+    internal static void PathDeleted(string path)
+    {
+        FileFavorites.Load();
+        if (FileFavorites.PathsDeleted(new[] { path })) FileFavorites.Save();
+    }
+
+    #endregion
+
     // The file history, the jumps (Recent), the splits and the corkboard follow a file or directory that was renamed or
     // moved
     private static void HistoryFollows(string oldPath, string newPath)

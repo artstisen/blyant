@@ -16,10 +16,20 @@ internal sealed partial class ShellSession
         ("cd [dir|n]", Lang.T("Go to a directory (alone: your home directory)")),
         ("up", Lang.T("Go to the directory above")),
         ("open file|n [+line]", Lang.T("Edit a file on the full screen (closing it is back here)")),
+        ("peek file|n [lines]", Lang.T("Show the lines of a file (the first 20, 40, or 100-120)")),
+        ("find [name] [-t text]", Lang.T("Find files here and below, by name (*.md) and by text")),
+        ("new name", Lang.T("Make a new, empty file here (.md if no extension)")),
+        ("mkdir name", Lang.T("Make a new directory here")),
+        ("rename file|n name", Lang.T("Give a file or directory a new name")),
+        ("copy file|n dir|n", Lang.T("Copy a file or directory into a directory")),
+        ("move file|n dir|n", Lang.T("Move a file or directory into a directory")),
+        ("delete file|n", Lang.T("Delete a file or directory, to the trash (del)")),
         ("favorites [list]", Lang.T("List the favorites (fav), or those of another list")),
+        ("favorites add|remove file|n", Lang.T("Add to the favorites, or take off them")),
         ("history", Lang.T("List the files opened (hist)")),
         ("recent", Lang.T("List the latest files")),
         ("hotlist", Lang.T("List the directory hotlist (hot)")),
+        ("hotlist add|remove [dir|n]", Lang.T("Add a directory to the hotlist (this one), or take it off")),
         ("bookmarks", Lang.T("List the bookmarks (book)")),
         ("projects", Lang.T("List the projects (proj)")),
         ("project n|name", Lang.T("Go to the directory of a project")),
@@ -70,7 +80,9 @@ internal sealed partial class ShellSession
             case "favorites":
             case "fav":
             case "favs":
-                ListFavorites(argument);
+                // "fav add 3", "fav remove 3", else the list ("fav work": another list)
+                if (Change(argument) is { } addFavorite) ChangeFavorites(Rest(argument), addFavorite);
+                else ListFavorites(argument);
                 break;
             case "history":
             case "hist":
@@ -81,7 +93,33 @@ internal sealed partial class ShellSession
                 break;
             case "hotlist":
             case "hot":
-                ListHotlist();
+                if (Change(argument) is { } addHot) ChangeHotlist(Rest(argument), addHot);
+                else ListHotlist();
+                break;
+            case "peek":
+                Peek(argument);
+                break;
+            case "find":
+                Find(argument);
+                break;
+            case "new":
+                NewFile(argument);
+                break;
+            case "mkdir":
+                MakeDirectory(argument);
+                break;
+            case "rename":
+                Rename(argument);
+                break;
+            case "copy":
+                CopyOrMove(argument, false);
+                break;
+            case "move":
+                CopyOrMove(argument, true);
+                break;
+            case "delete":
+            case "del":
+                Delete(argument);
                 break;
             case "bookmarks":
             case "book":
@@ -110,6 +148,23 @@ internal sealed partial class ShellSession
         }
 
         return true;
+    }
+
+    // "add ..." (true) or "remove ..." (false) after "fav" or "hot", or null for none of them
+    private static bool? Change(string argument) =>
+        argument.TrimStart().Split(' ', 2)[0].ToLowerInvariant() switch
+        {
+            "add" => true,
+            "remove" => false,
+            _ => null
+        };
+
+    // What follows the first word of what follows a command
+
+    private static string Rest(string argument)
+    {
+        var parts = argument.TrimStart().Split(' ', 2);
+        return parts.Length > 1 ? parts[1] : string.Empty;
     }
 
     #region Places
@@ -350,6 +405,7 @@ internal sealed partial class ShellSession
                 "proj" => "projects",
                 "h" => "help",
                 "q" or "quit" => "exit",
+                "del" => "delete",
                 _ => name
             };
             var row = rows.FirstOrDefault(r => r.Command.Split(' ')[0] == full);

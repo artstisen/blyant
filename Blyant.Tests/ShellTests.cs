@@ -24,6 +24,8 @@ public class ShellTests : IDisposable
         DirectoryHotlist.FilePathOverride = Path.Combine(_data, "hotlist.txt");
         Bookmarks.FilePathOverride = Path.Combine(_data, Bookmarks.FileName);
         Projects.ListPathOverride = Path.Combine(_data, Projects.ListFileName);
+        FileIo.DataDirectoryOverride = _data;
+        FileOperations.TrashOverride = Path.Combine(_data, "trash");
         FileFavorites.Parse(string.Empty);
         FileHistory.Parse(string.Empty);
         DirectoryHotlist.Parse(string.Empty);
@@ -37,6 +39,8 @@ public class ShellTests : IDisposable
         DirectoryHotlist.FilePathOverride = null;
         Bookmarks.FilePathOverride = null;
         Projects.ListPathOverride = null;
+        FileIo.DataDirectoryOverride = null;
+        FileOperations.TrashOverride = null;
         FileFavorites.Parse(string.Empty);
         FileHistory.Parse(string.Empty);
         DirectoryHotlist.Parse(string.Empty);
@@ -207,5 +211,133 @@ public class ShellTests : IDisposable
         Assert.Equal(string.Empty, errors);
         Assert.Equal(Path.GetFullPath(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)),
             Path.GetFullPath(session.Directory));
+    }
+
+    // ---- Phase 2: the files
+
+    [Fact]
+    public void Words_AreSeparatedByBlanks_OrKeptTogetherInQuotes()
+    {
+        Assert.Equal(new[] { "rename", "my notes.md", "new.md" }, ShellSession.Words("rename \"my notes.md\"  new.md"));
+        Assert.Empty(ShellSession.Words("   "));
+        Assert.Equal(new[] { "" }, ShellSession.Words("\"\""));
+    }
+
+    [Fact]
+    public void NewMkdirRenameCopyMove_WorkOnTheFiles_AndTheNewPlaceIsTheLastList()
+    {
+        var (output, errors, _, session) = Run(
+            "new ideas\nmkdir old\ncopy plot.md old\nrename Ending.md \"The end.md\"\nmove 1 old\nls old\n");
+        Assert.Equal(string.Empty, errors);
+        // (a name without an extension gets that of new files)
+        Assert.True(File.Exists(In("work", "ideas.md")));
+        Assert.True(File.Exists(In("work", "plot.md")));
+        Assert.True(File.Exists(In("work", "old", "plot.md")));
+        Assert.False(File.Exists(In("work", "Ending.md")));
+        // "move 1": the row of the last list, which was the file renamed
+        Assert.True(File.Exists(In("work", "old", "The end.md")));
+        Assert.Contains(Lang.F("Moved to {0}", In("work", "old", "The end.md")), output);
+        Assert.Equal(2, session.LastList.Count);
+    }
+
+    [Fact]
+    public void CopyAndMove_NeverOverwrite_AndNamesTakenAreTold()
+    {
+        Directory.CreateDirectory(In("work", "old"));
+        File.WriteAllText(In("work", "old", "plot.md"), "Older\n");
+        var (_, errors, code, _) = Run("copy plot.md old\nmove plot.md old\nnew plot.md\nmkdir Draft\n");
+        Assert.Equal("Older\n", File.ReadAllText(In("work", "old", "plot.md")));
+        Assert.Equal("Plot\n", File.ReadAllText(In("work", "plot.md")));
+        Assert.Equal(4, errors.TrimEnd('\n').Split('\n').Length);
+        Assert.Equal(1, code);
+    }
+
+    [Fact]
+    public void RenameAndMove_AreFollowedByTheFavoritesAndTheHistory()
+    {
+        FileFavorites.Toggle(In("work", "plot.md"));
+        FileFavorites.Save();
+        FileHistory.Add(In("work", "plot.md"), DateTime.Now);
+        FileHistory.Save();
+        Run("rename plot.md story.md\n");
+        FileFavorites.Load();
+        FileHistory.Load();
+        Assert.True(FileFavorites.Contains(In("work", "story.md")));
+        Assert.False(FileFavorites.Contains(In("work", "plot.md")));
+        Assert.Equal(In("work", "story.md"), FileHistory.Items[0].Path);
+    }
+
+    [Fact]
+    public void Delete_AsksFirst_AndGoesToTheTrash_AndLeavesTheFavorites()
+    {
+        FileFavorites.Toggle(In("work", "plot.md"));
+        FileFavorites.Save();
+        // From a file: not asked, so nothing is deleted
+        var (output, _, _, _) = Run("delete plot.md\n");
+        Assert.True(File.Exists(In("work", "plot.md")));
+        Assert.Contains(Lang.T("Nothing was deleted"), output);
+        // In a terminal: the answer typed in full; a letter is no
+        Run("delete plot.md\ny\n", terminal: true);
+        Assert.True(File.Exists(In("work", "plot.md")));
+        Run("delete plot.md\n" + DialogText.ChoiceYes + "\n", terminal: true);
+        Assert.False(File.Exists(In("work", "plot.md")));
+        Assert.Single(Directory.GetFiles(Path.Combine(_data, "trash")), path => path.EndsWith("plot.md"));
+        FileFavorites.Load();
+        Assert.False(FileFavorites.Contains(In("work", "plot.md")));
+        // With --yes, from a file: a directory with what is in it
+        Run("delete Draft\n", yes: true);
+        Assert.False(Directory.Exists(In("work", "Draft")));
+    }
+
+    [Fact]
+    public void TheFilesOfBlyant_CannotBeRenamedMovedOrDeleted_EvenWithYes()
+    {
+        File.WriteAllText(Path.Combine(_data, FileIo.SettingsFileName), "x\n");
+        var settings = Path.Combine(_data, FileIo.SettingsFileName);
+        var (_, errors, _, _) = Run("rename \"" + settings + "\" y.ini\ndelete \"" + _data + "\"\nmove \"" + settings +
+                                     "\" Draft\n", yes: true);
+        Assert.True(File.Exists(settings));
+        Assert.True(Directory.Exists(_data));
+        Assert.Equal(3, errors.TrimEnd('\n').Split('\n').Length);
+    }
+
+    [Fact]
+    public void Peek_ShowsTheLinesNumbered_AndNeverWritesTheFile()
+    {
+        File.WriteAllText(In("work", "long.md"), string.Join("\n", Enumerable.Range(1, 50).Select(n => "Line " + n)));
+        var before = File.GetLastWriteTimeUtc(In("work", "long.md"));
+        var (output, errors, _, _) = Run("peek long.md\npeek long.md 10-12\npeek long.md 3\npeek Draft\npeek long.md x\n");
+        Assert.Contains("   1  Line 1\n", output);
+        Assert.Contains("  20  Line 20\n" + Lang.F("(lines {0}-{1} of {2})", 1, 20, 50), output);
+        Assert.Contains("  10  Line 10\n  11  Line 11\n  12  Line 12\n", output);
+        Assert.Contains("  3  Line 3\n", output);
+        Assert.Equal(2, errors.TrimEnd('\n').Split('\n').Length);
+        Assert.Equal(before, File.GetLastWriteTimeUtc(In("work", "long.md")));
+    }
+
+    [Fact]
+    public void Find_FindsByNameAndByText_AndOpenGoesToTheLineFound()
+    {
+        File.WriteAllText(In("work", "Draft", "storm.md"), "Calm\nThe storm came\n");
+        var (output, errors, _, session) = Run("find *.md\nfind -t storm\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains("Ending.md", output);
+        Assert.Contains("Draft" + Path.DirectorySeparatorChar + "storm.md:2  The storm came", output);
+        // The last list: the file found by its text, at the line
+        Assert.Equal((2, 1), session.LastList.Single().At);
+        var (_, nothing, _, _) = Run("find\n");
+        Assert.NotEqual(string.Empty, nothing);
+    }
+
+    [Fact]
+    public void FavAndHot_AddAndRemove_AndTheListsShowIt()
+    {
+        var (output, errors, _, _) = Run("fav add plot.md\nfav add plot.md\nfav\nfav remove 1\nhot add\nhot add Draft\nhot\nhot remove 2\nhot remove plot.md\n");
+        Assert.Contains(Lang.F("Already a favorite: {0}", In("work", "plot.md")), output);
+        FileFavorites.Load();
+        Assert.False(FileFavorites.Contains(In("work", "plot.md")));
+        DirectoryHotlist.Load();
+        Assert.Single(DirectoryHotlist.Items);
+        Assert.Equal(Lang.F("Not a directory: {0}", In("work", "plot.md")) + "\n", errors);
     }
 }
