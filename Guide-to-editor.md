@@ -83,7 +83,7 @@ Copies are made of the files opened from the file browser (and of the snippets, 
 - `I` / `A` Insert at the start/end of the line
 - `o` / `O` Insert on a new line below/above
 
-In Insert mode: `Tab` inserts 4 blank spaces (or completes a word, see [Completing words](#completing-words)), `CTRL+W` deletes the word before the cursor, `CTRL+U` deletes the line before the cursor, `CTRL+R` pastes the current memory string, and `CTRL+K` shows the snippets (see [Snippets](#snippets)). Text can be pasted from the clipboard with the paste function of your terminal.
+In Insert mode: `Tab` inserts 4 blank spaces, or 2 or 8 as set (**Indent with Tab, >> and <<** on the Editor page of Configuration), or completes a word (see [Completing words](#completing-words)), `CTRL+W` deletes the word before the cursor, `CTRL+U` deletes the line before the cursor, `CTRL+R` pastes the current memory string, and `CTRL+K` shows the snippets (see [Snippets](#snippets)). Text can be pasted from the clipboard with the paste function of your terminal.
 
 ## Moving the cursor (Normal and Visual mode)
 - `h` `j` `k` `l` Left/Down/Up/Right (as the arrow keys). `j` and `k` move by rows as shown on screen
@@ -122,7 +122,7 @@ A number before a movement or command repeats it: `5j` moves 5 rows down and `3w
 - `D` `C` `Y` Delete/Change to the end of the line, Yank the line
 - `p` `P` Paste after/before the cursor. With a count (`3p`) it is pasted that many times; more than 10 million characters at once is refused
 - `J` Join the line with the next
-- `>>` `<<` Indent/Unindent the line
+- `>>` `<<` Indent/Unindent the line, by the width set for `Tab` (4 spaces unless 2 or 8 is set on the Editor page of Configuration)
 - `~` Switch the case of the character, `gUU` `guu` Line to UPPERCASE/lowercase, `gUw` `guw` Word to UPPERCASE/lowercase
 - `u` Undo (500 steps), `U` or `CTRL+R` Redo. `:changes` lists them: see [Edit history](#edit-history)
 - `.` Repeat the last change

@@ -127,6 +127,28 @@ backup=
         Assert.False(saved.ContainsKey("projectsask"));
     }
 
+    [Theory]
+    [InlineData("2", 2)]
+    [InlineData("8", 8)]
+    [InlineData(" 4 ", 4)]
+    // A width not of the list, or not a number: the default
+    [InlineData("3", 4)]
+    [InlineData("tab", 4)]
+    [InlineData("", 4)]
+    public void Indent_IsLoadedAndSaved(string value, int expected)
+    {
+        File.WriteAllText(SettingsFile, LegacySettings + "\nindent=" + value + "\n");
+        Assert.True(FileIo.LoadSettings());
+        Assert.Equal(expected, EditorEngine.IndentSetting);
+        // A new editor takes it
+        Assert.Equal(expected, new EditorEngine("x", 40, 10, false).IndentWidth);
+        FileIo.SaveSettings();
+        Assert.Equal(expected.ToString(), FileIo.ParseSettings(File.ReadAllText(SettingsFile))["indent"]);
+        // The default: 4
+        Actions.ApplyDefaultSettings();
+        Assert.Equal(4, EditorEngine.IndentSetting);
+    }
+
     [Fact]
     public void ZenMode_IsLoadedAndSaved()
     {
@@ -383,7 +405,7 @@ backup=
         Assert.False(settings.ContainsKey("stayloggedin"));
         Assert.False(settings.ContainsKey("projectsdir"));
         Assert.False(settings.ContainsKey("projectsask"));
-        Assert.Equal(59, settings.Count);
+        Assert.Equal(60, settings.Count);
         Assert.Equal("true", settings["modulejump"]);
         // The modules are on unless turned off
         Assert.Equal("true", settings["moduleprojects"]);
@@ -392,6 +414,8 @@ backup=
         Assert.Equal("false", settings["gutter"]);
         // Zen mode is off unless turned on
         Assert.Equal("false", settings["zen"]);
+        // Tab, ">>" and "<<" indent by 4 spaces unless another width is set
+        Assert.Equal("4", settings["indent"]);
         Assert.Equal("false", settings["marksapostrophe"]);
         Assert.Equal("false", settings["filenumbers"]);
         Assert.Equal("false", settings["searchnumbers"]);

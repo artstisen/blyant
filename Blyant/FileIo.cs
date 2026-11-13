@@ -506,6 +506,8 @@ internal static class FileIo
         _tempSettings += "wrap=" + (TextArea.WordWrap ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // Blank space shown in the editor as . (space), > (tab) and $ (line end) (:whitespace)
         _tempSettings += "whitespace=" + (TextArea.ShowWhitespace ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        // The indent of Tab, ">>" and "<<" in the editor, in spaces: 2, 4 or 8
+        _tempSettings += "indent=" + EditorEngine.IndentSetting + '\n';
         // Zen mode: the editor of a file shows only the mode and the name above the text, the line and column below (:zen)
         _tempSettings += "zen=" + (TextArea.Zen ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // The modules (Configuration: Modules): the projects and the corkboard, on unless turned off
@@ -702,6 +704,8 @@ internal static class FileIo
         TextArea.WordWrap = Tools.TrimToLower(Get("wrap")) != DialogText.BFalse;
         TextArea.ShowWhitespace = Tools.TrimToLower(Get("whitespace")) == DialogText.BTrue;
         TextArea.Zen = Tools.TrimToLower(Get("zen")) == DialogText.BTrue;
+        // 4 spaces unless another width of the list is set
+        EditorEngine.IndentSetting = EditorEngine.ParseIndent(Get("indent"));
         // On unless turned off
         Modules.Projects = Tools.TrimToLower(Get("moduleprojects")) != DialogText.BFalse;
         Modules.Board = Tools.TrimToLower(Get("moduleboard")) != DialogText.BFalse;

@@ -94,7 +94,32 @@ internal enum EditorRequest
 /// </summary>
 internal sealed partial class EditorEngine
 {
+    // A tab in text put in (pasted, completed, "\t" of a macro) becomes this many spaces
     internal const int TabWidth = 4;
+
+    /// <summary>
+    /// The widths of indent that can be set (Configuration: Editor), in spaces
+    /// </summary>
+    internal static readonly int[] IndentWidths = [2, 4, 8];
+
+    internal const int DefaultIndent = 4;
+
+    /// <summary>
+    /// The setting (indent): how many spaces Tab in Insert mode, and ">>" and "<<", indent and unindent by. An
+    /// editor takes it when it is made (IndentWidth)
+    /// </summary>
+    internal static int IndentSetting { get; set; } = DefaultIndent;
+
+    /// <summary>
+    /// The width of indent in this editor (the setting IndentSetting, when the editor was made)
+    /// </summary>
+    internal int IndentWidth { get; set; } = IndentSetting;
+
+    /// <summary>
+    /// The indent of the settings file read: 2, 4 or 8 (another value, or none, is the default, 4)
+    /// </summary>
+    internal static int ParseIndent(string? value) =>
+        int.TryParse(value?.Trim(), out var width) && IndentWidths.Contains(width) ? width : DefaultIndent;
     internal const int MaxCommandLength = 64;
 
     internal TextBuffer Buffer { get; }
@@ -858,7 +883,8 @@ internal sealed partial class EditorEngine
         }
         else if (key.Key == ConsoleKey.Tab)
         {
-            var text = new string(' ', TabWidth);
+            // Blank space of the width of indent set
+            var text = new string(' ', IndentWidth);
             if (HasRoomFor(text)) Cursor = Insert(Cursor, text);
         }
         else if (key.Key == ConsoleKey.Backspace)
