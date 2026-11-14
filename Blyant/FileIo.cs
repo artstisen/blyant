@@ -396,7 +396,20 @@ internal static class FileIo
 
     internal static void SaveSettings()
     {
-        // Collect settings data and save it
+        var status = WriteSettingsFile(SettingsText());
+        if (status != DialogText.Success)
+        {
+            Menu.StatusMessage(status, true, true, true, DialogText.CaptionsSettings, string.Empty, false);
+        }
+    }
+
+    /// <summary>
+    /// The settings as Blyant writes them in the settings file, with their values now (all the settings of this
+    /// version: a file written by an earlier one can lack some)
+    /// </summary>
+    internal static string SettingsText()
+    {
+        // Collect settings data
         // Section start
         _tempSettings = "; Last modified " + IsoDateTime.GetDateTimeNow() + '\n';
         _tempSettings += "[SETTINGS]" + '\n';
@@ -512,6 +525,10 @@ internal static class FileIo
         _tempSettings += "zen=" + (TextArea.Zen ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // The shell: a long output in pages (only here, and with "set shellpaging" in the shell: not in Configuration)
         _tempSettings += "shellpaging=" + (Shell.Paging ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        // The directory the shell starts in (a path, "last", or empty: the one Blyant is started in), and the one it
+        // was left in (for "last")
+        _tempSettings += "shelldir=" + Shell.StartSetting + '\n';
+        _tempSettings += "shelllastdir=" + Shell.LastDirectory + '\n';
         // In Zen mode, the mode ([N], [I] ...) in the color of its mode, as the mode label outside Zen mode
         _tempSettings += "zencolors=" + (TextArea.ZenColors ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // The modules (Configuration: Modules): the projects and the corkboard, on unless turned off
@@ -530,12 +547,7 @@ internal static class FileIo
         // The languages used by the editor command :spell (spell files in the directory "spell"):
         _tempSettings += "spelllang=" + SpellChecker.Languages + '\n';
 
-        // Write to file
-        var status = WriteSettingsFile(_tempSettings);
-        if (status != DialogText.Success)
-        {
-            Menu.StatusMessage(status, true, true, true, DialogText.CaptionsSettings, string.Empty, false);
-        }
+        return _tempSettings;
     }
 
     /// <summary>
@@ -711,6 +723,8 @@ internal static class FileIo
         TextArea.ZenColors = Tools.TrimToLower(Get("zencolors")) == DialogText.BTrue;
         // On unless turned off
         Shell.Paging = Tools.TrimToLower(Get("shellpaging")) != DialogText.BFalse;
+        Shell.StartSetting = Get("shelldir").Trim();
+        Shell.LastDirectory = Get("shelllastdir").Trim();
         // 4 spaces unless another width of the list is set
         EditorEngine.IndentSetting = EditorEngine.ParseIndent(Get("indent"));
         // On unless turned off

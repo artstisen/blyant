@@ -1804,10 +1804,15 @@ en: "Too long for clipboard (more than {0} KB). Write to paste bin?"
 en: "Replaces text in paste bin"
 en: "C Copy path | Esc Close"
 
+# Shell/Shell.cs
+en: "The start directory {0} is not there: the shell starts here"
+
 # Shell/ShellCommands.cs
 en: "Show the directory you are in"
 en: "List the folders and files of a directory"
 en: "Go to a directory, or that of a file (alone: home)"
+en: "Go to your home directory"
+en: "Go to the data directory of Blyant (settings, lists, log)"
 en: "Edit a file on the full screen (closing it is back here)"
 en: "Show the lines of a file (the first 20, 40, 100-120, or +100 30)"
 en: "Find files here and below, by name (*.md) and by text"

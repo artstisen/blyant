@@ -3502,6 +3502,10 @@ it: "Sostituisce il testo nel file di scambio"
 en: "C Copy path | Esc Close"
 it: "C Copia percorso | Esc Chiudi"
 
+# Shell/Shell.cs
+en: "The start directory {0} is not there: the shell starts here"
+it: "La cartella iniziale {0} non c'è: la shell parte da qui"
+
 # Shell/ShellCommands.cs
 en: "Show the directory you are in"
 it: "Mostra la cartella in cui sei"
@@ -3509,6 +3513,10 @@ en: "List the folders and files of a directory"
 it: "Elenca cartelle e file di una cartella"
 en: "Go to a directory, or that of a file (alone: home)"
 it: "Vai a una cartella, o a quella di un file (da solo: home)"
+en: "Go to your home directory"
+it: "Vai alla tua cartella home"
+en: "Go to the data directory of Blyant (settings, lists, log)"
+it: "Vai alla cartella dati di Blyant (impostazioni, liste, registro)"
 en: "Edit a file on the full screen (closing it is back here)"
 it: "Modifica un file a schermo intero (chiudendolo torni qui)"
 en: "Show the lines of a file (the first 20, 40, 100-120, or +100 30)"

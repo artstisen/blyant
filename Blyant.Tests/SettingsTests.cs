@@ -418,7 +418,7 @@ backup=
         Assert.False(settings.ContainsKey("stayloggedin"));
         Assert.False(settings.ContainsKey("projectsdir"));
         Assert.False(settings.ContainsKey("projectsask"));
-        Assert.Equal(62, settings.Count);
+        Assert.Equal(64, settings.Count);
         Assert.Equal("true", settings["modulejump"]);
         // The modules are on unless turned off
         Assert.Equal("true", settings["moduleprojects"]);
@@ -431,6 +431,9 @@ backup=
         Assert.Equal("false", settings["zencolors"]);
         // The shell pages a long output unless that is turned off
         Assert.Equal("true", settings["shellpaging"]);
+        // The shell starts in the directory Blyant is started in, unless another is set
+        Assert.Equal(string.Empty, settings["shelldir"]);
+        Assert.Equal(string.Empty, settings["shelllastdir"]);
         // Tab, ">>" and "<<" indent by 4 spaces unless another width is set
         Assert.Equal("4", settings["indent"]);
         Assert.Equal("false", settings["marksapostrophe"]);

@@ -241,6 +241,20 @@ internal sealed partial class ShellSession
             return;
         }
 
+        // A file written by an earlier version can lack settings of this one: it is written whole first (as when a
+        // setting is changed in Configuration), so every setting can be shown and changed
+        if (FileIo.ParseSettings(FileIo.SettingsText()).Keys.Any(key => !FileIo.ParseSettings(content).ContainsKey(key)))
+        {
+            var written = FileIo.WriteSettingsFile(FileIo.SettingsText());
+            if (written != DialogText.Success)
+            {
+                Error(written);
+                return;
+            }
+
+            content = FileIo.ReadSettingsFile();
+        }
+
         var settings = FileIo.ParseSettings(content);
         var trimmed = argument.Trim();
         if (trimmed.Length == 0)

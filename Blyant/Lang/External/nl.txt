@@ -3502,6 +3502,10 @@ nl: "Vervangt tekst in plakbestand"
 en: "C Copy path | Esc Close"
 nl: "C Pad kopiëren | Esc Sluiten"
 
+# Shell/Shell.cs
+en: "The start directory {0} is not there: the shell starts here"
+nl: "De startmap {0} is er niet: de shell begint hier"
+
 # Shell/ShellCommands.cs
 en: "Show the directory you are in"
 nl: "De map tonen waarin je bent"
@@ -3509,6 +3513,10 @@ en: "List the folders and files of a directory"
 nl: "Mappen en bestanden van een map tonen"
 en: "Go to a directory, or that of a file (alone: home)"
 nl: "Naar een map gaan, of die van een bestand (alleen: thuis)"
+en: "Go to your home directory"
+nl: "Naar je thuismap gaan"
+en: "Go to the data directory of Blyant (settings, lists, log)"
+nl: "Naar de datamap van Blyant gaan (instellingen, lijsten, logboek)"
 en: "Edit a file on the full screen (closing it is back here)"
 nl: "Een bestand op het volle scherm bewerken (sluiten: terug hier)"
 en: "Show the lines of a file (the first 20, 40, 100-120, or +100 30)"

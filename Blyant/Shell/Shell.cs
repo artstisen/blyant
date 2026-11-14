@@ -20,6 +20,65 @@ internal static class Shell
     internal static bool Paging { get; set; } = true;
 
     /// <summary>
+    /// The directory the shell starts in when none is given (setting "shelldir"): a path ("~/projects" from the home
+    /// directory), "last" (the one it was left in, kept as "shelllastdir"), or empty: the one Blyant is started in
+    /// </summary>
+    internal static string StartSetting { get; set; } = string.Empty;
+
+    /// <summary>
+    /// The directory the shell was left in (setting "shelllastdir"), where it starts with shelldir=last
+    /// </summary>
+    internal static string LastDirectory { get; set; } = string.Empty;
+
+    // The value of shelldir for the directory the shell was left in
+    private const string Last = "last";
+
+    /// <summary>
+    /// The directory the shell starts in when none is given: that of the setting shelldir, else the current one. One
+    /// that is not there (moved, a drive taken out, a path of another system) is told (note), and the current one is
+    /// used: the shell always starts
+    /// </summary>
+    internal static string StartIn(string current, out string? note)
+    {
+        note = null;
+        var set = StartSetting.Trim();
+        var wanted = string.Equals(set, Last, StringComparison.OrdinalIgnoreCase) ? LastDirectory.Trim() : set;
+        if (wanted.Length == 0) return current;
+        if (FullPath(wanted, current) is { } path && Directory.Exists(path)) return path;
+        note = Lang.F("The start directory {0} is not there: the shell starts here", wanted);
+        return current;
+    }
+
+    // A path of the setting as a full path ("~" is the home directory), or null if it is not a path
+    private static string? FullPath(string path, string current)
+    {
+        if (path == "~" || path.StartsWith("~/") || path.StartsWith("~" + Path.DirectorySeparatorChar))
+        {
+            var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            path = path.Length == 1 ? home : Path.Combine(home, path[2..]);
+        }
+
+        try
+        {
+            return Path.GetFullPath(path, current);
+        }
+        catch (Exception e) when (e is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// With shelldir=last: the directory the shell is left in is kept (shelllastdir), to start there next time
+    /// </summary>
+    internal static void RememberLast(string directory)
+    {
+        if (!string.Equals(StartSetting.Trim(), Last, StringComparison.OrdinalIgnoreCase)) return;
+        LastDirectory = directory;
+        FileIo.SaveSettings();
+    }
+
+    /// <summary>
     /// ":shell" on the full screen: the main loop goes on as the shell, in this directory (the file: the last list,
     /// "open 1"). Null: none asked for
     /// </summary>
@@ -60,18 +119,21 @@ internal static class Shell
     /// <param name="directory">The directory it starts in</param>
     /// <param name="yes">Commands read from a file (not a terminal): their questions are answered yes</param>
     /// <returns>The exit code: 1 if a command read from a file failed, else 0</returns>
-    internal static int Run(string directory, bool yes, string? file = null)
+    internal static int Run(string directory, bool yes, string? file = null, string? note = null)
     {
         var terminal = !Console.IsInputRedirected && !Console.IsOutputRedirected;
         var session = new ShellSession(Console.In, Console.Out, Console.Error, directory, terminal, yes)
         {
+            StartNote = note,
             ClearScreen = terminal ? Console.Clear : null,
             WindowSize = terminal ? WindowSizeOfTerminal : null,
             ReadKey = terminal ? ReadPauseKey : null
         };
         // (from the editor: the file is the last list, "open 1" opens it again)
         if (file != null && File.Exists(file)) session.ShowFirst(file);
-        return Run(session);
+        var code = Run(session);
+        RememberLast(session.Directory);
+        return code;
     }
 
     // The size of the window, read for each page (the window can be made larger or smaller meanwhile); null when the

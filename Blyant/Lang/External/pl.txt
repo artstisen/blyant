@@ -3502,6 +3502,10 @@ pl: "Zastępuje tekst w przechowalni"
 en: "C Copy path | Esc Close"
 pl: "C Kopiuj ścieżkę | Esc Zamknij"
 
+# Shell/Shell.cs
+en: "The start directory {0} is not there: the shell starts here"
+pl: "Katalogu startowego {0} nie ma: powłoka startuje tutaj"
+
 # Shell/ShellCommands.cs
 en: "Show the directory you are in"
 pl: "Pokaż katalog, w którym jesteś"
@@ -3509,6 +3513,10 @@ en: "List the folders and files of a directory"
 pl: "Wypisz katalogi i pliki katalogu"
 en: "Go to a directory, or that of a file (alone: home)"
 pl: "Przejdź do katalogu lub katalogu pliku (samo: domowy)"
+en: "Go to your home directory"
+pl: "Przejdź do katalogu domowego"
+en: "Go to the data directory of Blyant (settings, lists, log)"
+pl: "Przejdź do katalogu danych Blyant (ustawienia, listy, dziennik)"
 en: "Edit a file on the full screen (closing it is back here)"
 pl: "Edytuj plik na pełnym ekranie (zamknięcie wraca tutaj)"
 en: "Show the lines of a file (the first 20, 40, 100-120, or +100 30)"

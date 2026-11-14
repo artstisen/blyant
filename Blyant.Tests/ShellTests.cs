@@ -721,4 +721,103 @@ public class ShellTests : IDisposable
         Assert.DoesNotContain(EventLog.All, line => line.Contains("secret words"));
         Assert.Contains(EventLog.All, line => line.Contains("Insert: " + In("work", "plot.md") + ":2"));
     }
+
+    // ---- The start directory (shelldir), and home and data
+
+    [Fact]
+    public void StartIn_IsTheDirectorySet_OrTheLastOne_OrHere_AndAGoneOneIsTold()
+    {
+        var here = In("work");
+        // Nothing set: here
+        Shell.StartSetting = string.Empty;
+        Assert.Equal(here, Shell.StartIn(here, out var note));
+        Assert.Null(note);
+        // A path
+        Shell.StartSetting = In("work", "Draft");
+        Assert.Equal(In("work", "Draft"), Shell.StartIn(here, out note));
+        Assert.Null(note);
+        // "~": the home directory
+        Shell.StartSetting = "~";
+        Assert.Equal(Path.GetFullPath(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)),
+            Path.GetFullPath(Shell.StartIn(here, out _)));
+        // Gone: here, and told
+        Shell.StartSetting = In("work", "gone");
+        Assert.Equal(here, Shell.StartIn(here, out note));
+        Assert.Equal(Lang.F("The start directory {0} is not there: the shell starts here", In("work", "gone")), note);
+        // "last": the one the shell was left in (nothing yet: here)
+        Shell.StartSetting = "LAST";
+        Shell.LastDirectory = string.Empty;
+        Assert.Equal(here, Shell.StartIn(here, out note));
+        Assert.Null(note);
+        Shell.LastDirectory = In("work", "notes");
+        Assert.Equal(In("work", "notes"), Shell.StartIn(here, out _));
+    }
+
+    [Fact]
+    public void Last_KeepsTheDirectoryTheShellIsLeftIn_InTheSettings()
+    {
+        Shell.StartSetting = "last";
+        Shell.RememberLast(In("work", "Draft"));
+        Assert.Equal(In("work", "Draft"), Shell.LastDirectory);
+        Assert.Equal(In("work", "Draft"), FileIo.ParseSettings(FileIo.ReadSettingsFile())["shelllastdir"]);
+        Assert.Equal("last", FileIo.ParseSettings(FileIo.ReadSettingsFile())["shelldir"]);
+        // Not "last": nothing is kept
+        Shell.StartSetting = In("work");
+        Shell.RememberLast(In("work", "notes"));
+        Assert.Equal(In("work", "Draft"), Shell.LastDirectory);
+    }
+
+    [Fact]
+    public void Set_KnowsTheSettingsOfThisVersion_InAFileOfAnEarlierOne()
+    {
+        // A settings file without shelldir (written before it was there)
+        var text = string.Join("\n", FileIo.SettingsText().Split('\n').Where(line => !line.StartsWith("shelldir=")));
+        FileIo.WriteSettingsFile(text);
+        Assert.False(FileIo.ParseSettings(FileIo.ReadSettingsFile()).ContainsKey("shelldir"));
+        var (output, errors, _, _) = Run("set shelldir last\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains("shelldir = last", output);
+        Assert.Equal("last", FileIo.ParseSettings(FileIo.ReadSettingsFile())["shelldir"]);
+    }
+
+    [Fact]
+    public void ShellDir_IsSetWithSet_AndReadBack()
+    {
+        FileIo.SaveSettings();
+        Run("set shelldir ~/projects\n");
+        Assert.Equal("~/projects", Shell.StartSetting);
+        Run("set shelldir last\n");
+        Assert.Equal("last", Shell.StartSetting);
+    }
+
+    [Fact]
+    public void HomeAndData_GoToTheHomeAndTheDataDirectory_AndAFolderNamedSoIsStillACd()
+    {
+        Directory.CreateDirectory(In("work", "data"));
+        Directory.CreateDirectory(In("work", "home"));
+        var (_, errors, _, session) = Run("data\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal(Path.GetFullPath(_data), Path.GetFullPath(session.Directory));
+        var (_, _, _, home) = Run("home\n");
+        Assert.Equal(Path.GetFullPath(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)),
+            Path.GetFullPath(home.Directory));
+        // "cd data" and "cd home": the folders of those names
+        var (_, _, _, folder) = Run("cd data\n");
+        Assert.Equal(In("work", "data"), folder.Directory);
+        var (_, _, _, other) = Run("cd home\n");
+        Assert.Equal(In("work", "home"), other.Directory);
+    }
+
+    [UnixFact]
+    public void OnLinuxAndMacOS_TheStartDirectoryTakesTildeAndSlash()
+    {
+        Shell.StartSetting = "~/";
+        Assert.Equal(Path.GetFullPath(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)),
+            Path.GetFullPath(Shell.StartIn(In("work"), out var note)));
+        Assert.Null(note);
+        // A path of Windows: not there, told, and here
+        Shell.StartSetting = @"C:\Users\nobody\projects";
+        Assert.Equal(In("work"), Shell.StartIn(In("work"), out note));
+        Assert.NotNull(note);
+    }
 }

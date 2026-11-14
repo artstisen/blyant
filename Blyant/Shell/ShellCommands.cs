@@ -15,6 +15,8 @@ internal sealed partial class ShellSession
         ("ls [dir|n]", Lang.T("List the folders and files of a directory")),
         ("cd [dir|file|n]", Lang.T("Go to a directory, or that of a file (alone: home)")),
         ("up", Lang.T("Go to the directory above")),
+        ("home", Lang.T("Go to your home directory")),
+        ("data", Lang.T("Go to the data directory of Blyant (settings, lists, log)")),
         ("open file|n [+line]", Lang.T("Edit a file on the full screen (closing it is back here)")),
         ("peek file|n [lines]", Lang.T("Show the lines of a file (the first 20, 40, 100-120, or +100 30)")),
         ("find [name] [-t text]", Lang.T("Find files here and below, by name (*.md) and by text")),
@@ -82,6 +84,13 @@ internal sealed partial class ShellSession
                 break;
             case "up":
                 ChangeDirectory("..");
+                break;
+            case "home":
+                ChangeDirectory(string.Empty);
+                break;
+            case "data":
+                // (where it is: next to the program, or in the data of the user)
+                ChangeDirectory(Path.GetFullPath(FileIo.GetDataDirectoryName()));
                 break;
             case "open":
                 Open(argument);

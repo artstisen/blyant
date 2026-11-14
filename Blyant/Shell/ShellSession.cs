@@ -53,6 +53,11 @@ internal sealed partial class ShellSession
     internal Action? ClearScreen { get; init; }
 
     /// <summary>
+    /// Told when the shell starts (the start directory set is not there)
+    /// </summary>
+    internal string? StartNote { get; init; }
+
+    /// <summary>
     /// The size of the window of the terminal (columns, rows), for the pages of what a command shows: null (or no
     /// rows) when it is not known, and nothing is paged. Set by the shell of the terminal
     /// </summary>
@@ -104,6 +109,8 @@ internal sealed partial class ShellSession
             Line(Lang.F("{0} {1}: help lists the commands, exit leaves", DialogText.ApplicationName,
                 DialogText.ApplicationVersion));
         }
+
+        if (StartNote != null) Line(StartNote);
 
         while (true)
         {

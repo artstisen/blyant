@@ -105,7 +105,11 @@ class Program
             }
         }
 
-        if (run.Count == 0) return Shell.Run(directory, yes);
+        // Without a directory given: the one of the setting shelldir (not for --run: its commands are of the directory
+        // Blyant is started in)
+        string? note = null;
+        if (start.Path == null && run.Count == 0) directory = Shell.StartIn(currentDirectory, out note);
+        if (run.Count == 0) return Shell.Run(directory, yes, null, note);
         var session = new ShellSession(new StringReader(string.Join("\n", run) + "\n"), Console.Out, Console.Error,
             directory, false, yes);
         return Shell.Run(session);
@@ -118,10 +122,12 @@ class Program
     {
         FileExplorer.RememberOnExit();
         Init.LeaveScreen();
+        // (a page without a directory of its own, as the start page: that of the setting shelldir)
+        string? note = null;
         var directory = request.Directory is { Length: > 0 } asked && Directory.Exists(asked)
             ? asked
-            : Directory.GetCurrentDirectory();
-        var code = Shell.Run(directory, false, request.File);
+            : Shell.StartIn(Directory.GetCurrentDirectory(), out note);
+        var code = Shell.Run(directory, false, request.File, note);
         if (Shell.TakeScreenRequest() is { } screen) ToScreen(screen);
         else Environment.Exit(code);
     }

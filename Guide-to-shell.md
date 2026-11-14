@@ -10,6 +10,15 @@ blyant --shell ~/projects      The shell, in that directory
 
 (On Windows `Blyant.exe --shell`, and `dotnet Blyant.dll --shell` for the portable version.)
 
+### Start directory
+Without a directory given, the shell starts in the directory you are in, unless the setting `shelldir` tells another:
+
+- `set shelldir ~/projects` (or a full path): the shell starts there. `~` is your home directory
+- `set shelldir last`: the shell starts where you left it the last time (kept as `shelllastdir`)
+- `set shelldir .`: in the directory you are in, as without the setting
+
+A directory given (`blyant --shell ~/notes`) is used instead, and so is the directory of the page you leave with `:shell` (the start page has none: then `shelldir`). Commands given with `--run` run in the directory you are in, so scripts do what they say wherever `shelldir` points. A start directory that is not there (moved, on a drive taken out) is told, and the shell starts in the directory you are in. The settings are in the settings file, and not on the pages of Configuration.
+
 ## Between the full screen and the shell
 You can go from one to the other while Blyant runs:
 
@@ -51,6 +60,8 @@ To have every output whole (with a screen reader, say), turn the pages off: `set
 | `ls [dir\|n]` | List the folders, then the files, of a directory (by name) |
 | `cd [dir\|file\|n]` | Go to a directory; `cd` alone goes to your home directory, `cd ~/notes` to one in it. A file (a row of `fav`, `hist`, `find` ...) goes to the directory it is in, and the file is then the last list: `open 1` opens it |
 | `up` | Go to the directory above (`cd ..`) |
+| `home` | Go to your home directory (as `cd` alone) |
+| `data` | Go to the [data directory](Guide-to-installation.md#good-to-know) of Blyant: its settings, lists and log. `cd data` is still a directory named _data_ |
 | `open file\|n [+line]` | Edit a file in the editor of the full screen, at a line if one is given (`open plot.md +12`). A directory is gone to |
 | `peek file\|n [lines]` | Show the lines of a text file, numbered: the first 20, `peek plot.md 40` the first 40, `peek plot.md 100-120` those, `peek plot.md +100` 20 lines from line 100, and `peek plot.md +100 30` 30 of them. Only read. After a peek from a line, `open 1` opens the file at that line |
 | `find [name] [-t text]` | Find files here and in the directories below, by name and by a text in them (see [Files](#files)) |
@@ -102,7 +113,7 @@ The shell works on files with the rules of the file browser:
 
 `insert` puts a line of text in a file, as quick notes are written down: `insert todo.md bottom Buy milk`, `insert notes.md top # Monday`, `insert 3 +12 A new line` (a row of the last list). The text is all that follows the place, as you type it (blanks and quotes too), and it is one line. `+12` makes it line 12, before the line that was there, and a line past the end puts it after the last. The file keeps its line endings and its byte order mark, and the file is then the last list, at the line put in: `open 1` opens it there. As for `format`, only a file in UTF-8 is changed, the files Blyant uses are not, and there is no undo.
 
-`set` shows the settings as they are in the settings file (`settings.ini` in the data directory), and changes one as the pages of Configuration do: `set indent 2`, `set wrap false`, `set colorscheme Deep Blue`. The setting is read again at once, as Blyant reads it when it starts. A value the setting cannot have is told, and the setting stays as it was: `indent cannot be 3: it stays 4`. The names and values are those of the settings file, and the guide to [Configuration](Guide-to-start-page.md#configuration) tells what each setting does.
+`set` shows the settings as they are in the settings file (`settings.ini` in the data directory), and changes one as the pages of Configuration do: `set indent 2`, `set wrap false`, `set colorscheme Deep Blue`. The setting is read again at once, as Blyant reads it when it starts. A value the setting cannot have is told, and the setting stays as it was: `indent cannot be 3: it stays 4`. A settings file written by an earlier version of Blyant lacks the settings that came after it: `set` writes the file whole first (as changing a setting in Configuration does), so every setting of this version can be shown and changed. The names and values are those of the settings file, and the guide to [Configuration](Guide-to-start-page.md#configuration) tells what each setting does.
 
 ## Editing a file
 `open` shows the editor of the full screen, with all its keys and commands (see the [guide to the editor](Guide-to-editor.md)). When you close it (`:q`, `:wq`), you are back at the prompt, in the directory you were in. A file that is not there yet is made if you want that: the shell asks first.
