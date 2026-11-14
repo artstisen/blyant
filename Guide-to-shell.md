@@ -77,6 +77,8 @@ To have every output whole (with a screen reader, say), turn the pages off: `set
 | `info [file\|n]` | Tell about a file or directory (alone: the one you are in): its kind, size, dates and path, and for a text file its characters, words, lines, encoding and line endings |
 | `insert file\|n top\|bottom\|+line text` | Put a line of text in a file without opening it: before the first line, after the last, or as line 12 (`+12`). See [Text and settings](#text-and-settings) |
 | `change file\|n +line\|from-to [text]` | Change a line (`+12`) or lines (`12-15`) of a file into a text, or delete them when no text is given (asks first). See [Text and settings](#text-and-settings) |
+| `shift file\|n lines place` | Move lines in a file without opening it: under a heading (`shift todo.md 4-6 Done`), at the end of its section (`Done+`), before a line (`+12`), to the `top` or the `bottom`. See [Moving lines](#moving-lines) |
+| `shift! file\|n lines place` | Move lines as `shift` does, and tick their task boxes (`- [ ]` to `- [x]`), or untick those that are ticked |
 | `format file\|n` | Format an HTML, CSS or XML file, as `:format` in the editor does (see [Text and settings](#text-and-settings)) |
 | `trim file\|n` | Remove the blank space at the end of the lines, as `:trim` in the editor does; `trim!` also the line breaks of Markdown |
 | `set [name [value]]` | Show the settings (`set`), one of them (`set indent`), or change one (`set indent 2`) |
@@ -106,7 +108,7 @@ To have every output whole (with a screen reader, say), turn the pages off: `set
 ### Typing a command
 In a terminal the line of the shell is read key by key:
 
-- `Tab` completes the word you are typing, and `Tab` again gives the next that fits (after the last: what you typed; `Shift+Tab` goes back): the name of a command (`fa` to `favorites`), the words that can follow some of them (the names of the settings after `set`, the lists after `fav`, the projects after `project`, `add` and `remove` after `fav` and `hot`, `top` and `bottom` after `insert`, `path`, `name`, `text` and `lines` after `clip`), and the names of files and directories after the commands that take a path (`open pl` to `open plot.md`). `cd` and `ls`, and the directory of `copy` and `move`, take directories only. A directory gets `/` after it, and when it is the only name that fits, `Tab` again goes on into it (`cd pr` to `cd projects/`, then `cd projects/Article/`). A name with a blank in it is put in quotes, and hidden names come only after a `.`
+- `Tab` completes the word you are typing, and `Tab` again gives the next that fits (after the last: what you typed; `Shift+Tab` goes back): the name of a command (`fa` to `favorites`), the words that can follow some of them (the names of the settings after `set`, the lists after `fav`, the projects after `project`, `add` and `remove` after `fav` and `hot`, `top` and `bottom` after `insert`, `top`, `bottom` and the headings of the file after the lines of `shift`, `path`, `name`, `text` and `lines` after `clip`), and the names of files and directories after the commands that take a path (`open pl` to `open plot.md`). `cd` and `ls`, and the directory of `copy` and `move`, take directories only. A directory gets `/` after it, and when it is the only name that fits, `Tab` again goes on into it (`cd pr` to `cd projects/`, then `cd projects/Article/`). A name with a blank in it is put in quotes, and hidden names come only after a `.`
 - `Up` and `Down` bring back the commands you typed before, on Windows, Linux and macOS alike; what you have typed is what they start with (`pe` and `Up`: the last `peek`)
 - `Left`, `Right`, `Home` and `End` move on the line, `Backspace` and `Delete` delete, `Ctrl+U` deletes the line before the cursor, `Ctrl+W` the word before it, and `Esc` the whole line. A line wider than the window is scrolled sideways on its row
 - `Ctrl+C` drops what you have typed, and `Ctrl+D` (or `Ctrl+Z` on Windows) on an empty line leaves, as `exit` does
@@ -137,6 +139,28 @@ The shell works on files with the rules of the file browser:
 `set` shows the settings as they are in the settings file (`settings.ini` in the data directory), and changes one as the pages of Configuration do: `set indent 2`, `set wrap false`, `set colorscheme Deep Blue`. The setting is read again at once, as Blyant reads it when it starts. A value the setting cannot have is told, and the setting stays as it was: `indent cannot be 3: it stays 4`. A settings file written by an earlier version of Blyant lacks the settings that came after it: `set` writes the file whole first (as changing a setting in Configuration does), so every setting of this version can be shown and changed.
 
 `reset` puts all the settings back to their defaults, as _Reset all settings_ on the System page of Configuration does: your lists, favorites, bookmarks and files are kept. It asks first, and only `y` (or `Yes`) goes ahead: `Enter` alone answers no. The settings of the shell go back too (`shellpaging` on, `shelldir` empty), and so does the language (English). From a file or with `--run`, nothing is reset unless `--yes` is given. The names and values are those of the settings file, and the guide to [Configuration](Guide-to-start-page.md#configuration) tells what each setting does.
+
+## Moving lines
+`shift` moves lines to another place in the same file, without opening it, as items are moved from _Todo_ to _Done_:
+
+```
+peek todo.md                       the lines, numbered
+shift todo.md 5 Done               line 5 under the heading Done
+shift todo.md 5-7 Done             lines 5 to 7
+shift todo.md 5,8,10-11 Done       lines that are not together, in their order
+shift todo.md "Buy milk" Done      the line with "Buy milk" in it
+shift todo.md 5 Done+              at the end of the section of Done
+shift todo.md 12 +3                before line 3
+shift todo.md 12 top               to the top (or bottom)
+shift! todo.md "Buy milk" Done     moved, and its task box ticked
+```
+
+- The numbers are those of the file as it is, as `peek` shows them
+- A place that is not `top`, `bottom` or `+12` is a heading: `Done` is `## Done` (any level, and letter case alike; `"## Done"` and `"Done today"` in quotes also do). The lines go right under it, after a blank line under it, so the newest come first; `Done+` puts them after the last line of its section, before the next heading of its level or above. In a Typst file (`.typ`) the headings are `= Done`. Headings in a block of code are not headings
+- A text in place of the lines finds the one line that has it (letter case alike). When more lines have it, or none does, they are shown with their numbers and nothing is moved, and so it is when no heading has the name, or two do (then the headings are shown)
+- `shift!` also ticks the task boxes of the lines moved (`- [ ] Milk` to `- [x] Milk`, also in a numbered list), and unticks those that are ticked: `shift! todo.md Milk Done` when it is done, `shift! todo.md Milk Todo` to have it back. A line without a box is moved as it is
+- The place cannot be in the lines moved (the heading moved, or `+5` with line 5 moved). Lines already at the place are left so
+- The lines moved are shown at their new place, and the file is then the last list there (`open 1`). As for `insert`, the file keeps its line endings and its byte order mark, only a file in UTF-8 is changed and not the files Blyant uses, and there is no undo; nothing is lost by a move, so it is not asked first
 
 ## Registers
 A register keeps a text or a path under a name, and `$name` puts it in any command:

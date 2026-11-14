@@ -108,30 +108,8 @@ internal sealed partial class ShellSession
             return;
         }
 
-        if (Existing(words[0]) is not { } item || Protected(item)) return;
-        if (item.IsDirectory)
-        {
-            Error(Lang.F("Not a file: {0}", item.Path));
-            return;
-        }
-
-        TextFile file;
-        try
-        {
-            file = TextFile.Load(item.Path);
-        }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidDataException)
-        {
-            Error(Lang.F("{0} cannot be read: {1}", item.Path, e.Message));
-            return;
-        }
-
-        if (!file.IsUtf8)
-        {
-            Error(Lang.F("{0} is not in UTF-8 ({1}): open it in the editor, which saves it in UTF-8", item.Path,
-                file.EncodingName));
-            return;
-        }
+        if (EditableFile(words[0]) is not { } editable) return;
+        var (item, file) = editable;
 
         var (text, number) = WithLine(file.Text, rest, at.Value);
         var result = file.Save(text);
@@ -167,30 +145,8 @@ internal sealed partial class ShellSession
         }
 
         var text = AfterWords(argument, 2);
-        if (Existing(words[0]) is not { } item || Protected(item)) return;
-        if (item.IsDirectory)
-        {
-            Error(Lang.F("Not a file: {0}", item.Path));
-            return;
-        }
-
-        TextFile file;
-        try
-        {
-            file = TextFile.Load(item.Path);
-        }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidDataException)
-        {
-            Error(Lang.F("{0} cannot be read: {1}", item.Path, e.Message));
-            return;
-        }
-
-        if (!file.IsUtf8)
-        {
-            Error(Lang.F("{0} is not in UTF-8 ({1}): open it in the editor, which saves it in UTF-8", item.Path,
-                file.EncodingName));
-            return;
-        }
+        if (EditableFile(words[0]) is not { } editable) return;
+        var (item, file) = editable;
 
         var count = LinesOfText(file.Text).Count;
         if (first > count)
@@ -242,6 +198,38 @@ internal sealed partial class ShellSession
         }
     }
 
+    // The text file of a word (a row of the last list, or a path) to change without opening it: there, in UTF-8 (the
+    // editor saves in UTF-8: it is opened there to be changed to it), and not one Blyant uses. Null (and told) if not
+    private (Item Item, TextFile File)? EditableFile(string word)
+    {
+        if (Existing(word) is not { } item || Protected(item)) return null;
+        if (item.IsDirectory)
+        {
+            Error(Lang.F("Not a file: {0}", item.Path));
+            return null;
+        }
+
+        TextFile file;
+        try
+        {
+            file = TextFile.Load(item.Path);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidDataException)
+        {
+            Error(Lang.F("{0} cannot be read: {1}", item.Path, e.Message));
+            return null;
+        }
+
+        if (!file.IsUtf8)
+        {
+            Error(Lang.F("{0} is not in UTF-8 ({1}): open it in the editor, which saves it in UTF-8", item.Path,
+                file.EncodingName));
+            return null;
+        }
+
+        return (item, file);
+    }
+
     /// <summary>
     /// The lines change works on: "+12" (line 12) or "12-15" (also "+12-15")
     /// </summary>
@@ -256,7 +244,7 @@ internal sealed partial class ShellSession
     }
 
     // The lines of a text (lines end in "\n"; the last line break does not start another line)
-    private static List<string> LinesOfText(string text)
+    internal static List<string> LinesOfText(string text)
     {
         text = TextBuffer.Normalize(text);
         if (text.Length == 0) return new List<string>();

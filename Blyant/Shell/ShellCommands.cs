@@ -29,6 +29,8 @@ internal sealed partial class ShellSession
         ("info [file|n]", Lang.T("Tell about a file or directory (alone: this one)")),
         ("insert file|n top|bottom|+line text", Lang.T("Put a line of text in a file, without opening it")),
         ("change file|n +line|from-to [text]", Lang.T("Change lines of a file into a text, or delete them")),
+        ("shift file|n lines place", Lang.T("Move lines in a file: under a heading, +line, top or bottom")),
+        ("shift! file|n lines place", Lang.T("Move lines, and tick or untick their task boxes")),
         ("format file|n", Lang.T("Format an HTML, CSS or XML file, as :format does")),
         ("trim file|n", Lang.T("Remove blank space at line ends, as :trim does (trim!)")),
         ("set [name [value]]", Lang.T("Show the settings, or change one")),
@@ -166,6 +168,12 @@ internal sealed partial class ShellSession
                 break;
             case "insert":
                 Insert(argument);
+                break;
+            case "shift":
+                Shift(argument, false);
+                break;
+            case "shift!":
+                Shift(argument, true);
                 break;
             case "change":
                 ChangeLines(argument);
@@ -506,12 +514,12 @@ internal sealed partial class ShellSession
                 "h" => "help",
                 "q" or "quit" => "exit",
                 "del" => "delete",
-                "trim!" => "trim",
                 "cls" => "clear",
                 _ => name
             };
             // (all the rows of the command: "help clip" tells each of its forms)
-            var found = rows.Where(r => r.Command.Split(' ')[0] == full).ToList();
+            // ("trim!", "shift!": with the command)
+            var found = rows.Where(r => r.Command.Split(' ')[0].TrimEnd('!') == full.TrimEnd('!')).ToList();
             if (found.Count == 0)
             {
                 Error(Lang.F("Unknown command: {0} (help lists the commands)", name));

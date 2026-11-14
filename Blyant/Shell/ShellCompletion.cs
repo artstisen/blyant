@@ -18,6 +18,7 @@ internal sealed class ShellCompletion
     private List<string> _matches = new();
     private int _index = -1; // The match shown (-1: what was typed)
     private bool _active;
+    private List<string> _words = new(); // The words after the command, as typed
 
     /// <param name="directory">The directory the shell is in</param>
     /// <param name="fullPath">A path typed as a full path (as the shell takes it: from its directory, "~")</param>
@@ -34,7 +35,8 @@ internal sealed class ShellCompletion
         Path,
         Directory,
         Words,
-        PathOrWords
+        PathOrWords,
+        QuotedWords
     }
 
     // What "clip" copies
@@ -84,13 +86,18 @@ internal sealed class ShellCompletion
         }
 
         var command = words[0].ToLowerInvariant();
-        var (kind, choices) = After(command, words.Skip(1).Select(w => w.ToLowerInvariant()).ToList());
+        // (the words as typed: the file of shift is read by its name, in its letter case)
+        _words = words.Skip(1).ToList();
+        var (kind, choices) = After(command, _words.Select(w => w.ToLowerInvariant()).ToList());
         _matches = kind switch
         {
             Kind.Path => PathsFitting(word, false),
             Kind.Directory => PathsFitting(word, true),
             Kind.Words => Fitting(choices, word),
             Kind.PathOrWords => Fitting(choices, word).Concat(PathsFitting(word, false)).ToList(),
+            // (a word with a blank in it in quotes: fitting what is typed after a quote)
+            Kind.QuotedWords => Fitting(choices, word.TrimStart('"'))
+                .Select(w => w.Any(char.IsWhiteSpace) ? "\"" + w + "\"" : w).ToList(),
             _ => new List<string>()
         };
         return _matches.Count > 0;
@@ -123,6 +130,15 @@ internal sealed class ShellCompletion
                 {
                     0 => (Kind.Path, none),
                     1 => (Kind.Directory, none),
+                    _ => (Kind.None, none)
+                };
+            case "shift":
+            case "shift!":
+                // The file, the lines (typed), and the place: top, bottom or a heading of the file
+                return position switch
+                {
+                    0 => (Kind.Path, none),
+                    2 => (Kind.QuotedWords, new[] { "top", "bottom" }.Concat(HeadingsOf(_words[0]))),
                     _ => (Kind.None, none)
                 };
             case "insert":
@@ -158,6 +174,22 @@ internal sealed class ShellCompletion
                 return (position == 0 ? Kind.Words : Kind.None, Commands.Names(CommandContext.Shell));
             default:
                 return (Kind.None, none);
+        }
+    }
+
+    // The names of the headings of a file (for "shift"); none if it cannot be read
+    private IEnumerable<string> HeadingsOf(string typed)
+    {
+        try
+        {
+            var path = _fullPath(typed.Trim('"'));
+            if (!File.Exists(path) || new FileInfo(path).Length > TextFile.MaxSize) return Enumerable.Empty<string>();
+            return ShellSession.Headings(TextBuffer.Normalize(File.ReadAllText(path)), ShellSession.IsTypst(path))
+                .Select(h => h.Name).ToList();
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+        {
+            return Enumerable.Empty<string>();
         }
     }
 

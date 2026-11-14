@@ -1370,4 +1370,117 @@ public class ShellTests : IDisposable
         Assert.Equal("clip plot.md", Tab(Completion(), "clip pl"));
         Assert.Equal("clip lines plot.md", Tab(Completion(), "clip lines pl"));
     }
+
+    // ---- shift: lines moved in a file
+
+    private const string Todo = "# Week\n\n## Todo\n\n- [ ] Milk\n- [ ] Ink\n- [ ] Paper\n\n## Done\n\n- [x] Pens\n\n## Notes\nA note\n";
+
+    [Theory]
+    [InlineData("4", new[] { 4 })]
+    [InlineData("+4", new[] { 4 })]
+    [InlineData("4-6", new[] { 4, 5, 6 })]
+    [InlineData("9-10,4,7,5", new[] { 4, 5, 7, 9, 10 })]
+    public void LineSet_TakesNumbersRangesAndLists(string text, int[] lines)
+    {
+        Assert.True(ShellSession.LineSet(text, out var found));
+        Assert.Equal(lines, found);
+    }
+
+    [Theory]
+    [InlineData("Milk")]
+    [InlineData("4-")]
+    [InlineData("0")]
+    [InlineData("6-4")]
+    public void LineSet_IsFalseForAText(string text)
+    {
+        Assert.False(ShellSession.LineSet(text, out _));
+    }
+
+    [Theory]
+    [InlineData("- [ ] Milk", "- [x] Milk")]
+    [InlineData("  * [x] Milk", "  * [ ] Milk")]
+    [InlineData("1. [X] Milk", "1. [ ] Milk")]
+    [InlineData("+ [ ] Milk", "+ [x] Milk")]
+    [InlineData("- Milk", "- Milk")]
+    [InlineData("[ ] Milk", "[ ] Milk")]
+    [InlineData("- [-] Milk", "- [-] Milk")]
+    public void Ticked_TicksOrUnticksATaskBox(string line, string expected)
+    {
+        Assert.Equal(expected, ShellSession.Ticked(line));
+    }
+
+    [Fact]
+    public void Headings_AreThoseOfMarkdown_NotInCode_OrOfTypst()
+    {
+        var text = "# One\n```\n# Not\n```\n    # Code\n## Two ##\n#NoSpace\n";
+        Assert.Equal(new[] { (1, 1, "One"), (6, 2, "Two") }, ShellSession.Headings(text, false));
+        Assert.Equal(new[] { (2, 2, "Done") }, ShellSession.Headings("Text\n== Done\n# not\n", true));
+    }
+
+    [Fact]
+    public void Shifted_MovesTheLinesBeforeAPlace_UpOrDown()
+    {
+        // Down: lines 1 and 3 before line 5 (from 0: 4)
+        Assert.Equal(("b\nd\na\nc\ne\n", 3, 0), ShellSession.Shifted("a\nb\nc\nd\ne\n", new[] { 1, 3 }, 4, false));
+        // Up, and to the end (no line break at the end kept so)
+        Assert.Equal(("d\na\nb\nc", 1, 0), ShellSession.Shifted("a\nb\nc\nd", new[] { 4 }, 0, false));
+        Assert.Equal(("b\na", 2, 0), ShellSession.Shifted("a\nb", new[] { 1 }, 2, false));
+    }
+
+    [Fact]
+    public void Shift_MovesLinesUnderAHeading_AndKeepsTheLineEndings()
+    {
+        File.WriteAllText(In("work", "todo.md"), Todo.Replace("\n", "\r\n"));
+        var (output, errors, _, session) = Run("shift todo.md 5-6 done\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("# Week\n\n## Todo\n\n- [ ] Paper\n\n## Done\n\n- [ ] Milk\n- [ ] Ink\n- [x] Pens\n\n## Notes\nA note\n"
+            .Replace("\n", "\r\n"), File.ReadAllText(In("work", "todo.md")));
+        Assert.Contains("9  - [ ] Milk\n", output);
+        // The file is the last list, at the lines moved
+        Assert.Equal((9, 1), session.LastList[0].At);
+    }
+
+    [Fact]
+    public void ShiftBang_TicksTheBoxes_AndPlusPutsThemAtTheEndOfTheSection()
+    {
+        File.WriteAllText(In("work", "todo.md"), Todo);
+        var (_, errors, _, _) = Run("shift! todo.md Ink \"## Done+\"\nshift! todo.md Pens Todo\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("# Week\n\n## Todo\n\n- [ ] Pens\n- [ ] Milk\n- [ ] Paper\n\n## Done\n\n- [x] Ink\n\n## Notes\nA note\n",
+            File.ReadAllText(In("work", "todo.md")));
+    }
+
+    [Fact]
+    public void Shift_TakesTopBottomAndALine()
+    {
+        File.WriteAllText(In("work", "list.md"), "a\nb\nc\nd\n");
+        var (_, errors, _, _) = Run("shift list.md 4 top\nshift list.md 1,2 bottom\nshift list.md 3 +1\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("d\nb\nc\na\n", File.ReadAllText(In("work", "list.md")));
+    }
+
+    [Fact]
+    public void Shift_TellsWhatItCannotDo_AndChangesNothing()
+    {
+        File.WriteAllText(In("work", "todo.md"), Todo);
+        var (output, errors, _, _) = Run("shift todo.md 5\nshift todo.md 5 Later\nshift todo.md \"[ ]\" Done\n" +
+                                         "shift todo.md Nothing Done\nshift todo.md 40 Done\nshift todo.md 2-3 Todo\n" +
+                                         "shift todo.md 4-6 +5\nshift todo.md 5 Todo\n");
+        Assert.Equal(7, errors.TrimEnd('\n').Split('\n').Length);
+        // Line 5 is under Todo already
+        Assert.Contains(Lang.T("Nothing moved: the lines are there already"), output);
+        Assert.Equal(Todo, File.ReadAllText(In("work", "todo.md")));
+        Assert.DoesNotContain(EventLog.All, line => line.Contains("Milk"));
+    }
+
+    [Fact]
+    public void Tab_CompletesTheHeadingsOfTheFile_AfterTheLines()
+    {
+        File.WriteAllText(In("work", "todo.md"), Todo + "## Done today\n");
+        Assert.Equal("shift todo.md 5 Notes", Tab(Completion(), "shift todo.md 5 No"));
+        Assert.Equal("shift todo.md 5 bottom", Tab(Completion(), "shift todo.md 5 bo"));
+        var completion = Completion();
+        Assert.Equal("shift todo.md 5 Done", Tab(completion, "shift todo.md 5 Do"));
+        Assert.Equal("shift todo.md 5 \"Done today\"", completion.Next("shift todo.md 5 Done", true));
+    }
 }
