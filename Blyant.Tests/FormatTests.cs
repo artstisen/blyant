@@ -7,8 +7,10 @@ namespace Blyant.Tests;
 
 /// <summary>
 /// ":format" in the editor: an HTML, CSS or XML file formatted as Blyant Validator formats it (the formatters
-/// themselves are tested in Format/, with the tests of Blyant Validator)
+/// themselves are tested in Format/, with the tests of Blyant Validator). In the collection "Static state": the
+/// commands typed go in the command history, which all editors share
 /// </summary>
+[Collection("Static state")]
 public class FormatTests
 {
     // The editor of a file of this name: the kind of file is told by the name, as Blyant Validator tells it

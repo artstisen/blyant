@@ -18,6 +18,22 @@ public class CommandHistoryTests : IDisposable
     }
 
     [Fact]
+    public void TheTestsThatTypeCommands_AreInTheCollectionStaticState()
+    {
+        // A command typed in an editor goes in the command history, which all editors share (a list of each place,
+        // for Up and Down). Test classes that type commands are not run at the same time as each other: else two
+        // of them change the history at once, and one of them fails now and then (in Dictionary or List)
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory != null && !File.Exists(Path.Combine(directory.FullName, "Blyant.sln"))) directory = directory.Parent;
+        Assert.NotNull(directory);
+        var outside = Directory.GetFiles(Path.Combine(directory!.FullName, "Blyant.Tests"), "*.cs")
+            .Where(path => System.Text.RegularExpressions.Regex.IsMatch(File.ReadAllText(path), @"\.Type\(""[^""]*:"))
+            .Where(path => !File.ReadAllText(path).Contains("[Collection(\"Static state\")]"))
+            .Select(Path.GetFileName).ToList();
+        Assert.True(outside.Count == 0, "Not in the collection \"Static state\": " + string.Join(", ", outside));
+    }
+
+    [Fact]
     public void Commands_AreKeptForEachPlace_TheNewestFirst_AndOnce()
     {
         CommandHistory.Add(CommandContext.Files, "copy");
