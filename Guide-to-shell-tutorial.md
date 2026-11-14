@@ -28,7 +28,7 @@ Blyant v1.5.0: help lists the commands, exit leaves
 blyant ~/novel>
 ```
 
-The prompt shows where you are: `~` is your home directory. `help` lists the commands, `help shift` tells what one of them does, and `exit` (or `Ctrl+D`) leaves Blyant.
+The prompt shows where you are: `~` is your home directory. `about` shows the commands used the most, `help` lists them all, `help shift` tells what one of them does, and `exit` (or `Ctrl+D`) leaves Blyant. `set language de` has Blyant speak German (`en`, `da`, `nb`, `sv`, `es`, `fr`, `it`, `pl`, `nl` and `fi` are there too); the commands stay as they are.
 
 Other ways in:
 

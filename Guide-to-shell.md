@@ -85,7 +85,7 @@ To have every output whole (with a screen reader, say), turn the pages off: `set
 | `shift! file\|n lines place` | Move lines as `shift` does, and tick their task boxes (`- [ ]` to `- [x]`), or untick those that are ticked |
 | `format file\|n` | Format an HTML, CSS or XML file, as `:format` in the editor does (see [Text and settings](#text-and-settings)) |
 | `trim file\|n` | Remove the blank space at the end of the lines, as `:trim` in the editor does; `trim!` also the line breaks of Markdown |
-| `set [name [value]]` | Show the settings (`set`), one of them (`set indent`), or change one (`set indent 2`) |
+| `set [name [value]]` | Show the settings (`set`), one of them (`set indent`), or change one (`set indent 2`, also `set indent=2` as in the settings file) |
 | `reset` | Put all the settings back to their defaults, as _Reset all settings_ on the System page of Configuration (asks first) |
 | `reload` | Read the settings file and the registers again, after you have edited them in another program (see [Text and settings](#text-and-settings)) |
 | `reg [name [text\|.\|#n]]` | Keep a text or a path in a register, show one, or list them (see [Registers](#registers)) |
@@ -107,6 +107,7 @@ To have every output whole (with a screen reader, say), turn the pages off: `set
 | `clear` (`cls`) | Clear the screen: the prompt is at the top again |
 | `screen` | Go on on the full screen, in the file browser of the directory you are in (see [Between the full screen and the shell](#between-the-full-screen-and-the-shell)) |
 | `version` | Show the version of Blyant |
+| `about [license]` | Show the version of Blyant and the commands used the most (`help`, `ls`, `open`, `peek`, `set language de` ...), and `about license` its license, as on the second page of [About](Guide-to-start-page.md#help) |
 | `help [command]` (`h`) | List the commands, or tell what one does |
 | `exit` (`quit`, `q`) | Leave Blyant |
 

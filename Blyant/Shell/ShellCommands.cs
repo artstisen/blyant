@@ -55,6 +55,7 @@ internal sealed partial class ShellSession
         ("clear", Lang.T("Clear the screen (also cls)")),
         ("screen", Lang.T("Go on on the full screen, in the file browser here")),
         ("version", Lang.T("Show the version of Blyant")),
+        ("about [license]", Lang.T("Show the version and the commands used the most, or the license")),
         ("help [command]", Lang.T("List the commands, or tell what one does")),
         ("exit", Lang.T("Leave Blyant (also quit, q)"))
     };
@@ -221,6 +222,9 @@ internal sealed partial class ShellSession
                 break;
             case "version":
                 Line(DialogText.ApplicationName + " " + DialogText.ApplicationVersion);
+                break;
+            case "about":
+                About(argument);
                 break;
             case "screen":
                 // The full screen, in the file browser of this directory (from a file or --run: no screen)
@@ -492,6 +496,62 @@ internal sealed partial class ShellSession
     {
         var count = int.TryParse(argument.Trim(), out var n) && n > 0 ? n : 20;
         foreach (var line in EventLog.All.Skip(Math.Max(0, EventLog.All.Count - count))) Line(line);
+    }
+
+    // "about": Blyant, its version and author, and the commands of the shell used the most (the about page of the full
+    // screen tells of its keys); "about license": the license, as on the second page of About
+    private void About(string argument)
+    {
+        var what = argument.Trim().ToLowerInvariant();
+        if (what.Length > 0 && what != "license")
+        {
+            Error(Lang.T("Give nothing, or license: about license"));
+            return;
+        }
+
+        // The columns of the window (0: not a terminal, or one that does not tell its size)
+        var width = Terminal && WindowSize?.Invoke() is { Width: > 20 } size ? size.Width - 1 : 0;
+        if (what == "license")
+        {
+            // In a terminal a line wider than the window is broken between words (the paragraphs of the license are
+            // one line each); to a file or a program, as it is
+            foreach (var line in TextBuffer.Normalize(SoftwareLicense.GetLicenseText()).TrimEnd('\n').Split('\n'))
+            {
+                if (width == 0 || TextMetrics.WidthOf(line) <= width) Line(line);
+                else foreach (var part in ChoiceBox.Wrap(line, width)) Line(part);
+            }
+
+            return;
+        }
+
+        Line(DialogText.ApplicationName + " " + DialogText.ApplicationVersion + " " + DialogText.ApplicationBy);
+        Line();
+        Line(Lang.T("The commands used the most:"));
+        var rows = new[]
+        {
+            ("help [command]", Lang.T("List the commands, or tell what one does")),
+            ("ls, cd 2, up", Lang.T("List a directory, go into row 2 of it, or up")),
+            ("open 3", Lang.T("Edit a file on the full screen (closing it is back here)")),
+            ("peek 3, find plot", Lang.T("Show lines of a file; find files by name (-t: by text)")),
+            ("recent, fav, hot", Lang.T("The latest files, the favorites, the directory hotlist")),
+            ("set language de", Lang.T("Language: en, de, da, nb, sv, es, fr, it, pl, nl or fi")),
+            ("screen", Lang.T("Go on on the full screen, in the file browser here")),
+            ("exit", Lang.T("Leave Blyant (also quit, q)"))
+        };
+        // (a text longer than the window, in some languages: broken between words, under its column; 79 columns
+        // when the window is not known)
+        var widest = rows.Max(row => row.Item1.Length) + 2;
+        var room = (width > 0 ? width : 79) - widest - 2;
+        foreach (var (command, text) in rows)
+        {
+            var parts = room >= 20 ? ChoiceBox.Wrap(text, room) : [text];
+            Line("  " + command.PadRight(widest) + parts[0]);
+            foreach (var part in parts.Skip(1)) Line(new string(' ', widest + 2) + part);
+        }
+
+        Line();
+        Line(Lang.T("about license shows the license."));
+        Line(Lang.T("The shell tutorial in the user manual shows more."));
     }
 
     private void Help(string argument)

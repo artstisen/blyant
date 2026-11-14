@@ -169,6 +169,8 @@ internal sealed class ShellCompletion
                 if (position == 0) return (Kind.Words, new[] { "-d" }.Concat(ShellRegisters.All.Keys));
                 return (position == 1 && after[0] == "-d" ? Kind.Words : Kind.None,
                     new[] { "all" }.Concat(ShellRegisters.All.Keys));
+            case "about":
+                return (position == 0 ? Kind.Words : Kind.None, new[] { "license" });
             case "help":
             case "h":
                 return (position == 0 ? Kind.Words : Kind.None, Commands.Names(CommandContext.Shell));

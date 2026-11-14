@@ -1753,4 +1753,36 @@ public class ShellTests : IDisposable
         var (_, errors, _, _) = Run("reload now\n");
         Assert.Contains(Lang.T("reload takes nothing after it"), errors);
     }
+
+    [Fact]
+    public void About_WritesTheVersionAndTheCommandsUsedTheMost_AndTheLicense()
+    {
+        var (output, errors, _, _) = Run("about\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.StartsWith(DialogText.ApplicationName + " " + DialogText.ApplicationVersion + " " + DialogText.ApplicationBy,
+            output);
+        Assert.Contains("  help [command]  ", output);
+        Assert.Contains("  set language de  ", output);
+        // (the about page of the full screen tells of its keys: not shown here)
+        Assert.DoesNotContain(TextBuffer.Normalize(DialogText.About).Split('\n')[0], output);
+        // The screen is 79 columns
+        Assert.All(output.TrimEnd('\n').Split('\n'), line => Assert.True(TextMetrics.WidthOf(line) <= 79, line));
+        (output, _, _, _) = Run("about license\n");
+        Assert.Contains("MIT", output);
+        (_, errors, _, _) = Run("about more\n");
+        Assert.Contains(Lang.T("Give nothing, or license: about license"), errors);
+        Assert.Equal("about license", Tab(Completion(), "about l"));
+    }
+
+    [Theory]
+    [InlineData("set indent=2")]
+    [InlineData("set indent = 2")]
+    [InlineData("set indent 2")]
+    public void Set_TakesNameEqualsValue_AsInTheSettingsFile(string line)
+    {
+        FileIo.SaveSettings();
+        var (output, errors, _, _) = Run(line + "\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains("  indent = 2", output);
+    }
 }

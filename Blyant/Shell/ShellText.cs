@@ -565,6 +565,13 @@ internal sealed partial class ShellSession
             return;
         }
 
+        // ("set language=de" as in the settings file, also "set language = de")
+        var equals = trimmed.IndexOf('=');
+        if (equals > 0 && !trimmed[..equals].Trim().Contains(' '))
+        {
+            trimmed = trimmed[..equals].Trim() + " " + trimmed[(equals + 1)..].Trim();
+        }
+
         var parts = trimmed.Split(' ', 2);
         var name = parts[0].ToLowerInvariant();
         if (!settings.TryGetValue(name, out var before))

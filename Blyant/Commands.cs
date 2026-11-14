@@ -88,7 +88,7 @@ internal static class Commands
             "q h u ju jmp corkboard colo favs hist hot qa"),
         [CommandContext.Shell] = new Table(
             "pwd ls cd up home data open peek find new mkdir rename copy move delete info insert change shift shift! format trim trim! set reset reload reg clip favorites history " +
-            "recent hotlist bookmarks projects project log clear screen version help exit quit",
+            "recent hotlist bookmarks projects project log clear screen version about help exit quit",
             "fav favs hist hot book proj h q del cls"),
         [CommandContext.Editor] = new Table(
             "write saveas quit quit! wq help edit edit! reload reload! undo redo delete yank replace nohlsearch " +

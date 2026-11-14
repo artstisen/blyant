@@ -272,6 +272,15 @@ internal static class Actions
     private static string TempPageNumber => Lang.F("Page {0}/{1}", 1, 2);
 
     /// <summary>
+    /// The text of the about page (the first of them; the license is the second): the name, version and author of
+    /// Blyant, what it is, and the tip about several copies of it. Its lines end in "\n"
+    /// </summary>
+    internal static string AboutText() =>
+        DialogText.ApplicationName + " " + DialogText.ApplicationVersion + " " + DialogText.ApplicationBy + "\n\n" +
+        TextBuffer.Normalize(DialogText.About).TrimEnd('\n') + "\n\n" +
+        TextBuffer.Normalize(DialogText.MultipleInstances).TrimEnd('\n');
+
+    /// <summary>
     /// Show the about page and, unless Esc is pressed, the license. The page it was opened from must be drawn
     /// again afterwards
     /// </summary>
@@ -282,13 +291,7 @@ internal static class Actions
 
         // Show help
         // Copyright
-        _tempAboutText = DialogText.ApplicationName + " " + DialogText.ApplicationVersion + " " +
-                         DialogText.ApplicationBy;
-        _tempAboutText += Environment.NewLine + Environment.NewLine;
-        _tempAboutText += DialogText.About;
-        _tempAboutText += Environment.NewLine + Environment.NewLine;
-        _tempAboutText += DialogText.MultipleInstances;
-        _tempAboutText += Environment.NewLine + Environment.NewLine;
+        _tempAboutText = AboutText().Replace("\n", Environment.NewLine) + Environment.NewLine + Environment.NewLine;
         // Show in read only editor (page 1)
         var dummy = new TextArea(Console.CursorLeft, Console.CursorTop, Init.LineWidth - 1, 22, _tempAboutText, 0, false,
             true, false, 0);
