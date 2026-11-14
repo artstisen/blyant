@@ -525,6 +525,8 @@ internal static class FileIo
         _tempSettings += "zen=" + (TextArea.Zen ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // The shell: a long output in pages (only here, and with "set shellpaging" in the shell: not in Configuration)
         _tempSettings += "shellpaging=" + (Shell.Paging ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        // Blyant starts as the shell (Configuration: General), as "blyant --shell" does
+        _tempSettings += "startshell=" + (Shell.StartInShell ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // The shell: the line read key by key, with Tab and Up (off: as the terminal reads it)
         _tempSettings += "shellcompletion=" + (Shell.Completion ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // The directory the shell starts in (a path, "last", or empty: the one Blyant is started in), and the one it
@@ -725,6 +727,7 @@ internal static class FileIo
         TextArea.ZenColors = Tools.TrimToLower(Get("zencolors")) == DialogText.BTrue;
         // On unless turned off
         Shell.Paging = Tools.TrimToLower(Get("shellpaging")) != DialogText.BFalse;
+        Shell.StartInShell = Tools.TrimToLower(Get("startshell")) == DialogText.BTrue;
         Shell.Completion = Tools.TrimToLower(Get("shellcompletion")) != DialogText.BFalse;
         Shell.StartSetting = Get("shelldir").Trim();
         Shell.LastDirectory = Get("shelllastdir").Trim();
@@ -787,6 +790,25 @@ internal static class FileIo
             ? spellLanguages
             : SpellChecker.DefaultLanguages;
 
+    }
+
+    /// <summary>
+    /// True if the settings file says Blyant starts as the shell (startshell): read before Blyant starts, to start
+    /// without the screen of the full screen. False if the file is not there or cannot be read
+    /// </summary>
+    internal static bool StartsInShell()
+    {
+        try
+        {
+            var content = ReadSettingsFile();
+            if (content == DialogText.ErrorReadingFile || content == DialogText.FileNotFound) return false;
+            return ParseSettings(content).TryGetValue("startshell", out var value) &&
+                   Tools.TrimToLower(value) == DialogText.BTrue;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException)
+        {
+            return false;
+        }
     }
 
     internal static string ReadSettingsFile()

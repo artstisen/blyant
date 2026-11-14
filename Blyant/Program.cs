@@ -8,13 +8,17 @@ class Program
         var currentDirectory = Directory.GetCurrentDirectory();
         var arguments = args.ToList();
         // "--shell": Blyant on lines (and "--yes" with it)
-        var shell = StartArgument.TakeShellOptions(arguments, currentDirectory, out var yes, out var run);
+        var asked = StartArgument.TakeShellOptions(arguments, currentDirectory, out var yes, out var run, out var onScreen);
         // An option (--help, --version) is answered before anything is shown (also to a pipe, as "blyant --help |
         // less"), wherever it is given ("blyant +12 --help"): it is never taken for the name of a file to make
         if (StartArgument.FirstOption(arguments, currentDirectory) is { } option)
         {
             Environment.Exit(StartArgument.AnswerOption(option, Console.Out));
         }
+
+        // The shell: asked for, or set (Configuration: General) when nothing else is given. The setting is read before
+        // anything is shown, so the shell starts without the screen of the full screen
+        var shell = StartArgument.StartsAsShell(asked, onScreen, arguments, FileIo.StartsInShell);
 
         // Keys are read one at a time from the terminal: with its input from a file or a pipe Blyant cannot run (the
         // shell can: it reads commands from it)

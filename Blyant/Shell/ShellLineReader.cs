@@ -49,7 +49,8 @@ internal sealed class ShellLineReader
         while (true)
         {
             var key = _readKey();
-            var control = (key.Modifiers & ConsoleModifiers.Control) != 0;
+            // Ctrl alone (Ctrl+Alt is AltGr, which types characters as $ @ { [ \ on many keyboards: they are typed)
+            var control = (key.Modifiers & ConsoleModifiers.Control) != 0 && (key.Modifiers & ConsoleModifiers.Alt) == 0;
             // (a terminal can give Enter, Tab and Backspace as their characters only)
             if (key.Key == ConsoleKey.Enter || key.KeyChar is '\r' or '\n')
             {
@@ -136,7 +137,7 @@ internal sealed class ShellLineReader
                     recall.Reset();
                     break;
                 default:
-                    if (key.KeyChar < ' ' || char.IsControl(key.KeyChar) || control) break;
+                    if (key.KeyChar < ' ' || char.IsControl(key.KeyChar)) break;
                     _text = _text.Insert(_cursor, key.KeyChar.ToString());
                     _cursor++;
                     recall.Reset();

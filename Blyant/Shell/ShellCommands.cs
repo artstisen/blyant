@@ -33,6 +33,8 @@ internal sealed partial class ShellSession
         ("trim file|n", Lang.T("Remove blank space at line ends, as :trim does (trim!)")),
         ("set [name [value]]", Lang.T("Show the settings, or change one")),
         ("reset", Lang.T("Reset all settings to the defaults (asks first)")),
+        ("reg [name [text|.|#n]]", Lang.T("Keep a text or a path in a register: $name puts it in a command")),
+        ("reg -d name|all", Lang.T("Take a register away, or all of them")),
         ("favorites [list]", Lang.T("List the favorites (fav), or those of another list")),
         ("favorites add|remove file|n", Lang.T("Add to the favorites, or take off them")),
         ("history", Lang.T("List the files opened (hist)")),
@@ -58,10 +60,19 @@ internal sealed partial class ShellSession
     {
         line = line.Trim();
         if (line.Length == 0) return true;
+        // By name only (never what follows it: a path, a name, the value of a register)
+        EventLog.AddCommand(DialogText.LogShell, line);
+        // $name: the value of the register (in the paths a value with blanks is one word; the text of insert, change,
+        // reg and set, and what find and project take, as it is)
+        line = ShellRegisters.Expand(line, CommandLine.Name(line).ToLowerInvariant() switch
+        {
+            "insert" or "change" => 3,
+            "reg" or "set" => 2,
+            "find" or "project" => 1,
+            _ => int.MaxValue
+        });
         var name = CommandLine.Name(line).ToLowerInvariant();
         var argument = CommandLine.Argument(line);
-        // By name only (never what follows it: a path, a name)
-        EventLog.AddCommand(DialogText.LogShell, line);
         // (the line of the command typed is the first row of its page)
         NewPage();
         return RunCommand(name, argument);
@@ -164,6 +175,9 @@ internal sealed partial class ShellSession
                 break;
             case "reset":
                 Reset();
+                break;
+            case "reg":
+                Register(argument);
                 break;
             case "bookmarks":
             case "book":

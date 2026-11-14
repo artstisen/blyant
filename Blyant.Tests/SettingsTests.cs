@@ -418,7 +418,7 @@ backup=
         Assert.False(settings.ContainsKey("stayloggedin"));
         Assert.False(settings.ContainsKey("projectsdir"));
         Assert.False(settings.ContainsKey("projectsask"));
-        Assert.Equal(65, settings.Count);
+        Assert.Equal(66, settings.Count);
         Assert.Equal("true", settings["modulejump"]);
         // The modules are on unless turned off
         Assert.Equal("true", settings["moduleprojects"]);
@@ -433,6 +433,8 @@ backup=
         Assert.Equal("true", settings["shellpaging"]);
         // The shell completes with Tab unless that is turned off
         Assert.Equal("true", settings["shellcompletion"]);
+        // Blyant starts on the full screen unless the shell is set
+        Assert.Equal("false", settings["startshell"]);
         // The shell starts in the directory Blyant is started in, unless another is set
         Assert.Equal(string.Empty, settings["shelldir"]);
         Assert.Equal(string.Empty, settings["shelllastdir"]);

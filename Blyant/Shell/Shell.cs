@@ -27,6 +27,12 @@ internal static class Shell
     internal static bool Completion { get; set; } = true;
 
     /// <summary>
+    /// Blyant starts as the shell (setting "startshell", Configuration: General), as "blyant --shell" does, unless a
+    /// file or directory is given (it is opened on the full screen) or "--screen"
+    /// </summary>
+    internal static bool StartInShell { get; set; }
+
+    /// <summary>
     /// The directory the shell starts in when none is given (setting "shelldir"): a path ("~/projects" from the home
     /// directory), "last" (the one it was left in, kept as "shelllastdir"), or empty: the one Blyant is started in
     /// </summary>

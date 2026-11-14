@@ -69,6 +69,7 @@ blyant ~/projects/site         Show the directory in the file browser
 blyant .                       Show the directory you are in, in the file browser
 blyant --shell                 Use Blyant on lines: commands typed at a prompt (see the guide to the shell)
 blyant --run "format a.html"   Run a command of the shell (more than one: --run "..." --run "..."), and end
+blyant --screen                Start on the full screen, when Blyant is set to start in the shell
 blyant --help                  Show how Blyant is started (also -h)
 blyant --version               Show the version (also -v)
 ```

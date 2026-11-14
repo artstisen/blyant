@@ -379,6 +379,101 @@ internal sealed partial class ShellSession
         Line(Lang.T("Settings reset to the defaults"));
     }
 
+    // "reg": the registers; "reg docs": the value of one (alone on its line, as a script reads it); "reg note Buy ink":
+    // a text; "reg here .": the directory the shell is in; "reg plot #3": the full path of row 3 of the last list;
+    // "reg -d note", "reg -d all": taken away. Kept in the data directory. Only the names are logged, never the values
+    private void Register(string argument)
+    {
+        var words = Words(argument);
+        if (words.Count == 0)
+        {
+            if (ShellRegisters.All.Count == 0)
+            {
+                Line(Lang.T("No registers (reg name text keeps one)"));
+                return;
+            }
+
+            var width = ShellRegisters.All.Keys.Max(key => key.Length) + 1;
+            foreach (var (key, value) in ShellRegisters.All) Line("  $" + key.PadRight(width) + value);
+            return;
+        }
+
+        if (words[0] == "-d")
+        {
+            if (words.Count != 2)
+            {
+                Error(Lang.T("Give the register to take away: reg -d note (or all)"));
+                return;
+            }
+
+            if (words[1].Equals("all", StringComparison.OrdinalIgnoreCase)) ShellRegisters.Clear();
+            else if (!ShellRegisters.Remove(words[1]))
+            {
+                Error(Lang.F("No register named {0} (reg lists them)", words[1]));
+                return;
+            }
+
+            // English: the log (the name only)
+            EventLog.Add(DialogText.LogShell + ": register taken away: " + words[1].ToLowerInvariant());
+            SaveRegisters(words[1].Equals("all", StringComparison.OrdinalIgnoreCase)
+                ? Lang.T("All registers taken away")
+                : Lang.F("Register {0} taken away", "$" + words[1].ToLowerInvariant()));
+            return;
+        }
+
+        var name = words[0];
+        if (!ShellRegisters.IsName(name))
+        {
+            Error(Lang.F("Not a name for a register: {0} (a letter first, then letters, digits or _)", name));
+            return;
+        }
+
+        var text = AfterWords(argument, 1);
+        if (text.Length == 0)
+        {
+            // The value alone on its line
+            if (ShellRegisters.Get(name) is { } value) Line(value);
+            else Error(Lang.F("No register named {0} (reg lists them)", name));
+            return;
+        }
+
+        string kept;
+        if (text.Trim() == ".")
+        {
+            kept = Directory;
+        }
+        else if (text.Trim() is ['#', .. var row] && row.Length > 0 && row.All(char.IsAsciiDigit))
+        {
+            if (!int.TryParse(row, out var number) || number < 1 || number > LastList.Count ||
+                LastList[number - 1].Path.Length == 0)
+            {
+                Error(!_listShown
+                    ? Lang.F("No row {0}: no list has been shown", row)
+                    : Lang.F("No row {0}: the last list has {1} rows", row, LastList.Count));
+                return;
+            }
+
+            kept = Path.GetFullPath(LastList[number - 1].Path);
+        }
+        else
+        {
+            kept = text;
+        }
+
+        ShellRegisters.Set(name, kept);
+        // English: the log (the name only, never the value)
+        EventLog.Add(DialogText.LogShell + ": register set: " + name.ToLowerInvariant());
+        SaveRegisters("  $" + name.ToLowerInvariant() + " = " + ShellRegisters.Get(name));
+    }
+
+    // The registers written to their file: what was done is told, or why they could not be kept
+    private void SaveRegisters(string done)
+    {
+        var result = ShellRegisters.Save();
+        if (result == DialogText.Success) Line(done);
+        else Error(result);
+    }
+
     // "set": the settings, as in the settings file; "set indent": one of them; "set indent 2": a setting changed (as on
     // the pages of Configuration). A value the setting cannot have is told, and the setting stays as it was
     private void Set(string argument)

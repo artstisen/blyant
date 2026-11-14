@@ -10,6 +10,9 @@ blyant --shell ~/projects      The shell, in that directory
 
 (On Windows `Blyant.exe --shell`, and `dotnet Blyant.dll --shell` for the portable version.)
 
+### Starting in the shell
+To have Blyant always start as the shell, turn on _Start in the shell_ on the General page of Configuration (or `set startshell true` in the shell). Then `blyant` alone starts as `blyant --shell` does. A file or directory given (`blyant notes.md`, `blyant +12 page.html`) is still opened on the full screen, so programs that open a file in Blyant (as Blyant Validator does) get the editor. `blyant --screen` starts on the full screen once, and `screen` in the shell comes there too.
+
 ### Start directory
 Without a directory given, the shell starts in the directory you are in, unless the setting `shelldir` tells another:
 
@@ -78,6 +81,8 @@ To have every output whole (with a screen reader, say), turn the pages off: `set
 | `trim file\|n` | Remove the blank space at the end of the lines, as `:trim` in the editor does; `trim!` also the line breaks of Markdown |
 | `set [name [value]]` | Show the settings (`set`), one of them (`set indent`), or change one (`set indent 2`) |
 | `reset` | Put all the settings back to their defaults, as _Reset all settings_ on the System page of Configuration (asks first) |
+| `reg [name [text\|.\|#n]]` | Keep a text or a path in a register, show one, or list them (see [Registers](#registers)) |
+| `reg -d name\|all` | Take a register away, or all of them |
 | `favorites [list]` (`fav`) | List the favorites of the file browser, with their folders as headings; `fav work` uses the list _work_ from now on, as `:list work` does |
 | `history` (`hist`) | List the files opened, the newest first, with when |
 | `recent` | List the latest files (the first nine of the history) |
@@ -128,6 +133,26 @@ The shell works on files with the rules of the file browser:
 `set` shows the settings as they are in the settings file (`settings.ini` in the data directory), and changes one as the pages of Configuration do: `set indent 2`, `set wrap false`, `set colorscheme Deep Blue`. The setting is read again at once, as Blyant reads it when it starts. A value the setting cannot have is told, and the setting stays as it was: `indent cannot be 3: it stays 4`. A settings file written by an earlier version of Blyant lacks the settings that came after it: `set` writes the file whole first (as changing a setting in Configuration does), so every setting of this version can be shown and changed.
 
 `reset` puts all the settings back to their defaults, as _Reset all settings_ on the System page of Configuration does: your lists, favorites, bookmarks and files are kept. It asks first, and only `y` (or `Yes`) goes ahead: `Enter` alone answers no. The settings of the shell go back too (`shellpaging` on, `shelldir` empty), and so does the language (English). From a file or with `--run`, nothing is reset unless `--yes` is given. The names and values are those of the settings file, and the guide to [Configuration](Guide-to-start-page.md#configuration) tells what each setting does.
+
+## Registers
+A register keeps a text or a path under a name, and `$name` puts it in any command:
+
+```
+reg docs ~/projects/novel/docs      a path (or a text: all after the name, as typed)
+reg here .                          the directory you are in
+reg plot #3                         the full path of row 3 of the last list (fav, hist, find, ls ...)
+reg note Buy more ink
+copy plot.md $docs                  $docs is ~/projects/novel/docs
+cd $here
+insert todo.md bottom $note
+```
+
+- `reg` lists the registers, `reg docs` shows the value of one (alone on its line, as a script reads it with `blyant --run "reg docs"`), `reg -d docs` takes it away, and `reg -d all` all of them
+- A name starts with a letter, and has letters, digits and `_` (`docs`, `draft_2`); letter case is alike
+- `$name` is put in only for a register that is there: anything else stays as typed, so `insert prices.md bottom Ink costs $5` keeps its `$5`. `$$` is a `$`
+- A path with a blank in it is put in quotes where a path is taken (`copy plot.md $docs` with _my docs_), and the text of `insert`, `change`, `reg` and `set` gets the value as it is
+- `Tab` completes the names of the registers after a `$`, and after `reg`
+- The registers are kept in the data directory (`registers.txt`), so they are there the next time. They are the shell's own: the registers of the editor are not these. `reset` does not take them away (they are not settings), and the log has their names, never their values
 
 ## Editing a file
 `open` shows the editor of the full screen, with all its keys and commands (see the [guide to the editor](Guide-to-editor.md)). When you close it (`:q`, `:wq`), you are back at the prompt, in the directory you were in. A file that is not there yet is made if you want that: the shell asks first.

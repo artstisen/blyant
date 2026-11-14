@@ -26,6 +26,8 @@ public class ShellTests : IDisposable
         Projects.ListPathOverride = Path.Combine(_data, Projects.ListFileName);
         FileIo.DataDirectoryOverride = _data;
         FileOperations.TrashOverride = Path.Combine(_data, "trash");
+        ShellRegisters.FilePathOverride = Path.Combine(_data, ShellRegisters.FileName);
+        ShellRegisters.Clear();
         FileFavorites.Parse(string.Empty);
         FileHistory.Parse(string.Empty);
         DirectoryHotlist.Parse(string.Empty);
@@ -43,6 +45,8 @@ public class ShellTests : IDisposable
         Actions.ApplyDefaultSettings();
         FileIo.DataDirectoryOverride = null;
         FileOperations.TrashOverride = null;
+        ShellRegisters.FilePathOverride = null;
+        ShellRegisters.Clear();
         FileFavorites.Parse(string.Empty);
         FileHistory.Parse(string.Empty);
         DirectoryHotlist.Parse(string.Empty);
@@ -421,18 +425,18 @@ public class ShellTests : IDisposable
     public void Run_TakesTheCommandsGiven_AndTheShellOptions()
     {
         var arguments = new List<string> { "--run", "format a.html", "notes", "--yes", "--run", "ls" };
-        Assert.True(StartArgument.TakeShellOptions(arguments, In("work"), out var yes, out var run));
+        Assert.True(StartArgument.TakeShellOptions(arguments, In("work"), out var yes, out var run, out _));
         Assert.True(yes);
         Assert.Equal(new[] { "format a.html", "ls" }, run);
         Assert.Equal(new[] { "notes" }, arguments);
         // "--run" without a command after it: not taken (an option Blyant does not know, as told)
         var alone = new List<string> { "--run" };
-        Assert.False(StartArgument.TakeShellOptions(alone, In("work"), out _, out var none));
+        Assert.False(StartArgument.TakeShellOptions(alone, In("work"), out _, out var none, out _));
         Assert.Empty(none);
         Assert.Equal(new[] { "--run" }, alone);
         // "--yes" without the shell is not taken either
         var noShell = new List<string> { "--yes" };
-        Assert.False(StartArgument.TakeShellOptions(noShell, In("work"), out var notYes, out _));
+        Assert.False(StartArgument.TakeShellOptions(noShell, In("work"), out var notYes, out _, out _));
         Assert.False(notYes);
         Assert.Equal(new[] { "--yes" }, noShell);
     }
@@ -1090,6 +1094,23 @@ public class ShellTests : IDisposable
     }
 
     [Fact]
+    public void AltGr_TypesItsCharacters_AsCtrlAltDoes()
+    {
+        // ($ @ { [ \ with AltGr on many keyboards: Windows tells them as Ctrl+Alt)
+        var keys = new Queue<ConsoleKeyInfo>(new[]
+        {
+            new ConsoleKeyInfo('$', ConsoleKey.D4, false, true, true),
+            new ConsoleKeyInfo('@', ConsoleKey.D2, false, true, true),
+            new ConsoleKeyInfo('{', ConsoleKey.D7, false, true, true),
+            // Ctrl+Alt+C is not Ctrl+C: the line is kept
+            new ConsoleKeyInfo('c', ConsoleKey.C, false, true, true),
+            new ConsoleKeyInfo('\r', ConsoleKey.Enter, false, false, false)
+        });
+        var reader = new ShellLineReader(() => keys.Dequeue(), new StringWriter(), () => 80, (text, _) => text);
+        Assert.Equal("$@{c", reader.Read("> "));
+    }
+
+    [Fact]
     public void Tab_AndUp_OnTheLine()
     {
         CommandHistory.Clear();
@@ -1123,5 +1144,144 @@ public class ShellTests : IDisposable
         Assert.Equal("true", FileIo.ParseSettings(FileIo.ReadSettingsFile())["shellcompletion"]);
         Run("set shellcompletion false\n");
         Assert.False(Shell.Completion);
+    }
+
+    // ---- Starting as the shell by the setting (startshell), and --screen
+
+    [Fact]
+    public void StartsAsShell_ByTheSetting_UnlessAFileOrScreenIsGiven()
+    {
+        // Asked for: always
+        Assert.True(StartArgument.StartsAsShell(true, false, new[] { "notes" }, () => false));
+        // Set, and nothing given: the shell
+        Assert.True(StartArgument.StartsAsShell(false, false, Array.Empty<string>(), () => true));
+        // Set, and a file given (as Blyant Validator opens one at a line): the full screen
+        Assert.False(StartArgument.StartsAsShell(false, false, new[] { "+12", "page.html" }, () => true));
+        // --screen: the full screen, and the setting is not read
+        Assert.False(StartArgument.StartsAsShell(false, true, Array.Empty<string>(), () => throw new InvalidOperationException()));
+        // Not set
+        Assert.False(StartArgument.StartsAsShell(false, false, Array.Empty<string>(), () => false));
+    }
+
+    [Fact]
+    public void Screen_IsTakenAsAnOption()
+    {
+        var arguments = new List<string> { "--screen", "notes" };
+        Assert.False(StartArgument.TakeShellOptions(arguments, In("work"), out _, out _, out var screen));
+        Assert.True(screen);
+        Assert.Equal(new[] { "notes" }, arguments);
+    }
+
+    [Fact]
+    public void StartsInShell_IsReadFromTheSettingsFile_AndAFileThatIsNotThereIsNo()
+    {
+        Assert.False(FileIo.StartsInShell());
+        Shell.StartInShell = true;
+        FileIo.SaveSettings();
+        Assert.True(FileIo.StartsInShell());
+        Assert.Equal("true", FileIo.ParseSettings(FileIo.ReadSettingsFile())["startshell"]);
+        Run("set startshell false\n");
+        Assert.False(FileIo.StartsInShell());
+    }
+
+    // ---- Registers: $name in a command
+
+    [Theory]
+    // A register put in; one that is not, and "$5", as typed; $$ is $
+    [InlineData("cd $docs", "cd C:/notes")]
+    [InlineData("peek $docs/plot.md", "peek C:/notes/plot.md")]
+    [InlineData("insert x.md bottom Costs $5 and $nothing", "insert x.md bottom Costs $5 and $nothing")]
+    [InlineData("insert x.md bottom $$docs", "insert x.md bottom $docs")]
+    // A value with blanks in a path: the word in quotes; in the text after the words, as it is
+    [InlineData("copy plot.md $space", "copy plot.md \"C:/my notes\"")]
+    [InlineData("copy plot.md $space/old", "copy plot.md \"C:/my notes/old\"")]
+    [InlineData("copy plot.md \"$space/old\"", "copy plot.md \"C:/my notes/old\"")]
+    [InlineData("insert $space bottom $note", "insert \"C:/my notes\" bottom Buy more ink")]
+    [InlineData("reg other $note", "reg other Buy more ink")]
+    public void Expand_PutsTheValuesInTheLine(string line, string expected)
+    {
+        ShellRegisters.Set("docs", "C:/notes");
+        ShellRegisters.Set("space", "C:/my notes");
+        ShellRegisters.Set("Note", "Buy more ink");
+        var words = line.StartsWith("insert") ? 3 : line.StartsWith("reg") ? 2 : int.MaxValue;
+        Assert.Equal(expected, ShellRegisters.Expand(line, words));
+    }
+
+    [Theory]
+    [InlineData("docs", true)]
+    [InlineData("Draft_2", true)]
+    [InlineData("2nd", false)]
+    [InlineData("my docs", false)]
+    [InlineData("a-b", false)]
+    public void IsName_IsALetterThenLettersDigitsOrUnderscore(string name, bool ok)
+    {
+        Assert.Equal(ok, ShellRegisters.IsName(name));
+    }
+
+    [Fact]
+    public void Reg_KeepsATextTheDirectoryOrARow_AndShowsIt()
+    {
+        var (output, errors, _, _) = Run("reg note Buy more ink\nreg here .\nls\nreg plot #4\nreg note\nreg\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("Buy more ink", ShellRegisters.Get("note"));
+        Assert.Equal(In("work"), ShellRegisters.Get("here"));
+        // Row 4 of ls: plot.md (the folders first)
+        Assert.Equal(In("work", "plot.md"), ShellRegisters.Get("plot"));
+        // The value alone on its line, as a script reads it; and the list
+        Assert.Contains("\nBuy more ink\n", output);
+        Assert.Contains("  $here ", output);
+        // Kept in the data directory, and read again next time
+        ShellRegisters.Clear();
+        ShellRegisters.Load();
+        Assert.Equal("Buy more ink", ShellRegisters.Get("NOTE"));
+    }
+
+    [Fact]
+    public void Registers_AreUsedByTheCommands_AsPathsAndAsText()
+    {
+        Directory.CreateDirectory(In("work", "my old"));
+        File.WriteAllText(In("work", "todo.md"), "One\n");
+        var (_, errors, _, session) = Run("reg old " + In("work", "my old") + "\nreg note Buy more ink\n" +
+                                          "copy plot.md $old\ninsert todo.md bottom $note\ncd $old\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.True(File.Exists(In("work", "my old", "plot.md")));
+        Assert.Equal("One\nBuy more ink\n", File.ReadAllText(In("work", "todo.md")));
+        Assert.Equal(In("work", "my old"), session.Directory);
+    }
+
+    [Fact]
+    public void Reg_TakesRegistersAway_AndTellsWhatItCannotDo()
+    {
+        var (_, errors, code, _) = Run("reg a one\nreg b two\nreg -d a\nreg -d a\nreg 2nd x\nreg nothing\nreg c #9\nreg -d\n");
+        Assert.Null(ShellRegisters.Get("a"));
+        Assert.Equal("two", ShellRegisters.Get("b"));
+        Assert.Equal(5, errors.TrimEnd('\n').Split('\n').Length);
+        Assert.Equal(1, code);
+        Run("reg -d all\n");
+        Assert.Empty(ShellRegisters.All);
+        // Empty: told how to keep one
+        var (empty, _, _, _) = Run("reg\n");
+        Assert.Contains(Lang.T("No registers (reg name text keeps one)"), empty);
+    }
+
+    [Fact]
+    public void Registers_AreNeverLogged_OnlyTheirNames()
+    {
+        Run("reg secret top secret words\ninsert plot.md bottom $secret\n");
+        Assert.DoesNotContain(EventLog.All, line => line.Contains("top secret"));
+        Assert.Contains(EventLog.All, line => line.EndsWith(DialogText.LogShell + ": register set: secret"));
+    }
+
+    [Fact]
+    public void Tab_CompletesTheNamesOfTheRegisters()
+    {
+        ShellRegisters.Set("docs", "x");
+        ShellRegisters.Set("draft", "y");
+        var completion = Completion();
+        Assert.Equal("cd $docs", Tab(completion, "cd $do"));
+        Assert.Equal("copy plot.md $draft", Tab(completion, "copy plot.md $dr"));
+        Assert.Equal("reg -d", Tab(Completion(), "reg -"));
+        Assert.Equal("reg -d all", Tab(Completion(), "reg -d a"));
+        Assert.Equal("reg docs", Tab(Completion(), "reg do"));
     }
 }

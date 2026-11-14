@@ -116,6 +116,7 @@ internal sealed partial class ShellSession
     internal int Run()
     {
         EventLog.Add(DialogText.LogShell + ": started"); // English: the log
+        ShellRegisters.Load();
         if (Terminal)
         {
             Line(Lang.F("{0} {1}: help lists the commands, exit leaves", DialogText.ApplicationName,

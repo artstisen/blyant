@@ -63,6 +63,13 @@ internal sealed class ShellCompletion
         var (before, word) = LastWord(text);
         _before = before;
         _typed = word;
+        // $name: the names of the registers, anywhere on the line
+        if (word.StartsWith('$') && !word.Contains('"'))
+        {
+            _matches = Fitting(ShellRegisters.All.Keys.Select(name => "$" + name), word);
+            return _matches.Count > 0;
+        }
+
         var words = ShellSession.Words(before);
         if (words.Count == 0)
         {
@@ -133,6 +140,10 @@ internal sealed class ShellCompletion
                 return (position == 0 ? Kind.Words : Kind.None, Projects.DisplayNames(Projects.All()));
             case "set":
                 return (position == 0 ? Kind.Words : Kind.None, FileIo.ParseSettings(FileIo.SettingsText()).Keys);
+            case "reg":
+                if (position == 0) return (Kind.Words, new[] { "-d" }.Concat(ShellRegisters.All.Keys));
+                return (position == 1 && after[0] == "-d" ? Kind.Words : Kind.None,
+                    new[] { "all" }.Concat(ShellRegisters.All.Keys));
             case "help":
             case "h":
                 return (position == 0 ? Kind.Words : Kind.None, Commands.Names(CommandContext.Shell));

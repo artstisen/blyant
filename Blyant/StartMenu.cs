@@ -502,6 +502,7 @@ internal static class StartMenu
         StartEditor,
         StartFavorites, // Shown below StartEditor when it is chosen
         StartBlank,
+        StartShell,
         FileType,
         NewLineEndings,
         Indent,
@@ -558,6 +559,7 @@ internal static class StartMenu
         var settings = new List<Setting> { Setting.StartSelect, Setting.StartEditor };
         if (Mode == StartMode.Editor) settings.Add(Setting.StartFavorites);
         settings.Add(Setting.StartBlank);
+        settings.Add(Setting.StartShell);
         settings.Add(Setting.FileType);
         settings.Add(Setting.NewLineEndings);
         settings.Add(Setting.DeleteToTrash);
@@ -635,6 +637,7 @@ internal static class StartMenu
                     _ => Lang.F("System ({0})", TextFile.LabelOf(Environment.NewLine))
                 }),
             Setting.StartFavorites => indent + Check(StartInFavorites) + Lang.T("Open favorites list first"),
+            Setting.StartShell => Check(Shell.StartInShell) + Lang.T("Start in the shell (blyant --shell)"),
             Setting.DeleteToTrash => Check(FileOperations.DeleteToTrash) + Lang.T("Delete to trash (:trash in file browser)"),
             Setting.CommandList => Check(Blyant.CommandList.Enabled) + Lang.T("List commands above command line"),
             Setting.Hints => Check(Blyant.Hints.Enabled) + Lang.T("Show hints on start page"),
@@ -700,7 +703,7 @@ internal static class StartMenu
     {
         return setting switch
         {
-            Setting.StartSelect or Setting.StartEditor or Setting.StartFavorites or Setting.StartBlank
+            Setting.StartSelect or Setting.StartEditor or Setting.StartFavorites or Setting.StartBlank or Setting.StartShell
                 or Setting.FileType or Setting.NewLineEndings or Setting.DeleteToTrash or Setting.CommandList
                 or Setting.Language => 0,
             Setting.AutoSize or Setting.Size or Setting.Monochrome or Setting.ColorScheme or Setting.Logo
@@ -1375,6 +1378,10 @@ internal static class StartMenu
                 return;
             case Setting.StartFavorites:
                 StartInFavorites = !StartInFavorites;
+                break;
+            case Setting.StartShell:
+                // From the next start ("blyant --screen" starts on the full screen once)
+                Shell.StartInShell = !Shell.StartInShell;
                 break;
             case Setting.NewLineEndings:
                 // System, LF, CRLF, and round again

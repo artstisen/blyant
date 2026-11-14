@@ -110,6 +110,7 @@ The settings are on six pages. `j` `k` (and `gg` `G`) select a setting on the pa
 - **Start in file browser**: Go directly to the file browser
   - **Open favorites list first** (shown when starting in the file browser): Start in the [favorites](#favorites) of the file browser. Closing the list shows the file browser. Saved as `startfavorites` in the settings file
 - **Start on a blank page**: Go directly to a [blank page](#start), to write at once. When it is closed, the start page is shown
+- **Start in the shell (blyant --shell)**: Blyant starts as the [shell](Guide-to-shell.md) (Blyant on lines), in its start directory, as `blyant --shell` does (off from the start; saved as `startshell`). A file or directory given when Blyant is started is still opened on the full screen (as Blyant Validator opens a file at a line), and `blyant --screen` starts on the full screen once. In the shell, `screen` comes to the full screen, and `set startshell false` turns the setting off
   - The choice is saved as `startmode` (`select`, `editor` or `blank`) in the settings file
 - **New files and blank pages**: The assumed file type of a new file whose name has no extension, and of a [blank page](#start) (the name it is saved with decides in the end)
   - `Enter` picks it in a list (`1` to `9`, then `A` and `B`, or `j`/`k` and `Enter`): Markdown (`.md`, the default), Typst (`.typ`), plain text (`.txt`), HTML, CSS, JavaScript, JSON, XML, C#, PHP or INI

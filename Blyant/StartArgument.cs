@@ -65,7 +65,15 @@ internal static class StartArgument
     /// </summary>
     /// <returns>True for the shell</returns>
     internal static bool TakeShellOptions(List<string> arguments, string currentDirectory, out bool yes) =>
-        TakeShellOptions(arguments, currentDirectory, out yes, out _);
+        TakeShellOptions(arguments, currentDirectory, out yes, out _, out _);
+
+    /// <summary>
+    /// Blyant starts as the shell: asked for (--shell, --run), or set (startshell) when nothing else is given. A file
+    /// or directory given is opened on the full screen (Blyant Validator opens a file at a line), and --screen starts
+    /// on the full screen once
+    /// </summary>
+    internal static bool StartsAsShell(bool asked, bool screen, IReadOnlyList<string> rest, Func<bool> setting) =>
+        asked || (!screen && rest.Count == 0 && setting());
 
     /// <summary>
     /// "--shell", "--run command" (a command run by the shell, as many as are given: Blyant ends after them) and
@@ -73,8 +81,10 @@ internal static class StartArgument
     /// </summary>
     /// <returns>True for the shell (also with --run)</returns>
     internal static bool TakeShellOptions(List<string> arguments, string currentDirectory, out bool yes,
-        out List<string> run)
+        out List<string> run, out bool screen)
     {
+        // "--screen": the full screen, also when Blyant is set to start as the shell
+        screen = arguments.RemoveAll(argument => argument == "--screen" && IsOption(argument, currentDirectory)) > 0;
         run = new List<string>();
         for (var i = 0; i < arguments.Count - 1; i++)
         {
@@ -157,6 +167,8 @@ internal static class StartArgument
         "                them). Commands can also be read from a file\n" +
         "  --run \"cmd\"   Run a command of the shell, and end (--run can be given more\n" +
         "                than once): blyant --run \"format page.html\"\n" +
+        "  --screen      Start on the full screen, when Blyant is set to start in the\n" +
+        "                shell (Configuration: General)\n" +
         "  --yes         With --shell or --run, for commands that are not typed: answer\n" +
         "                yes to questions (else nothing is done that asks first)\n" +
         "  --help, -h    Show this text\n" +
