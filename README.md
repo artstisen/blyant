@@ -96,6 +96,8 @@ The screenshots are of the real program, made with [tools/screenshots.py](tools/
 | `:view` (or `:split name`): another file read only beside the text | `Ctrl+K`: the latest files, to switch to one |
 | ![Editing Typst](docs/screenshots/typst.svg) | ![The corkboard of a project](docs/screenshots/corkboard.svg) |
 | Editing Typst: markup, math and code in their colors | The corkboard of a project: files, folders and notes as cards |
+| ![The shell: a project with typed commands](docs/screenshots/shell.svg) | ![The shell: a todo list kept with insert and shift!](docs/screenshots/shell-todo.svg) |
+| The shell (`blyant --shell`): `ls`, `peek`, `find` and a register, in numbered lists | The shell: a task added with `insert`, and ticked and moved to _Done_ with `shift!` |
 
 ## Getting started
 1. Download the build for your platform from the [releases page](https://github.com/artstisen/blyant/releases), and unzip it into a directory of your choice.

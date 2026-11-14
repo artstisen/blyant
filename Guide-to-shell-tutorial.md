@@ -62,6 +62,7 @@ blyant ~/novel>
 
 - `cd 1` goes into row 1, `cd chapters` does the same by name, and `cd ../other` or `cd ~/letters` take a path
 - `up` goes to the directory above, `home` (or `cd` alone) to your home directory, and `pwd` shows where you are
+- `ls -a` lists hidden files too (as `.gitignore`), which `ls` leaves out, as the file browser does
 - `Tab` completes what you type: `cd ch` and `Tab` gives `cd chapters/`, and `Tab` again goes on into it. `Up` and `Down` bring back the commands you typed before
 - `cd` on a file goes to the directory it is in, and makes the file the last list, so `open 1` opens it:
 
@@ -186,6 +187,8 @@ Delete lines: Delete line 6 of plot.md?
 There is no undo for `insert` and `change`: `peek` first, to be sure of the line numbers. A file keeps its line endings and its byte order mark, and the files Blyant uses are not changed.
 
 ## Todo list
+![A task added with insert, and ticked and moved under Done with shift!](docs/screenshots/shell-todo.svg)
+
 `todo.md` is a list of tasks under headings:
 
 ```

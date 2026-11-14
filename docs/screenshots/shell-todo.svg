@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="868" height="572" viewBox="0 0 868 572">
+<title>Blyant: the shell, a todo list kept with insert and shift!</title>
+<style>text{font-family:"Cascadia Mono","Cascadia Code",Consolas,"DejaVu Sans Mono",Menlo,monospace;font-size:14px;white-space:pre}</style>
+<rect width="100%" height="100%" rx="10" fill="#0C0C0C"/>
+<rect width="100%" height="34" rx="10" fill="#2B2B2B"/>
+<rect y="24" width="100%" height="10" fill="#2B2B2B"/>
+<circle cx="20" cy="17" r="6" fill="#FF5F57"/>
+<circle cx="40" cy="17" r="6" fill="#FEBC2E"/>
+<circle cx="60" cy="17" r="6" fill="#28C840"/>
+<text x="434.0" y="22" fill="#A0A0A0" text-anchor="middle">Blyant: the shell, a todo list kept with insert and shift!</text>
+<text x="14.0" y="60.8" fill="#CCCCCC" textLength="428.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Blyant v1.5.0: help lists the commands, exit leaves</text>
+<text x="14.0" y="77.8" fill="#CCCCCC" textLength="672.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">blyant C:\Writing\Harbour Lights&gt; insert todo.md +8 - [ ] Ask the harbour master</text>
+<text x="14.0" y="94.8" fill="#CCCCCC" textLength="403.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">C:\Writing\Harbour Lights\todo.md: line 8 put in</text>
+<text x="14.0" y="111.8" fill="#CCCCCC" textLength="554.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">blyant C:\Writing\Harbour Lights&gt; shift! todo.md &quot;tide times&quot; Done</text>
+<text x="14.0" y="128.8" fill="#CCCCCC" textLength="537.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  11  - [x] Check the tide times in chapter 2 against the tables</text>
+<text x="14.0" y="145.8" fill="#CCCCCC" textLength="470.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">C:\Writing\Harbour Lights\todo.md: line moved to line 11</text>
+<text x="14.0" y="162.8" fill="#CCCCCC" textLength="268.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Task boxes ticked or unticked: 1</text>
+<text x="14.0" y="179.8" fill="#CCCCCC" textLength="386.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">blyant C:\Writing\Harbour Lights&gt; peek todo.md</text>
+<text x="14.0" y="196.8" fill="#CCCCCC" textLength="109.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">   1  # To do</text>
+<text x="14.0" y="213.8" fill="#CCCCCC" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">   2</text>
+<text x="14.0" y="230.8" fill="#CCCCCC" textLength="100.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">   3  ## Now</text>
+<text x="14.0" y="247.8" fill="#CCCCCC" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">   4</text>
+<text x="14.0" y="264.8" fill="#CCCCCC" textLength="504.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">   5  - [ ] Give the ferryman a reason to stay on the island</text>
+<text x="14.0" y="281.8" fill="#CCCCCC" textLength="268.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">   6  - [ ] Read chapter 3 aloud</text>
+<text x="14.0" y="298.8" fill="#CCCCCC" textLength="285.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">   7  - [ ] Ask the harbour master</text>
+<text x="14.0" y="315.8" fill="#CCCCCC" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">   8</text>
+<text x="14.0" y="332.8" fill="#CCCCCC" textLength="109.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">   9  ## Done</text>
+<text x="14.0" y="349.8" fill="#CCCCCC" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  10</text>
+<text x="14.0" y="366.8" fill="#CCCCCC" textLength="537.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  11  - [x] Check the tide times in chapter 2 against the tables</text>
+<text x="14.0" y="383.8" fill="#CCCCCC" textLength="394.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  12  - [x] Move the logbook scene to chapter 3</text>
+<rect x="299.6" y="388" width="8.4" height="17" fill="#CCCCCC"/>
+<text x="14.0" y="400.8" fill="#CCCCCC" textLength="277.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">blyant C:\Writing\Harbour Lights&gt;</text>
+</svg>

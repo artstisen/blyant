@@ -143,8 +143,14 @@ FILES = {
 """,
     'todo.md': """# To do
 
+## Now
+
 - [ ] Check the tide times in chapter 2 against the tables
 - [ ] Give the ferryman a reason to stay on the island
+- [ ] Read chapter 3 aloud
+
+## Done
+
 - [x] Move the logbook scene to chapter 3
 """,
     os.path.join('research', 'tides.md'): """# Tides
@@ -564,6 +570,13 @@ SCENES = [
      {'boardname': PROJECT, 'boardpeek': 'true'}, [], [':board<Enter>'], False),
     ('projects', 'Blyant: the projects, with the corkboard of the selected one, its cards and badges', {},
      [], [':projects<Enter>', 'j'], False),
+    # The shell (blyant --shell): commands typed at a prompt, lists numbered, in the colors of the terminal
+    ('shell', 'Blyant: the shell, a project with typed commands and numbered lists', {},
+     ['--shell', PROJECT], ['<wait>', 'ls<Enter>', 'peek 3 +3 4<Enter>', 'find -t keeper<Enter>', 'reg ch .<Enter>'],
+     True),
+    ('shell-todo', 'Blyant: the shell, a todo list kept with insert and shift!', {},
+     ['--shell', PROJECT], ['<wait>', 'insert todo.md +8 - [ ] Ask the harbour master<Enter>',
+                            'shift! todo.md "tide times" Done<Enter>', 'peek todo.md<Enter>'], True),
 ]
 
 
