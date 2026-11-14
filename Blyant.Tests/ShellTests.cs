@@ -28,6 +28,7 @@ public class ShellTests : IDisposable
         FileOperations.TrashOverride = Path.Combine(_data, "trash");
         ShellRegisters.FilePathOverride = Path.Combine(_data, ShellRegisters.FileName);
         ShellRegisters.Clear();
+        ShellRegisters.Clip = null;
         FileFavorites.Parse(string.Empty);
         FileHistory.Parse(string.Empty);
         DirectoryHotlist.Parse(string.Empty);
@@ -47,6 +48,7 @@ public class ShellTests : IDisposable
         FileOperations.TrashOverride = null;
         ShellRegisters.FilePathOverride = null;
         ShellRegisters.Clear();
+        ShellRegisters.Clip = null;
         SystemClipboard.WriteOverride = null;
         Tools.ClearLineMemory();
         FileFavorites.Parse(string.Empty);
@@ -1346,8 +1348,11 @@ public class ShellTests : IDisposable
         var (output, errors, code, _) = Run("clip plot.md\n");
         Assert.Empty(sent);
         Assert.DoesNotContain("\u001b]52", output);
-        Assert.Contains(Lang.T("The clipboard needs a terminal (the output goes to a file or a program): turn on the paste bin"), errors);
-        Assert.Equal(1, code);
+        // (kept for $clip: a script can put it in)
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains(Lang.T("Kept for $clip (the clipboard needs a terminal)"), output);
+        Assert.Equal(In("work", "plot.md"), ShellRegisters.Clip);
+        Assert.Equal(0, code);
 
         SystemClipboard.PasteBin = true;
         SystemClipboard.PasteBinFile = Path.Combine(_data, "bin.txt");
@@ -1919,5 +1924,116 @@ public class ShellTests : IDisposable
         (output, _, _, _) = Run("ls -a\nls -a Draft\n");
         Assert.Contains(".board.txt", output);
         Assert.Contains(In("work", "Draft") + "\n", output);
+    }
+
+    // ---- $clip: the text clip copied last, as a register
+
+    [Fact]
+    public void ClipVariable_PutsInTheLinesCopied_WithInsertAndChange()
+    {
+        File.WriteAllText(In("work", "lines.md"), "one\ntwo\nthree\nfour\n");
+        File.WriteAllText(In("work", "plan.md"), "a\nb\n");
+        var (output, errors, _, _) = Run("clip lines lines.md 2-3\ninsert plan.md bottom $clip\n" +
+                                         "change plan.md +1 $clip\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("two\nthree\nb\ntwo\nthree\n", File.ReadAllText(In("work", "plan.md")));
+        Assert.Contains(Lang.F("{0}: lines {1}-{2} put in", In("work", "plan.md"), 3, 4), output);
+    }
+
+    [Fact]
+    public void ClipVariable_TheTextOfAWholeFile_PutsInItsLines()
+    {
+        File.WriteAllText(In("work", "plan.md"), "a\n");
+        var (_, errors, _, _) = Run("clip text Ending.md\ninsert plan.md top $clip\nclip name plot.md\n" +
+                                    "insert plan.md bottom See $clip\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("End\na\nSee plot.md\n", File.ReadAllText(In("work", "plan.md")));
+    }
+
+    [Fact]
+    public void ClipVariable_AsAPath_AndInClipAgain()
+    {
+        var sent = Clipboard();
+        var (output, errors, _, _) = Run("clip Ending.md\npeek $clip\nclip $clip\n", clipboard: true);
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains("  1  End", output);
+        Assert.Equal(new[] { In("work", "Ending.md"), In("work", "Ending.md") }, sent);
+    }
+
+    [Fact]
+    public void ClipVariable_NothingCopied_OrLinesWhereOneLineGoes_IsTold()
+    {
+        var (_, errors, code, _) = Run("insert plot.md bottom $clip\n");
+        Assert.Contains(Lang.T("Nothing copied yet: clip copies a text for $clip"), errors);
+        Assert.Equal(1, code);
+        Assert.Equal("Plot\n", File.ReadAllText(In("work", "plot.md")));
+
+        File.WriteAllText(In("work", "lines.md"), "one\ntwo\n");
+        (_, errors, _, _) = Run("clip text lines.md\ncd $clip\nreg note $clip\n");
+        Assert.Equal(2, errors.TrimEnd('\n').Split('\n').Length);
+        Assert.Contains(Lang.T("$clip has more than one line: only insert and change take it"), errors);
+        Assert.Null(ShellRegisters.Get("note"));
+        // ($$clip is the text "$clip")
+        (_, errors, _, _) = Run("insert plot.md bottom $$clip\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("Plot\n$clip\n", File.ReadAllText(In("work", "plot.md")));
+    }
+
+    [Fact]
+    public void ClipVariable_IsNoRegister_ToSetOrTakeAway_AndIsNotWritten()
+    {
+        var file = Path.Combine(_data, ShellRegisters.FileName);
+        File.WriteAllText(file, "clip\tfrom the file\n");
+        ShellRegisters.Load();
+        Assert.Null(ShellRegisters.Get("clip"));
+        var (output, errors, _, _) = Run("reg clip something\nreg -d clip\nclip name plot.md\nreg clip\nreg\nreg a one\n");
+        Assert.Equal(2, errors.TrimEnd('\n').Split('\n').Length);
+        Assert.Contains(Lang.T("$clip is the text clip copied last: it is not a register to set or take away"), errors);
+        Assert.Contains("plot.md\n", output);
+        Assert.Contains("  $clip " + Lang.F("{0}  (the last clip)", "plot.md"), output);
+        // (the line of the file is kept as it was, $clip is not written)
+        Assert.Equal("a\tone\nclip\tfrom the file\n", File.ReadAllText(file));
+    }
+
+    [Fact]
+    public void ClipVariable_InTheList_ShowsTheFirstLineAndHowMany()
+    {
+        File.WriteAllText(In("work", "lines.md"), new string('x', 60) + "\ntwo\n");
+        var (output, _, _, _) = Run("clip text lines.md\nreg\n");
+        Assert.Contains("  $clip " + Lang.F("{0}  ({1} lines, the last clip)", new string('x', 40) + "...", 2), output);
+        Assert.DoesNotContain(Lang.T("No registers (reg name text keeps one)"), output);
+        File.WriteAllText(In("work", "lines.md"), "one.\ntwo\n");
+        (output, _, _, _) = Run("clip text lines.md\nreg\nhelp $clip\n");
+        Assert.Contains("  $clip " + Lang.F("{0}  ({1} lines, the last clip)", "one. ...", 2), output);
+        Assert.Contains("clip ... $clip", output);
+    }
+
+    [Fact]
+    public void Tab_AfterADollar_OffersClip_OnceSomethingIsCopied()
+    {
+        Assert.Equal("insert plot.md top $cl", Tab(Completion(), "insert plot.md top $cl"));
+        ShellRegisters.Clip = "x";
+        Assert.Equal("insert plot.md top $clip", Tab(Completion(), "insert plot.md top $cl"));
+    }
+
+    [Theory]
+    [InlineData("a $clip b", true)]
+    [InlineData("a $CLIP", true)]
+    [InlineData("a \"$clip/x\"", true)]
+    [InlineData("a $$clip", false)]
+    [InlineData("a $clips", false)]
+    [InlineData("a clip", false)]
+    public void Mentions_FindsDollarClip_AsExpandDoes(string line, bool expected)
+    {
+        Assert.Equal(expected, ShellRegisters.Mentions(line, ShellRegisters.ClipName));
+    }
+
+    [Theory]
+    [InlineData("a\nb\n", "x\ny", 2, "a\nx\ny\nb\n", 2)]
+    [InlineData("a\nb\n", "x\ny\n", 9, "a\nb\nx\ny\n", 3)]
+    [InlineData("", "x\r\ny", 1, "x\ny\n", 1)]
+    public void WithLine_ATextOfLines_PutsInEachLine(string text, string line, int at, string expected, int number)
+    {
+        Assert.Equal((expected, number), ShellSession.WithLine(text, line, at));
     }
 }

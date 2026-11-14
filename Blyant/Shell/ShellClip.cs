@@ -3,7 +3,8 @@
 /// <summary>
 /// "clip": a path, a name, the text of a file or some of its lines, or the value of a register, to the clipboard
 /// (OSC 52) and/or the paste bin, as set on the clipboard page of Configuration, and to the string memory, so "p" in
-/// the editor puts it in (after "open" or "screen", which run in the same Blyant). What is copied is never logged
+/// the editor puts it in (after "open" or "screen", which run in the same Blyant), and to $clip, which the commands
+/// of the shell take as a register. What is copied is never logged
 /// </summary>
 internal sealed partial class ShellSession
 {
@@ -41,17 +42,21 @@ internal sealed partial class ShellSession
             return;
         }
 
-        // Without a terminal (the output to a file or a program) the paste bin only: the string memory would end
-        // with Blyant
+        // $clip: kept in Blyant, also without a terminal (a script: "clip lines notes.md 4-6", then "insert plan.md
+        // bottom $clip")
+        ShellRegisters.Clip = text;
+        // English: the log (what kind, never the text)
+        EventLog.Add(DialogText.LogShell + ": clip: " + kind);
+        // Without a terminal (the output to a file or a program) the clipboard sequence would end up in the output:
+        // $clip only, and the paste bin if it is turned on
         if (!Clipboard && !SystemClipboard.PasteBin)
         {
-            Error(Lang.T("The clipboard needs a terminal (the output goes to a file or a program): turn on the paste bin"));
+            Line(Lang.T("Kept for $clip (the clipboard needs a terminal)"));
+            Line("  " + shown);
             return;
         }
 
         var (message, isError) = SystemClipboard.CopyWithMemory(text, Clipboard);
-        // English: the log (what kind, never the text)
-        EventLog.Add(DialogText.LogShell + ": clip: " + kind);
         if (isError)
         {
             Error(message);

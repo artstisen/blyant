@@ -40,6 +40,7 @@ internal sealed partial class ShellSession
         ("clip text file|n", Lang.T("Copy the text of a file to the clipboard")),
         ("clip lines file|n lines", Lang.T("Copy lines of a file, as peek takes them")),
         ("clip $name", Lang.T("Copy the value of a register to the clipboard")),
+        ("clip ... $clip", Lang.T("The text copied last, in a command")),
         ("reg [name [text|.|#n]]", Lang.T("Keep a text or a path in a register: $name puts it in a command")),
         ("reg -d name|all", Lang.T("Take a register away, or all of them")),
         ("favorites [list]", Lang.T("List the favorites (fav), or those of another list")),
@@ -74,8 +75,19 @@ internal sealed partial class ShellSession
         ShellRegisters.Refresh();
         // $name: the value of the register (in the paths a value with blanks is one word; the text of insert, change,
         // reg and set, and what find and project take, as it is)
+        // $clip: the text clip copied last. Told when nothing is copied yet, and when it has more than one line where
+        // one line is taken (only insert and change put in lines, and "clip $clip" copies it again)
+        // ("help $clip" tells of it: nothing is put in after help)
+        var help = CommandLine.Name(line).ToLowerInvariant() is "help" or "h";
+        if (!help && ShellRegisters.Mentions(line, ShellRegisters.ClipName) && ClipProblem(line) is { } problem)
+        {
+            NewPage();
+            Error(problem);
+            return true;
+        }
+
         // ("clip $note" alone copies the value as it is: not put in first, where it would be taken as a path)
-        if (!IsClipOfRegister(line))
+        if (!help && !IsClipOfRegister(line))
         {
             line = ShellRegisters.Expand(line, CommandLine.Name(line).ToLowerInvariant() switch
             {
@@ -91,6 +103,16 @@ internal sealed partial class ShellSession
         // (the line of the command typed is the first row of its page)
         NewPage();
         return RunCommand(name, argument);
+    }
+
+    // Why $clip cannot be used in a command line (null: it can)
+    private static string? ClipProblem(string line)
+    {
+        if (ShellRegisters.Clip is not { } clip) return Lang.T("Nothing copied yet: clip copies a text for $clip");
+        if (!clip.Contains('\n') || IsClipOfRegister(line)) return null;
+        return CommandLine.Name(line).ToLowerInvariant() is "insert" or "change"
+            ? null
+            : Lang.T("$clip has more than one line: only insert and change take it");
     }
 
     private bool RunCommand(string name, string argument)
@@ -579,6 +601,7 @@ internal sealed partial class ShellSession
                 "q" or "quit" => "exit",
                 "del" => "delete",
                 "cls" => "clear",
+                "$clip" => "clip",
                 _ => name
             };
             // (all the rows of the command: "help clip" tells each of its forms)

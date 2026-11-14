@@ -92,6 +92,8 @@ internal sealed partial class ShellSession
         var (item, file) = editable;
 
         var (text, number) = WithLine(file.Text, rest, at.Value);
+        // (more than one line: $clip of lines copied)
+        var count = LinesPutIn(rest).Count;
         var result = file.Save(text);
         // (the path, never the text)
         FileExplorer.LogFileOperation("Insert", item.Path + ":" + number, result);
@@ -102,10 +104,13 @@ internal sealed partial class ShellSession
         }
 
         LastList = new List<Item> { new(item.Path, false, (number, 1)) };
-        Line(Lang.F("{0}: line {1} put in", item.Path, number));
+        Line(count == 1
+            ? Lang.F("{0}: line {1} put in", item.Path, number)
+            : Lang.F("{0}: lines {1}-{2} put in", item.Path, number, number + count - 1));
     }
 
-    // "change notes.md +12 A new line", "change notes.md 12-15 One line instead": the lines become the text (one line);
+    // "change notes.md +12 A new line", "change notes.md 12-15 One line instead": the lines become the text (one line;
+    // more with $clip of lines copied);
     // "change notes.md 12-15" without a text: the lines are deleted, after they are shown and the question is
     // answered yes (No selected; from a file only with --yes). As insert: the line endings and byte order mark of the
     // file are kept, only a file in UTF-8 and not one Blyant uses, and the file is then the last list at the place
@@ -270,7 +275,7 @@ internal sealed partial class ShellSession
         var endsWithBreak = text.EndsWith('\n');
         var lines = LinesOfText(text);
         lines.RemoveRange(first - 1, last - first + 1);
-        if (line != null) lines.Insert(first - 1, line.Replace("\r", string.Empty).Replace("\n", " "));
+        if (line != null) lines.InsertRange(first - 1, LinesPutIn(line));
         if (lines.Count == 0) return (string.Empty, 1);
         return (string.Join("\n", lines) + (endsWithBreak ? "\n" : string.Empty), Math.Min(first, lines.Count));
     }
@@ -278,18 +283,29 @@ internal sealed partial class ShellSession
     /// <summary>
     /// A text with a line put in as line "at" (1: before the first; past the end: after the last), and the number it
     /// got. The lines end in "\n"; a text that ends with a line break keeps it, and one that does not gets none after
-    /// a line put in at the end
+    /// a line put in at the end. A text of more than one line ($clip) is put in as its lines, from "at"
     /// </summary>
     internal static (string Text, int Line) WithLine(string text, string line, int at)
     {
         text = TextBuffer.Normalize(text);
-        line = line.Replace("\r", string.Empty).Replace("\n", " ");
-        if (text.Length == 0) return (line + "\n", 1);
+        var added = LinesPutIn(line);
+        if (text.Length == 0) return (string.Join("\n", added) + "\n", 1);
         var endsWithBreak = text.EndsWith('\n');
         var lines = (endsWithBreak ? text[..^1] : text).Split('\n').ToList();
         var index = Math.Clamp(at - 1, 0, lines.Count);
-        lines.Insert(index, line);
+        lines.InsertRange(index, added);
         return (string.Join("\n", lines) + (endsWithBreak ? "\n" : string.Empty), index + 1);
+    }
+
+    /// <summary>
+    /// The lines a text put in a file becomes: one, or the lines of a text of more than one line (its last line break
+    /// does not start another line, so the text of a whole file copied puts in its lines)
+    /// </summary>
+    internal static List<string> LinesPutIn(string text)
+    {
+        text = TextBuffer.Normalize(text);
+        if (text.EndsWith('\n')) text = text[..^1];
+        return text.Split('\n').ToList();
     }
 
     // What follows the first words of a text (words in quotes as one), as typed (one blank after them left out)
@@ -384,15 +400,12 @@ internal sealed partial class ShellSession
         var words = Words(argument);
         if (words.Count == 0)
         {
-            if (ShellRegisters.All.Count == 0)
-            {
-                Line(Lang.T("No registers (reg name text keeps one)"));
-                SkippedRegisters();
-                return;
-            }
-
-            var width = ShellRegisters.All.Keys.Max(key => key.Length) + 1;
+            var clip = ShellRegisters.Clip != null;
+            if (ShellRegisters.All.Count == 0 && !clip) Line(Lang.T("No registers (reg name text keeps one)"));
+            var width = ShellRegisters.All.Keys.Append(clip ? ShellRegisters.ClipName : string.Empty)
+                .Max(key => key.Length) + 1;
             foreach (var (key, value) in ShellRegisters.All) Line("  $" + key.PadRight(width) + value);
+            ClipRow(width);
             SkippedRegisters();
             return;
         }
@@ -402,6 +415,12 @@ internal sealed partial class ShellSession
             if (words.Count != 2)
             {
                 Error(Lang.T("Give the register to take away: reg -d note (or all)"));
+                return;
+            }
+
+            if (ShellRegisters.IsClip(words[1]))
+            {
+                Error(Lang.T("$clip is the text clip copied last: it is not a register to set or take away"));
                 return;
             }
 
@@ -428,9 +447,15 @@ internal sealed partial class ShellSession
         }
 
         var text = AfterWords(argument, 1);
+        if (text.Length > 0 && ShellRegisters.IsClip(name))
+        {
+            Error(Lang.T("$clip is the text clip copied last: it is not a register to set or take away"));
+            return;
+        }
+
         if (text.Length == 0)
         {
-            // The value alone on its line
+            // The value alone on its line ("reg clip": the text clip copied last, all its lines)
             if (ShellRegisters.Get(name) is { } value) Line(value);
             else Error(Lang.F("No register named {0} (reg lists them)", name));
             return;
@@ -467,6 +492,22 @@ internal sealed partial class ShellSession
         // English: the log (the name only, never the value)
         EventLog.Add(DialogText.LogShell + ": register set: " + name.ToLowerInvariant());
         SaveRegisters("  $" + name.ToLowerInvariant() + " = " + ShellRegisters.Get(name));
+    }
+
+    // $clip in the list of the registers: the first line of the text clip copied last (cut, so the row fits the
+    // screen), and how many lines it has
+    private void ClipRow(int width)
+    {
+        if (ShellRegisters.Clip is not { } clip) return;
+        var lines = LinesPutIn(clip);
+        var first = Printable(lines[0]).Replace('\t', ' ');
+        var shown = Cut(first, 40);
+        // ("..." where the line is cut; " ..." after a whole first line, when more lines follow)
+        if (shown.Length < first.Length) shown += "...";
+        else if (lines.Count > 1) shown += " ...";
+        Line("  $" + ShellRegisters.ClipName.PadRight(width) + (lines.Count == 1
+            ? Lang.F("{0}  (the last clip)", shown)
+            : Lang.F("{0}  ({1} lines, the last clip)", shown, lines.Count)));
     }
 
     // Lines of the file of the registers that are not registers (edited by hand): told, so a register mistyped there is

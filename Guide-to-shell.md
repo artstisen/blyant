@@ -96,6 +96,7 @@ To have every output whole (with a screen reader, say), turn the pages off: `set
 | `clip text file\|n` | Copy the text of a file to the clipboard |
 | `clip lines file\|n lines` | Copy lines of a file to the clipboard, given as for `peek` (`40`, `100-120`, `+100 30`) |
 | `clip $name` | Copy the value of a register to the clipboard |
+| `$clip` | The text `clip` copied last, put in a command as a register is (`insert plan.md bottom $clip`: its lines) |
 | `favorites [list]` (`fav`) | List the favorites of the file browser, with their folders as headings; `fav work` uses the list _work_ from now on, as `:list work` does |
 | `history` (`hist`) | List the files opened, the newest first, with when |
 | `recent` | List the latest files (the first nine of the history) |
@@ -193,7 +194,8 @@ insert todo.md bottom $note
 - A name starts with a letter, and has letters, digits and `_` (`docs`, `draft_2`); letter case is alike
 - `$name` is put in only for a register that is there: anything else stays as typed, so `insert prices.md bottom Ink costs $5` keeps its `$5`. `$$` is a `$`
 - A path with a blank in it is put in quotes where a path is taken (`copy plot.md $docs` with _my docs_), and the text of `insert`, `change`, `reg` and `set` gets the value as it is
-- `Tab` completes the names of the registers after a `$`, and after `reg`
+- `$clip` is the text `clip` copied last (see [Clipboard](#clipboard)): it is put in as a register is, but it is not one to set, and it is not kept in the file
+- `Tab` completes the names of the registers after a `$` (and `$clip`, once something is copied), and after `reg`
 - The registers are kept in the data directory (`registers.txt`), so they are there the next time. The file can be edited in another program: a line is the name, a tab, and the value. A file changed since the shell read it is read again before the next command, and `reg` tells of lines that are not registers (no tab, or a name a register cannot have): they are kept in the file, at its end, so you can put them right. They are the shell's own: the registers of the editor are not these. `reset` does not take them away (they are not settings), and the log has their names, never their values
 
 ## Clipboard
@@ -209,10 +211,20 @@ clip lines notes.md +40 10  10 lines from line 40 (as peek takes them: 40, 100-1
 clip $note                  the value of a register, as it is
 ```
 
+What `clip` copied last is `$clip`, which puts it in a command, as a register does:
+
+```
+clip lines notes.md 4-6     three lines
+insert plan.md bottom $clip they go at the end of plan.md
+clip name 3
+insert todo.md top Read $clip
+```
+
 - It goes where the [clipboard settings](Guide-to-editor.md#system-clipboard-and-paste-bin) of the editor send a yank: to the clipboard of the system through the terminal (OSC 52, also over SSH) and/or to the paste bin file. Text too long for the terminal goes only to the paste bin, if it is on. What was copied is told, and the path, or how much
 - It also goes to the string memory of the editor: after `open` (or `screen`), `p` in the editor puts it in, and `:reglist` lists it. That works also where the terminal has no clipboard (the console of Linux, the Terminal of macOS), or with the clipboard turned off
 - `text` and `lines` take text files only. Lines copied are joined by line breaks, without one after the last
-- From a file, a pipe or with `--run` and the output going to a file or a program, the clipboard sequence would end up in that output: then only the paste bin is used, and without it `clip` is told it needs a terminal
+- `$clip` is kept in Blyant, not taken from the clipboard of the system: text copied in another program is pasted on the line with the keys of the terminal (`Ctrl+Shift+V`). It is there until Blyant ends, and the next `clip` replaces it. Before the first `clip`, a command with `$clip` is told that nothing is copied yet. Lines copied are put in as lines by `insert` and `change` (`change plan.md 3-5 $clip`); other commands take one line, and are told when `$clip` has more. `reg` lists it after the registers, with its first line and how many lines it has, and `reg clip` shows it all. `$clip` is not a register: `reg clip text` and `reg -d clip` are refused, and a line `clip` in `registers.txt` is kept there as a line that is not a register
+- From a file, a pipe or with `--run` and the output going to a file or a program, the clipboard sequence would end up in that output: then only the paste bin is used, if it is on, and `$clip`, so a script can copy lines and put them in another file
 - The log tells only that something was copied, and what kind (`clip: path`), never the text
 
 ## Editing a file

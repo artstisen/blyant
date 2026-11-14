@@ -24,7 +24,7 @@ blyant --shell ~/novel
 ```
 
 ```
-Blyant v1.5.0: help lists the commands, exit leaves
+Blyant v1.5.1: help lists the commands, exit leaves
 blyant ~/novel>
 ```
 
@@ -307,6 +307,21 @@ Copied to the clipboard and the string memory
 - `clip .` copies the path of the directory you are in, `clip text plot.md` the whole text of a file, `clip lines plot.md +3 2` two lines from line 3, and `clip $note` the value of a register
 - It goes where the clipboard settings of the editor send a yank: the clipboard of your system (through the terminal), and/or the paste bin file
 - It also goes to the string memory of the editor: after `open`, `p` in the editor puts it in. That works also in a terminal without a clipboard
+
+What you copied last is `$clip`, which puts it in a command, as a register does. Lines copied go in as lines:
+
+```
+blyant ~/novel> clip lines plot.md +3 2
+Copied to the clipboard and the string memory
+  Lines 3-4 of /home/anna/novel/plot.md
+blyant ~/novel> new ideas
+Made: /home/anna/novel/ideas.md
+blyant ~/novel> insert ideas.md bottom $clip
+/home/anna/novel/ideas.md: lines 1-2 put in
+```
+
+- `$clip` is kept in Blyant until it ends: it is not read from the clipboard of your system. Text copied in another program is pasted on the line with the keys of your terminal
+- `reg` lists it after the registers, and `reg clip` shows all of it
 
 ## Favorites, history and hotlist
 The lists of the full screen are the lists of the shell:

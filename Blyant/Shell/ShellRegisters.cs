@@ -27,6 +27,22 @@ internal static partial class ShellRegisters
     /// </summary>
     internal static IReadOnlyDictionary<string, string> All => Values;
 
+    /// <summary>
+    /// The name of $clip: the text the shell's "clip" copied last. It is not a register a user can set, and is kept in
+    /// Blyant only (not in the file, and not read from the clipboard of the system)
+    /// </summary>
+    internal const string ClipName = "clip";
+
+    /// <summary>
+    /// $clip: the text "clip" copied last in this Blyant (null: nothing yet). It may have more than one line
+    /// </summary>
+    internal static string? Clip { get; set; }
+
+    /// <summary>
+    /// True for the name of $clip (letter case alike)
+    /// </summary>
+    internal static bool IsClip(string name) => name.Equals(ClipName, StringComparison.OrdinalIgnoreCase);
+
     [GeneratedRegex("^[A-Za-z][A-Za-z0-9_]*$")]
     private static partial Regex NamePattern();
 
@@ -100,7 +116,8 @@ internal static partial class ShellRegisters
         {
             if (line.Trim().Length == 0) continue;
             var tab = line.IndexOf('\t');
-            if (tab <= 0 || !IsName(line[..tab]))
+            // (a line "clip" is kept as it is: $clip is the text clip copied)
+            if (tab <= 0 || !IsName(line[..tab]) || IsClip(line[..tab]))
             {
                 Kept.Add(line);
                 continue;
@@ -140,9 +157,10 @@ internal static partial class ShellRegisters
     }
 
     /// <summary>
-    /// The value of a register, or null
+    /// The value of a register ("clip": the text clip copied last), or null
     /// </summary>
-    internal static string? Get(string name) => Values.TryGetValue(name.ToLowerInvariant(), out var value) ? value : null;
+    internal static string? Get(string name) =>
+        IsClip(name) ? Clip : Values.TryGetValue(name.ToLowerInvariant(), out var value) ? value : null;
 
     /// <summary>
     /// Give a register a value (one line: a line break or a tab becomes a blank)
@@ -205,6 +223,30 @@ internal static partial class ShellRegisters
         }
 
         return result.ToString();
+    }
+
+    /// <summary>
+    /// True if a command line has $name in it (as Expand finds it: not "$$name", and not "$names")
+    /// </summary>
+    internal static bool Mentions(string line, string name)
+    {
+        for (var i = 0; i + 1 < line.Length; i++)
+        {
+            if (line[i] != '$') continue;
+            if (line[i + 1] == '$')
+            {
+                i++;
+                continue;
+            }
+
+            if (!char.IsAsciiLetter(line[i + 1])) continue;
+            var end = i + 1;
+            while (end < line.Length && (char.IsAsciiLetterOrDigit(line[end]) || line[end] == '_')) end++;
+            if (line[(i + 1)..end].Equals(name, StringComparison.OrdinalIgnoreCase)) return true;
+            i = end - 1;
+        }
+
+        return false;
     }
 
     // $name for the value of the register (a name not of a register: as typed), and $$ for $

@@ -74,7 +74,9 @@ internal sealed class ShellCompletion
         {
             // (the file edited by hand since the last command: its names)
             ShellRegisters.Refresh();
-            _matches = Fitting(ShellRegisters.All.Keys.Select(name => "$" + name), word);
+            // ($clip when clip has copied a text)
+            var names = ShellRegisters.All.Keys.Concat(ShellRegisters.Clip != null ? [ShellRegisters.ClipName] : []);
+            _matches = Fitting(names.Order(StringComparer.Ordinal).Select(name => "$" + name), word);
             return _matches.Count > 0;
         }
 
