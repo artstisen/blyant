@@ -1,5 +1,5 @@
 # Guide to the shell
-The shell is Blyant on lines: you type a command at a prompt, and Blyant writes its answer as lines of text, with no colors and no cursor moved about. It works in any terminal, with a screen reader, and from a script. Files are edited in the editor of the full screen, and closing the editor brings you back to the prompt.
+The shell is Blyant on lines: you type a command at a prompt, and Blyant writes its answer as plain lines of text, in the colors of your terminal. It works in any terminal, with a screen reader, and from a script. Files are edited in the editor of the full screen, and closing the editor brings you back to the prompt.
 
 Start it with `--shell`, and leave it with `exit`:
 
@@ -10,22 +10,24 @@ blyant --shell ~/projects      The shell, in that directory
 
 (On Windows `Blyant.exe --shell`, and `dotnet Blyant.dll --shell` for the portable version.)
 
-### Starting in the shell
+New to the shell? The [shell tutorial](Guide-to-shell-tutorial.md) goes through a day of work with it, task by task: getting around, looking into files, copying and moving, adding lines, a todo list, registers and the clipboard. This guide tells every command.
+
+## Starting in the shell
 To have Blyant always start as the shell, turn on _Start in the shell_ on the General page of Configuration (or `set startshell true` in the shell). Then `blyant` alone starts as `blyant --shell` does. A file or directory given (`blyant notes.md`, `blyant +12 page.html`) is still opened on the full screen, so programs that open a file in Blyant (as Blyant Validator does) get the editor. `blyant --screen` starts on the full screen once, and `screen` in the shell comes there too.
 
-### Start directory
+## Start directory
 Without a directory given, the shell starts in the directory you are in, unless the setting `shelldir` tells another:
 
 - `set shelldir ~/projects` (or a full path): the shell starts there. `~` is your home directory
 - `set shelldir last`: the shell starts where you left it the last time (kept as `shelllastdir`)
 - `set shelldir .`: in the directory you are in, as without the setting
 
-A directory given (`blyant --shell ~/notes`) is used instead, and so is the directory of the page you leave with `:shell` (the start page has none: then `shelldir`). Commands given with `--run` run in the directory you are in, so scripts do what they say wherever `shelldir` points. A start directory that is not there (moved, on a drive taken out) is told, and the shell starts in the directory you are in. The settings are in the settings file, and not on the pages of Configuration.
+A directory given (`blyant --shell ~/notes`) is used instead, and so is the directory of the page you leave with `:shell` (the start page, the Jump menu and the corkboard have none: then `shelldir`). Commands given with `--run` run in the directory you are in, so scripts do what they say wherever `shelldir` points. A start directory that is not there (moved, on a drive taken out) is told, and the shell starts in the directory you are in. The settings are in the settings file, and not on the pages of Configuration.
 
 ## Between the full screen and the shell
 You can go from one to the other while Blyant runs:
 
-- `:shell` on any command line of the full screen goes on as the shell, in the directory of the page you leave: from the file browser (and its lists) the directory of the pane, from the editor the directory of the file (which is then the last list: `open 1` opens it again), from the list of projects the directory of the selected project, and else the directory Blyant was started in
+- `:shell` on any command line of the full screen goes on as the shell, in the directory of the page you leave: from the file browser (and its lists) the directory of the pane, from the editor the directory of the file (which is then the last list: `open 1` opens it again), from the list of projects the directory of the selected project, and else (the start page, the Jump menu, the corkboard) the start directory of `shelldir`, or the directory Blyant was started in
 - `screen` in the shell goes on on the full screen, in the file browser of the directory you are in. Closing the file browser shows the start page
 
 Leaving with `:shell` is as leaving for a jump of the Jump menu: the editor asks about changes that are not saved first (save, discard, or stay), and on a page opened on top of the editor (the Jump menu, the corkboard, the list of projects) `:shell` is not done while the editor has such changes. `exit` in the shell leaves Blyant, wherever it was started.
@@ -131,7 +133,7 @@ The shell works on files with the rules of the file browser:
 - After `new`, `mkdir`, `rename`, `copy` and `move`, the new place is the last list: `open 1` opens it
 
 ## Text and settings
-`format` and `trim` change a file without opening it: they are the commands `:format` and `:trim` of the editor, run on the text of the file, so they do just what they do there (see the [guide to the editor](Guide-to-editor.md#other-commands)). The file is saved only when its text changed, with its line endings and its byte order mark as they were, and it is told: `page.html: Formatted`, `poem.md: Lines trimmed: 3`. A file that cannot be formatted safely is left as it is, and why is told.
+`format` and `trim` change a file without opening it: they are the commands `:format` and `:trim` of the editor, run on the text of the file, so they do just what they do there (see the [guide to the editor](Guide-to-editor.md#other-commands)). The file is saved only when its text changed, with its line endings and its byte order mark as they were, and it is told with the path of the file: `/home/anna/site/page.html: Formatted`, `/home/anna/poems/poem.md: Lines trimmed: 3`, or `Already formatted` when nothing changed. A file that cannot be formatted safely is left as it is, and why is told.
 
 - Only files in UTF-8 are changed: a file in another encoding (Windows-1252, say) is left as it is. Open it in the editor, which saves it in UTF-8
 - A file with more than one kind of line endings (some lines CRLF, some LF) is left as it is too: saved, every line would get one kind. The editor tells it, and saves it with one. This goes for `insert`, `change` and `shift` too, and so does leaving the files Blyant uses

@@ -283,7 +283,7 @@ internal static class StartMenu
 
                 break;
             case "shell":
-                // Go on as the shell, in the directory Blyant was started in
+                // Go on as the shell, in its start directory (shelldir), or the one Blyant was started in
                 Blyant.Jump.ToShell();
                 break;
             default:

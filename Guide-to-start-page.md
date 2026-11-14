@@ -97,7 +97,7 @@ The files are in the folder of the project, so they go with it when it is copied
 - `:help` (or `?`) The keys of the list
 - `:q` (`:quit`, `:close`) Close the list, as `Esc`
 - `:exit` (or `:qa`) Exit Blyant (asks first; from the editor, about changes that are not saved)
-- `:shell` Go on in the [shell](Guide-to-shell.md#between-the-full-screen-and-the-shell), in the directory of the pane (`screen` there comes back)
+- `:shell` Go on in the [shell](Guide-to-shell.md#between-the-full-screen-and-the-shell), in the directory of the selected project (`screen` there comes to the file browser of that directory)
 
 The list of projects can also be opened from the file browser (`E` or `:projects`, `:pro`: the project picked is shown in the pane with the focus) and from the editor (`:projects`, `:pro`: the project picked is shown in the file browser, as a jump, after asking about changes that are not saved).
 
@@ -110,8 +110,8 @@ The settings are on six pages. `j` `k` (and `gg` `G`) select a setting on the pa
 - **Start in file browser**: Go directly to the file browser
   - **Open favorites list first** (shown when starting in the file browser): Start in the [favorites](#favorites) of the file browser. Closing the list shows the file browser. Saved as `startfavorites` in the settings file
 - **Start on a blank page**: Go directly to a [blank page](#start), to write at once. When it is closed, the start page is shown
+  - The choice of these three is saved as `startmode` (`select`, `editor` or `blank`) in the settings file
 - **Start in the shell (blyant --shell)**: Blyant starts as the [shell](Guide-to-shell.md) (Blyant on lines), in its start directory, as `blyant --shell` does (off from the start; saved as `startshell`). A file or directory given when Blyant is started is still opened on the full screen (as Blyant Validator opens a file at a line), and `blyant --screen` starts on the full screen once. In the shell, `screen` comes to the full screen, and `set startshell false` turns the setting off
-  - The choice is saved as `startmode` (`select`, `editor` or `blank`) in the settings file
 - **New files and blank pages**: The assumed file type of a new file whose name has no extension, and of a [blank page](#start) (the name it is saved with decides in the end)
   - `Enter` picks it in a list (`1` to `9`, then `A` and `B`, or `j`/`k` and `Enter`): Markdown (`.md`, the default), Typst (`.typ`), plain text (`.txt`), HTML, CSS, JavaScript, JSON, XML, C#, PHP or INI
   - A blank page is colored as that kind, and saved with its extension when the name has none

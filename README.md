@@ -41,6 +41,7 @@ See the [guide to the corkboard](Guide-to-corkboard.md).
 - Split view: the same text in two panes side by side, remembered when you open it again
 - Zen mode (`:zen`): only the mode and the file name above the text, and the line and column below it
 - Syntax highlighting for Markdown, Typst, HTML, PHP, CSS, JavaScript, JSON, XML, C#, C and C++, Rust, Python, PowerShell, shell scripts, Windows batch files, settings files (INI) and diffs ([which files](Guide-to-editor.md#colors))
+- `:format` formats HTML, CSS and XML files as [Blyant Validator](Guide-to-installation.md#blyant-validator) does ([how](Guide-to-editor.md#other-commands))
 - Spell checking and word completion
 - Typst: colors, completions (`/h1`, `/figure`, `/math` ...) and a [guide to writing with Typst and its CLI](Guide-to-typst.md)
 - Search and replace with regular expressions, file comparison (diff), snippets, and a macro recorder whose macros can be edited as text
@@ -65,7 +66,7 @@ See the [guide to the corkboard](Guide-to-corkboard.md).
 - Color schemes and logos, which you can edit and make your own; `:colorscheme name` changes the scheme from any command line
 - English built in, and ten more languages as files that can be changed or added to
 - Runs on Windows, Linux (also Raspberry Pi) and macOS, as a single file with nothing else to install
-- A shell for lines of text (`blyant --shell`): your files and lists with typed commands and numbered lists, for screen readers and scripts, and the full editor a command away
+- A shell for lines of text (`blyant --shell`): your files and lists with typed commands and numbered lists, for screen readers and scripts, and the full editor a command away ([tutorial](Guide-to-shell-tutorial.md))
 
 ## Blyant Validator
 **[Blyant Validator](https://github.com/artstisen/blyant-validator)** is a companion tool, which also works on its own: validate HTML, CSS, XML, Markdown and Typst, and format HTML, CSS and XML, side by side with your editor, in any terminal. It checks a file again each time it is saved, and makes a Typst document into a PDF with `:typst`.
@@ -120,7 +121,7 @@ Blyant is operated in the style of Vim: the editor has Normal, Insert and Visual
 - [Corkboard](Guide-to-corkboard.md)
 - [Editor](Guide-to-editor.md)
 - [Writing with Typst](Guide-to-typst.md)
-- [Shell](Guide-to-shell.md)
+- [Shell](Guide-to-shell.md), and a [shell tutorial](Guide-to-shell-tutorial.md)
 - [Changes](CHANGELOG.md)
 
 The guides are also put together as a **user manual**, in two forms:
