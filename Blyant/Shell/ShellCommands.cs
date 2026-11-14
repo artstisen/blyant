@@ -31,7 +31,7 @@ internal sealed partial class ShellSession
         ("change file|n +line|from-to [text]", Lang.T("Change lines of a file into a text, or delete them")),
         ("shift file|n lines place", Lang.T("Move lines in a file: under a heading, +line, top or bottom")),
         ("shift! file|n lines place", Lang.T("Move lines, and tick or untick their task boxes")),
-        ("lines file lines > file place", Lang.T("Copy lines to another file (cut: move them)")),
+        ("lines file|n lines > file|n place", Lang.T("Copy lines to another file (cut last: move them)")),
         ("format file|n", Lang.T("Format an HTML, CSS or XML file, as :format does")),
         ("trim file|n", Lang.T("Remove blank space at line ends, as :trim does (trim!)")),
         ("set [name [value]]", Lang.T("Show the settings, or change one")),
@@ -85,39 +85,43 @@ internal sealed partial class ShellSession
         // $clip: the text clip copied last. Told when nothing is copied yet, and when it has more than one line where
         // one line is taken (only insert and change put in lines, and "clip $clip" copies it again)
         // ("help $clip" tells of it: nothing is put in after help)
-        var help = CommandLine.Name(line).ToLowerInvariant() is "help" or "h";
-        if (!help && ShellRegisters.Mentions(line, ShellRegisters.ClipName) && ClipProblem(line) is { } problem)
+        var name = CommandLine.Name(line).ToLowerInvariant();
+        var argument = CommandLine.Argument(line);
+        var help = name is "help" or "h";
+        if (!help && ShellRegisters.Mentions(line, ShellRegisters.ClipName) && ClipProblem(name, line) is { } problem)
         {
             NewPage();
             Error(problem);
             return true;
         }
 
-        // ("clip $note" alone copies the value as it is: not put in first, where it would be taken as a path)
+        // Put in after the line is split into the command and what follows it, so a value is not trimmed: the blank
+        // lines and blanks at the end of $clip stay. ("clip $note" alone copies the value as it is: not put in first,
+        // where it would be taken as a path)
         if (!help && !IsClipOfRegister(line))
         {
-            line = ShellRegisters.Expand(line, CommandLine.Name(line).ToLowerInvariant() switch
+            argument = ShellRegisters.Expand(argument, name switch
             {
-                "insert" or "change" => 3,
-                "reg" or "set" => 2,
-                "find" or "project" => 1,
+                "insert" or "change" => 2,
+                "reg" or "set" => 1,
+                "find" or "project" => 0,
                 _ => int.MaxValue
             });
         }
 
-        var name = CommandLine.Name(line).ToLowerInvariant();
-        var argument = CommandLine.Argument(line);
         // (the line of the command typed is the first row of its page)
         NewPage();
         return RunCommand(name, argument);
     }
 
     // Why $clip cannot be used in a command line (null: it can)
-    private static string? ClipProblem(string line)
+    private static string? ClipProblem(string name, string line)
     {
         if (ShellRegisters.Clip is not { } clip) return Lang.T("Nothing copied yet: clip copies a text for $clip");
+        // (change without a text deletes the lines: an empty $clip is not taken for that)
+        if (clip.Length == 0 && name == "change") return Lang.T("$clip is empty: change would delete the lines");
         if (!clip.Contains('\n') || IsClipOfRegister(line)) return null;
-        return CommandLine.Name(line).ToLowerInvariant() is "insert" or "change"
+        return name is "insert" or "change"
             ? null
             : Lang.T("$clip has more than one line: only insert and change take it");
     }
@@ -423,20 +427,17 @@ internal sealed partial class ShellSession
 
     #region Lists
 
-    private void ListFavorites(string argument)
+    // "fav", "fav work": the favorites of the open list, or of another. "fav -l", "fav -l work": the full paths.
+    // "options": false for "fav use -l" (a list named "-l")
+    private void ListFavorites(string argument, bool options = true)
     {
-        // ("fav -l", "fav -l work": the full paths)
-        var (full, rest) = LongList(argument);
-        argument = rest;
+        var full = false;
+        if (options) (full, argument) = LongList(argument);
         FileFavorites.Load();
         if (argument.Trim().Length > 0)
         {
             // Another list: used from now on, as ":list name" in the file browser
-            if (FileFavorites.FindList(argument.Trim()) is not { } list)
-            {
-                Error(Lang.F("No list of favorites named {0}", argument.Trim()));
-                return;
-            }
+            if (FavoriteList(argument) is not { } list) return;
 
             FileFavorites.UseList(list);
             // (kept, as ":list" keeps it: the full screen shows the same list)
@@ -482,7 +483,7 @@ internal sealed partial class ShellSession
     // "hist", "recent": the files by name and when they were opened ("-l": the full paths)
     private void ListHistory(int most, string argument)
     {
-        var (full, _) = LongList(argument);
+        if (OnlyLong(argument) is not { } full) return;
         FileHistory.Load();
         var entries = FileHistory.Items.Take(most).ToList();
         var names = Names(entries.Select(entry => (entry.Path, false)).ToList(), full);
@@ -505,7 +506,7 @@ internal sealed partial class ShellSession
     // "book": the bookmarks, by their name and the name of the file or directory ("-l": its full path)
     private void ListBookmarks(string argument)
     {
-        var (full, _) = LongList(argument);
+        if (OnlyLong(argument) is not { } full) return;
         Bookmarks.Load();
         var places = Bookmarks.Places.ToList();
         var names = Names(places.Select(entry =>
@@ -600,20 +601,26 @@ internal sealed partial class ShellSession
             ("screen", Lang.T("Go on on the full screen, in the file browser here")),
             ("exit", Lang.T("Leave Blyant (also quit, q)"))
         };
-        // (a text longer than the window, in some languages: broken between words, under its column; 79 columns
-        // when the window is not known)
-        var widest = rows.Max(row => row.Item1.Length) + 2;
-        var room = (width > 0 ? width : 79) - widest - 2;
-        foreach (var (command, text) in rows)
-        {
-            var parts = room >= 20 ? ChoiceBox.Wrap(text, room) : [text];
-            Line("  " + command.PadRight(widest) + parts[0]);
-            foreach (var part in parts.Skip(1)) Line(new string(' ', widest + 2) + part);
-        }
+        CommandRows(rows, "  ");
 
         Line();
         Line(Lang.T("about license shows the license."));
         Line(Lang.T("The shell tutorial in the user manual shows more."));
+    }
+
+    // Rows of a command and what it does: the texts in a column, a text wider than the window (79 columns when it is
+    // not known, as to a file) broken between words under its column
+    private void CommandRows(IReadOnlyList<(string Command, string Text)> rows, string indent)
+    {
+        var width = Terminal && WindowSize?.Invoke() is { Width: > 20 } size ? size.Width - 1 : 79;
+        var widest = rows.Max(row => row.Command.Length) + 2;
+        var room = width - widest - indent.Length;
+        foreach (var (command, text) in rows)
+        {
+            var parts = room >= 20 ? ChoiceBox.Wrap(text, room) : [text];
+            Line(indent + command.PadRight(widest) + parts[0]);
+            foreach (var part in parts.Skip(1)) Line(new string(' ', indent.Length + widest) + part);
+        }
     }
 
     private void Help(string argument)
@@ -646,13 +653,11 @@ internal sealed partial class ShellSession
                 return;
             }
 
-            var widest = found.Max(r => r.Command.Length) + 2;
-            foreach (var (command, text) in found) Line(command.PadRight(widest) + text);
+            CommandRows(found, string.Empty);
             return;
         }
 
-        var width = rows.Max(r => r.Command.Length) + 2;
-        foreach (var (command, text) in rows) Line("  " + command.PadRight(width) + text);
+        CommandRows(rows, "  ");
         Line();
         Line(Lang.T("A number is a row of the last list shown: open 3, cd 2"));
     }

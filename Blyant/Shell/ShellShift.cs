@@ -3,8 +3,9 @@
 /// <summary>
 /// "shift": lines of a file moved to another place in it (under a heading, before a line, to the top or the bottom),
 /// without opening it, as items of a list are moved from "Todo" to "Done". "shift!" also ticks the task boxes of the
-/// lines moved ("- [ ]" to "- [x]"), or unticks those that are ticked. The working parts (the lines, the headings, the
-/// move) do not touch the console, so they can be tested
+/// lines moved ("- [ ]" to "- [x]"), or unticks those that are ticked. The lines a command takes (PickedLines) and
+/// the place in a file (PlaceIn) serve "lines" too, and tell what is wrong; the rest (the line sets, the headings, the
+/// move) does not touch the console, so it can be tested
 /// </summary>
 internal sealed partial class ShellSession
 {
@@ -39,8 +40,7 @@ internal sealed partial class ShellSession
 
         var result = file.Save(text);
         // (the path and the lines, never the text)
-        FileExplorer.LogFileOperation("Shift lines", item.Path + ":" + string.Join(',', moved) + " to " + at,
-            result);
+        FileExplorer.LogFileOperation("Shift lines", item.Path + ":" + Numbers(moved) + " to " + at, result);
         if (result != DialogText.Success)
         {
             Error(result);

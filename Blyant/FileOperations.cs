@@ -70,6 +70,11 @@ internal static class FileOperations
     /// </summary>
     internal static bool NamesIgnoreCase => OperatingSystem.IsWindows() || OperatingSystem.IsMacOS();
 
+    /// <summary>
+    /// Names of files compared as the file system compares them: letter case alike on Windows and macOS, not on Linux
+    /// </summary>
+    internal static StringComparer NameComparer => NamesIgnoreCase ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
+
     private static StringComparison PathComparison =>
         NamesIgnoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
 

@@ -252,14 +252,21 @@ internal sealed class ShellCompletion
             if (!System.IO.Directory.Exists(directory)) return new List<string>();
             var info = new DirectoryInfo(directory);
             var recent = start.Length == 0 && Shell.RecentFirst ? RecentIn(directory, directoriesOnly) : null;
-            var names = info.EnumerateDirectories().Select(d => (Name: d.Name, IsDirectory: true))
+            var entries = info.EnumerateDirectories().Select(d => (Name: d.Name, IsDirectory: true))
                 .Concat(directoriesOnly
                     ? Enumerable.Empty<(string Name, bool IsDirectory)>()
                     : info.EnumerateFiles().Select(f => (Name: f.Name, IsDirectory: false)))
-                .Where(entry => (pattern
-                                    ? System.IO.Enumeration.FileSystemName.MatchesSimpleExpression(start, entry.Name)
-                                    : entry.Name.StartsWith(start, StringComparison.OrdinalIgnoreCase)) &&
-                                (start.StartsWith('.') || !entry.Name.StartsWith('.')))
+                .Where(entry => start.StartsWith('.') || !entry.Name.StartsWith('.')).ToList();
+            var fitting = entries.Where(entry => pattern
+                ? System.IO.Enumeration.FileSystemName.MatchesSimpleExpression(start, entry.Name)
+                : entry.Name.StartsWith(start, StringComparison.OrdinalIgnoreCase)).ToList();
+            // (a pattern that fits nothing is a name typed: on Linux and macOS "notes?.md" can be one)
+            if (pattern && fitting.Count == 0)
+            {
+                fitting = entries.Where(entry => entry.Name.StartsWith(start, StringComparison.OrdinalIgnoreCase)).ToList();
+            }
+
+            var names = fitting
                 .OrderBy(entry => recent == null ? 0 : Rank(recent, entry.Name))
                 .ThenBy(entry => entry.Name, StringComparer.OrdinalIgnoreCase)
                 .Select(entry => folder + entry.Name + (entry.IsDirectory ? "/" : string.Empty))
@@ -283,7 +290,7 @@ internal sealed class ShellCompletion
     // Where a name is in the files opened last (0: the last opened), after them all when it is not one of them
     private static int Rank(List<string> recent, string name)
     {
-        var index = recent.FindIndex(r => string.Equals(r, name, StringComparison.OrdinalIgnoreCase));
+        var index = recent.FindIndex(r => FileOperations.NameComparer.Equals(r, name));
         return index < 0 ? int.MaxValue : index;
     }
 
@@ -311,7 +318,8 @@ internal sealed class ShellCompletion
                     : null;
             }
 
-            if (name != null && !names.Contains(name, StringComparer.OrdinalIgnoreCase)) names.Add(name);
+            // (letter case as the file system has it: "Notes.md" is not "notes.md" on Linux)
+            if (name != null && !names.Contains(name, FileOperations.NameComparer)) names.Add(name);
         }
 
         return names;

@@ -36,7 +36,7 @@ internal sealed partial class ShellSession
         place = place.Trim('"').Trim();
         if (EditableFile(words[0]) is not { } source) return;
         if (EditableFile(words[arrow + 1]) is not { } target) return;
-        if (FileOperations.SamePath(Path.GetFullPath(source.Item.Path), Path.GetFullPath(target.Item.Path)))
+        if (FileOperations.SamePath(LinkedPath(source.Item.Path), LinkedPath(target.Item.Path)))
         {
             Error(Lang.T("The lines are in that file already: shift moves lines in a file"));
             return;
@@ -89,8 +89,23 @@ internal sealed partial class ShellSession
             : Lang.F("{0}: {1} lines taken out", source.Item.Path, picked.Count));
     }
 
+    // The file a path is (a link: the file it links to, as the file is saved there), to tell the same file under
+    // two names
+    private static string LinkedPath(string path)
+    {
+        var full = Path.GetFullPath(path);
+        try
+        {
+            return new FileInfo(full).ResolveLinkTarget(true)?.FullName ?? full;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return full;
+        }
+    }
+
     // The numbers of lines for the log ("4-6" for 4, 5 and 6; "4,7")
-    private static string Numbers(List<int> lines) =>
+    internal static string Numbers(List<int> lines) =>
         lines.Count > 1 && lines[^1] - lines[0] == lines.Count - 1
             ? lines[0] + "-" + lines[^1]
             : string.Join(',', lines);

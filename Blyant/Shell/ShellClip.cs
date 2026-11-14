@@ -44,7 +44,9 @@ internal sealed partial class ShellSession
 
         // $clip: kept in Blyant, also without a terminal (a script: "clip lines notes.md 4-6", then "insert plan.md
         // bottom $clip")
-        ShellRegisters.Clip = text;
+        // (the text of a file without the line break that ends its last line: one line is one line, and a blank
+        // line at the end is a line)
+        ShellRegisters.Clip = kind == "text" && text.EndsWith('\n') ? text[..^1] : text;
         // English: the log (what kind, never the text)
         EventLog.Add(DialogText.LogShell + ": clip: " + kind);
         // Without a terminal (the output to a file or a program) the clipboard sequence would end up in the output:

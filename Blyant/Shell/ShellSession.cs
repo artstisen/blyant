@@ -340,11 +340,12 @@ internal sealed partial class ShellSession
     {
         if (full) return entries.Select(entry => Shown(entry.Path, entry.IsDirectory)).ToList();
         var names = entries.Select(entry => NameOf(entry.Path)).ToList();
-        var twice = names.GroupBy(name => name, StringComparer.OrdinalIgnoreCase).Where(group => group.Count() > 1)
-            .Select(group => group.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        // (names the file system tells apart are not alike: "Plot.md" and "plot.md" on Linux)
+        var twice = names.GroupBy(name => name, FileOperations.NameComparer).Where(group => group.Count() > 1)
+            .Select(group => group.Key).ToHashSet(FileOperations.NameComparer);
         return entries.Select((entry, i) =>
         {
-            var there = entry.IsDirectory ? System.IO.Directory.Exists(entry.Path) : File.Exists(entry.Path);
+            var there = entry.IsDirectory ? System.IO.Directory.Exists(entry.Path) : FileOperations.IsFileThere(entry.Path);
             var shown = names[i] + (entry.IsDirectory ? "/" : string.Empty);
             var parent = Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(entry.Path));
             if (twice.Contains(names[i]) && parent != null) shown += " (" + NameOf(parent) + ")";
@@ -364,6 +365,15 @@ internal sealed partial class ShellSession
     private static string Padded(string text, int width) =>
         text + new string(' ', Math.Max(0, width - TextMetrics.WidthOf(text)));
 
+    // "hist", "recent", "book": only "-l" can follow (true: given). Null (and told) for another word
+    private bool? OnlyLong(string argument)
+    {
+        var (full, others) = LongList(argument);
+        if (others.Length == 0) return full;
+        Error(Lang.F("Not taken: {0} (only -l, for the full paths)", others));
+        return null;
+    }
+
     // "-l" in the words after a list command: the full paths. The words without it
     private static (bool Full, string Others) LongList(string argument)
     {
@@ -375,7 +385,8 @@ internal sealed partial class ShellSession
     // A file or directory as listed: with "/" after a directory, and "(missing)" when it is not there
     private static string Shown(string path, bool isDirectory)
     {
-        var there = isDirectory ? System.IO.Directory.Exists(path) : File.Exists(path);
+        // (a link to a file that is gone is missing too: on Linux and macOS File.Exists is true for it)
+        var there = isDirectory ? System.IO.Directory.Exists(path) : FileOperations.IsFileThere(path);
         return (isDirectory ? Path.TrimEndingDirectorySeparator(path) + "/" : path) +
                (there ? string.Empty : " " + DialogText.FavoriteMissing);
     }

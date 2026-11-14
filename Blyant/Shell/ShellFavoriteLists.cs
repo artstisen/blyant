@@ -31,7 +31,8 @@ internal sealed partial class ShellSession
                 DeleteFavoriteList(Rest(argument));
                 break;
             case "use":
-                ListFavorites(Rest(argument));
+                // (as it is: "fav use -l" opens a list named "-l")
+                ListFavorites(Rest(argument), false);
                 break;
             default:
                 ListFavorites(argument);
@@ -149,11 +150,9 @@ internal sealed partial class ShellSession
     }
 
     // The list of a name as written ("main": the main list, empty), or null (told)
-    private static string? FindFavoriteList(string word) => FileFavorites.FindList(word.Trim().Trim('"'));
-
     private string? FavoriteList(string word)
     {
-        if (FindFavoriteList(word) is { } name) return name;
+        if (FileFavorites.FindList(word.Trim().Trim('"')) is { } name) return name;
         Error(Lang.F("No list of favorites named {0}", word.Trim().Trim('"')));
         return null;
     }

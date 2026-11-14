@@ -91,9 +91,10 @@ internal sealed partial class ShellSession
         if (EditableFile(words[0]) is not { } editable) return;
         var (item, file) = editable;
 
-        var (text, number) = WithLine(file.Text, rest, at.Value);
         // (more than one line: $clip of lines copied)
-        var count = LinesPutIn(rest).Count;
+        var added = LinesPutIn(rest);
+        var count = added.Count;
+        var (text, number) = WithLinesAt(file.Text, added, at.Value - 1);
         var result = file.Save(text);
         // (the path, never the text)
         FileExplorer.LogFileOperation("Insert", item.Path + ":" + number, result);
@@ -285,28 +286,15 @@ internal sealed partial class ShellSession
     /// got. The lines end in "\n"; a text that ends with a line break keeps it, and one that does not gets none after
     /// a line put in at the end. A text of more than one line ($clip) is put in as its lines, from "at"
     /// </summary>
-    internal static (string Text, int Line) WithLine(string text, string line, int at)
-    {
-        text = TextBuffer.Normalize(text);
-        var added = LinesPutIn(line);
-        if (text.Length == 0) return (string.Join("\n", added) + "\n", 1);
-        var endsWithBreak = text.EndsWith('\n');
-        var lines = (endsWithBreak ? text[..^1] : text).Split('\n').ToList();
-        var index = Math.Clamp(at - 1, 0, lines.Count);
-        lines.InsertRange(index, added);
-        return (string.Join("\n", lines) + (endsWithBreak ? "\n" : string.Empty), index + 1);
-    }
+    internal static (string Text, int Line) WithLine(string text, string line, int at) =>
+        WithLinesAt(text, LinesPutIn(line), at - 1);
 
     /// <summary>
-    /// The lines a text put in a file becomes: one, or the lines of a text of more than one line (its last line break
-    /// does not start another line, so the text of a whole file copied puts in its lines)
+    /// The lines a text put in a file becomes: one, or the lines of a text of more than one line ($clip), each line
+    /// break starting a line, so blank lines at its end are lines too ($clip of a whole file has no line break at its
+    /// end: clip leaves it out)
     /// </summary>
-    internal static List<string> LinesPutIn(string text)
-    {
-        text = TextBuffer.Normalize(text);
-        if (text.EndsWith('\n')) text = text[..^1];
-        return text.Split('\n').ToList();
-    }
+    internal static List<string> LinesPutIn(string text) => TextBuffer.Normalize(text).Split('\n').ToList();
 
     // What follows the first words of a text (words in quotes as one), as typed (one blank after them left out)
     private static string AfterWords(string text, int count)

@@ -274,9 +274,10 @@ blyant ~/novel> ls
 /home/anna/novel
   1  chapters/
   2  notes/
-  3  plot.md
-  4  todo.md
-blyant ~/novel> reg plot #3
+  3  done.md
+  4  plot.md
+  5  todo.md
+blyant ~/novel> reg plot #4
   $plot = /home/anna/novel/plot.md
 ```
 
@@ -349,6 +350,7 @@ Added to the favorites: /home/anna/novel/plot.md
 blyant ~/novel> fav add chapters
 Added to the favorites: /home/anna/novel/chapters
 blyant ~/novel> fav
+List: main
   1  plot.md
   2  chapters/
 blyant ~/novel> hot add

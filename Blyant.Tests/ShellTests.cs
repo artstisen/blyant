@@ -2031,7 +2031,8 @@ public class ShellTests : IDisposable
 
     [Theory]
     [InlineData("a\nb\n", "x\ny", 2, "a\nx\ny\nb\n", 2)]
-    [InlineData("a\nb\n", "x\ny\n", 9, "a\nb\nx\ny\n", 3)]
+    // (each line break starts a line: a blank line at the end of $clip is put in)
+    [InlineData("a\nb\n", "x\ny\n", 9, "a\nb\nx\ny\n\n", 3)]
     [InlineData("", "x\r\ny", 1, "x\ny\n", 1)]
     public void WithLine_ATextOfLines_PutsInEachLine(string text, string line, int at, string expected, int number)
     {
@@ -2355,5 +2356,136 @@ public class ShellTests : IDisposable
         Assert.Equal("fav use main", Tab(Completion(), "fav use ma"));
         Assert.Equal("fav delete reading", Tab(Completion(), "fav delete re"));
         Assert.Equal("fav main", Tab(Completion(), "fav ma"));
+    }
+
+    // ---- Review of 1.5.1
+
+    [Fact]
+    public void ClipVariable_KeepsBlankLinesAndBlanksAtItsEnd()
+    {
+        File.WriteAllText(In("work", "src.md"), "a\nb\n\n\nc\nRoses are red,  \nViolets  \n");
+        File.WriteAllText(In("work", "dst.md"), "x\n");
+        var (_, errors, _, _) = Run("clip lines src.md 2-4\ninsert dst.md bottom $clip\nclip lines src.md 6-7\n" +
+                                    "insert dst.md bottom $clip\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("x\nb\n\n\nRoses are red,  \nViolets  \n", Text("dst.md"));
+    }
+
+    [Fact]
+    public void ClipVariable_ABlankLineOrEmpty_NeverMakesChangeDelete()
+    {
+        File.WriteAllText(In("work", "src.md"), "a\n\n\nb\n");
+        File.WriteAllText(In("work", "blank.md"), "\n");
+        File.WriteAllText(In("work", "dst.md"), "x\ny\nz\n");
+        // Two blank lines: line 2 becomes two blank lines
+        var (_, errors, _, _) = Run("clip lines src.md 2-3\nchange dst.md 2 $clip\n", yes: true);
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("x\n\n\nz\n", Text("dst.md"));
+        // The text of a file of one blank line is empty: refused, nothing deleted
+        (_, errors, _, _) = Run("clip text blank.md\nchange dst.md 1 $clip\n", yes: true);
+        Assert.Contains(Lang.T("$clip is empty: change would delete the lines"), errors);
+        Assert.Equal("x\n\n\nz\n", Text("dst.md"));
+    }
+
+    [Fact]
+    public void ClipVariable_TheTextOfAFileOfOneLine_IsOneLine()
+    {
+        File.WriteAllText(In("work", "one.txt"), "Draft\n");
+        var (output, errors, _, _) = Run("clip text one.txt\ncd $clip\nreg\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains("  $clip " + Lang.F("{0}  (the last clip)", "Draft"), output);
+    }
+
+    [Fact]
+    public void Help_FitsTheScreen_TheTextsBrokenUnderTheirColumn()
+    {
+        var (output, _, _, _) = Run("help\nhelp fav\nhelp lines\n");
+        Assert.All(output.TrimEnd('\n').Split('\n'), line => Assert.True(TextMetrics.WidthOf(line) <= 79, line));
+        Assert.Contains("lines file|n lines > file|n place", output);
+    }
+
+    [Fact]
+    public void FavoriteLists_AListNamedDashL_IsOpenedWithUse_AndOtherWordsAfterTheListsAreTold()
+    {
+        try
+        {
+            FileFavorites.NewList("-l");
+            var (output, errors, _, _) = Run("fav use -l\n");
+            Assert.Equal(string.Empty, errors);
+            Assert.Equal("-l", FileFavorites.CurrentList);
+            Assert.Contains(Lang.F("List: {0}", "-l"), output);
+        }
+        finally
+        {
+            FileFavorites.UseList(string.Empty);
+        }
+
+        var (_, others, code, _) = Run("hist 5\nrecent x\nbook work\nhist -l\n");
+        Assert.Equal(3, others.TrimEnd('\n').Split('\n').Length);
+        Assert.Contains(Lang.F("Not taken: {0} (only -l, for the full paths)", "5"), others);
+        Assert.Equal(1, code);
+    }
+
+    // Two files whose names differ only in letter case, where the file system tells them apart (Linux); false
+    // where it does not (Windows, macOS)
+    private bool TwoNamesByCase(string folder)
+    {
+        File.WriteAllText(In("work", folder, "Notes.md"), "upper\n");
+        File.WriteAllText(In("work", folder, "notes.md"), "lower\n");
+        return Directory.GetFiles(In("work", folder)).Length == 2;
+    }
+
+    [Fact]
+    public void Tab_TheFilesOpenedLast_ByTheLetterCaseOfTheFileSystem()
+    {
+        Directory.CreateDirectory(In("work", "case"));
+        if (!TwoNamesByCase("case")) return;
+        FileHistory.Add(In("work", "case", "notes.md"), new DateTime(2026, 11, 13, 9, 0, 0));
+        FileHistory.Save();
+        Assert.Equal("open case/notes.md", Tab(Completion(), "open case/"));
+        Assert.Equal("open case/Notes.md", Tab(Completion(), "open case/", true, true));
+    }
+
+    [Fact]
+    public void Lines_TwoNamesByLetterCase_AreTwoFilesOnlyWhereTheFileSystemSaysSo()
+    {
+        Directory.CreateDirectory(In("work", "case"));
+        var two = TwoNamesByCase("case");
+        var (_, errors, _, _) = Run("lines case/Notes.md 1 > case/notes.md bottom\n");
+        if (two)
+        {
+            Assert.Equal(string.Empty, errors);
+            Assert.Equal("lower\nupper\n", Text(Path.Combine("case", "notes.md")));
+        }
+        else
+        {
+            Assert.Contains(Lang.T("The lines are in that file already: shift moves lines in a file"), errors);
+        }
+    }
+
+    [UnixFact]
+    public void OnLinuxAndMacOS_APatternThatFitsNothing_CompletesAName()
+    {
+        Directory.CreateDirectory(In("work", "marks"));
+        File.WriteAllText(In("work", "marks", "notes?.md"), "x\n");
+        Assert.Equal("open marks/notes?.md", Tab(Completion(), "open marks/notes?"));
+    }
+
+    [UnixFact]
+    public void OnLinuxAndMacOS_ALinkToAFileThatIsGone_IsMissing_AndLinesFollowsALink()
+    {
+        File.WriteAllText(In("work", "gone.md"), "x\n");
+        File.CreateSymbolicLink(In("work", "link.md"), In("work", "gone.md"));
+        File.Delete(In("work", "gone.md"));
+        FileFavorites.Toggle(In("work", "link.md"));
+        FileFavorites.Save();
+        var (output, _, _, _) = Run("fav\n");
+        Assert.Contains("link.md " + DialogText.FavoriteMissing, output);
+
+        File.WriteAllText(In("work", "real.md"), "a\nb\n");
+        File.CreateSymbolicLink(In("work", "alias.md"), In("work", "real.md"));
+        var (_, errors, _, _) = Run("lines real.md 1 > alias.md bottom cut\n");
+        Assert.Contains(Lang.T("The lines are in that file already: shift moves lines in a file"), errors);
+        Assert.Equal("a\nb\n", Text("real.md"));
     }
 }
