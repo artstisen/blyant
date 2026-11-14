@@ -361,6 +361,25 @@ Added to the hotlist: /home/anna/novel
 - `book` lists the bookmarks of the Jump menu, `projects` the projects, and `project novel` goes to the directory of one
 - `fav remove 1` takes a favorite off the list (the file itself stays)
 
+The favorites can be kept in several lists, as with `:list` in the file browser: one for the novel, one for research. The list you open is the one the full screen shows too:
+
+```
+blyant ~/novel> fav new research
+List made and opened: research
+blyant ~/novel> fav add notes
+Added to the favorites: /home/anna/novel/notes
+blyant ~/novel> fav lists
+    main
+  * research
+blyant ~/novel> fav main
+List: main
+  1  plot.md
+  2  chapters/
+```
+
+- `fav research` opens the list again, and `fav main` goes back to the main list
+- `fav rename research sources` gives a list a new name, and `fav delete sources` deletes it, after asking (the files in it stay where they are)
+
 ## Tidying files
 `format` and `trim` are the commands `:format` and `:trim` of the editor, run on a file without opening it:
 

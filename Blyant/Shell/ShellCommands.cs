@@ -46,6 +46,11 @@ internal sealed partial class ShellSession
         ("reg -d name|all", Lang.T("Take a register away, or all of them")),
         ("favorites [-l] [list]", Lang.T("List the favorites (fav), or those of another list")),
         ("favorites -l", Lang.T("Lists with full paths (also hist, recent, book)")),
+        ("favorites lists", Lang.T("List the lists of favorites (*: the open one)")),
+        ("favorites main", Lang.T("Open the main list of favorites again")),
+        ("favorites new|delete name", Lang.T("Make a list and open it, or delete one")),
+        ("favorites rename name new", Lang.T("Give a list of favorites a new name")),
+        ("favorites use name", Lang.T("Open a list named as a word (new, lists ...)")),
         ("favorites add|remove file|n", Lang.T("Add to the favorites, or take off them")),
         ("history [-l]", Lang.T("List the files opened (hist)")),
         ("recent [-l]", Lang.T("List the latest files")),
@@ -150,9 +155,9 @@ internal sealed partial class ShellSession
             case "favorites":
             case "fav":
             case "favs":
-                // "fav add 3", "fav remove 3", else the list ("fav work": another list)
-                if (Change(argument) is { } addFavorite) ChangeFavorites(Rest(argument), addFavorite);
-                else ListFavorites(argument);
+                // "fav add 3", "fav remove 3", the lists ("fav lists", "fav new", "fav rename", "fav delete"), else the
+                // list ("fav work", "fav use work": another list; "fav main": the main list)
+                Favorites(argument);
                 break;
             case "history":
             case "hist":
@@ -434,9 +439,11 @@ internal sealed partial class ShellSession
             }
 
             FileFavorites.UseList(list);
+            // (kept, as ":list" keeps it: the full screen shows the same list)
+            FileIo.SaveSettings();
         }
 
-        if (FileFavorites.CurrentList.Length > 0) Line(Lang.F("List: {0}", FileFavorites.CurrentList));
+        Line(Lang.F("List: {0}", ListWord(FileFavorites.CurrentList)));
         // The folders of the list are shown as headings (not numbered)
         var items = new List<Item>();
         var headings = new Dictionary<int, string>();

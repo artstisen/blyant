@@ -2269,4 +2269,91 @@ public class ShellTests : IDisposable
         Assert.Equal("hist -l", Tab(Completion(), "hist -"));
         Assert.Equal("fav -l", Tab(Completion(), "fav -"));
     }
+
+    // ---- The lists of favorites: fav lists, new, rename, delete, use, main
+
+    [Fact]
+    public void FavoriteLists_AreMadeOpenedRenamedAndDeleted_AndTheOpenOneIsKept()
+    {
+        try
+        {
+            FileIo.SaveSettings();
+            var (output, errors, _, _) = Run("fav new reading\nfav add plot.md\nfav lists\n", yes: true);
+            Assert.Equal(string.Empty, errors);
+            Assert.Contains(Lang.F("List made and opened: {0}", "reading"), output);
+            Assert.Contains("  * reading\n", output);
+            Assert.Contains("    main\n", output);
+            Assert.Equal("reading", FileFavorites.CurrentList);
+            Assert.Equal("reading", FileIo.ParseSettings(FileIo.ReadSettingsFile())["favoritelist"]);
+
+            (output, errors, _, _) = Run("fav main\nfav rename reading writing\nfav use writing\n", yes: true);
+            Assert.Equal(string.Empty, errors);
+            Assert.Contains(Lang.F("List: {0}", "main"), output);
+            Assert.Contains(Lang.F("List {0} renamed to {1}", "reading", "writing"), output);
+            Assert.Contains("  1  plot.md\n", output);
+            Assert.Equal("writing", FileIo.ParseSettings(FileIo.ReadSettingsFile())["favoritelist"]);
+
+            // The open list deleted: the main list is open
+            (output, errors, _, _) = Run("fav delete writing\nfav lists\n", yes: true);
+            // (the question, from a file: on the error output)
+            Assert.StartsWith(Lang.T("Delete list"), errors);
+            Assert.Contains(Lang.F("List deleted: {0}", "writing"), output);
+            Assert.DoesNotContain("writing\n", output.Split(Lang.F("List deleted: {0}", "writing"))[1]);
+            Assert.Equal(string.Empty, FileFavorites.CurrentList);
+            Assert.Equal(string.Empty, FileIo.ParseSettings(FileIo.ReadSettingsFile())["favoritelist"]);
+        }
+        finally
+        {
+            FileFavorites.UseList(string.Empty);
+        }
+    }
+
+    [Fact]
+    public void FavoriteLists_WhatCannotBeDone_IsTold()
+    {
+        try
+        {
+            FileFavorites.NewList("work");
+            var (_, errors, _, _) = Run("fav new\nfav new main\nfav new work\nfav rename main x\nfav delete main\n" +
+                                        "fav delete nothing\nfav rename work\nfav nothing\n", yes: true);
+            Assert.Equal(8, errors.TrimEnd('\n').Split('\n').Length);
+            Assert.Contains(Lang.T("The main list keeps its name"), errors);
+            Assert.Contains(Lang.T("The main list cannot be deleted"), errors);
+            // Not asked from a file without --yes: nothing deleted
+            var (output, _, _, _) = Run("fav delete work\n");
+            Assert.Contains(Lang.T("Nothing was deleted"), output);
+            Assert.Contains("work", FileFavorites.ListNames());
+        }
+        finally
+        {
+            FileFavorites.UseList(string.Empty);
+        }
+    }
+
+    [Fact]
+    public void FavoriteLists_ANameThatIsAWord_IsOpenedWithUse()
+    {
+        try
+        {
+            FileFavorites.NewList("new");
+            var (output, errors, _, _) = Run("fav use new\n");
+            Assert.Equal(string.Empty, errors);
+            Assert.Contains(Lang.F("List: {0}", "new"), output);
+            Assert.Equal("new", FileFavorites.CurrentList);
+        }
+        finally
+        {
+            FileFavorites.UseList(string.Empty);
+        }
+    }
+
+    [Fact]
+    public void Tab_AfterFav_CompletesTheWordsAndTheLists()
+    {
+        FileFavorites.NewList("reading");
+        Assert.Equal("fav lists", Tab(Completion(), "fav li"));
+        Assert.Equal("fav use main", Tab(Completion(), "fav use ma"));
+        Assert.Equal("fav delete reading", Tab(Completion(), "fav delete re"));
+        Assert.Equal("fav main", Tab(Completion(), "fav ma"));
+    }
 }

@@ -107,7 +107,11 @@ To have every output whole (with a screen reader, say), turn the pages off: `set
 | `clip lines file\|n lines` | Copy lines of a file to the clipboard, given as for `peek` (`40`, `100-120`, `+100 30`) |
 | `clip $name` | Copy the value of a register to the clipboard |
 | `$clip` | The text `clip` copied last, put in a command as a register is (`insert plan.md bottom $clip`: its lines) |
-| `favorites [-l] [list]` (`fav`) | List the favorites of the file browser by name, with their folders as headings (`-l`: the full paths); `fav work` uses the list _work_ from now on, as `:list work` does |
+| `favorites [-l] [list]` (`fav`) | List the favorites of the file browser by name, with their folders as headings (`-l`: the full paths); `fav work` uses the list _work_ from now on, as `:list work` does, and `fav main` the main list again. The open list is told first (`List: main`) |
+| `favorites lists` | List the lists of favorites, `*` at the one that is open |
+| `favorites new\|delete name` | Make a list and open it (`fav new reading`), or delete one: asked first, to the trash (the files in it stay where they are; the main list is open after the open one is deleted) |
+| `favorites rename name new` | Give a list a new name (`fav rename work writing`). The main list keeps its name |
+| `favorites use name` | Open a list whose name is a word of `fav` (`fav use new` for a list named _new_) |
 | `history [-l]` (`hist`) | List the files opened by name, the newest first, with when (`-l`: the full paths) |
 | `recent [-l]` | List the latest files (the first nine of the history), by name (`-l`: the full paths) |
 | `hotlist` (`hot`) | List the directory hotlist |

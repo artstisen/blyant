@@ -170,8 +170,13 @@ internal sealed class ShellCompletion
             case "fav":
             case "favs":
                 if (position == 0)
-                    return (Kind.Words, new[] { "add", "remove", "-l" }.Concat(FileFavorites.ListNames()));
-                if (position == 1 && after[0] == "-l") return (Kind.Words, FileFavorites.ListNames());
+                {
+                    return (Kind.Words, new[] { "add", "remove", "lists", "new", "rename", "delete", "use", "-l" }
+                        .Concat(FileFavorites.ListWords()));
+                }
+
+                if (position == 1 && after[0] is "-l" or "use") return (Kind.Words, FileFavorites.ListWords());
+                if (position == 1 && after[0] is "rename" or "delete") return (Kind.Words, FileFavorites.ListNames());
                 return (position == 1 && after[0] is "add" or "remove" ? Kind.Path : Kind.None, none);
             case "history":
             case "hist":
