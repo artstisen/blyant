@@ -525,6 +525,8 @@ internal static class FileIo
         _tempSettings += "zen=" + (TextArea.Zen ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // The shell: a long output in pages (only here, and with "set shellpaging" in the shell: not in Configuration)
         _tempSettings += "shellpaging=" + (Shell.Paging ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        // The shell: the line read key by key, with Tab and Up (off: as the terminal reads it)
+        _tempSettings += "shellcompletion=" + (Shell.Completion ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // The directory the shell starts in (a path, "last", or empty: the one Blyant is started in), and the one it
         // was left in (for "last")
         _tempSettings += "shelldir=" + Shell.StartSetting + '\n';
@@ -723,6 +725,7 @@ internal static class FileIo
         TextArea.ZenColors = Tools.TrimToLower(Get("zencolors")) == DialogText.BTrue;
         // On unless turned off
         Shell.Paging = Tools.TrimToLower(Get("shellpaging")) != DialogText.BFalse;
+        Shell.Completion = Tools.TrimToLower(Get("shellcompletion")) != DialogText.BFalse;
         Shell.StartSetting = Get("shelldir").Trim();
         Shell.LastDirectory = Get("shelllastdir").Trim();
         // 4 spaces unless another width of the list is set

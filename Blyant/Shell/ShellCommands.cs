@@ -257,7 +257,7 @@ internal sealed partial class ShellSession
 
     // A path typed, as a full path: "~" is the home directory, and a path that is not full is taken from the
     // directory the shell is in (on Windows "/docs" from its drive, not from the drive Blyant was started on)
-    private string PathOf(string typed)
+    internal string PathOf(string typed)
     {
         if (typed.Length == 0) return Directory;
         if (typed == "~" || typed.StartsWith("~/") || typed.StartsWith("~" + Path.DirectorySeparatorChar))

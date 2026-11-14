@@ -78,6 +78,18 @@ internal sealed partial class ShellSession
     /// </summary>
     internal void ShowFirst(string file) => LastList = new List<Item> { new(file, false) };
 
+    private ShellLineReader? _lineReader; // The line read key by key, with Tab and Up (null: a line as typed)
+
+    /// <summary>
+    /// Read the lines key by key (setting "shellcompletion"): Tab completes, Up and Down bring back the commands typed
+    /// before, and the keys of the command lines of the full screen edit the line
+    /// </summary>
+    internal void ReadLinesWith(Func<ConsoleKeyInfo> readKey, Func<int> width)
+    {
+        var completion = new ShellCompletion(() => Directory, PathOf);
+        _lineReader = new ShellLineReader(readKey, _output, width, completion.Next);
+    }
+
     private int _rows; // The rows written on the page (since the command was typed, or the last pause)
     private bool _stopped; // "q" at a pause: the rest of what the command shows is not written
 
@@ -114,13 +126,24 @@ internal sealed partial class ShellSession
 
         while (true)
         {
-            if (Terminal)
+            string? line;
+            if (_lineReader != null)
             {
-                _output.Write(Prompt());
-                _output.Flush();
+                line = _lineReader.Read(Prompt());
+                // (kept for Up and Down)
+                if (!string.IsNullOrWhiteSpace(line)) CommandHistory.Add(CommandContext.Shell, line);
+            }
+            else
+            {
+                if (Terminal)
+                {
+                    _output.Write(Prompt());
+                    _output.Flush();
+                }
+
+                line = _input.ReadLine();
             }
 
-            var line = _input.ReadLine();
             if (line == null)
             {
                 // Ctrl+C at the prompt: a new prompt; the end of the input (Ctrl+D, Ctrl+Z, the end of the file):

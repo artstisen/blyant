@@ -223,6 +223,7 @@ internal static class Actions
         TextArea.Zen = false;
         TextArea.ZenColors = false;
         Shell.Paging = true;
+        Shell.Completion = true;
         Shell.StartSetting = string.Empty;
         Shell.LastDirectory = string.Empty;
         EditorEngine.IndentSetting = EditorEngine.DefaultIndent;

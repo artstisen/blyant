@@ -292,6 +292,15 @@ public class ShellTests : IDisposable
     }
 
     [Fact]
+    public void Delete_TellsWhereTheTrashIsOpened_InTheShell()
+    {
+        // (":trash" is a command of the file browser, not of the shell)
+        var (output, _, _, _) = Run("delete plot.md\ndelete Draft\n");
+        Assert.Contains(Lang.T("It can be found again in the trash (:trash in the file browser)"), output);
+        Assert.DoesNotContain(DialogText.TrashFileNote + "\n", output);
+    }
+
+    [Fact]
     public void TheFilesOfBlyant_CannotBeRenamedMovedOrDeleted_EvenWithYes()
     {
         File.WriteAllText(Path.Combine(_data, FileIo.SettingsFileName), "x\n");
@@ -932,5 +941,187 @@ public class ShellTests : IDisposable
         Assert.Equal(1, code);
         Assert.DoesNotContain(EventLog.All, line => line.Contains("secret words"));
         Assert.Contains(EventLog.All, line => line.Contains("Change lines: " + In("work", "list.md") + ":1-1"));
+    }
+
+    // ---- Tab, Up and the keys of the line (setting "shellcompletion")
+
+    private ShellCompletion Completion() => new(() => In("work"), typed => Path.GetFullPath(typed, In("work")));
+
+    // Tab pressed a number of times on a line (false: Shift+Tab)
+    private static string Tab(ShellCompletion completion, string text, params bool[] keys)
+    {
+        foreach (var forward in keys.Length == 0 ? new[] { true } : keys) text = completion.Next(text, forward);
+        return text;
+    }
+
+    [Fact]
+    public void Tab_CompletesTheNamesOfTheCommands_AndGoesThroughThem()
+    {
+        var completion = Completion();
+        Assert.Equal("favorites", Tab(completion, "fa"));
+        var names = Commands.Names(CommandContext.Shell).Where(name => name.StartsWith('c')).ToList();
+        Assert.Equal(names[0], Tab(completion, "c"));
+        Assert.Equal(names[1], Tab(completion, "c", true, true));
+        // After the last: what was typed; Shift+Tab goes back
+        Assert.Equal("c", Tab(completion, "c", Enumerable.Repeat(true, names.Count + 1).ToArray()));
+        Assert.Equal(names[^1], Tab(completion, "c", false));
+        Assert.Equal("xyz", Tab(completion, "xyz"));
+    }
+
+    [Fact]
+    public void Tab_CompletesTheWordsAfterSomeCommands()
+    {
+        var completion = Completion();
+        FileIo.SaveSettings();
+        Assert.Equal("set shellpaging", Tab(completion, "set shellp"));
+        Assert.Equal("fav add", Tab(completion, "fav a"));
+        Assert.Equal("hot remove", Tab(completion, "hot r"));
+        Assert.Equal("insert plot.md bottom", Tab(completion, "insert plot.md b"));
+        Assert.Equal("help peek", Tab(completion, "help pe"));
+        // Nothing follows: as it was
+        Assert.Equal("version x", Tab(completion, "version x"));
+    }
+
+    [Fact]
+    public void Tab_CompletesPaths_AndDirectoriesOnlyWhereADirectoryIsWanted()
+    {
+        var completion = Completion();
+        File.WriteAllText(In("work", "Draft", "storm.md"), "x");
+        Assert.Equal("open plot.md", Tab(completion, "open pl"));
+        Assert.Equal("peek Ending.md", Tab(completion, "peek e"));
+        // cd: the directories only, by name, then what was typed
+        Assert.Equal("cd Draft/", Tab(completion, "cd "));
+        Assert.Equal("cd notes/", Tab(completion, "cd ", true, true));
+        Assert.Equal("cd ", Tab(completion, "cd ", true, true, true));
+        Assert.Equal("cd pl", Tab(completion, "cd pl"));
+        // The only one that fits is taken: Tab goes on into the directory
+        var into = Completion();
+        var line = Tab(into, "open Dr");
+        Assert.Equal("open Draft/", line);
+        Assert.Equal("open Draft/storm.md", Tab(into, line));
+        // The directory of copy and move, and the file of fav add
+        Assert.Equal("copy plot.md Draft/", Tab(completion, "copy plot.md Dr"));
+        Assert.Equal("fav add plot.md", Tab(completion, "fav add pl"));
+    }
+
+    [Fact]
+    public void Tab_PutsANameWithBlanksInQuotes_AndLeavesHiddenNamesOut()
+    {
+        File.WriteAllText(In("work", "my notes.md"), "x");
+        Directory.CreateDirectory(In("work", ".hidden"));
+        var completion = Completion();
+        Assert.Equal("open \"my notes.md\"", Tab(completion, "open my"));
+        Assert.Equal("open \"my notes.md\"", Tab(completion, "open \"my n"));
+        Assert.DoesNotContain(".hidden", Tab(completion, "cd ", true, true, true));
+        Assert.Equal("cd .hidden/", Tab(completion, "cd ."));
+    }
+
+    [Theory]
+    [InlineData("open pl", "open ", "pl")]
+    [InlineData("open ", "open ", "")]
+    [InlineData("fa", "", "fa")]
+    [InlineData("open \"my no", "open ", "\"my no")]
+    [InlineData("rename \"my notes.md\" ne", "rename \"my notes.md\" ", "ne")]
+    public void LastWord_IsAfterTheLastBlank_OrFromAnOpenQuote(string text, string before, string word)
+    {
+        Assert.Equal((before, word), ShellCompletion.LastWord(text));
+    }
+
+    // A reader of the keys given (a text: each char a key; named keys between < and >), in a window this wide
+    private static (string? Line, string Output, ShellLineReader Reader) ReadLine(string keys, int width = 80,
+        Func<string, bool, string>? complete = null)
+    {
+        var queue = new Queue<ConsoleKeyInfo>(LineKeys(keys));
+        var output = new StringWriter();
+        var reader = new ShellLineReader(() => queue.Dequeue(), output, () => width,
+            complete ?? ((text, _) => text));
+        var line = reader.Read("> ");
+        return (line, output.ToString(), reader);
+    }
+
+    private static IEnumerable<ConsoleKeyInfo> LineKeys(string keys)
+    {
+        var named = new Dictionary<string, ConsoleKeyInfo>
+        {
+            ["CR"] = new('\r', ConsoleKey.Enter, false, false, false),
+            ["BS"] = new('\b', ConsoleKey.Backspace, false, false, false),
+            ["Del"] = new('\0', ConsoleKey.Delete, false, false, false),
+            ["Left"] = new('\0', ConsoleKey.LeftArrow, false, false, false),
+            ["Right"] = new('\0', ConsoleKey.RightArrow, false, false, false),
+            ["Home"] = new('\0', ConsoleKey.Home, false, false, false),
+            ["End"] = new('\0', ConsoleKey.End, false, false, false),
+            ["Up"] = new('\0', ConsoleKey.UpArrow, false, false, false),
+            ["Down"] = new('\0', ConsoleKey.DownArrow, false, false, false),
+            ["Tab"] = new('\t', ConsoleKey.Tab, false, false, false),
+            ["Esc"] = new('\u001b', ConsoleKey.Escape, false, false, false),
+            ["C-c"] = new('\u0003', ConsoleKey.C, false, false, true),
+            ["C-d"] = new('\u0004', ConsoleKey.D, false, false, true),
+            ["C-u"] = new('\u0015', ConsoleKey.U, false, false, true),
+            ["C-w"] = new('\u0017', ConsoleKey.W, false, false, true)
+        };
+        for (var i = 0; i < keys.Length; i++)
+        {
+            var close = keys[i] == '<' ? keys.IndexOf('>', i) : -1;
+            if (close > i && named.TryGetValue(keys[(i + 1)..close], out var key))
+            {
+                yield return key;
+                i = close;
+                continue;
+            }
+
+            yield return new ConsoleKeyInfo(keys[i], keys[i] == ' ' ? ConsoleKey.Spacebar : ConsoleKey.A, false, false, false);
+        }
+    }
+
+    [Theory]
+    [InlineData("ls<CR>", "ls")]
+    [InlineData("lx<BS>s<CR>", "ls")]
+    [InlineData("s<Home>l<CR>", "ls")]
+    [InlineData("lxs<Left><Left><Del><End> 2<CR>", "ls 2")]
+    [InlineData("peek plot.md<C-w>notes.md<CR>", "peek notes.md")]
+    [InlineData("rm plot.md<Home><Right><Right><C-u>ls<CR>", "ls plot.md")]
+    [InlineData("something<Esc>pwd<CR>", "pwd")]
+    [InlineData("half<C-c>", "")]
+    [InlineData("<C-d>", null)]
+    [InlineData("ls<C-d><CR>", "ls")]
+    public void TheKeysOfTheLine_EditIt(string keys, string? line)
+    {
+        Assert.Equal(line, ReadLine(keys).Line);
+    }
+
+    [Fact]
+    public void Tab_AndUp_OnTheLine()
+    {
+        CommandHistory.Clear();
+        Assert.Equal("favorites", ReadLine("fa<Tab><CR>", complete: Completion().Next).Line);
+        CommandHistory.Add(CommandContext.Shell, "peek plot.md");
+        CommandHistory.Add(CommandContext.Shell, "ls");
+        Assert.Equal("ls", ReadLine("<Up><CR>").Line);
+        Assert.Equal("peek plot.md", ReadLine("<Up><Up><CR>").Line);
+        // What is typed is what the commands brought back start with
+        Assert.Equal("peek plot.md", ReadLine("pe<Up><CR>").Line);
+        Assert.Equal("ls", ReadLine("<Up><Up><Down><CR>").Line);
+        CommandHistory.Clear();
+    }
+
+    [Fact]
+    public void ALineWiderThanTheWindow_IsScrolledSideways_OnOneRow()
+    {
+        var text = string.Concat(Enumerable.Range(0, 6).Select(n => "word" + n + "-------"));
+        var (line, output, _) = ReadLine(text + "<CR>", 30);
+        Assert.Equal(text, line);
+        // Never more than the window on the row, and the end of the line is shown at the end
+        Assert.All(output.Split('\r'), row => Assert.True(row.TrimEnd('\n').Length <= 29, row));
+        var last = output.Split('\r').Where(row => row.Length > 0).TakeLast(2).First();
+        Assert.EndsWith("word5-------", last.TrimEnd());
+    }
+
+    [Fact]
+    public void ShellCompletion_IsASettingOfTheSettingsFile()
+    {
+        FileIo.SaveSettings();
+        Assert.Equal("true", FileIo.ParseSettings(FileIo.ReadSettingsFile())["shellcompletion"]);
+        Run("set shellcompletion false\n");
+        Assert.False(Shell.Completion);
     }
 }

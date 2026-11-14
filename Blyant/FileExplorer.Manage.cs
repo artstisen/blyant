@@ -1272,6 +1272,12 @@ internal static partial class FileExplorer
         return deleted;
     }
 
+    // What the question before deleting tells about the trash. In the shell (asked on lines) where it is opened, as
+    // ":trash" is a command of the file browser
+    private static string TrashNote => Shell.Prompts != null
+        ? Lang.T("It can be found again in the trash (:trash in the file browser)")
+        : DialogText.TrashFileNote;
+
     // Ask before deleting, in a box on top of the list, telling what is deleted and whether it goes to the trash.
     // Letters do nothing in the box: text typed by mistake cannot answer it
     private static bool ConfirmDelete(List<Item> items, bool toTrash)
@@ -1297,11 +1303,11 @@ internal static partial class FileExplorer
                         files, directories);
                 }
 
-                if (toTrash) note += ". " + DialogText.TrashFileNote;
+                if (toTrash) note += ". " + TrashNote;
             }
             else
             {
-                note = toTrash ? DialogText.TrashFileNote : DialogText.DeleteFileNote;
+                note = toTrash ? TrashNote : DialogText.DeleteFileNote;
             }
 
             // A file or directory Blyant uses (the protection lifted): told first
@@ -1334,7 +1340,7 @@ internal static partial class FileExplorer
             return ChoiceBox.ConfirmGuarded(DialogText.DeleteMarkedCaption,
                 Lang.F("Move the marked files and directories to the trash ({0})?", items.Count),
                 usedNote + Lang.F("In all, files: {0}, directories: {1}.", allFiles, allDirectories) + " " +
-                DialogText.TrashFileNote);
+                TrashNote);
         }
 
         var note2 = usedNote +

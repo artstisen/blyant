@@ -20,6 +20,13 @@ internal static class Shell
     internal static bool Paging { get; set; } = true;
 
     /// <summary>
+    /// In a terminal the line is read key by key: Tab completes, Up and Down bring back the commands typed before
+    /// (setting "shellcompletion", on unless turned off: off, the line is read as the terminal reads it, which some
+    /// screen readers read best). Only in the settings file, or with "set shellcompletion false"
+    /// </summary>
+    internal static bool Completion { get; set; } = true;
+
+    /// <summary>
     /// The directory the shell starts in when none is given (setting "shelldir"): a path ("~/projects" from the home
     /// directory), "last" (the one it was left in, kept as "shelllastdir"), or empty: the one Blyant is started in
     /// </summary>
@@ -129,6 +136,7 @@ internal static class Shell
             WindowSize = terminal ? WindowSizeOfTerminal : null,
             ReadKey = terminal ? ReadPauseKey : null
         };
+        if (terminal && Completion) session.ReadLinesWith(ReadPauseKey, WindowWidth);
         // (from the editor: the file is the last list, "open 1" opens it again)
         if (file != null && File.Exists(file)) session.ShowFirst(file);
         var code = Run(session);
@@ -150,7 +158,20 @@ internal static class Shell
         }
     }
 
-    // The key at the pause after a page (Ctrl+C as a key: it stops the output, and does not end Blyant)
+    // The width of the window (80 when the terminal does not tell it)
+    private static int WindowWidth()
+    {
+        try
+        {
+            return Console.WindowWidth > 0 ? Console.WindowWidth : 80;
+        }
+        catch (Exception e) when (e is IOException or PlatformNotSupportedException or InvalidOperationException)
+        {
+            return 80;
+        }
+    }
+
+    // The key at the pause after a page, and the keys of the line read key by key (Ctrl+C as a key: it stops the output, and does not end Blyant)
     private static ConsoleKeyInfo ReadPauseKey()
     {
         var before = Console.TreatControlCAsInput;
