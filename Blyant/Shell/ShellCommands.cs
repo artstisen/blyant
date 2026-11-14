@@ -12,7 +12,7 @@ internal sealed partial class ShellSession
     private static IEnumerable<(string Command, string Text)> HelpRows() => new[]
     {
         ("pwd", Lang.T("Show the directory you are in")),
-        ("ls [dir|n]", Lang.T("List the folders and files of a directory")),
+        ("ls [-a] [dir|n]", Lang.T("List the folders and files of a directory (-a: hidden ones too)")),
         ("cd [dir|file|n]", Lang.T("Go to a directory, or that of a file (alone: home)")),
         ("up", Lang.T("Go to the directory above")),
         ("home", Lang.T("Go to your home directory")),
@@ -348,8 +348,13 @@ internal sealed partial class ShellSession
         if (Directory.Length == 0 || !Path.IsPathRooted(Directory)) Directory = Path.GetFullPath(path);
     }
 
+    // "ls", "ls notes", "ls 2": the folders and files of a directory, as the file browser shows them (hidden and
+    // system ones left out: on Linux and macOS the names that start with "."); "ls -a": those too
     private void ListDirectory(string argument)
     {
+        var trimmed = argument.Trim();
+        var all = trimmed == "-a" || trimmed.StartsWith("-a ");
+        if (all) argument = trimmed[2..];
         var item = Resolve(argument, true);
         if (item == null) return;
         if (!System.IO.Directory.Exists(item.Path))
@@ -362,9 +367,9 @@ internal sealed partial class ShellSession
         {
             var info = new DirectoryInfo(item.Path);
             // The folders first, then the files, each by name (letter case alike)
-            var rows = info.EnumerateDirectories().OrderBy(d => d.Name, StringComparer.OrdinalIgnoreCase)
+            var rows = info.EnumerateDirectories().Where(Shown).OrderBy(d => d.Name, StringComparer.OrdinalIgnoreCase)
                 .Select(d => (new Item(d.FullName, true), d.Name + "/"))
-                .Concat(info.EnumerateFiles().OrderBy(f => f.Name, StringComparer.OrdinalIgnoreCase)
+                .Concat(info.EnumerateFiles().Where(Shown).OrderBy(f => f.Name, StringComparer.OrdinalIgnoreCase)
                     .Select(f => (new Item(f.FullName, false), f.Name)))
                 .ToList();
             Line(item.Path);
@@ -374,6 +379,8 @@ internal sealed partial class ShellSession
         {
             Error(Lang.F("{0} cannot be read: {1}", item.Path, e.Message));
         }
+
+        bool Shown(FileSystemInfo entry) => all || (entry.Attributes & (FileAttributes.Hidden | FileAttributes.System)) == 0;
     }
 
     #endregion

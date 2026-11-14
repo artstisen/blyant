@@ -654,6 +654,19 @@ internal static class FileIo
     }
 
     /// <summary>
+    /// Use the settings of a text of the settings file, read by the caller (the shell's "reload"), as when Blyant starts
+    /// </summary>
+    /// <returns>False if the text has no settings (nothing is changed)</returns>
+    internal static bool ApplySettingsText(string content)
+    {
+        var settings = ParseSettings(content);
+        if (settings.Count == 0) return false;
+        _keepUnreadSettings = false;
+        ApplySettings(settings);
+        return true;
+    }
+
+    /// <summary>
     /// Get the "name=value" pairs of a settings file. Sections, comments and blank lines are skipped.
     /// </summary>
     internal static Dictionary<string, string> ParseSettings(string content)

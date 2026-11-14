@@ -1785,4 +1785,139 @@ public class ShellTests : IDisposable
         Assert.Equal(string.Empty, errors);
         Assert.Contains("  indent = 2", output);
     }
+
+    // ---- Review: registers read again by their text, a file that cannot be read, lines kept
+
+    // A shell to run commands in one by one, and what it writes
+    private (ShellSession Session, StringWriter Output, StringWriter Errors) Session()
+    {
+        var output = new StringWriter();
+        var errors = new StringWriter();
+        return (new ShellSession(new StringReader(string.Empty), output, errors, In("work"), false), output, errors);
+    }
+
+    [WindowsFact]
+    public void Registers_AFileThatCannotBeReadForAMoment_IsNotWrittenOver_Windows()
+    {
+        var file = Path.Combine(_data, ShellRegisters.FileName);
+        File.WriteAllText(file, "a\tone\nb\ttwo\n");
+        var (session, _, errors) = Session();
+        ShellRegisters.Load();
+        File.WriteAllText(file, "a\tone\nb\ttwo\nc\tthree\n");
+        // Another program has the file open, as while it saves it
+        using (new FileStream(file, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+        {
+            Assert.False(ShellRegisters.Refresh());
+            Assert.Equal("one", ShellRegisters.Get("a"));
+        }
+
+        // Read again now: nothing lost
+        session.Execute("reg d four");
+        Assert.Equal(string.Empty, errors.ToString());
+        Assert.Equal("a\tone\nb\ttwo\nc\tthree\nd\tfour\n", File.ReadAllText(file));
+    }
+
+    [WindowsFact]
+    public void Registers_NeverReadAtTheStart_AreNotWrittenOverTheFile_Windows()
+    {
+        var file = Path.Combine(_data, ShellRegisters.FileName);
+        File.WriteAllText(file, "a\tone\n");
+        using (new FileStream(file, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+        {
+            ShellRegisters.Load();
+            ShellRegisters.Set("b", "two");
+            Assert.NotEqual(DialogText.Success, ShellRegisters.Save());
+        }
+
+        Assert.Equal("a\tone\n", File.ReadAllText(file));
+    }
+
+    [UnixFact]
+    public void Registers_AFileThatCannotBeRead_IsNotWrittenOver_Unix()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            var file = Path.Combine(_data, ShellRegisters.FileName);
+            File.WriteAllText(file, "a\tone\n");
+            File.SetUnixFileMode(file, UnixFileMode.None);
+            try
+            {
+                // (as root every file can be read: nothing to try then)
+                if (Environment.UserName == "root") return;
+                ShellRegisters.Load();
+                ShellRegisters.Set("b", "two");
+                Assert.NotEqual(DialogText.Success, ShellRegisters.Save());
+            }
+            finally
+            {
+                File.SetUnixFileMode(file, UnixFileMode.UserRead | UnixFileMode.UserWrite);
+            }
+
+            Assert.Equal("a\tone\n", File.ReadAllText(file));
+        }
+    }
+
+    [Fact]
+    public void Registers_LinesThatAreNotRegisters_AreKeptInTheFile()
+    {
+        var file = Path.Combine(_data, ShellRegisters.FileName);
+        File.WriteAllText(file, "a\tone\nmistyped line\n2b\tbad name\n");
+        var (session, output, _) = Session();
+        ShellRegisters.Load();
+        session.Execute("reg c three");
+        Assert.Equal("a\tone\nc\tthree\nmistyped line\n2b\tbad name\n", File.ReadAllText(file));
+        session.Execute("reg");
+        Assert.Contains(Lang.F("({0} lines of {1} are not registers: a name, a tab, and the value)", 2,
+            ShellRegisters.FileName), output.ToString());
+    }
+
+    [Fact]
+    public void Registers_AChangeOfTheSameSizeAndTime_IsSeen()
+    {
+        var file = Path.Combine(_data, ShellRegisters.FileName);
+        File.WriteAllText(file, "a\tone\n");
+        ShellRegisters.Load();
+        var time = File.GetLastWriteTimeUtc(file);
+        File.WriteAllText(file, "a\ttwo\n");
+        File.SetLastWriteTimeUtc(file, time);
+        Assert.True(ShellRegisters.Refresh());
+        Assert.Equal("two", ShellRegisters.Get("a"));
+    }
+
+    [Fact]
+    public void Tab_AfterADollar_UsesTheFileEditedByHand()
+    {
+        var file = Path.Combine(_data, ShellRegisters.FileName);
+        File.WriteAllText(file, "a\tone\n");
+        ShellRegisters.Load();
+        File.WriteAllText(file, "a\tone\nnotes\t" + In("work") + "\n");
+        Assert.Equal("cd $notes", Tab(Completion(), "cd $no"));
+    }
+
+    [Fact]
+    public void Reload_ASettingsFileWithNoSettings_ChangesNothing()
+    {
+        FileIo.SaveSettings();
+        var before = FileIo.SettingsText().Split('\n').Skip(1).ToList();
+        FileIo.WriteSettingsFile("; nothing here\n");
+        var (output, errors, _, _) = Run("reload\n");
+        Assert.Contains(Lang.F("{0} has no settings: the settings stay as they were", FileIo.SettingsFileName), errors);
+        Assert.DoesNotContain(Lang.T("Settings and registers read again"), output);
+        Assert.Equal(before, FileIo.SettingsText().Split('\n').Skip(1).ToList());
+    }
+
+    [Fact]
+    public void Ls_LeavesOutHiddenFiles_AndLsDashALists_Them()
+    {
+        var hidden = In("work", ".board.txt");
+        File.WriteAllText(hidden, "x");
+        // (on Windows a file is hidden by its attribute; on Linux and macOS by the "." of its name)
+        if (OperatingSystem.IsWindows()) File.SetAttributes(hidden, File.GetAttributes(hidden) | FileAttributes.Hidden);
+        var (output, errors, _, _) = Run("ls\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.DoesNotContain(".board.txt", output);
+        (output, _, _, _) = Run("ls -a\nls -a Draft\n");
+        Assert.Contains(".board.txt", output);
+        Assert.Contains(In("work", "Draft") + "\n", output);
+    }
 }

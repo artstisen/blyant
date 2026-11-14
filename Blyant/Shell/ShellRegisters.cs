@@ -36,70 +36,77 @@ internal static partial class ShellRegisters
     internal static bool IsName(string name) => NamePattern().IsMatch(name);
 
     /// <summary>
-    /// The lines of the file that were not registers when it was read last (no name, no tab, or not a name a register
-    /// can have): skipped, and told by "reg"
+    /// The lines of the file that are not registers (no name, no tab, or not a name a register can have): told by
+    /// "reg", and kept in the file when it is written, so a line mistyped by hand can be put right
     /// </summary>
-    internal static int Skipped { get; private set; }
+    internal static int Skipped => Kept.Count;
 
-    // The file as it was when it was read or written last (its time and size), to tell when it was changed by hand
-    private static (DateTime Time, long Size)? _stamp;
+    private static readonly List<string> Kept = new();
+
+    // The text of the file as it was read or written last ("": no file), to tell when it was changed by hand. Null: it
+    // could not be read, so it is not written over until it has been read
+    private static string? _text;
 
     /// <summary>
     /// Read the registers from their file (none: no registers)
     /// </summary>
     internal static void Load()
     {
-        Values.Clear();
-        Skipped = 0;
-        _stamp = Stamp();
-        string text;
-        try
+        if (Read() is { } text)
         {
-            if (!File.Exists(FilePath)) return;
-            text = File.ReadAllText(FilePath);
-        }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
-        {
+            Take(text);
             return;
         }
 
+        Values.Clear();
+        Kept.Clear();
+        _text = null;
+    }
+
+    /// <summary>
+    /// Read the registers again when their file has been changed since (edited by hand, or by another Blyant): before
+    /// each command of the shell. The text of the file is compared (a time of a file can be too coarse: 2 seconds on
+    /// FAT drives). A file that cannot be read now (another program saving it) leaves them as they are. Every change
+    /// made in the shell is written at once, so none is lost
+    /// </summary>
+    /// <returns>True if they were read again</returns>
+    internal static bool Refresh()
+    {
+        if (Read() is not { } text || text == _text) return false;
+        Take(text);
+        return true;
+    }
+
+    // The text of the file ("": it is not there), or null when it cannot be read
+    private static string? Read()
+    {
+        try
+        {
+            return File.Exists(FilePath) ? File.ReadAllText(FilePath) : string.Empty;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+        {
+            return null;
+        }
+    }
+
+    // The registers of a text of the file (the lines that are not registers kept as they are)
+    private static void Take(string text)
+    {
+        Values.Clear();
+        Kept.Clear();
+        _text = text;
         foreach (var line in TextBuffer.Normalize(text).Split('\n'))
         {
             if (line.Trim().Length == 0) continue;
             var tab = line.IndexOf('\t');
             if (tab <= 0 || !IsName(line[..tab]))
             {
-                Skipped++;
+                Kept.Add(line);
                 continue;
             }
 
             Values[line[..tab].ToLowerInvariant()] = line[(tab + 1)..];
-        }
-    }
-
-    /// <summary>
-    /// Read the registers again when their file has been changed since (edited by hand, or by another Blyant): before
-    /// each command of the shell. Every change made in the shell is written at once, so none is lost
-    /// </summary>
-    /// <returns>True if they were read again</returns>
-    internal static bool Refresh()
-    {
-        if (Stamp() == _stamp) return false;
-        Load();
-        return true;
-    }
-
-    // The time and size of the file (null: it is not there, or cannot be looked at)
-    private static (DateTime Time, long Size)? Stamp()
-    {
-        try
-        {
-            var file = new FileInfo(FilePath);
-            return file.Exists ? (file.LastWriteTimeUtc, file.Length) : null;
-        }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
-        {
-            return null;
         }
     }
 
@@ -111,11 +118,19 @@ internal static partial class ShellRegisters
     {
         try
         {
-            var text = string.Concat(Values.Select(pair => pair.Key + "\t" + pair.Value + "\n"));
+            // A file that could not be read is not written over: its registers would be lost
+            if (_text == null)
+            {
+                Load();
+                if (_text == null) return Lang.F("{0} could not be read: the registers are not written", FileName);
+            }
+
+            // The registers, and after them the lines that are not registers, as they were
+            var text = string.Concat(Values.Select(pair => pair.Key + "\t" + pair.Value + "\n")) +
+                       string.Concat(Kept.Select(line => line + "\n"));
             FileIo.WriteAllBytesSafe(FilePath, new UTF8Encoding(false).GetBytes(text));
-            // (written here: not read again for it; the lines skipped are gone from the file)
-            _stamp = Stamp();
-            Skipped = 0;
+            // (written here: not read again for it)
+            _text = text;
             return DialogText.Success;
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
@@ -143,11 +158,7 @@ internal static partial class ShellRegisters
     /// <summary>
     /// Take all the registers away
     /// </summary>
-    internal static void Clear()
-    {
-        Values.Clear();
-        Skipped = 0;
-    }
+    internal static void Clear() => Values.Clear();
 
     /// <summary>
     /// A command line with $name put in for the value of each register of that name ("$$" for a "$"; a $name that is

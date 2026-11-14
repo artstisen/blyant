@@ -275,7 +275,7 @@ internal static class Actions
     /// The text of the about page (the first of them; the license is the second): the name, version and author of
     /// Blyant, what it is, and the tip about several copies of it. Its lines end in "\n"
     /// </summary>
-    internal static string AboutText() =>
+    private static string AboutText() =>
         DialogText.ApplicationName + " " + DialogText.ApplicationVersion + " " + DialogText.ApplicationBy + "\n\n" +
         TextBuffer.Normalize(DialogText.About).TrimEnd('\n') + "\n\n" +
         TextBuffer.Normalize(DialogText.MultipleInstances).TrimEnd('\n');

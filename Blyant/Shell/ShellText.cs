@@ -497,9 +497,10 @@ internal sealed partial class ShellSession
             return;
         }
 
-        if (!FileIo.LoadSettings())
+        // (the text read once: what is used is what is compared below)
+        if (!FileIo.ApplySettingsText(content))
         {
-            Error(Lang.F("{0} could not be read: the settings stay as they were", FileIo.SettingsFileName));
+            Error(Lang.F("{0} has no settings: the settings stay as they were", FileIo.SettingsFileName));
             return;
         }
 

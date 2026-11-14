@@ -72,6 +72,8 @@ internal sealed class ShellCompletion
         // $name: the names of the registers, anywhere on the line
         if (word.StartsWith('$') && !word.Contains('"'))
         {
+            // (the file edited by hand since the last command: its names)
+            ShellRegisters.Refresh();
             _matches = Fitting(ShellRegisters.All.Keys.Select(name => "$" + name), word);
             return _matches.Count > 0;
         }
@@ -111,8 +113,10 @@ internal sealed class ShellCompletion
         switch (command)
         {
             case "cd":
-            case "ls":
                 return (position == 0 ? Kind.Directory : Kind.None, none);
+            case "ls":
+                // ("ls -a notes": the directory after -a)
+                return (position == 0 || (position == 1 && after[0] == "-a") ? Kind.Directory : Kind.None, none);
             case "open":
             case "peek":
             case "info":

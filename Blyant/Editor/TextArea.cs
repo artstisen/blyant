@@ -1884,7 +1884,14 @@ public partial class TextArea
 
             // The settings file of Blyant, edited as a text: what was saved is used at once (else the settings Blyant
             // has would be written over it the next time it writes them: when the file browser is left, or Blyant)
-            if (FileIo.IsSettingsFile(FileExplorer.CurrentFilePath)) FileIo.LoadSettings();
+            // The file keeps the size of the screen it was written at: with automatic size the window is followed
+            // again, and the editor is drawn anew (the colors of the scheme, the language)
+            if (FileIo.IsSettingsFile(FileExplorer.CurrentFilePath))
+            {
+                FileIo.LoadSettings();
+                if (Init.AutoSize) Init.ApplyAutoSize();
+                RedrawAll();
+            }
         }
         else
         {

@@ -1,4 +1,6 @@
 # Guide to the shell
+![The shell: a project listed, a file peeked into, a search by text and a register](docs/screenshots/shell.svg)
+
 The shell is Blyant on lines: you type a command at a prompt, and Blyant writes its answer as plain lines of text, in the colors of your terminal. It works in any terminal, with a screen reader, and from a script. Files are edited in the editor of the full screen, and closing the editor brings you back to the prompt.
 
 Start it with `--shell`, and leave it with `exit`:
@@ -64,7 +66,7 @@ To have every output whole (with a screen reader, say), turn the pages off: `set
 | Command | What it does |
 |---|---|
 | `pwd` | Show the directory you are in |
-| `ls [dir\|n]` | List the folders, then the files, of a directory (by name) |
+| `ls [-a] [dir\|n]` | List the folders, then the files, of a directory (by name). Hidden files are left out, as in the file browser (on Linux and macOS the names that start with `.`); `ls -a` lists them too |
 | `cd [dir\|file\|n]` | Go to a directory; `cd` alone goes to your home directory, `cd ~/notes` to one in it. A file (a row of `fav`, `hist`, `find` ...) goes to the directory it is in, and the file is then the last list: `open 1` opens it |
 | `up` | Go to the directory above (`cd ..`) |
 | `home` | Go to your home directory (as `cd` alone) |
@@ -192,7 +194,7 @@ insert todo.md bottom $note
 - `$name` is put in only for a register that is there: anything else stays as typed, so `insert prices.md bottom Ink costs $5` keeps its `$5`. `$$` is a `$`
 - A path with a blank in it is put in quotes where a path is taken (`copy plot.md $docs` with _my docs_), and the text of `insert`, `change`, `reg` and `set` gets the value as it is
 - `Tab` completes the names of the registers after a `$`, and after `reg`
-- The registers are kept in the data directory (`registers.txt`), so they are there the next time. The file can be edited in another program: a line is the name, a tab, and the value. A file changed since the shell read it is read again before the next command, and `reg` tells of lines that are not registers (no tab, or a name a register cannot have), which are left out. They are the shell's own: the registers of the editor are not these. `reset` does not take them away (they are not settings), and the log has their names, never their values
+- The registers are kept in the data directory (`registers.txt`), so they are there the next time. The file can be edited in another program: a line is the name, a tab, and the value. A file changed since the shell read it is read again before the next command, and `reg` tells of lines that are not registers (no tab, or a name a register cannot have): they are kept in the file, at its end, so you can put them right. They are the shell's own: the registers of the editor are not these. `reset` does not take them away (they are not settings), and the log has their names, never their values
 
 ## Clipboard
 `clip` copies to the clipboard what you would otherwise select and copy by hand:
