@@ -471,9 +471,7 @@ internal sealed partial class ShellSession
             if (!int.TryParse(row, out var number) || number < 1 || number > LastList.Count ||
                 LastList[number - 1].Path.Length == 0)
             {
-                Error(!_listShown
-                    ? Lang.F("No row {0}: no list has been shown", row)
-                    : Lang.F("No row {0}: the last list has {1} rows", row, LastList.Count));
+                Error(NoRow(row));
                 return;
             }
 

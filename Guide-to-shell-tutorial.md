@@ -48,7 +48,7 @@ blyant ~/novel> ls
   4  todo.md
 ```
 
-The numbers are the key to the shell. A number given to the next command is a row of the last list shown, so you seldom type a name:
+The numbers are the key to the shell. A number given to a command is a row of the last list shown, so you seldom type a name. The list is kept until another list is shown, or a command works on a file (`peek`, `insert`, `copy` ...: that file is then the list, as row 1); `cd` into a directory, `open`, `clip` and `reg` leave it as it was. See [Prompt and lists](Guide-to-shell.md#prompt-and-lists) for all of them:
 
 ```
 blyant ~/novel> cd 1

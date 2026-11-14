@@ -2036,4 +2036,16 @@ public class ShellTests : IDisposable
     {
         Assert.Equal((expected, number), ShellSession.WithLine(text, line, at));
     }
+
+    [Fact]
+    public void ARowNotInTheList_OfOneRow_IsToldAsOneRow()
+    {
+        var (_, errors, _, _) = Run("peek plot.md\nopen 3\nreg x #2\nls\nopen 9\n");
+        Assert.Contains(Lang.F("No row {0}: the last list has 1 row", 3), errors);
+        Assert.Contains(Lang.F("No row {0}: the last list has 1 row", 2), errors);
+        // (ls: the rows of the folder of the tests, more than one)
+        var rows = new DirectoryInfo(In("work")).EnumerateFileSystemInfos()
+            .Count(entry => (entry.Attributes & (FileAttributes.Hidden | FileAttributes.System)) == 0);
+        Assert.Contains(Lang.F("No row {0}: the last list has {1} rows", 9, rows), errors);
+    }
 }

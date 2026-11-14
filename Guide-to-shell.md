@@ -47,7 +47,14 @@ blyant ~/projects/novel> ls
 blyant ~/projects/novel> open 4
 ```
 
-Every list a command shows is numbered, and a number given to the next command is a row of that list: `open 4` opens `plot.md`, `cd 1` goes to `chapters`. A path works too (`open plot.md`, `cd ../other`), and a path that is not full is taken from the directory you are in. A file or directory that is not there is marked `(missing)`.
+Every list a command shows is numbered, and a number given to a command after it is a row of that list: `open 4` opens `plot.md`, `cd 1` goes to `chapters`. A path works too (`open plot.md`, `cd ../other`), and a path that is not full is taken from the directory you are in. A file or directory that is not there is marked `(missing)`.
+
+The last list is kept for as long as no other command takes its place, however long that is (until Blyant ends: it is not kept for the next time):
+
+- A list shown takes its place: `ls`, `fav`, `hist`, `recent`, `hot`, `book`, `projects` and `find`
+- So does the file or directory a command worked on, as a list of one row (`open 1` opens it): `peek`, `insert`, `change`, `shift`, `format`, `trim` and `info` (the file, at its line), `new`, `mkdir`, `copy`, `move` and `rename` (the new place), and `cd` on a file (the file)
+- Other commands leave it as it was: `cd` into a directory, `up`, `home`, `data`, `pwd`, `open`, `delete`, `clip`, `reg`, `set`, `help`, `about` and `clear`. The rows are full paths, so `fav`, then `cd` somewhere else, and `open 3` still opens row 3 of the favorites
+- A row deleted since (`delete 3`) stays in the list, and is told as not there. When a number is not a row of the list you meant (after `peek 2`, the last list is that file), show the list again
 
 The shell writes in the colors of your terminal (the color scheme is for the full screen), and a character of a file that would steer the terminal (an escape sequence: a color, a title, the clipboard) is shown as `?`. A command that fails in a way it should not is told (`The command failed: ...`), and the shell goes on.
 

@@ -294,6 +294,12 @@ internal sealed partial class ShellSession
 
     #region Places
 
+    // A row that is not in the last list: told with how many rows it has (a list of one row: the file a command worked on)
+    private string NoRow(string row) =>
+        !_listShown ? Lang.F("No row {0}: no list has been shown", row)
+        : LastList.Count == 1 ? Lang.F("No row {0}: the last list has 1 row", row)
+        : Lang.F("No row {0}: the last list has {1} rows", row, LastList.Count);
+
     /// <summary>
     /// The path a command is given: the number of a row of the last list, or a path (not full: from the directory
     /// the shell is in; "~": the home directory). Null (and told) for a number that is not a row
@@ -309,9 +315,7 @@ internal sealed partial class ShellSession
                 if (item.Path.Length > 0) return item;
             }
 
-            Error(!_listShown
-                ? Lang.F("No row {0}: no list has been shown", argument)
-                : Lang.F("No row {0}: the last list has {1} rows", argument, LastList.Count));
+            Error(NoRow(argument));
             return null;
         }
 
