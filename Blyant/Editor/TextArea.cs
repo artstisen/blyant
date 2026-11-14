@@ -1101,6 +1101,20 @@ public partial class TextArea
             case EditorRequest.Zen:
                 ToggleZen();
                 break;
+            case EditorRequest.Shell:
+                // On as the shell, in the directory of the file (the file is its last list: "open 1"); changes that are
+                // not saved are asked about first (Save, Discard, Cancel). Only the editor of a file
+                Draw();
+                Tools.HideCursor();
+                if (_saveMode == SaveAsFile && _peek == null)
+                {
+                    var file = FileExplorer.CurrentFilePath;
+                    Jump.ToShell(LeaveForJump, file.Length > 0 ? System.IO.Path.GetDirectoryName(file) : null,
+                        file.Length > 0 ? file : null);
+                }
+
+                RedrawAll();
+                break;
             case EditorRequest.Exit:
                 // Blyant is left: changes that are not saved are asked about (Save, Discard, Cancel), else the usual
                 // question; where the cursor is, is kept as when the file is closed. (The text is drawn first, without

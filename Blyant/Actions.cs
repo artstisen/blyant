@@ -222,6 +222,7 @@ internal static class Actions
         TextArea.ShowWhitespace = false;
         TextArea.Zen = false;
         TextArea.ZenColors = false;
+        Shell.Paging = true;
         EditorEngine.IndentSetting = EditorEngine.DefaultIndent;
         Modules.Projects = true;
         Modules.Board = true;

@@ -39,6 +39,7 @@ internal sealed partial class ShellSession
         ("project n|name", Lang.T("Go to the directory of a project")),
         ("log [n]", Lang.T("Show the last lines of the log (20)")),
         ("clear", Lang.T("Clear the screen (also cls)")),
+        ("screen", Lang.T("Go on on the full screen, in the file browser here")),
         ("version", Lang.T("Show the version of Blyant")),
         ("help [command]", Lang.T("List the commands, or tell what one does")),
         ("exit", Lang.T("Leave Blyant (also quit, q)"))
@@ -56,6 +57,8 @@ internal sealed partial class ShellSession
         var argument = CommandLine.Argument(line);
         // By name only (never what follows it: a path, a name)
         EventLog.AddCommand(DialogText.LogShell, line);
+        // (the line of the command typed is the first row of its page)
+        NewPage();
         return RunCommand(name, argument);
     }
 
@@ -158,6 +161,16 @@ internal sealed partial class ShellSession
             case "version":
                 Line(DialogText.ApplicationName + " " + DialogText.ApplicationVersion);
                 break;
+            case "screen":
+                // The full screen, in the file browser of this directory (from a file or --run: no screen)
+                if (!Terminal)
+                {
+                    Error(Lang.T("The full screen needs a terminal"));
+                    break;
+                }
+
+                ScreenDirectory = Directory;
+                return false;
             case "clear":
             case "cls":
                 // (in a terminal: else there is no screen, and nothing is done)

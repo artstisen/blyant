@@ -1341,6 +1341,8 @@ public class EditorTests
         // ":exit" (":qa"): leave Blyant (the host asks about the changes)
         Assert.Equal(EditorRequest.Exit, editor.Type(":exit<CR>"));
         Assert.Equal(EditorRequest.Exit, editor.Type(":qa<CR>"));
+        // ":shell": on as the shell (the host asks about the changes)
+        Assert.Equal(EditorRequest.Shell, editor.Type(":shell<CR>"));
         Assert.Equal(EditorRequest.Bom, editor.Type(":bom ON<CR>"));
         Assert.Equal("on", editor.BomArgument);
         Assert.Equal(EditorRequest.Bom, editor.Type(":bom<CR>"));

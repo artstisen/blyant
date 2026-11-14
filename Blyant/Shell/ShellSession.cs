@@ -53,6 +53,30 @@ internal sealed partial class ShellSession
     internal Action? ClearScreen { get; init; }
 
     /// <summary>
+    /// The size of the window of the terminal (columns, rows), for the pages of what a command shows: null (or no
+    /// rows) when it is not known, and nothing is paged. Set by the shell of the terminal
+    /// </summary>
+    internal Func<(int Width, int Height)?>? WindowSize { get; init; }
+
+    /// <summary>
+    /// Reads the key at the pause after a page (null: no pages). Set by the shell of the terminal
+    /// </summary>
+    internal Func<ConsoleKeyInfo>? ReadKey { get; init; }
+
+    /// <summary>
+    /// "screen": the shell ended to go on on the full screen, in this directory (null: it was left with "exit")
+    /// </summary>
+    internal string? ScreenDirectory { get; private set; }
+
+    /// <summary>
+    /// A file as the last list, without showing it (the file the shell was started from, in the editor)
+    /// </summary>
+    internal void ShowFirst(string file) => LastList = new List<Item> { new(file, false) };
+
+    private int _rows; // The rows written on the page (since the command was typed, or the last pause)
+    private bool _stopped; // "q" at a pause: the rest of what the command shows is not written
+
+    /// <summary>
     /// The number of commands that failed (from a file, the exit code is 1 when there were any)
     /// </summary>
     internal int Failures { get; private set; }
@@ -129,8 +153,56 @@ internal sealed partial class ShellSession
 
     #region Output
 
-    // A line of what a command shows
-    private void Line(string text = "") => _output.WriteLine(text);
+    // A line of what a command shows. In a terminal a long output comes in pages (setting "shellpaging"): when the
+    // window is full, the shell waits for a key (Enter or Space: the next page, q: the rest is not shown)
+    private void Line(string text = "")
+    {
+        if (_stopped) return;
+        if (PageSize() is { } size)
+        {
+            // (a line wider than the window takes more rows)
+            var rows = Math.Max(1, (TextMetrics.WidthOf(text) + size.Width - 1) / size.Width);
+            if (_rows > 0 && _rows + rows > size.Height - 1 && !Pause(size.Width))
+            {
+                _stopped = true;
+                return;
+            }
+
+            _rows += rows;
+        }
+
+        _output.WriteLine(text);
+    }
+
+    // The size of a page: in a terminal, with paging on (setting "shellpaging"), in a window of a known size. Null:
+    // no pages (from a file or a pipe, paging off, or a terminal that does not tell its size)
+    private (int Width, int Height)? PageSize()
+    {
+        if (!Terminal || !Shell.Paging || ReadKey == null || WindowSize?.Invoke() is not { } size) return null;
+        return size.Width > 0 && size.Height > 2 ? size : null;
+    }
+
+    // The pause after a page, on the last row: true to go on (Enter, Space or another key), false to stop (q, Esc,
+    // Ctrl+C). The line of the pause is written over by what comes next
+    private bool Pause(int width)
+    {
+        var text = Lang.T("-- More: Enter or Space next page, q stop --");
+        _output.Write(text);
+        _output.Flush();
+        var key = ReadKey!();
+        _output.Write("\r" + new string(' ', Math.Min(TextMetrics.WidthOf(text), Math.Max(0, width - 1))) + "\r");
+        _output.Flush();
+        _rows = 0;
+        return key.Key is not (ConsoleKey.Q or ConsoleKey.Escape) &&
+               !(key.Key == ConsoleKey.C && key.Modifiers.HasFlag(ConsoleModifiers.Control));
+    }
+
+    // A new page starts: a command typed, or an answer (the rows before it have been read)
+    private void NewPage(int rows = 1)
+    {
+        _rows = rows;
+        _stopped = false;
+    }
 
     // What went wrong: a command that failed (on the error output, so a script can tell it from what is shown)
     private void Error(string text)
@@ -202,6 +274,7 @@ internal sealed partial class ShellSession
         _output.Write("  " + shown + ": ");
         _output.Flush();
         var typed = _input.ReadLine()?.Trim();
+        NewPage();
         if (typed == null) return -1;
         if (guarded) return string.Equals(typed, choices[0], StringComparison.CurrentCultureIgnoreCase) ? 0 : -1;
         if (typed.Length == 0) return selected;
@@ -242,6 +315,7 @@ internal sealed partial class ShellSession
         _output.Write("  " + label + " ");
         _output.Flush();
         var typed = _input.ReadLine()?.Trim();
+        NewPage();
         return string.IsNullOrEmpty(typed) ? null : typed;
     }
 

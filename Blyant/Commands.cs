@@ -51,49 +51,49 @@ internal static class Commands
     private static readonly Dictionary<CommandContext, Table> Tables = new()
     {
         [CommandContext.Files] = new Table(
-            "quit close exit home data help browse file open jump book peek diff cd new info mkdir rename copy duplicate move delete favorite favorites history hotlist hotadd bookmark board pin refresh panes match path name find projects trash recovery project protect number nonumber bookmark! splits recent colorscheme log",
+            "quit close exit home data help browse file open jump book peek diff cd new info mkdir rename copy duplicate move delete favorite favorites history hotlist hotadd bookmark board pin refresh panes match path name find projects trash recovery project protect number nonumber bookmark! splits recent colorscheme log shell",
             "q h fav favs hist hot ju jmp proj pro corkboard colo qa"),
         [CommandContext.FilePicker] = new Table(
             "quit close home data help cd number nonumber",
             "q h"),
         [CommandContext.Favorites] = new Table(
             "quit close help jump book new color info remove move top bottom undo folder subfolder note panes peek number nonumber expand collapse rename import goto " +
-            "path name recent missing prune list bookmark bookmark! board pin colorscheme log favorites history hotlist browse file open exit",
+            "path name recent missing prune list bookmark bookmark! board pin colorscheme log favorites history hotlist browse file open exit shell",
             "q h u ju jmp corkboard colo favs hist hot qa"),
         [CommandContext.History] = new Table(
             "quit close help jump book info goto favorite remove clear path name number nonumber recent missing prune " +
-            "bookmark bookmark! board pin colorscheme log favorites history hotlist browse file open exit",
+            "bookmark bookmark! board pin colorscheme log favorites history hotlist browse file open exit shell",
             "q h fav ju jmp corkboard colo favs hist hot qa"),
         [CommandContext.Hotlist] = new Table(
             "quit close help jump book info remove undo top bottom move rename clear path name number nonumber recent " +
-            "missing prune bookmark bookmark! board pin colorscheme log favorites history hotlist browse file open exit",
+            "missing prune bookmark bookmark! board pin colorscheme log favorites history hotlist browse file open exit shell",
             "q h u ju jmp corkboard colo favs hist hot qa"),
         [CommandContext.Search] = new Table(
-            "quit close help jump book find info goto favorite number nonumber recent bookmark bookmark! board pin colorscheme log favorites history hotlist browse file open exit",
+            "quit close help jump book find info goto favorite number nonumber recent bookmark bookmark! board pin colorscheme log favorites history hotlist browse file open exit shell",
             "q h fav ju jmp corkboard colo favs hist hot qa"),
         [CommandContext.Start] = new Table(
             "new blank recover file open browse favorites project projects start config general layout editor lists modules system jump book splits recent help about " +
-            "quick scheme logo snippet completions clipboard log restart reset quit exit board colorscheme history hotlist",
+            "quick scheme logo snippet completions clipboard log restart reset quit exit board colorscheme history hotlist shell",
             "favs newproject proj pro ju jmp h guide snip comp q corkboard colo hist hot qa"),
         [CommandContext.Jump] = new Table(
             "quit close help info jump book new note panes peek number nonumber folder subfolder expand collapse rename color remove move " +
-            "top bottom undo clearbook import path name recent missing prune board colorscheme log favorites history hotlist browse file open exit",
+            "top bottom undo clearbook import path name recent missing prune board colorscheme log favorites history hotlist browse file open exit shell",
             "q h u ju jmp corkboard colo favs hist hot qa"),
         [CommandContext.Projects] = new Table(
-            "quit close help info path name color note board new add remove colorscheme log favorites history hotlist browse file open exit",
+            "quit close help info path name color note board new add remove colorscheme log favorites history hotlist browse file open exit shell",
             "q h colo favs hist hot qa"),
         [CommandContext.Board] = new Table(
             "quit close help jump book recent new folder note badge divider line frame mode info peek list board arrange color rename remove clear undo " +
-            "top bottom missing prune tofile colorscheme log favorites history hotlist browse file open exit",
+            "top bottom missing prune tofile colorscheme log favorites history hotlist browse file open exit shell",
             "q h u ju jmp corkboard colo favs hist hot qa"),
         [CommandContext.Shell] = new Table(
             "pwd ls cd up open peek find new mkdir rename copy move delete info format trim trim! set favorites history " +
-            "recent hotlist bookmarks projects project log clear version help exit quit",
+            "recent hotlist bookmarks projects project log clear screen version help exit quit",
             "fav favs hist hot book proj h q del cls"),
         [CommandContext.Editor] = new Table(
             "write saveas quit quit! wq help edit edit! reload reload! undo redo delete yank replace nohlsearch " +
             "spell nospell spellnext spellprev suggest spelladd syntax number nonumber timestamp " +
-            "favorite record play macro trim trim! format lineendings bom whitespace mark marks delmarks delmarks! changes bookmark! view splits recent clear registers reglist regclear putall vsel vline block ol ul dup duplicate surround pb pbappend pbread pbclear pbpath clipboard path sort sort! wrap nowrap snip complete diff scrolloff info jump book bookmark yankall rename split only new projects board pin colorscheme log zen favorites history hotlist browse file open exit",
+            "favorite record play macro trim trim! format lineendings bom whitespace mark marks delmarks delmarks! changes bookmark! view splits recent clear registers reglist regclear putall vsel vline block ol ul dup duplicate surround pb pbappend pbread pbclear pbpath clipboard path sort sort! wrap nowrap snip complete diff scrolloff info jump book bookmark yankall rename split only new projects board pin colorscheme log zen favorites history hotlist browse file open exit shell",
             "w q q! wq! x h e e! u red d y s rep noh set spellsuggest spellgood nu nonu ts reg sn ju jmp fav proj pro sur k sview sv corkboard colo favs hist hot qa")
     };
 

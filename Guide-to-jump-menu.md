@@ -47,7 +47,7 @@ It works wherever `:jump` does, and in the Jump menu. After `:jump ` the box abo
 
 As from the menu, a page of Configuration, the file browser and its lists leave the page you are on: from the editor, changes that are not saved are asked about first, and closing them shows the start page. The others open on top and return to where you were.
 
-`:exit` (or `:qa`) exits Blyant from every command line, asking first. From the editor it asks about changes that are not saved; on a page opened on top of the editor (the Jump menu, the corkboard, the list of projects) it is not done while the editor has such changes: you are told to close the page and save or discard them first.
+`:exit` (or `:qa`) exits Blyant from every command line, asking first. From the editor it asks about changes that are not saved; on a page opened on top of the editor (the Jump menu, the corkboard, the list of projects) it is not done while the editor has such changes: you are told to close the page and save or discard them first. `:shell` goes on in the [shell](Guide-to-shell.md#between-the-full-screen-and-the-shell) (Blyant on lines) from every command line, in the same way.
 
 `:favorites` (or `:favs`), `:history` (`:hist`), `:hotlist` (`:hot`) and `:browse` (or `:file`, `:open`) work on every command line: the start page, the lists of the file browser, the Jump menu, the list of projects, the corkboard and the editor.
 

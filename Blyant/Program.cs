@@ -26,7 +26,18 @@ class Program
         }
 
         Init.RunInitialization(shell);
-        if (shell) Environment.Exit(RunShell(arguments, currentDirectory, yes, run));
+        if (shell)
+        {
+            var code = RunShell(arguments, currentDirectory, yes, run);
+            // "screen": on to the full screen
+            if (Shell.TakeScreenRequest() is { } screen)
+            {
+                ToScreen(screen);
+                MainLoop();
+            }
+
+            Environment.Exit(code);
+        }
         if (Lang.Missing != null)
         {
             // The language set has no file (a language file in a folder "lang" that is gone): English is used
@@ -100,6 +111,28 @@ class Program
         return Shell.Run(session);
     }
 
+    // ":shell" on the full screen: the places of the file browser kept (as when Blyant is left), the terminal as it
+    // was, and the shell in the directory of the page (the file edited: the last list). "exit" there leaves Blyant,
+    // "screen" comes back to the full screen
+    private static void ToShell(Shell.Switch request)
+    {
+        FileExplorer.RememberOnExit();
+        Init.LeaveScreen();
+        var directory = request.Directory is { Length: > 0 } asked && Directory.Exists(asked)
+            ? asked
+            : Directory.GetCurrentDirectory();
+        var code = Shell.Run(directory, false, request.File);
+        if (Shell.TakeScreenRequest() is { } screen) ToScreen(screen);
+        else Environment.Exit(code);
+    }
+
+    // "screen" in the shell: the full screen, in the file browser of the directory (closing it shows the start page)
+    private static void ToScreen(string directory)
+    {
+        Init.EnterScreen();
+        Jump.OpenAtStart(new JumpTarget(JumpKind.Directory, directory));
+    }
+
     // The place a path given at startup leads to, or null (a message tells why, or the user did not want a file
     // that is not there to be made)
     private static JumpTarget? OpenArgument(string argument, int? line, string currentDirectory)
@@ -150,7 +183,13 @@ class Program
         {
             try
             {
-                if (Jump.Pending != null)
+                if (Shell.Requested is { } request)
+                {
+                    // ":shell": Blyant goes on as the shell (and back to the full screen with "screen")
+                    Shell.Requested = null;
+                    ToShell(request);
+                }
+                else if (Jump.Pending != null)
                 {
                     // A place was picked in the Jump menu (or given at startup): go there
                     Jump.RunPending();

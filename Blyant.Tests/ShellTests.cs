@@ -442,4 +442,159 @@ public class ShellTests : IDisposable
         Assert.Equal(string.Empty, output + errors);
         Assert.Equal(0, code);
     }
+
+    // ---- Pages: a long output in a terminal waits for a key when the window is full
+
+    // A shell in a terminal of this size, with these keys pressed at the pauses: what it wrote, and how many keys
+    // were read
+    private (string Output, int KeysRead) Paged(string script, (int Width, int Height)? size, params ConsoleKey[] keys)
+    {
+        var output = new StringWriter();
+        var queue = new Queue<ConsoleKeyInfo>(keys.Select(key => new ConsoleKeyInfo(key == ConsoleKey.C ? '\u0003' : ' ',
+            key, false, false, key == ConsoleKey.C)));
+        var read = 0;
+        var session = new ShellSession(new StringReader(script), output, new StringWriter(), In("work"), true)
+        {
+            WindowSize = () => size,
+            ReadKey = () =>
+            {
+                read++;
+                return queue.Count > 0 ? queue.Dequeue() : new ConsoleKeyInfo('q', ConsoleKey.Q, false, false, false);
+            }
+        };
+        Shell.Run(session);
+        return (output.ToString().Replace("\r\n", "\n"), read);
+    }
+
+    // The lines of the file peek shows ("12  Line 12")
+    private static int PeekLines(string output) =>
+        // (anywhere: in a test nothing echoes the command typed, so the first line follows the prompt, and a line after
+        // a pause follows the return that wrote over it)
+        System.Text.RegularExpressions.Regex.Matches(output, @"(?<!\d)\d+  Line \d+").Count;
+
+    private void LongFile() =>
+        File.WriteAllText(In("work", "long.md"), string.Join("\n", Enumerable.Range(1, 60).Select(n => "Line " + n)));
+
+    [Fact]
+    public void ALongOutput_ComesInPages_AndQStopsIt()
+    {
+        LongFile();
+        // A window of 10 rows: 9 for the output (the last for the pause), the first of them the command typed
+        var (output, read) = Paged("peek long.md 1-60\n", (80, 10), ConsoleKey.Enter, ConsoleKey.Q);
+        Assert.Equal(2, read);
+        Assert.Equal(8 + 9, PeekLines(output));
+        Assert.Equal(2, output.Split(Lang.T("-- More: Enter or Space next page, q stop --")).Length - 1);
+        // The next command is shown whole again from its first page
+        var (again, _) = Paged("peek long.md 1-60\npeek long.md 1-5\n", (80, 10), ConsoleKey.Q);
+        Assert.Equal(8 + 5, PeekLines(again));
+    }
+
+    [Fact]
+    public void Space_GoesOn_AndCtrlC_StopsAsQ()
+    {
+        LongFile();
+        var (output, _) = Paged("peek long.md 1-30\n", (80, 10), ConsoleKey.Spacebar, ConsoleKey.Spacebar,
+            ConsoleKey.Spacebar);
+        Assert.Equal(30, PeekLines(output));
+        var (stopped, read) = Paged("peek long.md 1-30\n", (80, 10), ConsoleKey.C);
+        Assert.Equal(1, read);
+        Assert.Equal(8, PeekLines(stopped));
+    }
+
+    [Fact]
+    public void ALineWiderThanTheWindow_TakesMoreRows()
+    {
+        // 25 columns in a window of 10: three rows each
+        File.WriteAllText(In("work", "wide.md"), string.Join("\n", Enumerable.Range(1, 9).Select(n => "Line " + n + new string('x', 17))));
+        var (output, _) = Paged("peek wide.md 1-9\n", (10, 10), ConsoleKey.Q);
+        // (8 rows after the command: two lines of three rows)
+        Assert.Equal(2, PeekLines(output));
+    }
+
+    [Fact]
+    public void NothingIsPaged_WithoutAWindowSize_WithPagingOff_OrFromAFile()
+    {
+        LongFile();
+        // A terminal that does not tell its size (or tells 0 rows)
+        Assert.Equal((60, 0), (PeekLines(Paged("peek long.md 1-60\n", null).Output), Paged("peek long.md 1-60\n", null).KeysRead));
+        Assert.Equal(0, Paged("peek long.md 1-60\n", (80, 0)).KeysRead);
+        // Paging turned off (setting "shellpaging")
+        Shell.Paging = false;
+        var (off, read) = Paged("peek long.md 1-60\n", (80, 10));
+        Assert.Equal(60, PeekLines(off));
+        Assert.Equal(0, read);
+        Shell.Paging = true;
+        // Not a terminal: the whole output, no key read (as for a pipe: blyant --run "ls" | less)
+        var keys = 0;
+        var output = new StringWriter();
+        Shell.Run(new ShellSession(new StringReader("peek long.md 1-60\n"), output, new StringWriter(), In("work"), false)
+        {
+            WindowSize = () => (80, 10),
+            ReadKey = () =>
+            {
+                keys++;
+                return new ConsoleKeyInfo('q', ConsoleKey.Q, false, false, false);
+            }
+        });
+        Assert.Equal(60, PeekLines(output.ToString()));
+        Assert.Equal(0, keys);
+    }
+
+    [Fact]
+    public void ShellPaging_IsASettingOfTheSettingsFile()
+    {
+        FileIo.SaveSettings();
+        Assert.Equal("true", FileIo.ParseSettings(FileIo.ReadSettingsFile())["shellpaging"]);
+        Run("set shellpaging false\n");
+        Assert.False(Shell.Paging);
+        Assert.Equal("false", FileIo.ParseSettings(FileIo.ReadSettingsFile())["shellpaging"]);
+    }
+
+    // ---- Between the full screen and the shell: ":shell" and "screen"
+
+    [Fact]
+    public void Screen_EndsTheShell_ToGoOnOnTheFullScreen_InItsDirectory()
+    {
+        var (_, errors, _, session) = Run("cd Draft\nscreen\nversion\n", terminal: true);
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal(In("work", "Draft"), session.ScreenDirectory);
+        Assert.Equal(In("work", "Draft"), Shell.TakeScreenRequest());
+        // Taken once
+        Assert.Null(Shell.TakeScreenRequest());
+        // "exit": no full screen
+        Run("exit\n", terminal: true);
+        Assert.Null(Shell.TakeScreenRequest());
+    }
+
+    [Fact]
+    public void Screen_NeedsATerminal()
+    {
+        var (_, errors, code, session) = Run("screen\nversion\n");
+        Assert.Equal(Lang.T("The full screen needs a terminal") + "\n", errors);
+        Assert.Null(session.ScreenDirectory);
+        Assert.Null(Shell.TakeScreenRequest());
+        Assert.Equal(1, code);
+    }
+
+    [Fact]
+    public void FromTheEditor_TheFileIsTheLastList()
+    {
+        var session = new ShellSession(new StringReader("exit\n"), new StringWriter(), new StringWriter(), In("work"), false);
+        session.ShowFirst(In("work", "plot.md"));
+        Assert.Equal(In("work", "plot.md"), session.LastList.Single().Path);
+    }
+
+    [Fact]
+    public void ToShell_LeavesThePage_AsAJump_UnlessThePageIsNotLeft()
+    {
+        Shell.Requested = null;
+        // The page does not let go (Cancel at the question about changes): nothing happens
+        Jump.ToShell(() => false, In("work"));
+        Assert.Null(Shell.Requested);
+        // Let go: the page is left (as for a jump), and the main loop is asked for the shell, with the file
+        Assert.Throws<NavigationException>(() => Jump.ToShell(() => true, In("work"), In("work", "plot.md")));
+        Assert.Equal(new Shell.Switch(In("work"), In("work", "plot.md")), Shell.Requested);
+        Assert.Null(Jump.Pending);
+        Shell.Requested = null;
+    }
 }

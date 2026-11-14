@@ -510,6 +510,8 @@ internal static class FileIo
         _tempSettings += "indent=" + EditorEngine.IndentSetting + '\n';
         // Zen mode: the editor of a file shows only the mode and the name above the text, the line and column below (:zen)
         _tempSettings += "zen=" + (TextArea.Zen ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        // The shell: a long output in pages (only here, and with "set shellpaging" in the shell: not in Configuration)
+        _tempSettings += "shellpaging=" + (Shell.Paging ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // In Zen mode, the mode ([N], [I] ...) in the color of its mode, as the mode label outside Zen mode
         _tempSettings += "zencolors=" + (TextArea.ZenColors ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // The modules (Configuration: Modules): the projects and the corkboard, on unless turned off
@@ -707,6 +709,8 @@ internal static class FileIo
         TextArea.ShowWhitespace = Tools.TrimToLower(Get("whitespace")) == DialogText.BTrue;
         TextArea.Zen = Tools.TrimToLower(Get("zen")) == DialogText.BTrue;
         TextArea.ZenColors = Tools.TrimToLower(Get("zencolors")) == DialogText.BTrue;
+        // On unless turned off
+        Shell.Paging = Tools.TrimToLower(Get("shellpaging")) != DialogText.BFalse;
         // 4 spaces unless another width of the list is set
         EditorEngine.IndentSetting = EditorEngine.ParseIndent(Get("indent"));
         // On unless turned off

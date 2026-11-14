@@ -121,6 +121,8 @@ public class MacroTests : IDisposable
         Assert.Equal(EditorRequest.MacroStop, editor.Type(":q<CR>"));
         // So is ":exit": the recording is asked about first
         Assert.Equal(EditorRequest.MacroStop, editor.Type(":exit<CR>"));
+        // ... and ":shell"
+        Assert.Equal(EditorRequest.MacroStop, editor.Type(":shell<CR>"));
         Assert.True(editor.IsRecording);
         Assert.Equal(new[] { "insert \"€5\"" }, editor.StopRecording());
     }

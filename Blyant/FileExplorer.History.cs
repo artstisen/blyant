@@ -81,6 +81,13 @@ internal static partial class FileExplorer
                     continue;
                 }
 
+                if (command != null && CommandLine.Name(command) == "shell")
+                {
+                    // Go on as the shell, in the directory of the file browser
+                    Jump.ToShell(directory: ShellDirectory);
+                    continue;
+                }
+
                 if (command != null && CommandLine.Name(command) is "jump" or "ju" or "jmp" or "board" or "corkboard"
                         or "favorites" or "favs" or "history" or "hist" or "hotlist" or "hot" or "browse"
                         or "file" or "open")

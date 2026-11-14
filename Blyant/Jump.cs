@@ -695,6 +695,20 @@ internal static class Jump
     /// Configuration tab), or the corkboard first when the jump was made from it
     /// </summary>
     /// <summary>
+    /// ":shell" on a page: Blyant goes on as the shell (Blyant on lines), in a directory (null: the one Blyant was
+    /// started in). Not while a page below has changes that are not saved (as for a jump); the page itself asks about
+    /// its own changes first (beforeLeaving). The page is left as for a jump, and the main loop starts the shell
+    /// </summary>
+    internal static void ToShell(Func<bool>? beforeLeaving = null, string? directory = null, string? file = null)
+    {
+        if (!MayLeave(beforeLeaving)) return;
+        Shell.Requested = new Shell.Switch(directory, file);
+        Pending = null;
+        BackToBoard = false;
+        Navigation.Wait();
+    }
+
+    /// <summary>
     /// Forget the jump about to be made (the shell, when the editor it opened is left for another place)
     /// </summary>
     internal static void DropPending()

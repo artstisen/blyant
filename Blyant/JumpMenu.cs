@@ -1652,6 +1652,13 @@ internal static class JumpMenu
             return false;
         }
 
+        if (CommandLine.Name(command) == "shell")
+        {
+            // Go on as the shell (not while the page the menu was opened from has changes that are not saved)
+            Jump.ToShell();
+            return false;
+        }
+
         if (CommandLine.Name(command) is "board" or "corkboard")
         {
             return JumpToPage(Jump.BoardPage(CommandLine.Argument(command)));

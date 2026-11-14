@@ -568,6 +568,14 @@ internal static partial class FileExplorer
                     continue;
                 }
 
+                if (name == "shell" && _mode == BrowseMode.Edit)
+                {
+                    // Go on as the shell, in the directory of the pane
+                    Jump.ToShell(directory: ShellDirectory);
+                    Draw(true);
+                    continue;
+                }
+
                 if (name is "home")
                 {
                     ChangeDirectory(HomeDirectory(), null);
@@ -1532,6 +1540,16 @@ internal static partial class FileExplorer
     /// The file of the recovery copy of the blank page being edited (empty if it is not one)
     /// </summary>
     internal static string UntitledCopy { get; private set; } = string.Empty;
+
+    /// <summary>
+    /// The full path of the file being edited (empty if none)
+    /// </summary>
+    /// <summary>
+    /// The directory ":shell" goes on in from the file browser and its lists: that of the pane with the focus (null:
+    /// the list of drives, or not browsing)
+    /// </summary>
+    internal static string? ShellDirectory =>
+        _mode == BrowseMode.Edit && Panes[_active].Directory.Length > 0 ? Panes[_active].Directory : null;
 
     /// <summary>
     /// The full path of the file being edited (empty if none)

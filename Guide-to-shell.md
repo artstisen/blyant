@@ -10,6 +10,14 @@ blyant --shell ~/projects      The shell, in that directory
 
 (On Windows `Blyant.exe --shell`, and `dotnet Blyant.dll --shell` for the portable version.)
 
+## Between the full screen and the shell
+You can go from one to the other while Blyant runs:
+
+- `:shell` on any command line of the full screen goes on as the shell, in the directory of the page you leave: from the file browser (and its lists) the directory of the pane, from the editor the directory of the file (which is then the last list: `open 1` opens it again), from the list of projects the directory of the selected project, and else the directory Blyant was started in
+- `screen` in the shell goes on on the full screen, in the file browser of the directory you are in. Closing the file browser shows the start page
+
+Leaving with `:shell` is as leaving for a jump of the Jump menu: the editor asks about changes that are not saved first (save, discard, or stay), and on a page opened on top of the editor (the Jump menu, the corkboard, the list of projects) `:shell` is not done while the editor has such changes. `exit` in the shell leaves Blyant, wherever it was started.
+
 ## Prompt and lists
 The prompt shows the directory you are in, from `~` in your home directory:
 
@@ -24,6 +32,17 @@ blyant ~/projects/novel> open 4
 ```
 
 Every list a command shows is numbered, and a number given to the next command is a row of that list: `open 4` opens `plot.md`, `cd 1` goes to `chapters`. A path works too (`open plot.md`, `cd ../other`), and a path that is not full is taken from the directory you are in. A file or directory that is not there is marked `(missing)`.
+
+## Long lists
+In a terminal, an output longer than the window comes in pages: when the window is full, the shell waits, with `-- More: Enter or Space next page, q stop --` on the last row.
+
+- `Enter` or `Space` (or another key) shows the next page
+- `q`, `Esc` or `Ctrl+C` stops: the rest is not shown, and the prompt comes back
+- A line wider than the window takes the rows it needs, and the size of the window is looked at again for each page
+
+Commands read from a file or a pipe, and `--run`, are never paged, so `blyant --run "find *.md" | less` gets the whole list. A terminal that does not tell its size is not paged either.
+
+To have every output whole (with a screen reader, say), turn the pages off: `set shellpaging false` in the shell, or `shellpaging=false` in the settings file (`settings.ini` in the data directory). The setting is not on the pages of Configuration.
 
 ## Commands
 | Command | What it does |
@@ -56,6 +75,7 @@ Every list a command shows is numbered, and a number given to the next command i
 | `project n\|name` | Go to the directory of a project (`project 2`, `project novel`) |
 | `log [n]` | Show the last lines of the [log](Guide-to-start-page.md#log) (20, or as many as you give) |
 | `clear` (`cls`) | Clear the screen: the prompt is at the top again |
+| `screen` | Go on on the full screen, in the file browser of the directory you are in (see [Between the full screen and the shell](#between-the-full-screen-and-the-shell)) |
 | `version` | Show the version of Blyant |
 | `help [command]` (`h`) | List the commands, or tell what one does |
 | `exit` (`quit`, `q`) | Leave Blyant |

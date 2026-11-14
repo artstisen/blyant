@@ -51,6 +51,7 @@ Typed on the command line: press `:`, type the command and press `Enter`. A box 
 - `:q` or `Esc` in Normal mode: Close the editor (asks what to do with unsaved changes)
 - `:q!` or `ZQ` Close the editor without saving
 - `:exit` (or `:qa`) Exit Blyant at once, from the editor: with changes that are not saved you are asked to save or discard them first (or to stay), else whether to exit. Practical when another program opened Blyant at a file (`blyant +12 notes.md`) and you go back to it. While a macro is recorded, it asks about the macro first, as `:q` does
+- `:shell` Go on in the [shell](Guide-to-shell.md#between-the-full-screen-and-the-shell) (Blyant on lines), in the directory of the file: with changes that are not saved you are asked to save or discard them first (or to stay). `screen` there brings you back to the full screen
 - `:e` (or `:reload`) Text files: read the file from disk again, when it has been changed by another program. If you have changes that are not saved it is not done; `:e!` reads the file anyway and drops your changes. What was done before cannot be undone afterwards
 - `:help` Show the list of keys
 - `Ctrl+C` does not close the editor (so text that is not saved is not lost): it tells how to close it. Where the terminal has a selection, `Ctrl+C` still copies it

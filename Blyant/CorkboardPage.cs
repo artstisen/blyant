@@ -1061,6 +1061,10 @@ internal static class CorkboardPage
                 // Leave Blyant (not while the page below the board has changes that are not saved)
                 Jump.Exit();
                 break;
+            case "shell":
+                // Go on as the shell (not while the page below the board has changes that are not saved)
+                Jump.ToShell();
+                break;
             case "h":
             case "help":
                 Tools.WriteEditorHelp(Tools.HelpTopic.Board);

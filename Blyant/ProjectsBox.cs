@@ -334,6 +334,12 @@ internal static class ProjectsBox
                 Jump.Exit();
                 Tools.ClearScreen();
                 return CommandResult.None;
+            case "shell":
+                // Go on as the shell, in the directory of the selected project (not while the editor it was opened
+                // from has changes that are not saved)
+                Jump.ToShell(directory: project?.Path);
+                Tools.ClearScreen();
+                return CommandResult.None;
             case "favorites":
             case "favs":
             case "history":

@@ -81,6 +81,7 @@ internal enum EditorRequest
     ColorScheme, // ":colorscheme name": another color scheme (ColorSchemeArgument: the name, or empty to tell it)
     WhitespaceToggle, // ":whitespace": blank space shown as . > $, or not
     Exit, // ":exit" (":qa"): leave Blyant (changes that are not saved are asked about first)
+    Shell, // ":shell": go on as the shell, in the directory of the file (changes that are not saved are asked about first)
     Zen, // ":zen": Zen mode on or off (only the mode and the name above the text, the line and column below it)
     Favorite // ":favorite": the file a favorite of the file browser (or not)
 }
@@ -645,7 +646,7 @@ internal sealed partial class EditorEngine
         // While recording, :q, :wq and ZZ ask about the macro first (as Esc does)
         if (IsRecording && !IsPlayingMacro &&
             _request is EditorRequest.Quit or EditorRequest.ForceQuit or EditorRequest.SaveAndQuit
-                or EditorRequest.ClosePane or EditorRequest.Exit)
+                or EditorRequest.ClosePane or EditorRequest.Exit or EditorRequest.Shell)
         {
             _request = EditorRequest.MacroStop;
         }
@@ -1444,6 +1445,9 @@ internal sealed partial class EditorEngine
             case "exit":
             case "qa":
                 if (!SingleLine) _request = EditorRequest.Exit;
+                break;
+            case "shell":
+                if (!SingleLine) _request = EditorRequest.Shell;
                 break;
             case "wq":
             case "wq!":

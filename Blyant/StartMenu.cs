@@ -282,6 +282,10 @@ internal static class StartMenu
                 Blyant.Jump.Exit();
 
                 break;
+            case "shell":
+                // Go on as the shell, in the directory Blyant was started in
+                Blyant.Jump.ToShell();
+                break;
             default:
                 CommandLine.ShowUnknown(command);
                 break;

@@ -26,6 +26,8 @@ internal static class Init
     /// </summary>
     internal static void EnterScreen()
     {
+        // (Blyant started as the shell: from now on the full screen)
+        Plain = false;
         SetDefaultOutputDimensions();
         ApplyAutoSize();
         Tools.HideCursor();
