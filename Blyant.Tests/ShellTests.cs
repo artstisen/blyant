@@ -666,4 +666,59 @@ public class ShellTests : IDisposable
         Assert.True(ShellSession.LinesOf("+2000000000", "2000000000", out _, out last));
         Assert.Equal(int.MaxValue, last);
     }
+
+    [Theory]
+    [InlineData("a\nb\n", 1, "new\na\nb\n", 1)]
+    [InlineData("a\nb\n", int.MaxValue, "a\nb\nnew\n", 3)]
+    [InlineData("a\nb\n", 2, "a\nnew\nb\n", 2)]
+    [InlineData("a\nb\n", 3, "a\nb\nnew\n", 3)]
+    [InlineData("a\nb\n", 99, "a\nb\nnew\n", 3)]
+    // Without a line break at the end: none after a line put in at the end
+    [InlineData("a\nb", int.MaxValue, "a\nb\nnew", 3)]
+    [InlineData("a\nb", 1, "new\na\nb", 1)]
+    [InlineData("", int.MaxValue, "new\n", 1)]
+    [InlineData("", 5, "new\n", 1)]
+    public void WithLine_PutsTheLineInItsPlace(string text, int at, string expected, int line)
+    {
+        Assert.Equal((expected, line), ShellSession.WithLine(text, "new", at));
+    }
+
+    [Fact]
+    public void Insert_PutsALineInAFile_KeepingItsLineEndings_AndOpenGoesThere()
+    {
+        File.WriteAllText(In("work", "list.md"), "One\r\nTwo\r\n");
+        var (output, errors, _, session) = Run(
+            "insert list.md top Zero\ninsert list.md bottom   Three, with \"quotes\"\ninsert list.md +3 Two and a half\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("Zero\r\nOne\r\nTwo and a half\r\nTwo\r\n  Three, with \"quotes\"\r\n",
+            File.ReadAllText(In("work", "list.md")));
+        Assert.Contains(Lang.F("{0}: line {1} put in", In("work", "list.md"), 3), output);
+        Assert.Equal((3, 1), session.LastList.Single().At);
+        // A file named with blanks, in quotes
+        File.WriteAllText(In("work", "my notes.md"), "x\n");
+        Run("insert \"my notes.md\" bottom y\n");
+        Assert.Equal("x\ny\n", File.ReadAllText(In("work", "my notes.md")));
+    }
+
+    [Fact]
+    public void Insert_TellsWhatItCannotDo()
+    {
+        File.WriteAllBytes(In("work", "old.md"), new byte[] { 0x63, 0x61, 0x66, 0xE9, 0x0A });
+        File.WriteAllText(Path.Combine(_data, FileIo.SettingsFileName), "x\n");
+        var (_, errors, code, _) = Run("insert plot.md\ninsert plot.md middle x\ninsert plot.md +0 x\ninsert old.md top x\n" +
+                                       "insert missing.md top x\ninsert Draft top x\ninsert \"" +
+                                       Path.Combine(_data, FileIo.SettingsFileName) + "\" top x\n");
+        Assert.Equal(7, errors.TrimEnd('\n').Split('\n').Length);
+        Assert.Equal("Plot\n", File.ReadAllText(In("work", "plot.md")));
+        Assert.Equal("x\n", File.ReadAllText(Path.Combine(_data, FileIo.SettingsFileName)));
+        Assert.Equal(1, code);
+    }
+
+    [Fact]
+    public void Insert_NeverLogsTheText()
+    {
+        Run("insert plot.md bottom secret words\n");
+        Assert.DoesNotContain(EventLog.All, line => line.Contains("secret words"));
+        Assert.Contains(EventLog.All, line => line.Contains("Insert: " + In("work", "plot.md") + ":2"));
+    }
 }

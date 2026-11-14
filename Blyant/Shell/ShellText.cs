@@ -79,6 +79,110 @@ internal sealed partial class ShellSession
         Line(item.Path + ": " + (command == "format" ? Lang.T("Formatted") : editor.Message));
     }
 
+    // "insert notes.md top Buy milk", "insert 3 bottom - one more", "insert notes.md +12 A new line": a line of text put
+    // in a file without opening it: before the first line, after the last, or as line 12 (before the line that was
+    // there; past the end: after the last). The text is all that follows the place, as typed. The file is saved with
+    // its line endings and byte order mark; only a file in UTF-8, and not one Blyant uses. The file is then the last
+    // list, at the line put in ("open 1")
+    private void Insert(string argument)
+    {
+        // The file (a word, or in quotes), the place, and the rest of the line as the text
+        var words = Words(argument);
+        if (words.Count < 2)
+        {
+            Error(Lang.T("Give a file, where, and the text: insert notes.md bottom Buy milk"));
+            return;
+        }
+
+        var rest = AfterWords(argument, 2);
+        var where = words[1].ToLowerInvariant();
+        int? at = where switch
+        {
+            "top" => 1,
+            "bottom" => int.MaxValue,
+            _ => where.Length > 1 && where[0] == '+' && int.TryParse(where[1..], out var line) && line > 0 ? line : null
+        };
+        if (at == null)
+        {
+            Error(Lang.F("Not a place in a file: {0} (top, bottom or +12)", words[1]));
+            return;
+        }
+
+        if (Existing(words[0]) is not { } item || Protected(item)) return;
+        if (item.IsDirectory)
+        {
+            Error(Lang.F("Not a file: {0}", item.Path));
+            return;
+        }
+
+        TextFile file;
+        try
+        {
+            file = TextFile.Load(item.Path);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidDataException)
+        {
+            Error(Lang.F("{0} cannot be read: {1}", item.Path, e.Message));
+            return;
+        }
+
+        if (!file.IsUtf8)
+        {
+            Error(Lang.F("{0} is not in UTF-8 ({1}): open it in the editor, which saves it in UTF-8", item.Path,
+                file.EncodingName));
+            return;
+        }
+
+        var (text, number) = WithLine(file.Text, rest, at.Value);
+        var result = file.Save(text);
+        // (the path, never the text)
+        FileExplorer.LogFileOperation("Insert", item.Path + ":" + number, result);
+        if (result != DialogText.Success)
+        {
+            Error(result);
+            return;
+        }
+
+        LastList = new List<Item> { new(item.Path, false, (number, 1)) };
+        Line(Lang.F("{0}: line {1} put in", item.Path, number));
+    }
+
+    /// <summary>
+    /// A text with a line put in as line "at" (1: before the first; past the end: after the last), and the number it
+    /// got. The lines end in "\n"; a text that ends with a line break keeps it, and one that does not gets none after
+    /// a line put in at the end
+    /// </summary>
+    internal static (string Text, int Line) WithLine(string text, string line, int at)
+    {
+        text = TextBuffer.Normalize(text);
+        line = line.Replace("\r", string.Empty).Replace("\n", " ");
+        if (text.Length == 0) return (line + "\n", 1);
+        var endsWithBreak = text.EndsWith('\n');
+        var lines = (endsWithBreak ? text[..^1] : text).Split('\n').ToList();
+        var index = Math.Clamp(at - 1, 0, lines.Count);
+        lines.Insert(index, line);
+        return (string.Join("\n", lines) + (endsWithBreak ? "\n" : string.Empty), index + 1);
+    }
+
+    // What follows the first words of a text (words in quotes as one), as typed (one blank after them left out)
+    private static string AfterWords(string text, int count)
+    {
+        var i = 0;
+        for (var word = 0; word < count; word++)
+        {
+            while (i < text.Length && char.IsWhiteSpace(text[i])) i++;
+            var quoted = false;
+            while (i < text.Length && (quoted || !char.IsWhiteSpace(text[i])))
+            {
+                if (text[i] == '"') quoted = !quoted;
+                i++;
+            }
+        }
+
+        if (i < text.Length && char.IsWhiteSpace(text[i])) i++;
+        return i < text.Length ? text[i..] : string.Empty;
+    }
+
     // "info 3": the name, kind, size, dates and path of a file or directory, as ":info" in the file browser, and for a
     // text file its characters, words and lines, its encoding and line endings
     private void Info(string argument)

@@ -25,6 +25,7 @@ internal sealed partial class ShellSession
         ("move file|n dir|n", Lang.T("Move a file or directory into a directory")),
         ("delete file|n", Lang.T("Delete a file or directory, to the trash (del)")),
         ("info [file|n]", Lang.T("Tell about a file or directory (alone: this one)")),
+        ("insert file|n top|bottom|+line text", Lang.T("Put a line of text in a file, without opening it")),
         ("format file|n", Lang.T("Format an HTML, CSS or XML file, as :format does")),
         ("trim file|n", Lang.T("Remove blank space at line ends, as :trim does (trim!)")),
         ("set [name [value]]", Lang.T("Show the settings, or change one")),
@@ -131,6 +132,9 @@ internal sealed partial class ShellSession
                 break;
             case "info":
                 Info(argument);
+                break;
+            case "insert":
+                Insert(argument);
                 break;
             case "format":
                 ChangeText(argument, "format");
