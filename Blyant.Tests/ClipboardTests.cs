@@ -155,11 +155,11 @@ public class ClipboardTests : IDisposable
         // It is the current string after a yank, and the yank is still in the memory
         editor.Type("0yiw");
         SystemClipboard.PasteBin = true;
-        Assert.Equal((DialogText.CopiedToPasteBinAndMemory, false), SystemClipboard.CopyWithMemory("/home/lars"));
-        Assert.Equal("/home/lars", Tools.GetCurrentLineFromLineMemory());
+        Assert.Equal((DialogText.CopiedToPasteBinAndMemory, false), SystemClipboard.CopyWithMemory("/home/anna"));
+        Assert.Equal("/home/anna", Tools.GetCurrentLineFromLineMemory());
         Assert.Contains("see", Tools.GetAllLinesFromLineMemory());
         SystemClipboard.ReadPasteBin(out var text);
-        Assert.Equal("/home/lars", text);
+        Assert.Equal("/home/anna", text);
     }
 
     [Fact]

@@ -133,7 +133,7 @@ public class HotlistTests : IDisposable
     public void LongPaths_AreShortenedByTheCellsTheyTake()
     {
         // Wide characters (Japanese, Chinese) take two cells, and an emoji is not split
-        Assert.Equal("/home/lars", TextMetrics.KeepEnd("/home/lars", 10));
+        Assert.Equal("/home/anna", TextMetrics.KeepEnd("/home/anna", 10));
         Assert.Equal("...資料/メモ", TextMetrics.KeepEnd("/home/anna/資料/メモ", 12));
         Assert.Equal(12, TextMetrics.WidthOf(TextMetrics.KeepEnd("/home/anna/資料/メモ", 12)));
         Assert.Equal(".../📁x", TextMetrics.KeepEnd("/home/📁/📁x", 7));
