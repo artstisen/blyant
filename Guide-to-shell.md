@@ -49,11 +49,13 @@ blyant ~/projects/novel> open 4
 
 Every list a command shows is numbered, and a number given to a command after it is a row of that list: `open 4` opens `plot.md`, `cd 1` goes to `chapters`. A path works too (`open plot.md`, `cd ../other`), and a path that is not full is taken from the directory you are in. A file or directory that is not there is marked `(missing)`.
 
+The favorites, the history (`hist` and `recent`) and the bookmarks show the names of the files and directories, not their paths, so a list is quick to read. A name that two rows have gets the folder it is in after it (`README.md (novel)`). `info 3` tells the rest of row 3: its full path, size, dates and, for a text, its words and lines. `-l` shows a list with the full paths (`fav -l`, `hist -l`, `recent -l`, `book -l`). The hotlist, the projects, `ls` and `find` show paths, as before.
+
 The last list is kept for as long as no other command takes its place, however long that is (until Blyant ends: it is not kept for the next time):
 
 - A list shown takes its place: `ls`, `fav`, `hist`, `recent`, `hot`, `book`, `projects` and `find`
-- So does the file or directory a command worked on, as a list of one row (`open 1` opens it): `peek`, `insert`, `change`, `shift`, `format`, `trim` and `info` (the file, at its line), `lines` (the other file, at the lines put in), `new`, `mkdir`, `copy`, `move` and `rename` (the new place), and `cd` on a file (the file)
-- Other commands leave it as it was: `cd` into a directory, `up`, `home`, `data`, `pwd`, `open`, `delete`, `clip`, `reg`, `set`, `help`, `about` and `clear`. The rows are full paths, so `fav`, then `cd` somewhere else, and `open 3` still opens row 3 of the favorites
+- So does the file or directory a command worked on, as a list of one row (`open 1` opens it): `peek`, `insert`, `change`, `shift`, `format` and `trim` (the file, at its line), `lines` (the other file, at the lines put in), `new`, `mkdir`, `copy`, `move` and `rename` (the new place), and `cd` on a file (the file)
+- Other commands leave it as it was: `info` (so `fav`, `info 3`, `info 4` and `open 4` work), `cd` into a directory, `up`, `home`, `data`, `pwd`, `open`, `delete`, `clip`, `reg`, `set`, `help`, `about` and `clear`. The rows are full paths, so `fav`, then `cd` somewhere else, and `open 3` still opens row 3 of the favorites
 - A row deleted since (`delete 3`) stays in the list, and is told as not there. When a number is not a row of the list you meant (after `peek 2`, the last list is that file), show the list again
 
 The shell writes in the colors of your terminal (the color scheme is for the full screen), and a character of a file that would steer the terminal (an escape sequence: a color, a title, the clipboard) is shown as `?`. A command that fails in a way it should not is told (`The command failed: ...`), and the shell goes on.
@@ -87,7 +89,7 @@ To have every output whole (with a screen reader, say), turn the pages off: `set
 | `copy file\|n dir\|n` | Copy a file or directory into a directory |
 | `move file\|n dir\|n` | Move a file or directory into a directory |
 | `delete file\|n` (`del`) | Delete a file or directory: to the trash, after asking |
-| `info [file\|n]` | Tell about a file or directory (alone: the one you are in): its kind, size, dates and path, and for a text file its characters, words, lines, encoding and line endings |
+| `info [file\|n]` | Tell about a file or directory (alone: the one you are in): its kind, size, dates and path, and for a text file its characters, words, lines, encoding and line endings. The last list stays as it was |
 | `insert file\|n top\|bottom\|+line text` | Put a line of text in a file without opening it: before the first line, after the last, or as line 12 (`+12`). See [Text and settings](#text-and-settings) |
 | `change file\|n +line\|from-to [text]` | Change a line (`+12`) or lines (`12-15`) of a file into a text, or delete them when no text is given (asks first). See [Text and settings](#text-and-settings) |
 | `shift file\|n lines place` | Move lines in a file without opening it: under a heading (`shift todo.md 4-6 Done`), at the end of its section (`Done+`), before a line (`+12`), to the `top` or the `bottom`. See [Moving lines](#moving-lines) |
@@ -105,13 +107,13 @@ To have every output whole (with a screen reader, say), turn the pages off: `set
 | `clip lines file\|n lines` | Copy lines of a file to the clipboard, given as for `peek` (`40`, `100-120`, `+100 30`) |
 | `clip $name` | Copy the value of a register to the clipboard |
 | `$clip` | The text `clip` copied last, put in a command as a register is (`insert plan.md bottom $clip`: its lines) |
-| `favorites [list]` (`fav`) | List the favorites of the file browser, with their folders as headings; `fav work` uses the list _work_ from now on, as `:list work` does |
-| `history` (`hist`) | List the files opened, the newest first, with when |
-| `recent` | List the latest files (the first nine of the history) |
+| `favorites [-l] [list]` (`fav`) | List the favorites of the file browser by name, with their folders as headings (`-l`: the full paths); `fav work` uses the list _work_ from now on, as `:list work` does |
+| `history [-l]` (`hist`) | List the files opened by name, the newest first, with when (`-l`: the full paths) |
+| `recent [-l]` | List the latest files (the first nine of the history), by name (`-l`: the full paths) |
 | `hotlist` (`hot`) | List the directory hotlist |
 | `fav add\|remove file\|n` | Add a file or directory to the favorites in use, or take it off them |
 | `hot add\|remove [dir\|n]` | Add a directory to the hotlist (`hot add` alone: the one you are in), or take it off |
-| `bookmarks` (`book`) | List the bookmarks of the Jump menu (a page of Blyant is shown, but opened on the full screen only) |
+| `bookmarks [-l]` (`book`) | List the bookmarks of the Jump menu, by name (`-l`: the full paths; a page of Blyant is shown, but opened on the full screen only) |
 | `projects` (`proj`) | List the projects |
 | `project n\|name` | Go to the directory of a project (`project 2`, `project novel`) |
 | `log [n]` | Show the last lines of the [log](Guide-to-start-page.md#log) (20, or as many as you give) |

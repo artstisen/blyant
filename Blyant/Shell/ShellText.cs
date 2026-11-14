@@ -369,7 +369,7 @@ internal sealed partial class ShellSession
             }
         }
 
-        LastList = new List<Item> { item };
+        // (the last list is kept: "fav", "info 3", "info 4", then "open 4")
         var width = rows.Max(row => row.Label.Length) + 2;
         foreach (var (label, value) in rows) Line("  " + label.PadRight(width) + value);
     }

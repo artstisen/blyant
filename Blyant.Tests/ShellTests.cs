@@ -138,8 +138,9 @@ public class ShellTests : IDisposable
 
         var (output, errors, _, session) = Run("fav\nhist\nhot\ncd 1\nproj\nproject notes\nbook\n");
         Assert.Equal(string.Empty, errors);
-        Assert.Contains("  1  " + In("work", "plot.md") + "\n", output);
-        Assert.Contains("  1  " + In("work", "Ending.md") + "  2026-11-13 09:30\n", output);
+        // (the favorites and the history by name; the hotlist and the projects with their paths)
+        Assert.Contains("  1  plot.md\n", output);
+        Assert.Contains("  1  Ending.md  2026-11-13 09:30\n", output);
         Assert.Contains("  1  " + Path.TrimEndingDirectorySeparator(In("work", "Draft")) + "/\n", output);
         Assert.Contains("  1  notes  " + Path.TrimEndingDirectorySeparator(In("work", "notes")) + "/\n", output);
         // "project notes" went to the project; the bookmark is the last list
@@ -2217,5 +2218,55 @@ public class ShellTests : IDisposable
     public void WithoutLines_TakesOutTheLines(string text, int[] taken, string expected)
     {
         Assert.Equal(expected, ShellSession.WithoutLines(text, taken));
+    }
+
+    // ---- Lists by name ("-l": full paths), and info keeps the last list
+
+    [Fact]
+    public void TheLists_ShowNames_TheFolderOfANameTwice_AndFullPathsWithDashL()
+    {
+        Directory.CreateDirectory(In("work", "novel"));
+        File.WriteAllText(In("work", "novel", "plot.md"), "x\n");
+        FileFavorites.Toggle(In("work", "plot.md"));
+        FileFavorites.Toggle(In("work", "novel", "plot.md"));
+        FileFavorites.Toggle(In("work", "Draft"));
+        FileFavorites.Toggle(In("work", "gone.md"));
+        FileFavorites.Save();
+        FileHistory.Add(In("work", "Ending.md"), new DateTime(2026, 11, 13, 9, 30, 0));
+        FileHistory.Add(In("work", "novel", "plot.md"), new DateTime(2026, 11, 13, 10, 0, 0));
+        FileHistory.Save();
+
+        var (output, errors, _, _) = Run("fav\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains("  plot.md (work)\n", output);
+        Assert.Contains("  plot.md (novel)\n", output);
+        Assert.Contains("  Draft/\n", output);
+        Assert.Contains("  gone.md " + DialogText.FavoriteMissing + "\n", output);
+        (output, _, _, _) = Run("fav -l\nrecent\nhist -l\n");
+        Assert.Contains("  " + In("work", "novel", "plot.md") + "\n", output);
+        // The dates lined up after the names
+        Assert.Contains("  1  plot.md    2026-11-13 10:00\n", output);
+        Assert.Contains("  2  Ending.md  2026-11-13 09:30\n", output);
+        // (-l: the full paths, the date right after each: not lined up, the rows would be too wide)
+        Assert.Contains("  2  " + In("work", "Ending.md") + "  2026-11-13 09:30\n", output);
+    }
+
+    [Fact]
+    public void Info_KeepsTheLastList()
+    {
+        FileFavorites.Toggle(In("work", "plot.md"));
+        FileFavorites.Toggle(In("work", "Ending.md"));
+        FileFavorites.Save();
+        var (output, errors, _, session) = Run("fav\ninfo 2\ninfo 1\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains(In("work", "Ending.md"), output);
+        Assert.Equal(2, session.LastList.Count);
+    }
+
+    [Fact]
+    public void Tab_AfterTheLists_CompletesDashL()
+    {
+        Assert.Equal("hist -l", Tab(Completion(), "hist -"));
+        Assert.Equal("fav -l", Tab(Completion(), "fav -"));
     }
 }

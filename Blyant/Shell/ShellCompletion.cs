@@ -169,8 +169,16 @@ internal sealed class ShellCompletion
             case "favorites":
             case "fav":
             case "favs":
-                if (position == 0) return (Kind.Words, new[] { "add", "remove" }.Concat(FileFavorites.ListNames()));
+                if (position == 0)
+                    return (Kind.Words, new[] { "add", "remove", "-l" }.Concat(FileFavorites.ListNames()));
+                if (position == 1 && after[0] == "-l") return (Kind.Words, FileFavorites.ListNames());
                 return (position == 1 && after[0] is "add" or "remove" ? Kind.Path : Kind.None, none);
+            case "history":
+            case "hist":
+            case "recent":
+            case "bookmarks":
+            case "book":
+                return (position == 0 ? Kind.Words : Kind.None, new[] { "-l" });
             case "hotlist":
             case "hot":
                 if (position == 0) return (Kind.Words, new[] { "add", "remove" });

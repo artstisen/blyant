@@ -44,13 +44,14 @@ internal sealed partial class ShellSession
         ("clip ... $clip", Lang.T("The text copied last, in a command")),
         ("reg [name [text|.|#n]]", Lang.T("Keep a text or a path in a register: $name puts it in a command")),
         ("reg -d name|all", Lang.T("Take a register away, or all of them")),
-        ("favorites [list]", Lang.T("List the favorites (fav), or those of another list")),
+        ("favorites [-l] [list]", Lang.T("List the favorites (fav), or those of another list")),
+        ("favorites -l", Lang.T("Lists with full paths (also hist, recent, book)")),
         ("favorites add|remove file|n", Lang.T("Add to the favorites, or take off them")),
-        ("history", Lang.T("List the files opened (hist)")),
-        ("recent", Lang.T("List the latest files")),
+        ("history [-l]", Lang.T("List the files opened (hist)")),
+        ("recent [-l]", Lang.T("List the latest files")),
         ("hotlist", Lang.T("List the directory hotlist (hot)")),
         ("hotlist add|remove [dir|n]", Lang.T("Add a directory to the hotlist (this one), or take it off")),
-        ("bookmarks", Lang.T("List the bookmarks (book)")),
+        ("bookmarks [-l]", Lang.T("List the bookmarks (book)")),
         ("projects", Lang.T("List the projects (proj)")),
         ("project n|name", Lang.T("Go to the directory of a project")),
         ("log [n]", Lang.T("Show the last lines of the log (20)")),
@@ -155,10 +156,10 @@ internal sealed partial class ShellSession
                 break;
             case "history":
             case "hist":
-                ListHistory(int.MaxValue);
+                ListHistory(int.MaxValue, argument);
                 break;
             case "recent":
-                ListHistory(RecentBox.MaxFiles);
+                ListHistory(RecentBox.MaxFiles, argument);
                 break;
             case "hotlist":
             case "hot":
@@ -234,7 +235,7 @@ internal sealed partial class ShellSession
                 break;
             case "bookmarks":
             case "book":
-                ListBookmarks();
+                ListBookmarks(argument);
                 break;
             case "projects":
             case "proj":
@@ -419,6 +420,9 @@ internal sealed partial class ShellSession
 
     private void ListFavorites(string argument)
     {
+        // ("fav -l", "fav -l work": the full paths)
+        var (full, rest) = LongList(argument);
+        argument = rest;
         FileFavorites.Load();
         if (argument.Trim().Length > 0)
         {
@@ -434,20 +438,23 @@ internal sealed partial class ShellSession
 
         if (FileFavorites.CurrentList.Length > 0) Line(Lang.F("List: {0}", FileFavorites.CurrentList));
         // The folders of the list are shown as headings (not numbered)
-        var rows = new List<(Item, string)>();
+        var items = new List<Item>();
         var headings = new Dictionary<int, string>();
         foreach (var favorite in FileFavorites.Items)
         {
             if (favorite.IsFolder)
             {
-                headings[rows.Count] = new string(' ', 2 * favorite.Level) + "[" + favorite.Name + "]";
+                headings[items.Count] = new string(' ', 2 * favorite.Level) + "[" + favorite.Name + "]";
                 continue;
             }
 
             var isDirectory = System.IO.Directory.Exists(favorite.Path);
             var at = favorite.Line > 0 ? (favorite.Line, Math.Max(1, favorite.Column)) : ((int, int)?)null;
-            rows.Add((new Item(favorite.Path, isDirectory, at), Shown(favorite.Path, isDirectory)));
+            items.Add(new Item(favorite.Path, isDirectory, at));
         }
+
+        var names = Names(items.Select(item => (item.Path, item.IsDirectory)).ToList(), full);
+        var rows = items.Select((item, i) => (item, names[i])).ToList();
 
         if (headings.Count == 0)
         {
@@ -465,12 +472,17 @@ internal sealed partial class ShellSession
         }
     }
 
-    private void ListHistory(int most)
+    // "hist", "recent": the files by name and when they were opened ("-l": the full paths)
+    private void ListHistory(int most, string argument)
     {
+        var (full, _) = LongList(argument);
         FileHistory.Load();
-        var rows = FileHistory.Items.Take(most).Select(entry =>
-            (new Item(entry.Path, false), Shown(entry.Path, false) + "  " + entry.Opened.ToString("yyyy-MM-dd HH:mm")))
-            .ToList();
+        var entries = FileHistory.Items.Take(most).ToList();
+        var names = Names(entries.Select(entry => (entry.Path, false)).ToList(), full);
+        // (the dates lined up after the names; after full paths not: the rows would be wider than the window)
+        var width = full || names.Count == 0 ? 0 : names.Max(TextMetrics.WidthOf);
+        var rows = entries.Select((entry, i) => (new Item(entry.Path, false),
+            Padded(names[i], width) + "  " + entry.Opened.ToString("yyyy-MM-dd HH:mm"))).ToList();
         List(rows, Lang.T("No files opened"));
     }
 
@@ -483,18 +495,24 @@ internal sealed partial class ShellSession
         List(rows, Lang.T("No directories in the hotlist"));
     }
 
-    private void ListBookmarks()
+    // "book": the bookmarks, by their name and the name of the file or directory ("-l": its full path)
+    private void ListBookmarks(string argument)
     {
+        var (full, _) = LongList(argument);
         Bookmarks.Load();
-        var rows = Bookmarks.Places.Select(entry =>
+        var places = Bookmarks.Places.ToList();
+        var names = Names(places.Select(entry =>
+            (entry.Target.Kind is JumpKind.File or JumpKind.Directory ? entry.Target.FullPath : "?",
+                entry.Target.Kind == JumpKind.Directory)).ToList(), full);
+        var rows = places.Select((entry, i) =>
         {
             var target = entry.Target;
             var name = entry.Name.Length > 0 ? entry.Name + "  " : string.Empty;
             return target.Kind switch
             {
                 JumpKind.File => (new Item(target.FullPath, false, target.At),
-                    name + Shown(target.FullPath, false) + (target.At is { } at ? ":" + at.Line : string.Empty)),
-                JumpKind.Directory => (new Item(target.FullPath, true), name + Shown(target.FullPath, true)),
+                    name + names[i] + (target.At is { } at ? ":" + at.Line : string.Empty)),
+                JumpKind.Directory => (new Item(target.FullPath, true), name + names[i]),
                 // A page of Blyant: on the full screen only
                 _ => (new Item(string.Empty, false), name + Lang.F("page {0} (full screen only)", target.Target))
             };

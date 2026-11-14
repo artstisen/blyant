@@ -331,6 +331,47 @@ internal sealed partial class ShellSession
         }
     }
 
+    /// <summary>
+    /// Files and directories as a list shows them: by name ("/" after a directory), with the folder they are in after
+    /// a name that two rows have ("README.md (novel)"), and "(missing)" when one is not there. "full": the full paths
+    /// ("fav -l"). "info 3" tells the rest
+    /// </summary>
+    internal static List<string> Names(IReadOnlyList<(string Path, bool IsDirectory)> entries, bool full)
+    {
+        if (full) return entries.Select(entry => Shown(entry.Path, entry.IsDirectory)).ToList();
+        var names = entries.Select(entry => NameOf(entry.Path)).ToList();
+        var twice = names.GroupBy(name => name, StringComparer.OrdinalIgnoreCase).Where(group => group.Count() > 1)
+            .Select(group => group.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        return entries.Select((entry, i) =>
+        {
+            var there = entry.IsDirectory ? System.IO.Directory.Exists(entry.Path) : File.Exists(entry.Path);
+            var shown = names[i] + (entry.IsDirectory ? "/" : string.Empty);
+            var parent = Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(entry.Path));
+            if (twice.Contains(names[i]) && parent != null) shown += " (" + NameOf(parent) + ")";
+            return shown + (there ? string.Empty : " " + DialogText.FavoriteMissing);
+        }).ToList();
+
+        // (a root, as "C:\" or "/", has no name: its path)
+        static string NameOf(string path)
+        {
+            var trimmed = Path.TrimEndingDirectorySeparator(path);
+            var name = Path.GetFileName(trimmed);
+            return name.Length > 0 ? name : trimmed;
+        }
+    }
+
+    // A text made as wide as the widest of a column (by the columns it takes on the screen), for what follows it
+    private static string Padded(string text, int width) =>
+        text + new string(' ', Math.Max(0, width - TextMetrics.WidthOf(text)));
+
+    // "-l" in the words after a list command: the full paths. The words without it
+    private static (bool Full, string Others) LongList(string argument)
+    {
+        var words = Words(argument);
+        var full = words.RemoveAll(word => word == "-l") > 0;
+        return (full, string.Join(' ', words));
+    }
+
     // A file or directory as listed: with "/" after a directory, and "(missing)" when it is not there
     private static string Shown(string path, bool isDirectory)
     {
