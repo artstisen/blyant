@@ -6,7 +6,8 @@
 /// names of files and directories after the commands that take a path ("open pl" to "open plot.md"; "cd" and the
 /// directory of "copy" and "move" take directories only). Tab again gives the next name that fits, and after the last
 /// of them what was typed; Shift+Tab goes back. A name that is the only one that fits is taken: Tab then goes on from
-/// it (into a directory: "Draft/"). This class does not touch the console
+/// it (into a directory: "Draft/"). A name with "*" or "?" in it is a pattern ("*151*" to "Blyant-v151.md"), and with
+/// nothing typed the files opened last come first (setting "shellrecentfirst"). This class does not touch the console
 /// </summary>
 internal sealed class ShellCompletion
 {
@@ -209,26 +210,34 @@ internal sealed class ShellCompletion
 
     // The files and directories (or directories only) whose names start with the end of the word typed, in the
     // directory of the word ("Draft/no" in "Draft"), by name (letter case alike). A directory gets "/" after it, and a
-    // name with a blank in it is put in quotes. Hidden names only when the word starts with "."
+    // name with a blank in it is put in quotes. Hidden names only when the word starts with ".". A name with "*" or "?"
+    // is a pattern ("*151*", "plot?.md"; in the name only, not in the directories before it). With nothing typed, the
+    // files opened last that are in the directory come first, the last opened first (directories: those the files are
+    // in), then the others by name (setting "shellrecentfirst")
     private List<string> PathsFitting(string word, bool directoriesOnly)
     {
         var typed = word.Trim('"');
         var cut = Math.Max(typed.LastIndexOf('/'), typed.LastIndexOf('\\'));
         var folder = cut >= 0 ? typed[..(cut + 1)] : string.Empty;
         var start = typed[(cut + 1)..];
+        var pattern = IsPattern(start);
         string directory;
         try
         {
             directory = folder.Length == 0 ? _directory() : _fullPath(folder);
             if (!System.IO.Directory.Exists(directory)) return new List<string>();
             var info = new DirectoryInfo(directory);
+            var recent = start.Length == 0 && Shell.RecentFirst ? RecentIn(directory, directoriesOnly) : null;
             var names = info.EnumerateDirectories().Select(d => (Name: d.Name, IsDirectory: true))
                 .Concat(directoriesOnly
                     ? Enumerable.Empty<(string Name, bool IsDirectory)>()
                     : info.EnumerateFiles().Select(f => (Name: f.Name, IsDirectory: false)))
-                .Where(entry => entry.Name.StartsWith(start, StringComparison.OrdinalIgnoreCase) &&
+                .Where(entry => (pattern
+                                    ? System.IO.Enumeration.FileSystemName.MatchesSimpleExpression(start, entry.Name)
+                                    : entry.Name.StartsWith(start, StringComparison.OrdinalIgnoreCase)) &&
                                 (start.StartsWith('.') || !entry.Name.StartsWith('.')))
-                .OrderBy(entry => entry.Name, StringComparer.OrdinalIgnoreCase)
+                .OrderBy(entry => recent == null ? 0 : Rank(recent, entry.Name))
+                .ThenBy(entry => entry.Name, StringComparer.OrdinalIgnoreCase)
                 .Select(entry => folder + entry.Name + (entry.IsDirectory ? "/" : string.Empty))
                 .Where(path => !string.Equals(path, typed, StringComparison.Ordinal))
                 .Select(path => path.Contains(' ') ? "\"" + path + "\"" : path)
@@ -240,6 +249,48 @@ internal sealed class ShellCompletion
         {
             return new List<string>();
         }
+    }
+
+    /// <summary>
+    /// True for a name with "*" (any characters) or "?" (one character) in it: a pattern for Tab
+    /// </summary>
+    internal static bool IsPattern(string name) => name.IndexOfAny(['*', '?']) >= 0;
+
+    // Where a name is in the files opened last (0: the last opened), after them all when it is not one of them
+    private static int Rank(List<string> recent, string name)
+    {
+        var index = recent.FindIndex(r => string.Equals(r, name, StringComparison.OrdinalIgnoreCase));
+        return index < 0 ? int.MaxValue : index;
+    }
+
+    // The names in a directory of the files opened last (the last opened first): the files that are in it, or, for a
+    // directory to complete, its directories that have them (in them or below)
+    private static List<string> RecentIn(string directory, bool directoriesOnly)
+    {
+        FileHistory.Load();
+        var names = new List<string>();
+        foreach (var entry in FileHistory.Items)
+        {
+            string? name;
+            if (directoriesOnly)
+            {
+                // ("~/novel" for "~/novel/chapters/02.md": "chapters")
+                if (!FileOperations.IsInside(entry.Path, directory)) continue;
+                var relative = Path.GetRelativePath(directory, entry.Path);
+                var first = relative.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)[0];
+                name = first.Length < relative.Length ? first : null;
+            }
+            else
+            {
+                name = FileOperations.SamePath(Path.GetDirectoryName(entry.Path) ?? string.Empty, directory)
+                    ? Path.GetFileName(entry.Path)
+                    : null;
+            }
+
+            if (name != null && !names.Contains(name, StringComparer.OrdinalIgnoreCase)) names.Add(name);
+        }
+
+        return names;
     }
 
     /// <summary>

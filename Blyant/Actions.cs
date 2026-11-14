@@ -224,6 +224,7 @@ internal static class Actions
         TextArea.ZenColors = false;
         Shell.Paging = true;
         Shell.Completion = true;
+        Shell.RecentFirst = true;
         Shell.StartInShell = false;
         Shell.StartSetting = string.Empty;
         Shell.LastDirectory = string.Empty;

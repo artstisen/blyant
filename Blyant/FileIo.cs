@@ -545,6 +545,8 @@ internal static class FileIo
         settings += "startshell=" + (Shell.StartInShell ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // The shell: the line read key by key, with Tab and Up (off: as the terminal reads it)
         settings += "shellcompletion=" + (Shell.Completion ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        // The shell: Tab with nothing typed offers the files opened last first (off: all names in order)
+        settings += "shellrecentfirst=" + (Shell.RecentFirst ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // The directory the shell starts in (a path, "last", or empty: the one Blyant is started in), and the one it
         // was left in (for "last")
         settings += "shelldir=" + Shell.StartSetting + '\n';
@@ -758,6 +760,7 @@ internal static class FileIo
         Shell.Paging = Tools.TrimToLower(Get("shellpaging")) != DialogText.BFalse;
         Shell.StartInShell = Tools.TrimToLower(Get("startshell")) == DialogText.BTrue;
         Shell.Completion = Tools.TrimToLower(Get("shellcompletion")) != DialogText.BFalse;
+        Shell.RecentFirst = Tools.TrimToLower(Get("shellrecentfirst")) != DialogText.BFalse;
         Shell.StartSetting = Get("shelldir").Trim();
         Shell.LastDirectory = Get("shelllastdir").Trim();
         // 4 spaces unless another width of the list is set

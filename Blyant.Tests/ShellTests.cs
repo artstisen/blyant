@@ -2048,4 +2048,73 @@ public class ShellTests : IDisposable
             .Count(entry => (entry.Attributes & (FileAttributes.Hidden | FileAttributes.System)) == 0);
         Assert.Contains(Lang.F("No row {0}: the last list has {1} rows", 9, rows), errors);
     }
+
+    // ---- Tab: the files opened last first, and patterns
+
+    // A folder "tabs" with a.md, b.md, c.md, Blyant-v151.md, notes-151.md, .h151, and the folders sub1 and sub2
+    private void TabFolder()
+    {
+        Directory.CreateDirectory(In("work", "tabs", "sub1"));
+        Directory.CreateDirectory(In("work", "tabs", "sub2"));
+        foreach (var name in new[] { "a.md", "b.md", "c.md", "Blyant-v151.md", "notes-151.md", ".h151" })
+            File.WriteAllText(In("work", "tabs", name), "x\n");
+        File.WriteAllText(In("work", "tabs", "sub2", "x.md"), "x\n");
+    }
+
+    [Fact]
+    public void Tab_WithNothingTyped_OffersTheFilesOpenedLastFirst()
+    {
+        TabFolder();
+        FileHistory.Add(In("work", "tabs", "a.md"), new DateTime(2026, 11, 13, 9, 0, 0));
+        FileHistory.Add(In("work", "tabs", "c.md"), new DateTime(2026, 11, 13, 10, 0, 0));
+        FileHistory.Add(In("work", "plot.md"), new DateTime(2026, 11, 13, 11, 0, 0));
+        FileHistory.Save();
+        var completion = Completion();
+        // c.md opened last, then a.md; then the others by name (plot.md is in another directory)
+        Assert.Equal("open tabs/c.md", Tab(completion, "open tabs/"));
+        Assert.Equal("open tabs/a.md", Tab(completion, "open tabs/", true, true));
+        Assert.Equal("open tabs/b.md", Tab(completion, "open tabs/", true, true, true));
+        // A letter typed: by name, as before
+        Assert.Equal("open tabs/a.md", Tab(completion, "open tabs/", true, true));
+        Assert.Equal("peek tabs/b.md", Tab(Completion(), "peek tabs/b"));
+        // In the directory the shell is in
+        Assert.Equal("open plot.md", Tab(Completion(), "open "));
+    }
+
+    [Fact]
+    public void Tab_ADirectoryWithNothingTyped_OffersThoseOfTheFilesOpenedLastFirst()
+    {
+        TabFolder();
+        FileHistory.Add(In("work", "tabs", "sub2", "x.md"), new DateTime(2026, 11, 13, 9, 0, 0));
+        FileHistory.Save();
+        Assert.Equal("cd tabs/sub2/", Tab(Completion(), "cd tabs/"));
+        Assert.Equal("cd tabs/", Tab(Completion(), "cd "));
+    }
+
+    [Fact]
+    public void Tab_TheFilesOpenedLastFirst_CanBeTurnedOff()
+    {
+        TabFolder();
+        FileHistory.Add(In("work", "tabs", "c.md"), new DateTime(2026, 11, 13, 10, 0, 0));
+        FileHistory.Save();
+        FileIo.SaveSettings();
+        Run("set shellrecentfirst false\n");
+        Assert.False(Shell.RecentFirst);
+        Assert.Equal("open tabs/a.md", Tab(Completion(), "open tabs/"));
+    }
+
+    [Fact]
+    public void Tab_APatternWithStarOrQuestionMark_CompletesTheNamesItFits()
+    {
+        TabFolder();
+        var completion = Completion();
+        Assert.Equal("open tabs/Blyant-v151.md", Tab(completion, "open tabs/*151*"));
+        Assert.Equal("open tabs/notes-151.md", Tab(completion, "open tabs/*151*", true, true));
+        // After the last: the pattern as typed (a hidden name only for a pattern that starts with ".")
+        Assert.Equal("open tabs/*151*", Tab(completion, "open tabs/*151*", true, true, true));
+        Assert.Equal("open tabs/a.md", Tab(Completion(), "open tabs/?.MD"));
+        Assert.Equal("open tabs/.h151", Tab(Completion(), "open tabs/.*1"));
+        Assert.Equal("cd tabs/sub1/", Tab(Completion(), "cd tabs/*1"));
+        Assert.Equal("open *151*", Tab(Completion(), "open *151*"));
+    }
 }

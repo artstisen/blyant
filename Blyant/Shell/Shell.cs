@@ -27,6 +27,12 @@ internal static class Shell
     internal static bool Completion { get; set; } = true;
 
     /// <summary>
+    /// Tab with nothing typed offers the files opened last first, those in the directory completed (setting
+    /// "shellrecentfirst", on unless turned off: off, all names in order). Only in the settings file, or with "set"
+    /// </summary>
+    internal static bool RecentFirst { get; set; } = true;
+
+    /// <summary>
     /// Blyant starts as the shell (setting "startshell", Configuration: General), as "blyant --shell" does, unless a
     /// file or directory is given (it is opened on the full screen) or "--screen"
     /// </summary>
