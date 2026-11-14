@@ -147,6 +147,137 @@ internal sealed partial class ShellSession
         Line(Lang.F("{0}: line {1} put in", item.Path, number));
     }
 
+    // "change notes.md +12 A new line", "change notes.md 12-15 One line instead": the lines become the text (one line);
+    // "change notes.md 12-15" without a text: the lines are deleted, after they are shown and the question is
+    // answered yes (No selected; from a file only with --yes). As insert: the line endings and byte order mark of the
+    // file are kept, only a file in UTF-8 and not one Blyant uses, and the file is then the last list at the place
+    private void ChangeLines(string argument)
+    {
+        var words = Words(argument);
+        if (words.Count < 2)
+        {
+            Error(Lang.T("Give a file, the lines, and the text: change notes.md 12-15 New line"));
+            return;
+        }
+
+        if (!LinesToChange(words[1], out var first, out var last))
+        {
+            Error(Lang.F("Not lines: {0} (as +12, or 12-15)", words[1]));
+            return;
+        }
+
+        var text = AfterWords(argument, 2);
+        if (Existing(words[0]) is not { } item || Protected(item)) return;
+        if (item.IsDirectory)
+        {
+            Error(Lang.F("Not a file: {0}", item.Path));
+            return;
+        }
+
+        TextFile file;
+        try
+        {
+            file = TextFile.Load(item.Path);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidDataException)
+        {
+            Error(Lang.F("{0} cannot be read: {1}", item.Path, e.Message));
+            return;
+        }
+
+        if (!file.IsUtf8)
+        {
+            Error(Lang.F("{0} is not in UTF-8 ({1}): open it in the editor, which saves it in UTF-8", item.Path,
+                file.EncodingName));
+            return;
+        }
+
+        var count = LinesOfText(file.Text).Count;
+        if (first > count)
+        {
+            Error(Lang.F("{0} has {1} lines", item.Path, count));
+            return;
+        }
+
+        last = Math.Min(last, count);
+        var delete = text.Length == 0;
+        if (delete)
+        {
+            // The lines that would go, and the question (no undo)
+            var lines = LinesOfText(file.Text);
+            var width = last.ToString().Length;
+            for (var i = first; i <= last; i++) Line(i.ToString().PadLeft(width + 2) + "  " + lines[i - 1]);
+            var question = first == last
+                ? Lang.F("Delete line {0} of {1}?", first, Path.GetFileName(item.Path))
+                : Lang.F("Delete lines {0}-{1} of {2}?", first, last, Path.GetFileName(item.Path));
+            if (!ChoiceBox.Confirm(Lang.T("Delete lines"), question, string.Empty, true))
+            {
+                Line(Lang.T("Nothing was deleted"));
+                return;
+            }
+        }
+
+        var (changed, at) = WithLinesChanged(file.Text, first, last, delete ? null : text);
+        var result = file.Save(changed);
+        // (the path and the lines, never the text)
+        FileExplorer.LogFileOperation(delete ? "Delete lines" : "Change lines", item.Path + ":" + first + "-" + last, result);
+        if (result != DialogText.Success)
+        {
+            Error(result);
+            return;
+        }
+
+        LastList = new List<Item> { new(item.Path, false, (at, 1)) };
+        if (delete)
+        {
+            Line(first == last
+                ? Lang.F("{0}: line {1} deleted", item.Path, first)
+                : Lang.F("{0}: lines {1}-{2} deleted", item.Path, first, last));
+        }
+        else
+        {
+            Line(first == last
+                ? Lang.F("{0}: line {1} changed", item.Path, first)
+                : Lang.F("{0}: lines {1}-{2} changed", item.Path, first, last));
+        }
+    }
+
+    /// <summary>
+    /// The lines change works on: "+12" (line 12) or "12-15" (also "+12-15")
+    /// </summary>
+    internal static bool LinesToChange(string text, out int first, out int last)
+    {
+        first = last = 0;
+        if (text.StartsWith('+')) text = text[1..];
+        var dash = text.IndexOf('-');
+        if (dash < 0) return int.TryParse(text, out first) && first > 0 && (last = first) > 0;
+        return int.TryParse(text[..dash], out first) && int.TryParse(text[(dash + 1)..], out last) && first > 0 &&
+               last >= first;
+    }
+
+    // The lines of a text (lines end in "\n"; the last line break does not start another line)
+    private static List<string> LinesOfText(string text)
+    {
+        text = TextBuffer.Normalize(text);
+        if (text.Length == 0) return new List<string>();
+        return (text.EndsWith('\n') ? text[..^1] : text).Split('\n').ToList();
+    }
+
+    /// <summary>
+    /// A text with the lines first to last (from 1; there) changed into a line, or taken out (null), and the line the
+    /// change is at now. A text that ends with a line break keeps it
+    /// </summary>
+    internal static (string Text, int Line) WithLinesChanged(string text, int first, int last, string? line)
+    {
+        text = TextBuffer.Normalize(text);
+        var endsWithBreak = text.EndsWith('\n');
+        var lines = LinesOfText(text);
+        lines.RemoveRange(first - 1, last - first + 1);
+        if (line != null) lines.Insert(first - 1, line.Replace("\r", string.Empty).Replace("\n", " "));
+        if (lines.Count == 0) return (string.Empty, 1);
+        return (string.Join("\n", lines) + (endsWithBreak ? "\n" : string.Empty), Math.Min(first, lines.Count));
+    }
+
     /// <summary>
     /// A text with a line put in as line "at" (1: before the first; past the end: after the last), and the number it
     /// got. The lines end in "\n"; a text that ends with a line break keeps it, and one that does not gets none after
@@ -228,6 +359,24 @@ internal sealed partial class ShellSession
         LastList = new List<Item> { item };
         var width = rows.Max(row => row.Label.Length) + 2;
         foreach (var (label, value) in rows) Line("  " + label.PadRight(width) + value);
+    }
+
+    // "reset": all the settings back to their defaults, as "Reset all settings" on the System page of Configuration
+    // (the lists, favorites, bookmarks and files are kept). Asked first, No selected; from a file only with --yes
+    private void Reset()
+    {
+        if (!ChoiceBox.Confirm(DialogText.CaptionsSettings, DialogText.ResetSettingsQuestion, string.Empty, true))
+        {
+            Line(Lang.T("The settings are as they were"));
+            return;
+        }
+
+        Actions.ApplyDefaultSettings();
+        // Completing words is on again: the file is made if there is none (one that is there is kept)
+        Completions.EnsureFile();
+        // English: the log
+        EventLog.Add(DialogText.LogShell + ": settings reset");
+        Line(Lang.T("Settings reset to the defaults"));
     }
 
     // "set": the settings, as in the settings file; "set indent": one of them; "set indent 2": a setting changed (as on

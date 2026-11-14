@@ -820,4 +820,117 @@ public class ShellTests : IDisposable
         Assert.Equal(In("work"), Shell.StartIn(In("work"), out note));
         Assert.NotNull(note);
     }
+
+    [Fact]
+    public void Reset_PutsTheSettingsBack_OnlyWhenTheAnswerIsYes()
+    {
+        FileIo.SaveSettings();
+        Run("set indent 8\nset shelldir last\n");
+        Assert.Equal(8, EditorEngine.IndentSetting);
+        // From a file: not asked, and nothing is reset
+        var (kept, _, _, _) = Run("reset\n");
+        Assert.Contains(Lang.T("The settings are as they were"), kept);
+        Assert.Equal(8, EditorEngine.IndentSetting);
+        // In a terminal: No is selected (Enter alone), and "n"
+        Run("reset\n\nreset\nn\n", terminal: true);
+        Assert.Equal(8, EditorEngine.IndentSetting);
+        // Yes: all the settings back, and saved
+        var (output, errors, _, _) = Run("reset\ny\n", terminal: true);
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains(Lang.T("Settings reset to the defaults"), output);
+        Assert.Equal(EditorEngine.DefaultIndent, EditorEngine.IndentSetting);
+        Assert.Equal(string.Empty, Shell.StartSetting);
+        Assert.Equal("4", FileIo.ParseSettings(FileIo.ReadSettingsFile())["indent"]);
+        // With --yes, from a file
+        Run("set indent 2\n");
+        Run("reset\n", yes: true);
+        Assert.Equal(EditorEngine.DefaultIndent, EditorEngine.IndentSetting);
+    }
+
+    [Fact]
+    public void Reset_KeepsTheLists()
+    {
+        FileIo.SaveSettings();
+        FileFavorites.Toggle(In("work", "plot.md"));
+        FileFavorites.Save();
+        Run("reset\n", yes: true);
+        FileFavorites.Load();
+        Assert.True(FileFavorites.Contains(In("work", "plot.md")));
+    }
+
+    // ---- change: lines changed into a text, or deleted
+
+    [Theory]
+    [InlineData("a\nb\nc\nd\n", 2, 2, "x", "a\nx\nc\nd\n", 2)]
+    [InlineData("a\nb\nc\nd\n", 2, 3, "x", "a\nx\nd\n", 2)]
+    [InlineData("a\nb\nc\nd\n", 2, 3, null, "a\nd\n", 2)]
+    [InlineData("a\nb\nc\nd\n", 3, 4, null, "a\nb\n", 2)]
+    [InlineData("a\nb\nc\nd", 4, 4, "x", "a\nb\nc\nx", 4)]
+    [InlineData("a\nb\n", 1, 2, null, "", 1)]
+    public void WithLinesChanged_ChangesOrTakesOutTheLines(string text, int first, int last, string? line,
+        string expected, int at)
+    {
+        Assert.Equal((expected, at), ShellSession.WithLinesChanged(text, first, last, line));
+    }
+
+    [Theory]
+    [InlineData("+12", true, 12, 12)]
+    [InlineData("12-15", true, 12, 15)]
+    [InlineData("+12-15", true, 12, 15)]
+    [InlineData("12", true, 12, 12)]
+    [InlineData("15-12", false, 0, 0)]
+    [InlineData("+0", false, 0, 0)]
+    [InlineData("top", false, 0, 0)]
+    public void LinesToChange_ReadsOneLineOrARange(string text, bool ok, int first, int last)
+    {
+        Assert.Equal(ok, ShellSession.LinesToChange(text, out var from, out var to));
+        if (ok) Assert.Equal((first, last), (from, to));
+    }
+
+    [Fact]
+    public void Change_ChangesLinesIntoAText_KeepingTheLineEndings_AndOpenGoesThere()
+    {
+        File.WriteAllText(In("work", "list.md"), "One\r\nTwo\r\nThree\r\nFour\r\n");
+        var (output, errors, _, session) = Run("change list.md +1 Zero\nchange list.md 2-3 Two and three\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("Zero\r\nTwo and three\r\nFour\r\n", File.ReadAllText(In("work", "list.md")));
+        Assert.Contains(Lang.F("{0}: lines {1}-{2} changed", In("work", "list.md"), 2, 3), output);
+        Assert.Equal((2, 1), session.LastList.Single().At);
+        // A range past the end stops at the last line
+        Run("change list.md 3-99 End\n");
+        Assert.Equal("Zero\r\nTwo and three\r\nEnd\r\n", File.ReadAllText(In("work", "list.md")));
+    }
+
+    [Fact]
+    public void Change_WithoutAText_DeletesTheLines_OnlyWhenTheAnswerIsYes()
+    {
+        File.WriteAllText(In("work", "list.md"), "One\nTwo\nThree\nFour\n");
+        // From a file: shown, not asked, and nothing is deleted
+        var (shown, _, _, _) = Run("change list.md 2-3\n");
+        Assert.Contains("  2  Two\n  3  Three\n", shown);
+        Assert.Contains(Lang.T("Nothing was deleted"), shown);
+        Assert.Equal("One\nTwo\nThree\nFour\n", File.ReadAllText(In("work", "list.md")));
+        // In a terminal: Enter alone is no, y is yes
+        Run("change list.md 2-3\n\n", terminal: true);
+        Assert.Equal("One\nTwo\nThree\nFour\n", File.ReadAllText(In("work", "list.md")));
+        var (output, _, _, _) = Run("change list.md 2-3\ny\n", terminal: true);
+        Assert.Equal("One\nFour\n", File.ReadAllText(In("work", "list.md")));
+        Assert.Contains(Lang.F("{0}: lines {1}-{2} deleted", In("work", "list.md"), 2, 3), output);
+        // With --yes, from a file
+        Run("change list.md +1\n", yes: true);
+        Assert.Equal("Four\n", File.ReadAllText(In("work", "list.md")));
+    }
+
+    [Fact]
+    public void Change_TellsWhatItCannotDo_AndNeverLogsTheText()
+    {
+        File.WriteAllText(In("work", "list.md"), "One\nTwo\n");
+        var (_, errors, code, _) = Run("change list.md\nchange list.md middle x\nchange list.md 5 x\nchange Draft +1 x\n" +
+                                       "change missing.md +1 x\nchange list.md +1 secret words\n");
+        Assert.Equal(5, errors.TrimEnd('\n').Split('\n').Length);
+        Assert.Contains(Lang.F("{0} has {1} lines", In("work", "list.md"), 2), errors);
+        Assert.Equal(1, code);
+        Assert.DoesNotContain(EventLog.All, line => line.Contains("secret words"));
+        Assert.Contains(EventLog.All, line => line.Contains("Change lines: " + In("work", "list.md") + ":1-1"));
+    }
 }
