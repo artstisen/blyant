@@ -49,10 +49,10 @@ To have every output whole (with a screen reader, say), turn the pages off: `set
 |---|---|
 | `pwd` | Show the directory you are in |
 | `ls [dir\|n]` | List the folders, then the files, of a directory (by name) |
-| `cd [dir\|n]` | Go to a directory; `cd` alone goes to your home directory, `cd ~/notes` to one in it |
+| `cd [dir\|file\|n]` | Go to a directory; `cd` alone goes to your home directory, `cd ~/notes` to one in it. A file (a row of `fav`, `hist`, `find` ...) goes to the directory it is in, and the file is then the last list: `open 1` opens it |
 | `up` | Go to the directory above (`cd ..`) |
 | `open file\|n [+line]` | Edit a file in the editor of the full screen, at a line if one is given (`open plot.md +12`). A directory is gone to |
-| `peek file\|n [lines]` | Show the lines of a text file, numbered: the first 20, `peek plot.md 40` the first 40, `peek plot.md 100-120` those. Only read |
+| `peek file\|n [lines]` | Show the lines of a text file, numbered: the first 20, `peek plot.md 40` the first 40, `peek plot.md 100-120` those, `peek plot.md +100` 20 lines from line 100, and `peek plot.md +100 30` 30 of them. Only read. After a peek from a line, `open 1` opens the file at that line |
 | `find [name] [-t text]` | Find files here and in the directories below, by name and by a text in them (see [Files](#files)) |
 | `new name` | Make a new, empty file here (`new ideas` makes `ideas.md`: the kind of new files, when no extension is given) |
 | `mkdir name` | Make a new directory here |

@@ -83,15 +83,14 @@ public class ShellTests : IDisposable
     }
 
     [Fact]
-    public void Cd_AloneGoesHome_ToAFile_OrNowhere_IsTold_AndTheExitCodeTellsIt()
+    public void Cd_AloneGoesHome_ToNowhere_IsTold_AndTheExitCodeTellsIt()
     {
-        var (_, errors, code, session) = Run("cd plot.md\ncd missing\ncd 7\ncd\n");
+        var (_, errors, code, session) = Run("cd missing\ncd 7\ncd\n");
         Assert.Equal(1, code);
         var lines = errors.TrimEnd('\n').Split('\n');
-        Assert.Equal(3, lines.Length);
-        Assert.Contains("plot.md", lines[0]);
-        Assert.Contains("missing", lines[1]);
-        Assert.Equal(Lang.F("No row {0}: no list has been shown", "7"), lines[2]);
+        Assert.Equal(2, lines.Length);
+        Assert.Contains("missing", lines[0]);
+        Assert.Equal(Lang.F("No row {0}: no list has been shown", "7"), lines[1]);
         Assert.Equal(Path.GetFullPath(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)),
             Path.GetFullPath(session.Directory));
     }
@@ -596,5 +595,75 @@ public class ShellTests : IDisposable
         Assert.Equal(new Shell.Switch(In("work"), In("work", "plot.md")), Shell.Requested);
         Assert.Null(Jump.Pending);
         Shell.Requested = null;
+    }
+
+    [Fact]
+    public void Cd_OnAFile_GoesToItsDirectory_AndTheFileIsTheLastList()
+    {
+        File.WriteAllText(In("work", "Draft", "storm.md"), "Calm\nThe storm came\n");
+        FileFavorites.Toggle(In("work", "Draft", "storm.md"));
+        FileFavorites.Save();
+        // A row of the favorites (from another directory), and then "open 1" is the file
+        var (output, errors, _, session) = Run("cd ..\nfav\ncd 1\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal(In("work", "Draft"), session.Directory);
+        Assert.Contains(Lang.F("In {0} (the directory of {1})", In("work", "Draft"), "storm.md"), output);
+        Assert.Equal(In("work", "Draft", "storm.md"), session.LastList.Single().Path);
+        // A path of a file; and a file found by its text keeps its line for "open 1"
+        var (_, _, _, byPath) = Run("cd Draft/storm.md\n");
+        Assert.Equal(In("work", "Draft"), byPath.Directory);
+        var (_, _, _, found) = Run("find -t storm\ncd 1\n");
+        Assert.Equal(In("work", "Draft"), found.Directory);
+        Assert.Equal((2, 1), found.LastList.Single().At);
+    }
+
+    [Fact]
+    public void Peek_FromALine_ShowsAsManyLinesAsGiven_AndOpenGoesThere()
+    {
+        File.WriteAllText(In("work", "long.md"), string.Join("\n", Enumerable.Range(1, 50).Select(n => "Line " + n)));
+        var (output, errors, _, session) = Run("peek long.md +45\n");
+        Assert.Equal(string.Empty, errors);
+        // 20 lines from line 45: as many as there are
+        Assert.Contains("  45  Line 45\n", output);
+        Assert.Contains("  50  Line 50\n", output);
+        Assert.Equal((45, 1), session.LastList.Single().At);
+        var (some, _, _, _) = Run("peek long.md +10 3\n");
+        Assert.Contains("  10  Line 10\n  11  Line 11\n  12  Line 12\n" + Lang.F("(lines {0}-{1} of {2})", 10, 12, 50), some);
+        // A start past the end: how many lines the file has
+        var (past, _, _, _) = Run("peek long.md +60\n");
+        Assert.Contains(Lang.F("{0} has {1} lines", In("work", "long.md"), 50), past);
+        // From the first line, the place of the file is as it was (open goes where it was left)
+        var (_, _, _, top) = Run("peek long.md\n");
+        Assert.Null(top.LastList.Single().At);
+    }
+
+    [Theory]
+    [InlineData("+0")]
+    [InlineData("+10 0")]
+    [InlineData("+10 x")]
+    [InlineData("40 10")]
+    [InlineData("+")]
+    [InlineData("-5")]
+    public void Peek_TellsLinesItCannotShow(string lines)
+    {
+        File.WriteAllText(In("work", "long.md"), "a\nb\n");
+        var (_, errors, _, _) = Run("peek long.md " + lines + "\n");
+        Assert.NotEqual(string.Empty, errors);
+    }
+
+    [Fact]
+    public void LinesOf_ReadsTheFormsOfPeek()
+    {
+        Assert.True(ShellSession.LinesOf("40", null, out var first, out var last));
+        Assert.Equal((1, 40), (first, last));
+        Assert.True(ShellSession.LinesOf("100-120", null, out first, out last));
+        Assert.Equal((100, 120), (first, last));
+        Assert.True(ShellSession.LinesOf("+100", null, out first, out last));
+        Assert.Equal((100, 119), (first, last));
+        Assert.True(ShellSession.LinesOf("+100", "30", out first, out last));
+        Assert.Equal((100, 129), (first, last));
+        // Very large: not past the largest line number
+        Assert.True(ShellSession.LinesOf("+2000000000", "2000000000", out _, out last));
+        Assert.Equal(int.MaxValue, last);
     }
 }

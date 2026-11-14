@@ -13,10 +13,10 @@ internal sealed partial class ShellSession
     {
         ("pwd", Lang.T("Show the directory you are in")),
         ("ls [dir|n]", Lang.T("List the folders and files of a directory")),
-        ("cd [dir|n]", Lang.T("Go to a directory (alone: your home directory)")),
+        ("cd [dir|file|n]", Lang.T("Go to a directory, or that of a file (alone: home)")),
         ("up", Lang.T("Go to the directory above")),
         ("open file|n [+line]", Lang.T("Edit a file on the full screen (closing it is back here)")),
-        ("peek file|n [lines]", Lang.T("Show the lines of a file (the first 20, 40, or 100-120)")),
+        ("peek file|n [lines]", Lang.T("Show the lines of a file (the first 20, 40, 100-120, or +100 30)")),
         ("find [name] [-t text]", Lang.T("Find files here and below, by name (*.md) and by text")),
         ("new name", Lang.T("Make a new, empty file here (.md if no extension)")),
         ("mkdir name", Lang.T("Make a new directory here")),
@@ -261,20 +261,35 @@ internal sealed partial class ShellSession
         }
     }
 
+    // "cd notes", "cd 2": a directory; "cd plot.md", "cd 3" on a file (of the favorites, the history, a search ...): the
+    // directory of the file, which is then the last list ("open 1"), and where it went is told
     private void ChangeDirectory(string argument)
     {
         var item = argument.Trim().Length == 0 ? new Item(PathOf("~"), true) : Resolve(argument, true);
         if (item == null) return;
-        if (!System.IO.Directory.Exists(item.Path))
+        if (!System.IO.Directory.Exists(item.Path) && File.Exists(item.Path) &&
+            Path.GetDirectoryName(Path.GetFullPath(item.Path)) is { Length: > 0 } folder)
         {
-            Error(File.Exists(item.Path)
-                ? Lang.F("Not a directory: {0}", item.Path)
-                : Lang.F("Not found: {0}", item.Path));
+            GoTo(folder);
+            LastList = new List<Item> { new(Path.GetFullPath(item.Path), false, item.At) };
+            Line(Lang.F("In {0} (the directory of {1})", Directory, Path.GetFileName(item.Path)));
             return;
         }
 
-        Directory = Path.TrimEndingDirectorySeparator(Path.GetFullPath(item.Path));
-        if (Directory.Length == 0 || !Path.IsPathRooted(Directory)) Directory = Path.GetFullPath(item.Path);
+        if (!System.IO.Directory.Exists(item.Path))
+        {
+            Error(Lang.F("Not found: {0}", item.Path));
+            return;
+        }
+
+        GoTo(item.Path);
+    }
+
+    // The directory the shell is in from now on
+    private void GoTo(string path)
+    {
+        Directory = Path.TrimEndingDirectorySeparator(Path.GetFullPath(path));
+        if (Directory.Length == 0 || !Path.IsPathRooted(Directory)) Directory = Path.GetFullPath(path);
     }
 
     private void ListDirectory(string argument)

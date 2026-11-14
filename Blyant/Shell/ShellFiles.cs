@@ -222,14 +222,15 @@ internal sealed partial class ShellSession
         Done(deleted, Lang.F("Deleted: {0}", item.Path), null);
     }
 
-    // "peek 3", "peek notes.md 40", "peek notes.md 100-120": the lines of a text file, numbered (the first 20 if no
-    // lines are given). Only read, never written
+    // "peek 3", "peek notes.md 40", "peek notes.md 100-120", "peek notes.md +100", "peek notes.md +100 30": the lines of
+    // a text file, numbered (the first 20 if no lines are given; from a line: 20, or as many as given). The file is
+    // then the last list, at the first line shown: "open 1" opens it there. Only read, never written
     private void Peek(string argument)
     {
         var words = Words(argument);
-        if (words.Count is < 1 or > 2)
+        if (words.Count is < 1 or > 3 || (words.Count == 3 && !words[1].StartsWith('+')))
         {
-            Error(Lang.T("Give a file, and the lines if you want: peek 3 10-30"));
+            Error(Lang.T("Give a file, and the lines if you want: peek 3 10-30, peek 3 +100 30"));
             return;
         }
 
@@ -241,9 +242,9 @@ internal sealed partial class ShellSession
         }
 
         var (first, last) = (1, PeekLines);
-        if (words.Count == 2 && !LinesOf(words[1], out first, out last))
+        if (words.Count >= 2 && !LinesOf(words[1], words.Count == 3 ? words[2] : null, out first, out last))
         {
-            Error(Lang.F("Not lines: {0} (as 40, or 100-120)", words[1]));
+            Error(Lang.F("Not lines: {0} (as 40, 100-120, or +100 30)", string.Join(' ', words.Skip(1))));
             return;
         }
 
@@ -258,7 +259,8 @@ internal sealed partial class ShellSession
             return;
         }
 
-        LastList = new List<Item> { item };
+        // (from a line: "open 1" opens the file there)
+        LastList = new List<Item> { first > 1 ? item with { At = (first, 1) } : item };
         last = Math.Min(last, lines.Length);
         if (first > last)
         {
@@ -274,11 +276,25 @@ internal sealed partial class ShellSession
     // The lines peek shows when none are given
     private const int PeekLines = 20;
 
-    // "40": the first 40 lines; "100-120": those lines
-    private static bool LinesOf(string text, out int first, out int last)
+    // "40": the first 40 lines; "100-120": those lines; "+100": 20 lines from line 100, and "+100" "30": 30 of them
+    internal static bool LinesOf(string text, string? count, out int first, out int last)
     {
         first = 1;
         last = 0;
+        if (text.StartsWith('+'))
+        {
+            var many = PeekLines;
+            if (!int.TryParse(text[1..], out first) || first < 1 ||
+                (count != null && (!int.TryParse(count, out many) || many < 1)))
+            {
+                return false;
+            }
+
+            last = (int)Math.Min((long)first + many - 1, int.MaxValue);
+            return true;
+        }
+
+        if (count != null) return false;
         var dash = text.IndexOf('-');
         if (dash < 0) return int.TryParse(text, out last) && last > 0;
         return int.TryParse(text[..dash], out first) && int.TryParse(text[(dash + 1)..], out last) &&
