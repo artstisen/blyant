@@ -67,7 +67,7 @@ blyant notes.md                Open notes.md in the editor (the file browser is 
 blyant +12 notes.md            Open notes.md at line 12 (also blyant notes.md +12)
 blyant ~/projects/site         Show the directory in the file browser
 blyant .                       Show the directory you are in, in the file browser
-blyant --shell                 Use Blyant on lines: commands typed at a prompt (see the guide to the shell)
+blyant --shell                 Use Blyant on lines: commands typed at a prompt (help lists them)
 blyant --run "format a.html"   Run a command of the shell (more than one: --run "..." --run "..."), and end
 blyant --screen                Start on the full screen, when Blyant is set to start in the shell
 blyant --shell --yes < a.txt   Answer yes to the questions of commands not typed (also with --run)
@@ -75,7 +75,7 @@ blyant --help                  Show how Blyant is started (also -h)
 blyant --version               Show the version (also -v)
 ```
 
-A path that is not a full path is taken from the directory you are in. `+12` is the line the file is opened at, as Vim and other editors are started: a line past the end of the file is its last line, and a file named `+12` that is there is opened as that file, and `+12` without a file is told. One file or directory is given at a time.
+A path that is not a full path is taken from the directory you are in. `+12` is the line the file is opened at, as Vim and other editors are started: a line past the end of the file is its last line, and a file named `+12` that is there is opened as that file, and `+12` without a file is told. One file or directory is given at a time. The options of the shell are told in the [guide to the shell](Guide-to-shell.md), and the [shell tutorial](Guide-to-shell-tutorial.md) shows how to work with it.
 
 Programs that open a file in your editor at a line can use Blyant this way, as [Blyant Validator](#blyant-validator) does.
 
