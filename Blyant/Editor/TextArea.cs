@@ -1881,6 +1881,10 @@ public partial class TextArea
                 _engine.SetMessage(status, true);
                 return false;
             }
+
+            // The settings file of Blyant, edited as a text: what was saved is used at once (else the settings Blyant
+            // has would be written over it the next time it writes them: when the file browser is left, or Blyant)
+            if (FileIo.IsSettingsFile(FileExplorer.CurrentFilePath)) FileIo.LoadSettings();
         }
         else
         {

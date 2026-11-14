@@ -35,6 +35,7 @@ internal sealed partial class ShellSession
         ("trim file|n", Lang.T("Remove blank space at line ends, as :trim does (trim!)")),
         ("set [name [value]]", Lang.T("Show the settings, or change one")),
         ("reset", Lang.T("Reset all settings to the defaults (asks first)")),
+        ("reload", Lang.T("Read the settings file and the registers again, after editing them")),
         ("clip [path|name] file|dir|n|.", Lang.T("Copy a path, or a name, to the clipboard")),
         ("clip text file|n", Lang.T("Copy the text of a file to the clipboard")),
         ("clip lines file|n lines", Lang.T("Copy lines of a file, as peek takes them")),
@@ -68,6 +69,8 @@ internal sealed partial class ShellSession
         if (line.Length == 0) return true;
         // By name only (never what follows it: a path, a name, the value of a register)
         EventLog.AddCommand(DialogText.LogShell, line);
+        // (the file of the registers edited by hand since: read again, so $name and reg use what is in it)
+        ShellRegisters.Refresh();
         // $name: the value of the register (in the paths a value with blanks is one word; the text of insert, change,
         // reg and set, and what find and project take, as it is)
         // ("clip $note" alone copies the value as it is: not put in first, where it would be taken as a path)
@@ -192,6 +195,9 @@ internal sealed partial class ShellSession
                 break;
             case "reset":
                 Reset();
+                break;
+            case "reload":
+                Reload(argument);
                 break;
             case "reg":
                 Register(argument);

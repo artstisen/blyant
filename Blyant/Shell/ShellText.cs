@@ -387,11 +387,13 @@ internal sealed partial class ShellSession
             if (ShellRegisters.All.Count == 0)
             {
                 Line(Lang.T("No registers (reg name text keeps one)"));
+                SkippedRegisters();
                 return;
             }
 
             var width = ShellRegisters.All.Keys.Max(key => key.Length) + 1;
             foreach (var (key, value) in ShellRegisters.All) Line("  $" + key.PadRight(width) + value);
+            SkippedRegisters();
             return;
         }
 
@@ -466,6 +468,60 @@ internal sealed partial class ShellSession
         EventLog.Add(DialogText.LogShell + ": register set: " + name.ToLowerInvariant());
         SaveRegisters("  $" + name.ToLowerInvariant() + " = " + ShellRegisters.Get(name));
     }
+
+    // Lines of the file of the registers that are not registers (edited by hand): told, so a register mistyped there is
+    // not taken for gone
+    private void SkippedRegisters()
+    {
+        if (ShellRegisters.Skipped == 0) return;
+        Line(ShellRegisters.Skipped == 1
+            ? Lang.F("(1 line of {0} is not a register: a name, a tab, and the value)", ShellRegisters.FileName)
+            : Lang.F("({0} lines of {1} are not registers: a name, a tab, and the value)", ShellRegisters.Skipped,
+                ShellRegisters.FileName));
+    }
+
+    // "reload": the settings file read again, and applied as when Blyant starts (after editing it by hand), and the
+    // registers. A value a setting cannot have is told: the setting has its default, as when Blyant starts
+    private void Reload(string argument)
+    {
+        if (argument.Trim().Length > 0)
+        {
+            Error(Lang.T("reload takes nothing after it"));
+            return;
+        }
+
+        var content = FileIo.ReadSettingsFile();
+        if (content == DialogText.ErrorReadingFile || content == DialogText.FileNotFound)
+        {
+            Error(Lang.F("{0}: {1}", content, FileIo.SettingsFileName));
+            return;
+        }
+
+        if (!FileIo.LoadSettings())
+        {
+            Error(Lang.F("{0} could not be read: the settings stay as they were", FileIo.SettingsFileName));
+            return;
+        }
+
+        ShellRegisters.Load();
+        // English: the log
+        EventLog.Add(DialogText.LogShell + ": settings and registers read again");
+        // The values in the file that were not taken (as Blyant writes them now)
+        var now = FileIo.ParseSettings(FileIo.SettingsText());
+        foreach (var (name, value) in FileIo.ParseSettings(content))
+        {
+            if (!now.TryGetValue(name, out var taken) || SameSetting(taken, value)) continue;
+            Error(Lang.F("{0} cannot be {1}: it is {2}", name, value.Trim(), taken));
+        }
+
+        Line(Lang.T("Settings and registers read again"));
+        SkippedRegisters();
+    }
+
+    // A value of a setting read is the one written, as Blyant writes it (letter case alike, "02" is 2)
+    private static bool SameSetting(string now, string wanted) =>
+        string.Equals(now.Trim(), wanted.Trim(), StringComparison.OrdinalIgnoreCase) ||
+        (int.TryParse(now.Trim(), out var a) && int.TryParse(wanted.Trim(), out var b) && a == b);
 
     // The registers written to their file: what was done is told, or why they could not be kept
     private void SaveRegisters(string done)
@@ -546,7 +602,7 @@ internal sealed partial class ShellSession
         var now = FileIo.ParseSettings(FileIo.ReadSettingsFile()).TryGetValue(name, out var found) ? found : string.Empty;
         // English: the log (the name only, never the value)
         EventLog.Add(DialogText.LogShell + ": setting " + name);
-        if (Same(now, wanted))
+        if (SameSetting(now, wanted))
         {
             Line("  " + name + " = " + now);
             return;
@@ -558,10 +614,5 @@ internal sealed partial class ShellSession
         Error(restored == DialogText.Success
             ? Lang.F("{0} cannot be {1}: it stays {2}", name, wanted, before)
             : Lang.F("{0} cannot be {1}, and the settings file could not be written back: {2}", name, wanted, restored));
-
-        // The value read is the one wanted, as Blyant writes it (letter case alike, "02" is 2)
-        static bool Same(string now, string wanted) =>
-            string.Equals(now.Trim(), wanted, StringComparison.OrdinalIgnoreCase) ||
-            (int.TryParse(now.Trim(), out var a) && int.TryParse(wanted, out var b) && a == b);
     }
 }

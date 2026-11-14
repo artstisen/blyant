@@ -1685,4 +1685,72 @@ public class ShellTests : IDisposable
         if (OperatingSystem.IsWindows()) Assert.Null(line);
         else Assert.Equal(string.Empty, line);
     }
+
+    // ---- Files edited by hand: the registers read again, and "reload"
+
+    [Fact]
+    public void Registers_EditedByHand_AreReadAgainBeforeTheNextCommand()
+    {
+        var file = Path.Combine(_data, ShellRegisters.FileName);
+        var output = new StringWriter();
+        var input = new StringReader(string.Empty);
+        var session = new ShellSession(input, output, new StringWriter(), In("work"), false);
+        session.Execute("reg note Buy ink");
+        // Edited in another program: a value changed, one added, and a line that is not a register
+        File.WriteAllText(file, "note\tBuy paper\ndocs\t" + In("work", "Draft") + "\nnot a register\n");
+        File.SetLastWriteTimeUtc(file, DateTime.UtcNow.AddMinutes(1));
+        session.Execute("reg");
+        Assert.Contains("  $note Buy paper", output.ToString());
+        Assert.Contains(Lang.F("(1 line of {0} is not a register: a name, a tab, and the value)",
+            ShellRegisters.FileName), output.ToString());
+        session.Execute("cd $docs");
+        Assert.Equal(In("work", "Draft"), session.Directory);
+    }
+
+    [Fact]
+    public void Registers_WrittenByTheShell_AreNotReadAgain_AndNothingIsLost()
+    {
+        var session = new ShellSession(new StringReader(string.Empty), new StringWriter(), new StringWriter(),
+            In("work"), false);
+        session.Execute("reg a one");
+        session.Execute("reg b two");
+        Assert.False(ShellRegisters.Refresh());
+        Assert.Equal("one", ShellRegisters.Get("a"));
+        Assert.Equal("two", ShellRegisters.Get("b"));
+    }
+
+    [Fact]
+    public void Reload_ReadsTheSettingsFileAgain_AndTellsAValueNotTaken()
+    {
+        FileIo.SaveSettings();
+        Assert.Equal(EditorEngine.DefaultIndent, EditorEngine.IndentSetting);
+        // Edited by hand: indent 2, and a value shellpaging cannot have
+        var text = FileIo.ReadSettingsFile().Replace("indent=" + EditorEngine.DefaultIndent, "indent=2")
+            .Replace("shellpaging=true", "shellpaging=often");
+        FileIo.WriteSettingsFile(text);
+        File.WriteAllText(Path.Combine(_data, ShellRegisters.FileName), "kept\tyes\n");
+        var (output, errors, _, _) = Run("reload\n");
+        Assert.Equal(2, EditorEngine.IndentSetting);
+        Assert.Equal("yes", ShellRegisters.Get("kept"));
+        Assert.Contains(Lang.T("Settings and registers read again"), output);
+        Assert.Contains("shellpaging", errors);
+        Assert.Contains("often", errors);
+        Assert.DoesNotContain("indent", errors);
+    }
+
+    [Fact]
+    public void IsSettingsFile_IsTrueForTheSettingsFileOfBlyant_Only()
+    {
+        Assert.True(FileIo.IsSettingsFile(Path.Combine(_data, FileIo.SettingsFileName)));
+        Assert.True(FileIo.IsSettingsFile(Path.Combine(_data, ".", FileIo.SettingsFileName)));
+        Assert.False(FileIo.IsSettingsFile(In("work", FileIo.SettingsFileName)));
+        Assert.False(FileIo.IsSettingsFile(string.Empty));
+    }
+
+    [Fact]
+    public void Reload_TakesNothingAfterIt()
+    {
+        var (_, errors, _, _) = Run("reload now\n");
+        Assert.Contains(Lang.T("reload takes nothing after it"), errors);
+    }
 }

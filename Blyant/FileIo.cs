@@ -392,6 +392,22 @@ internal static class FileIo
     }
 
 
+    /// <summary>
+    /// True for the settings file of Blyant (a path of it, as the file browser and the shell give it)
+    /// </summary>
+    internal static bool IsSettingsFile(string path)
+    {
+        try
+        {
+            return path.Length > 0 && FileOperations.SamePath(Path.GetFullPath(path),
+                Path.GetFullPath(GetSettingsFolderAndFileName()));
+        }
+        catch (Exception e) when (e is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            return false;
+        }
+    }
+
     private static string _tempSettings = string.Empty;
 
     internal static void SaveSettings()

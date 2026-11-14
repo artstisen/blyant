@@ -271,7 +271,7 @@ They are saved however the browser is left (closed, a jump to another page, or e
 - `:recovery` Go to the [recovery copies](Guide-to-editor.md#recovery-copies) of text that was not saved
 - `:project add` Add the directory shown to the [projects](#projects)
 - `:protect off` and `:protect on` Lift or restore the protection of the files Blyant uses (see [Managing files](#managing-files)), for this session
-- `:data` Go to the data directory itself, with the files Blyant keeps there: `settings.ini`, `snippets.txt` and `completions.txt` (the snippets and the completions of the editor), `favorites.txt`, `history.txt` and `hotlist.txt` (of the file browser), and `jump.txt` and `bookmarks.txt` (of the Jump menu)
+- `:data` Go to the data directory itself, with the files Blyant keeps there: `settings.ini`, `snippets.txt` and `completions.txt` (the snippets and the completions of the editor), `favorites.txt`, `history.txt` and `hotlist.txt` (of the file browser), and `jump.txt` and `bookmarks.txt` (of the Jump menu). `settings.ini` saved in the editor is used at once
 - `Tab` on the command line completes the command you are typing, and goes through the commands of the file browser when pressed again; `Up` and `Down` bring back the commands given in the file browser before
 - `?` Help
 - `Esc`, `Q` or `:q` Close the file browser

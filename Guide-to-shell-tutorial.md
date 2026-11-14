@@ -351,6 +351,16 @@ blyant ~/novel> set shelldir ~/novel
 
 `reset` puts all the settings back to their defaults (it asks first). Your files and lists are kept.
 
+Settings can also be changed in the settings file itself. `data` goes to the data directory of Blyant (`~/blyant/data` when Blyant is in `~/blyant`), where it is. `open settings.ini` edits it in the editor, and what you save there is used at once. When you edit it in another program, `reload` uses what you saved, without starting Blyant again:
+
+```
+blyant ~/novel> data
+blyant ~/blyant/data> reload
+Settings and registers read again
+```
+
+The registers are kept in the same directory, in `registers.txt` (a name, a tab, and the value on each line). When you edit that file, the shell reads it again by itself before the next command.
+
 ## Scripts
 The commands of the shell can also be run from the command line, or read from a file, as a small script:
 

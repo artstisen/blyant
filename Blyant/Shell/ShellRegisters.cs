@@ -36,11 +36,22 @@ internal static partial class ShellRegisters
     internal static bool IsName(string name) => NamePattern().IsMatch(name);
 
     /// <summary>
+    /// The lines of the file that were not registers when it was read last (no name, no tab, or not a name a register
+    /// can have): skipped, and told by "reg"
+    /// </summary>
+    internal static int Skipped { get; private set; }
+
+    // The file as it was when it was read or written last (its time and size), to tell when it was changed by hand
+    private static (DateTime Time, long Size)? _stamp;
+
+    /// <summary>
     /// Read the registers from their file (none: no registers)
     /// </summary>
     internal static void Load()
     {
         Values.Clear();
+        Skipped = 0;
+        _stamp = Stamp();
         string text;
         try
         {
@@ -54,9 +65,41 @@ internal static partial class ShellRegisters
 
         foreach (var line in TextBuffer.Normalize(text).Split('\n'))
         {
+            if (line.Trim().Length == 0) continue;
             var tab = line.IndexOf('\t');
-            if (tab <= 0 || !IsName(line[..tab])) continue;
+            if (tab <= 0 || !IsName(line[..tab]))
+            {
+                Skipped++;
+                continue;
+            }
+
             Values[line[..tab].ToLowerInvariant()] = line[(tab + 1)..];
+        }
+    }
+
+    /// <summary>
+    /// Read the registers again when their file has been changed since (edited by hand, or by another Blyant): before
+    /// each command of the shell. Every change made in the shell is written at once, so none is lost
+    /// </summary>
+    /// <returns>True if they were read again</returns>
+    internal static bool Refresh()
+    {
+        if (Stamp() == _stamp) return false;
+        Load();
+        return true;
+    }
+
+    // The time and size of the file (null: it is not there, or cannot be looked at)
+    private static (DateTime Time, long Size)? Stamp()
+    {
+        try
+        {
+            var file = new FileInfo(FilePath);
+            return file.Exists ? (file.LastWriteTimeUtc, file.Length) : null;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+        {
+            return null;
         }
     }
 
@@ -70,6 +113,9 @@ internal static partial class ShellRegisters
         {
             var text = string.Concat(Values.Select(pair => pair.Key + "\t" + pair.Value + "\n"));
             FileIo.WriteAllBytesSafe(FilePath, new UTF8Encoding(false).GetBytes(text));
+            // (written here: not read again for it; the lines skipped are gone from the file)
+            _stamp = Stamp();
+            Skipped = 0;
             return DialogText.Success;
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
@@ -97,7 +143,11 @@ internal static partial class ShellRegisters
     /// <summary>
     /// Take all the registers away
     /// </summary>
-    internal static void Clear() => Values.Clear();
+    internal static void Clear()
+    {
+        Values.Clear();
+        Skipped = 0;
+    }
 
     /// <summary>
     /// A command line with $name put in for the value of each register of that name ("$$" for a "$"; a $name that is
