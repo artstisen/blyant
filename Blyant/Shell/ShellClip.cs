@@ -119,9 +119,9 @@ internal sealed partial class ShellSession
             return true;
         }
 
-        var rows = all.Split('\n');
-        // (the empty row after the last line break is not a line)
-        var count = all.EndsWith('\n') ? rows.Length - 1 : rows.Length;
+        // (the last line break does not start a line)
+        var rows = LinesOfText(all);
+        var count = rows.Count;
         last = Math.Min(last, count);
         if (first > last)
         {
@@ -129,7 +129,7 @@ internal sealed partial class ShellSession
             return false;
         }
 
-        text = string.Join("\n", rows[(first - 1)..last]);
+        text = string.Join("\n", rows.GetRange(first - 1, last - first + 1));
         shown = Lang.F("Lines {0}-{1} of {2}", first, last, path);
         return true;
     }

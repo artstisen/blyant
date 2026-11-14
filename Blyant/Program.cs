@@ -109,10 +109,14 @@ class Program
             }
         }
 
-        // Without a directory given: the one of the setting shelldir (not for --run: its commands are of the directory
-        // Blyant is started in)
+        // Without a directory given: the one of the setting shelldir (not for --run, nor for commands read from a file
+        // or a pipe: their commands are of the directory Blyant is started in)
         string? note = null;
-        if (start.Path == null && run.Count == 0) directory = Shell.StartIn(currentDirectory, out note);
+        if (start.Path == null && run.Count == 0 && !Console.IsInputRedirected)
+        {
+            directory = Shell.StartIn(currentDirectory, out note);
+        }
+
         if (run.Count == 0) return Shell.Run(directory, yes, null, note);
         var session = new ShellSession(new StringReader(string.Join("\n", run) + "\n"), Console.Out, Console.Error,
             directory, false, yes) { Clipboard = !Console.IsOutputRedirected };

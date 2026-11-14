@@ -397,10 +397,10 @@ internal static class FileIo
     internal static void SaveSettings()
     {
         var status = WriteSettingsFile(SettingsText());
-        if (status != DialogText.Success)
-        {
-            Menu.StatusMessage(status, true, true, true, DialogText.CaptionsSettings, string.Empty, false);
-        }
+        if (status == DialogText.Success) return;
+        // (the shell tells it on a line)
+        if (Shell.Prompts is { } shell) shell.Tell(Lang.F("{0}: {1}", DialogText.CaptionsSettings, status));
+        else Menu.StatusMessage(status, true, true, true, DialogText.CaptionsSettings, string.Empty, false);
     }
 
     /// <summary>
@@ -411,147 +411,147 @@ internal static class FileIo
     {
         // Collect settings data
         // Section start
-        _tempSettings = "; Last modified " + IsoDateTime.GetDateTimeNow() + '\n';
-        _tempSettings += "[SETTINGS]" + '\n';
+        var settings = "; Last modified " + IsoDateTime.GetDateTimeNow() + '\n';
+        settings += "[SETTINGS]" + '\n';
         // Comment
-        _tempSettings += '\n';
-        _tempSettings += "; DIMENSIONS" + '\n';
+        settings += '\n';
+        settings += "; DIMENSIONS" + '\n';
         // Output line width (columns)
-        _tempSettings += "linewidth=" + Init.LineWidth + '\n';
+        settings += "linewidth=" + Init.LineWidth + '\n';
         // Output line count (rows)
-        _tempSettings += "linecount=" + Init.LineCount + '\n';
+        settings += "linecount=" + Init.LineCount + '\n';
         // Follow the size of the terminal window
-        _tempSettings += "autosize=" + (Init.AutoSize ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        settings += "autosize=" + (Init.AutoSize ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // Comment
-        _tempSettings += '\n';
-        _tempSettings += "; OPTIONAL" + '\n';
+        settings += '\n';
+        settings += "; OPTIONAL" + '\n';
         // What to show at startup: select (the start page), editor (the file browser) or blank (a blank page)
-        _tempSettings += "startmode=" + StartMenu.SettingName(StartMenu.Mode) + '\n';
+        settings += "startmode=" + StartMenu.SettingName(StartMenu.Mode) + '\n';
         // The kind of new files and blank pages: the extension a name without one gets (md, txt, html ...)
-        _tempSettings += "filetype=" + FileOperations.DefaultExtension.TrimStart('.') + '\n';
+        settings += "filetype=" + FileOperations.DefaultExtension.TrimStart('.') + '\n';
         // The line endings of new files and blank pages: system, lf or crlf
-        _tempSettings += "newlineendings=" + TextFile.NewFileLineEndings + '\n';
+        settings += "newlineendings=" + TextFile.NewFileLineEndings + '\n';
         // Starting in the file browser: open the favorites list first
-        _tempSettings += "startfavorites=" + (StartMenu.StartInFavorites ? DialogText.BTrue : DialogText.BFalse) +
+        settings += "startfavorites=" + (StartMenu.StartInFavorites ? DialogText.BTrue : DialogText.BFalse) +
                          '\n';
         // Deleting in the file browser moves to the trash ("trash" in the data directory); false: deleted for good
-        _tempSettings += "deletetotrash=" + (FileOperations.DeleteToTrash ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        settings += "deletetotrash=" + (FileOperations.DeleteToTrash ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // Below the list of favorites: the panes with the note and the peek of the selected item, and the peek in them
-        _tempSettings += "favoritepanes=" + (FileExplorer.FavoritePanes ? DialogText.BTrue : DialogText.BFalse) + '\n';
-        _tempSettings += "favoritepeek=" + (FileExplorer.FavoritePeek ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        settings += "favoritepanes=" + (FileExplorer.FavoritePanes ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        settings += "favoritepeek=" + (FileExplorer.FavoritePeek ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // The list of favorites that is open
-        _tempSettings += "favoritelist=" + FileFavorites.CurrentList + '\n';
+        settings += "favoritelist=" + FileFavorites.CurrentList + '\n';
         // The board of the corkboard that is open, and its peek
-        _tempSettings += "boardname=" + Corkboard.CurrentBoard + '\n';
-        _tempSettings += "boardpeek=" + (CorkboardPage.PeekOn ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        settings += "boardname=" + Corkboard.CurrentBoard + '\n';
+        settings += "boardpeek=" + (CorkboardPage.PeekOn ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // What the keys of the corkboard select: all (at first), both (cards and badges), cards, badges or lines
-        _tempSettings += "boardmode=" + CorkboardPage.ModeWord + '\n';
+        settings += "boardmode=" + CorkboardPage.ModeWord + '\n';
         // The rows of the favorites numbered (and below, of the bookmarks)
-        _tempSettings += "favoritenumbers=" + (FileExplorer.FavoriteNumbers ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        settings += "favoritenumbers=" + (FileExplorer.FavoriteNumbers ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // The same below the bookmarks of the Jump menu
-        _tempSettings += "bookmarkpanes=" + (JumpMenu.BookmarkPanes ? DialogText.BTrue : DialogText.BFalse) + '\n';
-        _tempSettings += "bookmarkpeek=" + (JumpMenu.BookmarkPeek ? DialogText.BTrue : DialogText.BFalse) + '\n';
-        _tempSettings += "bookmarknumbers=" + (JumpMenu.BookmarkNumbers ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        settings += "bookmarkpanes=" + (JumpMenu.BookmarkPanes ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        settings += "bookmarkpeek=" + (JumpMenu.BookmarkPeek ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        settings += "bookmarknumbers=" + (JumpMenu.BookmarkNumbers ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // The rows of the panes of the file browser, the history, the hotlist and the search results numbered
-        _tempSettings += "filenumbers=" + (FileExplorer.FileNumbers ? DialogText.BTrue : DialogText.BFalse) + '\n';
-        _tempSettings += "historynumbers=" + (FileExplorer.HistoryNumbers ? DialogText.BTrue : DialogText.BFalse) + '\n';
-        _tempSettings += "hotlistnumbers=" + (FileExplorer.HotlistNumbers ? DialogText.BTrue : DialogText.BFalse) + '\n';
-        _tempSettings += "searchnumbers=" + (FileExplorer.SearchNumbers ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        settings += "filenumbers=" + (FileExplorer.FileNumbers ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        settings += "historynumbers=" + (FileExplorer.HistoryNumbers ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        settings += "hotlistnumbers=" + (FileExplorer.HotlistNumbers ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        settings += "searchnumbers=" + (FileExplorer.SearchNumbers ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // The commands of the place in a box above the command line while a command is typed
-        _tempSettings += "commandlist=" + (CommandList.Enabled ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        settings += "commandlist=" + (CommandList.Enabled ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // The hints on the start page, and the one shown (the next each time Blyant starts, while they are shown)
-        _tempSettings += "hints=" + (Hints.Enabled ? DialogText.BTrue : DialogText.BFalse) + '\n';
-        _tempSettings += "hintindex=" + Hints.Index + '\n';
+        settings += "hints=" + (Hints.Enabled ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        settings += "hintindex=" + Hints.Index + '\n';
         // The clipboard: yanks to the system clipboard (OSC 52) and/or the paste bin, every yank ("all") or only
         // with "+ in front ("plus"), and the paste bin file
-        _tempSettings += "osc52=" + (SystemClipboard.Osc52 ? DialogText.BTrue : DialogText.BFalse) + '\n';
-        _tempSettings += "pastebin=" + (SystemClipboard.PasteBin ? DialogText.BTrue : DialogText.BFalse) +
+        settings += "osc52=" + (SystemClipboard.Osc52 ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        settings += "pastebin=" + (SystemClipboard.PasteBin ? DialogText.BTrue : DialogText.BFalse) +
                          '\n';
-        _tempSettings += "clipboardyank=" + (SystemClipboard.EveryYank ? "all" : "plus") + '\n';
-        _tempSettings += "pastebinappend=" + (SystemClipboard.PasteBinAppend ? DialogText.BTrue : DialogText.BFalse) +
+        settings += "clipboardyank=" + (SystemClipboard.EveryYank ? "all" : "plus") + '\n';
+        settings += "pastebinappend=" + (SystemClipboard.PasteBinAppend ? DialogText.BTrue : DialogText.BFalse) +
                          '\n';
-        _tempSettings += "pastebinfile=" + SystemClipboard.PasteBinFile + '\n';
+        settings += "pastebinfile=" + SystemClipboard.PasteBinFile + '\n';
         // The order of the snippets in the editor (file, title or used)
-        _tempSettings += "snipsort=" + Snippets.SortName(Snippets.Sort) + '\n';
+        settings += "snipsort=" + Snippets.SortName(Snippets.Sort) + '\n';
         // Comment
-        _tempSettings += '\n';
-        _tempSettings += "; STYLING" + '\n';
+        settings += '\n';
+        settings += "; STYLING" + '\n';
         // ASCII style
-        _tempSettings += "asciistyle=" + AsciiStyles.GetAsciiStyle() + '\n';
+        settings += "asciistyle=" + AsciiStyles.GetAsciiStyle() + '\n';
         // Logo animation on the start page
-        _tempSettings += "logoanim=" + Logo.SettingName(Logo.Animation) + '\n';
+        settings += "logoanim=" + Logo.SettingName(Logo.Animation) + '\n';
         // The logo: the built-in one (Blyant), or the name of one in the directory "logos"
-        _tempSettings += "logo=" + Logo.Current.Name + '\n';
+        settings += "logo=" + Logo.Current.Name + '\n';
         // The color scheme: a built-in one, or the name of one in the directory "colorschemes"
-        _tempSettings += "colorscheme=" + ConsoleColors.Current.Name + '\n';
+        settings += "colorscheme=" + ConsoleColors.Current.Name + '\n';
         // Black and white: the colors of the scheme are kept, but not used
-        _tempSettings += "monochrome=" + (ConsoleColors.Monochrome ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        settings += "monochrome=" + (ConsoleColors.Monochrome ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // Comment
-        _tempSettings += '\n';
-        _tempSettings += "; FILE BROWSER AND EDITOR" + '\n';
+        settings += '\n';
+        settings += "; FILE BROWSER AND EDITOR" + '\n';
         // The directories last shown in the two panes of the file browser, the names selected in them, and the pane
         // that had the focus (1 or 2)
-        _tempSettings += "browsedir1=" + FileExplorer.StartDirectory + '\n';
-        _tempSettings += "browsedir2=" + FileExplorer.StartDirectory2 + '\n';
-        _tempSettings += "browsesel1=" + FileExplorer.StartSelected + '\n';
-        _tempSettings += "browsesel2=" + FileExplorer.StartSelected2 + '\n';
-        _tempSettings += "browsepane=" + (FileExplorer.StartPane + 1) + '\n';
+        settings += "browsedir1=" + FileExplorer.StartDirectory + '\n';
+        settings += "browsedir2=" + FileExplorer.StartDirectory2 + '\n';
+        settings += "browsesel1=" + FileExplorer.StartSelected + '\n';
+        settings += "browsesel2=" + FileExplorer.StartSelected2 + '\n';
+        settings += "browsepane=" + (FileExplorer.StartPane + 1) + '\n';
         // Where the folder pickers start: the folder picked last (or, ending with a separator, the directory where
         // the picking was canceled)
-        _tempSettings += "pickdir=" + FileExplorer.PickPlace + '\n';
+        settings += "pickdir=" + FileExplorer.PickPlace + '\n';
         // Two panes side by side in the file browser (false: one pane)
-        _tempSettings += "browsedual=" + (FileExplorer.DualPane ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        settings += "browsedual=" + (FileExplorer.DualPane ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // Recovery copies of text that is not saved, in the directory "recovery" (false: none are written)
-        _tempSettings += "recovery=" + (Recovery.Enabled ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        settings += "recovery=" + (Recovery.Enabled ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // Complete words while typing in the editor (the lists are in completions.txt)
-        _tempSettings += "autocomplete=" + (Completions.Enabled ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        settings += "autocomplete=" + (Completions.Enabled ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // Color Markdown, HTML, CSS, JavaScript and JSON files in the editor (the editor command :syntax turns
         // the colors on and off)
         // The language of the texts (en, da, de, nb, sv, es, fr)
         // The language set, also when its file is missing (English is used until it is there again)
-        _tempSettings += "language=" + (Lang.Missing ?? Lang.Current) + '\n';
-        _tempSettings += "syntaxcolors=" + (SyntaxHighlighter.ColorFiles ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        settings += "language=" + (Lang.Missing ?? Lang.Current) + '\n';
+        settings += "syntaxcolors=" + (SyntaxHighlighter.ColorFiles ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // Line numbers in the editor (the editor command :number turns them on and off)
-        _tempSettings += "linenumbers=" + (TextArea.LineNumbers ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        settings += "linenumbers=" + (TextArea.LineNumbers ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // A blank gutter in front of the text when the line numbers are off, as a margin
-        _tempSettings += "gutter=" + (TextArea.BlankGutter ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        settings += "gutter=" + (TextArea.BlankGutter ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // Long lines in the editor wrapped (on unless turned off)
-        _tempSettings += "wrap=" + (TextArea.WordWrap ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        settings += "wrap=" + (TextArea.WordWrap ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // Blank space shown in the editor as . (space), > (tab) and $ (line end) (:whitespace)
-        _tempSettings += "whitespace=" + (TextArea.ShowWhitespace ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        settings += "whitespace=" + (TextArea.ShowWhitespace ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // The indent of Tab, ">>" and "<<" in the editor, in spaces: 2, 4 or 8
-        _tempSettings += "indent=" + EditorEngine.IndentSetting + '\n';
+        settings += "indent=" + EditorEngine.IndentSetting + '\n';
         // Zen mode: the editor of a file shows only the mode and the name above the text, the line and column below (:zen)
-        _tempSettings += "zen=" + (TextArea.Zen ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        settings += "zen=" + (TextArea.Zen ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // The shell: a long output in pages (only here, and with "set shellpaging" in the shell: not in Configuration)
-        _tempSettings += "shellpaging=" + (Shell.Paging ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        settings += "shellpaging=" + (Shell.Paging ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // Blyant starts as the shell (Configuration: General), as "blyant --shell" does
-        _tempSettings += "startshell=" + (Shell.StartInShell ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        settings += "startshell=" + (Shell.StartInShell ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // The shell: the line read key by key, with Tab and Up (off: as the terminal reads it)
-        _tempSettings += "shellcompletion=" + (Shell.Completion ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        settings += "shellcompletion=" + (Shell.Completion ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // The directory the shell starts in (a path, "last", or empty: the one Blyant is started in), and the one it
         // was left in (for "last")
-        _tempSettings += "shelldir=" + Shell.StartSetting + '\n';
-        _tempSettings += "shelllastdir=" + Shell.LastDirectory + '\n';
+        settings += "shelldir=" + Shell.StartSetting + '\n';
+        settings += "shelllastdir=" + Shell.LastDirectory + '\n';
         // In Zen mode, the mode ([N], [I] ...) in the color of its mode, as the mode label outside Zen mode
-        _tempSettings += "zencolors=" + (TextArea.ZenColors ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        settings += "zencolors=" + (TextArea.ZenColors ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // The modules (Configuration: Modules): the projects and the corkboard, on unless turned off
-        _tempSettings += "moduleprojects=" + (Modules.Projects ? DialogText.BTrue : DialogText.BFalse) + '\n';
-        _tempSettings += "moduleboard=" + (Modules.Board ? DialogText.BTrue : DialogText.BFalse) + '\n';
-        _tempSettings += "modulejump=" + (Modules.Jump ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        settings += "moduleprojects=" + (Modules.Projects ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        settings += "moduleboard=" + (Modules.Board ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        settings += "modulejump=" + (Modules.Jump ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // ' jumps to the place of a mark, as ` (for keyboards where ` is hard to type)
-        _tempSettings += "marksapostrophe=" + (EditorEngine.MarksApostrophe ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        settings += "marksapostrophe=" + (EditorEngine.MarksApostrophe ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // Lines kept above and below the cursor when the editor scrolls (on or off, and how many)
-        _tempSettings += "scrolloff=" + (TextArea.ScrollOff ? DialogText.BTrue : DialogText.BFalse) +
+        settings += "scrolloff=" + (TextArea.ScrollOff ? DialogText.BTrue : DialogText.BFalse) +
                          '\n';
-        _tempSettings += "scrolllines=" + TextArea.ScrollOffLines + '\n';
+        settings += "scrolllines=" + TextArea.ScrollOffLines + '\n';
         // Comment
-        _tempSettings += '\n';
-        _tempSettings += "; SPELL CHECKING" + '\n';
+        settings += '\n';
+        settings += "; SPELL CHECKING" + '\n';
         // The languages used by the editor command :spell (spell files in the directory "spell"):
-        _tempSettings += "spelllang=" + SpellChecker.Languages + '\n';
+        settings += "spelllang=" + SpellChecker.Languages + '\n';
 
-        return _tempSettings;
+        return settings;
     }
 
     /// <summary>

@@ -65,7 +65,10 @@ internal sealed class ShellLineReader
                 return string.Empty;
             }
 
-            if ((control && key.Key is ConsoleKey.D or ConsoleKey.Z) || key.KeyChar is '\u0004' or '\u001a')
+            // (Ctrl+Z only on Windows: on Linux and macOS it suspends a program, which the terminal does not do while
+            // keys are read one by one, so it is not taken for the end)
+            if ((control && key.Key == ConsoleKey.D) || key.KeyChar == '\u0004' ||
+                (OperatingSystem.IsWindows() && ((control && key.Key == ConsoleKey.Z) || key.KeyChar == '\u001a')))
             {
                 // Ctrl+D, Ctrl+Z: the end of the input, on an empty line
                 if (_text.Length > 0) continue;
@@ -148,19 +151,16 @@ internal sealed class ShellLineReader
         }
     }
 
-    /// <summary>
-    /// The text written for the line now (without the prompt), and where the cursor is in it: for a test
-    /// </summary>
-    internal (string Text, int Cursor) Shown => (_text, _cursor);
-
     // Write the row: the prompt (its end, in a narrow window) and the part of the line that fits, blanks over what was
     // written before, and the cursor put in its place by writing the row again up to it
     private void Draw(string prompt)
     {
-        var width = Math.Max(20, _width()) - 1;
-        // (a prompt that leaves less than 20 columns for the line: its end)
-        if (TextMetrics.WidthOf(prompt) > width - 20) prompt = TextMetrics.KeepEnd(prompt, Math.Max(10, width - 20));
-        var room = Math.Max(5, width - TextMetrics.WidthOf(prompt));
+        // (the last column of the window is not written: the row would wrap)
+        var width = Math.Max(3, _width() - 1);
+        // (a prompt that leaves less than 20 columns for the line, or half a narrow window: its end)
+        var least = Math.Min(20, width / 2);
+        if (TextMetrics.WidthOf(prompt) > width - least) prompt = TextMetrics.KeepEnd(prompt, Math.Max(1, width - least));
+        var room = Math.Max(2, width - TextMetrics.WidthOf(prompt));
         // The part of the line shown: the cursor in it (the line scrolled sideways)
         if (_cursor < _scroll) _scroll = _cursor;
         while (TextMetrics.WidthOf(_text[_scroll.._cursor]) > room - 1)

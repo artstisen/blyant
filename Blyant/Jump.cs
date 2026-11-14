@@ -691,10 +691,6 @@ internal static class Jump
     }
 
     /// <summary>
-    /// Make the pending jump (called by the main loop). Afterwards the start page is shown (or a page of its
-    /// Configuration tab), or the corkboard first when the jump was made from it
-    /// </summary>
-    /// <summary>
     /// ":shell" on a page: Blyant goes on as the shell (Blyant on lines), in a directory (null: the one Blyant was
     /// started in). Not while a page below has changes that are not saved (as for a jump); the page itself asks about
     /// its own changes first (beforeLeaving). The page is left as for a jump, and the main loop starts the shell
@@ -715,8 +711,14 @@ internal static class Jump
     {
         Pending = null;
         BackToBoard = false;
+        // (":shell" in the editor opened from the shell: it is back at the prompt, as asked)
+        Shell.Requested = null;
     }
 
+    /// <summary>
+    /// Make the pending jump (called by the main loop). Afterwards the start page is shown (or a page of its
+    /// Configuration tab), or the corkboard first when the jump was made from it
+    /// </summary>
     internal static void RunPending()
     {
         var target = Pending;

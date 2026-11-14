@@ -65,21 +65,42 @@ internal static class Shell
     // A path of the setting as a full path ("~" is the home directory), or null if it is not a path
     private static string? FullPath(string path, string current)
     {
-        if (path == "~" || path.StartsWith("~/") || path.StartsWith("~" + Path.DirectorySeparatorChar))
-        {
-            var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-            path = path.Length == 1 ? home : Path.Combine(home, path[2..]);
-        }
-
         try
         {
-            return Path.GetFullPath(path, current);
+            return Path.GetFullPath(FromHome(path), current);
         }
         catch (Exception e) when (e is ArgumentException or NotSupportedException or PathTooLongException)
         {
             return null;
         }
     }
+
+    /// <summary>
+    /// A path typed with "~" for the home directory ("~", "~/notes") as a path from it; another path as it is
+    /// </summary>
+    internal static string FromHome(string path)
+    {
+        if (path != "~" && !path.StartsWith("~/") && !path.StartsWith("~" + Path.DirectorySeparatorChar)) return path;
+        var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        return path.Length == 1 ? home : Path.Combine(home, path[2..]);
+    }
+
+    /// <summary>
+    /// Blyant is left from the full screen shown from the shell (":exit" in the editor opened with "open"): the shell is
+    /// left too, as with "exit" (its directory kept with shelldir=last)
+    /// </summary>
+    internal static void OnExit()
+    {
+        if (Current is not { Terminal: true } session) return;
+        EventLog.Add(DialogText.LogShell + ": left"); // English: the log
+        RememberLast(session.Directory);
+    }
+
+    /// <summary>
+    /// The shell writes on lines, in the colors of the terminal (Blyant started as the shell, or the shell runs and
+    /// the full screen is not shown from it): the colors of a scheme are not set
+    /// </summary>
+    internal static bool OnLines => Init.Plain || Prompts != null;
 
     /// <summary>
     /// With shelldir=last: the directory the shell is left in is kept (shelllastdir), to start there next time
@@ -143,11 +164,12 @@ internal static class Shell
             WindowSize = terminal ? WindowSizeOfTerminal : null,
             ReadKey = terminal ? ReadPauseKey : null
         };
-        if (terminal && Completion) session.ReadLinesWith(ReadPauseKey, WindowWidth);
+        if (terminal) session.ReadLinesWith(ReadPauseKey, WindowWidth);
         // (from the editor: the file is the last list, "open 1" opens it again)
         if (file != null && File.Exists(file)) session.ShowFirst(file);
         var code = Run(session);
-        RememberLast(session.Directory);
+        // (commands read from a file or a pipe do not change where the shell typed in starts)
+        if (terminal) RememberLast(session.Directory);
         return code;
     }
 

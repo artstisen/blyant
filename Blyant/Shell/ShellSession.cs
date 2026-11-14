@@ -129,12 +129,20 @@ internal sealed partial class ShellSession
                 DialogText.ApplicationVersion));
         }
 
-        if (StartNote != null) Line(StartNote);
+        if (StartNote != null)
+        {
+            if (Terminal) Line(StartNote);
+            else _errors.WriteLine(StartNote);
+        }
 
+        var first = true;
         while (true)
         {
             string? line;
-            if (_lineReader != null)
+            // (a Ctrl+C pressed while the last command ran, or at a question, is not taken for this prompt)
+            if (Terminal) Tools.TakeCancelKey();
+            // (the setting shellcompletion is followed at once: "set shellcompletion false")
+            if (_lineReader != null && Shell.Completion)
             {
                 line = _lineReader.Read(Prompt());
                 // (kept for Up and Down)
@@ -149,13 +157,16 @@ internal sealed partial class ShellSession
                 }
 
                 line = _input.ReadLine();
+                // (a file of commands saved with a byte order mark, as Notepad and PowerShell save it)
+                if (first && line != null) line = line.TrimStart('\uFEFF');
             }
 
+            first = false;
             if (line == null)
             {
                 // Ctrl+C at the prompt: a new prompt; the end of the input (Ctrl+D, Ctrl+Z, the end of the file):
-                // leave
-                if (Terminal && Tools.TakeCancelKey())
+                // leave. (Ctrl+C can end the reading of a line before Blyant is told of it: it is waited for a moment)
+                if (Terminal && SpinWait.SpinUntil(Tools.TakeCancelKey, CancelKeyWait))
                 {
                     _output.WriteLine();
                     continue;
@@ -165,11 +176,31 @@ internal sealed partial class ShellSession
                 break;
             }
 
-            if (!Execute(line)) break;
+            if (!RunLine(line)) break;
         }
 
         EventLog.Add(DialogText.LogShell + ": left"); // English: the log
         return !Terminal && Failures > 0 ? 1 : 0;
+    }
+
+    // How long Ctrl+C is waited for after the reading of a line ended without one (ms)
+    private const int CancelKeyWait = 100;
+
+    // A command typed, run: one that fails in a way no command expects (a bug) is told, and the shell goes on
+    private bool RunLine(string line)
+    {
+        try
+        {
+            return Execute(line);
+        }
+        catch (Exception e) when (e is not NavigationException)
+        {
+            Error(Lang.F("The command failed: {0}", e.Message));
+            // English: the log (the kind of failure, never what was typed after the command)
+            EventLog.Add(DialogText.LogShell + ": " + CommandLine.Name(line).ToLowerInvariant() + " failed: " +
+                         e.GetType().Name);
+            return true;
+        }
     }
 
     /// <summary>
@@ -195,10 +226,11 @@ internal sealed partial class ShellSession
     private void Line(string text = "")
     {
         if (_stopped) return;
+        text = Printable(text);
         if (PageSize() is { } size)
         {
-            // (a line wider than the window takes more rows)
-            var rows = Math.Max(1, (TextMetrics.WidthOf(text) + size.Width - 1) / size.Width);
+            // (a line wider than the window takes more rows; so do the lines of a text of several)
+            var rows = text.Split('\n').Sum(part => Math.Max(1, (TextMetrics.WidthOf(part) + size.Width - 1) / size.Width));
             if (_rows > 0 && _rows + rows > size.Height - 1 && !Pause(size.Width))
             {
                 _stopped = true;
@@ -223,7 +255,8 @@ internal sealed partial class ShellSession
     // Ctrl+C). The line of the pause is written over by what comes next
     private bool Pause(int width)
     {
-        var text = Lang.T("-- More: Enter or Space next page, q stop --");
+        // (on one row: a narrow window, or a long translation, gets it cut)
+        var text = Cut(Lang.T("-- More: Enter or Space next page, q stop --"), width - 1);
         _output.Write(text);
         _output.Flush();
         var key = ReadKey!();
@@ -241,11 +274,42 @@ internal sealed partial class ShellSession
         _stopped = false;
     }
 
+    /// <summary>
+    /// What went wrong, told by another part of Blyant (a file it could not write) while the shell runs
+    /// </summary>
+    internal void Tell(string text) => Error(text);
+
     // What went wrong: a command that failed (on the error output, so a script can tell it from what is shown)
     private void Error(string text)
     {
         Failures++;
-        _errors.WriteLine(text);
+        _errors.WriteLine(Printable(text));
+    }
+
+    /// <summary>
+    /// A text as it is written: control characters (of a file shown, a name) as "?", so a file cannot move the cursor,
+    /// change the colors or the title, or set the clipboard of the terminal by being shown (escape sequences). Line
+    /// breaks and tabs are kept
+    /// </summary>
+    internal static string Printable(string text)
+    {
+        if (!text.Any(IsControl)) return text;
+        return string.Concat(text.Select(c => IsControl(c) ? '?' : c));
+
+        static bool IsControl(char c) => char.IsControl(c) && c is not ('\n' or '\t');
+    }
+
+    /// <summary>
+    /// A text cut to a number of columns (whole characters)
+    /// </summary>
+    internal static string Cut(string text, int columns)
+    {
+        while (text.Length > 0 && TextMetrics.WidthOf(text) > Math.Max(0, columns))
+        {
+            text = text[..^TextMetrics.PreviousElementLength(text, text.Length)];
+        }
+
+        return text;
     }
 
     /// <summary>
@@ -291,16 +355,20 @@ internal sealed partial class ShellSession
     internal int Pick(string caption, string question, string note, IReadOnlyList<string> choices,
         IReadOnlyList<string> keys, int selected, bool guarded)
     {
-        Line(caption.Length > 0 ? caption + ": " + question : question);
-        if (note.Length > 0) Line("  " + note);
         if (!Terminal)
         {
+            // On the error output, as it is not what the command shows: and when nothing is done, the command failed
             var answer = _yes && choices.Count > 0 ? 0 : -1;
-            Line("  " + (answer == 0
+            Asked(Question(caption, question), note, answer == 0
                 ? Lang.F("(not asked: {0}, as --yes tells)", choices[0])
-                : Lang.T("(not asked: the commands are not typed, so nothing is done)")));
+                : Lang.T("(not asked: the commands are not typed, so nothing is done)"), answer < 0);
             return answer;
         }
+
+        // (a question after "q" at a pause is shown)
+        NewPage(0);
+        Line(Question(caption, question));
+        if (note.Length > 0) Line("  " + note);
 
         // "1 Yes  2 No", or with the keys: "Y Yes  N No"; guarded: the word to type
         var shown = guarded
@@ -333,8 +401,21 @@ internal sealed partial class ShellSession
     /// </summary>
     internal void Message(string caption, string message, string note)
     {
-        Line(caption.Length > 0 ? caption + ": " + message : message);
+        Line(Question(caption, message));
         if (note.Length > 0) Line("  " + note);
+    }
+
+    // The question (or message) with the caption of its box in front
+    private static string Question(string caption, string question) =>
+        caption.Length > 0 ? Lang.F("{0}: {1}", caption, question) : question;
+
+    // A question not asked (the commands are read from a file): written on the error output, with what was done
+    private void Asked(string question, string note, string answer, bool failed)
+    {
+        if (failed) Failures++;
+        _errors.WriteLine(Printable(question));
+        if (note.Length > 0) _errors.WriteLine("  " + Printable(note));
+        _errors.WriteLine("  " + answer);
     }
 
     /// <summary>
@@ -342,12 +423,15 @@ internal sealed partial class ShellSession
     /// </summary>
     internal string? AskText(string caption, string prompt, string label)
     {
-        Line(caption.Length > 0 ? caption + ": " + prompt : prompt);
         if (!Terminal)
         {
-            Line("  " + Lang.T("(not asked: the commands are not typed, so nothing is done)"));
+            Asked(Question(caption, prompt), string.Empty,
+                Lang.T("(not asked: the commands are not typed, so nothing is done)"), true);
             return null;
         }
+
+        NewPage(0);
+        Line(Question(caption, prompt));
 
         _output.Write("  " + label + " ");
         _output.Flush();

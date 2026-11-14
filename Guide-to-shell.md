@@ -45,6 +45,8 @@ blyant ~/projects/novel> open 4
 
 Every list a command shows is numbered, and a number given to the next command is a row of that list: `open 4` opens `plot.md`, `cd 1` goes to `chapters`. A path works too (`open plot.md`, `cd ../other`), and a path that is not full is taken from the directory you are in. A file or directory that is not there is marked `(missing)`.
 
+The shell writes in the colors of your terminal (the color scheme is for the full screen), and a character of a file that would steer the terminal (an escape sequence: a color, a title, the clipboard) is shown as `?`. A command that fails in a way it should not is told (`The command failed: ...`), and the shell goes on.
+
 ## Long lists
 In a terminal, an output longer than the window comes in pages: when the window is full, the shell waits, with `-- More: Enter or Space next page, q stop --` on the last row.
 
@@ -113,12 +115,14 @@ In a terminal the line of the shell is read key by key:
 - `Left`, `Right`, `Home` and `End` move on the line, `Backspace` and `Delete` delete, `Ctrl+U` deletes the line before the cursor, `Ctrl+W` the word before it, and `Esc` the whole line. A line wider than the window is scrolled sideways on its row
 - `Ctrl+C` drops what you have typed, and `Ctrl+D` (or `Ctrl+Z` on Windows) on an empty line leaves, as `exit` does
 
-With a screen reader the line may be read best as the terminal reads it: turn the setting `shellcompletion` off (`set shellcompletion false`, or `shellcompletion=false` in the settings file; not on the pages of Configuration). The line is then read whole after `Enter`, without `Tab` and with the history your terminal gives. Commands from a file, a pipe or `--run` are always read that way.
+With a screen reader the line may be read best as the terminal reads it: turn the setting `shellcompletion` off (`set shellcompletion false`, at once, or `shellcompletion=false` in the settings file; not on the pages of Configuration). The line is then read whole after `Enter`, without `Tab` and with the history your terminal gives. Commands from a file, a pipe or `--run` are always read that way.
 
 ## Files
 The shell works on files with the rules of the file browser:
 
 - A name with blanks in it is written in double quotes: `rename "old notes.md" notes.md`
+- When you rename, move or delete the directory you are in (`rename . drafts`, `delete ..`), the shell goes with it, or to the directory above it
+- `fav remove` and `hot remove` also take off a file or directory that is gone
 - `copy` and `move` never overwrite a file or directory of the same name: it is told, and nothing is done. A copy made in the directory it is in gets a new name (`plot-copy.md`)
 - `delete` asks first, telling what goes with a directory, and you type the answer in full (`Yes`) to go ahead. It goes to the trash, which you open from the file browser with `:trash`, unless _Delete to trash_ is turned off on the General page of Configuration. Something that cannot be moved to the trash is deleted for good only if you say so
 - The files and directories Blyant uses (its data directory, the settings, the favorites, the history) cannot be renamed, moved or deleted from the shell
@@ -130,13 +134,14 @@ The shell works on files with the rules of the file browser:
 `format` and `trim` change a file without opening it: they are the commands `:format` and `:trim` of the editor, run on the text of the file, so they do just what they do there (see the [guide to the editor](Guide-to-editor.md#other-commands)). The file is saved only when its text changed, with its line endings and its byte order mark as they were, and it is told: `page.html: Formatted`, `poem.md: Lines trimmed: 3`. A file that cannot be formatted safely is left as it is, and why is told.
 
 - Only files in UTF-8 are changed: a file in another encoding (Windows-1252, say) is left as it is. Open it in the editor, which saves it in UTF-8
+- A file with more than one kind of line endings (some lines CRLF, some LF) is left as it is too: saved, every line would get one kind. The editor tells it, and saves it with one. This goes for `insert`, `change` and `shift` too, and so does leaving the files Blyant uses
 - There is no undo: a file changed by `format` or `trim` is saved at once. Use them on files you can get back (a copy, a project kept in Git)
 
 `insert` puts a line of text in a file, as quick notes are written down: `insert todo.md bottom Buy milk`, `insert notes.md top # Monday`, `insert 3 +12 A new line` (a row of the last list). The text is all that follows the place, as you type it (blanks and quotes too), and it is one line. `+12` makes it line 12, before the line that was there, and a line past the end puts it after the last. The file keeps its line endings and its byte order mark, and the file is then the last list, at the line put in: `open 1` opens it there. As for `format`, only a file in UTF-8 is changed, the files Blyant uses are not, and there is no undo.
 
 `change` changes lines of a file into a text, without opening it: `change notes.md +12 A new line` (line 12), `change notes.md 12-15 One line instead` (lines 12 to 15 become one line). The text is all that follows the lines, as you type it, and it is one line. Without a text, the lines are deleted: `change notes.md 12-15` shows them and asks first (No is selected, as there is no undo), and from a file or with `--run` they are only deleted with `--yes`. A range past the end stops at the last line. As for `insert`, the file keeps its line endings and byte order mark, only a file in UTF-8 is changed and not the files Blyant uses, and the file is then the last list at the place changed (`open 1`). (The `:replace` of the editor finds a text and puts another in its place; `change` works on whole lines.)
 
-`set` shows the settings as they are in the settings file (`settings.ini` in the data directory), and changes one as the pages of Configuration do: `set indent 2`, `set wrap false`, `set colorscheme Deep Blue`. The setting is read again at once, as Blyant reads it when it starts. A value the setting cannot have is told, and the setting stays as it was: `indent cannot be 3: it stays 4`. A settings file written by an earlier version of Blyant lacks the settings that came after it: `set` writes the file whole first (as changing a setting in Configuration does), so every setting of this version can be shown and changed.
+`set` shows the settings as they are in the settings file (`settings.ini` in the data directory), and changes one as the pages of Configuration do: `set indent 2`, `set wrap false`, `set colorscheme Deep Blue`. The setting is read again at once, as Blyant reads it when it starts, and `set shelldir ""` empties a setting. A value the setting cannot have is told, and the setting stays as it was: `indent cannot be 3: it stays 4`. A settings file written by an earlier version of Blyant lacks the settings that came after it: `set` writes the file whole first (as changing a setting in Configuration does), so every setting of this version can be shown and changed.
 
 `reset` puts all the settings back to their defaults, as _Reset all settings_ on the System page of Configuration does: your lists, favorites, bookmarks and files are kept. It asks first, and only `y` (or `Yes`) goes ahead: `Enter` alone answers no. The settings of the shell go back too (`shellpaging` on, `shelldir` empty), and so does the language (English). From a file or with `--run`, nothing is reset unless `--yes` is given. The names and values are those of the settings file, and the guide to [Configuration](Guide-to-start-page.md#configuration) tells what each setting does.
 
@@ -175,6 +180,7 @@ cd $here
 insert todo.md bottom $note
 ```
 
+- A text in quotes is kept without them: `reg docs "~/my docs"` keeps the path, so `copy plot.md $docs` takes it as one
 - `reg` lists the registers, `reg docs` shows the value of one (alone on its line, as a script reads it with `blyant --run "reg docs"`), `reg -d docs` takes it away, and `reg -d all` all of them
 - A name starts with a letter, and has letters, digits and `_` (`docs`, `draft_2`); letter case is alike
 - `$name` is put in only for a register that is there: anything else stays as typed, so `insert prices.md bottom Ink costs $5` keeps its `$5`. `$$` is a `$`
@@ -221,8 +227,10 @@ printf 'ls\nhist\n' | blyant --shell
 ```
 
 - No prompt is shown, and what went wrong is written to the error output, so a script can tell the two apart. The exit code is 1 when a command failed, else 0
-- Questions are not asked: the answer is no, so nothing is done that would ask first. With `--yes` the answer is yes, also to deleting (to the trash): `blyant --shell --yes < commands.txt`
-- `open` does not open the editor (it needs a terminal); with `--yes` a file that is not there is still made
+- Questions are not asked: the answer is no, so nothing is done that would ask first, and the command counts as failed. With `--yes` the answer is yes, also to deleting (to the trash): `blyant --shell --yes < commands.txt`. The question, and the answer it got, are written to the error output
+- `open` does not open the editor (it needs a terminal), and a file that is not there is not made
+- The commands run in the directory Blyant is started in (or the one given), not in the start directory of the setting `shelldir`, and where they end is not kept for `shelldir=last`
+- A file of commands saved with a byte order mark (as Notepad and PowerShell can save it) is read as one without
 
 `--run` gives the commands on the command line instead, one after each `--run`, and Blyant ends when they are done: what they show, their questions and the exit code are as for commands read from a file.
 

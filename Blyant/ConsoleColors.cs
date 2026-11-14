@@ -23,7 +23,8 @@ internal static class ConsoleColors
     internal static void Use(ColorScheme scheme)
     {
         Current = scheme.Clone();
-        SetColors(ColorPreset.Normal);
+        // (the shell writes in the colors of the terminal: the scheme is used when the full screen is shown)
+        if (!Shell.OnLines) SetColors(ColorPreset.Normal);
     }
 
     /// <summary>

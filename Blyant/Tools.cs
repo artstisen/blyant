@@ -427,6 +427,7 @@ internal static class Tools
     {
         // The places of the file browser, if Blyant is left from it (or from the editor opened from it)
         FileExplorer.RememberOnExit();
+        Shell.OnExit();
         ShowCursor(); // Remember to show cursor again for continuous work in the console
         // Exit the application reverting to the original console colors
         ConsoleColors.Reset();

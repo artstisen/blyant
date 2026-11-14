@@ -21,30 +21,8 @@ internal sealed partial class ShellSession
             return;
         }
 
-        if (Existing(words[0]) is not { } item) return;
-        if (item.IsDirectory)
-        {
-            Error(Lang.F("Not a file: {0}", item.Path));
-            return;
-        }
-
-        TextFile file;
-        try
-        {
-            file = TextFile.Load(item.Path);
-        }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidDataException)
-        {
-            Error(Lang.F("{0} cannot be read: {1}", item.Path, e.Message));
-            return;
-        }
-
-        if (!file.IsUtf8)
-        {
-            Error(Lang.F("{0} is not in UTF-8 ({1}): open it in the editor, which saves it in UTF-8", item.Path,
-                file.EncodingName));
-            return;
-        }
+        if (EditableFile(words[0]) is not { } editable) return;
+        var (item, file) = editable;
 
         // An editor without a screen, of the kind of the file (Markdown keeps its line breaks when trimmed)
         var name = Path.GetFileName(item.Path);
@@ -57,13 +35,15 @@ internal sealed partial class ShellSession
         var text = editor.GetText();
         if (editor.MessageIsError)
         {
-            Error(item.Path + ": " + editor.Message);
+            Error(Lang.F("{0}: {1}", item.Path, editor.Message));
             return;
         }
 
         if (text == file.Text)
         {
-            Line(item.Path + ": " + (command == "format" ? Lang.T("Already formatted") : editor.Message));
+            Line(command == "format"
+                ? Lang.F("{0}: Already formatted", item.Path)
+                : Lang.F("{0}: {1}", item.Path, editor.Message));
             return;
         }
 
@@ -76,7 +56,7 @@ internal sealed partial class ShellSession
         }
 
         LastList = new List<Item> { item };
-        Line(item.Path + ": " + (command == "format" ? Lang.T("Formatted") : editor.Message));
+        Line(command == "format" ? Lang.F("{0}: Formatted", item.Path) : Lang.F("{0}: {1}", item.Path, editor.Message));
     }
 
     // "insert notes.md top Buy milk", "insert 3 bottom - one more", "insert notes.md +12 A new line": a line of text put
@@ -148,7 +128,8 @@ internal sealed partial class ShellSession
         if (EditableFile(words[0]) is not { } editable) return;
         var (item, file) = editable;
 
-        var count = LinesOfText(file.Text).Count;
+        var lines = LinesOfText(file.Text);
+        var count = lines.Count;
         if (first > count)
         {
             Error(Lang.F("{0} has {1} lines", item.Path, count));
@@ -160,7 +141,6 @@ internal sealed partial class ShellSession
         if (delete)
         {
             // The lines that would go, and the question (no undo)
-            var lines = LinesOfText(file.Text);
             var width = last.ToString().Length;
             for (var i = first; i <= last; i++) Line(i.ToString().PadLeft(width + 2) + "  " + lines[i - 1]);
             var question = first == last
@@ -169,6 +149,13 @@ internal sealed partial class ShellSession
             if (!ChoiceBox.Confirm(Lang.T("Delete lines"), question, string.Empty, true))
             {
                 Line(Lang.T("Nothing was deleted"));
+                return;
+            }
+
+            // (changed by another program while the question was asked: the lines shown may not be those now)
+            if (Changed(item.Path, file))
+            {
+                Error(Lang.F("{0} was changed meanwhile: nothing was deleted", item.Path));
                 return;
             }
         }
@@ -199,7 +186,8 @@ internal sealed partial class ShellSession
     }
 
     // The text file of a word (a row of the last list, or a path) to change without opening it: there, in UTF-8 (the
-    // editor saves in UTF-8: it is opened there to be changed to it), and not one Blyant uses. Null (and told) if not
+    // editor saves in UTF-8: it is opened there to be changed to it), with one kind of line endings, and not one
+    // Blyant uses. Null (and told) if not
     private (Item Item, TextFile File)? EditableFile(string word)
     {
         if (Existing(word) is not { } item || Protected(item)) return null;
@@ -227,7 +215,28 @@ internal sealed partial class ShellSession
             return null;
         }
 
+        // (saved, every line would get the one kind most lines have, and there is no undo)
+        if (file.MixedLineEndings)
+        {
+            Error(Lang.F("{0} has more than one kind of line endings: open it in the editor, which tells it",
+                item.Path));
+            return null;
+        }
+
         return (item, file);
+    }
+
+    // The file is not as it was read (or cannot be read now)
+    private static bool Changed(string path, TextFile file)
+    {
+        try
+        {
+            return TextFile.Load(path).Text != file.Text;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidDataException)
+        {
+            return true;
+        }
     }
 
     /// <summary>
@@ -445,7 +454,11 @@ internal sealed partial class ShellSession
         }
         else
         {
-            kept = text;
+            // (a text typed in quotes, as a path with blanks is: without them, so $docs is one path again)
+            var trimmed = text.Trim();
+            kept = trimmed.Length >= 2 && trimmed[0] == '"' && trimmed[^1] == '"' && trimmed.Count(c => c == '"') == 2
+                ? trimmed[1..^1]
+                : text;
         }
 
         ShellRegisters.Set(name, kept);
@@ -512,6 +525,8 @@ internal sealed partial class ShellSession
 
         // The line of the setting changed, the settings read again (and written as Blyant writes them)
         var wanted = parts[1].Trim();
+        // (in quotes: without them; set shelldir "" empties the setting)
+        if (wanted.Length >= 2 && wanted[0] == '"' && wanted[^1] == '"') wanted = wanted[1..^1];
         var lines = content.Split('\n').Select(line =>
         {
             var separator = line.IndexOf('=');
@@ -531,15 +546,22 @@ internal sealed partial class ShellSession
         var now = FileIo.ParseSettings(FileIo.ReadSettingsFile()).TryGetValue(name, out var found) ? found : string.Empty;
         // English: the log (the name only, never the value)
         EventLog.Add(DialogText.LogShell + ": setting " + name);
-        if (string.Equals(now.Trim(), wanted, StringComparison.OrdinalIgnoreCase))
+        if (Same(now, wanted))
         {
             Line("  " + name + " = " + now);
             return;
         }
 
         // Not a value it can have: the settings as they were
-        FileIo.WriteSettingsFile(content.EndsWith('\n') ? content : content + "\n");
+        var restored = FileIo.WriteSettingsFile(content.EndsWith('\n') ? content : content + "\n");
         FileIo.LoadSettings();
-        Error(Lang.F("{0} cannot be {1}: it stays {2}", name, wanted, before));
+        Error(restored == DialogText.Success
+            ? Lang.F("{0} cannot be {1}: it stays {2}", name, wanted, before)
+            : Lang.F("{0} cannot be {1}, and the settings file could not be written back: {2}", name, wanted, restored));
+
+        // The value read is the one wanted, as Blyant writes it (letter case alike, "02" is 2)
+        static bool Same(string now, string wanted) =>
+            string.Equals(now.Trim(), wanted, StringComparison.OrdinalIgnoreCase) ||
+            (int.TryParse(now.Trim(), out var a) && int.TryParse(wanted, out var b) && a == b);
     }
 }

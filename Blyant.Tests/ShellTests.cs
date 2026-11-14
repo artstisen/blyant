@@ -171,22 +171,29 @@ public class ShellTests : IDisposable
     public void Commands_AreLoggedByName_NeverWhatFollowsThem()
     {
         Run("ls secret-folder\n");
-        Assert.Contains(EventLog.All, line => line.EndsWith(DialogText.LogShell + ": :ls"));
+        // (a command with words after it is logged with "...": what follows is never written)
+        Assert.Contains(EventLog.All, line => line.EndsWith(DialogText.LogShell + ": :ls ..."));
         Assert.DoesNotContain(EventLog.All, line => line.Contains("secret-folder"));
     }
 
     [Fact]
     public void FromAFile_AQuestionIsNotAsked_AndNothingIsDone_UnlessYes()
     {
-        // "open new.md": Blyant asks to make it (ChoiceBox, asked on lines while the shell runs)
-        var (output, _, _, _) = Run("open new.md\n");
-        Assert.False(File.Exists(In("work", "new.md")));
-        Assert.Contains(Lang.T("(not asked: the commands are not typed, so nothing is done)"), output);
-        // With --yes it is made (and not opened: the editor needs a terminal)
-        var (_, errors, code, _) = Run("open new.md\n", yes: true);
-        Assert.True(File.Exists(In("work", "new.md")));
-        Assert.Contains(Lang.F("{0} is not opened: the editor needs a terminal", In("work", "new.md")), errors);
+        // "delete plot.md": Blyant asks first (ChoiceBox, asked on lines while the shell runs). Not asked: told on the
+        // error output, nothing done, and the command failed
+        var (output, errors, code, _) = Run("delete plot.md\n");
+        Assert.True(File.Exists(In("work", "plot.md")));
+        Assert.Contains(Lang.T("(not asked: the commands are not typed, so nothing is done)"), errors);
+        Assert.DoesNotContain(Lang.T("(not asked: the commands are not typed, so nothing is done)"), output);
         Assert.Equal(1, code);
+        // With --yes it is done
+        (_, _, code, _) = Run("delete plot.md\n", yes: true);
+        Assert.False(File.Exists(In("work", "plot.md")));
+        Assert.Equal(0, code);
+        // "open new.md" without a terminal: not made, as the editor could not open it (also with --yes)
+        (_, errors, _, _) = Run("open new.md\n", yes: true);
+        Assert.False(File.Exists(In("work", "new.md")));
+        Assert.Contains(Lang.F("{0} is not opened: the editor needs a terminal", In("work", "new.md")), errors);
     }
 
     [Fact]
@@ -304,9 +311,9 @@ public class ShellTests : IDisposable
     public void Delete_TellsWhereTheTrashIsOpened_InTheShell()
     {
         // (":trash" is a command of the file browser, not of the shell)
-        var (output, _, _, _) = Run("delete plot.md\ndelete Draft\n");
-        Assert.Contains(Lang.T("It can be found again in the trash (:trash in the file browser)"), output);
-        Assert.DoesNotContain(DialogText.TrashFileNote + "\n", output);
+        var (_, errors, _, _) = Run("delete plot.md\ndelete Draft\n");
+        Assert.Contains(Lang.T("It can be found again in the trash (:trash in the file browser)"), errors);
+        Assert.DoesNotContain(DialogText.TrashFileNote + "\n", errors);
     }
 
     [Fact]
@@ -1382,7 +1389,7 @@ public class ShellTests : IDisposable
     [InlineData("9-10,4,7,5", new[] { 4, 5, 7, 9, 10 })]
     public void LineSet_TakesNumbersRangesAndLists(string text, int[] lines)
     {
-        Assert.True(ShellSession.LineSet(text, out var found));
+        Assert.True(ShellSession.LineSet(text, 100, out var found));
         Assert.Equal(lines, found);
     }
 
@@ -1393,7 +1400,7 @@ public class ShellTests : IDisposable
     [InlineData("6-4")]
     public void LineSet_IsFalseForAText(string text)
     {
-        Assert.False(ShellSession.LineSet(text, out _));
+        Assert.False(ShellSession.LineSet(text, 100, out _));
     }
 
     [Theory]
@@ -1482,5 +1489,200 @@ public class ShellTests : IDisposable
         var completion = Completion();
         Assert.Equal("shift todo.md 5 Done", Tab(completion, "shift todo.md 5 Do"));
         Assert.Equal("shift todo.md 5 \"Done today\"", completion.Next("shift todo.md 5 Done", true));
+    }
+
+    // ---- Review of 1.5.0: the shell made solid
+
+    [Fact]
+    public void ACommandThatFails_UnexpectedlyIsTold_AndTheShellGoesOn()
+    {
+        // (a range as large as this was made into a list of lines, and Blyant ran out of memory)
+        File.WriteAllText(In("work", "list.md"), "a\nb\n");
+        var (output, errors, code, _) = Run("shift list.md 1-2147483647 top\nshift list.md 2147483647 top\npwd\n");
+        Assert.Contains(Lang.F("{0} has {1} lines", In("work", "list.md"), 2), errors);
+        Assert.Contains(In("work") + "\n", output);
+        Assert.Equal(1, code);
+    }
+
+    [Fact]
+    public void AFileOfCommands_WithAByteOrderMark_Runs()
+    {
+        var (output, errors, _, _) = Run("\uFEFFpwd\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal(In("work") + "\n", output);
+    }
+
+    [Fact]
+    public void Peek_CountsTheLines_AsChangeShiftAndClipDo()
+    {
+        File.WriteAllText(In("work", "two.md"), "a\nb\n");
+        var (output, errors, _, _) = Run("peek two.md\nchange two.md +3 X\n");
+        Assert.DoesNotContain("  3  ", output);
+        Assert.Contains(Lang.F("{0} has {1} lines", In("work", "two.md"), 2), errors);
+    }
+
+    [Fact]
+    public void RenameMoveAndDeleteOfTheDirectoryItIsIn_TheShellFollows()
+    {
+        Directory.CreateDirectory(In("work", "d1", "sub"));
+        var (_, errors, _, session) = Run("cd d1/sub\nrename .. d2\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal(In("work", "d2", "sub"), session.Directory);
+        (_, errors, _, session) = Run("cd d2\nmove . ../notes\n");
+        Assert.Equal(In("work", "notes", "d2"), session.Directory);
+        // (the question not asked is told on the error output)
+        (_, _, var code, session) = Run("cd notes/d2/sub\ndelete ..\n", yes: true);
+        Assert.Equal(0, code);
+        Assert.False(Directory.Exists(In("work", "notes", "d2")));
+        Assert.Equal(In("work", "notes"), session.Directory);
+    }
+
+    [Fact]
+    public void AFileWithMixedLineEndings_IsNotChanged()
+    {
+        File.WriteAllText(In("work", "mixed.md"), "one\r\ntwo\nthree\r\n");
+        var (_, errors, _, _) = Run("insert mixed.md bottom new\nchange mixed.md +1 x\nshift mixed.md 1 bottom\ntrim mixed.md\n");
+        Assert.Equal(4, errors.TrimEnd('\n').Split('\n').Length);
+        Assert.Equal("one\r\ntwo\nthree\r\n", File.ReadAllText(In("work", "mixed.md")));
+    }
+
+    [Fact]
+    public void FormatAndTrim_LeaveTheFilesOfBlyant()
+    {
+        var settings = Path.Combine(_data, FileIo.SettingsFileName);
+        File.WriteAllText(settings, "a=1   \n");
+        var (_, errors, _, _) = Run("trim \"" + settings + "\"\n");
+        Assert.NotEqual(string.Empty, errors);
+        Assert.Equal("a=1   \n", File.ReadAllText(settings));
+    }
+
+    [Fact]
+    public void Reg_ATextInQuotes_IsKeptWithoutThem()
+    {
+        Directory.CreateDirectory(In("work", "My Docs"));
+        var (_, errors, _, _) = Run("reg docs \"" + In("work", "My Docs") + "\"\ncopy plot.md $docs\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal(In("work", "My Docs"), ShellRegisters.Get("docs"));
+        Assert.True(File.Exists(In("work", "My Docs", "plot.md")));
+    }
+
+    [Fact]
+    public void FavAndHotRemove_TakeOffAnEntryThatIsGone()
+    {
+        Directory.CreateDirectory(In("work", "gone"));
+        File.WriteAllText(In("work", "gone.md"), "x");
+        Run("fav add gone.md\nhot add gone\n");
+        File.Delete(In("work", "gone.md"));
+        Directory.Delete(In("work", "gone"));
+        var (_, errors, _, _) = Run("fav remove gone.md\nhot remove gone\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.False(FileFavorites.Contains(In("work", "gone.md")));
+        Assert.DoesNotContain(DirectoryHotlist.Items, entry => FileOperations.SamePath(entry.Path, In("work", "gone")));
+    }
+
+    [Fact]
+    public void Shift_AnEmptyText_IsNotTakenForEveryLine()
+    {
+        File.WriteAllText(In("work", "list.md"), "a\nb\n");
+        var (_, errors, _, _) = Run("shift list.md \"\" top\n");
+        Assert.Contains(Lang.F("Give a file, the lines and the place: {0} todo.md 4-6 Done", "shift"), errors);
+        Assert.Equal("a\nb\n", File.ReadAllText(In("work", "list.md")));
+    }
+
+    [Fact]
+    public void Open_ANameInQuotes_KeepsItsBlanks()
+    {
+        File.WriteAllText(In("work", "a  b.md"), "x");
+        var (_, errors, _, _) = Run("open \"a  b.md\"\n");
+        // (found: only the terminal is missing)
+        Assert.Contains(Lang.F("{0} is not opened: the editor needs a terminal", In("work", "a  b.md")), errors);
+    }
+
+    [Fact]
+    public void Output_ControlCharactersOfAFile_AreNotWritten()
+    {
+        File.WriteAllText(In("work", "esc.md"), "Title\u001b]52;c;aGk=\u0007 end\n");
+        var (output, _, _, _) = Run("peek esc.md\n");
+        // (compared by the characters: a comparison of the culture passes over control characters)
+        Assert.DoesNotContain('\u001b', output);
+        Assert.DoesNotContain('\u0007', output);
+        Assert.Contains("Title?]52;c;aGk=? end", output);
+    }
+
+    [Fact]
+    public void Set_AValueInQuotes_AndOneWrittenAsBlyantWritesIt()
+    {
+        FileIo.SaveSettings();
+        var (output, errors, _, _) = Run("set shelldir ~/x\nset shelldir \"\"\nset indent 02\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal(string.Empty, Shell.StartSetting);
+        Assert.Contains("  indent = 2", output);
+    }
+
+    [Fact]
+    public void AQuestionAfterQAtAPause_IsShown()
+    {
+        var output = new StringWriter();
+        var keys = new Queue<ConsoleKeyInfo>(new[] { new ConsoleKeyInfo('q', ConsoleKey.Q, false, false, false) });
+        var session = new ShellSession(new StringReader("y\n"), output, new StringWriter(), In("work"), true)
+        {
+            WindowSize = () => (80, 5),
+            ReadKey = keys.Dequeue
+        };
+        for (var i = 0; i < 10; i++) File.WriteAllText(In("work", "f" + i + ".md"), "x");
+        Assert.True(session.Execute("ls"));
+        Assert.Equal(0, session.Pick("", "Go on?", "", [DialogText.ChoiceYes, DialogText.ChoiceNo], ["Y", "N"], 1, false));
+        Assert.Contains("Go on?", output.ToString());
+    }
+
+    [Theory]
+    [InlineData("--Shell")]
+    [InlineData("--SHELL")]
+    public void ShellOptions_AreTakenInAnyLetterCase(string option)
+    {
+        var arguments = new List<string> { option, "--Yes" };
+        Assert.True(StartArgument.TakeShellOptions(arguments, In("work"), out var yes, out _, out _));
+        Assert.True(yes);
+        Assert.Empty(arguments);
+    }
+
+    [Fact]
+    public void Run_WithoutACommandAfterIt_IsTold()
+    {
+        var output = new StringWriter();
+        Assert.Equal(1, StartArgument.AnswerOption("--run", output));
+        Assert.Contains("--run needs a command", output.ToString());
+    }
+
+    [Fact]
+    public void Printable_KeepsLineBreaksAndTabs_AndHidesTheOtherControlCharacters()
+    {
+        Assert.Equal("a\tb\nc?d?e", ShellSession.Printable("a\tb\nc\u001bd\re"));
+    }
+
+    [Fact]
+    public void LineReader_InANarrowWindow_KeepsToOneRow()
+    {
+        var keys = new Queue<ConsoleKeyInfo>("hello world".Select(c => new ConsoleKeyInfo(c, ConsoleKey.A, false, false, false))
+            .Append(new ConsoleKeyInfo('\r', ConsoleKey.Enter, false, false, false)));
+        var output = new StringWriter();
+        var reader = new ShellLineReader(keys.Dequeue, output, () => 12, (text, _) => text);
+        Assert.Equal("hello world", reader.Read("blyant ~/notes> "));
+        // Every row written (between carriage returns) fits in the 11 columns used
+        Assert.All(output.ToString().Split('\r', '\n'), row => Assert.True(TextMetrics.WidthOf(row) <= 11, row));
+    }
+
+    [Fact]
+    public void LineReader_CtrlZ_EndsTheInput_OnlyOnWindows()
+    {
+        var keys = new Queue<ConsoleKeyInfo>(new[]
+        {
+            new ConsoleKeyInfo('\u001a', ConsoleKey.Z, false, false, true),
+            new ConsoleKeyInfo('\r', ConsoleKey.Enter, false, false, false)
+        });
+        var reader = new ShellLineReader(keys.Dequeue, new StringWriter(), () => 80, (text, _) => text);
+        var line = reader.Read("> ");
+        if (OperatingSystem.IsWindows()) Assert.Null(line);
+        else Assert.Equal(string.Empty, line);
     }
 }

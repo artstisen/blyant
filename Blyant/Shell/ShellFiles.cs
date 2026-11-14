@@ -56,7 +56,7 @@ internal sealed partial class ShellSession
     private bool Protected(Item item)
     {
         if (FileExplorer.ProtectionOf(item.Path, item.IsDirectory) is not { } why) return false;
-        Error(why + ": " + item.Path);
+        Error(Lang.F("{0}: {1}", why, item.Path));
         return true;
     }
 
@@ -93,7 +93,7 @@ internal sealed partial class ShellSession
         var path = Path.Combine(Directory, name);
         if (File.Exists(path) || System.IO.Directory.Exists(path))
         {
-            Error(DialogText.NameExists + ": " + path);
+            Error(Lang.F("{0}: {1}", DialogText.NameExists, path));
             return;
         }
 
@@ -141,7 +141,7 @@ internal sealed partial class ShellSession
         if (Existing(words[0]) is not { } item || Protected(item)) return;
         var result = FileOperations.Rename(item.Path, words[1], out var path);
         FileExplorer.LogFileOperation("Rename", item.Path + " -> " + words[1], result);
-        if (result == DialogText.Success) FileExplorer.PathMoved(item.Path, path, item.IsDirectory);
+        if (result == DialogText.Success) Moved(item, path);
         Done(result, Lang.F("Renamed: {0}", path), result == DialogText.Success ? path : null);
     }
 
@@ -168,7 +168,7 @@ internal sealed partial class ShellSession
             ? FileOperations.Move(item.Path, target.Path, out var path)
             : FileOperations.Copy(item.Path, target.Path, out path);
         FileExplorer.LogFileOperation(move ? "Move" : "Copy", item.Path + " -> " + target.Path, result);
-        if (move && result == DialogText.Success) FileExplorer.PathMoved(item.Path, path, item.IsDirectory);
+        if (move && result == DialogText.Success) Moved(item, path);
         Done(result, move ? Lang.F("Moved to {0}", path) : Lang.F("Copied to {0}", path),
             result == DialogText.Success ? path : null);
     }
@@ -201,7 +201,7 @@ internal sealed partial class ShellSession
                 item.Path + (trashedPath.Length > 0 ? " -> " + trashedPath : string.Empty), result);
             if (result == DialogText.Success)
             {
-                FileExplorer.PathDeleted(item.Path);
+                Deleted(item);
                 Line(Lang.F("Moved to the trash: {0}", item.Path));
                 return;
             }
@@ -218,8 +218,34 @@ internal sealed partial class ShellSession
 
         var deleted = FileOperations.Delete(item.Path);
         FileExplorer.LogFileOperation(kind, item.Path, deleted);
-        if (deleted == DialogText.Success) FileExplorer.PathDeleted(item.Path);
+        if (deleted == DialogText.Success) Deleted(item);
         Done(deleted, Lang.F("Deleted: {0}", item.Path), null);
+    }
+
+    // A file or directory renamed or moved: the lists follow it, and so does the shell when it is in it ("rename . d2")
+    private void Moved(Item item, string path)
+    {
+        FileExplorer.PathMoved(item.Path, path, item.IsDirectory);
+        if (item.IsDirectory && In(item.Path))
+        {
+            Directory = Path.GetFullPath(Path.Combine(path, Path.GetRelativePath(item.Path, Directory)));
+        }
+    }
+
+    // The shell is in the directory, or in one below it
+    private bool In(string directory) =>
+        FileOperations.SamePath(Directory, directory) || FileOperations.IsInside(Directory, directory);
+
+    // A file or directory deleted: off the lists, and the shell in it ("delete .") goes to the directory above it
+    private void Deleted(Item item)
+    {
+        FileExplorer.PathDeleted(item.Path);
+        if (!item.IsDirectory || !In(item.Path)) return;
+        var above = Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(item.Path));
+        while (above != null && !System.IO.Directory.Exists(above)) above = Path.GetDirectoryName(above);
+        if (above == null) return;
+        Directory = above;
+        Line(Lang.F("In {0}", Directory));
     }
 
     // "peek 3", "peek notes.md 40", "peek notes.md 100-120", "peek notes.md +100", "peek notes.md +100 30": the lines of
@@ -248,10 +274,11 @@ internal sealed partial class ShellSession
             return;
         }
 
-        string[] lines;
+        List<string> lines;
         try
         {
-            lines = TextBuffer.Normalize(TextFile.Load(item.Path).Text).Split('\n');
+            // (counted as change, shift and clip count them: the last line break does not start a line)
+            lines = LinesOfText(TextFile.Load(item.Path).Text);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidDataException)
         {
@@ -261,16 +288,16 @@ internal sealed partial class ShellSession
 
         // (from a line: "open 1" opens the file there)
         LastList = new List<Item> { first > 1 ? item with { At = (first, 1) } : item };
-        last = Math.Min(last, lines.Length);
+        last = Math.Min(last, lines.Count);
         if (first > last)
         {
-            Line(Lang.F("{0} has {1} lines", item.Path, lines.Length));
+            Line(Lang.F("{0} has {1} lines", item.Path, lines.Count));
             return;
         }
 
         var width = last.ToString().Length;
         for (var i = first; i <= last; i++) Line(i.ToString().PadLeft(width + 2) + "  " + lines[i - 1]);
-        if (last < lines.Length) Line(Lang.F("(lines {0}-{1} of {2})", first, last, lines.Length));
+        if (last < lines.Count) Line(Lang.F("(lines {0}-{1} of {2})", first, last, lines.Count));
     }
 
     // The lines peek shows when none are given
@@ -319,7 +346,7 @@ internal sealed partial class ShellSession
         var problem = FileSearch.Validate(options);
         if (problem != DialogText.Success)
         {
-            Error(problem + " " + Lang.T("(find plot, find *.md, find -t storm)"));
+            Error(Lang.F("{0} (find plot, find *.md, find -t storm)", problem));
             return;
         }
 
@@ -348,7 +375,8 @@ internal sealed partial class ShellSession
             return;
         }
 
-        if (Existing(words[0]) is not { } item) return;
+        // (one that is gone can be taken off)
+        if ((add ? Existing(words[0]) : Resolve(words[0], false)) is not { } item) return;
         FileFavorites.Load();
         if (FileFavorites.Contains(item.Path) == add)
         {
@@ -374,9 +402,10 @@ internal sealed partial class ShellSession
             return;
         }
 
-        var item = words.Count == 0 ? new Item(Directory, true) : Existing(words[0]);
+        // (one that is gone can be taken off)
+        var item = words.Count == 0 ? new Item(Directory, true) : add ? Existing(words[0]) : Resolve(words[0], true);
         if (item == null) return;
-        if (!item.IsDirectory)
+        if (!item.IsDirectory || (!add && File.Exists(item.Path)))
         {
             Error(Lang.F("Not a directory: {0}", item.Path));
             return;

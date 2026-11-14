@@ -60,14 +60,6 @@ internal static class StartArgument
         arguments.FirstOrDefault(argument => IsOption(argument, currentDirectory));
 
     /// <summary>
-    /// "--shell" (Blyant on lines, see Shell), and "--yes" with it: taken out of the arguments (a file of that name
-    /// that is there is a file)
-    /// </summary>
-    /// <returns>True for the shell</returns>
-    internal static bool TakeShellOptions(List<string> arguments, string currentDirectory, out bool yes) =>
-        TakeShellOptions(arguments, currentDirectory, out yes, out _, out _);
-
-    /// <summary>
     /// Blyant starts as the shell: asked for (--shell, --run), or set (startshell) when nothing else is given. A file
     /// or directory given is opened on the full screen (Blyant Validator opens a file at a line), and --screen starts
     /// on the full screen once
@@ -84,20 +76,23 @@ internal static class StartArgument
         out List<string> run, out bool screen)
     {
         // "--screen": the full screen, also when Blyant is set to start as the shell
-        screen = arguments.RemoveAll(argument => argument == "--screen" && IsOption(argument, currentDirectory)) > 0;
+        // (letter case alike, as for the other options: --Shell)
+        screen = arguments.RemoveAll(argument => Is(argument, "--screen")) > 0;
         run = new List<string>();
         for (var i = 0; i < arguments.Count - 1; i++)
         {
-            if (arguments[i] != "--run" || !IsOption(arguments[i], currentDirectory)) continue;
+            if (!Is(arguments[i], "--run")) continue;
             run.Add(arguments[i + 1]);
             arguments.RemoveRange(i, 2);
             i--;
         }
 
-        var shell = arguments.RemoveAll(argument => argument == "--shell" && IsOption(argument, currentDirectory)) > 0 ||
-                    run.Count > 0;
-        yes = shell && arguments.RemoveAll(argument => argument == "--yes" && IsOption(argument, currentDirectory)) > 0;
+        var shell = arguments.RemoveAll(argument => Is(argument, "--shell")) > 0 || run.Count > 0;
+        yes = shell && arguments.RemoveAll(argument => Is(argument, "--yes")) > 0;
         return shell;
+
+        bool Is(string argument, string option) =>
+            string.Equals(argument, option, StringComparison.OrdinalIgnoreCase) && IsOption(argument, currentDirectory);
     }
 
     // "+12": the line 12 (a line before the first is the first), or null for another argument
@@ -149,6 +144,10 @@ internal static class StartArgument
             case "--help" or "-h" or "-?" or "-help":
                 output.WriteLine(Usage);
                 return 0;
+            case "--run":
+                // (the last argument: no command after it)
+                output.WriteLine("--run needs a command after it: blyant --run \"ls\"");
+                return 1;
             default:
                 output.WriteLine("Unknown option: " + option);
                 output.WriteLine(Usage);

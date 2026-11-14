@@ -294,20 +294,11 @@ internal sealed partial class ShellSession
     internal string PathOf(string typed)
     {
         if (typed.Length == 0) return Directory;
-        if (typed == "~" || typed.StartsWith("~/") || typed.StartsWith("~" + Path.DirectorySeparatorChar))
-        {
-            var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-            typed = typed.Length == 1 ? home : Path.Combine(home, typed[2..]);
-        }
-
+        typed = Shell.FromHome(typed);
         try
         {
-            if (OperatingSystem.IsWindows() && typed.Length > 0 && typed[0] is '/' or '\\' &&
-                !typed.StartsWith(@"\\") && !typed.StartsWith("//"))
-            {
-                typed = Path.Combine(Path.GetPathRoot(Directory) ?? string.Empty, typed.TrimStart('/', '\\'));
-            }
-
+            // (with a base path, a path from the root without a drive, "/docs" on Windows, is on the drive of the
+            // base path: not on the drive Blyant was started on)
             return Path.GetFullPath(typed, Directory);
         }
         catch (Exception e) when (e is ArgumentException or NotSupportedException or PathTooLongException)
@@ -545,11 +536,12 @@ internal sealed partial class ShellSession
     // closed. A file that is not there (in a directory that is) is made if you want that. A directory: gone to
     private void Open(string argument)
     {
-        var words = argument.Split(' ', StringSplitOptions.RemoveEmptyEntries).ToList();
-        var line = words.Select(word => word.Length > 1 && word[0] == '+' && word[1..].All(char.IsAsciiDigit)
+        // (a name in quotes as it is: "a  b.md" keeps its blanks)
+        var words = Words(argument);
+        var line = words.Select(word => IsLine(word)
             ? int.TryParse(word[1..], out var n) ? Math.Max(1, n) : int.MaxValue
             : (int?)null).LastOrDefault(n => n != null);
-        var name = string.Join(' ', words.Where(word => !(word.Length > 1 && word[0] == '+' && word[1..].All(char.IsAsciiDigit))));
+        var name = string.Join(' ', words.Where(word => !IsLine(word)));
         if (name.Length == 0)
         {
             Error(Lang.T("Open what? open notes.md, or open 3 (a row of the last list)"));
@@ -568,6 +560,13 @@ internal sealed partial class ShellSession
         if (result.Message.Length > 0)
         {
             Error(result.Message);
+            return;
+        }
+
+        // (before a new file is made: without the editor it would stay empty)
+        if (!Terminal)
+        {
+            Error(Lang.F("{0} is not opened: the editor needs a terminal", result.Path));
             return;
         }
 
@@ -591,16 +590,13 @@ internal sealed partial class ShellSession
             }
         }
 
-        if (!Terminal)
-        {
-            Error(Lang.F("{0} is not opened: the editor needs a terminal", result.Path));
-            return;
-        }
-
         var at = line is { } l ? (l, 1) : item.At;
         if (EditOnScreen(result.Path, at)) Line(Lang.F("Back from the editor: {0}", result.Path));
         else Line(Lang.F("Back from the editor: {0} (the place jumped to is not shown here)", result.Path));
     }
+
+    // "+12": a line to open the file at
+    private static bool IsLine(string word) => word.Length > 1 && word[0] == '+' && word[1..].All(char.IsAsciiDigit);
 
     // The editor of the full screen, with the file browser of its directory behind it, which closes with it (as when
     // a file is opened from the corkboard). A jump to another place leaves the editor (asking about changes first)

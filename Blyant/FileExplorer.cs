@@ -1542,9 +1542,6 @@ internal static partial class FileExplorer
     internal static string UntitledCopy { get; private set; } = string.Empty;
 
     /// <summary>
-    /// The full path of the file being edited (empty if none)
-    /// </summary>
-    /// <summary>
     /// The directory ":shell" goes on in from the file browser and its lists: that of the pane with the focus (null:
     /// the list of drives, or not browsing)
     /// </summary>

@@ -18,7 +18,7 @@ internal sealed partial class ShellSession
         var command = tick ? "shift!" : "shift";
         var words = Words(argument);
         var place = AfterWords(argument, 2).Trim().Trim('"').Trim();
-        if (words.Count < 3 || place.Length == 0)
+        if (words.Count < 3 || place.Length == 0 || words[1].Trim().Length == 0)
         {
             Error(Lang.F("Give a file, the lines and the place: {0} todo.md 4-6 Done", command));
             return;
@@ -29,7 +29,7 @@ internal sealed partial class ShellSession
         var lines = LinesOfText(file.Text);
 
         // The lines: by number, or the line with the text
-        if (!LineSet(words[1], out var moved))
+        if (!LineSet(words[1], lines.Count, out var moved))
         {
             var having = lines.Select((line, i) => (Line: line, Number: i + 1))
                 .Where(row => row.Line.Contains(words[1], StringComparison.OrdinalIgnoreCase)).ToList();
@@ -98,7 +98,7 @@ internal sealed partial class ShellSession
 
         var result = file.Save(text);
         // (the path and the lines, never the text)
-        FileExplorer.LogFileOperation("Shift lines", item.Path + ":" + string.Join(',', moved) + " to " + (at),
+        FileExplorer.LogFileOperation("Shift lines", item.Path + ":" + string.Join(',', moved) + " to " + at,
             result);
         if (result != DialogText.Success)
         {
@@ -117,16 +117,24 @@ internal sealed partial class ShellSession
     }
 
     /// <summary>
-    /// The lines of "4", "+4", "4-6" or "4,7,9-10" (from 1), in order, each once. False for anything else (a text)
+    /// The lines of "4", "+4", "4-6" or "4,7,9-10" (from 1), in order, each once. False for anything else (a text).
+    /// A range stops at the last line of the file ("count"); one that starts after it gives its first line only (so
+    /// it is told that the file has fewer lines), and a range as large as "1-2147483647" is never made into a list
     /// </summary>
-    internal static bool LineSet(string text, out List<int> lines)
+    internal static bool LineSet(string text, int count, out List<int> lines)
     {
         lines = new List<int>();
         if (text.Length == 0) return false;
         foreach (var part in text.Split(','))
         {
             if (!LinesToChange(part, out var first, out var last)) return false;
-            for (var i = first; i <= last; i++) lines.Add(i);
+            if (first > count)
+            {
+                lines.Add(first);
+                continue;
+            }
+
+            for (var i = first; i <= Math.Min(last, count); i++) lines.Add(i);
         }
 
         lines = lines.Distinct().Order().ToList();

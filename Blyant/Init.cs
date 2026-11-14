@@ -17,9 +17,6 @@ internal static class Init
     internal static byte LineWidth { get; private set; }
     internal static byte LineCount { get; private set; }
 
-    // Set "artificial buffer size" according to general guidelines (79x23: a window of 80x24)
-    // -the actual console buffer is not touched but must be set manually by the user (cross platform compat)
-    // -this buffer is used to calculate the output width and height across the entire application.
     /// <summary>
     /// The full screen shown from the shell (the editor of a file opened there): the size of the window, a hidden
     /// cursor and the colors of the scheme
@@ -45,6 +42,9 @@ internal static class Init
         Console.Clear();
     }
 
+    // Set "artificial buffer size" according to general guidelines (79x23: a window of 80x24)
+    // -the actual console buffer is not touched but must be set manually by the user (cross platform compat)
+    // -this buffer is used to calculate the output width and height across the entire application.
     internal static void SetDefaultOutputDimensions()
     {
         LineWidth = MinLineWidth;
@@ -431,8 +431,9 @@ internal static class Init
         // there is never written over)
         if (Completions.Enabled) Completions.EnsureFile();
         WriteProgressBar(15); // progress
-        // Update output dimensions if set by user
-        ApplyAutoSize();
+        // Update output dimensions if set by user (not for the shell: a size that does not fit the window would be
+        // told on the full screen; it is looked at when the editor is opened from the shell)
+        if (!plain) ApplyAutoSize();
         Log(DialogText.InitUpdateDimensions, true);
         WriteProgressBar(16); // progress
         Log("Target: " + LineWidth + "x" + LineCount, true);
