@@ -115,7 +115,7 @@ class Program
         if (start.Path == null && run.Count == 0) directory = Shell.StartIn(currentDirectory, out note);
         if (run.Count == 0) return Shell.Run(directory, yes, null, note);
         var session = new ShellSession(new StringReader(string.Join("\n", run) + "\n"), Console.Out, Console.Error,
-            directory, false, yes);
+            directory, false, yes) { Clipboard = !Console.IsOutputRedirected };
         return Shell.Run(session);
     }
 

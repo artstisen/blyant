@@ -23,6 +23,12 @@ internal sealed partial class ShellSession
     /// </summary>
     internal bool Terminal { get; }
 
+    /// <summary>
+    /// The output goes to a terminal, so "clip" can send to the clipboard through it (OSC 52). False for output to a
+    /// file or a program, where the sequence would end up in the output: "clip" then uses the paste bin only
+    /// </summary>
+    internal bool Clipboard { get; init; }
+
     private readonly bool _yes;
 
     /// <summary>

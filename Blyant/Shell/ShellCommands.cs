@@ -33,6 +33,10 @@ internal sealed partial class ShellSession
         ("trim file|n", Lang.T("Remove blank space at line ends, as :trim does (trim!)")),
         ("set [name [value]]", Lang.T("Show the settings, or change one")),
         ("reset", Lang.T("Reset all settings to the defaults (asks first)")),
+        ("clip [path|name] file|dir|n|.", Lang.T("Copy a path, or a name, to the clipboard")),
+        ("clip text file|n", Lang.T("Copy the text of a file to the clipboard")),
+        ("clip lines file|n lines", Lang.T("Copy lines of a file, as peek takes them")),
+        ("clip $name", Lang.T("Copy the value of a register to the clipboard")),
         ("reg [name [text|.|#n]]", Lang.T("Keep a text or a path in a register: $name puts it in a command")),
         ("reg -d name|all", Lang.T("Take a register away, or all of them")),
         ("favorites [list]", Lang.T("List the favorites (fav), or those of another list")),
@@ -64,13 +68,18 @@ internal sealed partial class ShellSession
         EventLog.AddCommand(DialogText.LogShell, line);
         // $name: the value of the register (in the paths a value with blanks is one word; the text of insert, change,
         // reg and set, and what find and project take, as it is)
-        line = ShellRegisters.Expand(line, CommandLine.Name(line).ToLowerInvariant() switch
+        // ("clip $note" alone copies the value as it is: not put in first, where it would be taken as a path)
+        if (!IsClipOfRegister(line))
         {
-            "insert" or "change" => 3,
-            "reg" or "set" => 2,
-            "find" or "project" => 1,
-            _ => int.MaxValue
-        });
+            line = ShellRegisters.Expand(line, CommandLine.Name(line).ToLowerInvariant() switch
+            {
+                "insert" or "change" => 3,
+                "reg" or "set" => 2,
+                "find" or "project" => 1,
+                _ => int.MaxValue
+            });
+        }
+
         var name = CommandLine.Name(line).ToLowerInvariant();
         var argument = CommandLine.Argument(line);
         // (the line of the command typed is the first row of its page)
@@ -178,6 +187,9 @@ internal sealed partial class ShellSession
                 break;
             case "reg":
                 Register(argument);
+                break;
+            case "clip":
+                Clip(argument);
                 break;
             case "bookmarks":
             case "book":
@@ -498,14 +510,16 @@ internal sealed partial class ShellSession
                 "cls" => "clear",
                 _ => name
             };
-            var row = rows.FirstOrDefault(r => r.Command.Split(' ')[0] == full);
-            if (row.Command == null)
+            // (all the rows of the command: "help clip" tells each of its forms)
+            var found = rows.Where(r => r.Command.Split(' ')[0] == full).ToList();
+            if (found.Count == 0)
             {
                 Error(Lang.F("Unknown command: {0} (help lists the commands)", name));
                 return;
             }
 
-            Line(row.Command + "  " + row.Text);
+            var widest = found.Max(r => r.Command.Length) + 2;
+            foreach (var (command, text) in found) Line(command.PadRight(widest) + text);
             return;
         }
 

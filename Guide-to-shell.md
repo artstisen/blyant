@@ -83,6 +83,10 @@ To have every output whole (with a screen reader, say), turn the pages off: `set
 | `reset` | Put all the settings back to their defaults, as _Reset all settings_ on the System page of Configuration (asks first) |
 | `reg [name [text\|.\|#n]]` | Keep a text or a path in a register, show one, or list them (see [Registers](#registers)) |
 | `reg -d name\|all` | Take a register away, or all of them |
+| `clip [path\|name] file\|dir\|n\|.` | Copy the full path of a file or directory (`clip 3`: row 3 of the last list; `clip .`: the directory you are in), or its name, to the clipboard (see [Clipboard](#clipboard)) |
+| `clip text file\|n` | Copy the text of a file to the clipboard |
+| `clip lines file\|n lines` | Copy lines of a file to the clipboard, given as for `peek` (`40`, `100-120`, `+100 30`) |
+| `clip $name` | Copy the value of a register to the clipboard |
 | `favorites [list]` (`fav`) | List the favorites of the file browser, with their folders as headings; `fav work` uses the list _work_ from now on, as `:list work` does |
 | `history` (`hist`) | List the files opened, the newest first, with when |
 | `recent` | List the latest files (the first nine of the history) |
@@ -102,7 +106,7 @@ To have every output whole (with a screen reader, say), turn the pages off: `set
 ### Typing a command
 In a terminal the line of the shell is read key by key:
 
-- `Tab` completes the word you are typing, and `Tab` again gives the next that fits (after the last: what you typed; `Shift+Tab` goes back): the name of a command (`fa` to `favorites`), the words that can follow some of them (the names of the settings after `set`, the lists after `fav`, the projects after `project`, `add` and `remove` after `fav` and `hot`, `top` and `bottom` after `insert`), and the names of files and directories after the commands that take a path (`open pl` to `open plot.md`). `cd` and `ls`, and the directory of `copy` and `move`, take directories only. A directory gets `/` after it, and when it is the only name that fits, `Tab` again goes on into it (`cd pr` to `cd projects/`, then `cd projects/Article/`). A name with a blank in it is put in quotes, and hidden names come only after a `.`
+- `Tab` completes the word you are typing, and `Tab` again gives the next that fits (after the last: what you typed; `Shift+Tab` goes back): the name of a command (`fa` to `favorites`), the words that can follow some of them (the names of the settings after `set`, the lists after `fav`, the projects after `project`, `add` and `remove` after `fav` and `hot`, `top` and `bottom` after `insert`, `path`, `name`, `text` and `lines` after `clip`), and the names of files and directories after the commands that take a path (`open pl` to `open plot.md`). `cd` and `ls`, and the directory of `copy` and `move`, take directories only. A directory gets `/` after it, and when it is the only name that fits, `Tab` again goes on into it (`cd pr` to `cd projects/`, then `cd projects/Article/`). A name with a blank in it is put in quotes, and hidden names come only after a `.`
 - `Up` and `Down` bring back the commands you typed before, on Windows, Linux and macOS alike; what you have typed is what they start with (`pe` and `Up`: the last `peek`)
 - `Left`, `Right`, `Home` and `End` move on the line, `Backspace` and `Delete` delete, `Ctrl+U` deletes the line before the cursor, `Ctrl+W` the word before it, and `Esc` the whole line. A line wider than the window is scrolled sideways on its row
 - `Ctrl+C` drops what you have typed, and `Ctrl+D` (or `Ctrl+Z` on Windows) on an empty line leaves, as `exit` does
@@ -153,6 +157,25 @@ insert todo.md bottom $note
 - A path with a blank in it is put in quotes where a path is taken (`copy plot.md $docs` with _my docs_), and the text of `insert`, `change`, `reg` and `set` gets the value as it is
 - `Tab` completes the names of the registers after a `$`, and after `reg`
 - The registers are kept in the data directory (`registers.txt`), so they are there the next time. They are the shell's own: the registers of the editor are not these. `reset` does not take them away (they are not settings), and the log has their names, never their values
+
+## Clipboard
+`clip` copies to the clipboard what you would otherwise select and copy by hand:
+
+```
+recent
+clip 3                      the full path of row 3 (also: clip path 3)
+clip name 3                 its name only (plot.md)
+clip .                      the directory you are in
+clip text todo.md           the whole text of a file
+clip lines notes.md +40 10  10 lines from line 40 (as peek takes them: 40, 100-120, +100 30)
+clip $note                  the value of a register, as it is
+```
+
+- It goes where the [clipboard settings](Guide-to-editor.md#system-clipboard-and-paste-bin) of the editor send a yank: to the clipboard of the system through the terminal (OSC 52, also over SSH) and/or to the paste bin file. Text too long for the terminal goes only to the paste bin, if it is on. What was copied is told, and the path, or how much
+- It also goes to the string memory of the editor: after `open` (or `screen`), `p` in the editor puts it in, and `:reglist` lists it. That works also where the terminal has no clipboard (the console of Linux, the Terminal of macOS), or with the clipboard turned off
+- `text` and `lines` take text files only. Lines copied are joined by line breaks, without one after the last
+- From a file, a pipe or with `--run` and the output going to a file or a program, the clipboard sequence would end up in that output: then only the paste bin is used, and without it `clip` is told it needs a terminal
+- The log tells only that something was copied, and what kind (`clip: path`), never the text
 
 ## Editing a file
 `open` shows the editor of the full screen, with all its keys and commands (see the [guide to the editor](Guide-to-editor.md)). When you close it (`:q`, `:wq`), you are back at the prompt, in the directory you were in. A file that is not there yet is made if you want that: the shell asks first.

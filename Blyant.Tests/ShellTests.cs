@@ -47,6 +47,8 @@ public class ShellTests : IDisposable
         FileOperations.TrashOverride = null;
         ShellRegisters.FilePathOverride = null;
         ShellRegisters.Clear();
+        SystemClipboard.WriteOverride = null;
+        Tools.ClearLineMemory();
         FileFavorites.Parse(string.Empty);
         FileHistory.Parse(string.Empty);
         DirectoryHotlist.Parse(string.Empty);
@@ -59,11 +61,14 @@ public class ShellTests : IDisposable
     // Run a script of commands (one a line) in a shell started in "work": what it wrote, what went wrong, and the
     // exit code. Not a terminal unless told (no prompt, questions not asked)
     private (string Output, string Errors, int Code, ShellSession Session) Run(string script, bool terminal = false,
-        bool yes = false)
+        bool yes = false, bool clipboard = false)
     {
         var output = new StringWriter();
         var errors = new StringWriter();
-        var session = new ShellSession(new StringReader(script), output, errors, In("work"), terminal, yes);
+        var session = new ShellSession(new StringReader(script), output, errors, In("work"), terminal, yes)
+        {
+            Clipboard = clipboard
+        };
         var code = Shell.Run(session);
         return (output.ToString().Replace("\r\n", "\n"), errors.ToString().Replace("\r\n", "\n"), code, session);
     }
@@ -1283,5 +1288,86 @@ public class ShellTests : IDisposable
         Assert.Equal("reg -d", Tab(Completion(), "reg -"));
         Assert.Equal("reg -d all", Tab(Completion(), "reg -d a"));
         Assert.Equal("reg docs", Tab(Completion(), "reg do"));
+    }
+
+    // ---- clip: to the clipboard (OSC 52) and the string memory
+
+    // What "clip" sent to the clipboard of the terminal, by the text in it (the sequence decoded)
+    private static List<string> Clipboard()
+    {
+        var sent = new List<string>();
+        SystemClipboard.WriteOverride = sequence =>
+        {
+            var base64 = sequence["\u001b]52;c;".Length..^1];
+            sent.Add(System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(base64)));
+        };
+        return sent;
+    }
+
+    [Fact]
+    public void Clip_CopiesThePathTheNameTheTextAndLines()
+    {
+        File.WriteAllText(In("work", "lines.md"), "one\ntwo\nthree\nfour\nfive\n");
+        var sent = Clipboard();
+        var (output, errors, _, _) = Run("ls\nclip 3\nclip name 3\nclip text plot.md\nclip lines lines.md +2 3\n" +
+                                         "clip lines lines.md 4-9\nclip .\n", clipboard: true);
+        Assert.Equal(string.Empty, errors);
+        // Row 3 of ls: Ending.md (the folders first, then the files by name)
+        Assert.Equal(new[]
+        {
+            In("work", "Ending.md"), "Ending.md", "Plot\n", "two\nthree\nfour", "four\nfive", In("work")
+        }, sent);
+        Assert.Contains(DialogText.CopiedToClipboardAndMemory, output);
+        // And in the string memory: "p" in the editor puts it in
+        Assert.Equal(In("work"), Tools.GetCurrentLineFromLineMemory());
+    }
+
+    [Fact]
+    public void Clip_CopiesTheValueOfARegister_AsItIs()
+    {
+        var sent = Clipboard();
+        var (_, errors, _, _) = Run("reg note Buy more ink\nreg plot #9\nclip $note\nclip name $docs\n", clipboard: true);
+        Assert.Equal(new[] { "Buy more ink" }, sent);
+        // ($docs is no register: a path that is not there)
+        Assert.Contains(In("work", "$docs"), errors);
+    }
+
+    [Fact]
+    public void Clip_WithoutATerminal_UsesThePasteBinOnly_NeverTheOutput()
+    {
+        var sent = Clipboard();
+        var (output, errors, code, _) = Run("clip plot.md\n");
+        Assert.Empty(sent);
+        Assert.DoesNotContain("\u001b]52", output);
+        Assert.Contains(Lang.T("The clipboard needs a terminal (the output goes to a file or a program): turn on the paste bin"), errors);
+        Assert.Equal(1, code);
+
+        SystemClipboard.PasteBin = true;
+        SystemClipboard.PasteBinFile = Path.Combine(_data, "bin.txt");
+        (_, errors, _, _) = Run("clip name plot.md\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Empty(sent);
+        Assert.Equal("plot.md", File.ReadAllText(Path.Combine(_data, "bin.txt")).TrimEnd());
+    }
+
+    [Fact]
+    public void Clip_TellsWhatItCannotDo_AndNeverLogsTheText()
+    {
+        File.WriteAllText(In("work", "secret.md"), "top secret words\n");
+        var sent = Clipboard();
+        var (_, errors, _, _) = Run("clip\nclip text notes\nclip lines secret.md\nclip lines secret.md 9-12\n" +
+                                    "clip lines secret.md x\nclip text nothing.md\nclip text secret.md\n", clipboard: true);
+        Assert.Equal(6, errors.TrimEnd('\n').Split('\n').Length);
+        Assert.Equal(new[] { "top secret words\n" }, sent);
+        Assert.DoesNotContain(EventLog.All, line => line.Contains("top secret"));
+        Assert.Contains(EventLog.All, line => line.EndsWith(DialogText.LogShell + ": clip: text"));
+    }
+
+    [Fact]
+    public void Tab_CompletesWhatClipCopies_AndPaths()
+    {
+        Assert.Equal("clip text", Tab(Completion(), "clip te"));
+        Assert.Equal("clip plot.md", Tab(Completion(), "clip pl"));
+        Assert.Equal("clip lines plot.md", Tab(Completion(), "clip lines pl"));
     }
 }

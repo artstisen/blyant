@@ -117,16 +117,19 @@ internal static class SystemClipboard
     /// </summary>
     /// <param name="text">The text yanked</param>
     /// <param name="asked">The yank had "+ in front (a message is shown if nothing is turned on)</param>
+    /// <param name="terminal">The output goes to a terminal (false: to a file or a program, where the clipboard
+    /// sequence would end up in the output: only the paste bin is used)</param>
     /// <returns>The message for the status line of the editor (empty: none), and if it is an error</returns>
-    internal static (string Message, bool IsError) Copy(string text, bool asked)
+    internal static (string Message, bool IsError) Copy(string text, bool asked, bool terminal = true)
     {
-        if (!Osc52 && !PasteBin)
+        var osc52 = Osc52 && terminal;
+        if (!osc52 && !PasteBin)
         {
             return asked ? (DialogText.ClipboardAllOff, true) : (string.Empty, false);
         }
 
-        var tooLong = Osc52 && TooLong(text);
-        if (Osc52 && !tooLong) WriteOsc52(text);
+        var tooLong = osc52 && TooLong(text);
+        if (osc52 && !tooLong) WriteOsc52(text);
         if (PasteBin)
         {
             var result = WritePasteBin(text, PasteBinAppend);
@@ -142,12 +145,12 @@ internal static class SystemClipboard
         }
 
         // (a terminal that is known to drop it is not told as "copied": the paste bin works everywhere)
-        if (Osc52 && !PasteBin && TerminalWithoutClipboard)
+        if (osc52 && !PasteBin && TerminalWithoutClipboard)
         {
             return (Lang.T("This terminal may not take the clipboard: use the paste bin (:clipboard)"), false);
         }
 
-        return (Osc52 && PasteBin ? DialogText.CopiedToBoth : Osc52 ? DialogText.CopiedToClipboard
+        return (osc52 && PasteBin ? DialogText.CopiedToBoth : osc52 ? DialogText.CopiedToClipboard
             : DialogText.CopiedToPasteBin, false);
     }
 
@@ -188,14 +191,15 @@ internal static class SystemClipboard
     /// both are turned off
     /// </summary>
     /// <returns>The message that tells where it went, and whether it is an error</returns>
-    internal static (string Message, bool IsError) CopyWithMemory(string text)
+    internal static (string Message, bool IsError) CopyWithMemory(string text, bool terminal = true)
     {
         if (text.Length == 0) return (string.Empty, false);
         Tools.StoreInLineMemory(text);
-        var (message, isError) = Copy(text, false);
+        var (message, isError) = Copy(text, false, terminal);
         if (isError) return (message, true);
-        return (Osc52 && PasteBin ? DialogText.CopiedToAllAndMemory
-            : Osc52 ? DialogText.CopiedToClipboardAndMemory
+        var osc52 = Osc52 && terminal;
+        return (osc52 && PasteBin ? DialogText.CopiedToAllAndMemory
+            : osc52 ? DialogText.CopiedToClipboardAndMemory
             : PasteBin ? DialogText.CopiedToPasteBinAndMemory
             : DialogText.CopiedToMemory, false);
     }
@@ -302,11 +306,22 @@ internal static class SystemClipboard
 
     #region OSC 52
 
+    /// <summary>
+    /// For tests: takes the clipboard sequence instead of the terminal (null: written to the terminal)
+    /// </summary>
+    internal static Action<string>? WriteOverride { get; set; }
+
     // Write the escape sequence to the terminal. On Windows the console only reads escape sequences when
     // "virtual terminal processing" is on: it is turned on while the sequence is written, as it was before after
     private static void WriteOsc52(string text)
     {
         var sequence = Osc52Sequence(text);
+        if (WriteOverride != null)
+        {
+            WriteOverride(sequence);
+            return;
+        }
+
         try
         {
             if (OperatingSystem.IsWindows())

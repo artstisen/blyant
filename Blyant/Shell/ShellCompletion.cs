@@ -33,8 +33,12 @@ internal sealed class ShellCompletion
         None,
         Path,
         Directory,
-        Words
+        Words,
+        PathOrWords
     }
+
+    // What "clip" copies
+    private static readonly string[] ClipKinds = { "path", "name", "text", "lines" };
 
     /// <summary>
     /// The line after Tab (forward) or Shift+Tab: the word at its end completed, or the line as it was
@@ -86,6 +90,7 @@ internal sealed class ShellCompletion
             Kind.Path => PathsFitting(word, false),
             Kind.Directory => PathsFitting(word, true),
             Kind.Words => Fitting(choices, word),
+            Kind.PathOrWords => Fitting(choices, word).Concat(PathsFitting(word, false)).ToList(),
             _ => new List<string>()
         };
         return _matches.Count > 0;
@@ -140,6 +145,10 @@ internal sealed class ShellCompletion
                 return (position == 0 ? Kind.Words : Kind.None, Projects.DisplayNames(Projects.All()));
             case "set":
                 return (position == 0 ? Kind.Words : Kind.None, FileIo.ParseSettings(FileIo.SettingsText()).Keys);
+            case "clip":
+                // The kind, or a path ("clip 3" copies the path)
+                if (position == 0) return (Kind.PathOrWords, ClipKinds);
+                return (position == 1 && ClipKinds.Contains(after[0]) ? Kind.Path : Kind.None, none);
             case "reg":
                 if (position == 0) return (Kind.Words, new[] { "-d" }.Concat(ShellRegisters.All.Keys));
                 return (position == 1 && after[0] == "-d" ? Kind.Words : Kind.None,

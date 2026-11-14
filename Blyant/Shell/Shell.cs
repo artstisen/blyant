@@ -138,6 +138,7 @@ internal static class Shell
         var session = new ShellSession(Console.In, Console.Out, Console.Error, directory, terminal, yes)
         {
             StartNote = note,
+            Clipboard = !Console.IsOutputRedirected,
             ClearScreen = terminal ? Console.Clear : null,
             WindowSize = terminal ? WindowSizeOfTerminal : null,
             ReadKey = terminal ? ReadPauseKey : null
