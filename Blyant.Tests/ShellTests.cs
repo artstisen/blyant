@@ -2117,4 +2117,105 @@ public class ShellTests : IDisposable
         Assert.Equal("cd tabs/sub1/", Tab(Completion(), "cd tabs/*1"));
         Assert.Equal("open *151*", Tab(Completion(), "open *151*"));
     }
+
+    // ---- lines: lines copied or cut to another file
+
+    private string Text(string name) => File.ReadAllText(In("work", name));
+
+    [Fact]
+    public void Lines_CopiesLinesToAnotherFile_AtThePlace()
+    {
+        File.WriteAllText(In("work", "notes.md"), "one\ntwo\nthree\nfour\n");
+        File.WriteAllText(In("work", "plan.md"), "# Plan\n\n- a\n\n## Done\n\n- b\n");
+        var (output, errors, _, _) = Run("lines notes.md 2-3 > plan.md bottom\nlines notes.md 1 > plan.md top copy\n" +
+                                         "lines notes.md +3 9 > plan.md Done\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("one\ntwo\nthree\nfour\n", Text("notes.md"));
+        Assert.Equal("one\n# Plan\n\n- a\n\n## Done\n\nthree\nfour\n- b\ntwo\nthree\n", Text("plan.md"));
+        Assert.Contains(Lang.F("{0}: lines {1}-{2} put in", In("work", "plan.md"), 8, 9), output);
+    }
+
+    [Fact]
+    public void Lines_Cut_MovesTheLines_ByNumberOrText()
+    {
+        File.WriteAllText(In("work", "todo.md"), "- [ ] Buy milk\n- [ ] Call Anna\n- [ ] Write\n");
+        File.WriteAllText(In("work", "done.md"), "# Done\n\n- x\n");
+        var (output, errors, _, _) = Run("lines todo.md \"Call Anna\" > done.md Done+ cut\nlines todo.md 1,2 > done.md +1 CUT\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("", Text("todo.md"));
+        Assert.Equal("- [ ] Buy milk\n- [ ] Write\n# Done\n\n- x\n- [ ] Call Anna\n", Text("done.md"));
+        Assert.Contains(Lang.F("{0}: line {1} taken out", In("work", "todo.md"), 2), output);
+        Assert.Contains(Lang.F("{0}: {1} lines taken out", In("work", "todo.md"), 2), output);
+        // The other file is the last list, at the lines put in
+        (output, _, _, _) = Run("lines todo.md 1 > done.md top\n");
+    }
+
+    [Fact]
+    public void Lines_AHeadingNamedCut_InQuotes_IsThePlace()
+    {
+        File.WriteAllText(In("work", "notes.md"), "one\ntwo\n");
+        File.WriteAllText(In("work", "plan.md"), "# Cut\n\n- a\n");
+        var (_, errors, _, _) = Run("lines notes.md 1 > plan.md \"Cut\"\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("one\ntwo\n", Text("notes.md"));
+        Assert.Equal("# Cut\n\none\n- a\n", Text("plan.md"));
+    }
+
+    [Fact]
+    public void Lines_TellsWhatItCannotDo_AndChangesNothing()
+    {
+        File.WriteAllText(In("work", "notes.md"), "one\ntwo\n");
+        File.WriteAllText(In("work", "plan.md"), "# Plan\n");
+        var (_, errors, code, _) = Run("lines notes.md 1 plan.md bottom\nlines notes.md 1 > notes.md top\n" +
+                                       "lines notes.md 9 > plan.md top\nlines notes.md 1 > plan.md Nowhere cut\n" +
+                                       "lines notes.md 1 > nothing.md top\nlines notes.md 1 3 > plan.md top\n" +
+                                       "lines notes.md 1 > plan.md\n");
+        Assert.Equal(7, errors.TrimEnd('\n').Split('\n').Count(line => !line.StartsWith("  ")));
+        Assert.Contains(Lang.T("The lines are in that file already: shift moves lines in a file"), errors);
+        Assert.Equal(1, code);
+        Assert.Equal("one\ntwo\n", Text("notes.md"));
+        Assert.Equal("# Plan\n", Text("plan.md"));
+    }
+
+    [Fact]
+    public void Lines_KeepsTheLineEndingsOfEachFile_AndNeverLogsTheText()
+    {
+        File.WriteAllText(In("work", "notes.md"), "zebrawords one\r\nzebrawords two\r\n");
+        File.WriteAllText(In("work", "plan.md"), "a\nb");
+        var (_, errors, _, _) = Run("lines notes.md 1 > plan.md bottom cut\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("zebrawords two\r\n", Text("notes.md"));
+        Assert.Equal("a\nb\nzebrawords one", Text("plan.md"));
+        Assert.DoesNotContain(EventLog.All, line => line.Contains("zebrawords"));
+    }
+
+    [Fact]
+    public void Tab_AfterLines_CompletesTheOtherFile_ThePlace_AndCut()
+    {
+        File.WriteAllText(In("work", "plan.md"), "# Plan\n\n## Done later\n");
+        var completion = Completion();
+        Assert.Equal("lines plot.md", Tab(completion, "lines plo"));
+        Assert.Equal("lines plot.md 1 > plan.md", Tab(Completion(), "lines plot.md 1 > pla"));
+        Assert.Equal("lines plot.md 1 > plan.md bottom", Tab(Completion(), "lines plot.md 1 > plan.md bo"));
+        Assert.Equal("lines plot.md 1 > plan.md \"Done later\"", Tab(Completion(), "lines plot.md 1 > plan.md Do"));
+        Assert.Equal("lines plot.md 1 > plan.md top cut", Tab(Completion(), "lines plot.md 1 > plan.md top cu"));
+    }
+
+    [Theory]
+    [InlineData("a\nb\n", 1, "a\nx\ny\nb\n", 2)]
+    [InlineData("a\nb", 2, "a\nb\nx\ny", 3)]
+    [InlineData("", 0, "x\ny\n", 1)]
+    public void WithLinesAt_PutsInTheLines(string text, int position, string expected, int line)
+    {
+        Assert.Equal((expected, line), ShellSession.WithLinesAt(text, new[] { "x", "y" }, position));
+    }
+
+    [Theory]
+    [InlineData("a\nb\nc\n", new[] { 2 }, "a\nc\n")]
+    [InlineData("a\nb\nc", new[] { 1, 3 }, "b")]
+    [InlineData("a\n", new[] { 1 }, "")]
+    public void WithoutLines_TakesOutTheLines(string text, int[] taken, string expected)
+    {
+        Assert.Equal(expected, ShellSession.WithoutLines(text, taken));
+    }
 }

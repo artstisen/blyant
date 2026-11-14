@@ -52,7 +52,7 @@ Every list a command shows is numbered, and a number given to a command after it
 The last list is kept for as long as no other command takes its place, however long that is (until Blyant ends: it is not kept for the next time):
 
 - A list shown takes its place: `ls`, `fav`, `hist`, `recent`, `hot`, `book`, `projects` and `find`
-- So does the file or directory a command worked on, as a list of one row (`open 1` opens it): `peek`, `insert`, `change`, `shift`, `format`, `trim` and `info` (the file, at its line), `new`, `mkdir`, `copy`, `move` and `rename` (the new place), and `cd` on a file (the file)
+- So does the file or directory a command worked on, as a list of one row (`open 1` opens it): `peek`, `insert`, `change`, `shift`, `format`, `trim` and `info` (the file, at its line), `lines` (the other file, at the lines put in), `new`, `mkdir`, `copy`, `move` and `rename` (the new place), and `cd` on a file (the file)
 - Other commands leave it as it was: `cd` into a directory, `up`, `home`, `data`, `pwd`, `open`, `delete`, `clip`, `reg`, `set`, `help`, `about` and `clear`. The rows are full paths, so `fav`, then `cd` somewhere else, and `open 3` still opens row 3 of the favorites
 - A row deleted since (`delete 3`) stays in the list, and is told as not there. When a number is not a row of the list you meant (after `peek 2`, the last list is that file), show the list again
 
@@ -92,6 +92,7 @@ To have every output whole (with a screen reader, say), turn the pages off: `set
 | `change file\|n +line\|from-to [text]` | Change a line (`+12`) or lines (`12-15`) of a file into a text, or delete them when no text is given (asks first). See [Text and settings](#text-and-settings) |
 | `shift file\|n lines place` | Move lines in a file without opening it: under a heading (`shift todo.md 4-6 Done`), at the end of its section (`Done+`), before a line (`+12`), to the `top` or the `bottom`. See [Moving lines](#moving-lines) |
 | `shift! file\|n lines place` | Move lines as `shift` does, and tick their task boxes (`- [ ]` to `- [x]`), or untick those that are ticked |
+| `lines file\|n lines > file\|n place [copy\|cut]` | Copy lines to another file without opening them (`lines notes.md 4-6 > plan.md bottom`), or with `cut` move them there. See [Moving lines](#moving-lines) |
 | `format file\|n` | Format an HTML, CSS or XML file, as `:format` in the editor does (see [Text and settings](#text-and-settings)) |
 | `trim file\|n` | Remove the blank space at the end of the lines, as `:trim` in the editor does; `trim!` also the line breaks of Markdown |
 | `set [name [value]]` | Show the settings (`set`), one of them (`set indent`), or change one (`set indent 2`, also `set indent=2` as in the settings file) |
@@ -124,7 +125,7 @@ To have every output whole (with a screen reader, say), turn the pages off: `set
 ### Typing a command
 In a terminal the line of the shell is read key by key:
 
-- `Tab` completes the word you are typing, and `Tab` again gives the next that fits (after the last: what you typed; `Shift+Tab` goes back): the name of a command (`fa` to `favorites`), the words that can follow some of them (the names of the settings after `set`, the lists after `fav`, the projects after `project`, `add` and `remove` after `fav` and `hot`, `top` and `bottom` after `insert`, `top`, `bottom` and the headings of the file after the lines of `shift`, `path`, `name`, `text` and `lines` after `clip`), and the names of files and directories after the commands that take a path (`open pl` to `open plot.md`). `cd` and `ls`, and the directory of `copy` and `move`, take directories only. A directory gets `/` after it, and when it is the only name that fits, `Tab` again goes on into it (`cd pr` to `cd projects/`, then `cd projects/Article/`). A name with a blank in it is put in quotes, and hidden names come only after a `.`
+- `Tab` completes the word you are typing, and `Tab` again gives the next that fits (after the last: what you typed; `Shift+Tab` goes back): the name of a command (`fa` to `favorites`), the words that can follow some of them (the names of the settings after `set`, the lists after `fav`, the projects after `project`, `add` and `remove` after `fav` and `hot`, `top` and `bottom` after `insert`, `top`, `bottom` and the headings of the file after the lines of `shift` and after the other file of `lines`, `path`, `name`, `text` and `lines` after `clip`), and the names of files and directories after the commands that take a path (`open pl` to `open plot.md`). `cd` and `ls`, and the directory of `copy` and `move`, take directories only. A directory gets `/` after it, and when it is the only name that fits, `Tab` again goes on into it (`cd pr` to `cd projects/`, then `cd projects/Article/`). A name with a blank in it is put in quotes, and hidden names come only after a `.`
 - With nothing typed after a command that takes a file (`open ` and `Tab`), the files you opened last that are in that directory come first, the last opened first: `Tab`, `Tab` goes between the files you are working on. The other names follow by name. It works after a directory too (`open drafts/` and `Tab`), and for a directory (`cd ` and `Tab`) the directories that have those files come first. Once you have typed a letter, the names come by name. The files opened last are those of `recent` and `hist`. To have all names by name, turn the setting `shellrecentfirst` off (`set shellrecentfirst false`, or `shellrecentfirst=false` in the settings file; not on the pages of Configuration)
 - A name with `*` (any characters) or `?` (one character) in it is a pattern: `open *151*` and `Tab` gives `open Blyant-v151.md`, and `Tab` again the next name it fits (letter case alike). It works in the name, also after a directory (`open drafts/*151*`), but not in the directories before it. A hidden name only for a pattern that starts with `.`. Without `Tab`, `*` and `?` are taken as they are: `open *151*` looks for a file of that name
 - `Up` and `Down` bring back the commands you typed before, on Windows, Linux and macOS alike; what you have typed is what they start with (`pe` and `Up`: the last `peek`)
@@ -150,7 +151,7 @@ The shell works on files with the rules of the file browser:
 `format` and `trim` change a file without opening it: they are the commands `:format` and `:trim` of the editor, run on the text of the file, so they do just what they do there (see the [guide to the editor](Guide-to-editor.md#other-commands)). The file is saved only when its text changed, with its line endings and its byte order mark as they were, and it is told with the path of the file: `/home/anna/site/page.html: Formatted`, `/home/anna/poems/poem.md: Lines trimmed: 3`, or `Already formatted` when nothing changed. A file that cannot be formatted safely is left as it is, and why is told.
 
 - Only files in UTF-8 are changed: a file in another encoding (Windows-1252, say) is left as it is. Open it in the editor, which saves it in UTF-8
-- A file with more than one kind of line endings (some lines CRLF, some LF) is left as it is too: saved, every line would get one kind. The editor tells it, and saves it with one. This goes for `insert`, `change` and `shift` too, and so does leaving the files Blyant uses
+- A file with more than one kind of line endings (some lines CRLF, some LF) is left as it is too: saved, every line would get one kind. The editor tells it, and saves it with one. This goes for `insert`, `change`, `shift` and `lines` too, and so does leaving the files Blyant uses
 - There is no undo: a file changed by `format` or `trim` is saved at once. Use them on files you can get back (a copy, a project kept in Git)
 
 `insert` puts a line of text in a file, as quick notes are written down: `insert todo.md bottom Buy milk`, `insert notes.md top # Monday`, `insert 3 +12 A new line` (a row of the last list). The text is all that follows the place, as you type it (blanks and quotes too), and it is one line. `+12` makes it line 12, before the line that was there, and a line past the end puts it after the last. The file keeps its line endings and its byte order mark, and the file is then the last list, at the line put in: `open 1` opens it there. As for `format`, only a file in UTF-8 is changed, the files Blyant uses are not, and there is no undo.
@@ -184,6 +185,20 @@ shift! todo.md "Buy milk" Done     moved, and its task box ticked
 - `shift!` also ticks the task boxes of the lines moved (`- [ ] Milk` to `- [x] Milk`, also in a numbered list), and unticks those that are ticked: `shift! todo.md Milk Done` when it is done, `shift! todo.md Milk Todo` to have it back. A line without a box is moved as it is
 - The place cannot be in the lines moved (the heading moved, or `+5` with line 5 moved). Lines already at the place are left so
 - The lines moved are shown at their new place, and the file is then the last list there (`open 1`). As for `insert`, the file keeps its line endings and its byte order mark, only a file in UTF-8 is changed and not the files Blyant uses, and there is no undo; nothing is lost by a move, so it is not asked first
+
+`lines` copies lines to another file, or moves them there with `cut` last:
+
+```
+lines notes.md 4-6 > plan.md bottom          lines 4 to 6 copied to the end of plan.md
+lines notes.md +10 5 > plan.md top           5 lines from line 10 (as peek takes them)
+lines todo.md "Buy milk" > done.md Done+ cut the line with "Buy milk" moved to the end of Done
+```
+
+- The lines are given as for `shift` (`4`, `4-6`, `4,7,9-10`, a text), or as `+10 5`: 5 lines from line 10. After the `>` come the other file and the place in it, as for `shift`: `top`, `bottom`, `+12`, a heading, or `Heading+`
+- `copy` is the default, and can be written too. `cut` takes the lines out of their file, after they are in the other: when something goes wrong, they are in both files, never in neither. The first file is not changed when it was changed since it was read (the lines are then copied, and it is told). A heading named _Cut_ is written in quotes (`"Cut"`), as the place
+- The lines put in are shown, and the other file is then the last list there (`open 1`). Both files keep their line endings and byte order mark, only files in UTF-8 are changed and not the files Blyant uses, and nothing is asked: no line is lost. The same file on both sides is for `shift`
+- `Tab` completes the other file after the `>`, then the headings of that file, then `copy` and `cut`
+- From the command line of your system, give the command in quotes: `blyant --run "lines notes.md 4-6 > plan.md bottom"`. Without them, bash, PowerShell and cmd take the `>` as a redirection to a file
 
 ## Registers
 A register keeps a text or a path under a name, and `$name` puts it in any command:

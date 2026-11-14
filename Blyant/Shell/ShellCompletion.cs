@@ -148,6 +148,17 @@ internal sealed class ShellCompletion
                     2 => (Kind.QuotedWords, new[] { "top", "bottom" }.Concat(HeadingsOf(_words[0]))),
                     _ => (Kind.None, none)
                 };
+            case "lines":
+            {
+                // The file, the lines (typed), ">" (typed), the other file, the place in it, and copy or cut
+                var arrow = after.ToList().IndexOf(">");
+                if (position == 0) return (Kind.Path, none);
+                if (arrow < 0) return (Kind.None, none);
+                if (position == arrow + 1) return (Kind.Path, none);
+                if (position == arrow + 2)
+                    return (Kind.QuotedWords, new[] { "top", "bottom" }.Concat(HeadingsOf(_words[arrow + 1])));
+                return (position == arrow + 3 ? Kind.Words : Kind.None, new[] { "copy", "cut" });
+            }
             case "insert":
                 return position switch
                 {

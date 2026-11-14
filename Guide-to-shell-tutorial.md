@@ -244,6 +244,22 @@ blyant ~/novel> peek todo.md
 - `shift` without `!` moves the lines as they are, for any kind of list: scenes in an outline, items in a shopping list
 - `Tab` after the lines completes the headings of the file
 
+At the end of the week the tasks done go to a file of their own. `lines` copies lines to another file, and with `cut` moves them there:
+
+```
+blyant ~/novel> new done
+Made: /home/anna/novel/done.md
+blyant ~/novel> lines todo.md 9-11 > done.md bottom cut
+  1  - [x] Call the editor
+  2  - [x] Check the dates
+  3  - [x] Outline
+/home/anna/novel/done.md: lines 1-3 put in
+/home/anna/novel/todo.md: 3 lines taken out
+```
+
+- Without `cut` the lines are copied, and stay where they were
+- The places are those of `shift`: `top`, `bottom`, `+12`, a heading or `Heading+`, now in the other file. The lines too, also `+9 3` (3 lines from line 9)
+
 ## Registers
 A register keeps a path or a text under a name, and `$name` puts it in any command. They are kept until you take them away, also when Blyant is started again.
 

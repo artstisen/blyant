@@ -27,67 +27,8 @@ internal sealed partial class ShellSession
         if (EditableFile(words[0]) is not { } editable) return;
         var (item, file) = editable;
         var lines = LinesOfText(file.Text);
-
-        // The lines: by number, or the line with the text
-        if (!LineSet(words[1], lines.Count, out var moved))
-        {
-            var having = lines.Select((line, i) => (Line: line, Number: i + 1))
-                .Where(row => row.Line.Contains(words[1], StringComparison.OrdinalIgnoreCase)).ToList();
-            if (having.Count != 1)
-            {
-                foreach (var row in having) Line("  " + row.Number + "  " + row.Line);
-                Error(having.Count == 0
-                    ? Lang.F("No line has {0} in it (or give the lines: 4, 4-6, 4,7,9-10)", words[1])
-                    : Lang.F("{0} lines have {1} in them: give the number of the line", having.Count, words[1]));
-                return;
-            }
-
-            moved = new List<int> { having[0].Number };
-        }
-
-        if (moved[^1] > lines.Count)
-        {
-            Error(Lang.F("{0} has {1} lines", item.Path, lines.Count));
-            return;
-        }
-
-        // The place: before which line (from 0) of the file as it is
-        var headings = Headings(file.Text, IsTypst(item.Path));
-        int position;
-        var lower = place.ToLowerInvariant();
-        if (lower == "top") position = 0;
-        else if (lower == "bottom") position = lines.Count;
-        else if (place.Length > 1 && place[0] == '+' && int.TryParse(place[1..], out var before) && before > 0)
-        {
-            position = Math.Min(before, lines.Count + 1) - 1;
-            if (moved.Contains(before))
-            {
-                Error(Lang.F("The place is in the lines moved: {0}", place));
-                return;
-            }
-        }
-        else
-        {
-            var atEnd = place.EndsWith('+');
-            var name = HeadingName(atEnd ? place[..^1] : place);
-            var found = headings.Where(h => string.Equals(h.Name, name, StringComparison.OrdinalIgnoreCase)).ToList();
-            if (found.Count != 1)
-            {
-                foreach (var h in found.Count > 1 ? found : headings) Line("  " + h.Line + "  " + lines[h.Line - 1]);
-                Error(found.Count == 0
-                    ? Lang.F("No heading {0} in {1} (or +12, top, bottom)", name, Path.GetFileName(item.Path))
-                    : Lang.F("{0} headings are named {1}: give the line (+12)", found.Count, name));
-                return;
-            }
-
-            if (moved.Contains(found[0].Line))
-            {
-                Error(Lang.F("The place is in the lines moved: {0}", place));
-                return;
-            }
-
-            position = atEnd ? EndOfSection(lines, headings, found[0]) : UnderHeading(lines, found[0].Line);
-        }
+        if (PickedLines(words[1], null, lines, item.Path) is not { } moved) return;
+        if (PlaceIn(place, lines, file.Text, item.Path, moved) is not { } position) return;
 
         var (text, at, ticked) = Shifted(file.Text, moved, position, tick);
         if (text == TextBuffer.Normalize(file.Text))
@@ -114,6 +55,95 @@ internal sealed partial class ShellSession
             ? Lang.F("{0}: line moved to line {1}", item.Path, at)
             : Lang.F("{0}: {1} lines moved to line {2}", item.Path, moved.Count, at));
         if (tick) Line(Lang.F("Task boxes ticked or unticked: {0}", ticked));
+    }
+
+    // The lines of a file a command takes (from 1, in order): by number ("4", "4-6", "4,7,9-10"), the one line with a
+    // text in it ("Buy milk"), or with a count "+100 20" (20 lines from line 100, as peek takes them). Null (and told)
+    // if they are not there
+    private List<int>? PickedLines(string word, string? count, List<string> lines, string path)
+    {
+        if (count != null)
+        {
+            if (!LinesOf(word, count, out var first, out var last))
+            {
+                Error(Lang.F("Not lines: {0} (as 4, 4-6, 4,7,9-10, or +100 20)", word + " " + count));
+                return null;
+            }
+
+            if (first > lines.Count)
+            {
+                Error(Lang.F("{0} has {1} lines", path, lines.Count));
+                return null;
+            }
+
+            return Enumerable.Range(first, Math.Min(last, lines.Count) - first + 1).ToList();
+        }
+
+        if (!LineSet(word, lines.Count, out var picked))
+        {
+            var having = lines.Select((line, i) => (Line: line, Number: i + 1))
+                .Where(row => row.Line.Contains(word, StringComparison.OrdinalIgnoreCase)).ToList();
+            if (having.Count != 1)
+            {
+                foreach (var row in having) Line("  " + row.Number + "  " + row.Line);
+                Error(having.Count == 0
+                    ? Lang.F("No line has {0} in it (or give the lines: 4, 4-6, 4,7,9-10)", word)
+                    : Lang.F("{0} lines have {1} in them: give the number of the line", having.Count, word));
+                return null;
+            }
+
+            picked = new List<int> { having[0].Number };
+        }
+
+        if (picked[^1] > lines.Count)
+        {
+            Error(Lang.F("{0} has {1} lines", path, lines.Count));
+            return null;
+        }
+
+        return picked;
+    }
+
+    // The place in a file (its lines and text) where lines go: before which line (from 0) of the file as it is.
+    // "top", "bottom", "+12" (before line 12), a heading (under it), "Heading+" (at the end of its section). The lines
+    // moved in the same file ("moved"; null: from another file) cannot hold the place. Null (and told) if it is not
+    // there
+    private int? PlaceIn(string place, List<string> lines, string text, string path, List<int>? moved)
+    {
+        var lower = place.ToLowerInvariant();
+        if (lower == "top") return 0;
+        if (lower == "bottom") return lines.Count;
+        if (place.Length > 1 && place[0] == '+' && int.TryParse(place[1..], out var before) && before > 0)
+        {
+            if (moved != null && moved.Contains(before))
+            {
+                Error(Lang.F("The place is in the lines moved: {0}", place));
+                return null;
+            }
+
+            return Math.Min(before, lines.Count + 1) - 1;
+        }
+
+        var headings = Headings(text, IsTypst(path));
+        var atEnd = place.EndsWith('+');
+        var name = HeadingName(atEnd ? place[..^1] : place);
+        var found = headings.Where(h => string.Equals(h.Name, name, StringComparison.OrdinalIgnoreCase)).ToList();
+        if (found.Count != 1)
+        {
+            foreach (var h in found.Count > 1 ? found : headings) Line("  " + h.Line + "  " + lines[h.Line - 1]);
+            Error(found.Count == 0
+                ? Lang.F("No heading {0} in {1} (or +12, top, bottom)", name, Path.GetFileName(path))
+                : Lang.F("{0} headings are named {1}: give the line (+12)", found.Count, name));
+            return null;
+        }
+
+        if (moved != null && moved.Contains(found[0].Line))
+        {
+            Error(Lang.F("The place is in the lines moved: {0}", place));
+            return null;
+        }
+
+        return atEnd ? EndOfSection(lines, headings, found[0]) : UnderHeading(lines, found[0].Line);
     }
 
     /// <summary>

@@ -31,6 +31,7 @@ internal sealed partial class ShellSession
         ("change file|n +line|from-to [text]", Lang.T("Change lines of a file into a text, or delete them")),
         ("shift file|n lines place", Lang.T("Move lines in a file: under a heading, +line, top or bottom")),
         ("shift! file|n lines place", Lang.T("Move lines, and tick or untick their task boxes")),
+        ("lines file lines > file place", Lang.T("Copy lines to another file (cut: move them)")),
         ("format file|n", Lang.T("Format an HTML, CSS or XML file, as :format does")),
         ("trim file|n", Lang.T("Remove blank space at line ends, as :trim does (trim!)")),
         ("set [name [value]]", Lang.T("Show the settings, or change one")),
@@ -200,6 +201,9 @@ internal sealed partial class ShellSession
                 break;
             case "shift!":
                 Shift(argument, true);
+                break;
+            case "lines":
+                CopyLines(argument);
                 break;
             case "change":
                 ChangeLines(argument);
