@@ -1,7 +1,7 @@
 # Shell tutorial
 The shell is Blyant on lines: you type a command at a prompt, and what it shows is written below it, as in a terminal. It does what the full screen does with files (finding them, looking into them, copying, moving, adding a line, ticking off a task) without leaving the line you type on. It works in any terminal, over SSH, with a screen reader, and from scripts.
 
-This tutorial goes through a day of work on a small novel project, one task at a time. Each part shows what you type after the prompt, and what Blyant writes back. The [guide to the shell](Guide-to-shell.md) tells all the commands and their details.
+This tutorial goes through a day of work on a small novel project, one task at a time. Each part shows what you type after the prompt, and what Blyant writes back. The last part, [Practice](#practice), is ten short steps to try on two files of your own. The [guide to the shell](Guide-to-shell.md) tells all the commands and their details.
 
 The project used in the examples is in `~/novel` (`/home/anna/novel`):
 
@@ -450,5 +450,100 @@ What you do on the full screen, and the command for it in the shell:
 | A line added in the editor | `insert 3 bottom text` |
 | Lines changed or deleted in the editor | `change 3 +12 text`, `change 3 12-15` |
 | Lines cut and put under another heading | `shift 3 4-6 Done` |
+| Lines copied or moved to another file | `lines 3 4-6 > 5 bottom`, `lines 3 4-6 > 5 bottom cut` |
+| Copy and paste | `clip lines 3 4-6`, then `insert 5 top $clip` |
 | Configuration | `set`, `set indent 2` |
 | `:shell` | `screen` |
+
+## Practice
+Ten steps to train the commands of this tutorial, on two files of your own. Type each command after the prompt: what Blyant writes back is shown under it. To keep the files apart, make a directory for them first, and go into it:
+
+```
+blyant ~> mkdir practice
+Made: /home/anna/practice
+blyant ~> cd practice
+```
+
+**1. Create a file.** `new` makes an empty file, and gives it `.md` when the name has no extension:
+
+```
+blyant ~/practice> new file1
+Made: /home/anna/practice/file1.md
+```
+
+**2. Insert the text "File 1" at the top of the file.** All that follows `top` is the text:
+
+```
+blyant ~/practice> insert file1.md top File 1
+/home/anna/practice/file1.md: line 1 put in
+```
+
+**3. Peek at the change.** `peek` shows the lines of the file, numbered:
+
+```
+blyant ~/practice> peek file1.md
+  1  File 1
+```
+
+**4. Insert another line below the first.** `bottom` puts it after the last line:
+
+```
+blyant ~/practice> insert file1.md bottom A second line
+/home/anna/practice/file1.md: line 2 put in
+blyant ~/practice> peek file1.md
+  1  File 1
+  2  A second line
+```
+
+**5. Move the first line below the second.** `shift` moves lines in a file: line 1 to the `bottom`. The line is shown at its new place:
+
+```
+blyant ~/practice> shift file1.md 1 bottom
+  2  File 1
+/home/anna/practice/file1.md: line moved to line 2
+```
+
+**6. Create a second file:**
+
+```
+blyant ~/practice> new file2
+Made: /home/anna/practice/file2.md
+```
+
+**7. Copy line 2 of file1 into file2.** `lines` takes the file and the lines, a `>`, and the other file and the place in it. Line 2 of `file1.md` is now "File 1":
+
+```
+blyant ~/practice> lines file1.md 2 > file2.md top
+  1  File 1
+/home/anna/practice/file2.md: line 1 put in
+```
+
+**8. Change the line in file2 into "File 2".** `change` takes the line (`+1`) and the new text:
+
+```
+blyant ~/practice> change file2.md +1 File 2
+/home/anna/practice/file2.md: line 1 changed
+blyant ~/practice> peek file2.md
+  1  File 2
+```
+
+**9. Copy the whole text of file2.** `clip text` copies it to the clipboard, and keeps it as `$clip`:
+
+```
+blyant ~/practice> clip text file2.md
+Copied to the clipboard and the string memory
+  /home/anna/practice/file2.md (7 characters)
+```
+
+**10. Insert it at the bottom of file1.** `$clip` puts in what was copied last:
+
+```
+blyant ~/practice> insert file1.md bottom $clip
+/home/anna/practice/file1.md: line 3 put in
+blyant ~/practice> peek file1.md
+  1  A second line
+  2  File 1
+  3  File 2
+```
+
+That is the whole round: making files, adding, moving, copying and changing lines, without opening an editor. `open file1.md` shows the result in the editor of the full screen. To try again, `delete file1.md` and `delete file2.md` (they go to the trash), or start over in another directory.
