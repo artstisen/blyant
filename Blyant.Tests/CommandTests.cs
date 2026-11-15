@@ -222,7 +222,8 @@ public class CommandTests
     [Fact]
     public void TheTables_HaveTheCommandsOfTheShell()
     {
-        AssertSame(CommandContext.Shell, Compared(Method("Shell/ShellCommands.cs", "RunCommand")));
+        // ("+", "++", "-" and "--" are not names of letters: not found in the code by Compared)
+        AssertSame(CommandContext.Shell, Compared(Method("Shell/ShellCommands.cs", "RunCommand")), "+", "++", "-", "--");
     }
 
     [Fact]

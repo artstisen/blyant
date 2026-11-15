@@ -259,6 +259,13 @@ internal sealed partial class ShellSession
             case "peek":
                 Peek(argument);
                 break;
+            // "+", "++", "-", "--" alone: "peek +" ... (the window of the last peek moved; nothing else they could be)
+            case "+":
+            case "++":
+            case "-":
+            case "--":
+                Peek(name);
+                break;
             case "find":
                 Find(argument);
                 break;
@@ -739,6 +746,7 @@ internal sealed partial class ShellSession
                 "q" or "quit" => "exit",
                 "del" => "delete",
                 "cls" => "clear",
+                "+" or "++" or "-" or "--" => "peek",
                 "$clip" => "clip",
                 _ => name
             };

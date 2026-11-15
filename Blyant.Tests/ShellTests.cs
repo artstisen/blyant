@@ -3025,4 +3025,19 @@ public class ShellTests : IDisposable
         Assert.Equal(1, Shell.PeekStep);
         Assert.Equal(5, Shell.PeekBigStep);
     }
+
+    [Fact]
+    public void Peek_PlusAndMinusAlone_AreStepsOfTheLastPeek()
+    {
+        File.WriteAllText(In("work", "long.md"), string.Concat(Enumerable.Range(1, 60).Select(n => "line " + n + "\n")));
+        var (output, errors, _, _) = Run("+\npeek long.md +40 10\n+\n++\ninsert long.md +50 new\n+\n-\n--\nhelp +\n");
+        // "+" before a peek: as "peek +"
+        Assert.Contains(Lang.T("No file peeked yet: peek a file first (peek plot.md)"), errors);
+        Assert.Single(errors.TrimEnd('\n').Split('\n'));
+        var windows = output.Split('\n').Where(l => l.StartsWith('(')).ToList();
+        Assert.Equal(new[] { (40, 49, 60), (41, 50, 60), (46, 55, 60), (47, 56, 61), (46, 55, 61), (41, 50, 61) }
+            .Select(w => Lang.F("(lines {0}-{1} of {2})", w.Item1, w.Item2, w.Item3)), windows);
+        // help + tells of peek
+        Assert.Contains("peek [file|n] +|++|-|--", output);
+    }
 }

@@ -84,7 +84,7 @@ To have every output whole (with a screen reader, say), turn the pages off: `set
 | `data` | Go to the [data directory](Guide-to-installation.md#good-to-know) of Blyant: its settings, lists and log. `cd data` is still a directory named _data_ |
 | `open file\|n [+line]` | Edit a file in the editor of the full screen, at a line if one is given (`open plot.md +12`). A directory is gone to |
 | `peek file\|n [lines]` | Show the lines of a text file, numbered: the first 20, `peek plot.md 40` the first 40, `peek plot.md 100-120` those, `peek plot.md +100` 20 lines from line 100, and `peek plot.md +100 30` 30 of them. Only read. After a peek from a line, `open 1` opens the file at that line |
-| `peek [file\|n] +\|++\|-\|--` | Move the window of the last peek of the file: `+` 1 line further down, `++` 5, `-` and `--` up again (the settings `shellpeekstep` and `shellpeekbigstep`: `set shellpeekstep 2`; 1 to 1000, and `reset` puts back 1 and 5), as many lines as before (`peek plot.md +`, then `peek +`: the file peeked last). From the top for a file not peeked before; at the end the last lines are shown |
+| `peek [file\|n] +\|++\|-\|--` | Move the window of the last peek of the file: `+` 1 line further down, `++` 5, `-` and `--` up again (the settings `shellpeekstep` and `shellpeekbigstep`: `set shellpeekstep 2`; 1 to 1000, and `reset` puts back 1 and 5), as many lines as before (`peek plot.md +`, then `peek +`: the file peeked last; `+`, `++`, `-` or `--` alone on the line do the same, also after other commands). From the top for a file not peeked before; at the end the last lines are shown |
 | `find [-l] [name] [-t text]` | Find files here and in the directories below, by name and by a text in them (see [Files](#files)); `find -l` gives the full paths |
 | `new name` | Make a new, empty file here (`new ideas` makes `ideas.md`: the kind of new files, when no extension is given). It is put in the latest files at once, as a file opened: `recent` lists it, and `Tab` with nothing typed offers it first |
 | `mkdir name` | Make a new directory here |
@@ -164,7 +164,7 @@ The commands that work on the lines of a file take line numbers in a few ways. A
 | `4,7,9-10` | those lines, in their order | `shift`, `lines`, `clip lines` |
 | `"Buy milk"` | the one line with that text in it | `shift`, `lines`, `clip lines` |
 | `+100 20` | 20 lines from line 100 | `peek`, `lines`, `clip lines` |
-| `+`, `++`, `-`, `--` | the window of the last peek moved: 1 or 5 lines down, or up (as set) | `peek` |
+| `+`, `++`, `-`, `--` | the window of the last peek moved: 1 or 5 lines down, or up (as set) | `peek`, and alone on the line (`+` is `peek +`) |
 | `+12` as a place | at line 12, before the line that is there | `insert`, `shift`, `lines` (after the `>`), and `open` (the cursor there) |
 
 - The `+` marks a place where the word could also be something else: `top`, `bottom` or a heading (a heading can be named _12_), and in `open notes.md +12` the line to go to, as in other editors (`vim +12 notes.md`)
