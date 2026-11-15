@@ -110,6 +110,8 @@ internal sealed partial class ShellSession
         }
 
         FileExplorer.LogFileOperation("New file", path, result);
+        // (in the latest files at once, as one opened: "recent" and Tab with nothing typed offer it)
+        if (result == DialogText.Success) FileExplorer.AddToHistory(path);
         Done(result, Lang.F("Made: {0}", path), path);
     }
 

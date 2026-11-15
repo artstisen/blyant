@@ -85,7 +85,7 @@ To have every output whole (with a screen reader, say), turn the pages off: `set
 | `open file\|n [+line]` | Edit a file in the editor of the full screen, at a line if one is given (`open plot.md +12`). A directory is gone to |
 | `peek file\|n [lines]` | Show the lines of a text file, numbered: the first 20, `peek plot.md 40` the first 40, `peek plot.md 100-120` those, `peek plot.md +100` 20 lines from line 100, and `peek plot.md +100 30` 30 of them. Only read. After a peek from a line, `open 1` opens the file at that line |
 | `find [-l] [name] [-t text]` | Find files here and in the directories below, by name and by a text in them (see [Files](#files)); `find -l` gives the full paths |
-| `new name` | Make a new, empty file here (`new ideas` makes `ideas.md`: the kind of new files, when no extension is given) |
+| `new name` | Make a new, empty file here (`new ideas` makes `ideas.md`: the kind of new files, when no extension is given). It is put in the latest files at once, as a file opened: `recent` lists it, and `Tab` with nothing typed offers it first |
 | `mkdir name` | Make a new directory here |
 | `rename file\|n name` | Give a file or directory a new name |
 | `copy file\|n dir\|n` | Copy a file or directory into a directory |

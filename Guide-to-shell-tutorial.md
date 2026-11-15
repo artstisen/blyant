@@ -139,7 +139,7 @@ blyant ~/novel> move scene-list.md notes
 Moved to /home/anna/novel/notes/scene-list.md
 ```
 
-- `new` makes an empty file (`.md` when no extension is given), and `mkdir` a directory
+- `new` makes an empty file (`.md` when no extension is given), and `mkdir` a directory. A new file is in `recent` at once
 - `copy` and `move` take what, and the directory it goes into; `rename` takes what, and its new name. Rows work for both: `copy 3 1` copies row 3 into row 1
 - After them the new place is the last list: `open 1` opens it
 - A name with blanks in it is written in quotes: `rename "old notes.md" notes.md`

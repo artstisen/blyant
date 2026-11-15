@@ -447,8 +447,8 @@ internal static partial class FileExplorer
         if (result != DialogText.Success) _historyMessage = result;
     }
 
-    // Add a file opened in the editor to the history
-    private static void AddToHistory(string path)
+    // Add a file opened in the editor to the history (and one made by "new" in the shell)
+    internal static void AddToHistory(string path)
     {
         FileHistory.Load();
         FileHistory.Add(path, DateTime.Now);

@@ -2761,4 +2761,17 @@ public class ShellTests : IDisposable
     {
         Assert.Equal("ls -a -l Draft/", Tab(Completion(), "ls -a -l Dr"));
     }
+
+    [Fact]
+    public void New_PutsTheFileInTheLatestFiles()
+    {
+        var (output, errors, _, _) = Run("new fresh\nrecent\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal(In("work", "fresh.md"), FileHistory.Items[0].Path);
+        Assert.Contains("  1  fresh.md  ", output);
+        // A name that is taken: not made, and not put in the list
+        (_, errors, _, _) = Run("new plot.md\n");
+        Assert.NotEmpty(errors);
+        Assert.DoesNotContain(FileHistory.Items, entry => entry.Path == In("work", "plot.md"));
+    }
 }
