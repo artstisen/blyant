@@ -129,14 +129,25 @@ internal sealed partial class ShellSession
         var headings = Headings(text, IsTypst(path));
         var atEnd = place.EndsWith('+');
         var name = HeadingName(atEnd ? place[..^1] : place);
-        var found = headings.Where(h => string.Equals(h.Name, name, StringComparison.OrdinalIgnoreCase)).ToList();
-        // (no heading of that whole name: the start of one, or a pattern; a heading with "*" in it is found whole first)
-        var fitted = found.Count == 0 && name.Length > 0;
-        if (fitted)
+        // (a heading whose name ends with "+", "## C++": that heading, not the end of the section of "C+")
+        if (atEnd && headings.Any(h => string.Equals(h.Name, HeadingName(place), StringComparison.OrdinalIgnoreCase)))
         {
-            found = ShellCompletion.IsPattern(name)
-                ? headings.Where(h => ShellCompletion.PatternFits(name, h.Name)).ToList()
-                : headings.Where(h => h.Name.StartsWith(name, StringComparison.OrdinalIgnoreCase)).ToList();
+            atEnd = false;
+            name = HeadingName(place);
+        }
+
+        var found = headings.Where(h => string.Equals(h.Name, name, StringComparison.OrdinalIgnoreCase)).ToList();
+        // (no heading of that whole name: the one a pattern fits, or the start of one; a heading with "*" or "?" in it
+        // is found whole first, and a start with "?" in it ("Why?") as it is when no pattern fits)
+        var fitted = found.Count == 0 && name.Length > 0;
+        if (fitted && ShellCompletion.IsPattern(name))
+        {
+            found = headings.Where(h => ShellCompletion.PatternFits(name, h.Name)).ToList();
+        }
+
+        if (fitted && found.Count == 0)
+        {
+            found = headings.Where(h => h.Name.StartsWith(name, StringComparison.OrdinalIgnoreCase)).ToList();
         }
 
         if (found.Count != 1)

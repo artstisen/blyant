@@ -94,11 +94,28 @@ internal static class FileSearch
         if (options.Text.Length == 0) return null;
         var regexOptions = RegexOptions.CultureInvariant | (options.MatchCase ? RegexOptions.None : RegexOptions.IgnoreCase);
         if (options.IsRegex) return new Regex(options.Text, regexOptions, MatchTimeout);
-        var pattern = Regex.Escape(options.Text);
-        // "storm*night": "storm", then anything in the same line, then "night" (a part of a line, as without them)
-        if (options.TextWildcards) pattern = pattern.Replace("\\*", ".*").Replace("\\?", ".");
-        return new Regex(pattern, regexOptions, MatchTimeout);
+        return new Regex(Escaped(options.Text, options.TextWildcards), regexOptions, MatchTimeout);
     }
+
+    // A text as a regular expression of itself; with wildcards, "storm*night": "storm", then anything in the same
+    // line, then "night" (a part of a line, as without them), and "?" one character
+    private static string Escaped(string text, bool wildcards)
+    {
+        var pattern = Regex.Escape(text);
+        return wildcards ? pattern.Replace("\\*", ".*").Replace("\\?", ".") : pattern;
+    }
+
+    /// <summary>
+    /// The text of a search as find -t takes it: a part of a line, letter case alike, "*" any characters and "?" one
+    /// ("storm*night": "storm", then anything in the same line, then "night")
+    /// </summary>
+    internal static Regex WildcardText(string text) =>
+        new(Escaped(text, true), RegexOptions.CultureInvariant | RegexOptions.IgnoreCase, MatchTimeout);
+
+    /// <summary>
+    /// A line has the text of a search (a search too slow is no match)
+    /// </summary>
+    internal static bool Matches(Regex pattern, string line) => IsMatch(pattern, line);
 
     private static bool IsMatch(Regex? pattern, string text)
     {

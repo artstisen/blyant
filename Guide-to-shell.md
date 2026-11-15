@@ -56,8 +56,8 @@ A favorite (of the open list of favorites) is marked ` *` after its name in `ls`
 The last list is kept for as long as no other command takes its place, however long that is (until Blyant ends: it is not kept for the next time):
 
 - A list shown takes its place: `ls`, `fav`, `hist`, `recent`, `hot`, `book`, `projects` and `find`
-- So does the file or directory a command worked on, as a list of one row (`open 1` opens it): `peek`, `insert`, `change`, `shift`, `format` and `trim` (the file, at its line), `lines` (the other file, at the lines put in), `new`, `mkdir`, `copy`, `move` and `rename` (the new place), and `cd` on a file (the file)
-- Other commands leave it as it was: `info` (so `fav`, `info 3`, `info 4` and `open 4` work), `cd` into a directory, `up`, `home`, `data`, `pwd`, `open`, `delete`, `clip`, `reg`, `set`, `help`, `about` and `clear`. The rows are full paths, so `fav`, then `cd` somewhere else, and `open 3` still opens row 3 of the favorites
+- So does the file or directory a command worked on, as a list of one row (`open 1` opens it): `peek`, `insert`, `change`, `shift`, `format` and `trim` (the file, at its line), `lines` (the other file, at the lines put in), `undo` and `redo` (the files written), `new`, `mkdir`, `copy`, `move` and `rename` (the new place), and `cd` on a file (the file)
+- Other commands leave it as it was: `info` (so `fav`, `info 3`, `info 4` and `open 4` work), `cd` into a directory, `up`, `home`, `data`, `pwd`, `open`, `delete`, `clip`, `reg`, `set`, `changes`, `help`, `about` and `clear`. The rows are full paths, so `fav`, then `cd` somewhere else, and `open 3` still opens row 3 of the favorites
 - A row deleted since (`delete 3`) stays in the list, and is told as not there. When a number is not a row of the list you meant (after `peek 2`, the last list is that file), show the list again
 
 The shell writes in the colors of your terminal (the color scheme is for the full screen), and a character of a file that would steer the terminal (an escape sequence: a color, a title, the clipboard) is shown as `?`. A command that fails in a way it should not is told (`The command failed: ...`), and the shell goes on.
@@ -87,6 +87,7 @@ To have every output whole (with a screen reader, say), turn the pages off: `set
 | `peek [file\|n] top\|middle\|bottom\|50%` | Put the window of the last peek (as many lines) at the top, in the middle, at the end, or from a part of the file (`peek 50%`: from halfway). Without a file: the file peeked last. See [Peeking into a file](#peeking-into-a-file) |
 | `peek +120` | The file peeked last from line 120, the window as large (a file named _+120_ is peeked, if there is one) |
 | `+ 20`, `- 20`, `++ 3`, `-- 3` | Move the window of the last peek as many steps: `+ 20` 20 lines down (with `shellpeekstep` 1), `++ 3` 3 big steps |
+| `peek [file\|n] /text` | The window at the first line with a text in it, marked with `>` (`peek notes.md /storm`; without a file: the file peeked last). `/` alone goes to the next line with it, `?` to the one before. See [Peeking into a file](#peeking-into-a-file) |
 | `peek` (or `.`) | Show the last peek again: the same lines of the same file, as it is now (after `insert`, `change`, `lines` or the editor). See [Peeking into a file](#peeking-into-a-file) |
 | `peek [file\|n] +\|++\|-\|--` | Move the window of the last peek: `+` 1 line further down, `++` 5, `-` and `--` up again (the settings `shellpeekstep` and `shellpeekbigstep`: `set shellpeekstep 2`; 1 to 1000, and `reset` puts back 1 and 5), as many lines as before (`peek plot.md +`, then `peek +`: the file peeked last; `+`, `++`, `-` or `--` alone on the line do the same, also after other commands; a number after them is a count of steps: `+ 20`). The lines shown are `$peek`. Another file than the one peeked last is moved from its top (`peek other.md +`: from line 2); at the end the last lines are shown |
 | `find [-l] [name] [-t text]` | Find files here and in the directories below, by name and by a text in them (see [Files](#files)); `find -l` gives the full paths |
@@ -159,7 +160,7 @@ To have every output whole (with a screen reader, say), turn the pages off: `set
 ### Typing a command
 In a terminal the line of the shell is read key by key:
 
-- `Tab` completes the word you are typing, and `Tab` again gives the next that fits (after the last: what you typed; `Shift+Tab` goes back): the name of a command (`fa` to `favorites`), the words that can follow some of them (the names of the settings after `set`, the lists after `fav`, the projects after `project`, `add` and `remove` after `fav` and `hot`, `top` and `bottom` after `insert`, `top`, `bottom` and the headings of the file after the lines of `shift` and after the other file of `lines`, `path`, `name`, `text` and `lines` after `clip`), and the names of files and directories after the commands that take a path (`open pl` to `open plot.md`). `cd` and `ls`, and the directory of `copy` and `move`, take directories only. A directory gets `/` after it, and when it is the only name that fits, `Tab` again goes on into it (`cd pr` to `cd projects/`, then `cd projects/Article/`). A name with a blank in it is put in quotes, and hidden names come only after a `.`
+- `Tab` completes the word you are typing, and `Tab` again gives the next that fits (after the last: what you typed; `Shift+Tab` goes back): the name of a command (`fa` to `favorites`), the words that can follow some of them (the names of the settings after `set`, the lists after `fav`, the projects after `project`, `add` and `remove` after `fav` and `hot`, `top` and `bottom` after `insert`, `top`, `bottom` and the headings of the file after the lines of `shift` and after the other file of `lines` (also from a pattern, and of a row or `$file`), `path`, `name`, `text` and `lines` after `clip`), and the names of files and directories after the commands that take a path (`open pl` to `open plot.md`). `cd` and `ls`, and the directory of `copy` and `move`, take directories only. A directory gets `/` after it, and when it is the only name that fits, `Tab` again goes on into it (`cd pr` to `cd projects/`, then `cd projects/Article/`). A name with a blank in it is put in quotes, and hidden names come only after a `.`
 - With nothing typed after a command that takes a file (`open ` and `Tab`), the files you opened last that are in that directory come first, the last opened first: `Tab`, `Tab` goes between the files you are working on. The other names follow by name. It works after a directory too (`open drafts/` and `Tab`), and for a directory (`cd ` and `Tab`) the directories that have those files come first. Once you have typed a letter, the names come by name. The files opened last are those of `recent` and `hist`. To have all names by name, turn the setting `shellrecentfirst` off (`set shellrecentfirst false`, or `shellrecentfirst=false` in the settings file; not on the pages of Configuration)
 - A name with `*` (any characters) or `?` (one character) in it is a pattern: `open *151*` and `Tab` gives `open Blyant-v151.md`, and `Tab` again the next name it fits (letter case alike). It works in the name, also after a directory (`open drafts/*151*`), but not in the directories before it. A hidden name only for a pattern that starts with `.`. Without `Tab`, `*` and `?` are taken as they are: `open *151*` looks for a file of that name
 - `Up` and `Down` bring back the commands you typed before, on Windows, Linux and macOS alike; what you have typed is what they start with (`pe` and `Up`: the last `peek`)
@@ -197,7 +198,7 @@ The shell works on files with the rules of the file browser:
 - `delete` asks first, telling what goes with a directory, and you type the answer in full (`Yes`) to go ahead. It goes to the trash, which you open from the file browser with `:trash`, unless _Delete to trash_ is turned off on the General page of Configuration. Something that cannot be moved to the trash is deleted for good only if you say so
 - The files and directories Blyant uses (its data directory, the settings, the favorites, the history) cannot be renamed, moved or deleted from the shell
 - What is renamed or moved is followed by the favorites, the history, the hotlist, the projects and the bookmarks, as in the file browser, and what is deleted leaves the favorites
-- `find` searches the directory you are in and the directories below it, as the search of the file browser does: hidden files are left out, and at most 5000 files are found. `find plot` finds the names with _plot_ in them, `find *.md` the names that match (`*` and `?`), `find -t storm` the text files with _storm_ in a line (with the line), and `find *.md -t storm` both. The text takes `*` and `?` too: `find -t storm*night` finds a line with _storm_ and then _night_ in it, `find -t st?rm` _storm_ and _starm_ (a `*` in the text you look for, as `**` of bold, is taken so too, and finds more lines). `open` on a file found by its text opens it at that line
+- `find` searches the directory you are in and the directories below it, as the search of the file browser does: hidden files are left out, and at most 5000 files are found. `find plot` finds the names with _plot_ in them, `find *.md` the names that match (`*` and `?`), `find -t storm` the text files with _storm_ in a line (with the line), and `find *.md -t storm` both. The text takes `*` and `?` too: `find -t storm*night` finds a line with _storm_ and then _night_ in it, `find -t st?rm` _storm_ and _starm_ (a `*` in the text you look for, as `**` of bold, is taken so too, and finds more lines). `open` on a file found by its text opens it at that line, and `peek` shows the window around it
 - After `new`, `mkdir`, `rename`, `copy` and `move`, the new place is the last list: `open 1` opens it
 
 To duplicate a file, copy it to the directory it is in, `.`: the copy gets `-copy` in its name, and a second copy `-copy2`. Copied to another directory, it keeps its name:
@@ -236,6 +237,8 @@ peek 75%                                     from three quarters into the file
 peek +120                                    from line 120, in the file peeked last
 peek chapter-3.md bottom                     the last 20 lines of a file
 .                                            the same window again, as the file is now
+peek chapter-3.md /storm                     at the first line with "storm" in it
+/                                            the next line with it (? the one before)
 ```
 
 Under the lines it tells where they are in the file, unless they are the last lines of it (after `bottom`, a step, or a window moved to the end, it tells it there too):
@@ -274,6 +277,34 @@ blyant ~/novel> .
 - A plain number is how many lines to show, from the top (`peek chapter-3.md 40`), as `peek` only shows them. With a `+` it is the line to start at (see [Line numbers](#line-numbers))
 - `+`, `++`, `-` and `--` move the window of the last peek, as many lines as before: 1 or 5 lines (the settings `shellpeekstep` and `shellpeekbigstep`), or as many steps as the number after them (`+ 20`). They stop at the ends: at the top line 1 is shown, and at the end the last lines. Alone on the line they go on in the file peeked last, also after other commands, so you can read, edit and read on. Another file than the one peeked last is moved from its top (`peek other.md +` shows it from line 2)
 - `top`, `middle`, `bottom` and a part (`50%`, `0%` to `100%`) put the window of the last peek there, as many lines as it had (3 after `peek chapter-3.md 10-12`). After a file (`peek chapter-3.md bottom`) they put a window there in that file: as large as the last peek when it was of that file, else 20 lines. `peek +120` alone goes to line 120 in the file peeked last; `+ 20` and `- 20` move the window 20 steps from where it is, and `++ 3` and `-- 3` 3 big steps. At the ends the window stops, as it does for `+` and `-`. `Tab` after `peek` completes `top`, `middle` and `bottom`
+
+To find a place, search: the window goes to the first line with the text, two lines of it above, and the line found is marked with `>`. `/` goes on to the next line with it, and `?` back:
+
+```
+blyant ~/novel> peek chapter-3.md 1-5
+...
+blyant ~/novel> peek chapter-3.md /storm
+   8  The ferry was late.
+   9  Maren stood at the rail.
+> 10  The storm came in from the west.
+  11  Anna closed the shutters.
+  12  Then the lights went out.
+(match 1 of 3, lines 8-12 of 30)
+blyant ~/novel> /
+  18  The rain stopped at midnight.
+  19  The harbour was quiet.
+> 20  Only the storm lantern still burned.
+  21  Maren went down.
+  22  The door was open.
+(match 2 of 3, lines 18-22 of 30)
+```
+
+- The text is a part of a line, letter case alike, as `find -t` takes it: `*` and `?` in it as there (`peek chapter-3.md /storm*night`), and all that follows the `/` (`peek notes.md /the storm came`). Without a file, `peek /storm` searches the file peeked last
+- `/` and `?` alone go to the next and the line before with the text searched last, in the file peeked last. At the end they go round, and it is told: `(from the top again)`, `(from the end again)`
+- The window is as large as the last one of that file (20 lines for another; a window of 1 or 2 lines starts at the line found). `open 1` opens the file at the line found, and `.`, `+` and `-` go on from the window. `/storm` alone, typed as a command, searches the file peeked last too
+- A word starting with `/` that is a file or directory, or that has another `/` in it, is a path: `peek /home/anna/notes.md /storm` searches that file, and a path mistyped is told as not found, not searched. Another file than the one searched last is searched from its top
+- A row of `find -t` (a line found in a file) is peeked at that line: `find -t storm`, then `peek 2` shows the window around the line found, marked, as `open 2` opens it there. When the file was changed since, the line with the text nearest to it is marked
+
 - `.` and `peek` alone show the window of the last peek again: the same file, the same first line and as many lines, read again. It is the window you peeked, whatever the commands after it worked on (`$file` can be another file by then). A line put in above the window moves the lines in it down, as you see. Before any peek, it is told
 - With the setting `shellautopeek` on (`set shellautopeek true`; off from the start), the window is shown again by itself after each command that changed its file: `insert`, `change`, `lines`, `shift`, `format`, `trim`, or the editor opened with `open`. `(peek again: chapter-3.md)` is written above it. A command that changed another file, or nothing, shows nothing more
 - After a peek, `open 1` opens the file at the first line shown, and `$file` is the file. The lines shown are `$peek`: `insert plan.md bottom $peek` puts them in another file (see [Registers](#registers))
@@ -404,7 +435,10 @@ blyant ~/notes> changes
 - `changes` lists the steps, numbered as `undo 3` counts them, and below them the steps undone, which `redo` does again
 - A file is put back exactly as it was: its line endings and its byte order mark too. The files written are the last list (`open 1`)
 - A step is only undone while its files are as it left them. When a file was changed since (in the editor, by another program), it is told, and nothing of the step is written: your change is never written over. The editor has its own undo (`u`)
-- The last 10 steps are kept (the setting `shellundosteps`, 1 to 50: `set shellundosteps 20`), while Blyant runs: they are never written to a file, so no copy of your text stays on the disk. A file larger than 2 MB is not kept, and it is told
+- The last 10 steps are kept (the setting `shellundosteps`, 1 to 50: `set shellundosteps 20`), while Blyant runs: they are never written to a file, so no copy of your text stays on the disk.
+- A command one of whose files is larger than 2 MB (or could not be read first) cannot be undone: it is told, and what was undone before it can no longer be redone. A change that leaves a file as it was is no step. All the steps keep at most 32 MB: past it, the oldest are let go
+- When the files of a step are no longer there (renamed, moved, deleted), it is told. When a file cannot be written, the files of the step written already are put back, so the step stays whole
+- `lines a.md 4-6 > $notes cut` is undone in `a.md`; the register keeps the lines (`reg -d notes` takes it away)
 - `new`, `copy`, `rename`, `move` and `delete` are not undone: they change files, not their text (`delete` goes to the trash)
 
 ## Folders of favorites

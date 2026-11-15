@@ -278,6 +278,34 @@ internal sealed partial class ShellSession
             return;
         }
 
+        // "peek notes.md /storm", "peek /storm" (the file peeked last): the window at the first line with the text.
+        // A word that starts with "/" alone is a path when it is there, or has another "/" in it (a path mistyped is
+        // told as not found, not searched)
+        var searchAt = words[0].Length > 1 && words[0][0] == '/' && words[0].IndexOfAny(['/', '\\'], 1) < 0 &&
+                       !File.Exists(PathOf(words[0])) && !System.IO.Directory.Exists(PathOf(words[0]))
+            ? 0
+            : words.Count >= 2 && words[1].Length > 0 && words[1][0] == '/' ? 1 : -1;
+        if (searchAt >= 0)
+        {
+            var text = AfterWords(argument, searchAt).Trim().Trim('"')[1..];
+            if (searchAt == 0)
+            {
+                SearchLastPeek(text);
+                return;
+            }
+
+            PeekSearch(words[0], text, 0);
+            return;
+        }
+
+        // A row of "find -t": the window around the line found, marked (looked up without telling: a number that is
+        // not a row is told by the peek below)
+        if (words.Count == 1 && RowOf(words[0]) is { Found: { } searched, At: { } found } row)
+        {
+            PeekFound(row.Path, searched, found.Line);
+            return;
+        }
+
         var place = words.Count is 1 or 2 ? PlaceOf(words[^1]) : null;
         var alone = words.Count == 1 && !File.Exists(PathOf(words[0])) && !System.IO.Directory.Exists(PathOf(words[0]));
         // "peek +120": the file peeked last, from line 120, its window as large
@@ -313,7 +341,10 @@ internal sealed partial class ShellSession
     // The window of a peek shown: the file (words[0]) and its lines or place. "again": the window of the last peek
     // (moved to the last lines when the file got shorter); "auto": shown again by the setting shellautopeek, which
     // leaves the last list, $file and $peek as the command before it left them, and tells nothing that goes wrong
-    private void PeekWindow(List<string> words, (PeekPlace Place, int Value)? place, int count, bool again, bool auto)
+    // "mark": a line marked with ">" (a line found), and "open 1" opens the file there; "match": which line found of
+    // how many, told under the lines; "loaded": the text of the file, read already
+    private void PeekWindow(List<string> words, (PeekPlace Place, int Value)? place, int count, bool again, bool auto,
+        int mark = 0, (int Number, int Count)? match = null, string? loaded = null)
     {
         Item item;
         if (auto)
@@ -354,7 +385,7 @@ internal sealed partial class ShellSession
         string text;
         try
         {
-            text = TextFile.Load(item.Path).Text;
+            text = loaded ?? TextFile.Load(item.Path).Text;
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidDataException)
         {
@@ -364,6 +395,8 @@ internal sealed partial class ShellSession
 
         // (counted as change, shift and clip count them: the last line break does not start a line)
         var lines = LinesOfText(text);
+        // (a line no longer there is not marked)
+        if (mark > lines.Count) mark = 0;
         // The top, the middle, the bottom, or a part of the file ("50%": from halfway)
         if (place is { Place: not PeekPlace.Step } at)
         {
@@ -392,7 +425,11 @@ internal sealed partial class ShellSession
         // shellautopeek; also when it shows no lines, so the next one goes on from it)
         _lastPeek = (path, first, asked, StampOf(item.Path), text.GetHashCode());
         // (from a line: "open 1" opens the file there)
-        if (!auto) LastList = new List<Item> { first > 1 ? item with { At = (first, 1) } : item };
+        if (!auto)
+        {
+            var opened = mark > 0 ? mark : first;
+            LastList = new List<Item> { opened > 1 ? item with { At = (opened, 1) } : item };
+        }
         last = Math.Min(last, lines.Count);
         if (first > last)
         {
@@ -401,11 +438,23 @@ internal sealed partial class ShellSession
         }
 
         var width = last.ToString().Length;
-        for (var i = first; i <= last; i++) Line(i.ToString().PadLeft(width + 2) + "  " + lines[i - 1]);
+        // (the line found marked with ">" in the margin)
+        for (var i = first; i <= last; i++)
+        {
+            var number = i.ToString().PadLeft(width + 2);
+            Line((i == mark ? ">" + number[1..] : number) + "  " + lines[i - 1]);
+        }
         // $peek: the lines shown, as they are now (to put them in another file: insert plan.md bottom $peek)
         if (!auto) ShellRegisters.Peek = string.Join("\n", lines.GetRange(first - 1, last - first + 1));
         // (where the window is: also at the end, when it was put or moved there)
-        if (last < lines.Count || place != null || moved) Line(Lang.F("(lines {0}-{1} of {2})", first, last, lines.Count));
+        if (match is { } told)
+        {
+            Line(Lang.F("(match {0} of {1}, lines {2}-{3} of {4})", told.Number, told.Count, first, last, lines.Count));
+        }
+        else if (last < lines.Count || place != null || moved)
+        {
+            Line(Lang.F("(lines {0}-{1} of {2})", first, last, lines.Count));
+        }
     }
 
     // Where a window of peek is put: a step from the last window, the top, the middle, the bottom, or a part of the
@@ -437,6 +486,151 @@ internal sealed partial class ShellSession
                int.TryParse(word[..^1], NumberStyles.None, CultureInfo.InvariantCulture, out var percent) && percent <= 100
             ? (PeekPlace.Percent, percent)
             : null;
+    }
+
+    // The file searched last by peek, the text and the line found ("/" and "?" go on from it, in the file peeked last)
+    private (string Path, string Text, int Line)? _lastSearch;
+
+    // "peek /storm", "/storm" alone: a search in the file peeked last
+    private void SearchLastPeek(string text)
+    {
+        if (_lastPeek is not { } peeked)
+        {
+            Error(Lang.T("No file peeked yet: peek a file first (peek plot.md)"));
+            return;
+        }
+
+        PeekSearch(peeked.Path, text, 0);
+    }
+
+    // A row of the last list that a word is (a number), or null: nothing told
+    private Item? RowOf(string word) =>
+        word.Length > 0 && word.All(char.IsAsciiDigit) && !File.Exists(PathOf(word)) &&
+        !System.IO.Directory.Exists(PathOf(word)) && int.TryParse(word, out var row) && row >= 1 &&
+        row <= LastList.Count && LastList[row - 1].Path.Length > 0
+            ? LastList[row - 1]
+            : null;
+
+    // A line found by find -t: the window around it, marked. When the file changed since, the line with the text
+    // nearest to it is marked; when none has it, the window is at the line, with no mark
+    private void PeekFound(string path, string searched, int line)
+    {
+        string text;
+        try
+        {
+            text = TextFile.Load(path).Text;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidDataException)
+        {
+            Error(Lang.F("{0} cannot be read: {1}", path, e.Message));
+            return;
+        }
+
+        var lines = LinesOfText(text);
+        var pattern = FileSearch.WildcardText(searched);
+        var found = Enumerable.Range(1, lines.Count).Where(i => FileSearch.Matches(pattern, lines[i - 1])).ToList();
+        var target = found.Count == 0 ? 0 : found.MinBy(i => Math.Abs(i - line));
+        PeekAtLine(path, target > 0 ? target : line, target > 0, null, text);
+    }
+
+    // The window of a peek around a line (two lines of it above; the line at the top of a window of 1 or 2 lines),
+    // as large as the last window of the file (20 lines for another), the line marked
+    private void PeekAtLine(string path, int line, bool mark, (int Number, int Count)? match, string text)
+    {
+        var size = _lastPeek is { } before && FileOperations.SamePath(before.Path, path) ? before.Count : PeekLines;
+        var first = size < 3 ? line : Math.Max(1, line - 2);
+        PeekWindow(new List<string>
+        {
+            path, "+" + first.ToString(CultureInfo.InvariantCulture), size.ToString(CultureInfo.InvariantCulture)
+        }, null, 1, true, false, mark ? line : 0, match, text);
+    }
+
+    // "peek notes.md /storm": the window at the first line with the text in it (letter case alike; "*" and "?" as
+    // find -t takes them: "storm*night"), two lines of it above, the line marked. "direction" 1 ("/"): the next line
+    // with it after the one found last, -1 ("?"): the one before; at the end the search goes round, and it is told
+    private void PeekSearch(string fileWord, string text, int direction)
+    {
+        if (text.Trim().Length == 0)
+        {
+            Error(Lang.T("Give a text: peek notes.md /storm"));
+            return;
+        }
+
+        if (Existing(fileWord) is not { } item) return;
+        if (item.IsDirectory)
+        {
+            Error(Lang.F("Not a file: {0}", item.Path));
+            return;
+        }
+
+        string content;
+        try
+        {
+            content = TextFile.Load(item.Path).Text;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidDataException)
+        {
+            Error(Lang.F("{0} cannot be read: {1}", item.Path, e.Message));
+            return;
+        }
+
+        var lines = LinesOfText(content);
+        var pattern = FileSearch.WildcardText(text);
+        var found = new List<int>();
+        for (var i = 0; i < lines.Count; i++)
+        {
+            if (FileSearch.Matches(pattern, lines[i])) found.Add(i + 1);
+        }
+
+        var path = Path.GetFullPath(item.Path);
+        if (found.Count == 0)
+        {
+            Error(Lang.F("No line with {0} in {1}", text, Path.GetFileName(path)));
+            return;
+        }
+
+        // From the line found last (in this file, the same text), or from the top
+        var from = direction != 0 && _lastSearch is { } last && last.Text == text && FileOperations.SamePath(last.Path, path)
+            ? last.Line
+            : 0;
+        int target;
+        if (direction > 0)
+        {
+            target = found.FirstOrDefault(line => line > from);
+            if (target == 0)
+            {
+                target = found[0];
+                Line(Lang.T("(from the top again)"));
+            }
+        }
+        else if (direction < 0)
+        {
+            target = found.LastOrDefault(line => line < from);
+            if (target == 0)
+            {
+                target = found[^1];
+                Line(Lang.T("(from the end again)"));
+            }
+        }
+        else
+        {
+            target = found[0];
+        }
+
+        _lastSearch = (path, text, target);
+        PeekAtLine(path, target, true, (found.IndexOf(target) + 1, found.Count), content);
+    }
+
+    // "/" and "?" alone: the next line with the text searched last, or the one before, in the file peeked last
+    private void SearchAgain(int direction)
+    {
+        if (_lastSearch is not { } searched || _lastPeek is not { } peeked)
+        {
+            Error(Lang.T("Nothing searched yet: peek notes.md /storm"));
+            return;
+        }
+
+        PeekSearch(peeked.Path, searched.Text, direction);
     }
 
     // The last peek of this shell: the file, its first line and how many lines (for "peek +" and "."), and when the
@@ -485,7 +679,8 @@ internal sealed partial class ShellSession
     // of the same length within the time the file system tells apart)
     private void AutoPeek(string command)
     {
-        if (!Shell.AutoPeek || _lastPeek is not { } previous || command is "peek" or "." or "+" or "++" or "-" or "--")
+        if (!Shell.AutoPeek || _lastPeek is not { } previous ||
+            command is "peek" or "." or "+" or "++" or "-" or "--" or "/" or "?" || command.StartsWith('/'))
         {
             return;
         }
@@ -603,7 +798,7 @@ internal sealed partial class ShellSession
                         (result.IsDirectory ? "/" : string.Empty);
             if (!full && result.Line < 0) shown += FavoriteMark(result.Path);
             return result.Line >= 0
-                ? (new Item(result.Path, result.IsDirectory, (result.Line + 1, 1)),
+                ? (new Item(result.Path, result.IsDirectory, (result.Line + 1, 1), text),
                     shown + ":" + (result.Line + 1) + "  " + result.LineText.Trim())
                 : (new Item(result.Path, result.IsDirectory), shown);
         }).ToList();

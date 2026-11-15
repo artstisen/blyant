@@ -224,7 +224,7 @@ public class CommandTests
     {
         // ("+", "++", "-", "--" and "." are not names of letters: not found in the code by Compared)
         AssertSame(CommandContext.Shell, Compared(Method("Shell/ShellCommands.cs", "RunCommand")), "+", "++", "-", "--",
-            ".");
+            ".", "/", "?");
     }
 
     [Fact]

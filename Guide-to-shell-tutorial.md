@@ -116,7 +116,7 @@ blyant ~/novel> find *.md -t attic
   2  chapters/01-attic.md:4  Anna climbed to the attic.
 ```
 
-What is found is a list like any other: `peek 2` shows it, and `open 2` opens it at the line found.
+What is found is a list like any other: `peek 2` shows the lines around the line found (marked with `>`), and `open 2` opens it there. In one file, `peek plot.md /storm` goes to the first line with "storm", and `/` to the next.
 
 ## Editing a file
 `open` edits a file in the editor of the full screen, with all its keys and commands:

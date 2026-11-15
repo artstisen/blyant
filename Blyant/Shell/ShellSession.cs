@@ -16,7 +16,8 @@ internal sealed partial class ShellSession
     /// <summary>
     /// A row of a list shown: a file or a directory (or a place that is neither, as a page of Blyant: no path)
     /// </summary>
-    internal sealed record Item(string Path, bool IsDirectory, (int Line, int Column)? At = null);
+    // (Found: the text a line of it was found by, with find -t: "peek 3" shows that line, marked)
+    internal sealed record Item(string Path, bool IsDirectory, (int Line, int Column)? At = null, string? Found = null);
 
     /// <summary>
     /// The shell runs in a terminal: a prompt is shown, questions are asked, and files can be opened in the editor.
@@ -46,7 +47,8 @@ internal sealed partial class ShellSession
         get => _lastList;
         private set
         {
-            _lastList = value;
+            // (a line found is a row of find -t only: a command that works on the file makes it a file again)
+            _lastList = value.Select(item => item.Found == null ? item : item with { Found = null }).ToList();
             _listShown = true;
             // One file: one a command worked on (peek, insert, new ...): $file
             if (value is [{ IsDirectory: false } one]) _file = Path.GetFullPath(one.Path);

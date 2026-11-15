@@ -28,6 +28,9 @@ internal sealed partial class ShellSession
         ("peek +line", Lang.T("The file peeked last, from that line (peek +120)")),
         ("+ n, - n, ++ n, -- n", Lang.T("Move the window n steps (+ 20)")),
         ("peek (or .)", Lang.T("Show the last peek again, as the file is now")),
+        ("peek [file|n] /text", Lang.T("The window at the first line with a text in it")),
+        ("/, ?", Lang.T("The next line with it (/), or the one before (?)")),
+        ("/text", Lang.T("Search the file peeked last (as peek /text)")),
         ("find [-l] [name] [-t text]", Lang.T("Find files here and below, by name (*.md) and by text")),
         ("new name", Lang.T("Make a new, empty file here (.md if no extension)")),
         ("mkdir name", Lang.T("Make a new directory here")),
@@ -387,6 +390,16 @@ internal sealed partial class ShellSession
 
                 break;
             }
+            // "/" and "?" alone: the next line with the text peek searched last, or the one before
+            case "/":
+            case "?":
+                if (argument.Trim().Length > 0) Error(Lang.F("{0} takes nothing after it: peek notes.md /storm, then {0}", name));
+                else SearchAgain(name == "/" ? 1 : -1);
+                break;
+            // "/storm" (a word starting with "/"): a search in the file peeked last, as "peek /storm"
+            case not null when name.Length > 1 && name[0] == '/':
+                SearchLastPeek((name + " " + argument).Trim()[1..]);
+                break;
             // "." alone: the last peek again ("peek" alone), as the file is now
             case ".":
                 if (argument.Trim().Length > 0) Error(Lang.T(". takes nothing after it: . alone shows the last peek again"));
@@ -576,13 +589,7 @@ internal sealed partial class ShellSession
     internal string CompletionFile(string typed)
     {
         var word = ShellRegisters.Expand(typed, int.MaxValue).Trim().Trim('"');
-        if (word.Length > 0 && word.All(char.IsAsciiDigit) && !File.Exists(PathOf(word)) &&
-            int.TryParse(word, out var row) && row >= 1 && row <= LastList.Count && LastList[row - 1].Path.Length > 0)
-        {
-            return LastList[row - 1].Path;
-        }
-
-        return PathOf(word);
+        return RowOf(word)?.Path ?? PathOf(word);
     }
 
     // A path typed, as a full path: "~" is the home directory, and a path that is not full is taken from the
@@ -972,7 +979,8 @@ internal sealed partial class ShellSession
                 "q" or "quit" => "exit",
                 "del" => "delete",
                 "cls" => "clear",
-                "+" or "++" or "-" or "--" or "." or "$peek" => "peek",
+                "+" or "++" or "-" or "--" or "." or "/" or "?" or "$peek" => "peek",
+                _ when name.Length > 1 && name[0] == '/' => "peek",
                 "$clip" => "clip",
                 _ when name.StartsWith('!') => "again",
                 _ => name
@@ -981,7 +989,7 @@ internal sealed partial class ShellSession
             // ("trim!", "shift!": with the command)
             // (the steps "+ n" ... with peek)
             var found = rows.Where(r => r.Command.Split(' ')[0].TrimEnd('!') == full.TrimEnd('!') ||
-                                        (full == "peek" && r.Command.StartsWith('+'))).ToList();
+                                        (full == "peek" && r.Command[0] is '+' or '/')).ToList();
             if (found.Count == 0)
             {
                 Error(Lang.F("Unknown command: {0} (help lists the commands)", name));

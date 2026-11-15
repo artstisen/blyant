@@ -4089,4 +4089,349 @@ public class ShellTests : IDisposable
         Assert.Contains("  1  insert t.md bottom b\n", output);
         Assert.Contains("insert t.md bottom c", output.Split(Lang.T("Undone (redo does them again):"))[1]);
     }
+
+    // ---- peek /text, / and ?; peek of a row of find -t
+
+    private void StormFile() =>
+        File.WriteAllText(In("work", "s.md"), string.Concat(Enumerable.Range(1, 40).Select(i =>
+            i is 10 or 25 ? "line " + i + " the Storm came\n" : i == 33 ? "line 33 storm at night\n" : "line " + i + "\n")));
+
+    [Fact]
+    public void PeekSearch_TheWindowAtTheFirstLineWithTheText_MarkedAndCounted()
+    {
+        StormFile();
+        var (output, errors, _, session) = Run("peek s.md 1-5\npeek s.md /storm\n");
+        Assert.Equal(string.Empty, errors);
+        // Two lines above it, as large as the last window (5 lines), letter case alike
+        Assert.Contains("   8  line 8\n   9  line 9\n> 10  line 10 the Storm came\n  11  line 11\n  12  line 12\n", output);
+        Assert.Contains(Lang.F("(match {0} of {1}, lines {2}-{3} of {4})", 1, 3, 8, 12, 40), output);
+        Assert.Equal((10, 1), session.LastList.Single().At);
+    }
+
+    [Fact]
+    public void PeekSearch_SlashAndQuestionMark_GoOn_AndGoRound()
+    {
+        StormFile();
+        var (output, errors, _, _) = Run("peek s.md /storm\n/\n/\n/\n?\n");
+        Assert.Equal(string.Empty, errors);
+        var marked = output.Split('\n').Where(line => line.StartsWith('>')).ToList();
+        Assert.Equal(new[] { "> 10", "> 25", "> 33", "> 10", "> 33" }, marked.Select(line => line[..4]));
+        Assert.Contains(Lang.T("(from the top again)"), output);
+        Assert.Contains(Lang.T("(from the end again)"), output);
+    }
+
+    [Fact]
+    public void PeekSearch_InTheFilePeekedLast_AWholeText_AndAPattern()
+    {
+        StormFile();
+        var (output, errors, _, _) = Run("peek s.md\npeek /storm at night\npeek s.md /storm*night\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal(2, output.Split('\n').Count(line => line.StartsWith("> 33")));
+    }
+
+    [Fact]
+    public void PeekSearch_NothingFound_OrNothingSearched_IsTold()
+    {
+        StormFile();
+        var (_, errors, _, _) = Run("/\npeek /storm\npeek s.md /nothing\n?\n/ x\npeek s.md /\n");
+        Assert.Contains(Lang.T("Nothing searched yet: peek notes.md /storm"), errors);
+        Assert.Contains(Lang.T("No file peeked yet: peek a file first (peek plot.md)"), errors);
+        Assert.Contains(Lang.F("No line with {0} in {1}", "nothing", "s.md"), errors);
+        Assert.Contains(Lang.F("{0} takes nothing after it: peek notes.md /storm, then {0}", "/"), errors);
+        Assert.Contains(Lang.T("Give a text: peek notes.md /storm"), errors);
+    }
+
+    [Fact]
+    public void Peek_ARowOfFindByText_ShowsTheLineFound_Marked()
+    {
+        StormFile();
+        var (output, errors, _, session) = Run("find -t night\npeek 1\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains("> 33  line 33 storm at night\n", output);
+        Assert.Contains("  31  line 31\n", output);
+        // The file at that line is the last list: open 1 opens it there; peek 1 again is the file as peeked
+        Assert.Equal((33, 1), session.LastList.Single().At);
+        Assert.Null(session.LastList.Single().Found);
+    }
+
+    [UnixFact]
+    public void OnLinuxAndMacOS_PeekOfAFullPath_IsNotASearch()
+    {
+        StormFile();
+        var (output, errors, _, _) = Run("peek " + In("work", "s.md") + " 1\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains("  1  line 1\n", output);
+    }
+
+    // ---- Review of the heading search, undo and the peek search
+
+    // A file of a size, of lines "line n"
+    private void LinesFile(string name, long atLeast)
+    {
+        var text = new System.Text.StringBuilder();
+        for (var i = 1; text.Length < atLeast; i++) text.Append("line ").Append(i).Append('\n');
+        File.WriteAllText(In("work", name), text.ToString());
+    }
+
+    [Fact]
+    public void Undo_ACommandWithAFileTooLarge_IsNoStep_AndEndsRedo()
+    {
+        LinesFile("big.md", ShellSession.UndoMaxSize + 1000);
+        File.WriteAllText(In("work", "small.md"), "x\n");
+        File.WriteAllText(In("work", "t.md"), "a\n");
+        var (output, errors, _, _) = Run("insert t.md bottom b\nundo\nlines big.md 1 > small.md bottom cut\nundo\nredo\n");
+        Assert.Contains(Lang.F("(this cannot be undone: {0} is larger than 2 MB)", "big.md"), output);
+        // Nothing to undo: the lines stay in small.md (they are not in big.md any more)
+        Assert.Contains(Lang.T("Nothing to undo: the changes made here cannot be undone"), output);
+        Assert.Equal("x\nline 1\n", Text("small.md"));
+        // The undone insert can no longer be done again
+        Assert.Contains(Lang.T("Nothing to redo"), output);
+        Assert.Equal("a\n", Text("t.md"));
+        Assert.Equal(string.Empty, errors);
+    }
+
+    [Fact]
+    public void Undo_AChangeThatChangesNothing_IsNoStep_AndTheLastUndoIsToldSo()
+    {
+        File.WriteAllText(In("work", "t.md"), "a\nb\n");
+        var (output, _, _, _) = Run("change t.md +1 a\nchanges\ninsert t.md top z\nundo\nundo\n");
+        Assert.Contains(Lang.T("No changes to undo: no file has been changed in this shell"), output);
+        Assert.Contains(Lang.T("Nothing more to undo (redo does it again)"), output);
+    }
+
+    [Fact]
+    public void Redo_AFileChangedSinceItWasUndone_IsNotWritten_AndAFileGoneIsTold()
+    {
+        File.WriteAllText(In("work", "t.md"), "a\n");
+        var output = new StringWriter();
+        var errors = new StringWriter();
+        var session = new ShellSession(new StringReader(string.Empty), output, errors, In("work"), false);
+        session.Execute("insert t.md bottom b");
+        session.Execute("undo");
+        File.WriteAllText(In("work", "t.md"), "edited\n");
+        session.Execute("redo");
+        Assert.Contains(Lang.F("{0} has changed since it was undone: {1} is not done again", In("work", "t.md"),
+            "insert t.md bottom b"), errors.ToString());
+        Assert.Equal("edited\n", Text("t.md"));
+        session.Execute("insert t.md bottom c");
+        File.Delete(In("work", "t.md"));
+        session.Execute("undo");
+        Assert.Contains(Lang.F("{0} is no longer there: {1} is not undone", In("work", "t.md"), "insert t.md bottom c"),
+            errors.ToString());
+        Assert.False(File.Exists(In("work", "t.md")));
+    }
+
+    [Fact]
+    public void Undo_TheCommandsThatChangeText_AllOfThem()
+    {
+        // (each command changes the file: shift, lines start, lines replace, trim, change that deletes, format)
+        File.WriteAllText(In("work", "t.md"), "a\n## Done\nb \nc\n");
+        File.WriteAllText(In("work", "p.html"), "<div>\n<p>x</p>\n</div>\n");
+        var (output, _, _, _) = Run("shift t.md 1 Done\nlines t.md 3 start -\nlines t.md 4 replace c C\ntrim t.md\n" +
+                                    "change t.md 1-2\nformat p.html\nchanges\nundo 6\n", yes: true);
+        Assert.Contains("  6  shift t.md 1 Done\n", output);
+        Assert.Equal(6, output.Split('\n').Count(line => line.StartsWith(Lang.F("Undone: {0}", string.Empty))));
+        Assert.Equal("a\n## Done\nb \nc\n", Text("t.md"));
+        Assert.Equal("<div>\n<p>x</p>\n</div>\n", Text("p.html"));
+    }
+
+    [Fact]
+    public void Undo_TheWrongWords_AreTold()
+    {
+        var (_, errors, _, _) = Run("redo x\nchanges x\nundo 0\n");
+        Assert.Contains(Lang.T("Give how many: redo, redo 2"), errors);
+        Assert.Contains(Lang.T("changes takes nothing after it"), errors);
+        Assert.Contains(Lang.T("Give how many: undo, undo 3 (changes lists them)"), errors);
+    }
+
+    [Fact]
+    public void Undo_TheSettingMadeSmaller_LetsTheOldestGoAtOnce()
+    {
+        File.WriteAllText(In("work", "t.md"), "a\n");
+        var output = new StringWriter();
+        var session = new ShellSession(new StringReader(string.Empty), output, new StringWriter(), In("work"), false);
+        try
+        {
+            session.Execute("insert t.md bottom b");
+            session.Execute("insert t.md bottom c");
+            session.Execute("insert t.md bottom d");
+            Shell.UndoSteps = 1;
+            session.Execute("changes");
+            Assert.Contains("  1  insert t.md bottom d", output.ToString());
+            Assert.DoesNotContain("insert t.md bottom c", output.ToString());
+        }
+        finally
+        {
+            Shell.UndoSteps = Shell.DefaultUndoSteps;
+        }
+    }
+
+    [Fact]
+    public void Undo_AllTheStepsKeepAtMost32MB()
+    {
+        LinesFile("big.md", ShellSession.UndoMaxSize - 200_000);
+        var commands = string.Concat(Enumerable.Range(1, 10).Select(i => "insert big.md top x" + i + "\n"));
+        var (output, _, _, _) = Run(commands + "changes\n");
+        var rows = output.Split('\n').Count(line => line.Contains("  insert big.md top x"));
+        // Each step keeps the file twice, about 3.6 MB: 8 of them stay under 32 MB, the newest first
+        Assert.InRange(rows, 1, 9);
+        Assert.Contains("insert big.md top x10", output.Split(Lang.T("Undone (redo does them again):"))[0]);
+    }
+
+    [WindowsFact]
+    public void Undo_AFileThatCannotBeWritten_PutsBackTheOtherFile_AndTheStepStays_Windows()
+    {
+        File.WriteAllText(In("work", "a.md"), "one\ntwo\n");
+        File.WriteAllText(In("work", "b.md"), "x\n");
+        var output = new StringWriter();
+        var errors = new StringWriter();
+        var session = new ShellSession(new StringReader(string.Empty), output, errors, In("work"), false);
+        session.Execute("lines a.md 1 > b.md bottom cut");
+        File.SetAttributes(In("work", "a.md"), FileAttributes.ReadOnly);
+        try
+        {
+            session.Execute("undo");
+            Assert.NotEmpty(errors.ToString());
+            // b.md was put back first, then put back as the step left it: both as after the command
+            Assert.Equal("x\none\n", Text("b.md"));
+            Assert.Equal("two\n", Text("a.md"));
+        }
+        finally
+        {
+            File.SetAttributes(In("work", "a.md"), FileAttributes.Normal);
+        }
+
+        session.Execute("undo");
+        Assert.Equal("one\ntwo\n", Text("a.md"));
+        Assert.Equal("x\n", Text("b.md"));
+    }
+
+    [Fact]
+    public void AutoPeek_AfterUndo_ShowsTheWindowAgain()
+    {
+        try
+        {
+            Shell.AutoPeek = true;
+            File.WriteAllText(In("work", "t.md"), "a\nb\n");
+            var (output, _, _, _) = Run("peek t.md\ninsert t.md top z\nundo\n");
+            Assert.Equal(2, output.Split('\n').Count(line => line == Lang.F("(peek again: {0})", "t.md")));
+            // (the window of 3 lines at the end of the shorter file, where it was moved)
+            Assert.EndsWith("  1  a\n  2  b\n" + Lang.F("(lines {0}-{1} of {2})", 1, 2, 2) + "\n", output);
+        }
+        finally
+        {
+            Shell.AutoPeek = false;
+        }
+    }
+
+    [Fact]
+    public void PeekSearch_AnotherFile_IsSearchedFromItsTop()
+    {
+        File.WriteAllText(In("work", "a.md"), string.Concat(Enumerable.Range(1, 30).Select(i => i == 25 ? "storm\n" : "x\n")));
+        File.WriteAllText(In("work", "b.md"), "storm here\nx\nx\n");
+        var (output, _, _, _) = Run("peek a.md /storm\npeek b.md\n/\n");
+        Assert.Contains("> 1  storm here", output);
+        Assert.DoesNotContain(Lang.T("(from the top again)"), output);
+    }
+
+    [Fact]
+    public void PeekSearch_TheEdges_ASmallWindow_TheTop_ALargeWindow_AndTheWords()
+    {
+        StormFile();
+        // A window of 1 line: the line found
+        var (output, _, _, _) = Run("peek s.md +5 1\n/\npeek s.md /storm\n");
+        Assert.Contains("> 10  line 10 the Storm came\n" + Lang.F("(match {0} of {1}, lines {2}-{3} of {4})", 1, 3, 10, 10, 40),
+            output);
+        // At the top: from line 1; a window larger than the file: the whole file
+        File.WriteAllText(In("work", "top.md"), "storm\nx\n");
+        (output, _, _, _) = Run("peek top.md /storm\n");
+        Assert.Contains("> 1  storm\n  2  x\n" + Lang.F("(match {0} of {1}, lines {2}-{3} of {4})", 1, 1, 1, 2, 2), output);
+        // A text that starts with "/", "?" as one character, an empty file, a directory
+        File.WriteAllText(In("work", "slash.md"), "a/b\nstarm\n");
+        File.WriteAllText(In("work", "empty.md"), string.Empty);
+        Directory.CreateDirectory(In("work", "dir"));
+        var errors = string.Empty;
+        (output, errors, _, _) = Run("peek slash.md //b\npeek slash.md /st?rm\npeek empty.md /x\npeek dir /x\n");
+        Assert.Contains("> 1  a/b", output);
+        Assert.Contains("> 2  starm", output);
+        Assert.Contains(Lang.F("No line with {0} in {1}", "x", "empty.md"), errors);
+        Assert.Contains(Lang.F("Not a file: {0}", In("work", "dir")), errors);
+    }
+
+    [Fact]
+    public void PeekSearch_SlashTextAlone_SearchesTheFilePeekedLast_AndIsLoggedAsSlash()
+    {
+        StormFile();
+        var (output, errors, _, _) = Run("peek s.md\n/night\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains("> 33  line 33 storm at night", output);
+        Assert.Equal("/", EventLog.CommandName("/night"));
+        Assert.Equal("/", EventLog.CommandName("/"));
+        Assert.Equal("?", EventLog.CommandName("?"));
+        Assert.Contains("/text", Run("help /\n").Output);
+    }
+
+    [Fact]
+    public void Peek_AMistypedPathStartingWithSlash_IsNotFound_NotASearch()
+    {
+        StormFile();
+        var (_, errors, _, _) = Run("peek s.md\npeek /nowhere/notes.md\n");
+        Assert.Contains("Not found:", errors);
+        Assert.DoesNotContain(Lang.F("No line with {0} in {1}", "nowhere/notes.md", "s.md"), errors);
+    }
+
+    [Fact]
+    public void Peek_AFindRow_TheFileChangedOrGone_AndAfterACommandOnIt()
+    {
+        StormFile();
+        var (_, _, _, session) = Run("find -t night\n");
+        // The line moved down 2: the line with the text nearest to it is marked
+        File.WriteAllText(In("work", "s.md"), "new\nnew\n" + File.ReadAllText(In("work", "s.md")));
+        var output = new StringWriter();
+        var errors = new StringWriter();
+        var shell = new ShellSession(new StringReader(string.Empty), output, errors, In("work"), false);
+        shell.Execute("find -t night");
+        File.WriteAllText(In("work", "s.md"), "new\n" + File.ReadAllText(In("work", "s.md")));
+        shell.Execute("peek 1");
+        Assert.Contains("> 36  line 33 storm at night", output.ToString());
+        // A command on the row: a file again (peek shows its top)
+        shell.Execute("find -t night");
+        shell.Execute("trim 1");
+        shell.Execute("peek 1");
+        Assert.DoesNotContain("> 1 ", output.ToString().Split("trim")[^1]);
+        // Gone
+        shell.Execute("find -t night");
+        File.Delete(In("work", "s.md"));
+        shell.Execute("peek 1");
+        Assert.NotEmpty(errors.ToString());
+    }
+
+    [Fact]
+    public void Shift_AHeadingEndingInPlus_ATypstHeading_AndAStartWithAQuestionMark()
+    {
+        foreach (var (file, text, place, expected) in new[]
+                 {
+                     ("c.md", "item\n## C++\n## C\n", "C++", "## C++\nitem\n## C\n"),
+                     ("w.md", "item\n## Why? Because\n", "\"Why?\"", "## Why? Because\nitem\n"),
+                     ("t.typ", "item\n= Done herunder\n= Other\n", "Done", "= Done herunder\nitem\n= Other\n"),
+                     ("u.typ", "item\n= Done herunder\nx\n= Other\n", "\"*herunder+\"", "= Done herunder\nx\nitem\n= Other\n"),
+                     ("v.md", "item\n## Done herunder\nx\n## Other\n", "Done+", "## Done herunder\nx\nitem\n## Other\n"),
+                 })
+        {
+            File.WriteAllText(In("work", file), text);
+            var (_, errors, _, _) = Run("shift " + file + " 1 " + place + "\n");
+            Assert.Equal(string.Empty, errors);
+            Assert.Equal(expected, Text(file));
+        }
+    }
+
+    [Fact]
+    public void CompletionFile_ARegisterWithAPathWithBlanks_AndANumberThatIsNoRow()
+    {
+        Directory.CreateDirectory(In("work", "my notes"));
+        File.WriteAllText(In("work", "my notes", "n.md"), "x\n");
+        var session = Run("reg n = " + In("work", "my notes", "n.md") + "\n").Session;
+        Assert.Equal(In("work", "my notes", "n.md"), session.CompletionFile("$n"));
+        Assert.Equal(In("work", "7"), session.CompletionFile("7"));
+    }
 }

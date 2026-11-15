@@ -130,7 +130,9 @@ internal static class EventLog
         // "+", "++", "-", "--" alone or with a number of steps ("+ 20"): the steps of peek in the shell (not lines);
         // "." the last peek again
         var first = command.Split(' ', 2)[0];
-        if (first is "+" or "++" or "-" or "--" or "." && Commands.IsKnown(first)) return first;
+        // ("/storm": a search in the shell, never the text searched)
+        if (first.Length > 1 && first[0] == '/' && Commands.IsKnown("/")) return "/";
+        if (first is "+" or "++" or "-" or "--" or "." or "/" or "?" && Commands.IsKnown(first)) return first;
         // The lines a command works on come first ("%", "2,5", "'<,'>")
         var start = 0;
         while (start < command.Length && !char.IsLetter(command[start])) start++;

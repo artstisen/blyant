@@ -21,14 +21,14 @@ internal sealed class ShellCompletion
     private bool _active;
     private List<string> _words = new(); // The words after the command, as typed
 
-    /// <param name="directory">The directory the shell is in</param>
-    /// <param name="fullPath">A path typed as a full path (as the shell takes it: from its directory, "~")</param>
     /// <summary>
     /// The file a word typed stands for, as the commands take it (a row of the last list, $file ...): for the headings
     /// of "shift" and "lines". Without it, the word is a path
     /// </summary>
     internal Func<string, string>? FileOf { get; init; }
 
+    /// <param name="directory">The directory the shell is in</param>
+    /// <param name="fullPath">A path typed as a full path (as the shell takes it: from its directory, "~")</param>
     internal ShellCompletion(Func<string> directory, Func<string, string> fullPath)
     {
         _directory = directory;

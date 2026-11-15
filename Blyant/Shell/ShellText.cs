@@ -147,7 +147,7 @@ internal sealed partial class ShellSession
         var delete = text.Length == 0;
         if (delete)
         {
-            // The lines that would go, and the question (no undo)
+            // The lines that would go, and the question (they are back only with undo, while Blyant runs)
             var width = last.ToString().Length;
             for (var i = first; i <= last; i++) Line(i.ToString().PadLeft(width + 2) + "  " + lines[i - 1]);
             var question = first == last
@@ -222,7 +222,7 @@ internal sealed partial class ShellSession
             return null;
         }
 
-        // (saved, every line would get the one kind most lines have, and there is no undo)
+        // (saved, every line would get the one kind most lines have: the file is not as it was, also after undo)
         if (file.MixedLineEndings)
         {
             Error(Lang.F("{0} has more than one kind of line endings: open it in the editor, which tells it",
