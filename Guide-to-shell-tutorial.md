@@ -64,6 +64,7 @@ blyant ~/novel>
 - `up` goes to the directory above, `home` (or `cd` alone) to your home directory, and `pwd` shows where you are
 - `ls -a` lists hidden files too (as `.gitignore`), which `ls` leaves out, as the file browser does
 - `Tab` completes what you type: `cd ch` and `Tab` gives `cd chapters/`, and `Tab` again goes on into it. `Up` and `Down` bring back the commands you typed before
+- `again` lists the commands you typed, numbered, and `again 3` (or `!3`) runs number 3 again; `!!` runs the last one. `!3` and `Tab` puts it on the line, to change it first
 - `open ` and `Tab` with nothing typed gives the file you opened last in this directory, and `Tab` again the one before it: quick to go between the files you are working on. `open chapters/*storm*` and `Tab` gives `open chapters/02-storm.md`: `*` stands for any characters, and `?` for one
 - `cd` on a file goes to the directory it is in, and makes the file the last list, so `open 1` opens it:
 

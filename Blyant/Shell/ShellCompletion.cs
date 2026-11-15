@@ -67,6 +67,17 @@ internal sealed class ShellCompletion
     // Find the words that fit the word at the end of the line (false: none)
     private bool Start(string text)
     {
+        // "!3", "!!", "again 3": the command it runs, put on the line to be changed before Enter
+        if (ShellSession.AgainNumber(text) is { } number)
+        {
+            var kept = CommandHistory.Of(CommandContext.Shell);
+            if (number < 1 || number > kept.Count) return false;
+            _before = string.Empty;
+            _typed = text;
+            _matches = new List<string> { kept[number - 1] };
+            return true;
+        }
+
         var (before, word) = LastWord(text);
         _before = before;
         _typed = word;

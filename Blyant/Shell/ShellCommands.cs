@@ -73,6 +73,7 @@ internal sealed partial class ShellSession
         ("screen", Lang.T("Go on on the full screen, in the file browser here")),
         ("version", Lang.T("Show the version of Blyant")),
         ("about [license]", Lang.T("Show the version and the commands used the most, or the license")),
+        ("again [n]", Lang.T("List the commands typed, or run one again (!n, !!)")),
         ("help [command]", Lang.T("List the commands, or tell what one does")),
         ("exit", Lang.T("Leave Blyant (also quit, q)"))
     };
@@ -85,6 +86,30 @@ internal sealed partial class ShellSession
     {
         line = line.Trim();
         if (line.Length == 0) return true;
+        // "!!", "!3", "again 3": a command typed before, written out and run again (as typed then)
+        if (AgainNumber(line) is { } number)
+        {
+            var kept = CommandHistory.Of(CommandContext.Shell);
+            if (number < 1 || number > kept.Count)
+            {
+                NewPage();
+                Error(kept.Count == 0
+                    ? Lang.T("No commands typed yet (they are kept while Blyant runs)")
+                    : Lang.F("No command {0}: {1} are kept (again lists them)", line, kept.Count));
+                return true;
+            }
+
+            line = kept[number - 1];
+            NewPage();
+            Line(line);
+        }
+
+        // Typed at the prompt: kept for Up and Down and for "again" (the command an "again" ran, not the "again")
+        if (_typed && !CommandLine.Name(line).Equals("again", StringComparison.OrdinalIgnoreCase))
+        {
+            CommandHistory.Add(CommandContext.Shell, line);
+        }
+
         // By name only (never what follows it: a path, a name, the value of a register)
         EventLog.AddCommand(DialogText.LogShell, line);
         // (the file of the registers edited by hand since: read again, so $name and reg use what is in it)
@@ -123,6 +148,40 @@ internal sealed partial class ShellSession
         // (the line of the command typed is the first row of its page)
         NewPage();
         return RunCommand(name, argument);
+    }
+
+    /// <summary>
+    /// The number of the command a line runs again: "!!" (1, the last), "!3", "again 3"; 0 for "again" with a word
+    /// that is not a number (told as no command). Null for any other line ("again" alone lists them)
+    /// </summary>
+    internal static int? AgainNumber(string line)
+    {
+        line = line.Trim();
+        if (line == "!!") return 1;
+        if (line.Length > 1 && line[0] == '!' && line[1..].All(char.IsAsciiDigit))
+        {
+            return int.TryParse(line[1..], out var bang) ? bang : 0;
+        }
+
+        if (!CommandLine.Name(line).Equals("again", StringComparison.OrdinalIgnoreCase)) return null;
+        var argument = CommandLine.Argument(line);
+        if (argument.Length == 0) return null;
+        return argument.All(char.IsAsciiDigit) && int.TryParse(argument, out var number) ? number : 0;
+    }
+
+    // "again": the commands typed at the prompt, the newest first, numbered for "again 3" and "!3" (not a last list:
+    // "open 3" is still a row of the list shown before)
+    private void ListAgain()
+    {
+        var kept = CommandHistory.Of(CommandContext.Shell);
+        if (kept.Count == 0)
+        {
+            Line(Lang.T("No commands typed yet (they are kept while Blyant runs)"));
+            return;
+        }
+
+        var width = kept.Count.ToString().Length;
+        for (var i = 0; i < kept.Count; i++) Line((i + 1).ToString().PadLeft(width + 2) + "  " + kept[i]);
     }
 
     // Why $clip cannot be used in a command line (null: it can)
@@ -287,6 +346,9 @@ internal sealed partial class ShellSession
             case "cls":
                 // (in a terminal: else there is no screen, and nothing is done)
                 ClearScreen?.Invoke();
+                break;
+            case "again":
+                ListAgain();
                 break;
             case "help":
             case "h":

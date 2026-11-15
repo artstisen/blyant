@@ -2774,4 +2774,99 @@ public class ShellTests : IDisposable
         Assert.NotEmpty(errors);
         Assert.DoesNotContain(FileHistory.Items, entry => entry.Path == In("work", "plot.md"));
     }
+
+    // ---- again, !3, !!: the commands typed, listed and run again
+
+    [Theory]
+    [InlineData("!!", 1)]
+    [InlineData("!3", 3)]
+    [InlineData("again 12", 12)]
+    [InlineData("AGAIN 2", 2)]
+    [InlineData("again x", 0)]
+    [InlineData("again", null)]
+    [InlineData("!x", null)]
+    [InlineData("ls", null)]
+    public void AgainNumber_TellsTheCommandALineRunsAgain(string line, int? expected)
+    {
+        Assert.Equal(expected, ShellSession.AgainNumber(line));
+    }
+
+    [Fact]
+    public void Again_ListsTheCommands_AndRunsOneByItsNumber()
+    {
+        CommandHistory.Clear();
+        CommandHistory.Add(CommandContext.Shell, "peek plot.md");
+        CommandHistory.Add(CommandContext.Shell, "pwd");
+        try
+        {
+            var (output, errors, _, session) = Run("ls\nagain\nagain 2\n!!\nagain x\n!9\n");
+            Assert.Contains("  1  pwd\n  2  peek plot.md\n", output);
+            // Written out, then run: peek shows plot.md, and pwd the directory
+            Assert.Contains("peek plot.md\n  1  Plot\n", output);
+            Assert.Contains("pwd\n" + In("work") + "\n", output);
+            Assert.Equal(2, errors.TrimEnd('\n').Split('\n').Length);
+            Assert.Contains(Lang.F("No command {0}: {1} are kept (again lists them)", "!9", 2), errors);
+            // From a file nothing is kept: the numbers stay
+            Assert.Equal(new[] { "pwd", "peek plot.md" }, CommandHistory.Of(CommandContext.Shell));
+            // "again" does not take the place of the last list (peek did)
+            Assert.Equal(In("work", "plot.md"), session.LastList.Single().Path);
+        }
+        finally
+        {
+            CommandHistory.Clear();
+        }
+    }
+
+    [Fact]
+    public void Again_TheCommandsTypedAtThePrompt_AreKept_AndAgainItselfIsNot()
+    {
+        CommandHistory.Clear();
+        try
+        {
+            var (output, _, _, _) = Run("pwd\npeek plot.md\n!2\nagain\n", terminal: true);
+            Assert.Equal(new[] { "pwd", "peek plot.md" }, CommandHistory.Of(CommandContext.Shell));
+            Assert.Contains("  1  pwd\n  2  peek plot.md\n", output);
+        }
+        finally
+        {
+            CommandHistory.Clear();
+        }
+    }
+
+    [Fact]
+    public void Again_TheShellKeepsFiftyCommands()
+    {
+        CommandHistory.Clear();
+        try
+        {
+            for (var i = 0; i < 60; i++) CommandHistory.Add(CommandContext.Shell, "cmd " + i);
+            for (var i = 0; i < 30; i++) CommandHistory.Add(CommandContext.Files, "cmd " + i);
+            Assert.Equal(CommandHistory.ShellMaxCount, CommandHistory.Of(CommandContext.Shell).Count);
+            Assert.Equal("cmd 59", CommandHistory.Of(CommandContext.Shell)[0]);
+            Assert.Equal(CommandHistory.MaxCount, CommandHistory.Of(CommandContext.Files).Count);
+        }
+        finally
+        {
+            CommandHistory.Clear();
+        }
+    }
+
+    [Fact]
+    public void Tab_AfterABangOrAgain_PutsTheCommandOnTheLine()
+    {
+        CommandHistory.Clear();
+        CommandHistory.Add(CommandContext.Shell, "lines todo.md 4 start Note:");
+        CommandHistory.Add(CommandContext.Shell, "pwd");
+        try
+        {
+            Assert.Equal("lines todo.md 4 start Note:", Tab(Completion(), "!2"));
+            Assert.Equal("pwd", Tab(Completion(), "!!"));
+            Assert.Equal("pwd", Tab(Completion(), "again 1"));
+            Assert.Equal("!7", Tab(Completion(), "!7"));
+        }
+        finally
+        {
+            CommandHistory.Clear();
+        }
+    }
 }

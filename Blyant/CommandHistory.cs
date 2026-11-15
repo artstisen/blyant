@@ -13,6 +13,11 @@ internal static class CommandHistory
     /// </summary>
     internal const int MaxCount = 20;
 
+    /// <summary>
+    /// The most commands kept for the shell, where "again" lists them and runs one again by its number
+    /// </summary>
+    internal const int ShellMaxCount = 50;
+
     private static readonly Dictionary<CommandContext, List<string>> Places = new();
 
     /// <summary>
@@ -25,7 +30,8 @@ internal static class CommandHistory
         if (!Places.TryGetValue(context, out var commands)) Places[context] = commands = new List<string>();
         commands.Remove(command);
         commands.Insert(0, command);
-        if (commands.Count > MaxCount) commands.RemoveRange(MaxCount, commands.Count - MaxCount);
+        var most = context == CommandContext.Shell ? ShellMaxCount : MaxCount;
+        if (commands.Count > most) commands.RemoveRange(most, commands.Count - most);
     }
 
     /// <summary>

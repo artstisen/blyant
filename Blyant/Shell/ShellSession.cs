@@ -145,8 +145,6 @@ internal sealed partial class ShellSession
             if (_lineReader != null && Shell.Completion)
             {
                 line = _lineReader.Read(Prompt());
-                // (kept for Up and Down)
-                if (!string.IsNullOrWhiteSpace(line)) CommandHistory.Add(CommandContext.Shell, line);
             }
             else
             {
@@ -176,12 +174,17 @@ internal sealed partial class ShellSession
                 break;
             }
 
+            // (typed at the prompt: kept for Up and Down, and "again"; read from a file or a pipe: not)
+            _typed = Terminal;
             if (!RunLine(line)) break;
         }
 
         EventLog.Add(DialogText.LogShell + ": left"); // English: the log
         return !Terminal && Failures > 0 ? 1 : 0;
     }
+
+    // The line run now was typed at the prompt (in a terminal): it is kept for Up and Down, and for "again"
+    private bool _typed;
 
     // How long Ctrl+C is waited for after the reading of a line ended without one (ms)
     private const int CancelKeyWait = 100;
