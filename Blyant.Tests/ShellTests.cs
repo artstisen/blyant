@@ -2002,7 +2002,8 @@ public class ShellTests : IDisposable
         File.WriteAllText(In("work", "lines.md"), new string('x', 60) + "\ntwo\n");
         var (output, _, _, _) = Run("clip text lines.md\nreg\n");
         Assert.Contains("  $clip " + Lang.F("{0}  ({1} lines, the last clip)", new string('x', 40) + "...", 2), output);
-        Assert.DoesNotContain(Lang.T("No registers (reg name text keeps one)"), output);
+        // ($clip is under the names set by Blyant, after the registers)
+        Assert.Contains(Lang.T("Set by Blyant:"), output);
         File.WriteAllText(In("work", "lines.md"), "one.\ntwo\n");
         (output, _, _, _) = Run("clip text lines.md\nreg\nhelp $clip\n");
         Assert.Contains("  $clip " + Lang.F("{0}  ({1} lines, the last clip)", "one. ...", 2), output);
@@ -2868,5 +2869,73 @@ public class ShellTests : IDisposable
         {
             CommandHistory.Clear();
         }
+    }
+
+    // ---- The names set by Blyant: $pwd, $file, $date, $time, $now
+
+    [Fact]
+    public void Pwd_IsTheDirectoryOfTheShell_InPathsAndInText()
+    {
+        var (_, errors, _, _) = Run("cd Draft\ninsert ../plot.md bottom Here: $pwd\ncopy ../Ending.md $pwd\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("Plot\nHere: " + In("work", "Draft") + "\n", Text("plot.md"));
+        Assert.True(File.Exists(In("work", "Draft", "Ending.md")));
+    }
+
+    [Fact]
+    public void File_IsTheFileTheLastCommandWorkedOn_NotARowOfAList()
+    {
+        var (_, errors, _, _) = Run("insert plot.md bottom $file\n");
+        Assert.Contains(Lang.T("No file yet: open, peek, insert, new ... give $file"),
+            errors);
+        Assert.Equal("Plot\n", Text("plot.md"));
+        (_, errors, _, _) = Run("peek plot.md\ninsert $file bottom one\nls\nfav\ninsert $file bottom two\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("Plot\none\ntwo\n", Text("plot.md"));
+    }
+
+    [Fact]
+    public void DateTimeAndNow_AreTheTimeNow_InIso()
+    {
+        ShellRegisters.Clock = () => new DateTime(2026, 11, 15, 14, 5, 33);
+        try
+        {
+            var (_, errors, _, _) = Run("insert plot.md bottom $date | $time | $now | $$date\n");
+            Assert.Equal(string.Empty, errors);
+            Assert.Equal("Plot\n2026-11-15 | 14:05 | 2026-11-15 14:05:33 | $date\n", Text("plot.md"));
+        }
+        finally
+        {
+            ShellRegisters.Clock = () => DateTime.Now;
+        }
+    }
+
+    [Fact]
+    public void TheNamesSetByBlyant_AreNoRegisters_AndRegListsThem()
+    {
+        var file = Path.Combine(_data, ShellRegisters.FileName);
+        File.WriteAllText(file, "date\tfrom the file\nnote\tBuy ink\n");
+        ShellRegisters.Load();
+        var (output, errors, _, _) = Run("reg pwd x\nreg -d date\nreg -d now\nreg\nreg pwd\n");
+        Assert.Equal(3, errors.TrimEnd('\n').Split('\n').Length);
+        Assert.Contains(Lang.F("${0} is set by Blyant: it is not a register to set or take away", "pwd"), errors);
+        Assert.Contains("  $note Buy ink\n", output);
+        Assert.Contains(Lang.T("Set by Blyant:") + "\n", output);
+        Assert.Contains("  $pwd  " + In("work") + "\n", output);
+        Assert.DoesNotContain("  $file ", output);
+        Assert.DoesNotContain("from the file\n" + Lang.T("Set by Blyant:"), output);
+        Assert.EndsWith(In("work") + "\n", output);
+        // (the line of the file is kept as it was, and not used)
+        Assert.Equal("date\tfrom the file\nnote\tBuy ink\n", File.ReadAllText(file));
+    }
+
+    [Fact]
+    public void Tab_AfterADollar_OffersTheNamesSetByBlyant_ThatHaveAValue()
+    {
+        // (a shell: $pwd is its directory)
+        Run("pwd\n");
+        Assert.Equal("cd $pwd", Tab(Completion(), "cd $pw"));
+        Assert.Equal("insert plot.md top $now", Tab(Completion(), "insert plot.md top $no"));
+        Assert.Equal("open $fi", Tab(Completion(), "open $fi"));
     }
 }

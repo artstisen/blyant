@@ -321,6 +321,7 @@ blyant ~/novel/chapters>
 - `reg -d note` takes a register away, and `reg -d all` all of them
 - A path with a blank in it is kept in quotes: `reg docs "~/my docs"`
 - `Tab` completes the names of the registers after a `$`
+- Some names are set by Blyant: `$pwd` is the directory you are in, `$file` the file the last command worked on, and `$date`, `$time` and `$now` the time now. `insert todo.md bottom $date Called the editor` puts in a line with the date, and `peek plot.md` then `insert $file bottom The end` adds to the file you looked at
 - The registers of the shell are its own: the string memory of the editor is not these
 
 ## Clipboard

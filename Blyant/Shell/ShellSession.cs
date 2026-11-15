@@ -46,8 +46,20 @@ internal sealed partial class ShellSession
         {
             _lastList = value;
             _listShown = true;
+            // One file: one a command worked on (peek, insert, new ...): $file
+            if (value is [{ IsDirectory: false } one]) _file = Path.GetFullPath(one.Path);
         }
     }
+
+    // A list shown (ls, fav, find ...): the last list, but $file stays the file worked on last
+    private void ShowRows(List<Item> rows)
+    {
+        _lastList = rows;
+        _listShown = true;
+    }
+
+    // $file: the file the last command worked on (null: none yet)
+    private string? _file;
 
     private List<Item> _lastList = new();
     private bool _listShown; // A list has been shown (its rows can be empty)
@@ -111,6 +123,9 @@ internal sealed partial class ShellSession
         _output = output;
         _errors = errors;
         Directory = Path.GetFullPath(directory);
+        // $pwd and $file: of this shell
+        ShellRegisters.DirectorySource = () => Directory;
+        ShellRegisters.FileSource = () => _file;
         Terminal = terminal;
         _yes = yes;
     }
@@ -320,7 +335,7 @@ internal sealed partial class ShellSession
     /// </summary>
     private void List(IReadOnlyList<(Item Item, string Text)> rows, string empty)
     {
-        LastList = rows.Select(row => row.Item).ToList();
+        ShowRows(rows.Select(row => row.Item).ToList());
         if (rows.Count == 0)
         {
             Line(empty);

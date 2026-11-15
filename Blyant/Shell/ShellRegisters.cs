@@ -43,6 +43,45 @@ internal static partial class ShellRegisters
     /// </summary>
     internal static bool IsClip(string name) => name.Equals(ClipName, StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// The names set by Blyant, not registers: $clip (the text clip copied last), $pwd (the directory the shell is
+    /// in), $file (the file the last command worked on), $date, $time and $now. They cannot be set or taken away, and
+    /// a line of one of them in the file is kept as a line that is not a register
+    /// </summary>
+    internal static readonly string[] Reserved = { ClipName, "pwd", "file", "date", "time", "now" };
+
+    /// <summary>
+    /// True for a name set by Blyant (letter case alike)
+    /// </summary>
+    internal static bool IsReserved(string name) => Reserved.Contains(name, StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// The directory the shell is in, for $pwd (set by the shell that runs)
+    /// </summary>
+    internal static Func<string>? DirectorySource { get; set; }
+
+    /// <summary>
+    /// The file the last command worked on, for $file (null: none yet; set by the shell that runs)
+    /// </summary>
+    internal static Func<string?>? FileSource { get; set; }
+
+    /// <summary>
+    /// The time now, for $date, $time and $now (another for tests)
+    /// </summary>
+    internal static Func<DateTime> Clock { get; set; } = () => DateTime.Now;
+
+    // The value of a name set by Blyant (null: none now: nothing copied, no file yet)
+    private static string? ReservedValue(string name) => name.ToLowerInvariant() switch
+    {
+        ClipName => Clip,
+        "pwd" => DirectorySource?.Invoke(),
+        "file" => FileSource?.Invoke(),
+        // (as :ts in the editor: ISO, the same in every language)
+        "date" => Clock().ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
+        "time" => Clock().ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture),
+        _ => Clock().ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture)
+    };
+
     [GeneratedRegex("^[A-Za-z][A-Za-z0-9_]*$")]
     private static partial Regex NamePattern();
 
@@ -116,8 +155,8 @@ internal static partial class ShellRegisters
         {
             if (line.Trim().Length == 0) continue;
             var tab = line.IndexOf('\t');
-            // (a line "clip" is kept as it is: $clip is the text clip copied)
-            if (tab <= 0 || !IsName(line[..tab]) || IsClip(line[..tab]))
+            // (a line "clip", "pwd" ... is kept as it is: those are set by Blyant)
+            if (tab <= 0 || !IsName(line[..tab]) || IsReserved(line[..tab]))
             {
                 Kept.Add(line);
                 continue;
@@ -157,10 +196,10 @@ internal static partial class ShellRegisters
     }
 
     /// <summary>
-    /// The value of a register ("clip": the text clip copied last), or null
+    /// The value of a register, or of a name set by Blyant ("clip", "pwd" ...), or null
     /// </summary>
     internal static string? Get(string name) =>
-        IsClip(name) ? Clip : Values.TryGetValue(name.ToLowerInvariant(), out var value) ? value : null;
+        IsReserved(name) ? ReservedValue(name) : Values.TryGetValue(name.ToLowerInvariant(), out var value) ? value : null;
 
     /// <summary>
     /// Give a register a value (one line: a line break or a tab becomes a blank)

@@ -317,7 +317,19 @@ insert todo.md bottom $note
 - `$name` is put in only for a register that is there: anything else stays as typed, so `insert prices.md bottom Ink costs $5` keeps its `$5`. `$$` is a `$`
 - A path with a blank in it is put in quotes where a path is taken (`copy plot.md $docs` with _my docs_), and the text of `insert`, `change`, `reg` and `set` gets the value as it is
 - `$clip` is the text `clip` copied last (see [Clipboard](#clipboard)): it is put in as a register is, but it is not one to set, and it is not kept in the file
-- `Tab` completes the names of the registers after a `$` (and `$clip`, once something is copied), and after `reg`
+- Some names are set by Blyant, and put in as a register is:
+
+  | Name | Value |
+  |---|---|
+  | `$pwd` | the directory you are in (`copy 3 $pwd`) |
+  | `$file` | the file the last command worked on: opened, peeked, put lines in, made with `new` ... (`peek plot.md`, then `insert $file bottom Done`). A list shown (`ls`, `fav`) does not change it |
+  | `$date` | today, as `2026-11-15` |
+  | `$time` | the time now, as `14:05` |
+  | `$now` | the date and the time, as `2026-11-15 14:05:33` (as `:ts` in the editor) |
+  | `$clip` | the text `clip` copied last |
+
+  `insert log.md bottom $date Finished chapter 3` puts in a line with the date. The date and the time are written the same in every language. These names are not registers: `reg pwd x` and `reg -d date` are refused, and a line of one of them in `registers.txt` is kept there as a line that is not a register, and not used. `reg` lists them after the registers, under _Set by Blyant_, with their values now, and `reg pwd` shows one. `$file` before a command has worked on a file is told (no file yet), and `$$date` is the text `$date`
+- `Tab` completes the names of the registers after a `$` (and the names set by Blyant that have a value: `$clip` once something is copied, `$file` once a file is worked on), and after `reg`
 - The registers are kept in the data directory (`registers.txt`), so they are there the next time. The file can be edited in another program: a line is the name, a tab, and the value. A file changed since the shell read it is read again before the next command, and `reg` tells of lines that are not registers (no tab, or a name a register cannot have): they are kept in the file, at its end, so you can put them right. They are the shell's own: the registers of the editor are not these. `reset` does not take them away (they are not settings), and the log has their names, never their values
 
 ## Clipboard

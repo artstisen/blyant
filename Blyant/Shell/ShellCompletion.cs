@@ -87,7 +87,8 @@ internal sealed class ShellCompletion
             // (the file edited by hand since the last command: its names)
             ShellRegisters.Refresh();
             // ($clip when clip has copied a text)
-            var names = ShellRegisters.All.Keys.Concat(ShellRegisters.Clip != null ? [ShellRegisters.ClipName] : []);
+            // (and those set by Blyant that have a value now: $clip when something is copied, $file ...)
+            var names = ShellRegisters.All.Keys.Concat(ShellRegisters.Reserved.Where(name => ShellRegisters.Get(name) != null));
             _matches = Fitting(names.Order(StringComparer.Ordinal).Select(name => "$" + name), word);
             return _matches.Count > 0;
         }

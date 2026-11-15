@@ -129,6 +129,14 @@ internal sealed partial class ShellSession
             return true;
         }
 
+        // $file before a command has worked on a file
+        if (!help && _file == null && ShellRegisters.Mentions(line, "file"))
+        {
+            NewPage();
+            Error(Lang.T("No file yet: open, peek, insert, new ... give $file"));
+            return true;
+        }
+
         // Put in after the line is split into the command and what follows it, so a value is not trimmed: the blank
         // lines and blanks at the end of $clip stay. ("clip $note" alone copies the value as it is: not put in first,
         // where it would be taken as a path)
@@ -558,7 +566,7 @@ internal sealed partial class ShellSession
         }
 
         // With folders: the rows with the folder names between them (the numbers are those of the rows)
-        LastList = rows.Select(row => row.Item1).ToList();
+        ShowRows(rows.Select(row => row.Item1).ToList());
         var width = rows.Count.ToString().Length;
         for (var i = 0; i <= rows.Count; i++)
         {
@@ -812,6 +820,8 @@ internal sealed partial class ShellSession
         }
 
         var at = line is { } l ? (l, 1) : item.At;
+        // (the file opened: $file; a directory went to it above)
+        _file = Path.GetFullPath(result.Path);
         if (EditOnScreen(result.Path, at)) Line(Lang.F("Back from the editor: {0}", result.Path));
         else Line(Lang.F("Back from the editor: {0} (the place jumped to is not shown here)", result.Path));
     }

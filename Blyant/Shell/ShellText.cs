@@ -388,13 +388,18 @@ internal sealed partial class ShellSession
         var words = Words(argument);
         if (words.Count == 0)
         {
-            var clip = ShellRegisters.Clip != null;
-            if (ShellRegisters.All.Count == 0 && !clip) Line(Lang.T("No registers (reg name text keeps one)"));
-            var width = ShellRegisters.All.Keys.Append(clip ? ShellRegisters.ClipName : string.Empty)
-                .Max(key => key.Length) + 1;
+            if (ShellRegisters.All.Count == 0) Line(Lang.T("No registers (reg name text keeps one)"));
+            var width = ShellRegisters.All.Keys.Concat(ShellRegisters.Reserved).Max(key => key.Length) + 1;
             foreach (var (key, value) in ShellRegisters.All) Line("  $" + key.PadRight(width) + value);
-            ClipRow(width);
             SkippedRegisters();
+            // The names set by Blyant, with their values now ($clip and $file when they have one)
+            Line(Lang.T("Set by Blyant:"));
+            ClipRow(width);
+            foreach (var reserved in ShellRegisters.Reserved.Skip(1))
+            {
+                if (ShellRegisters.Get(reserved) is { } value) Line("  $" + reserved.PadRight(width) + Printable(value));
+            }
+
             return;
         }
 
@@ -406,9 +411,9 @@ internal sealed partial class ShellSession
                 return;
             }
 
-            if (ShellRegisters.IsClip(words[1]))
+            if (ShellRegisters.IsReserved(words[1]))
             {
-                Error(Lang.T("$clip is the text clip copied last: it is not a register to set or take away"));
+                Error(ReservedRefused(words[1]));
                 return;
             }
 
@@ -435,9 +440,9 @@ internal sealed partial class ShellSession
         }
 
         var text = AfterWords(argument, 1);
-        if (text.Length > 0 && ShellRegisters.IsClip(name))
+        if (text.Length > 0 && ShellRegisters.IsReserved(name))
         {
-            Error(Lang.T("$clip is the text clip copied last: it is not a register to set or take away"));
+            Error(ReservedRefused(name));
             return;
         }
 
@@ -479,6 +484,11 @@ internal sealed partial class ShellSession
         EventLog.Add(DialogText.LogShell + ": register set: " + name.ToLowerInvariant());
         SaveRegisters("  $" + name.ToLowerInvariant() + " = " + ShellRegisters.Get(name));
     }
+
+    // Why a name set by Blyant is not set or taken away by "reg"
+    private static string ReservedRefused(string name) => ShellRegisters.IsClip(name)
+        ? Lang.T("$clip is the text clip copied last: it is not a register to set or take away")
+        : Lang.F("${0} is set by Blyant: it is not a register to set or take away", name.ToLowerInvariant());
 
     // $clip in the list of the registers: the first line of the text clip copied last (cut, so the row fits the
     // screen), and how many lines it has
