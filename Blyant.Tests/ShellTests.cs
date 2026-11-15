@@ -3610,4 +3610,44 @@ public class ShellTests : IDisposable
         Assert.Equal("hist filter", Tab(Completion(), "hist fi"));
         Assert.Equal("hist -l filter", Tab(Completion(), "hist -l fi"));
     }
+
+    [Fact]
+    public void DotAndPeekAlone_ShowTheLastPeekAgain_AsTheFileIsNow()
+    {
+        File.WriteAllText(In("work", "a.md"), "one\ntwo\nthree\nfour\nfive\n");
+        var (output, errors, _, session) = Run(".\npeek a.md +2 2\nchange a.md +2 TWO\n.\ninsert a.md top zero\npeek\n. 3\n");
+        Assert.Contains(Lang.T("No file peeked yet: peek a file first (peek plot.md)"), errors);
+        Assert.Contains(Lang.T(". takes nothing after it: . alone shows the last peek again"), errors);
+        // The same window (lines 2-3), read again: after the change, and after a line put in above it
+        Assert.Contains("  2  TWO\n  3  three\n(lines 2-3 of 5)", output);
+        Assert.Contains("  2  one\n  3  TWO\n(lines 2-3 of 6)", output);
+        Assert.Equal("one\nTWO", ShellRegisters.Peek);
+        Assert.Equal((2, 1), session.LastList.Single().At);
+        Assert.Contains("peek (or .)", Run("help .\n").Output);
+    }
+
+    [Fact]
+    public void AutoPeek_ShowsTheWindowAgain_AfterACommandChangedItsFile()
+    {
+        try
+        {
+            Shell.AutoPeek = true;
+            File.WriteAllText(In("work", "a.md"), "one\ntwo\nthree\n");
+            File.WriteAllText(In("work", "b.md"), "x\n");
+            var (output, errors, _, _) = Run("peek a.md 1-2\ninsert b.md bottom y\nchange a.md +1 ONE\nls\n");
+            Assert.Equal(string.Empty, errors);
+            var again = Lang.F("(peek again: {0})", "a.md");
+            // Once: after the change of a.md, not after b.md was changed, nor after ls
+            Assert.Single(output.Split('\n'), line => line == again);
+            Assert.Contains(again + "\n  1  ONE\n  2  two\n", output);
+            // Off: not shown again
+            Shell.AutoPeek = false;
+            (output, _, _, _) = Run("peek a.md 1-2\nchange a.md +1 one\n");
+            Assert.DoesNotContain(again, output);
+        }
+        finally
+        {
+            Shell.AutoPeek = false;
+        }
+    }
 }

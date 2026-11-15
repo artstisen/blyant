@@ -22,6 +22,7 @@ internal sealed partial class ShellSession
         ("peek [file|n] +|++|-|--", Shell.PeekStep == 1
             ? Lang.F("Show 1 line further down (++: {0}), or up (-, --)", Shell.PeekBigStep)
             : Lang.F("Show {0} lines further down (++: {1}), or up (-, --)", Shell.PeekStep, Shell.PeekBigStep)),
+        ("peek (or .)", Lang.T("Show the last peek again, as the file is now")),
         ("find [-l] [name] [-t text]", Lang.T("Find files here and below, by name (*.md) and by text")),
         ("new name", Lang.T("Make a new, empty file here (.md if no extension)")),
         ("mkdir name", Lang.T("Make a new directory here")),
@@ -179,7 +180,10 @@ internal sealed partial class ShellSession
 
         // (the line of the command typed is the first row of its page)
         NewPage();
-        return RunCommand(name, argument);
+        var going = RunCommand(name, argument);
+        // (setting shellautopeek: the window of the last peek again, when the command changed its file)
+        if (going) AutoPeek(name);
+        return going;
     }
 
     /// <summary>
@@ -323,6 +327,11 @@ internal sealed partial class ShellSession
                 // (alone: "+ 7" is not taken as "peek +")
                 if (argument.Trim().Length > 0) Error(Lang.F("{0} takes nothing after it: {0} alone, or peek file {0}", name));
                 else Peek(name);
+                break;
+            // "." alone: the last peek again ("peek" alone), as the file is now
+            case ".":
+                if (argument.Trim().Length > 0) Error(Lang.T(". takes nothing after it: . alone shows the last peek again"));
+                else PeekAgain();
                 break;
             case "find":
                 Find(argument);
@@ -879,7 +888,7 @@ internal sealed partial class ShellSession
                 "q" or "quit" => "exit",
                 "del" => "delete",
                 "cls" => "clear",
-                "+" or "++" or "-" or "--" or "$peek" => "peek",
+                "+" or "++" or "-" or "--" or "." or "$peek" => "peek",
                 "$clip" => "clip",
                 _ when name.StartsWith('!') => "again",
                 _ => name

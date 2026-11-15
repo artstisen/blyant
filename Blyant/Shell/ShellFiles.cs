@@ -265,6 +265,13 @@ internal sealed partial class ShellSession
     private void Peek(string argument)
     {
         var words = Words(argument);
+        // "peek" alone (and "."): the window of the last peek again, as the file is now
+        if (words.Count == 0)
+        {
+            PeekAgain();
+            return;
+        }
+
         // "peek 3 +", "peek +": the window of the last peek moved down 1 line ("++": 5; "-" and "--": up; settings
         // shellpeekstep and shellpeekbigstep). Without
         // a file: the file peeked last
@@ -340,8 +347,9 @@ internal sealed partial class ShellSession
             return;
         }
 
-        // (kept for "peek +": the file, and the window asked for; $peek below: the lines shown)
-        _lastPeek = (Path.GetFullPath(item.Path), first, asked);
+        // (kept for "peek +" and ".": the file, the window asked for, and the file as it was then, for the setting
+        // shellautopeek; $peek below: the lines shown)
+        _lastPeek = (Path.GetFullPath(item.Path), first, asked, StampOf(item.Path));
 
         var width = last.ToString().Length;
         for (var i = first; i <= last; i++) Line(i.ToString().PadLeft(width + 2) + "  " + lines[i - 1]);
@@ -351,8 +359,52 @@ internal sealed partial class ShellSession
         if (last < lines.Count || step != 0) Line(Lang.F("(lines {0}-{1} of {2})", first, last, lines.Count));
     }
 
-    // The last peek of this shell: the file, its first line and how many lines (for "peek +")
-    private (string Path, int First, int Count)? _lastPeek;
+    // The last peek of this shell: the file, its first line and how many lines (for "peek +" and "."), and when the
+    // file was last written and how long it was then (for the setting shellautopeek)
+    private (string Path, int First, int Count, (DateTime, long)? Stamp)? _lastPeek;
+
+    // "." and "peek" alone: the window of the last peek shown again, the same lines of the same file, read as it is
+    // now (after a change made to it: insert, change, lines, the editor ...)
+    private void PeekAgain()
+    {
+        if (_lastPeek is not { } previous)
+        {
+            Error(Lang.T("No file peeked yet: peek a file first (peek plot.md)"));
+            return;
+        }
+
+        Peek("\"" + previous.Path + "\" +" + previous.First + " " + previous.Count);
+    }
+
+    // When a file was last written, and how long it is (null: it cannot be read)
+    private static (DateTime, long)? StampOf(string path)
+    {
+        try
+        {
+            var info = new FileInfo(path);
+            return info.Exists ? (info.LastWriteTimeUtc, info.Length) : null;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException or
+                                       NotSupportedException)
+        {
+            return null;
+        }
+    }
+
+    // The setting shellautopeek: after a command that changed the file of the last peek (insert, change, lines,
+    // shift, format, trim, or the editor opened with open), its window is shown again, with its name above it
+    private void AutoPeek(string command)
+    {
+        if (!Shell.AutoPeek || _lastPeek is not { } previous || command is "peek" or "." or "+" or "++" or "-" or "--")
+        {
+            return;
+        }
+
+        var now = StampOf(previous.Path);
+        if (now == null || now == previous.Stamp) return;
+        Line(Lang.F("(peek again: {0})", Path.GetFileName(previous.Path)));
+        PeekAgain();
+    }
 
     // How far "+", "++", "-" and "--" move the window of peek (settings shellpeekstep and shellpeekbigstep; 0:
     // another word)

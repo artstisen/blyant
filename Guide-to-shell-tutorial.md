@@ -88,6 +88,7 @@ blyant ~/novel> peek 3
 
 - `peek plot.md 40` shows the first 40 lines (20 when no number is given), and `peek plot.md 100-120` those lines
 - `peek +` shows the file peeked last 1 line further down, and `peek ++` 5 (`set shellpeekstep 2` and `set shellpeekbigstep 10` change them); `peek -` and `peek --` go back up. Each moves from the last window, so `peek +`, `peek +` goes on down the file. Shorter still: `+`, `++`, `-` and `--` alone on the line, also after an `insert` in between
+- `.` (or `peek` alone) shows the last peek again, as the file is now: a window into the lines you are changing. `set shellautopeek true` shows it by itself after each change of that file
 - What `peek` showed last is `$peek`, to put in another file: `peek plot.md 3-4`, then `insert ideas.md bottom $peek`
 - `peek chapters/02-storm.md +3 2` shows 2 lines from line 3. The file is then the last list at that line, so `open 1` opens it right there:
 

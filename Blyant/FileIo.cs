@@ -547,6 +547,8 @@ internal static class FileIo
         settings += "shellcompletion=" + (Shell.Completion ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // The shell: Tab with nothing typed offers the files opened last first (off: all names in order)
         settings += "shellrecentfirst=" + (Shell.RecentFirst ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        // The window of the last peek shown again after a change of its file
+        settings += "shellautopeek=" + (Shell.AutoPeek ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // The shell: how many lines "peek +" and "peek ++" move the window (and "-", "--" back)
         settings += "shellpeekstep=" + Shell.PeekStep + '\n';
         settings += "shellpeekbigstep=" + Shell.PeekBigStep + '\n';
@@ -767,6 +769,8 @@ internal static class FileIo
         Shell.StartInShell = Tools.TrimToLower(Get("startshell")) == DialogText.BTrue;
         Shell.Completion = Tools.TrimToLower(Get("shellcompletion")) != DialogText.BFalse;
         Shell.RecentFirst = Tools.TrimToLower(Get("shellrecentfirst")) != DialogText.BFalse;
+        // Off unless turned on
+        Shell.AutoPeek = Tools.TrimToLower(Get("shellautopeek")) == DialogText.BTrue;
         Shell.PeekStep = Shell.ParsePeekStep(Get("shellpeekstep"), Shell.DefaultPeekStep);
         Shell.PeekBigStep = Shell.ParsePeekStep(Get("shellpeekbigstep"), Shell.DefaultPeekBigStep);
         Shell.StartSetting = Get("shelldir").Trim();

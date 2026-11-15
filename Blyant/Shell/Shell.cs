@@ -33,6 +33,12 @@ internal static class Shell
     internal static bool RecentFirst { get; set; } = true;
 
     /// <summary>
+    /// After a command that changed the file of the last peek, its window is shown again (setting "shellautopeek",
+    /// off unless turned on). Only in the settings file, or with "set"
+    /// </summary>
+    internal static bool AutoPeek { get; set; }
+
+    /// <summary>
     /// How many lines "peek +" and "peek -" move the window of the last peek (setting "shellpeekstep", 1 to 1000;
     /// only in the settings file, or with "set")
     /// </summary>

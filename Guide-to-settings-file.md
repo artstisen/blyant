@@ -127,6 +127,7 @@ Changed with `set` in the shell, or in the file: they are not on the pages of Co
 | `shellpaging` | **true**, false | A long output comes in pages in a terminal |
 | `shellcompletion` | **true**, false | `Tab` and the keys of the line; off: the line is read as the terminal reads it (for screen readers) |
 | `shellrecentfirst` | **true**, false | `Tab` with nothing typed offers the files opened last first |
+| `shellautopeek` | **false**, true | After a command that changed the file of the last peek, its window is shown again (as `.` shows it) |
 | `shellpeekstep` | **1**, 1 to 1000 | Lines that `+` and `-` move the window of the last peek |
 | `shellpeekbigstep` | **5**, 1 to 1000 | Lines that `++` and `--` move it |
 | `shelldir` | **empty**, a path (`~/notes`), last | The directory the shell starts in: empty, the one Blyant is started in; `last`, the one it was left in |

@@ -84,6 +84,7 @@ To have every output whole (with a screen reader, say), turn the pages off: `set
 | `data` | Go to the [data directory](Guide-to-installation.md#good-to-know) of Blyant: its settings, lists and log. `cd data` is still a directory named _data_ |
 | `open file\|n [+line]` | Edit a file in the editor of the full screen, at a line if one is given (`open plot.md +12`). A directory is gone to |
 | `peek file\|n [lines]` | Show the lines of a text file, numbered: the first 20, `peek plot.md 40` the first 40, `peek plot.md 100-120` those, `peek plot.md +100` 20 lines from line 100, and `peek plot.md +100 30` 30 of them. Only read. After a peek from a line, `open 1` opens the file at that line. See [Peeking into a file](#peeking-into-a-file) |
+| `peek` (or `.`) | Show the last peek again: the same lines of the same file, as it is now (after `insert`, `change`, `lines` or the editor). See [Peeking into a file](#peeking-into-a-file) |
 | `peek [file\|n] +\|++\|-\|--` | Move the window of the last peek of the file: `+` 1 line further down, `++` 5, `-` and `--` up again (the settings `shellpeekstep` and `shellpeekbigstep`: `set shellpeekstep 2`; 1 to 1000, and `reset` puts back 1 and 5), as many lines as before (`peek plot.md +`, then `peek +`: the file peeked last; `+`, `++`, `-` or `--` alone on the line do the same, also after other commands; nothing is taken after them: `+ 7` is told). The lines shown are `$peek`. From the top for a file not peeked before; at the end the last lines are shown |
 | `find [-l] [name] [-t text]` | Find files here and in the directories below, by name and by a text in them (see [Files](#files)); `find -l` gives the full paths |
 | `new name` | Make a new, empty file here (`new ideas` makes `ideas.md`: the kind of new files, when no extension is given). It is put in the latest files at once, as a file opened: `recent` lists it, and `Tab` with nothing typed offers it first |
@@ -220,6 +221,7 @@ peek chapter-3.md +                          the window 1 line further down
 +                                            the same, in the file peeked last
 ++                                           5 lines further down
 -                                            1 line up (-- 5 lines up)
+.                                            the same window again, as the file is now
 ```
 
 Under the lines it tells where they are in the file, unless they are the last lines of it:
@@ -238,8 +240,27 @@ blyant ~/novel> +
 blyant ~/novel> open 1
 ```
 
+As a window into the part of the file you are working on: peek it, change it, and `.` (or `peek` alone) shows the same lines again, as they are now:
+
+```
+blyant ~/novel> peek chapter-3.md 10-12
+  10  The storm came in from the west.
+  11  Anna closed the shutters.
+  12  Then the lights went out.
+(lines 10-12 of 30)
+blyant ~/novel> change chapter-3.md +11 Anna closed the shutters, one by one.
+/home/anna/novel/chapter-3.md: line 11 changed
+blyant ~/novel> .
+  10  The storm came in from the west.
+  11  Anna closed the shutters, one by one.
+  12  Then the lights went out.
+(lines 10-12 of 30)
+```
+
 - A plain number is how many lines to show, from the top (`peek chapter-3.md 40`), as `peek` only shows them. With a `+` it is the line to start at (see [Line numbers](#line-numbers))
 - `+`, `++`, `-` and `--` move the window of the last peek, as many lines as before: 1 or 5 lines (the settings `shellpeekstep` and `shellpeekbigstep`). They stop at the ends: at the top line 1 is shown, and at the end the last lines. Alone on the line they go on in the file peeked last, also after other commands, so you can read, edit and read on. A file not peeked before is shown from the top
+- `.` and `peek` alone show the window of the last peek again: the same file, the same first line and as many lines, read again. It is the window you peeked, whatever the commands after it worked on (`$file` can be another file by then). A line put in above the window moves the lines in it down, as you see. Before any peek, it is told
+- With the setting `shellautopeek` on (`set shellautopeek true`; off from the start), the window is shown again by itself after each command that changed its file: `insert`, `change`, `lines`, `shift`, `format`, `trim`, or the editor opened with `open`. `(peek again: chapter-3.md)` is written above it. A command that changed another file, or nothing, shows nothing more
 - After a peek, `open 1` opens the file at the first line shown, and `$file` is the file. The lines shown are `$peek`: `insert plan.md bottom $peek` puts them in another file (see [Registers](#registers))
 - Control characters of a file are shown as `?`, and a file that is not text (an image, a program) is not shown
 
