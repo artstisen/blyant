@@ -340,13 +340,14 @@ internal sealed partial class ShellSession
     // The last peek of this shell: the file, its first line and how many lines (for "peek +")
     private (string Path, int First, int Count)? _lastPeek;
 
-    // How far "+", "++", "-" and "--" move the window of peek (0: another word)
+    // How far "+", "++", "-" and "--" move the window of peek (settings shellpeekstep and shellpeekbigstep; 0:
+    // another word)
     private static int PeekStep(string word) => word switch
     {
-        "+" => 5,
-        "++" => 10,
-        "-" => -5,
-        "--" => -10,
+        "+" => Shell.PeekStep,
+        "++" => Shell.PeekBigStep,
+        "-" => -Shell.PeekStep,
+        "--" => -Shell.PeekBigStep,
         _ => 0
     };
 

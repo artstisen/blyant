@@ -225,6 +225,8 @@ internal static class Actions
         Shell.Paging = true;
         Shell.Completion = true;
         Shell.RecentFirst = true;
+        Shell.PeekStep = Shell.DefaultPeekStep;
+        Shell.PeekBigStep = Shell.DefaultPeekBigStep;
         Shell.StartInShell = false;
         Shell.StartSetting = string.Empty;
         Shell.LastDirectory = string.Empty;

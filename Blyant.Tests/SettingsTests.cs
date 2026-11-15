@@ -402,7 +402,8 @@ backup=
         FileIo.SaveSettings();
 
         var saved = File.ReadAllText(SettingsFile);
-        Assert.DoesNotContain("kb", saved);
+        // (no setting of the old key mapping: their names started with "kb")
+        Assert.DoesNotContain(saved.Split('\n'), line => line.StartsWith("kb", StringComparison.OrdinalIgnoreCase));
         Assert.DoesNotContain("KEY MAPPING", saved);
         var settings = FileIo.ParseSettings(saved);
         Assert.Equal("100", settings["linewidth"]);
@@ -418,7 +419,7 @@ backup=
         Assert.False(settings.ContainsKey("stayloggedin"));
         Assert.False(settings.ContainsKey("projectsdir"));
         Assert.False(settings.ContainsKey("projectsask"));
-        Assert.Equal(67, settings.Count);
+        Assert.Equal(69, settings.Count);
         Assert.Equal("true", settings["modulejump"]);
         // The modules are on unless turned off
         Assert.Equal("true", settings["moduleprojects"]);
@@ -435,6 +436,9 @@ backup=
         Assert.Equal("true", settings["shellcompletion"]);
         // Tab offers the files opened last first unless that is turned off
         Assert.Equal("true", settings["shellrecentfirst"]);
+        // peek + moves 1 line, and ++ 5, unless set otherwise
+        Assert.Equal("1", settings["shellpeekstep"]);
+        Assert.Equal("5", settings["shellpeekbigstep"]);
         // Blyant starts on the full screen unless the shell is set
         Assert.Equal("false", settings["startshell"]);
         // The shell starts in the directory Blyant is started in, unless another is set

@@ -547,6 +547,9 @@ internal static class FileIo
         settings += "shellcompletion=" + (Shell.Completion ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // The shell: Tab with nothing typed offers the files opened last first (off: all names in order)
         settings += "shellrecentfirst=" + (Shell.RecentFirst ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        // The shell: how many lines "peek +" and "peek ++" move the window (and "-", "--" back)
+        settings += "shellpeekstep=" + Shell.PeekStep + '\n';
+        settings += "shellpeekbigstep=" + Shell.PeekBigStep + '\n';
         // The directory the shell starts in (a path, "last", or empty: the one Blyant is started in), and the one it
         // was left in (for "last")
         settings += "shelldir=" + Shell.StartSetting + '\n';
@@ -761,6 +764,8 @@ internal static class FileIo
         Shell.StartInShell = Tools.TrimToLower(Get("startshell")) == DialogText.BTrue;
         Shell.Completion = Tools.TrimToLower(Get("shellcompletion")) != DialogText.BFalse;
         Shell.RecentFirst = Tools.TrimToLower(Get("shellrecentfirst")) != DialogText.BFalse;
+        Shell.PeekStep = Shell.ParsePeekStep(Get("shellpeekstep"), Shell.DefaultPeekStep);
+        Shell.PeekBigStep = Shell.ParsePeekStep(Get("shellpeekbigstep"), Shell.DefaultPeekBigStep);
         Shell.StartSetting = Get("shelldir").Trim();
         Shell.LastDirectory = Get("shelllastdir").Trim();
         // 4 spaces unless another width of the list is set

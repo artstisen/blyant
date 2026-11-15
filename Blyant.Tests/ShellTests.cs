@@ -2960,6 +2960,9 @@ public class ShellTests : IDisposable
     [Fact]
     public void Peek_PlusAndMinus_MoveTheWindowOfTheLastPeek()
     {
+        // (steps of 5 and 10, set)
+        Shell.PeekStep = 5;
+        Shell.PeekBigStep = 10;
         File.WriteAllText(In("work", "long.md"), string.Concat(Enumerable.Range(1, 60).Select(n => "line " + n + "\n")));
         var (output, errors, _, session) = Run("peek long.md\npeek 1 +\npeek +\npeek ++\npeek -\npeek --\n");
         Assert.Equal(string.Empty, errors);
@@ -2974,6 +2977,8 @@ public class ShellTests : IDisposable
     [Fact]
     public void Peek_Plus_KeepsTheSizeOfTheWindow_AndStopsAtTheEnds()
     {
+        Shell.PeekStep = 5;
+        Shell.PeekBigStep = 10;
         File.WriteAllText(In("work", "long.md"), string.Concat(Enumerable.Range(1, 60).Select(n => "line " + n + "\n")));
         var (output, _, _, _) = Run("peek long.md +40 10\npeek ++\npeek ++\npeek ++\npeek -- \npeek long.md --\n");
         var windows = output.Split('\n').Where(l => l.StartsWith('(')).ToList();
@@ -2988,9 +2993,36 @@ public class ShellTests : IDisposable
     [Fact]
     public void Peek_Plus_WithNoFilePeekedYet_IsTold_AndAnotherFileStartsAtTheTop()
     {
+        Shell.PeekStep = 5;
         File.WriteAllText(In("work", "long.md"), string.Concat(Enumerable.Range(1, 60).Select(n => "line " + n + "\n")));
         var (output, errors, _, _) = Run("peek +\npeek plot.md\npeek long.md +\n");
         Assert.Contains(Lang.T("No file peeked yet: peek a file first (peek plot.md)"), errors);
         Assert.Contains(Lang.F("(lines {0}-{1} of {2})", 6, 25, 60), output);
+    }
+
+    [Fact]
+    public void Peek_Steps_AreOneAndFive_AndCanBeSet_AndReset()
+    {
+        File.WriteAllText(In("work", "long.md"), string.Concat(Enumerable.Range(1, 60).Select(n => "line " + n + "\n")));
+        FileIo.SaveSettings();
+        var (output, errors, _, _) = Run("peek long.md +1 5\npeek +\npeek ++\npeek -\nhelp peek\n");
+        Assert.Equal(string.Empty, errors);
+        var windows = output.Split('\n').Where(l => l.StartsWith('(')).ToList();
+        // 1-5, then 1 down, 5 down, 1 up
+        Assert.Equal(new[] { (1, 5), (2, 6), (7, 11), (6, 10) }.Select(w => Lang.F("(lines {0}-{1} of {2})", w.Item1, w.Item2, 60)),
+            windows);
+        Assert.Contains(Lang.F("Show 1 line further down (++: {0}), or up (-, --)", 5), output);
+
+        (output, errors, _, _) = Run("set shellpeekstep 3\nset shellpeekbigstep 0\npeek long.md +1 5\npeek +\nhelp peek\n");
+        Assert.Contains(Lang.F("(lines {0}-{1} of {2})", 4, 8, 60), output);
+        Assert.Contains(Lang.F("Show {0} lines further down (++: {1}), or up (-, --)", 3, 5), output);
+        Assert.NotEqual(string.Empty, errors);
+        Assert.Equal(3, Shell.PeekStep);
+        Assert.Equal(5, Shell.PeekBigStep);
+        Assert.Equal("3", FileIo.ParseSettings(FileIo.ReadSettingsFile())["shellpeekstep"]);
+
+        Run("reset\n", yes: true);
+        Assert.Equal(1, Shell.PeekStep);
+        Assert.Equal(5, Shell.PeekBigStep);
     }
 }
