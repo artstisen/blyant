@@ -37,7 +37,8 @@ internal sealed class ShellCompletion
         Directory,
         Words,
         PathOrWords,
-        QuotedWords
+        QuotedWords,
+        Names // Words, or those a pattern fits ("chapter-*" to "chapter-1.md"), in quotes with a blank in them
     }
 
     // What "clip" copies
@@ -114,6 +115,8 @@ internal sealed class ShellCompletion
             Kind.PathOrWords => Fitting(choices, word).Concat(PathsFitting(word, false)).ToList(),
             // (a word with a blank in it in quotes: fitting what is typed after a quote)
             Kind.QuotedWords => Fitting(choices, word.TrimStart('"'))
+                .Select(w => w.Any(char.IsWhiteSpace) ? "\"" + w + "\"" : w).ToList(),
+            Kind.Names => NamesFitting(choices, word.TrimStart('"'))
                 .Select(w => w.Any(char.IsWhiteSpace) ? "\"" + w + "\"" : w).ToList(),
             _ => new List<string>()
         };
@@ -193,17 +196,23 @@ internal sealed class ShellCompletion
                     return (Kind.Words, new[]
                         {
                             "add", "remove", "lists", "new", "rename", "delete", "use", "folder", "subfolder", "move",
-                            "undo", "-l"
+                            "undo", "filter", "-l"
                         }
                         .Concat(FileFavorites.ListWords()));
                 }
 
-                if (position == 1 && after[0] is "-l" or "use") return (Kind.Words, FileFavorites.ListWords());
+                if (position == 1 && after[0] == "-l") return (Kind.Words, FileFavorites.ListWords().Prepend("filter"));
+                if (position == 1 && after[0] == "use") return (Kind.Words, FileFavorites.ListWords());
                 if (position == 1 && after[0] == "delete") return (Kind.Words, FileFavorites.ListNames());
                 // (a list, or a folder in brackets)
                 if (position == 1 && after[0] == "rename")
                     return (Kind.QuotedWords, FileFavorites.ListNames().Concat(FavoriteFolderWords()));
-                if (position == 1 && after[0] is "subfolder" or "move") return (Kind.QuotedWords, FavoriteFolderWords());
+                if (position == 1 && after[0] == "subfolder") return (Kind.QuotedWords, FavoriteFolderWords());
+                // (a favorite by its name, a pattern of names, or a folder)
+                if (position == 1 && after[0] == "move") return (Kind.Names, FavoriteFolderWords().Concat(FavoriteNames()));
+                // ("fav add notes.md top": where it goes)
+                if (position == 2 && after[0] == "add")
+                    return (Kind.QuotedWords, new[] { "top", "bottom" }.Concat(FavoriteFolderWords()));
                 if (position == 2 && after[0] == "move")
                 {
                     return (Kind.QuotedWords,
@@ -257,6 +266,25 @@ internal sealed class ShellCompletion
         return Enumerable.Range(0, items.Count).Where(i => items[i].IsFolder).Select(i =>
             "[" + (items[i].Level > 0 ? items[FileFavorites.Parent(i)].Name + "/" : string.Empty) + items[i].Name + "]")
             .ToList();
+    }
+
+    // The names of the favorites of the open list, as "fav" shows them (a directory with "/")
+    private static IEnumerable<string> FavoriteNames()
+    {
+        FileFavorites.Load();
+        return FileFavorites.Items.Where(item => !item.IsFolder).Select(item =>
+            ShellSession.FavoriteName(item) + (System.IO.Directory.Exists(item.Path) ? "/" : string.Empty)).ToList();
+    }
+
+    // The words that start with what is typed, or that a pattern typed fits ("*ch*"), as they are written; a pattern
+    // that fits none is a start of a word, as for files
+    private static List<string> NamesFitting(IEnumerable<string> words, string typed)
+    {
+        var list = words.ToList();
+        if (!IsPattern(typed)) return Fitting(list, typed);
+        var fitting = list.Where(word => System.IO.Enumeration.FileSystemName.MatchesSimpleExpression(typed,
+                word.TrimEnd('/'))).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        return fitting.Count > 0 ? fitting : Fitting(list, typed);
     }
 
     // The names of the headings of a file (for "shift"); none if it cannot be read

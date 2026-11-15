@@ -1,6 +1,7 @@
 # Changes
 
 ## v1.5.3
+- **Favorites in the shell: a place to add at, names to move, and a filter**: `fav add notes.md top` (or `bottom`, the place of a row: `5`, or a folder: `[Drafts]`, last in it) adds a favorite where it should be; without a place it goes at the bottom, as before. `fav move` takes a favorite by its name (`fav move plot.md top`) or a pattern (`fav move chapter-*.md [Drafts]`: all that fit), and `Tab` completes the names of the favorites, also from a pattern (`fav move *ch*`). `fav filter draft` shows the favorites with a text in their name or path (or `fav filter *.typ`), with their folders, numbered as in the whole list, so `open 7` is the same row. See [Folders of favorites](Guide-to-shell.md#folders-of-favorites).
 - **Copied, renamed and moved files in the latest files**: a file copied (`copy notes.md .`), renamed or moved in the shell is put in the latest files at once, as one made with `new`, so a file duplicated and renamed is there to work on: `recent` lists it first, and `Tab` with nothing typed offers it. Before, a file was only followed there when it was in the list already. A directory is not put there. See [Files](Guide-to-shell.md#files).
 
 ## v1.5.2 (2026-11-15)

@@ -124,12 +124,14 @@ To have every output whole (with a screen reader, say), turn the pages off: `set
 | `favorites subfolder [folder] name` | Make a subfolder, first in a folder (`fav subfolder [Writing] Drafts`) |
 | `favorites rename [folder] name` | Give a folder a new name (`fav rename [Drafts] Old drafts`) |
 | `favorites remove [folder]` | Remove a folder with its favorites and subfolders, after asking (the files stay) |
-| `favorites move rows\|[folder] where` | Move favorites or a folder: `top`, `bottom`, `up`, `down`, `out`, to the place of a row (`5`), or into a `[folder]` |
+| `favorites move rows\|name\|[folder] where` | Move favorites or a folder: `top`, `bottom`, `up`, `down`, `out`, to the place of a row (`5`), or into a `[folder]`. A favorite by its row or its name (`fav move plot.md top`), and several by a pattern (`fav move chapter-*.md [Drafts]`) |
+| `favorites filter text` | Show the favorites with a text in their name or path, or whose name fits a pattern (`fav filter draft`, `fav filter *.typ`), numbered as in the whole list. See [Folders of favorites](#folders-of-favorites) |
 | `favorites undo` | Put back what `fav remove` removed last |
 | `history [-l]` (`hist`) | List the files opened by name, the newest first, with when (`-l`: the full paths) |
 | `recent [-l]` | List the latest files (the first nine of the history), by name (`-l`: the full paths) |
 | `hotlist` (`hot`) | List the directory hotlist |
-| `fav add\|remove file\|n` | Add a file or directory to the favorites in use, or take it off them |
+| `fav add file\|n [where]` | Add a file or directory to the favorites in use: last in the list, or where it is told: `top`, `bottom`, the place of a row (`5`) or into a `[folder]` (`fav add notes.md [Drafts]`) |
+| `fav remove file\|n` | Take a file or directory off the favorites in use |
 | `hot add\|remove [dir\|n]` | Add a directory to the hotlist (`hot add` alone: the one you are in), or take it off |
 | `bookmarks [-l]` (`book`) | List the bookmarks of the Jump menu, by name (`-l`: the full paths; a page of Blyant is shown, but opened on the full screen only) |
 | `projects` (`proj`) | List the projects |
@@ -370,20 +372,27 @@ fav move 4 top                       to the top of its folder (or of the list)
 fav move 4 bottom                    to the end
 fav move 4 up                        one step up (down: one step down)
 fav move 4 2                         to the place of row 2, in its folder
+fav move plot.md top                 a favorite by its name
+fav move chapter-*.md [Writing]      all those whose names fit the pattern
 fav move 2 out                       out of its folder, last in the list
 fav move [Sources] top               a folder, with what is in it
 fav move [Sources] [Writing]         a folder into another, as a subfolder
 fav move [Writing/Sources] out       a subfolder out of its folder
 fav remove [Sources]                 a folder with what is in it (asked first)
 fav undo                             what fav remove removed last, put back
+fav add ideas.md [Writing]           a new favorite, last in Writing
+fav add ideas.md top                 a new favorite, at the top
+fav filter chapter                   only the rows with "chapter" in them
 ```
 
-- The rows are given as in [Line numbers](#line-numbers): `3`, `3-5`, `3,7`. `up` and `down` move one row, or one folder, a step at a time, as `V` with `j` and `k` does on the full screen: a favorite moved onto a folder goes into it, and one moved past the first or last favorite of its folder leaves it
+- The rows are given as in [Line numbers](#line-numbers): `3`, `3-5`, `3,7`. `fav move` also takes a favorite by its name, as `fav` shows it (`plot.md`, `chapters/`), or by its path, and all the favorites whose names fit a pattern (`chapter-*.md`), in their order. When two favorites have the name (`README.md` of two projects), their rows are told: give the row. `Tab` after `fav move` completes the names of the favorites, also from a pattern that fits the whole name, as for files (`fav move *ch*` and `Tab`), and the folders. `up` and `down` move one row, or one folder, a step at a time, as `V` with `j` and `k` does on the full screen: a favorite moved onto a folder goes into it, and one moved past the first or last favorite of its folder leaves it
 - A folder with subfolders does not go into another folder, as there are two levels at most, and a subfolder goes into a folder at the top. What cannot be done is told, and nothing is moved
 - After each change the list is shown again with its new rows, and it is the last list: `open 2` opens row 2 of it. A folder name with blanks is written in quotes (`"[My drafts]"`), and `Tab` completes the names of the folders after `[`, and the places after `fav move 3`
 - `fav remove [Sources]` asks first, and tells how many favorites and subfolders go with the folder; the files stay where they are. `fav undo` puts back what `fav remove` (a folder, or a favorite: `fav remove 3`) removed last in this shell, as long as the list is as it left it
+- `fav add` takes a place after the file: `top`, `bottom`, the place of a row (`5`) or a `[folder]` (last in it), as `fav move` does. Without one the favorite is added at the bottom of the list, as before. When the place is not there (no such folder), nothing is added. `Tab` after the file completes `top`, `bottom` and the folders
+- `fav filter draft` shows the favorites with _draft_ in their name or path (letter case alike), and `fav filter *.typ` those whose name fits the pattern, with the folders they are in above them. The rows keep their numbers of the whole list, so `open 7` and `fav move 7 top` are the same row as in `fav`. Nothing is kept: `fav` shows them all again. `fav -l filter draft` gives the full paths
 - They work on the open list of favorites, and each change is saved at once, so the full screen shows the same folders. `fav undo` puts back in the list it removed from: after another list was opened, it tells which one to open first
-- A list of favorites named as one of these words (`folder`, `subfolder`, `move`, `undo` ...) is opened with `fav use folder`, as for `new` (see [Commands](#commands))
+- A list of favorites named as one of these words (`folder`, `subfolder`, `move`, `undo`, `filter` ...) is opened with `fav use folder`, as for `new` (see [Commands](#commands))
 - A file whose name starts with a bracket (`[2024].md`) is a file, not a folder, after `fav add` and `fav remove`: a folder is a name in brackets alone
 
 ## Registers

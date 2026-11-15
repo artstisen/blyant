@@ -3441,4 +3441,101 @@ public class ShellTests : IDisposable
         Assert.Equal("fav rename [Drafts]", Tab(Completion(), "fav rename [D"));
         Assert.Equal("fav subfolder [Drafts]", Tab(Completion(), "fav subfolder [D"));
     }
+
+    // ---- Favorites: a place to add at, names to move, a filter (1.5.3)
+
+    [Fact]
+    public void FavAdd_WithAPlace_GoesThere_AndWithoutOne_AtTheBottom()
+    {
+        FourFavorites();
+        foreach (var name in new[] { "e.md", "f.md", "g.md", "h.md" }) File.WriteAllText(In("work", name), "x\n");
+        var (output, errors, _, _) = Run("fav folder Drafts\nfav add e.md top\nfav add f.md [Drafts]\nfav add g.md 2\n" +
+                                         "fav add h.md\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("e.md|g.md|a.md|b.md|c.md|d.md|[Drafts]|.f.md|h.md", FavoritesShape());
+        Assert.Contains(Lang.F("Added to the favorites: {0}", In("work", "f.md")) + "\n" + Lang.F("List: {0}", "main"),
+            output);
+    }
+
+    [Fact]
+    public void FavAdd_APlaceThatIsNotThere_AddsNothing()
+    {
+        FourFavorites();
+        File.WriteAllText(In("work", "e.md"), "x\n");
+        var (output, errors, _, _) = Run("fav add e.md [Nowhere]\nfav add e.md 9\nfav add e.md up\nfav add a.md top\n");
+        Assert.Contains(Lang.F("No folder [{0}] in the favorites (fav shows them)", "Nowhere"), errors);
+        Assert.Contains(Lang.F("No row {0}: the favorites have {1} rows", 9, 5), errors);
+        Assert.Contains(Lang.T("A new favorite goes to top, bottom, a row (5) or a [folder]: fav add notes.md [Drafts]"),
+            errors);
+        Assert.Contains(Lang.F("Already a favorite: {0} (fav move puts it elsewhere)", In("work", "a.md")), output);
+        Assert.Equal("a.md|b.md|c.md|d.md", FavoritesShape());
+    }
+
+    [Fact]
+    public void FavMove_ByNameAndByPattern()
+    {
+        foreach (var name in new[] { "chapter-1.md", "chapter-2.md", "notes.md" }) File.WriteAllText(In("work", name), "x\n");
+        Directory.CreateDirectory(In("work", "research"));
+        var (_, errors, _, _) = Run("fav add notes.md\nfav add chapter-1.md\nfav add research\nfav add chapter-2.md\n" +
+                                    "fav folder Book\nfav move chapter-*.md [Book]\nfav move NOTES.md bottom\n" +
+                                    "fav move research/ top\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("research|[Book]|.chapter-1.md|.chapter-2.md|notes.md", FavoritesShape());
+        // By a path, and a name that is not there
+        (_, errors, _, _) = Run("fav move ./notes.md top\nfav move nothing.md top\n");
+        Assert.Equal("notes.md|research|[Book]|.chapter-1.md|.chapter-2.md", FavoritesShape());
+        Assert.Contains(Lang.F("No favorite named {0} (fav shows them)", "nothing.md"), errors);
+    }
+
+    [Fact]
+    public void FavMove_ANameTwoFavoritesHave_TellsTheirRows()
+    {
+        Directory.CreateDirectory(In("work", "one"));
+        Directory.CreateDirectory(In("work", "two"));
+        File.WriteAllText(In("work", "one", "README.md"), "x\n");
+        File.WriteAllText(In("work", "two", "README.md"), "x\n");
+        File.WriteAllText(In("work", "a.md"), "x\n");
+        var (_, errors, _, _) = Run("fav add a.md\nfav add one/README.md\nfav add two/README.md\nfav move readme.md top\n" +
+                                    "fav move two/README.md top\n");
+        Assert.Contains(Lang.F("{0} favorites are named {1}: give the row ({2})", 2, "readme.md", "2, 3"), errors);
+        Assert.Single(errors.TrimEnd('\n').Split('\n'));
+        FileFavorites.Load();
+        Assert.Equal(In("work", "two", "README.md"), FileFavorites.Items[0].Path);
+    }
+
+    [Fact]
+    public void FavFilter_ShowsTheRowsWithTheText_NumberedAsTheWholeList()
+    {
+        foreach (var name in new[] { "plot.md", "draft-1.md", "notes.md", "draft-2.typ" })
+            File.WriteAllText(In("work", name), "x\n");
+        Run("fav add plot.md\nfav add draft-1.md\nfav add notes.md\nfav add draft-2.typ\nfav folder Drafts\n" +
+            "fav subfolder [Drafts] Old\nfav move 4 [Drafts/Old]\n");
+        var (output, errors, _, session) = Run("fav filter DRAFT\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal(Lang.F("List: {0}", "main") + "\n  2  draft-1.md\n[Drafts]\n  [Old]\n      4  draft-2.typ\n", output);
+        // The last list is the whole list: row 3 is notes.md
+        Assert.Equal(4, session.LastList.Count);
+        Assert.Equal(In("work", "notes.md"), session.LastList[2].Path);
+        (output, _, _, _) = Run("fav filter *.typ\nfav -l filter plot\nfav filter nothing\n");
+        Assert.Contains("      4  draft-2.typ\n", output);
+        Assert.DoesNotContain("draft-1.md", output);
+        Assert.Contains("  1  " + In("work", "plot.md") + "\n", output);
+        Assert.Contains(Lang.F("No favorites with {0} in them", "nothing"), output);
+        (_, errors, _, _) = Run("fav filter\n");
+        Assert.Contains(Lang.T("Give a text: fav filter draft (or *.md)"), errors);
+    }
+
+    [Fact]
+    public void Tab_AfterFavMove_TheNamesOfTheFavorites_AlsoFromAPattern_AndAfterFavAdd_ThePlaces()
+    {
+        foreach (var name in new[] { "chapter-1.md", "chapter-2.md", "my notes.md" }) File.WriteAllText(In("work", name), "x\n");
+        Run("fav add chapter-1.md\nfav add chapter-2.md\nfav add \"my notes.md\"\nfav folder Drafts\n");
+        Assert.Equal("fav move chapter-1.md", Tab(Completion(), "fav move ch"));
+        Assert.Equal("fav move chapter-2.md", Tab(Completion(), "fav move *2*"));
+        Assert.Equal("fav move \"my notes.md\"", Tab(Completion(), "fav move my"));
+        Assert.Equal("fav move [Drafts]", Tab(Completion(), "fav move [D"));
+        Assert.Equal("fav add plot.md top", Tab(Completion(), "fav add plot.md t"));
+        Assert.Equal("fav add plot.md [Drafts]", Tab(Completion(), "fav add plot.md [D"));
+        Assert.Equal("fav filter", Tab(Completion(), "fav fil"));
+    }
 }

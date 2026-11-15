@@ -4,7 +4,8 @@
 /// The folders of the favorites in the shell, and the favorites arranged, as on the favorites page of the full
 /// screen: "fav folder", "fav subfolder", "fav rename [folder]", "fav remove [folder]", "fav move" and "fav undo". A
 /// folder is named as "fav" shows it, in brackets ("[Drafts]", a subfolder "[Writing/Drafts]"), and a favorite by its
-/// row in "fav" (the folders are not rows). Each change is saved, and the list is shown again with its new rows
+/// row in "fav" (the folders are not rows) or, for "fav move", by its name ("plot.md", "chapter-*.md"). Each change is
+/// saved, and the list is shown again with its new rows
 /// </summary>
 internal sealed partial class ShellSession
 {
@@ -243,21 +244,27 @@ internal sealed partial class ShellSession
             }
 
             var rows = FavoriteRows();
-            if (!LineSet(words[0], rows.Count, out var numbers) || numbers.Count == 0)
+            if (LineSet(words[0], rows.Count, out var numbers) && numbers.Count > 0)
             {
-                Error(usage);
+                if (numbers[^1] > rows.Count || numbers[0] < 1)
+                {
+                    Error(rows.Count == 1
+                        ? Lang.F("No row {0}: the favorites have 1 row", numbers[^1])
+                        : Lang.F("No row {0}: the favorites have {1} rows", numbers[^1], rows.Count));
+                    return;
+                }
+
+                moved = numbers.Select(n => rows[n - 1]).ToList();
+            }
+            else if (FavoritesNamed(words[0]) is { } named)
+            {
+                moved = named;
+            }
+            else
+            {
                 return;
             }
 
-            if (numbers[^1] > rows.Count || numbers[0] < 1)
-            {
-                Error(rows.Count == 1
-                    ? Lang.F("No row {0}: the favorites have 1 row", numbers[^1])
-                    : Lang.F("No row {0}: the favorites have {1} rows", numbers[^1], rows.Count));
-                return;
-            }
-
-            moved = numbers.Select(n => rows[n - 1]).ToList();
             where = AfterWords(argument, 1).Trim();
         }
 
@@ -273,6 +280,52 @@ internal sealed partial class ShellSession
         var error = folder != null ? MoveFolder(folder, where) : MoveRows(moved, where);
         if (error == null) FavoritesChanged(Lang.F("Moved: {0}", what), "move");
         else if (error.Length > 0) Error(error);
+    }
+
+    // The name of a favorite as "fav" shows it, without the "/" of a directory
+    internal static string FavoriteName(FileFavorites.Favorite favorite) =>
+        Path.GetFileName(Path.TrimEndingDirectorySeparator(favorite.Path));
+
+    // The favorites a name typed stands for: the one of that name ("plot.md", "chapters/"), or all those a pattern
+    // fits ("chapter-*.md"), in their order; a path ("~/novel/plot.md", "drafts/plot.md") the one of that path. Letter
+    // case alike, as "fav" shows the names. Null (and told) when none is, or when more have the name (their rows told:
+    // the row is then given)
+    private List<FileFavorites.Favorite>? FavoritesNamed(string word)
+    {
+        var name = word.Trim().Trim('"');
+        var trimmed = Path.TrimEndingDirectorySeparator(name);
+        var rows = FavoriteRows();
+        List<int> found;
+        if (trimmed.IndexOfAny(new[] { '/', '\\' }) >= 0 || trimmed.StartsWith('~'))
+        {
+            var path = PathOf(trimmed);
+            found = Enumerable.Range(0, rows.Count).Where(i => FileOperations.SamePath(rows[i].Path, path)).ToList();
+        }
+        else if (ShellCompletion.IsPattern(trimmed))
+        {
+            found = Enumerable.Range(0, rows.Count).Where(i =>
+                System.IO.Enumeration.FileSystemName.MatchesSimpleExpression(trimmed, FavoriteName(rows[i]))).ToList();
+        }
+        else
+        {
+            found = Enumerable.Range(0, rows.Count).Where(i =>
+                FavoriteName(rows[i]).Equals(trimmed, StringComparison.OrdinalIgnoreCase)).ToList();
+        }
+
+        if (found.Count == 0)
+        {
+            Error(Lang.F("No favorite named {0} (fav shows them)", name));
+            return null;
+        }
+
+        if (found.Count > 1 && !ShellCompletion.IsPattern(trimmed))
+        {
+            Error(Lang.F("{0} favorites are named {1}: give the row ({2})", found.Count, name,
+                string.Join(", ", found.Select(i => i + 1))));
+            return null;
+        }
+
+        return found.Select(i => rows[i]).ToList();
     }
 
     private static string MoveUsage => Lang.T("Give what and where: fav move 3 top (bottom, up, down, out, 5, [Drafts])");

@@ -3,13 +3,21 @@
 /// <summary>
 /// The lists of favorites in the shell, as ":list" in the file browser: "fav lists" shows them, "fav work" (or "fav use
 /// work") opens one, "fav main" the main list, and "fav new", "fav rename" and "fav delete" make, rename and delete
-/// one. The list opened is kept in the settings, so the full screen shows the same list
+/// one. The list opened is kept in the settings, so the full screen shows the same list. "fav filter draft" shows the
+/// rows of the open list that have a text in them
 /// </summary>
 internal sealed partial class ShellSession
 {
     // "fav ...": the favorites of the open list, "add" and "remove", or the lists
     private void Favorites(string argument)
     {
+        // "fav filter draft", "fav -l filter draft"
+        if (FilterOf(argument) is { } filter)
+        {
+            FilterFavorites(filter.Text, filter.Full);
+            return;
+        }
+
         if (Change(argument) is { } add)
         {
             // ("fav remove [Drafts]": a folder)
@@ -54,6 +62,79 @@ internal sealed partial class ShellSession
                 ListFavorites(argument);
                 break;
         }
+    }
+
+    // "fav filter text" (with "-l" before it or after "fav": the full paths): the text, or null when it is not a filter
+    private static (string Text, bool Full)? FilterOf(string argument)
+    {
+        var text = argument.Trim();
+        var full = false;
+        while (text == "-l" || text.StartsWith("-l ", StringComparison.Ordinal))
+        {
+            full = true;
+            text = text[2..].TrimStart();
+        }
+
+        if (!text.Split(' ', 2)[0].Equals("filter", StringComparison.OrdinalIgnoreCase)) return null;
+        return (Rest(text).Trim(), full);
+    }
+
+    // The favorites of the open list that a text is in (in the name or the path, letter case alike), or that a
+    // pattern fits ("*.typ", "chapter-?.md": the name, as find takes it). Shown with the folders they are in, and
+    // numbered as in the whole list, which is the last list: "open 7" and "fav move 7 top" are the row 7 of "fav"
+    private void FilterFavorites(string text, bool full)
+    {
+        text = text.Trim('"');
+        if (text.Length == 0)
+        {
+            Error(Lang.T("Give a text: fav filter draft (or *.md)"));
+            return;
+        }
+
+        FileFavorites.Load();
+        Line(Lang.F("List: {0}", ListWord(FileFavorites.CurrentList)));
+        var items = FileFavorites.Items;
+        var rows = new List<(int Index, Item Item)>();
+        for (var i = 0; i < items.Count; i++)
+        {
+            if (items[i].IsFolder) continue;
+            rows.Add((i, new Item(items[i].Path, System.IO.Directory.Exists(items[i].Path))));
+        }
+
+        ShowRows(rows.Select(row => row.Item).ToList());
+        var pattern = ShellCompletion.IsPattern(text);
+        var names = Names(rows.Select(row => (row.Item.Path, row.Item.IsDirectory)).ToList(), full, false);
+        var width = rows.Count.ToString().Length;
+        var shown = new HashSet<int>(); // The folders shown above a row already
+        var found = 0;
+        for (var row = 0; row < rows.Count; row++)
+        {
+            var favorite = items[rows[row].Index];
+            var name = FavoriteName(favorite);
+            if (pattern
+                    ? !System.IO.Enumeration.FileSystemName.MatchesSimpleExpression(text, name)
+                    : !favorite.Path.Contains(text, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            // (the folder and subfolder it is in, above it, once)
+            var folders = new List<int>();
+            for (var parent = FileFavorites.Parent(rows[row].Index); parent >= 0; parent = FileFavorites.Parent(parent))
+            {
+                folders.Insert(0, parent);
+            }
+
+            foreach (var folder in folders.Where(shown.Add))
+            {
+                Line(new string(' ', 2 * items[folder].Level) + "[" + items[folder].Name + "]");
+            }
+
+            Line(new string(' ', 2 * favorite.Level) + (row + 1).ToString().PadLeft(width + 2) + "  " + names[row]);
+            found++;
+        }
+
+        if (found == 0) Line(Lang.F("No favorites with {0} in them", text));
     }
 
     // The name of a list as the shell shows and takes it ("main" for the main list: a word of the commands)

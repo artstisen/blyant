@@ -442,10 +442,18 @@ internal sealed partial class ShellSession
         if (outcome.Unreadable > 0) Line(Lang.F("(directories that could not be read: {0})", outcome.Unreadable));
     }
 
-    // "fav add 3", "fav remove notes.md": a file or directory added to the favorites in use, or taken off them
+    // "fav add 3", "fav remove notes.md": a file or directory added to the favorites in use, or taken off them. A
+    // place after the file of "fav add" puts it there: "top", "bottom", the place of a row ("5") or a folder
+    // ("[Drafts]": last in it), as "fav move" moves it; without one it goes at the bottom
     private void ChangeFavorites(string argument, bool add)
     {
         var words = Words(argument);
+        if (add && words.Count > 1)
+        {
+            AddFavoriteAt(words[0], AfterWords(argument, 1).Trim());
+            return;
+        }
+
         if (words.Count != 1)
         {
             Error(add ? Lang.T("Give what to add: fav add 3") : Lang.T("Give what to take off: fav remove 3"));
@@ -469,6 +477,45 @@ internal sealed partial class ShellSession
         EventLog.Add(DialogText.LogFile + (add ? "Favorite add: " : "Favorite remove: ") + item.Path);
         Done(result, add ? Lang.F("Added to the favorites: {0}", item.Path)
             : Lang.F("Taken off the favorites: {0}", item.Path), null);
+    }
+
+    // "fav add notes.md [Drafts]": a favorite added at a place (top, bottom, a row, a folder). Nothing is added when
+    // the place is not there; the list is shown again, as after "fav move"
+    private void AddFavoriteAt(string what, string where)
+    {
+        if (where.Trim('"').ToLowerInvariant() is "up" or "down" or "out")
+        {
+            Error(Lang.T("A new favorite goes to top, bottom, a row (5) or a [folder]: fav add notes.md [Drafts]"));
+            return;
+        }
+
+        if (Existing(what) is not { } item) return;
+        FileFavorites.Load();
+        if (FileFavorites.Contains(item.Path))
+        {
+            Line(Lang.F("Already a favorite: {0} (fav move puts it elsewhere)", item.Path));
+            return;
+        }
+
+        // (added at the end, then moved as "fav move" moves it; put back as it was when the place is not there)
+        var before = FileFavorites.Serialize();
+        if (!FileFavorites.Toggle(item.Path))
+        {
+            Error(Lang.F("Not added to the favorites: {0}", item.Path));
+            return;
+        }
+
+        var added = FileFavorites.Items[^1];
+        var error = MoveRows(new List<FileFavorites.Favorite> { added }, where);
+        if (error != null)
+        {
+            FileFavorites.Parse(before);
+            if (error.Length > 0) Error(error);
+            return;
+        }
+
+        EventLog.Add(DialogText.LogFile + "Favorite add: " + item.Path);
+        FavoritesChanged(Lang.F("Added to the favorites: {0}", item.Path), "add at a place");
     }
 
     // "hot add" (the directory you are in), "hot add 2", "hot remove 3": a directory added to the hotlist, or taken
