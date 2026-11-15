@@ -24,7 +24,7 @@ blyant --shell ~/novel
 ```
 
 ```
-Blyant v1.5.1: help lists the commands, exit leaves
+Blyant v1.5.2: help lists the commands, exit leaves
 blyant ~/novel>
 ```
 
@@ -185,7 +185,21 @@ Delete lines: Delete line 6 of plot.md?
 /home/anna/novel/plot.md: line 6 deleted
 ```
 
-There is no undo for `insert` and `change`: `peek` first, to be sure of the line numbers. A file keeps its line endings and its byte order mark, and the files Blyant uses are not changed.
+`lines` changes the text in lines, and keeps what is there: `start` puts a text before a line, and `end` after it:
+
+```
+blyant ~/novel> lines plot.md 4 start Draft:
+  4  Draft: The letter is from her mother.
+/home/anna/novel/plot.md: line 4 changed
+blyant ~/novel> lines plot.md 4 unstart Draft:
+  4  The letter is from her mother.
+/home/anna/novel/plot.md: line 4 changed
+```
+
+- `unstart` and `unend` take the text off again, and `lines plot.md 3-5 replace letter note` replaces a word in lines 3 to 5
+- In quotes the text is put as it is, without a blank between: `lines todo.md 5-7 start "- [ ] "` makes lines 5 to 7 tasks
+
+There is no undo for `insert`, `change` and `lines`: `peek` first, to be sure of the line numbers. A file keeps its line endings and its byte order mark, and the files Blyant uses are not changed.
 
 ## Todo list
 ![A task added with insert, and ticked and moved under Done with shift!](docs/screenshots/shell-todo.svg)

@@ -32,6 +32,9 @@ internal sealed partial class ShellSession
         ("shift file|n lines place", Lang.T("Move lines in a file: under a heading, +line, top or bottom")),
         ("shift! file|n lines place", Lang.T("Move lines, and tick or untick their task boxes")),
         ("lines file|n lines > file|n place", Lang.T("Copy lines to another file (cut last: move them)")),
+        ("lines file|n lines start|end text", Lang.T("Put a text at the start or the end of lines")),
+        ("lines file lines unstart|unend text", Lang.T("Take a text off the start or the end of lines")),
+        ("lines file|n lines replace old new", Lang.T("Replace a text in lines, the rest kept")),
         ("format file|n", Lang.T("Format an HTML, CSS or XML file, as :format does")),
         ("trim file|n", Lang.T("Remove blank space at line ends, as :trim does (trim!)")),
         ("set [name [value]]", Lang.T("Show the settings, or change one")),
@@ -105,6 +108,8 @@ internal sealed partial class ShellSession
                 "insert" or "change" => 2,
                 "reg" or "set" => 1,
                 "find" or "project" => 0,
+                // (the text of "lines todo.md 4 start ..." as it is)
+                "lines" => LinesWords(argument),
                 _ => int.MaxValue
             });
         }
@@ -213,7 +218,7 @@ internal sealed partial class ShellSession
                 Shift(argument, true);
                 break;
             case "lines":
-                CopyLines(argument);
+                Lines(argument);
                 break;
             case "change":
                 ChangeLines(argument);

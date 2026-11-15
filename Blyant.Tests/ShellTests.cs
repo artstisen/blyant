@@ -2488,4 +2488,97 @@ public class ShellTests : IDisposable
         Assert.Contains(Lang.T("The lines are in that file already: shift moves lines in a file"), errors);
         Assert.Equal("a\nb\n", Text("real.md"));
     }
+
+    // ---- lines: start, end, unstart, unend, replace
+
+    [Theory]
+    [InlineData("This is some task", "start", "Remember this:", false, "", "Remember this: This is some task")]
+    [InlineData("Buy milk", "start", "- [ ] ", true, "", "- [ ] Buy milk")]
+    [InlineData("x = 1", "end", ";", true, "", "x = 1;")]
+    [InlineData("A task", "end", "(by Friday)", false, "", "A task (by Friday)")]
+    [InlineData("   ", "start", "-", false, "", "   ")]
+    [InlineData("Remember this: A task", "unstart", "Remember this:", false, "", "A task")]
+    [InlineData("- [ ] Buy milk", "unstart", "- [ ] ", true, "", "Buy milk")]
+    [InlineData("Other line", "unstart", "Remember this:", false, "", "Other line")]
+    [InlineData("A task (by Friday)", "unend", "(by Friday)", false, "", "A task")]
+    [InlineData("a draft, a Draft", "replace", "draft", false, "final", "a final, a Draft")]
+    [InlineData("one two", "replace", " two", false, "", "one")]
+    public void EditedLine_PutsInTakesOffOrReplaces(string line, string kind, string text, bool exact, string with,
+        string expected)
+    {
+        Assert.Equal(expected, ShellSession.EditedLine(line, kind, text, exact, with));
+    }
+
+    [Fact]
+    public void Lines_StartEndAndBack_WorkOnTheLinesPicked_AndKeepTheRest()
+    {
+        File.WriteAllText(In("work", "todo.md"), "This is some task, I need to complete\r\n\r\nBuy milk\r\nCall Anna\r\n");
+        var (output, errors, _, session) = Run("lines todo.md 1 start Remember this:\nlines todo.md 1-4 end \"!\"\n" +
+                                               "lines todo.md \"Buy milk\" start \"- [ ] \"\n");
+        Assert.Equal(string.Empty, errors);
+        // (the blank line left as it is; the line endings of the file kept)
+        Assert.Equal("Remember this: This is some task, I need to complete!\r\n\r\n- [ ] Buy milk!\r\nCall Anna!\r\n",
+            Text("todo.md"));
+        Assert.Contains(Lang.F("{0}: {1} lines changed", In("work", "todo.md"), 3), output);
+        Assert.Contains(Lang.F("{0}: line {1} changed", In("work", "todo.md"), 3), output);
+        Assert.Equal(3, session.LastList.Single().At?.Line);
+
+        (output, errors, _, _) = Run("lines todo.md 1 unstart Remember this:\nlines todo.md 1-4 unend \"!\"\n" +
+                                     "lines todo.md 1-4 unend \"!\"\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("This is some task, I need to complete\r\n\r\n- [ ] Buy milk\r\nCall Anna\r\n", Text("todo.md"));
+        Assert.Contains(Lang.F("Nothing changed: no line ends with {0}", "!"), output);
+    }
+
+    [Fact]
+    public void Lines_Replace_ChangesATextInTheLinesOnly()
+    {
+        File.WriteAllText(In("work", "notes.md"), "a draft\nthe draft\nmy draft\n");
+        var (output, errors, _, _) = Run("lines notes.md 1-2 replace draft \"final text\"\nlines notes.md +3 1 replace my \"\"\n" +
+                                         "lines notes.md 1-3 replace nothing x\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("a final text\nthe final text\n draft\n", Text("notes.md"));
+        Assert.Contains(Lang.F("Nothing changed: no line has {0} in it", "nothing"), output);
+    }
+
+    [Fact]
+    public void Lines_ATextWithAnArrowOrAWordOfTheCommands_IsText_AndRegistersAreTheirValue()
+    {
+        File.WriteAllText(In("work", "notes.md"), "quote\nline\n");
+        var (_, errors, _, _) = Run("lines notes.md 1 start >\nreg note Buy more ink\nlines notes.md 2 end $note\n" +
+                                    "lines notes.md 2 end start\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("> quote\nline Buy more ink start\n", Text("notes.md"));
+    }
+
+    [Fact]
+    public void Lines_WhatCannotBeDone_IsTold_AndChangesNothing()
+    {
+        File.WriteAllText(In("work", "notes.md"), "one\ntwo\n");
+        var (_, errors, code, _) = Run("lines notes.md 1 start\nlines notes.md 1 replace x\nlines notes.md 9 end x\n" +
+                                       "lines notes.md 1 middle x\nlines notes.md 1 start \"\"\n");
+        Assert.Equal(5, errors.TrimEnd('\n').Split('\n').Length);
+        Assert.Equal(1, code);
+        Assert.Equal("one\ntwo\n", Text("notes.md"));
+    }
+
+    [Theory]
+    [InlineData("todo.md 4 > plan.md top", 2, -1)]
+    [InlineData("todo.md +4 3 > plan.md top", 3, -1)]
+    [InlineData("todo.md 4 start x", -1, 2)]
+    [InlineData("todo.md +4 3 END x", -1, 3)]
+    [InlineData("todo.md 4 end >", -1, 2)]
+    [InlineData("todo.md 4 middle x", -1, -1)]
+    public void LinesForm_TellsACopyFromAnEdit(string argument, int arrow, int edit)
+    {
+        Assert.Equal((arrow, edit), ShellSession.LinesForm(ShellSession.Words(argument)));
+    }
+
+    [Fact]
+    public void Tab_AfterTheLinesOfLines_CompletesWhatIsDone()
+    {
+        Assert.Equal("lines plot.md 1 start", Tab(Completion(), "lines plot.md 1 st"));
+        Assert.Equal("lines plot.md +1 2 unend", Tab(Completion(), "lines plot.md +1 2 une"));
+        Assert.Equal("lines plot.md 1 replace", Tab(Completion(), "lines plot.md 1 rep"));
+    }
 }

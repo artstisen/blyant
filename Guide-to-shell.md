@@ -95,6 +95,9 @@ To have every output whole (with a screen reader, say), turn the pages off: `set
 | `shift file\|n lines place` | Move lines in a file without opening it: under a heading (`shift todo.md 4-6 Done`), at the end of its section (`Done+`), before a line (`+12`), to the `top` or the `bottom`. See [Moving lines](#moving-lines) |
 | `shift! file\|n lines place` | Move lines as `shift` does, and tick their task boxes (`- [ ]` to `- [x]`), or untick those that are ticked |
 | `lines file\|n lines > file\|n place [copy\|cut]` | Copy lines to another file without opening them (`lines notes.md 4-6 > plan.md bottom`), or with `cut` move them there. See [Moving lines](#moving-lines) |
+| `lines file\|n lines start\|end text` | Put a text at the start or the end of lines, the rest of them kept (`lines todo.md 4 start Remember this:`). See [Text in lines](#text-in-lines) |
+| `lines file\|n lines unstart\|unend text` | Take a text off the start or the end of the lines that have it |
+| `lines file\|n lines replace old new` | Replace a text in lines, the rest of them kept (`lines notes.md 5-9 replace draft final`) |
 | `format file\|n` | Format an HTML, CSS or XML file, as `:format` in the editor does (see [Text and settings](#text-and-settings)) |
 | `trim file\|n` | Remove the blank space at the end of the lines, as `:trim` in the editor does; `trim!` also the line breaks of Markdown |
 | `set [name [value]]` | Show the settings (`set`), one of them (`set indent`), or change one (`set indent 2`, also `set indent=2` as in the settings file) |
@@ -205,6 +208,28 @@ lines todo.md "Buy milk" > done.md Done+ cut the line with "Buy milk" moved to t
 - The lines put in are shown, and the other file is then the last list there (`open 1`). Both files keep their line endings and byte order mark, only files in UTF-8 are changed and not the files Blyant uses, and nothing is asked: no line is lost. The same file on both sides is for `shift`
 - `Tab` completes the other file after the `>`, then the headings of that file, then `copy` and `cut`
 - From the command line of your system, give the command in quotes: `blyant --run "lines notes.md 4-6 > plan.md bottom"`. Without them, bash, PowerShell and cmd take the `>` as a redirection to a file
+
+## Text in lines
+`lines` also changes the text in lines, keeping what is there: a text put at their start or end, taken off it again, or a text in them replaced. The word after the lines tells what is done:
+
+```
+lines todo.md 4 start Remember this:         "Remember this: This is some task"
+lines todo.md 4 end (by Friday)              "This is some task (by Friday)"
+lines todo.md 5-9 start "- [ ] "             lines 5 to 9 made task items
+lines code.md 12 end ";"                     a ";" at the end, with no blank before it
+lines todo.md 4 unstart Remember this:       taken off again
+lines todo.md 5-9 unstart "- [ ] "           the task boxes taken off
+lines notes.md 5-9 replace draft final       "draft" in lines 5 to 9 made "final"
+lines notes.md 5-9 replace " (draft)" ""     " (draft)" taken out of them
+```
+
+- The lines are given as for `shift` and the other forms of `lines`: `4`, `4-6`, `4,7,9-10`, `+10 5` (5 lines from line 10), or a text that finds one line (`lines todo.md "some task" start Note:`). Every line of them is changed
+- `start` and `end` put the text with a blank between it and the line. In quotes it is put as it is: no blank, or the blanks in the quotes (`"- [ ] "`). A blank line is left as it is
+- `unstart` and `unend` take the text off the lines that have it at their start or end, with the blank `start` and `end` put there (in quotes: the text only), so they undo `start` and `end`. The other lines are left as they are
+- `replace old new` replaces the text everywhere in the lines, with the letter case as typed (`draft`, not `Draft`). A text with blanks is written in quotes, and `""` is no text: what is replaced is taken out
+- After the lines, `Tab` completes `start`, `end`, `unstart`, `unend`, `replace` and `>`. A `>` or one of these words later on is part of the text: `lines notes.md 3 start ">"` makes line 3 a quote
+- `$name` and `$clip` put in their value: `lines todo.md 4 end $note`
+- The lines changed are shown, and the file is then the last list, at the first of them (`open 1`). When no line changes, nothing is written, and it is told. As for `insert`, the file keeps its line endings and byte order mark, only a file in UTF-8 is changed and not the files Blyant uses, and there is no undo; nothing is asked, as no line is lost
 
 ## Registers
 A register keeps a text or a path under a name, and `$name` puts it in any command:

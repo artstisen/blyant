@@ -1,5 +1,8 @@
 # Changes
 
+## v1.5.2
+- **Text in lines in the shell**: `lines` also changes the text in lines and keeps what is there. `lines todo.md 4 start Remember this:` puts a text at the start of line 4 and `end` at its end, with a blank between (in quotes as it is: `start "- [ ] "`, `end ";"`); `unstart` and `unend` take it off again, and `replace draft final` replaces a text in the lines (letter case as typed). The lines as for the other forms (`4-6`, `4,7`, `+10 5`, a text in the line); blank lines are left as they are by `start` and `end`. `Tab` completes the words after the lines. See [Text in lines](Guide-to-shell.md#text-in-lines).
+
 ## v1.5.1 (2026-11-14)
 - **Practice in the shell tutorial**: the tutorial ends with ten short steps to try on two files of your own: making them, `insert`, `peek`, `shift`, `lines`, `change`, `clip text` and `$clip`, each with what Blyant answers. Its table of the full screen and the shell has `lines` and copy and paste too. See [Practice](Guide-to-shell-tutorial.md#practice).
 - **Lists of favorites in the shell**: `fav lists` lists the lists of favorites (`*` at the open one), `fav new reading` makes a list and opens it, `fav rename work writing` gives one a new name, and `fav delete reading` deletes one (asked first, to the trash), as `:list` does in the file browser. `fav main` opens the main list again, and is now completed by `Tab` and told in the help; `fav use new` opens a list whose name is a word of `fav`. `fav` tells the open list first (`List: main`), and a list opened in the shell is kept in the settings, so the full screen shows the same list (before, `fav work` was used only until Blyant ended). See [Commands](Guide-to-shell.md#commands).

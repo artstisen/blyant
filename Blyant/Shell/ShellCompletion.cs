@@ -153,7 +153,14 @@ internal sealed class ShellCompletion
                 // The file, the lines (typed), ">" (typed), the other file, the place in it, and copy or cut
                 var arrow = after.ToList().IndexOf(">");
                 if (position == 0) return (Kind.Path, none);
-                if (arrow < 0) return (Kind.None, none);
+                // After the lines (or "+10 5"): ">" for a copy, or what is done to the text in them
+                if (arrow < 0)
+                {
+                    var what = position == 2 || (position == 3 && after[1].StartsWith('+'));
+                    return (what ? Kind.Words : Kind.None,
+                        new[] { ">", "start", "end", "unstart", "unend", "replace" });
+                }
+
                 if (position == arrow + 1) return (Kind.Path, none);
                 if (position == arrow + 2)
                     return (Kind.QuotedWords, new[] { "top", "bottom" }.Concat(HeadingsOf(_words[arrow + 1])));
