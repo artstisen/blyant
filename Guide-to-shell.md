@@ -444,6 +444,8 @@ blyant ~/notes> changes
 ## Editing in a window
 A peek is a window into the part of a file you are working on: find the place, change the lines, and look again, without opening the editor. `undo` takes a change back.
 
+![A window into a chapter: a search, a change shown again by itself, and undo](docs/screenshots/shell-window.svg)
+
 **Find the place.** A window of 5 lines first, then a search moves it to the line, marked with `>`:
 
 ```

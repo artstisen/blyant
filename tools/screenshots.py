@@ -577,6 +577,13 @@ SCENES = [
     ('shell-todo', 'Blyant: the shell, a todo list kept with insert and shift!', {},
      ['--shell', PROJECT], ['<wait>', 'insert todo.md +8 - [ ] Ask the harbour master<Enter>',
                             'shift! todo.md "tide times" Done<Enter>', 'peek todo.md<Enter>'], True),
+    # A peek as a window into a file being changed: a search, a change shown again by itself (shellautopeek), undo
+    ('shell-window', 'Blyant: the shell, a window into a chapter: search, change, the window again, undo',
+     {'shellautopeek': 'true'},
+     ['--shell', PROJECT], ['<wait>', 'peek chapter-01.md 1-6<Enter>', 'clear<Enter>',
+                            'peek chapter-01.md /wound the clock<Enter>',
+                            'change chapter-01.md +22 She wound the clock, then the lamp.<Enter>',
+                            'undo<Enter>'], True),
 ]
 
 
