@@ -128,6 +128,7 @@ Blyant is operated in the style of Vim: the editor has Normal, Insert and Visual
 - [Editor](Guide-to-editor.md)
 - [Writing with Typst](Guide-to-typst.md)
 - [Shell](Guide-to-shell.md), and a [shell tutorial](Guide-to-shell-tutorial.md)
+- [Settings file](Guide-to-settings-file.md): every setting, its values and its default
 - [Changes](CHANGELOG.md)
 
 The guides are also put together as a **user manual**, in two forms:

@@ -102,7 +102,7 @@ The files are in the folder of the project, so they go with it when it is copied
 The list of projects can also be opened from the file browser (`E` or `:projects`, `:pro`: the project picked is shown in the pane with the focus) and from the editor (`:projects`, `:pro`: the project picked is shown in the file browser, as a jump, after asking about changes that are not saved).
 
 ### Configuration
-The settings are on six pages. `j` `k` (and `gg` `G`) select a setting on the page, and the number of a row selects it (`1` to `9`, and `0` the tenth). A page with more settings than the window has rows for scrolls as the selection moves, with `^` at the right of the first row when there are more above, and `v` at the last when there are more below. `Enter` or `Space` changes it. `Esc` or `Q` goes back to the Start tab. Changes are saved at once.
+The settings are on six pages. `j` `k` (and `gg` `G`) select a setting on the page, and the number of a row selects it (`1` to `9`, and `0` the tenth). A page with more settings than the window has rows for scrolls as the selection moves, with `^` at the right of the first row when there are more above, and `v` at the last when there are more below. `Enter` or `Space` changes it. `Esc` or `Q` goes back to the Start tab. Changes are saved at once, in the settings file: [Settings file](Guide-to-settings-file.md) lists every setting with its values and default.
 
 **General**
 
@@ -181,7 +181,7 @@ Nothing of it is deleted: your projects and boards are there again, as they were
 
 - **Show hints on start page**: A hint about a feature of Blyant to the right of the menu of the Start tab, the next one each time Blyant starts (on from the start; `X` on the Start tab hides them). Setting `hints`
 - **Reset all settings**: Set all settings back to their defaults (you are asked first, in a box where _No_ is selected first)
-- **Edit settings.ini**: Open the settings file in the editor (it can also be edited from the file system). When the file is saved, Blyant starts over and reads the settings again; closing it without saving returns to the page
+- **Edit settings.ini**: Open the settings file in the editor (it can also be edited from the file system; see [Settings file](Guide-to-settings-file.md)). When the file is saved, Blyant starts over and reads the settings again; closing it without saving returns to the page
 - **Restart Blyant**: Start Blyant over: the settings are read again and the start page is shown as at startup (you are asked first, in a box)
 - **Info**: Show the version of Blyant, the directory of the program, the data directory and the settings file in a box. Any key closes it
 - **View log**: Show the [log](#log)

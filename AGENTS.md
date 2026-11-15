@@ -36,7 +36,7 @@ Text shown to the user is written in English in the code and given to `Lang.T(".
 - `dotnet test Blyant.sln` passes
 - The change is tried in the running program, not only in tests
 - Help (`?` / `:help`), the guides (`Guide-to-*.md`) and `CHANGELOG.md` describe the change
-- A new setting is read and written by name in `FileIo` and counted in `SettingsTests`
+- A new setting is read and written by name in `FileIo` and counted in `SettingsTests`, and gets a row in `Guide-to-settings-file.md` (its values, its default, where it is changed: `SettingsTests` fails on a setting without one)
 
 ## Code
 - Source files are UTF-8 with BOM and CRLF line endings. Markdown files have LF

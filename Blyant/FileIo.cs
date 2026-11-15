@@ -554,6 +554,8 @@ internal static class FileIo
         // was left in (for "last")
         settings += "shelldir=" + Shell.StartSetting + '\n';
         settings += "shelllastdir=" + Shell.LastDirectory + '\n';
+        // $file of the shell when it was left
+        settings += "shelllastfile=" + Shell.LastFile + '\n';
         // In Zen mode, the mode ([N], [I] ...) in the color of its mode, as the mode label outside Zen mode
         settings += "zencolors=" + (TextArea.ZenColors ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // The modules (Configuration: Modules): the projects and the corkboard, on unless turned off
@@ -769,6 +771,7 @@ internal static class FileIo
         Shell.PeekBigStep = Shell.ParsePeekStep(Get("shellpeekbigstep"), Shell.DefaultPeekBigStep);
         Shell.StartSetting = Get("shelldir").Trim();
         Shell.LastDirectory = Get("shelllastdir").Trim();
+        Shell.LastFile = Get("shelllastfile").Trim();
         // 4 spaces unless another width of the list is set
         EditorEngine.IndentSetting = EditorEngine.ParseIndent(Get("indent"));
         // On unless turned off

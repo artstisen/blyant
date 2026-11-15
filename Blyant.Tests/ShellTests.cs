@@ -784,6 +784,36 @@ public class ShellTests : IDisposable
     }
 
     [Fact]
+    public void File_IsKeptWhenTheShellIsLeft_AndIsFileAgainInTheNextShellAtATerminal()
+    {
+        try
+        {
+            Shell.StartSetting = string.Empty;
+            File.WriteAllText(In("work", "kept.md"), "x\n");
+            var (_, _, _, session) = Run("peek kept.md\n", terminal: true);
+            Shell.RememberLast(session.Directory, session.WorkedFile);
+            Assert.Equal(In("work", "kept.md"), Shell.LastFile);
+            Assert.Equal(In("work", "kept.md"), FileIo.ParseSettings(FileIo.ReadSettingsFile())["shelllastfile"]);
+            // (shelldir is not "last": the directory is not kept)
+            Assert.Equal(string.Empty, FileIo.ParseSettings(FileIo.ReadSettingsFile())["shelllastdir"]);
+            // The next shell at a terminal has it as $file; commands from a file do not
+            var (output, errors, _, _) = Run("insert $file bottom more\n", terminal: true);
+            Assert.Equal(string.Empty, errors);
+            Assert.Equal("x\nmore\n", Text("kept.md"));
+            (_, errors, _, _) = Run("insert $file bottom again\n");
+            Assert.Contains(Lang.T("No file yet: open, peek, insert, new ... give $file"), errors);
+            // A file that is gone is not $file
+            File.Delete(In("work", "kept.md"));
+            (_, errors, _, _) = Run("peek $file\n", terminal: true);
+            Assert.Contains(Lang.T("No file yet: open, peek, insert, new ... give $file"), errors);
+        }
+        finally
+        {
+            Shell.LastFile = string.Empty;
+        }
+    }
+
+    [Fact]
     public void Last_KeepsTheDirectoryTheShellIsLeftIn_InTheSettings()
     {
         Shell.StartSetting = "last";

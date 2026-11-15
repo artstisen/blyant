@@ -422,7 +422,7 @@ backup=
         Assert.False(settings.ContainsKey("stayloggedin"));
         Assert.False(settings.ContainsKey("projectsdir"));
         Assert.False(settings.ContainsKey("projectsask"));
-        Assert.Equal(69, settings.Count);
+        Assert.Equal(70, settings.Count);
         Assert.Equal("true", settings["modulejump"]);
         // The modules are on unless turned off
         Assert.Equal("true", settings["moduleprojects"]);
@@ -447,6 +447,7 @@ backup=
         // The shell starts in the directory Blyant is started in, unless another is set
         Assert.Equal(string.Empty, settings["shelldir"]);
         Assert.Equal(string.Empty, settings["shelllastdir"]);
+        Assert.Equal(string.Empty, settings["shelllastfile"]);
         // Tab, ">>" and "<<" indent by 4 spaces unless another width is set
         Assert.Equal("4", settings["indent"]);
         Assert.Equal("false", settings["marksapostrophe"]);
@@ -582,5 +583,21 @@ backup=
     {
         Assert.True(FileIo.LoadSettings());
         Assert.True(Init.UsingDefaultSettings);
+    }
+
+    // Guide-to-settings-file.md has a row for each setting Blyant writes, and no row for one it does not
+    [Fact]
+    public void TheGuideToTheSettingsFile_HasARowForEverySetting()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory != null && !File.Exists(Path.Combine(directory.FullName, "Blyant.sln"))) directory = directory.Parent;
+        Assert.NotNull(directory);
+        var guide = File.ReadAllText(Path.Combine(directory.FullName, "Guide-to-settings-file.md"));
+        var documented = System.Text.RegularExpressions.Regex.Matches(guide, @"^\| `([a-z0-9]+)` \|",
+            System.Text.RegularExpressions.RegexOptions.Multiline).Select(match => match.Groups[1].Value).ToList();
+        var written = FileIo.ParseSettings(FileIo.SettingsText()).Keys.ToList();
+        Assert.Equal(documented.Count, documented.Distinct().Count());
+        Assert.Empty(written.Except(documented));
+        Assert.Empty(documented.Except(written));
     }
 }

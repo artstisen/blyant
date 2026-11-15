@@ -33,6 +33,7 @@ NAME = 'Blyant-User-Manual'
 INSTALL, START, EDITOR = 'Guide-to-installation.md', 'Guide-to-start-page.md', 'Guide-to-editor.md'
 JUMP, BOARD, TYPST = 'Guide-to-jump-menu.md', 'Guide-to-corkboard.md', 'Guide-to-typst.md'
 SHELL, TUTORIAL = 'Guide-to-shell.md', 'Guide-to-shell-tutorial.md'
+SETTINGS = 'Guide-to-settings-file.md'
 CHAPTERS = [
     ('Getting started', [
         (INSTALL, 'Installing and running Blyant', 'intro', None),
@@ -119,6 +120,7 @@ CHAPTERS = [
     ('Appendix', [
         (START, 'Log', 'all', None),
         (START, 'Directories', 'all', 'Data directory'),
+        (SETTINGS, 'Settings file', 'all', None),
         (INSTALL, 'Language files', 'all', None),
         (INSTALL, 'Building from source', 'all', None),
     ]),

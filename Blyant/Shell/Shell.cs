@@ -69,6 +69,12 @@ internal static class Shell
     /// </summary>
     internal static string LastDirectory { get; set; } = string.Empty;
 
+    /// <summary>
+    /// $file when the shell was left (setting "shelllastfile"): $file again in the next shell typed in at a terminal,
+    /// while the file is there
+    /// </summary>
+    internal static string LastFile { get; set; } = string.Empty;
+
     // The value of shelldir for the directory the shell was left in
     private const string Last = "last";
 
@@ -119,7 +125,7 @@ internal static class Shell
     {
         if (Current is not { Terminal: true } session) return;
         EventLog.Add(DialogText.LogShell + ": left"); // English: the log
-        RememberLast(session.Directory);
+        RememberLast(session.Directory, session.WorkedFile);
     }
 
     /// <summary>
@@ -129,13 +135,25 @@ internal static class Shell
     internal static bool OnLines => Init.Plain || Prompts != null;
 
     /// <summary>
-    /// With shelldir=last: the directory the shell is left in is kept (shelllastdir), to start there next time
+    /// A shell typed in at a terminal is left: with shelldir=last the directory it is left in is kept (shelllastdir),
+    /// to start there next time, and $file (shelllastfile), to be $file again. Saved when one of them changed
     /// </summary>
-    internal static void RememberLast(string directory)
+    internal static void RememberLast(string directory, string? file = null)
     {
-        if (!string.Equals(StartSetting.Trim(), Last, StringComparison.OrdinalIgnoreCase)) return;
-        LastDirectory = directory;
-        FileIo.SaveSettings();
+        var changed = false;
+        if (string.Equals(StartSetting.Trim(), Last, StringComparison.OrdinalIgnoreCase) && LastDirectory != directory)
+        {
+            LastDirectory = directory;
+            changed = true;
+        }
+
+        if (file != null && LastFile != file)
+        {
+            LastFile = file;
+            changed = true;
+        }
+
+        if (changed) FileIo.SaveSettings();
     }
 
     /// <summary>
@@ -195,7 +213,7 @@ internal static class Shell
         if (file != null && File.Exists(file)) session.ShowFirst(file);
         var code = Run(session);
         // (commands read from a file or a pipe do not change where the shell typed in starts)
-        if (terminal) RememberLast(session.Directory);
+        if (terminal) RememberLast(session.Directory, session.WorkedFile);
         return code;
     }
 

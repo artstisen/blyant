@@ -63,6 +63,11 @@ internal sealed partial class ShellSession
     // $file: the file the last command worked on (null: none yet)
     private string? _file;
 
+    /// <summary>
+    /// $file: the file the last command worked on (null: none yet), kept when the shell is left (shelllastfile)
+    /// </summary>
+    internal string? WorkedFile => _file;
+
     private List<Item> _lastList = new();
     private bool _listShown; // A list has been shown (its rows can be empty)
 
@@ -130,6 +135,9 @@ internal sealed partial class ShellSession
         ShellRegisters.FileSource = () => _file;
         Terminal = terminal;
         _yes = yes;
+        // $file of the shell left last, while the file is there (typed in at a terminal: not for commands from a file,
+        // a pipe or --run, which do only what they say)
+        if (terminal && Shell.LastFile.Length > 0 && File.Exists(Shell.LastFile)) _file = Shell.LastFile;
     }
 
     /// <summary>

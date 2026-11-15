@@ -256,7 +256,7 @@ blyant ~/novel> open 1
 
 `set` shows the settings as they are in the settings file (`settings.ini` in the data directory), and changes one as the pages of Configuration do: `set indent 2`, `set wrap false`, `set colorscheme Deep Blue`. The setting is read again at once, as Blyant reads it when it starts, and `set shelldir ""` empties a setting. A value the setting cannot have is told, and the setting stays as it was: `indent cannot be 3: it stays 4`. A settings file written by an earlier version of Blyant lacks the settings that came after it: `set` writes the file whole first (as changing a setting in Configuration does), so every setting of this version can be shown and changed.
 
-`reset` puts all the settings back to their defaults, as _Reset all settings_ on the System page of Configuration does: your lists, favorites, bookmarks and files are kept. It asks first, and only `y` (or `Yes`) goes ahead: `Enter` alone answers no. The settings of the shell go back too (`shellpaging` on, `shelldir` empty), and so does the language (English). From a file or with `--run`, nothing is reset unless `--yes` is given. The names and values are those of the settings file, and the guide to [Configuration](Guide-to-start-page.md#configuration) tells what each setting does.
+`reset` puts all the settings back to their defaults, as _Reset all settings_ on the System page of Configuration does: your lists, favorites, bookmarks and files are kept. It asks first, and only `y` (or `Yes`) goes ahead: `Enter` alone answers no. The settings of the shell go back too (`shellpaging` on, `shelldir` empty), and so does the language (English). From a file or with `--run`, nothing is reset unless `--yes` is given. The names and values are those of the settings file: [Settings file](Guide-to-settings-file.md) lists them all, with their defaults, and the guide to [Configuration](Guide-to-start-page.md#configuration) tells more of what each setting does.
 
 `reload` reads the settings file again after you have edited it in another program (saved in the editor of Blyant, `open settings.ini` from `data`, it is used at once), and uses it as Blyant does when it starts: `Settings and registers read again`. A value a setting cannot have is told (`shellpaging cannot be often: it is true`), and the setting has its default, as when Blyant starts. The language changes at once; the color scheme and the other settings of the full screen are used the next time it is shown. The directory you are in, the last list and the commands typed before stay as they were. `reload` also reads the registers again.
 
@@ -438,7 +438,7 @@ lines plot.md 3-5 > $notes          ">": the register is those lines alone
   | Name | Value |
   |---|---|
   | `$pwd` | the directory you are in (`copy 3 $pwd`) |
-  | `$file` | the file the last command worked on: opened, peeked, put lines in, made with `new` ... (`peek plot.md`, then `insert $file bottom Done`). A list shown (`ls`, `fav`) does not change it |
+  | `$file` | the file the last command worked on: opened, peeked, put lines in, made with `new` ... (`peek plot.md`, then `insert $file bottom Done`). It is kept when you leave the shell, and is `$file` again the next time you start it, while the file is there (setting `shelllastfile`; not for commands from a file, a pipe or `--run`). A list shown (`ls`, `fav`) does not change it |
   | `$date` | today, as `2026-11-15` |
   | `$time` | the time now, as `14:05` |
   | `$now` | the date and the time, as `2026-11-15 14:05:33` (as `:ts` in the editor) |
