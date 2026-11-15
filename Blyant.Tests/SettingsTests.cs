@@ -152,14 +152,17 @@ backup=
     [Fact]
     public void ZenColors_AreLoadedAndSaved()
     {
-        File.WriteAllText(SettingsFile, LegacySettings + "\nzen=true\nzencolors=true\n");
+        File.WriteAllText(SettingsFile, LegacySettings + "\nzen=true\nzencolors=false\n");
+        Assert.True(FileIo.LoadSettings());
+        Assert.False(TextArea.ZenColors);
+        FileIo.SaveSettings();
+        Assert.Equal("false", FileIo.ParseSettings(File.ReadAllText(SettingsFile))["zencolors"]);
+        // The defaults: on (also for a settings file from before, without the setting)
+        Actions.ApplyDefaultSettings();
+        Assert.True(TextArea.ZenColors);
+        File.WriteAllText(SettingsFile, LegacySettings + "\nzen=true\n");
         Assert.True(FileIo.LoadSettings());
         Assert.True(TextArea.ZenColors);
-        FileIo.SaveSettings();
-        Assert.Equal("true", FileIo.ParseSettings(File.ReadAllText(SettingsFile))["zencolors"]);
-        // The defaults: off
-        Actions.ApplyDefaultSettings();
-        Assert.False(TextArea.ZenColors);
     }
 
     [Fact]
@@ -428,8 +431,8 @@ backup=
         Assert.Equal("false", settings["gutter"]);
         // Zen mode is off unless turned on
         Assert.Equal("false", settings["zen"]);
-        // The mode in Zen mode is in the color of the text unless its colors are turned on
-        Assert.Equal("false", settings["zencolors"]);
+        // The mode in Zen mode is in the color of its mode unless that is turned off
+        Assert.Equal("true", settings["zencolors"]);
         // The shell pages a long output unless that is turned off
         Assert.Equal("true", settings["shellpaging"]);
         // The shell completes with Tab unless that is turned off

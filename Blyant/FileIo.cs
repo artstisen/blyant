@@ -758,7 +758,8 @@ internal static class FileIo
         TextArea.WordWrap = Tools.TrimToLower(Get("wrap")) != DialogText.BFalse;
         TextArea.ShowWhitespace = Tools.TrimToLower(Get("whitespace")) == DialogText.BTrue;
         TextArea.Zen = Tools.TrimToLower(Get("zen")) == DialogText.BTrue;
-        TextArea.ZenColors = Tools.TrimToLower(Get("zencolors")) == DialogText.BTrue;
+        // (on unless turned off)
+        TextArea.ZenColors = Tools.TrimToLower(Get("zencolors")) != DialogText.BFalse;
         // On unless turned off
         Shell.Paging = Tools.TrimToLower(Get("shellpaging")) != DialogText.BFalse;
         Shell.StartInShell = Tools.TrimToLower(Get("startshell")) == DialogText.BTrue;

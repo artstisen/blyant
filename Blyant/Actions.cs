@@ -221,7 +221,7 @@ internal static class Actions
         TextArea.WordWrap = true;
         TextArea.ShowWhitespace = false;
         TextArea.Zen = false;
-        TextArea.ZenColors = false;
+        TextArea.ZenColors = true;
         Shell.Paging = true;
         Shell.Completion = true;
         Shell.RecentFirst = true;
