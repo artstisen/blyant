@@ -115,6 +115,12 @@ To have every output whole (with a screen reader, say), turn the pages off: `set
 | `favorites new\|delete name` | Make a list and open it (`fav new reading`), or delete one: asked first, to the trash (the files in it stay where they are; the main list is open after the open one is deleted) |
 | `favorites rename name new` | Give a list a new name (`fav rename work writing`). The main list keeps its name |
 | `favorites use name` | Open a list whose name is a word of `fav` (`fav use new` for a list named _new_) |
+| `favorites folder name` | Make a folder of favorites, last in the list (`fav folder Drafts`). See [Folders of favorites](#folders-of-favorites) |
+| `favorites subfolder [folder] name` | Make a subfolder, first in a folder (`fav subfolder [Writing] Drafts`) |
+| `favorites rename [folder] name` | Give a folder a new name (`fav rename [Drafts] Old drafts`) |
+| `favorites remove [folder]` | Remove a folder with its favorites and subfolders, after asking (the files stay) |
+| `favorites move rows\|[folder] where` | Move favorites or a folder: `top`, `bottom`, `up`, `down`, `out`, to the place of a row (`5`), or into a `[folder]` |
+| `favorites undo` | Put back what `fav remove` removed last |
 | `history [-l]` (`hist`) | List the files opened by name, the newest first, with when (`-l`: the full paths) |
 | `recent [-l]` | List the latest files (the first nine of the history), by name (`-l`: the full paths) |
 | `hotlist` (`hot`) | List the directory hotlist |
@@ -247,6 +253,46 @@ lines notes.md 5-9 replace " (draft)" ""     " (draft)" taken out of them
 - After the lines, `Tab` completes `start`, `end`, `unstart`, `unend`, `replace` and `>`. A `>` or one of these words later on is part of the text: `lines notes.md 3 start ">"` makes line 3 a quote
 - `$name` and `$clip` put in their value: `lines todo.md 4 end $note`
 - The lines changed are shown, and the file is then the last list, at the first of them (`open 1`). When no line changes, nothing is written, and it is told. As for `insert`, the file keeps its line endings and byte order mark, only a file in UTF-8 is changed and not the files Blyant uses, and there is no undo; nothing is asked, as no line is lost
+
+## Folders of favorites
+The favorites can be kept in folders, as on the favorites page of the full screen: a folder holds favorites and subfolders, and a subfolder favorites (two levels). A folder is only in the list of favorites: nothing is made on disk, and no file is moved. `fav` shows the folders in brackets, with what is in them below them:
+
+```
+blyant ~> fav
+List: main
+  1  plot.md
+[Writing]
+  [Drafts]
+  2  chapter-1.md
+  3  chapter-2.md
+  4  notes.md
+```
+
+A folder is named as `fav` shows it, in brackets: `[Writing]`, and a subfolder with its folder, `[Writing/Drafts]` (or `[Drafts]` when no other folder has that name). A favorite is named by its row, as `fav` numbers it: the folders are not rows.
+
+```
+fav folder Research                  a folder, last in the list
+fav subfolder [Writing] Drafts       a subfolder, first in Writing
+fav rename [Research] Sources        a folder renamed
+fav move 1 [Writing]                 row 1 into Writing, last in it
+fav move 2,3 [Writing/Drafts]        rows 2 and 3 into the subfolder
+fav move 4 top                       to the top of its folder (or of the list)
+fav move 4 bottom                    to the end
+fav move 4 up                        one step up (down: one step down)
+fav move 4 2                         to the place of row 2, in its folder
+fav move 2 out                       out of its folder, last in the list
+fav move [Sources] top               a folder, with what is in it
+fav move [Sources] [Writing]         a folder into another, as a subfolder
+fav move [Writing/Sources] out       a subfolder out of its folder
+fav remove [Sources]                 a folder with what is in it (asked first)
+fav undo                             what fav remove removed last, put back
+```
+
+- The rows are given as in [Line numbers](#line-numbers): `3`, `3-5`, `3,7`. `up` and `down` move one row, or one folder, a step at a time, as `V` with `j` and `k` does on the full screen: a favorite moved onto a folder goes into it, and one moved past the first or last favorite of its folder leaves it
+- A folder with subfolders does not go into another folder, as there are two levels at most, and a subfolder goes into a folder at the top. What cannot be done is told, and nothing is moved
+- After each change the list is shown again with its new rows, and it is the last list: `open 2` opens row 2 of it. A folder name with blanks is written in quotes (`"[My drafts]"`), and `Tab` completes the names of the folders after `[`, and the places after `fav move 3`
+- `fav remove [Sources]` asks first, and tells how many favorites and subfolders go with the folder; the files stay where they are. `fav undo` puts back what `fav remove` (a folder, or a favorite: `fav remove 3`) removed last in this shell, as long as the list is as it left it
+- They work on the open list of favorites, and each change is saved at once, so the full screen shows the same folders
 
 ## Registers
 A register keeps a text or a path under a name, and `$name` puts it in any command:

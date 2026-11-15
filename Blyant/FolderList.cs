@@ -252,6 +252,27 @@ internal sealed class FolderList<T> where T : class, IFolderItem
         return moving.Count;
     }
 
+    /// <summary>
+    /// Move an item (not a folder) to the place of another (not a folder): in front of it, in the folder it is in
+    /// (opened, so that it is shown)
+    /// </summary>
+    /// <returns>The place of the item in the list, or -1 if it was not moved</returns>
+    internal int MoveBefore(T item, T target)
+    {
+        if (item.IsFolder || target.IsFolder || ReferenceEquals(item, target) || !Items.Contains(item) ||
+            !Items.Contains(target))
+        {
+            return -1;
+        }
+
+        Items.Remove(item);
+        var at = Items.IndexOf(target);
+        item.Level = target.Level;
+        Items.Insert(at, item);
+        Reveal(at);
+        return at;
+    }
+
     #region Folders
 
     /// <summary>

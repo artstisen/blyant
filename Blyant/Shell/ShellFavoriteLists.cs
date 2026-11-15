@@ -12,12 +12,26 @@ internal sealed partial class ShellSession
     {
         if (Change(argument) is { } add)
         {
-            ChangeFavorites(Rest(argument), add);
+            // ("fav remove [Drafts]": a folder)
+            if (!add && FolderFirst(Rest(argument)) != null) RemoveFavoriteFolder(Rest(argument));
+            else ChangeFavorites(Rest(argument), add);
             return;
         }
 
         switch (argument.TrimStart().Split(' ', 2)[0].ToLowerInvariant())
         {
+            case "folder":
+                NewFavoriteFolder(Rest(argument));
+                break;
+            case "subfolder":
+                NewFavoriteSubfolder(Rest(argument));
+                break;
+            case "move":
+                MoveFavorites(Rest(argument));
+                break;
+            case "undo":
+                UndoFavorites();
+                break;
             case "lists":
                 ShowFavoriteLists();
                 break;
@@ -25,7 +39,9 @@ internal sealed partial class ShellSession
                 NewFavoriteList(Rest(argument));
                 break;
             case "rename":
-                RenameFavoriteList(Rest(argument));
+                // ("fav rename [Drafts] Old drafts": a folder; "fav rename work writing": a list)
+                if (FolderFirst(Rest(argument)) != null) RenameFavoriteFolder(Rest(argument));
+                else RenameFavoriteList(Rest(argument));
                 break;
             case "delete":
                 DeleteFavoriteList(Rest(argument));

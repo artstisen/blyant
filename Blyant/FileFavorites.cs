@@ -757,6 +757,12 @@ internal static class FileFavorites
     internal static bool Move(int index, bool up) => Folders.Move(index, up);
 
     /// <summary>
+    /// Move a favorite to the place of another: in front of it, in its folder (the shell's "fav move 3 5")
+    /// </summary>
+    /// <returns>The place of the favorite in the list, or -1 if it was not moved (a folder, or the same)</returns>
+    internal static int MoveBefore(Favorite favorite, Favorite target) => Folders.MoveBefore(favorite, target);
+
+    /// <summary>
     /// A file or directory was renamed or moved: the favorites follow (also the ones inside a directory), in all the
     /// lists. The other lists are saved here
     /// </summary>

@@ -396,6 +396,26 @@ List: main
 - `fav research` opens the list again, and `fav main` goes back to the main list
 - `fav rename research sources` gives a list a new name, and `fav delete sources` deletes it, after asking (the files in it stay where they are)
 
+Within a list the favorites can be kept in folders, as on the favorites page of the full screen. A folder is named in brackets, as `fav` shows it, and a favorite by its row:
+
+```
+blyant ~/novel> fav folder Story
+Folder made: [Story]
+List: main
+  1  plot.md
+  2  chapters/
+[Story]
+blyant ~/novel> fav move 1 [Story]
+Moved: plot.md
+List: main
+  1  chapters/
+[Story]
+  2  plot.md
+```
+
+- `fav move 2 top` moves row 2 to the top of its folder, `up` and `down` one step, `out` out of its folder, and `fav move [Story] top` the folder with what is in it
+- `fav subfolder [Story] Ideas` makes a subfolder, `fav rename [Story] Novel` renames a folder, and `fav remove [Story]` removes it after asking. `fav undo` puts it back
+
 ## Tidying files
 `format` and `trim` are the commands `:format` and `:trim` of the editor, run on a file without opening it:
 

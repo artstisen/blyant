@@ -384,8 +384,11 @@ internal sealed partial class ShellSession
             return;
         }
 
+        // (taken off: "fav undo" puts it back)
+        var before = FileFavorites.Serialize();
         FileFavorites.Toggle(item.Path);
         var result = FileFavorites.Save();
+        if (!add && result == DialogText.Success) KeepForUndo(before);
         EventLog.Add(DialogText.LogFile + (add ? "Favorite add: " : "Favorite remove: ") + item.Path);
         Done(result, add ? Lang.F("Added to the favorites: {0}", item.Path)
             : Lang.F("Taken off the favorites: {0}", item.Path), null);

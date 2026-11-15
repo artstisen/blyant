@@ -178,13 +178,28 @@ internal sealed class ShellCompletion
             case "favs":
                 if (position == 0)
                 {
-                    return (Kind.Words, new[] { "add", "remove", "lists", "new", "rename", "delete", "use", "-l" }
+                    return (Kind.Words, new[]
+                        {
+                            "add", "remove", "lists", "new", "rename", "delete", "use", "folder", "subfolder", "move",
+                            "undo", "-l"
+                        }
                         .Concat(FileFavorites.ListWords()));
                 }
 
                 if (position == 1 && after[0] is "-l" or "use") return (Kind.Words, FileFavorites.ListWords());
-                if (position == 1 && after[0] is "rename" or "delete") return (Kind.Words, FileFavorites.ListNames());
-                return (position == 1 && after[0] is "add" or "remove" ? Kind.Path : Kind.None, none);
+                if (position == 1 && after[0] == "delete") return (Kind.Words, FileFavorites.ListNames());
+                // (a list, or a folder in brackets)
+                if (position == 1 && after[0] == "rename")
+                    return (Kind.QuotedWords, FileFavorites.ListNames().Concat(FavoriteFolderWords()));
+                if (position == 1 && after[0] is "subfolder" or "move") return (Kind.QuotedWords, FavoriteFolderWords());
+                if (position == 2 && after[0] == "move")
+                {
+                    return (Kind.QuotedWords,
+                        new[] { "top", "bottom", "up", "down", "out" }.Concat(FavoriteFolderWords()));
+                }
+
+                if (position == 1 && after[0] == "remove") return (Kind.PathOrWords, FavoriteFolderWords());
+                return (position == 1 && after[0] == "add" ? Kind.Path : Kind.None, none);
             case "history":
             case "hist":
             case "recent":
@@ -215,6 +230,16 @@ internal sealed class ShellCompletion
             default:
                 return (Kind.None, none);
         }
+    }
+
+    // The folders of the open list of favorites as the shell names them: "[Drafts]", "[Writing/Drafts]"
+    private static IEnumerable<string> FavoriteFolderWords()
+    {
+        FileFavorites.Load();
+        var items = FileFavorites.Items;
+        return Enumerable.Range(0, items.Count).Where(i => items[i].IsFolder).Select(i =>
+            "[" + (items[i].Level > 0 ? items[FileFavorites.Parent(i)].Name + "/" : string.Empty) + items[i].Name + "]")
+            .ToList();
     }
 
     // The names of the headings of a file (for "shift"); none if it cannot be read

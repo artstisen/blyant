@@ -2598,4 +2598,125 @@ public class ShellTests : IDisposable
         // peek: the first 2 lines
         Assert.Contains("five.md\n  1  one\n  2  two\n", output);
     }
+
+    // ---- Folders of favorites: fav folder, subfolder, rename, remove, move, undo
+
+    // The favorites as a line: "." for each level, a folder in brackets, a favorite by its name
+    private static string FavoritesShape()
+    {
+        FileFavorites.Load();
+        return string.Join("|", FileFavorites.Items.Select(item => new string('.', item.Level) +
+            (item.IsFolder ? "[" + item.Name + "]" : Path.GetFileName(item.Path))));
+    }
+
+    // Four favorites: a.md, b.md, c.md, d.md
+    private void FourFavorites()
+    {
+        foreach (var name in new[] { "a.md", "b.md", "c.md", "d.md" }) File.WriteAllText(In("work", name), "x\n");
+        Run("fav add a.md\nfav add b.md\nfav add c.md\nfav add d.md\n");
+    }
+
+    [Fact]
+    public void FavoriteFolders_AreMadeFilledRenamedAndShownAgain()
+    {
+        FourFavorites();
+        var (output, errors, _, session) = Run("fav folder Drafts\nfav move 2,4 [Drafts]\nfav subfolder [Drafts] Old\n" +
+                                               "fav move 1 \"[Drafts/Old]\"\nfav rename [Drafts] My writing\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("c.md|[My writing]|.[Old]|..a.md|.b.md|.d.md", FavoritesShape());
+        Assert.Contains(Lang.F("Folder made: [{0}]", "Drafts"), output);
+        Assert.Contains(Lang.F("Folder renamed: [{0}]", "My writing"), output);
+        Assert.Contains(Lang.F("Moved: {0}", "b.md, d.md"), output);
+        // The list shown again is the last list: its rows are those of fav
+        Assert.Equal(In("work", "c.md"), session.LastList[0].Path);
+        Assert.Contains("\n[My writing]\n  [Old]\n", output);
+    }
+
+    [Fact]
+    public void FavoriteRows_MoveTopBottomUpDownToARowAndOut()
+    {
+        FourFavorites();
+        Run("fav move 4 top\n");
+        Assert.Equal("d.md|a.md|b.md|c.md", FavoritesShape());
+        Run("fav move 1 bottom\nfav move 1 down\n");
+        Assert.Equal("b.md|a.md|c.md|d.md", FavoritesShape());
+        Run("fav move 4 2\n");
+        Assert.Equal("b.md|d.md|a.md|c.md", FavoritesShape());
+        Run("fav folder F\nfav move 1-2 [F]\nfav move 4 out\n");
+        Assert.Equal("a.md|c.md|[F]|.b.md|d.md", FavoritesShape());
+        // To the place of a row in a folder: into the folder
+        Run("fav move 1 3\n");
+        Assert.Equal("c.md|[F]|.a.md|.b.md|d.md", FavoritesShape());
+    }
+
+    [Fact]
+    public void FavoriteFolders_MoveWithWhatIsInThem()
+    {
+        FourFavorites();
+        Run("fav folder A\nfav folder B\nfav move 1 [A]\nfav move 1 [B]\nfav move [B] top\n");
+        Assert.Equal("[B]|.b.md|c.md|d.md|[A]|.a.md", FavoritesShape());
+        Run("fav move [A] [B]\n");
+        Assert.Equal("[B]|.b.md|.[A]|..a.md|c.md|d.md", FavoritesShape());
+        Run("fav move [B/A] out\nfav move [A] up\n");
+        Assert.Equal("[A]|.a.md|[B]|.b.md|c.md|d.md", FavoritesShape());
+        // A folder with subfolders does not go into another
+        Run("fav subfolder [B] S\n");
+        var (_, errors, _, _) = Run("fav move [B] [A]\nfav move [A] [A]\nfav move [A] out\nfav move [A] 3\n");
+        Assert.Equal(4, errors.TrimEnd('\n').Split('\n').Length);
+        Assert.Contains(Lang.F("{0} has subfolders: it cannot go into another folder", "B"), errors);
+        Assert.Equal("[A]|.a.md|[B]|.[S]|.b.md|c.md|d.md", FavoritesShape());
+    }
+
+    [Fact]
+    public void FavoriteFolders_RemovedAfterAsking_AndUndoPutsThemBack()
+    {
+        FourFavorites();
+        Run("fav folder F\nfav move 1-2 [F]\n");
+        var shape = FavoritesShape();
+        // Not asked from a file without --yes: nothing removed
+        var (output, _, _, _) = Run("fav remove [F]\n");
+        Assert.Contains(Lang.T("Nothing was removed"), output);
+        Assert.Equal(shape, FavoritesShape());
+
+        // (asked on lines while the shell runs: --yes answers)
+        Run("fav remove [F]\nfav undo\n", yes: true);
+        Assert.Equal(shape, FavoritesShape());
+        Run("fav remove [F]\n", yes: true);
+        Assert.Equal("c.md|d.md", FavoritesShape());
+        // Another shell has removed nothing
+        var errors = Run("fav undo\n").Errors;
+        Assert.Contains(Lang.T("Nothing to put back: fav remove has removed nothing here"), errors);
+        // fav remove 3 too; and only while the list is as the removal left it
+        Run("fav add a.md\nfav\nfav remove 2\nfav undo\n", yes: true);
+        Assert.Equal("c.md|d.md|a.md", FavoritesShape());
+        errors = Run("fav\nfav remove 1\nfav add c.md\nfav undo\n", yes: true).Errors;
+        Assert.Contains(Lang.T("The favorites have changed since: nothing is put back"), errors);
+        Assert.Equal("d.md|a.md|c.md", FavoritesShape());
+    }
+
+    [Fact]
+    public void FavoriteFolders_WhatCannotBeDone_IsTold()
+    {
+        FourFavorites();
+        Run("fav folder F\nfav folder G\nfav subfolder [F] X\nfav subfolder [G] X\n");
+        var shape = FavoritesShape();
+        var (_, errors, code, _) = Run("fav move 9 top\nfav move 1,2 up\nfav move 1 nowhere\nfav move [Nothing] top\n" +
+                                       "fav move [X] top\nfav folder [bad]\nfav subfolder [F/X] Y\nfav rename [F]\n" +
+                                       "fav move 1 1\nfav move 1 out\n");
+        Assert.Equal(10, errors.TrimEnd('\n').Split('\n').Length);
+        Assert.Contains(Lang.F("{0} folders are named [{1}]: give the folder it is in too, [Writing/{1}]", 2, "X"), errors);
+        Assert.Equal(1, code);
+        Assert.Equal(shape, FavoritesShape());
+    }
+
+    [Fact]
+    public void Tab_AfterFavMove_CompletesTheFoldersAndThePlaces()
+    {
+        FourFavorites();
+        Run("fav folder Drafts\nfav folder \"My notes\"\n");
+        Assert.Equal("fav move 1 [Drafts]", Tab(Completion(), "fav move 1 [Dr"));
+        Assert.Equal("fav move 1 bottom", Tab(Completion(), "fav move 1 bo"));
+        Assert.Equal("fav move \"[My notes]\"", Tab(Completion(), "fav move [My"));
+        Assert.Equal("fav remove [Drafts]", Tab(Completion(), "fav remove [D"));
+    }
 }

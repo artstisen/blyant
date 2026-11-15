@@ -54,6 +54,12 @@ internal sealed partial class ShellSession
         ("favorites new|delete name", Lang.T("Make a list and open it, or delete one")),
         ("favorites rename name new", Lang.T("Give a list of favorites a new name")),
         ("favorites use name", Lang.T("Open a list named as a word (new, lists ...)")),
+        ("favorites folder name", Lang.T("Make a folder of favorites, last in the list")),
+        ("favorites subfolder [f] name", Lang.T("Make a subfolder, first in the folder [f]")),
+        ("favorites rename [f] name", Lang.T("Give a folder of favorites a new name")),
+        ("favorites remove [f]", Lang.T("Remove a folder with its favorites (asks first)")),
+        ("favorites move rows|[f] where", Lang.T("Move: top, bottom, up, down, out, 5, [folder]")),
+        ("favorites undo", Lang.T("Put back what fav remove removed last")),
         ("favorites add|remove file|n", Lang.T("Add to the favorites, or take off them")),
         ("history [-l]", Lang.T("List the files opened (hist)")),
         ("recent [-l]", Lang.T("List the latest files")),
@@ -452,12 +458,14 @@ internal sealed partial class ShellSession
         Line(Lang.F("List: {0}", ListWord(FileFavorites.CurrentList)));
         // The folders of the list are shown as headings (not numbered)
         var items = new List<Item>();
-        var headings = new Dictionary<int, string>();
+        // (the folders before each row: a folder with a subfolder first in it, or empty folders, are several)
+        var headings = new Dictionary<int, List<string>>();
         foreach (var favorite in FileFavorites.Items)
         {
             if (favorite.IsFolder)
             {
-                headings[items.Count] = new string(' ', 2 * favorite.Level) + "[" + favorite.Name + "]";
+                if (!headings.TryGetValue(items.Count, out var before)) headings[items.Count] = before = new List<string>();
+                before.Add(new string(' ', 2 * favorite.Level) + "[" + favorite.Name + "]");
                 continue;
             }
 
@@ -480,7 +488,7 @@ internal sealed partial class ShellSession
         var width = rows.Count.ToString().Length;
         for (var i = 0; i <= rows.Count; i++)
         {
-            if (headings.TryGetValue(i, out var heading)) Line(heading);
+            if (headings.TryGetValue(i, out var before)) foreach (var heading in before) Line(heading);
             if (i < rows.Count) Line((i + 1).ToString().PadLeft(width + 2) + "  " + rows[i].Item2);
         }
     }
