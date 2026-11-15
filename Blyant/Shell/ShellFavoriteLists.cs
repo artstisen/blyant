@@ -64,8 +64,8 @@ internal sealed partial class ShellSession
         }
     }
 
-    // "filter text" after "fav", "hist" or "hot" (with "-l" before it: the full paths): the text, or null when it is not
-    // a filter
+    // "filter text" after "fav", "hist", "hot" or "again" (with "-l" before it: the full paths, for "fav" and
+    // "hist"): the text (without the quotes it can be written in), or null when it is not a filter
     private static (string Text, bool Full)? FilterOf(string argument)
     {
         var text = argument.Trim();
@@ -77,7 +77,7 @@ internal sealed partial class ShellSession
         }
 
         if (!text.Split(' ', 2)[0].Equals("filter", StringComparison.OrdinalIgnoreCase)) return null;
-        return (Rest(text).Trim(), full);
+        return (Rest(text).Trim().Trim('"'), full);
     }
 
     // The favorites of the open list that a text is in (in the name or the path, letter case alike), or that a
@@ -85,7 +85,6 @@ internal sealed partial class ShellSession
     // numbered as in the whole list, which is the last list: "open 7" and "fav move 7 top" are the row 7 of "fav"
     private void FilterFavorites(string text, bool full)
     {
-        text = text.Trim('"');
         if (text.Length == 0)
         {
             Error(Lang.T("Give a text: fav filter draft (or *.md)"));
@@ -99,7 +98,9 @@ internal sealed partial class ShellSession
         for (var i = 0; i < items.Count; i++)
         {
             if (items[i].IsFolder) continue;
-            rows.Add((i, new Item(items[i].Path, System.IO.Directory.Exists(items[i].Path))));
+            // (with the place kept in the favorite, as "fav" lists it: "open 3" opens the file there)
+            var at = items[i].Line > 0 ? (items[i].Line, Math.Max(1, items[i].Column)) : ((int, int)?)null;
+            rows.Add((i, new Item(items[i].Path, System.IO.Directory.Exists(items[i].Path), at)));
         }
 
         ShowRows(rows.Select(row => row.Item).ToList());

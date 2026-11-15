@@ -18,7 +18,7 @@ autosize=true
 - In the shell, `set` lists the settings as they are in the file, `set indent 2` changes one, and `set shelldir ""` empties one (see the [guide to the shell](Guide-to-shell.md#text-and-settings))
 - `true` and `false` turn a setting on and off. A value a setting cannot have gives it its default, and so does a setting that is not in the file: a file written by an earlier version of Blyant lacks the settings that came after it
 - Blyant writes the whole file each time a setting changes: comments and lines of your own are not kept, and names it does not know are left out (as the lines of Marbles, which Blyant came from)
-- _Reset all settings_ on the System page (and `reset` in the shell) puts every setting back to its default. Your lists, favorites, bookmarks and files are kept
+- _Reset all settings_ on the System page (and `reset` in the shell) puts the settings back to their defaults. The language, the spell languages and the places Blyant keeps (the directories of the file browser, `pickdir`, the hint shown next) stay as they are, and so do your lists, favorites, bookmarks and files
 - A file that cannot be read when Blyant starts is kept as `settings.ini.bad` before a new one is written, so the settings in it are not lost
 
 The tables below tell each setting, the values it takes (the default in bold), and where it is changed.
@@ -33,9 +33,9 @@ The tables below tell each setting, the values it takes (the default in bold), a
 | `newlineendings` | **system**, lf, crlf | Line endings of new files (_Line endings of new files_) |
 | `deletetotrash` | **true**, false | Deleting in the file browser moves to the trash (_Delete to trash_) |
 | `commandlist` | **true**, false | List the commands above the command line while one is typed |
-| `language` | **en**, de, da, nb, sv, es, fr, it, pl, nl, fi | The language of the menus, help and messages (_Language_) |
+| `language` | **en**, de, da, nb, sv, es, fr, it, pl, nl, fi | The language of the menus, help and messages (_Language_). A language whose file is missing is kept, and English is used meanwhile |
 | `hints` | **true**, false | A hint on the Start tab (System page; `X` on the Start tab hides them) |
-| `hintindex` | **0**, a number | The hint shown next time (kept by Blyant) |
+| `hintindex` | **-1**, a number | The hint shown next time (kept by Blyant) |
 
 ## Size and looks
 | Setting | Values | What it is |
@@ -60,8 +60,8 @@ The tables below tell each setting, the values it takes (the default in bold), a
 | `zen` | **false**, true | Zen mode: only mode, name and line (`:zen`) |
 | `zencolors` | **true**, false | The mode at the top in Zen mode in the color of its mode (_Colored mode label_) |
 | `marksapostrophe` | **false**, true | `'a` jumps to the exact place of mark `a`, as `` `a `` does |
-| `scrolloff` | **true**, false | Keep lines above and below the cursor when the text scrolls (_Keep 12 lines around cursor_) |
-| `scrolllines` | **12**, a number | How many lines are kept (`:scrolloff 8`) |
+| `scrolloff` | **true**, false | Keep lines above and below the cursor when the text scrolls (_Lines kept around cursor_) |
+| `scrolllines` | **12**, 1 to 999 | How many lines are kept (`:scrolloff 8`) |
 | `syntaxcolors` | **true**, false | Color the text of the kinds of files the editor knows (`:syntax on`, `:syntax off`) |
 | `spelllang` | **en**, a language, or several (`da,en`) | The languages of `:spell` (_Spell checker_) |
 | `autocomplete` | **true**, false | Complete words while typing (_Complete words while typing_, `:complete`) |
@@ -77,7 +77,7 @@ Changed in _Clipboard and paste bin_ on the Editor page (see [System clipboard a
 | `pastebin` | **false**, true | Yanked text is written to the paste bin file |
 | `clipboardyank` | **all**, plus | Every yank goes out of Blyant, or only one with `"+` in front of it (`"+yy`) |
 | `pastebinappend` | **false**, true | A yank is added to the end of the paste bin file, instead of replacing what is in it |
-| `pastebinfile` | a path | The paste bin file (`:pbpath` shows it) |
+| `pastebinfile` | **paste-bin.txt**, a path | The paste bin file (`:pbpath` shows it) |
 
 ## Lists
 Changed on the Lists page of Configuration, or with the commands of the lists (`:number`, `:panes`, `:peek`).

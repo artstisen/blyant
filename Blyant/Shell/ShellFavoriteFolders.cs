@@ -215,8 +215,9 @@ internal sealed partial class ShellSession
         FavoritesChanged(Lang.T("Put back what was removed last"), "undo");
     }
 
-    // "fav move 3 top", "fav move 3,5 [Drafts]", "fav move [Drafts] up": favorites (by their rows in "fav": "3",
-    // "3-5", "3,7") or a folder ("[Drafts]") moved: "top" or "bottom" (of the folder they are in, or of the list),
+    // "fav move 3 top", "fav move 3,5 [Drafts]", "fav move plot.md top", "fav move chapter-*.md [Book]", "fav move
+    // [Drafts] up": favorites (by their rows in "fav": "3", "3-5", "3,7", or by their names, a pattern or a path; see
+    // FavoritesNamed) or a folder ("[Drafts]") moved: "top" or "bottom" (of the folder they are in, or of the list),
     // "up" or "down" one step (one favorite or folder, as V with j and k), "out" (out of their folders: favorites
     // last in the list, a subfolder after its folder), into a folder ("[Drafts]": last in it; a folder goes into a
     // folder at the top as a subfolder), or, for favorites, to the place of a row ("5": in front of it, in its
@@ -276,15 +277,15 @@ internal sealed partial class ShellSession
 
         var what = folder != null
             ? "[" + folder.Name + "]"
-            : string.Join(", ", moved.Select(favorite => Path.GetFileName(Path.TrimEndingDirectorySeparator(favorite.Path))));
+            : string.Join(", ", moved.Select(FavoriteName));
         var error = folder != null ? MoveFolder(folder, where) : MoveRows(moved, where);
         if (error == null) FavoritesChanged(Lang.F("Moved: {0}", what), "move");
         else if (error.Length > 0) Error(error);
     }
 
-    // The name of a favorite as "fav" shows it, without the "/" of a directory
-    internal static string FavoriteName(FileFavorites.Favorite favorite) =>
-        Path.GetFileName(Path.TrimEndingDirectorySeparator(favorite.Path));
+    // The name of a favorite as "fav" shows it, without the "/" of a directory (a root: its path), as the favorites
+    // page names it
+    internal static string FavoriteName(FileFavorites.Favorite favorite) => FileExplorer.FavoriteName(favorite.Path);
 
     // The favorites a name typed stands for: the one of that name ("plot.md", "chapters/"), or all those a pattern
     // fits ("chapter-*.md"), in their order; a path ("~/novel/plot.md", "drafts/plot.md") the one of that path. Letter
@@ -296,7 +297,9 @@ internal sealed partial class ShellSession
         var trimmed = Path.TrimEndingDirectorySeparator(name);
         var rows = FavoriteRows();
         List<int> found;
-        if (trimmed.IndexOfAny(new[] { '/', '\\' }) >= 0 || trimmed.StartsWith('~'))
+        // (a path: with a separator of this system, or from the home directory; on Linux a "\" can be in a name)
+        if (trimmed.IndexOfAny(new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar }) >= 0 ||
+            trimmed == "~")
         {
             var path = PathOf(trimmed);
             found = Enumerable.Range(0, rows.Count).Where(i => FileOperations.SamePath(rows[i].Path, path)).ToList();
@@ -304,7 +307,7 @@ internal sealed partial class ShellSession
         else if (ShellCompletion.IsPattern(trimmed))
         {
             found = Enumerable.Range(0, rows.Count).Where(i =>
-                System.IO.Enumeration.FileSystemName.MatchesSimpleExpression(trimmed, FavoriteName(rows[i]))).ToList();
+                ShellCompletion.PatternFits(trimmed, FavoriteName(rows[i]))).ToList();
         }
         else
         {

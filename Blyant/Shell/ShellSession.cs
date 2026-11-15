@@ -137,7 +137,11 @@ internal sealed partial class ShellSession
         _yes = yes;
         // $file of the shell left last, while the file is there (typed in at a terminal: not for commands from a file,
         // a pipe or --run, which do only what they say)
-        if (terminal && Shell.LastFile.Length > 0 && File.Exists(Shell.LastFile)) _file = Shell.LastFile;
+        if (terminal && Shell.LastFile.Length > 0 && Path.IsPathFullyQualified(Shell.LastFile) &&
+            File.Exists(Shell.LastFile))
+        {
+            _file = Path.GetFullPath(Shell.LastFile);
+        }
     }
 
     /// <summary>

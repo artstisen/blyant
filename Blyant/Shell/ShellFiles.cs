@@ -232,6 +232,7 @@ internal sealed partial class ShellSession
     private void Moved(Item item, string path)
     {
         FileExplorer.PathMoved(item.Path, path, item.IsDirectory);
+        PeekFollows(item.Path, path);
         if (item.IsDirectory && In(item.Path))
         {
             Directory = Path.GetFullPath(Path.Combine(path, Path.GetRelativePath(item.Path, Directory)));
@@ -264,9 +265,9 @@ internal sealed partial class ShellSession
     // "peek 3", "peek notes.md 40", "peek notes.md 100-120", "peek notes.md +100", "peek notes.md +100 30": the lines of
     // a text file, numbered (the first 20 if no lines are given; from a line: 20, or as many as given). The file is
     // then the last list, at the first line shown: "open 1" opens it there. Only read, never written. A place after
-    // the file (or alone: the file peeked last) puts a window as large as the last one of the file there: "+", "++",
-    // "-", "--" (steps from it; "+ 20": steps, given as "count"), "top", "middle", "bottom", "50%"; "peek +120" alone
-    // is the file peeked last from line 120
+    // the file (or alone: the file peeked last) puts a window as large as the last one there: "+", "++", "-", "--"
+    // (steps from it; "+ 20": steps, given as "count"), "top", "middle", "bottom", "50%"; "peek +120" alone is the
+    // file peeked last from line 120. A word alone that is the name of a file here is that file
     private void Peek(string argument, int count = 1)
     {
         var words = Words(argument);
@@ -278,11 +279,11 @@ internal sealed partial class ShellSession
         }
 
         var place = words.Count is 1 or 2 ? PlaceOf(words[^1]) : null;
-        // "peek +120": the file peeked last, from line 120, its window as large (unless a file has that name)
-        var fromLine = place == null && words.Count == 1 && words[0].Length > 1 && words[0][0] == '+' &&
-                       words[0][1..].All(char.IsAsciiDigit) && !File.Exists(PathOf(words[0])) &&
-                       !System.IO.Directory.Exists(PathOf(words[0]));
-        if ((place != null && words.Count == 1) || fromLine)
+        var alone = words.Count == 1 && !File.Exists(PathOf(words[0])) && !System.IO.Directory.Exists(PathOf(words[0]));
+        // "peek +120": the file peeked last, from line 120, its window as large
+        var fromLine = alone && place == null && words[0].Length > 1 && words[0][0] == '+' &&
+                       words[0][1..].All(char.IsAsciiDigit);
+        if (alone && (place != null || fromLine))
         {
             if (_lastPeek is not { } previous)
             {
@@ -294,6 +295,11 @@ internal sealed partial class ShellSession
                 ? new List<string> { previous.Path, words[0], previous.Count.ToString(CultureInfo.InvariantCulture) }
                 : new List<string> { previous.Path, words[0] };
         }
+        else if (place != null && words.Count == 1)
+        {
+            // (a file named "top", "+" ... here: that file)
+            place = null;
+        }
 
         if (place == null && (words.Count > 3 || (words.Count == 3 && !words[1].StartsWith('+'))))
         {
@@ -301,25 +307,43 @@ internal sealed partial class ShellSession
             return;
         }
 
-        if (Existing(words[0]) is not { } item) return;
+        PeekWindow(words, place, count, false, false);
+    }
+
+    // The window of a peek shown: the file (words[0]) and its lines or place. "again": the window of the last peek
+    // (moved to the last lines when the file got shorter); "auto": shown again by the setting shellautopeek, which
+    // leaves the last list, $file and $peek as the command before it left them, and tells nothing that goes wrong
+    private void PeekWindow(List<string> words, (PeekPlace Place, int Value)? place, int count, bool again, bool auto)
+    {
+        Item item;
+        if (auto)
+        {
+            item = new Item(Path.GetFullPath(words[0]), false);
+        }
+        else
+        {
+            if (Existing(words[0]) is not { } found) return;
+            item = found;
+        }
+
         if (item.IsDirectory)
         {
             Error(Lang.F("Not a file: {0}", item.Path));
             return;
         }
 
-        // A place: from the window of the last peek of this file, as large; for another file the first 20 lines are
-        // the window it is moved from
+        // The window it is moved from: the last peek of this file, as large; for another file the first 20 lines
+        // (a step from its top: "peek other.md +" from line 2)
         var path = Path.GetFullPath(item.Path);
-        var (before, size) = _lastPeek is { } last1 && FileOperations.SamePath(last1.Path, path)
-            ? (last1.First, last1.Count)
-            : (1, PeekLines);
+        var same = _lastPeek is { } last1 && FileOperations.SamePath(last1.Path, path);
+        var size = same ? _lastPeek!.Value.Count : PeekLines;
         var (first, last) = (1, PeekLines);
         if (place is { Place: PeekPlace.Step } step)
         {
-            var from = before + (long)step.Value * count;
-            first = (int)Math.Clamp(from, 1, int.MaxValue);
-            last = (int)Math.Min((long)first + size - 1, int.MaxValue);
+            var from = (same ? _lastPeek!.Value.First : 1) + (long)step.Value * count;
+            // (as large at the end of int too)
+            first = (int)Math.Clamp(from, 1, int.MaxValue - size + 1);
+            last = first + size - 1;
         }
         else if (place == null && words.Count >= 2 && !LinesOf(words[1], words.Count == 3 ? words[2] : null, out first, out last))
         {
@@ -327,18 +351,19 @@ internal sealed partial class ShellSession
             return;
         }
 
-        List<string> lines;
+        string text;
         try
         {
-            // (counted as change, shift and clip count them: the last line break does not start a line)
-            lines = LinesOfText(TextFile.Load(item.Path).Text);
+            text = TextFile.Load(item.Path).Text;
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidDataException)
         {
-            Error(Lang.F("{0} cannot be read: {1}", item.Path, e.Message));
+            if (!auto) Error(Lang.F("{0} cannot be read: {1}", item.Path, e.Message));
             return;
         }
 
+        // (counted as change, shift and clip count them: the last line break does not start a line)
+        var lines = LinesOfText(text);
         // The top, the middle, the bottom, or a part of the file ("50%": from halfway)
         if (place is { Place: not PeekPlace.Step } at)
         {
@@ -349,21 +374,25 @@ internal sealed partial class ShellSession
                 PeekPlace.Percent => 1 + (long)Math.Max(0, lines.Count - 1) * at.Value / 100,
                 _ => 1
             };
-            first = (int)Math.Clamp(start, 1, int.MaxValue);
-            last = (int)Math.Min((long)first + size - 1, int.MaxValue);
+            first = (int)Math.Clamp(start, 1, int.MaxValue - size + 1);
+            last = first + size - 1;
         }
 
-        // Moved past the end: the last lines, as many as the window
-        if (place != null && last > lines.Count && lines.Count > 0)
-        {
-            var span = last - first;
-            last = lines.Count;
-            first = Math.Max(1, last - span);
-        }
-
-        // (from a line: "open 1" opens the file there)
-        LastList = new List<Item> { first > 1 ? item with { At = (first, 1) } : item };
+        // The size of the window asked for: kept, also where the file has fewer lines
         var asked = (int)Math.Min((long)last - first + 1, int.MaxValue);
+        // Moved past the end (or the file got shorter): the last lines, as many as the window
+        var moved = (place != null || again) && last > lines.Count && lines.Count > 0;
+        if (moved)
+        {
+            last = lines.Count;
+            first = Math.Max(1, last - asked + 1);
+        }
+
+        // (kept for "peek +" and ".": the file, the window asked for, and the file as it was, for the setting
+        // shellautopeek; also when it shows no lines, so the next one goes on from it)
+        _lastPeek = (path, first, asked, StampOf(item.Path), text.GetHashCode());
+        // (from a line: "open 1" opens the file there)
+        if (!auto) LastList = new List<Item> { first > 1 ? item with { At = (first, 1) } : item };
         last = Math.Min(last, lines.Count);
         if (first > last)
         {
@@ -371,16 +400,12 @@ internal sealed partial class ShellSession
             return;
         }
 
-        // (kept for "peek +" and ".": the file, the window asked for, and the file as it was then, for the setting
-        // shellautopeek; $peek below: the lines shown)
-        _lastPeek = (path, first, asked, StampOf(item.Path));
-
         var width = last.ToString().Length;
         for (var i = first; i <= last; i++) Line(i.ToString().PadLeft(width + 2) + "  " + lines[i - 1]);
         // $peek: the lines shown, as they are now (to put them in another file: insert plan.md bottom $peek)
-        ShellRegisters.Peek = string.Join("\n", lines.GetRange(first - 1, last - first + 1));
-        // (where the window is: also at the end, when it was moved there)
-        if (last < lines.Count || place != null) Line(Lang.F("(lines {0}-{1} of {2})", first, last, lines.Count));
+        if (!auto) ShellRegisters.Peek = string.Join("\n", lines.GetRange(first - 1, last - first + 1));
+        // (where the window is: also at the end, when it was put or moved there)
+        if (last < lines.Count || place != null || moved) Line(Lang.F("(lines {0}-{1} of {2})", first, last, lines.Count));
     }
 
     // Where a window of peek is put: a step from the last window, the top, the middle, the bottom, or a part of the
@@ -415,12 +440,15 @@ internal sealed partial class ShellSession
     }
 
     // The last peek of this shell: the file, its first line and how many lines (for "peek +" and "."), and when the
-    // file was last written and how long it was then (for the setting shellautopeek)
-    private (string Path, int First, int Count, (DateTime, long)? Stamp)? _lastPeek;
+    // file was last written, how long it was and a hash of its text then (for the setting shellautopeek)
+    private (string Path, int First, int Count, (DateTime, long)? Stamp, int Hash)? _lastPeek;
+
+    // The largest file whose text shellautopeek reads after a command to tell a change its time and length miss
+    private const long AutoPeekReadLimit = 4 * 1024 * 1024;
 
     // "." and "peek" alone: the window of the last peek shown again, the same lines of the same file, read as it is
-    // now (after a change made to it: insert, change, lines, the editor ...)
-    private void PeekAgain()
+    // now (after a change made to it: insert, change, lines, the editor ...); at its end when it got shorter
+    private void PeekAgain(bool auto = false)
     {
         if (_lastPeek is not { } previous)
         {
@@ -428,10 +456,15 @@ internal sealed partial class ShellSession
             return;
         }
 
-        Peek("\"" + previous.Path + "\" +" + previous.First + " " + previous.Count);
+        // (the words as they would be typed, given as words: a path with a quote in it is one word)
+        PeekWindow(new List<string>
+        {
+            previous.Path, "+" + previous.First.ToString(CultureInfo.InvariantCulture),
+            previous.Count.ToString(CultureInfo.InvariantCulture)
+        }, null, 1, true, auto);
     }
 
-    // When a file was last written, and how long it is (null: it cannot be read)
+    // When a file was last written, and how long it is (null: it is not there, or cannot be read)
     private static (DateTime, long)? StampOf(string path)
     {
         try
@@ -447,7 +480,9 @@ internal sealed partial class ShellSession
     }
 
     // The setting shellautopeek: after a command that changed the file of the last peek (insert, change, lines,
-    // shift, format, trim, or the editor opened with open), its window is shown again, with its name above it
+    // shift, format, trim, the editor opened with open, or another program), its window is shown again, with its
+    // name above it. A change is told by the time the file was written and its length, or else by its text (a change
+    // of the same length within the time the file system tells apart)
     private void AutoPeek(string command)
     {
         if (!Shell.AutoPeek || _lastPeek is not { } previous || command is "peek" or "." or "+" or "++" or "-" or "--")
@@ -456,9 +491,37 @@ internal sealed partial class ShellSession
         }
 
         var now = StampOf(previous.Path);
-        if (now == null || now == previous.Stamp) return;
+        if (now == null) return;
+        if (now == previous.Stamp)
+        {
+            if (now.Value.Item2 > AutoPeekReadLimit) return;
+            try
+            {
+                if (TextFile.Load(previous.Path).Text.GetHashCode() == previous.Hash) return;
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidDataException)
+            {
+                return;
+            }
+        }
+
         Line(Lang.F("(peek again: {0})", Path.GetFileName(previous.Path)));
-        PeekAgain();
+        PeekAgain(true);
+    }
+
+    // The last peek follows its file when it is renamed or moved in the shell (or the directory it is in), so "." and
+    // "+" go on in it
+    private void PeekFollows(string from, string to)
+    {
+        if (_lastPeek is not { } previous) return;
+        if (FileOperations.SamePath(previous.Path, from))
+        {
+            _lastPeek = previous with { Path = Path.GetFullPath(to) };
+        }
+        else if (FileOperations.IsInside(previous.Path, from))
+        {
+            _lastPeek = previous with { Path = Path.GetFullPath(Path.Combine(to, Path.GetRelativePath(from, previous.Path))) };
+        }
     }
 
     // How far "+", "++", "-" and "--" move the window of peek (settings shellpeekstep and shellpeekbigstep; 0:
@@ -604,6 +667,24 @@ internal sealed partial class ShellSession
             return;
         }
 
+        // The place of a row, counted as the list is before the favorite is added: the row after the last is the
+        // bottom
+        if (int.TryParse(where.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out var row))
+        {
+            var count = FavoriteRows().Count;
+            if (row == count + 1)
+            {
+                where = "bottom";
+            }
+            else if (row < 1 || row > count)
+            {
+                Error(count == 1
+                    ? Lang.F("No row {0}: the favorites have 1 row", row)
+                    : Lang.F("No row {0}: the favorites have {1} rows", row, count));
+                return;
+            }
+        }
+
         // (added at the end, then moved as "fav move" moves it; put back as it was when the place is not there)
         var before = FileFavorites.Serialize();
         if (!FileFavorites.Toggle(item.Path))
@@ -617,12 +698,18 @@ internal sealed partial class ShellSession
         if (error != null)
         {
             FileFavorites.Parse(before);
+            // (a place fav move does not know: told as for fav add)
+            if (error == MoveUsage)
+            {
+                error = Lang.T("A new favorite goes to top, bottom, a row (5) or a [folder]: fav add notes.md [Drafts]");
+            }
+
             if (error.Length > 0) Error(error);
             return;
         }
 
-        EventLog.Add(DialogText.LogFile + "Favorite add: " + item.Path);
-        FavoritesChanged(Lang.F("Added to the favorites: {0}", item.Path), "add at a place");
+        // (one line in the log: the change and the path)
+        FavoritesChanged(Lang.F("Added to the favorites: {0}", item.Path), "add at a place: " + item.Path);
     }
 
     // "hot add" (the directory you are in), "hot add 2", "hot remove 3": a directory added to the hotlist, or taken

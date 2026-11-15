@@ -421,7 +421,7 @@ List: main
     2  plot.md
 ```
 
-- `fav move 2 top` moves row 2 to the top of its folder, `up` and `down` one step, `out` out of its folder, and `fav move [Story] top` the folder with what is in it. A favorite can also be named: `fav move plot.md top`, and `fav move chapter-*.md [Story]` moves all that fit
+- `fav move 2 top` moves row 2 to the top of its folder, `up` and `down` one step, `out` out of its folder, and `fav move [Story] top` the folder with what is in it. A favorite can also be named: `fav move plot.md top`, and `fav move *.md [Story]` moves all that fit
 - `fav add notes [Story]` adds a favorite right into a folder (or `top`), and `fav filter plot` shows only the rows with _plot_ in them, with their numbers of the whole list
 - `fav subfolder [Story] Ideas` makes a subfolder, `fav rename [Story] Novel` renames a folder, and `fav remove [Story]` removes it after asking. `fav undo` puts it back
 

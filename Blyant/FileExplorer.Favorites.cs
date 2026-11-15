@@ -1495,7 +1495,7 @@ internal static partial class FileExplorer
         return indent + FavoriteName(item.Path);
     }
 
-    private static string FavoriteName(string path)
+    internal static string FavoriteName(string path)
     {
         var name = System.IO.Path.GetFileName(path.TrimEnd(System.IO.Path.DirectorySeparatorChar));
         return name.Length > 0 ? name : path;

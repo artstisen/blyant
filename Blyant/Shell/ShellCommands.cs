@@ -90,6 +90,7 @@ internal sealed partial class ShellSession
         ("version", Lang.T("Show the version of Blyant")),
         ("about [license]", Lang.T("Show the version and the commands used the most, or the license")),
         ("again [n]", Lang.T("List the commands typed, or run one again (!n, !!)")),
+        ("again filter text", Lang.T("Show the commands typed with a text in them")),
         ("run $name|file", Lang.T("Run the commands of a register or a file, one a line")),
         ("help [command]", Lang.T("List the commands, or tell what one does")),
         ("exit", Lang.T("Leave Blyant (also quit, q)"))
@@ -206,14 +207,28 @@ internal sealed partial class ShellSession
 
         if (!CommandLine.Name(line).Equals("again", StringComparison.OrdinalIgnoreCase)) return null;
         var argument = CommandLine.Argument(line);
-        if (argument.Length == 0) return null;
+        // ("again filter lines": a list, as "again" alone)
+        if (argument.Length == 0 || FilterOf(argument) != null) return null;
         return argument.All(char.IsAsciiDigit) && int.TryParse(argument, out var number) ? number : 0;
     }
 
     // "again": the commands typed at the prompt, the newest first, numbered for "again 3" and "!3" (not a last list:
     // "open 3" is still a row of the list shown before)
-    private void ListAgain()
+    // "again filter lines": those with a text in them, or that a pattern fits ("lines*"), with their numbers, so "!7"
+    // runs the one numbered 7
+    private void ListAgain(string argument)
     {
+        string? filter = null;
+        if (FilterOf(argument) is { } asked)
+        {
+            filter = asked.Text;
+            if (filter.Length == 0)
+            {
+                Error(Lang.T("Give a text: again filter lines (or lines*)"));
+                return;
+            }
+        }
+
         var kept = CommandHistory.Of(CommandContext.Shell);
         if (kept.Count == 0)
         {
@@ -222,7 +237,21 @@ internal sealed partial class ShellSession
         }
 
         var width = kept.Count.ToString().Length;
-        for (var i = 0; i < kept.Count; i++) Line((i + 1).ToString().PadLeft(width + 2) + "  " + kept[i]);
+        var found = 0;
+        for (var i = 0; i < kept.Count; i++)
+        {
+            if (filter != null && !(ShellCompletion.IsPattern(filter)
+                    ? ShellCompletion.PatternFits(filter, kept[i])
+                    : kept[i].Contains(filter, StringComparison.OrdinalIgnoreCase)))
+            {
+                continue;
+            }
+
+            Line((i + 1).ToString().PadLeft(width + 2) + "  " + kept[i]);
+            found++;
+        }
+
+        if (found == 0) Line(Lang.F("No commands with {0} in them", filter ?? string.Empty));
     }
 
     // The commands that take a value of more than one line: insert and change put in its lines, reg keeps them, and
@@ -452,7 +481,7 @@ internal sealed partial class ShellSession
                 RunCommands(argument);
                 break;
             case "again":
-                ListAgain();
+                ListAgain(argument);
                 break;
             case "help":
             case "h":
@@ -682,7 +711,7 @@ internal sealed partial class ShellSession
         string? filter = null;
         if (most == int.MaxValue && FilterOf(argument) is { } asked)
         {
-            filter = asked.Text.Trim('"');
+            filter = asked.Text;
             if (filter.Length == 0)
             {
                 Error(Lang.T("Give a text: hist filter draft (or *.md)"));
@@ -732,9 +761,8 @@ internal sealed partial class ShellSession
     {
         if (ShellCompletion.IsPattern(filter))
         {
-            return System.IO.Enumeration.FileSystemName.MatchesSimpleExpression(filter,
-                       Path.GetFileName(Path.TrimEndingDirectorySeparator(path))) ||
-                   (name is { Length: > 0 } && System.IO.Enumeration.FileSystemName.MatchesSimpleExpression(filter, name));
+            return ShellCompletion.PatternFits(filter, Path.GetFileName(Path.TrimEndingDirectorySeparator(path))) ||
+                   (name is { Length: > 0 } && ShellCompletion.PatternFits(filter, name));
         }
 
         return path.Contains(filter, StringComparison.OrdinalIgnoreCase) ||
@@ -751,7 +779,7 @@ internal sealed partial class ShellSession
                 (entry.Name.Length > 0 ? entry.Name + "  " : string.Empty) + Shown(entry.Path, true))).ToList();
         if (FilterOf(argument) is { } asked)
         {
-            var filter = asked.Text.Trim('"');
+            var filter = asked.Text;
             if (filter.Length == 0)
             {
                 Error(Lang.T("Give a text: hot filter notes"));

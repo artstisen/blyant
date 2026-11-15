@@ -146,20 +146,25 @@ internal static class Shell
     /// </summary>
     internal static void RememberLast(string directory, string? file = null)
     {
-        var changed = false;
-        if (string.Equals(StartSetting.Trim(), Last, StringComparison.OrdinalIgnoreCase) && LastDirectory != directory)
+        // Only these two lines of the settings file are changed: a setting edited by hand in another program meanwhile
+        // (without "reload") is kept. A path with a line break (Linux allows it) would break the file: not kept
+        var changed = new List<(string Name, string Value)>();
+        if (string.Equals(StartSetting.Trim(), Last, StringComparison.OrdinalIgnoreCase) && LastDirectory != directory &&
+            Keepable(directory))
         {
             LastDirectory = directory;
-            changed = true;
+            changed.Add(("shelllastdir", directory));
         }
 
-        if (file != null && LastFile != file)
+        if (file != null && LastFile != file && Keepable(file))
         {
             LastFile = file;
-            changed = true;
+            changed.Add(("shelllastfile", file));
         }
 
-        if (changed) FileIo.SaveSettings();
+        if (changed.Count > 0) FileIo.SaveSettingValues(changed);
+
+        static bool Keepable(string path) => path.IndexOfAny(['\r', '\n']) < 0;
     }
 
     /// <summary>

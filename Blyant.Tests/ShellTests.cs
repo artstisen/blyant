@@ -2850,6 +2850,7 @@ public class ShellTests : IDisposable
     [InlineData("AGAIN 2", 2)]
     [InlineData("again x", 0)]
     [InlineData("again", null)]
+    [InlineData("again filter lines", null)]
     [InlineData("!x", null)]
     [InlineData("ls", null)]
     public void AgainNumber_TellsTheCommandALineRunsAgain(string line, int? expected)
@@ -3358,9 +3359,9 @@ public class ShellTests : IDisposable
         var (output, errors, _, _) = Run("+ x\npeek a.md 1\n-\n--\npeek a.md +2147483647\n+\npeek plot.md -\n");
         Assert.Contains(Lang.F("{0} takes a number of steps, or nothing: {0} 20", "+"), errors);
         var windows = output.Split('\n').Where(l => l.StartsWith('(')).ToList();
-        // - and -- at the top: line 1; a peek past the end shows nothing, and + steps from the last window shown;
-        // another file: its top
-        Assert.Equal(new[] { (1, 1, 3), (1, 1, 3), (1, 1, 3), (2, 2, 3), (1, 1, 1) }
+        // - and -- at the top: line 1; a peek past the end shows nothing, but is the window: + from it is the last
+        // line; another file: its top
+        Assert.Equal(new[] { (1, 1, 3), (1, 1, 3), (1, 1, 3), (3, 3, 3), (1, 1, 1) }
             .Select(w => Lang.F("(lines {0}-{1} of {2})", w.Item1, w.Item2, w.Item3)), windows);
     }
 
@@ -3494,7 +3495,8 @@ public class ShellTests : IDisposable
         File.WriteAllText(In("work", "e.md"), "x\n");
         var (output, errors, _, _) = Run("fav add e.md [Nowhere]\nfav add e.md 9\nfav add e.md up\nfav add a.md top\n");
         Assert.Contains(Lang.F("No folder [{0}] in the favorites (fav shows them)", "Nowhere"), errors);
-        Assert.Contains(Lang.F("No row {0}: the favorites have {1} rows", 9, 5), errors);
+        // (the rows as they are before the favorite is added)
+        Assert.Contains(Lang.F("No row {0}: the favorites have {1} rows", 9, 4), errors);
         Assert.Contains(Lang.T("A new favorite goes to top, bottom, a row (5) or a [folder]: fav add notes.md [Drafts]"),
             errors);
         Assert.Contains(Lang.F("Already a favorite: {0} (fav move puts it elsewhere)", In("work", "a.md")), output);
@@ -3697,5 +3699,215 @@ public class ShellTests : IDisposable
         Assert.Contains("+ n, - n, ++ n, -- n", Run("help +\n").Output);
         Assert.Equal("peek bottom", Tab(Completion(), "peek bo"));
         Assert.Equal("peek plot.md middle", Tab(Completion(), "peek plot.md mi"));
+    }
+
+    [Fact]
+    public void AgainFilter_ShowsTheCommandsWithTheText_WithTheirNumbers()
+    {
+        CommandHistory.Clear();
+        foreach (var command in new[] { "lines a.md 1 start X", "pwd", "peek plot.md", "lines b.md 2 end Y" })
+            CommandHistory.Add(CommandContext.Shell, command);
+        try
+        {
+            var (output, errors, _, _) = Run("again filter LINES\nagain filter peek*\nagain filter nothing\nagain filter\n");
+            Assert.Contains("  1  lines b.md 2 end Y\n  4  lines a.md 1 start X\n", output);
+            Assert.Contains("  2  peek plot.md\n", output);
+            Assert.DoesNotContain("  3  pwd", output);
+            Assert.Contains(Lang.F("No commands with {0} in them", "nothing"), output);
+            Assert.Contains(Lang.T("Give a text: again filter lines (or lines*)"), errors);
+            Assert.Equal("again filter", Tab(Completion(), "again fi"));
+        }
+        finally
+        {
+            CommandHistory.Clear();
+        }
+    }
+
+    // ---- Review of 1.5.3
+
+    [Fact]
+    public void AutoPeek_LeavesTheLastListFileAndPeekOfTheCommand()
+    {
+        try
+        {
+            Shell.AutoPeek = true;
+            File.WriteAllText(In("work", "a.md"), "one\ntwo\nthree\n");
+            File.WriteAllText(In("work", "b.md"), "x\n");
+            var (output, errors, _, session) = Run("peek a.md 1-2\nlines a.md 1 > b.md bottom cut\n");
+            Assert.Equal(string.Empty, errors);
+            Assert.Contains(Lang.F("(peek again: {0})", "a.md"), output);
+            // The last list and $file are those of lines: b.md, at the line put in; $peek is still the peek
+            Assert.Equal(In("work", "b.md"), session.LastList.Single().Path);
+            Assert.Equal(In("work", "b.md"), session.WorkedFile);
+            Assert.Equal("one\ntwo", ShellRegisters.Peek);
+        }
+        finally
+        {
+            Shell.AutoPeek = false;
+        }
+    }
+
+    [Fact]
+    public void AutoPeek_AFileShorterThanTheWindow_ShowsItsLastLines_Once()
+    {
+        try
+        {
+            Shell.AutoPeek = true;
+            File.WriteAllText(In("work", "a.md"), string.Concat(Enumerable.Range(1, 10).Select(i => "line " + i + "\n")));
+            var (output, errors, _, session) = Run("peek a.md +8 3\nchange a.md 3-10\nls\npwd\nopen 2\n", yes: true);
+            var again = Lang.F("(peek again: {0})", "a.md");
+            Assert.Single(output.Split('\n'), line => line == again);
+            // The window as large as before, at the end of the shorter file
+            Assert.Contains(again + "\n  1  line 1\n  2  line 2\n(lines 1-2 of 2)", output);
+            Assert.DoesNotContain(Lang.F("No row {0}: the last list has 1 row", 2), errors);
+        }
+        finally
+        {
+            Shell.AutoPeek = false;
+        }
+    }
+
+    [Fact]
+    public void Peek_APlace_KeepsTheSizeOfTheWindow_OnAShortFile()
+    {
+        // The window of 20 lines put at the top of a 5-line file stays 20 lines: with the file grown, "." shows 20
+        File.WriteAllText(In("work", "f.md"), "1\n2\n3\n4\n5\n");
+        File.WriteAllText(In("work", "g.md"), string.Concat(Enumerable.Range(6, 25).Select(i => i + "\n")));
+        var (output, errors, _, _) = Run("peek f.md\npeek top\nlines g.md 1-25 > f.md bottom\n.\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains(Lang.F("(lines {0}-{1} of {2})", 1, 5, 5), output);
+        Assert.Contains(Lang.F("(lines {0}-{1} of {2})", 1, 20, 30), output);
+        // A 2-line window at the bottom of a 3-line file
+        File.WriteAllText(In("work", "s.md"), "a\nb\nc\n");
+        (output, _, _, _) = Run("peek s.md +2 2\npeek bottom\n");
+        Assert.Contains(Lang.F("(lines {0}-{1} of {2})", 2, 3, 3), output);
+    }
+
+    [Fact]
+    public void Peek_FollowsItsFile_WhenItIsRenamedOrMovedInTheShell()
+    {
+        File.WriteAllText(In("work", "a.md"), "one\ntwo\n");
+        Directory.CreateDirectory(In("work", "d"));
+        var (output, errors, _, _) = Run("peek a.md 2\nrename a.md b.md\n.\nmove b.md d\n+\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains("  1  one\n  2  two\n", output);
+    }
+
+    [Fact]
+    public void Peek_AWordAlone_ThatIsAFileHere_IsThatFile_AndAnEmptyFileIsAWindow()
+    {
+        File.WriteAllText(In("work", "top"), "the file named top\n");
+        File.WriteAllText(In("work", "empty.md"), "");
+        var (output, errors, _, _) = Run("peek top\npeek empty.md\npeek bottom\n");
+        Assert.Contains("  1  the file named top\n", output);
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal(2, output.Split('\n').Count(line => line == Lang.F("{0} has {1} lines", In("work", "empty.md"), 0)));
+    }
+
+    [UnixFact]
+    public void OnLinuxAndMacOS_DotPeeksAgain_APathWithAQuote()
+    {
+        Directory.CreateDirectory(In("work", "q"));
+        File.WriteAllText(In("work", "q", "my \"draft\".md"), "one\n");
+        var (output, errors, _, _) = Run("cd q\nls\npeek 1\n.\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal(2, output.Split('\n').Count(line => line == "  1  one"));
+    }
+
+    [Fact]
+    public void FavAdd_TheRowAfterTheLast_IsTheBottom_AndAnUnknownPlaceIsToldForAdd()
+    {
+        FourFavorites();
+        File.WriteAllText(In("work", "e.md"), "x\n");
+        var (_, errors, _, _) = Run("fav add e.md sideways\nfav add e.md 5\n");
+        Assert.Contains(Lang.T("A new favorite goes to top, bottom, a row (5) or a [folder]: fav add notes.md [Drafts]"),
+            errors);
+        Assert.Single(errors.TrimEnd('\n').Split('\n'));
+        Assert.Equal("a.md|b.md|c.md|d.md|e.md", FavoritesShape());
+        // An empty list: the rows it has are none
+        FileFavorites.Load();
+        while (FileFavorites.Items.Count > 0) FileFavorites.RemoveAt(0);
+        FileFavorites.Save();
+        (_, errors, _, _) = Run("fav add e.md 2\n");
+        Assert.Contains(Lang.F("No row {0}: the favorites have {1} rows", 2, 0), errors);
+    }
+
+    [Fact]
+    public void FavFilter_KeepsThePlaceOfAFavorite()
+    {
+        FourFavorites();
+        FileFavorites.Load();
+        FileFavorites.Items.First(item => item.Path == In("work", "c.md")).Line = 7;
+        FileFavorites.Save();
+        var session = Run("fav filter c.md\n").Session;
+        Assert.Equal((7, 1), session.LastList[2].At);
+    }
+
+    [Fact]
+    public void RememberLast_ChangesOnlyItsLines_AndKeepsWhatWasEditedByHand()
+    {
+        try
+        {
+            Shell.StartSetting = "last";
+            FileIo.SaveSettings();
+            var file = Path.Combine(_data, "settings.ini");
+            File.WriteAllText(file, File.ReadAllText(file).Replace("indent=4", "indent=2") + "; a note of my own\n");
+            Shell.RememberLast(In("work"), In("work", "plot.md"));
+            var text = File.ReadAllText(file);
+            Assert.Contains("indent=2\n", text);
+            Assert.Contains("; a note of my own\n", text);
+            Assert.Equal(In("work", "plot.md"), FileIo.ParseSettings(text)["shelllastfile"]);
+            Assert.Equal(In("work"), FileIo.ParseSettings(text)["shelllastdir"]);
+            // A path with a line break is not kept
+            Shell.RememberLast(In("work"), In("work", "a\nb.md"));
+            Assert.Equal(In("work", "plot.md"), Shell.LastFile);
+        }
+        finally
+        {
+            Shell.StartSetting = string.Empty;
+            Shell.LastFile = string.Empty;
+            Shell.LastDirectory = string.Empty;
+        }
+    }
+
+    [Fact]
+    public void Patterns_TakeABackslash_AsItself()
+    {
+        Assert.True(ShellCompletion.PatternFits(@"*C:\Users*", @"open C:\Users\x.md"));
+        Assert.True(ShellCompletion.PatternFits(@"a\b*", @"a\b.md"));
+        Assert.False(ShellCompletion.PatternFits(@"a\b*", "ab.md"));
+        CommandHistory.Clear();
+        CommandHistory.Add(CommandContext.Shell, @"open C:\Users\x.md");
+        CommandHistory.Add(CommandContext.Shell, "pwd");
+        try
+        {
+            Assert.Contains(@"  2  open C:\Users\x.md", Run("again filter *C:\\Users*\n").Output);
+        }
+        finally
+        {
+            CommandHistory.Clear();
+        }
+    }
+
+    [Fact]
+    public void Log_StepsWithANumber_AreLoggedAsTheStep()
+    {
+        Assert.Equal("+", EventLog.CommandName("+ 20"));
+        Assert.Equal("--", EventLog.CommandName("-- 3"));
+        Assert.Equal(".", EventLog.CommandName("."));
+    }
+
+    [UnixFact]
+    public void OnLinuxAndMacOS_FavMove_NamesThatDifferOnlyInCase_AreToldWithTheirRows()
+    {
+        File.WriteAllText(In("work", "Notes.md"), "x\n");
+        File.WriteAllText(In("work", "notes.md"), "y\n");
+        // (a file system that takes them as one name, as macOS usually does: nothing to tell apart)
+        if (Directory.GetFiles(In("work"), "*otes.md").Length < 2) return;
+        var (_, errors, _, _) = Run("fav add Notes.md\nfav add notes.md\nfav move notes.md top\nfav move ./notes.md top\n");
+        Assert.Contains(Lang.F("{0} favorites are named {1}: give the row ({2})", 2, "notes.md", "1, 2"), errors);
+        Assert.Single(errors.TrimEnd('\n').Split('\n'));
+        FileFavorites.Load();
+        Assert.Equal(In("work", "notes.md"), FileFavorites.Items[0].Path);
     }
 }

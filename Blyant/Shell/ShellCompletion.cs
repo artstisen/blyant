@@ -73,7 +73,8 @@ internal sealed class ShellCompletion
     private bool Start(string text)
     {
         // "!3", "!!", "again 3": the command it runs, put on the line to be changed before Enter
-        if (ShellSession.AgainNumber(text) is { } number)
+        // ("again x": no number, completed as words: "again filter")
+        if (ShellSession.AgainNumber(text) is { } number && number != 0)
         {
             var kept = CommandHistory.Of(CommandContext.Shell);
             if (number < 1 || number > kept.Count) return false;
@@ -262,6 +263,8 @@ internal sealed class ShellCompletion
                 if (position == 1 && after[0] != "-d") return (Kind.Words, new[] { "=", "+=" });
                 return (position == 1 && after[0] == "-d" ? Kind.Words : Kind.None,
                     new[] { "all" }.Concat(ShellRegisters.All.Keys));
+            case "again":
+                return (position == 0 ? Kind.Words : Kind.None, new[] { "filter" });
             case "run":
                 // (a file of commands; $ and Tab the registers)
                 return (position == 0 ? Kind.Path : Kind.None, none);
@@ -299,8 +302,8 @@ internal sealed class ShellCompletion
     {
         var list = words.ToList();
         if (!IsPattern(typed)) return Fitting(list, typed);
-        var fitting = list.Where(word => System.IO.Enumeration.FileSystemName.MatchesSimpleExpression(typed,
-                word.TrimEnd('/'))).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        var fitting = list.Where(word => PatternFits(typed, word.TrimEnd('/'))).Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
         return fitting.Count > 0 ? fitting : Fitting(list, typed);
     }
 
@@ -352,7 +355,7 @@ internal sealed class ShellCompletion
                     : info.EnumerateFiles().Select(f => (Name: f.Name, IsDirectory: false)))
                 .Where(entry => start.StartsWith('.') || !entry.Name.StartsWith('.')).ToList();
             var fitting = entries.Where(entry => pattern
-                ? System.IO.Enumeration.FileSystemName.MatchesSimpleExpression(start, entry.Name)
+                ? PatternFits(start, entry.Name)
                 : entry.Name.StartsWith(start, StringComparison.OrdinalIgnoreCase)).ToList();
             // (a pattern that fits nothing is a name typed: on Linux and macOS "notes?.md" can be one)
             if (pattern && fitting.Count == 0)
@@ -380,6 +383,13 @@ internal sealed class ShellCompletion
     /// True for a name with "*" (any characters) or "?" (one character) in it: a pattern for Tab
     /// </summary>
     internal static bool IsPattern(string name) => name.IndexOfAny(['*', '?']) >= 0;
+
+    /// <summary>
+    /// A pattern ("*" any characters, "?" one) fits a whole text, letter case alike. A "\" in it is the character
+    /// itself (as in a path on Windows, or a name on Linux), not the escape character of .NET's patterns
+    /// </summary>
+    internal static bool PatternFits(string pattern, string text) =>
+        System.IO.Enumeration.FileSystemName.MatchesSimpleExpression(pattern.Replace("\\", "\\\\"), text);
 
     // Where a name is in the files opened last (0: the last opened), after them all when it is not one of them
     private static int Rank(List<string> recent, string name)

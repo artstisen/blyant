@@ -412,9 +412,13 @@ internal static class FileIo
 
     internal static void SaveSettings()
     {
-        var status = WriteSettingsFile(SettingsText());
+        TellIfNotSaved(WriteSettingsFile(SettingsText()));
+    }
+
+    // A settings file that could not be written is told (the shell tells it on a line)
+    private static void TellIfNotSaved(string status)
+    {
         if (status == DialogText.Success) return;
-        // (the shell tells it on a line)
         if (Shell.Prompts is { } shell) shell.Tell(Lang.F("{0}: {1}", DialogText.CaptionsSettings, status));
         else Menu.StatusMessage(status, true, true, true, DialogText.CaptionsSettings, string.Empty, false);
     }
@@ -854,6 +858,43 @@ internal static class FileIo
         {
             return false;
         }
+    }
+
+    /// <summary>
+    /// Change some settings in the settings file as it is: their lines are written with these values (or added at the
+    /// end), and the other lines are left as they are, so a change made by hand meanwhile is kept. When there is no
+    /// file yet, or it cannot be read, all the settings are written (SaveSettings)
+    /// </summary>
+    internal static void SaveSettingValues(IReadOnlyList<(string Name, string Value)> values)
+    {
+        string? text = null;
+        try
+        {
+            var path = GetSettingsFolderAndFileName();
+            if (!_keepUnreadSettings && File.Exists(path)) text = File.ReadAllText(path);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            text = null;
+        }
+
+        if (text == null)
+        {
+            SaveSettings();
+            return;
+        }
+
+        var lines = text.Replace("\r\n", "\n").Split('\n').ToList();
+        foreach (var (name, value) in values)
+        {
+            var line = name + "=" + value;
+            var at = lines.FindIndex(l => l.TrimStart().StartsWith(name + "=", StringComparison.OrdinalIgnoreCase));
+            if (at >= 0) lines[at] = line;
+            // (before the empty piece after the last line break)
+            else lines.Insert(lines.Count > 0 && lines[^1].Length == 0 ? lines.Count - 1 : lines.Count, line);
+        }
+
+        TellIfNotSaved(WriteSettingsFile(string.Join("\n", lines)));
     }
 
     internal static string ReadSettingsFile()
