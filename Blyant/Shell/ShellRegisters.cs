@@ -5,7 +5,7 @@ namespace Blyant;
 
 /// <summary>
 /// The registers of the shell: named values ("docs", "note") that a command line uses with $name ("copy plot.md
-/// $docs"). A value is a text or a path. They are the shell's own (not the registers of the editor), and kept in the
+/// $docs"). A value is a text, a path, or lines (collected with "reg notes += $peek"). They are the shell's own (not the registers of the editor), and kept in the
 /// data directory between sessions (registers.txt: a line "name", a tab, and the value). A name starts with a letter,
 /// and has letters, digits and "_" (letter case alike: kept in lowercase). This class does not touch the console
 /// </summary>
@@ -163,8 +163,17 @@ internal static partial class ShellRegisters
         Values.Clear();
         Kept.Clear();
         _text = text;
+        // (the register a line starting with a tab goes on: a register of several lines)
+        string? current = null;
         foreach (var line in TextBuffer.Normalize(text).Split('\n'))
         {
+            if (current != null && line.StartsWith('\t'))
+            {
+                Values[current] += "\n" + line[1..];
+                continue;
+            }
+
+            current = null;
             if (line.Trim().Length == 0) continue;
             var tab = line.IndexOf('\t');
             // (a line "clip", "pwd" ... is kept as it is: those are set by Blyant)
@@ -174,7 +183,8 @@ internal static partial class ShellRegisters
                 continue;
             }
 
-            Values[line[..tab].ToLowerInvariant()] = line[(tab + 1)..];
+            current = line[..tab].ToLowerInvariant();
+            Values[current] = line[(tab + 1)..];
         }
     }
 
@@ -194,7 +204,8 @@ internal static partial class ShellRegisters
             }
 
             // The registers, and after them the lines that are not registers, as they were
-            var text = string.Concat(Values.Select(pair => pair.Key + "\t" + pair.Value + "\n")) +
+            // (a register of several lines: its next lines start with a tab)
+            var text = string.Concat(Values.Select(pair => pair.Key + "\t" + pair.Value.Replace("\n", "\n\t") + "\n")) +
                        string.Concat(Kept.Select(line => line + "\n"));
             FileIo.WriteAllBytesSafe(FilePath, new UTF8Encoding(false).GetBytes(text));
             // (written here: not read again for it)
@@ -214,10 +225,16 @@ internal static partial class ShellRegisters
         IsReserved(name) ? ReservedValue(name) : Values.TryGetValue(name.ToLowerInvariant(), out var value) ? value : null;
 
     /// <summary>
-    /// Give a register a value (one line: a line break or a tab becomes a blank)
+    /// Give a register a value: a text, or lines (kept in the file as lines that start with a tab after the first)
     /// </summary>
     internal static void Set(string name, string value) =>
-        Values[name.ToLowerInvariant()] = value.Replace("\r", string.Empty).Replace('\n', ' ').Replace('\t', ' ');
+        Values[name.ToLowerInvariant()] = TextBuffer.Normalize(value);
+
+    /// <summary>
+    /// Add a text to the end of a register, as lines after those it has (a register that is not there: made)
+    /// </summary>
+    internal static void Add(string name, string value) =>
+        Set(name, Values.TryGetValue(name.ToLowerInvariant(), out var before) ? before + "\n" + value : value);
 
     /// <summary>
     /// Take a register away (false: there is none of that name)

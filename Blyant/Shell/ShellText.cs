@@ -390,7 +390,7 @@ internal sealed partial class ShellSession
         {
             if (ShellRegisters.All.Count == 0) Line(Lang.T("No registers (reg name text keeps one)"));
             var width = ShellRegisters.All.Keys.Concat(ShellRegisters.Reserved).Max(key => key.Length) + 1;
-            foreach (var (key, value) in ShellRegisters.All) Line("  $" + key.PadRight(width) + value);
+            foreach (var (key, value) in ShellRegisters.All) Line("  $" + key.PadRight(width) + RegisterShown(value));
             SkippedRegisters();
             // The names set by Blyant, with their values now ($clip and $file when they have one)
             Line(Lang.T("Set by Blyant:"));
@@ -440,10 +440,19 @@ internal sealed partial class ShellSession
             return;
         }
 
-        var text = AfterWords(argument, 1);
-        if (text.Length > 0 && ShellRegisters.IsReserved(name))
+        // "reg notes = text" (as "reg notes text"), "reg notes += text": added at its end, as lines
+        var adds = words.Count > 1 && words[1] == "+=";
+        var equals = adds || (words.Count > 1 && words[1] == "=");
+        var text = AfterWords(argument, equals ? 2 : 1);
+        if ((text.Length > 0 || equals) && ShellRegisters.IsReserved(name))
         {
             Error(ReservedRefused(name));
+            return;
+        }
+
+        if (equals && text.Trim().Length == 0)
+        {
+            Error(Lang.F("Give the text: reg {0} {1} Buy ink (or $peek, $clip ...)", name, words[1]));
             return;
         }
 
@@ -480,10 +489,22 @@ internal sealed partial class ShellSession
                 : text;
         }
 
-        ShellRegisters.Set(name, kept);
+        if (adds) ShellRegisters.Add(name, kept);
+        else ShellRegisters.Set(name, kept);
         // English: the log (the name only, never the value)
-        EventLog.Add(DialogText.LogShell + ": register set: " + name.ToLowerInvariant());
-        SaveRegisters("  $" + name.ToLowerInvariant() + " = " + ShellRegisters.Get(name));
+        EventLog.Add(DialogText.LogShell + (adds ? ": register added to: " : ": register set: ") + name.ToLowerInvariant());
+        SaveRegisters("  $" + name.ToLowerInvariant() + " = " + RegisterShown(ShellRegisters.Get(name) ?? string.Empty));
+    }
+
+    // A value as the list of the registers shows it: as it is, or the first line of lines (cut) and how many lines
+    private static string RegisterShown(string value)
+    {
+        if (!value.Contains('\n')) return value;
+        var lines = value.Split('\n');
+        var first = Printable(lines[0]).Replace('\t', ' ');
+        var shown = Cut(first, 40);
+        shown += shown.Length < first.Length ? "..." : " ...";
+        return Lang.F("{0}  ({1} lines)", shown, lines.Length);
     }
 
     // Why a name set by Blyant is not set or taken away by "reg"

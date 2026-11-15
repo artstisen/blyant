@@ -1973,9 +1973,10 @@ public class ShellTests : IDisposable
 
         File.WriteAllText(In("work", "lines.md"), "one\ntwo\n");
         (_, errors, _, _) = Run("clip text lines.md\ncd $clip\nreg note $clip\n");
-        Assert.Equal(2, errors.TrimEnd('\n').Split('\n').Length);
+        Assert.Single(errors.TrimEnd('\n').Split('\n'));
         Assert.Contains(Lang.T("$clip has more than one line: only insert and change take it"), errors);
-        Assert.Null(ShellRegisters.Get("note"));
+        // (a register keeps lines)
+        Assert.Equal("one\ntwo", ShellRegisters.Get("note"));
         // ($$clip is the text "$clip")
         (_, errors, _, _) = Run("insert plot.md bottom $$clip\n");
         Assert.Equal(string.Empty, errors);
@@ -3068,5 +3069,60 @@ public class ShellTests : IDisposable
         var (_, errors, _, _) = Run("peek notes.md 1\ncd $peek\n");
         Assert.Equal(string.Empty, errors);
         Assert.Equal("insert plot.md top $peek", Tab(Completion(), "insert plot.md top $pe"));
+    }
+
+    // ---- Registers of several lines: reg name = / +=, lines ... > $name, >> $name
+
+    [Fact]
+    public void Registers_OfSeveralLines_AreKeptInTheFile_AsLinesStartingWithATab()
+    {
+        var file = Path.Combine(_data, ShellRegisters.FileName);
+        File.WriteAllText(file, "docs\tC:\\Writing\\docs\n\tnot of a register\n");
+        ShellRegisters.Load();
+        Assert.Equal("C:\\Writing\\docs\nnot of a register", ShellRegisters.Get("docs"));
+        ShellRegisters.Set("notes", "one\n\n\ttabbed\nlast");
+        ShellRegisters.Set("docs", "C:\\Writing\\docs");
+        Assert.Equal(DialogText.Success, ShellRegisters.Save());
+        Assert.Equal("docs\tC:\\Writing\\docs\nnotes\tone\n\t\n\t\ttabbed\n\tlast\n", File.ReadAllText(file));
+        ShellRegisters.Load();
+        Assert.Equal("one\n\n\ttabbed\nlast", ShellRegisters.Get("notes"));
+        // A line with a tab first and no register before it: kept as it is
+        File.WriteAllText(file, "\tlost line\na\tone\n");
+        ShellRegisters.Load();
+        Assert.Equal(1, ShellRegisters.Skipped);
+        Assert.Equal("one", ShellRegisters.Get("a"));
+    }
+
+    [Fact]
+    public void Reg_EqualsAndPlusEquals_CollectLines()
+    {
+        File.WriteAllText(In("work", "a.md"), "one\ntwo\nthree\nfour\n");
+        File.WriteAllText(In("work", "plan.md"), "# Plan\n");
+        var (output, errors, _, _) = Run("reg notes = First idea\npeek a.md 2-3\nreg notes += $peek\nreg notes += Last\n" +
+                                         "insert plan.md bottom $notes\ncd $notes\nreg\nreg x =\n");
+        Assert.Equal(2, errors.TrimEnd('\n').Split('\n').Length);
+        Assert.Contains(Lang.F("${0} has more than one line: only insert and change take it", "notes"), errors);
+        Assert.Equal("First idea\ntwo\nthree\nLast", ShellRegisters.Get("notes"));
+        Assert.Equal("# Plan\nFirst idea\ntwo\nthree\nLast\n", Text("plan.md"));
+        Assert.Contains("  $notes " + Lang.F("{0}  ({1} lines)", "First idea ...", 4), output);
+    }
+
+    [Fact]
+    public void Lines_IntoARegister_SetAddAndCut()
+    {
+        File.WriteAllText(In("work", "a.md"), "one\ntwo\nthree\nfour\n");
+        File.WriteAllText(In("work", "b.md"), "b1\nb2\n");
+        var (output, errors, _, _) = Run("lines a.md 2-3 > $notes\nlines b.md 1 >> $notes\nlines a.md 4 >> $notes cut\n" +
+                                         "lines a.md 1 >> b.md bottom\n");
+        Assert.Single(errors.TrimEnd('\n').Split('\n'));
+        Assert.Contains(Lang.T(">> adds lines to a register: lines notes.md 4-6 >> $notes"), errors);
+        Assert.Equal("two\nthree\nb1\nfour", ShellRegisters.Get("notes"));
+        Assert.Equal("one\ntwo\nthree\n", Text("a.md"));
+        Assert.Contains(Lang.F("{0} lines kept in ${1}", 2, "notes"), output);
+        Assert.Contains(Lang.F("Line {0} added to ${1}", 1, "notes"), output);
+        // > sets it again; a register holding a path, with a place after it, is still the file
+        Run("reg plan " + In("work", "b.md") + "\nlines a.md 1 > $notes\nlines a.md 3 > $plan top\n");
+        Assert.Equal("one", ShellRegisters.Get("notes"));
+        Assert.Equal("three\nb1\nb2\n", Text("b.md"));
     }
 }

@@ -35,6 +35,7 @@ internal sealed partial class ShellSession
         ("shift file|n lines place", Lang.T("Move lines in a file: under a heading, +line, top or bottom")),
         ("shift! file|n lines place", Lang.T("Move lines, and tick or untick their task boxes")),
         ("lines file|n lines > file|n place", Lang.T("Copy lines to another file (cut last: move them)")),
+        ("lines file|n lines >|>> $name", Lang.T("Keep lines in a register (>>: add them to it)")),
         ("lines file|n lines start|end text", Lang.T("Put a text at the start or the end of lines")),
         ("lines file lines unstart|unend text", Lang.T("Take a text off the start or the end of lines")),
         ("lines file|n lines replace old new", Lang.T("Replace a text in lines, the rest kept")),
@@ -49,6 +50,7 @@ internal sealed partial class ShellSession
         ("clip $name", Lang.T("Copy the value of a register to the clipboard")),
         ("clip ... $clip", Lang.T("The text copied last, in a command")),
         ("reg [name [text|.|#n]]", Lang.T("Keep a text or a path in a register: $name puts it in a command")),
+        ("reg name += text", Lang.T("Add a text to a register, as lines (reg notes += $peek)")),
         ("reg -d name|all", Lang.T("Take a register away, or all of them")),
         ("favorites [-l] [list]", Lang.T("List the favorites (fav), or those of another list")),
         ("favorites -l", Lang.T("Lists with full paths (also hist, recent, book)")),
@@ -125,6 +127,8 @@ internal sealed partial class ShellSession
         var name = CommandLine.Name(line).ToLowerInvariant();
         var argument = CommandLine.Argument(line);
         var help = name is "help" or "h";
+        // ("lines a.md 4-6 > $notes": the register the lines go to, not its value: kept as the name)
+        if (name == "lines") argument = ProtectRegisterTarget(argument);
         if (!help && ShellRegisters.Mentions(line, ShellRegisters.ClipName) && ClipProblem(name, line) is { } problem)
         {
             NewPage();
@@ -137,6 +141,16 @@ internal sealed partial class ShellSession
         {
             NewPage();
             Error(peekProblem);
+            return true;
+        }
+
+        // A register of several lines, as $clip: where one line is taken, told
+        if (!help && name is not ("insert" or "change" or "reg") && !IsClipOfRegister(line) &&
+            ShellRegisters.All.FirstOrDefault(pair => pair.Value.Contains('\n') && ShellRegisters.Mentions(argument, pair.Key))
+                is { Key: { } several })
+        {
+            NewPage();
+            Error(Lang.F("${0} has more than one line: only insert and change take it", several));
             return true;
         }
 
@@ -210,7 +224,8 @@ internal sealed partial class ShellSession
         // (change without a text deletes the lines: an empty $clip is not taken for that)
         if (clip.Length == 0 && name == "change") return Lang.T("$clip is empty: change would delete the lines");
         if (!clip.Contains('\n') || IsClipOfRegister(line)) return null;
-        return name is "insert" or "change"
+        // (reg keeps lines: "reg notes += $clip")
+        return name is "insert" or "change" or "reg"
             ? null
             : Lang.T("$clip has more than one line: only insert and change take it");
     }
@@ -221,7 +236,7 @@ internal sealed partial class ShellSession
         if (ShellRegisters.Peek is not { } peek) return Lang.T("Nothing peeked yet: peek shows lines for $peek");
         if (peek.Length == 0 && name == "change") return Lang.T("$peek is empty: change would delete the lines");
         if (!peek.Contains('\n') || IsClipOfRegister(line)) return null;
-        return name is "insert" or "change"
+        return name is "insert" or "change" or "reg"
             ? null
             : Lang.T("$peek has more than one line: only insert and change take it");
     }

@@ -98,6 +98,7 @@ To have every output whole (with a screen reader, say), turn the pages off: `set
 | `shift file\|n lines place` | Move lines in a file without opening it: under a heading (`shift todo.md 4-6 Done`), at the end of its section (`Done+`), before a line (`+12`), to the `top` or the `bottom`. See [Moving lines](#moving-lines) |
 | `shift! file\|n lines place` | Move lines as `shift` does, and tick their task boxes (`- [ ]` to `- [x]`), or untick those that are ticked |
 | `lines file\|n lines > file\|n place [copy\|cut]` | Copy lines to another file without opening them (`lines notes.md 4-6 > plan.md bottom`), or with `cut` move them there. See [Moving lines](#moving-lines) |
+| `lines file\|n lines >\|>> $name [copy\|cut]` | Keep lines in a register (`lines notes.md 4-6 > $notes`), or add them to its end with `>>`; with `cut`, also take them out of the file. See [Registers](#registers) |
 | `lines file\|n lines start\|end text` | Put a text at the start or the end of lines, the rest of them kept (`lines todo.md 4 start Remember this:`). See [Text in lines](#text-in-lines) |
 | `lines file\|n lines unstart\|unend text` | Take a text off the start or the end of the lines that have it |
 | `lines file\|n lines replace old new` | Replace a text in lines, the rest of them kept (`lines notes.md 5-9 replace draft final`) |
@@ -107,6 +108,7 @@ To have every output whole (with a screen reader, say), turn the pages off: `set
 | `reset` | Put all the settings back to their defaults, as _Reset all settings_ on the System page of Configuration (asks first) |
 | `reload` | Read the settings file and the registers again, after you have edited them in another program (see [Text and settings](#text-and-settings)) |
 | `reg [name [text\|.\|#n]]` | Keep a text or a path in a register, show one, or list them (see [Registers](#registers)) |
+| `reg name = text`, `reg name += text` | Keep a text in a register (as `reg name text`), or add it to its end, as lines (`reg notes += $peek`) |
 | `reg -d name\|all` | Take a register away, or all of them |
 | `clip [path\|name] file\|dir\|n\|.` | Copy the full path of a file or directory (`clip 3`: row 3 of the last list; `clip .`: the directory you are in), or its name, to the clipboard (see [Clipboard](#clipboard)) |
 | `clip text file\|n` | Copy the text of a file to the clipboard |
@@ -313,6 +315,23 @@ cd $here
 insert todo.md bottom $note
 ```
 
+A register can also hold lines, collected from several places of a file, or from several files:
+
+```
+reg notes = First idea              set (the same as "reg notes First idea")
+peek plot.md 12-14
+reg notes += $peek                  the lines peek showed, added at the end
+lines chapter-2.md 40-42 >> $notes  lines of a file added at the end
+lines todo.md 7 >> $notes cut       ... and taken out of todo.md
+reg notes += Remember the attic     a line added
+insert ideas.md bottom $notes       all of them put in a file
+lines plot.md 3-5 > $notes          ">": the register is those lines alone
+```
+
+- `+=` and `>>` add to the end of a register, as lines (a register that is not there is made); `=`, `>` and `reg name text` set it. `$clip`, `$peek` and the other registers can be added (`reg notes += $clip`)
+- A register of more than one line is put in as `$clip` and `$peek` are: `insert` and `change` put in its lines, and the other commands are told. `reg` lists its first line and how many lines it has, and `reg notes` shows all of them
+- In `registers.txt` the lines after the first start with a tab, so the file can still be edited by hand. The lines you collect are kept there until you take the register away (`reg -d notes`): the text of your files is in that file, in the data directory (never in the log)
+
 - A text in quotes is kept without them: `reg docs "~/my docs"` keeps the path, so `copy plot.md $docs` takes it as one
 - `reg` lists the registers, `reg docs` shows the value of one (alone on its line, as a script reads it with `blyant --run "reg docs"`), `reg -d docs` takes it away, and `reg -d all` all of them
 - A name starts with a letter, and has letters, digits and `_` (`docs`, `draft_2`); letter case is alike
@@ -332,6 +351,20 @@ insert todo.md bottom $note
   | `$peek` | the lines `peek` showed last, as they were then: `peek notes.md 4-6`, then `insert plan.md bottom $peek` puts them in another file (`+` and `-` change it, as they move the window) |
 
   `insert log.md bottom $date Finished chapter 3` puts in a line with the date. The date and the time are written the same in every language. These names are not registers: `reg pwd x` and `reg -d date` are refused, and a line of one of them in `registers.txt` is kept there as a line that is not a register, and not used. `reg` lists them after the registers, under _Set by Blyant_, with their values now, and `reg pwd` shows one. `$file` before a command has worked on a file is told (no file yet), and `$$date` is the text `$date`
+- In which commands they can be used: every register and name set by Blyant is put in before the command runs, so all commands take them. Only a value of more than one line (`$clip` or `$peek` of lines) is limited: `insert` and `change` put in its lines, and the other commands are told (nothing is changed):
+
+  | | One line (`$pwd`, `$file`, `$date`, `$time`, `$now`, a register, and `$clip` or `$peek` of one line) | More lines (`$clip`, `$peek`) |
+  |---|---|---|
+  | `insert file top\|bottom\|+N $peek` | yes | yes, as lines |
+  | `change file 3-5 $peek` | yes | yes: lines 3 to 5 become those lines |
+  | `lines file 4 start\|end $date` | yes (`lines todo.md 4 end (done $date)`) | no: start and end add to one line |
+  | `lines file 4-6 replace old $peek` | yes | no |
+  | `lines $file 4-6 > other.md bottom`, `shift $file 4-6 Done` | yes: the file names and places | |
+  | `find -t $peek` | yes: that text is looked for | no |
+  | `reg note $peek`, `reg notes += $peek` | yes | yes: a register keeps lines |
+  | `clip $peek` | yes | yes: all of it |
+
+  An empty `$clip` or `$peek` is not taken by `change` (no text deletes the lines), and `insert` puts it in as a blank line. A value is put in when the command line starts: after `peek a.md 2-3`, `insert $file bottom $peek` puts the lines back into `a.md`; to put them in another file, give its name (`insert b.md bottom $peek`)
 - `Tab` completes the names of the registers after a `$` (and the names set by Blyant that have a value: `$clip` once something is copied, `$file` once a file is worked on), and after `reg`
 - The registers are kept in the data directory (`registers.txt`), so they are there the next time. The file can be edited in another program: a line is the name, a tab, and the value. A file changed since the shell read it is read again before the next command, and `reg` tells of lines that are not registers (no tab, or a name a register cannot have): they are kept in the file, at its end, so you can put them right. They are the shell's own: the registers of the editor are not these. `reset` does not take them away (they are not settings), and the log has their names, never their values
 

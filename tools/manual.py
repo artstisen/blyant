@@ -424,10 +424,10 @@ def table_cells(line):
             i += 2
             continue
         if line[i] == '`':
-            # A pipe in code is not a column
+            # A pipe in code is not a column (written "\|" in a table, as GitHub shows it: "|")
             end = line.find('`', i + 1)
             if end > 0:
-                cell += line[i:end + 1]
+                cell += line[i:end + 1].replace('\\|', '|')
                 i = end + 1
                 continue
         if line[i] == '|':

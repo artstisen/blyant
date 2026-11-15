@@ -22,7 +22,8 @@ internal sealed partial class ShellSession
             ? 3
             : 2;
         if (words.Count <= at) return (-1, -1);
-        if (words[at] == ">") return (at, -1);
+        // (">>": added to a register)
+        if (words[at] is ">" or ">>") return (at, -1);
         return LineEdits.Contains(words[at].ToLowerInvariant()) ? (-1, at) : (-1, -1);
     }
 
@@ -163,7 +164,20 @@ internal sealed partial class ShellSession
     private void CopyLines(string argument)
     {
         var words = Words(argument);
-        var arrow = words.IndexOf(">");
+        var arrow = LinesForm(words).Arrow;
+        // Into a register: "lines a.md 4-6 > $notes" (">>": added to it), "copy" or "cut" after it
+        if (arrow >= 0 && RegisterTarget(words, arrow) is { } register)
+        {
+            LinesToRegister(words, arrow, register);
+            return;
+        }
+
+        if (arrow >= 0 && words[arrow] == ">>")
+        {
+            Error(Lang.T(">> adds lines to a register: lines notes.md 4-6 >> $notes"));
+            return;
+        }
+
         if (arrow is < 2 or > 3 || words.Count < arrow + 3 || (arrow == 3 && !words[1].StartsWith('+')))
         {
             Error(Lang.T("Give the lines and where to: lines notes.md 4-6 > plan.md bottom (cut: move them)"));
@@ -224,6 +238,85 @@ internal sealed partial class ShellSession
 
         var left = WithoutLines(source.File.Text, picked);
         var removed = source.File.Save(left);
+        FileExplorer.LogFileOperation("Take out lines", source.Item.Path + ":" + Numbers(picked), removed);
+        if (removed != DialogText.Success)
+        {
+            Error(Lang.F("{0}: the lines are copied, but not taken out: {1}", source.Item.Path, removed));
+            return;
+        }
+
+        Line(picked.Count == 1
+            ? Lang.F("{0}: line {1} taken out", source.Item.Path, picked[0])
+            : Lang.F("{0}: {1} lines taken out", source.Item.Path, picked.Count));
+    }
+
+    // The register lines go to: "$notes" after the ">" (or ">>"), alone or with "copy" or "cut" after it (a file
+    // has a place after it); a name set by Blyant ($file ...) is a path. Null: not a register
+    private static string? RegisterTarget(IReadOnlyList<string> words, int arrow)
+    {
+        if (words.Count <= arrow + 1 || words[arrow + 1] is not ['$', .. var name] || !ShellRegisters.IsName(name) ||
+            ShellRegisters.IsReserved(name))
+        {
+            return null;
+        }
+
+        return words.Count == arrow + 2 || (words.Count == arrow + 3 && words[^1].ToLowerInvariant() is "copy" or "cut")
+            ? name.ToLowerInvariant()
+            : null;
+    }
+
+    /// <summary>
+    /// The words after "lines" with the "$" of a register the lines go to made "$$", so that it is not put in (the
+    /// value of $notes) but stays the name ("lines a.md 4-6 > $notes")
+    /// </summary>
+    internal static string ProtectRegisterTarget(string argument)
+    {
+        var words = Words(argument);
+        var arrow = LinesForm(words).Arrow;
+        if (arrow < 0 || RegisterTarget(words, arrow) == null) return argument;
+        var match = System.Text.RegularExpressions.Regex.Match(argument, @"(^|\s)>>?\s+\$(?=[A-Za-z])");
+        return match.Success ? argument[..(match.Index + match.Length - 1)] + "$" + argument[(match.Index + match.Length - 1)..] : argument;
+    }
+
+    // "lines a.md 4-6 > $notes": the lines kept in a register (">>": added to its end), and with "cut" taken out of
+    // their file after the register is saved, as for another file. The register is kept in the data directory
+    private void LinesToRegister(List<string> words, int arrow, string register)
+    {
+        var cut = words.Count == arrow + 3 && words[^1].Equals("cut", StringComparison.OrdinalIgnoreCase);
+        var adds = words[arrow] == ">>";
+        if (EditableFile(words[0]) is not { } source) return;
+        var lines = LinesOfText(source.File.Text);
+        if (PickedLines(words[1], arrow == 3 ? words[2] : null, lines, source.Item.Path) is not { } picked) return;
+        var text = string.Join("\n", picked.Select(n => lines[n - 1]));
+        if (adds) ShellRegisters.Add(register, text);
+        else ShellRegisters.Set(register, text);
+        var saved = ShellRegisters.Save();
+        // English: the log (the name of the register and the lines, never the text)
+        EventLog.Add(DialogText.LogShell + ": lines to register " + register + ": " + source.Item.Path + ":" +
+                     Numbers(picked));
+        if (saved != DialogText.Success)
+        {
+            Error(saved);
+            return;
+        }
+
+        Line(adds
+            ? picked.Count == 1
+                ? Lang.F("Line {0} added to ${1}", picked[0], register)
+                : Lang.F("{0} lines added to ${1}", picked.Count, register)
+            : picked.Count == 1
+                ? Lang.F("Line {0} kept in ${1}", picked[0], register)
+                : Lang.F("{0} lines kept in ${1}", picked.Count, register));
+        if (!cut) return;
+
+        // Cut: out of their file, as it was read (changed since: left there)
+        if (Changed(source.Item.Path, source.File))
+        {
+            Error(Lang.F("{0} was changed meanwhile: the lines are copied, not taken out", source.Item.Path));
+            return;
+        }
+
+        var removed = source.File.Save(WithoutLines(source.File.Text, picked));
         FileExplorer.LogFileOperation("Take out lines", source.Item.Path + ":" + Numbers(picked), removed);
         if (removed != DialogText.Success)
         {
