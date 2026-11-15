@@ -9,7 +9,7 @@ Blyant has several features inspired by popular Neovim plugins for text navigati
 
 **My favorite feature? – Using bookmarks to create custom jump points and open them from anywhere via the command line.**
 
-I also like to use Blyant in Shell mode, with no TUI at all, as a purely command driven tool in the CLI.
+I also like to use Blyant in Shell mode, with no TUI at all, as a purely command driven tool in the CLI (see [shell tutorial](Guide-to-shell-tutorial.md)).
 
 ![The editor in split view, with command suggestions](docs/screenshots/split-view.svg)
 
