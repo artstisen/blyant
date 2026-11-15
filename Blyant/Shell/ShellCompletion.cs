@@ -223,13 +223,16 @@ internal sealed class ShellCompletion
                 return (position == 1 && after[0] == "add" ? Kind.Path : Kind.None, none);
             case "history":
             case "hist":
+                // ("hist filter draft", "hist -l filter draft")
+                if (position == 0) return (Kind.Words, new[] { "-l", "filter" });
+                return (position == 1 && after[0] == "-l" ? Kind.Words : Kind.None, new[] { "filter" });
             case "recent":
             case "bookmarks":
             case "book":
                 return (position == 0 ? Kind.Words : Kind.None, new[] { "-l" });
             case "hotlist":
             case "hot":
-                if (position == 0) return (Kind.Words, new[] { "add", "remove" });
+                if (position == 0) return (Kind.Words, new[] { "add", "remove", "filter" });
                 return (position == 1 && after[0] is "add" or "remove" ? Kind.Directory : Kind.None, none);
             case "project":
                 return (position == 0 ? Kind.Words : Kind.None, Projects.DisplayNames(Projects.All()));

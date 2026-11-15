@@ -64,7 +64,8 @@ internal sealed partial class ShellSession
         }
     }
 
-    // "fav filter text" (with "-l" before it or after "fav": the full paths): the text, or null when it is not a filter
+    // "filter text" after "fav", "hist" or "hot" (with "-l" before it: the full paths): the text, or null when it is not
+    // a filter
     private static (string Text, bool Full)? FilterOf(string argument)
     {
         var text = argument.Trim();
@@ -102,7 +103,6 @@ internal sealed partial class ShellSession
         }
 
         ShowRows(rows.Select(row => row.Item).ToList());
-        var pattern = ShellCompletion.IsPattern(text);
         var names = Names(rows.Select(row => (row.Item.Path, row.Item.IsDirectory)).ToList(), full, false);
         var width = rows.Count.ToString().Length;
         var shown = new HashSet<int>(); // The folders shown above a row already
@@ -110,13 +110,7 @@ internal sealed partial class ShellSession
         for (var row = 0; row < rows.Count; row++)
         {
             var favorite = items[rows[row].Index];
-            var name = FavoriteName(favorite);
-            if (pattern
-                    ? !System.IO.Enumeration.FileSystemName.MatchesSimpleExpression(text, name)
-                    : !favorite.Path.Contains(text, StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
+            if (!Fits(text, favorite.Path, null)) continue;
 
             // (the folder and subfolder it is in, above it, once)
             var folders = new List<int>();

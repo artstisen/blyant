@@ -70,8 +70,10 @@ internal sealed partial class ShellSession
         ("favorites add file|n [where]", Lang.T("Add to the favorites: last, or top, 5, [folder]")),
         ("favorites remove file|n", Lang.T("Take off the favorites")),
         ("history [-l]", Lang.T("List the files opened (hist)")),
+        ("history filter text", Lang.T("Show the files opened with a text in them (or *.md)")),
         ("recent [-l]", Lang.T("List the latest files")),
         ("hotlist", Lang.T("List the directory hotlist (hot)")),
+        ("hotlist filter text", Lang.T("Show the directories with a text in them")),
         ("hotlist add|remove [dir|n]", Lang.T("Add a directory to the hotlist (this one), or take it off")),
         ("bookmarks [-l]", Lang.T("List the bookmarks (book)")),
         ("projects", Lang.T("List the projects (proj)")),
@@ -308,7 +310,7 @@ internal sealed partial class ShellSession
             case "hotlist":
             case "hot":
                 if (Change(argument) is { } addHot) ChangeHotlist(Rest(argument), addHot);
-                else ListHotlist();
+                else ListHotlist(argument);
                 break;
             case "peek":
                 Peek(argument);
@@ -651,6 +653,20 @@ internal sealed partial class ShellSession
     // "hist", "recent": the files by name and when they were opened ("-l": the full paths)
     private void ListHistory(int most, string argument)
     {
+        // "hist filter draft" ("hist -l filter draft": the full paths)
+        string? filter = null;
+        if (most == int.MaxValue && FilterOf(argument) is { } asked)
+        {
+            filter = asked.Text.Trim('"');
+            if (filter.Length == 0)
+            {
+                Error(Lang.T("Give a text: hist filter draft (or *.md)"));
+                return;
+            }
+
+            argument = asked.Full ? "-l" : string.Empty;
+        }
+
         if (OnlyLong(argument) is not { } full) return;
         FileHistory.Load();
         var entries = FileHistory.Items.Take(most).ToList();
@@ -659,15 +675,69 @@ internal sealed partial class ShellSession
         var width = full || names.Count == 0 ? 0 : names.Max(TextMetrics.WidthOf);
         var rows = entries.Select((entry, i) => (new Item(entry.Path, false),
             Padded(names[i], width) + "  " + entry.Opened.ToString("yyyy-MM-dd HH:mm"))).ToList();
+        if (filter != null)
+        {
+            Filtered(rows, i => Fits(filter, entries[i].Path, null), Lang.F("No files with {0} in them", filter));
+            return;
+        }
+
         List(rows, Lang.T("No files opened"));
     }
 
-    private void ListHotlist()
+    // The rows of a list that a filter fits, numbered as in the whole list, which is the last list ("open 7" is row 7
+    // of the list without the filter); what is told when none does
+    private void Filtered(IReadOnlyList<(Item Item, string Text)> rows, Func<int, bool> fits, string none)
+    {
+        ShowRows(rows.Select(row => row.Item).ToList());
+        var width = rows.Count.ToString().Length;
+        var found = 0;
+        for (var i = 0; i < rows.Count; i++)
+        {
+            if (!fits(i)) continue;
+            Line((i + 1).ToString().PadLeft(width + 2) + "  " + rows[i].Text);
+            found++;
+        }
+
+        if (found == 0) Line(none);
+    }
+
+    // A filter fits a path (or a name it has: of a directory of the hotlist): the text is in it (letter case alike),
+    // or a pattern ("*.md") fits the name of the file or directory, or the name
+    private static bool Fits(string filter, string path, string? name)
+    {
+        if (ShellCompletion.IsPattern(filter))
+        {
+            return System.IO.Enumeration.FileSystemName.MatchesSimpleExpression(filter,
+                       Path.GetFileName(Path.TrimEndingDirectorySeparator(path))) ||
+                   (name is { Length: > 0 } && System.IO.Enumeration.FileSystemName.MatchesSimpleExpression(filter, name));
+        }
+
+        return path.Contains(filter, StringComparison.OrdinalIgnoreCase) ||
+               (name != null && name.Contains(filter, StringComparison.OrdinalIgnoreCase));
+    }
+
+    // "hot": the directories of the hotlist; "hot filter notes" those with a text in their name or path
+    private void ListHotlist(string argument)
     {
         DirectoryHotlist.Load();
-        var rows = DirectoryHotlist.Items.Select(entry =>
+        var entries = DirectoryHotlist.Items.ToList();
+        var rows = entries.Select(entry =>
             (new Item(entry.Path, true),
                 (entry.Name.Length > 0 ? entry.Name + "  " : string.Empty) + Shown(entry.Path, true))).ToList();
+        if (FilterOf(argument) is { } asked)
+        {
+            var filter = asked.Text.Trim('"');
+            if (filter.Length == 0)
+            {
+                Error(Lang.T("Give a text: hot filter notes"));
+                return;
+            }
+
+            Filtered(rows, i => Fits(filter, entries[i].Path, entries[i].Name),
+                Lang.F("No directories with {0} in them", filter));
+            return;
+        }
+
         List(rows, Lang.T("No directories in the hotlist"));
     }
 

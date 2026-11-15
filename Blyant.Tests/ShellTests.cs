@@ -3538,4 +3538,46 @@ public class ShellTests : IDisposable
         Assert.Equal("fav add plot.md [Drafts]", Tab(Completion(), "fav add plot.md [D"));
         Assert.Equal("fav filter", Tab(Completion(), "fav fil"));
     }
+
+    [Fact]
+    public void HistFilter_ShowsTheFilesWithTheText_NumberedAsTheWholeHistory()
+    {
+        Run("new chapter-1\nnew notes\nnew chapter-2.typ\n");
+        var (output, errors, _, session) = Run("hist filter CHAPTER\n");
+        Assert.Equal(string.Empty, errors);
+        var lines = output.TrimEnd('\n').Split('\n');
+        Assert.Equal(2, lines.Length);
+        Assert.StartsWith("  1  chapter-2.typ", lines[0]);
+        Assert.StartsWith("  3  chapter-1.md", lines[1]);
+        // The last list is the whole history: row 2 is notes.md
+        Assert.Equal(3, session.LastList.Count);
+        Assert.Equal(In("work", "notes.md"), session.LastList[1].Path);
+        (output, _, _, _) = Run("hist filter *.typ\nhist -l filter notes\nhist filter nothing\n");
+        Assert.Contains("  1  chapter-2.typ", output);
+        Assert.Contains("  2  " + In("work", "notes.md") + "  ", output);
+        Assert.DoesNotContain("chapter-1.md", output);
+        Assert.Contains(Lang.F("No files with {0} in them", "nothing"), output);
+        (_, errors, _, _) = Run("hist filter\nrecent filter x\n");
+        Assert.Contains(Lang.T("Give a text: hist filter draft (or *.md)"), errors);
+        Assert.Contains(Lang.F("Not taken: {0} (only -l, for the full paths)", "filter x"), errors);
+    }
+
+    [Fact]
+    public void HotFilter_ShowsTheDirectoriesWithTheText()
+    {
+        foreach (var name in new[] { "novel", "notes", "site" }) Directory.CreateDirectory(In("work", name));
+        var (output, errors, _, session) = Run("hot add novel\nhot add notes\nhot add site\nhot filter no*\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains("  1  " + In("work", "novel") + "/\n  2  " + In("work", "notes") + "/\n", output);
+        Assert.DoesNotContain(In("work", "site") + "/", output);
+        Assert.Equal(3, session.LastList.Count);
+        (output, _, _, _) = Run("hot filter SITE\nhot filter nothing\n");
+        Assert.Contains("  3  " + In("work", "site") + "/\n", output);
+        Assert.Contains(Lang.F("No directories with {0} in them", "nothing"), output);
+        (_, errors, _, _) = Run("hot filter\n");
+        Assert.Contains(Lang.T("Give a text: hot filter notes"), errors);
+        Assert.Equal("hot filter", Tab(Completion(), "hot fi"));
+        Assert.Equal("hist filter", Tab(Completion(), "hist fi"));
+        Assert.Equal("hist -l filter", Tab(Completion(), "hist -l fi"));
+    }
 }

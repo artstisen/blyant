@@ -128,8 +128,10 @@ To have every output whole (with a screen reader, say), turn the pages off: `set
 | `favorites filter text` | Show the favorites with a text in their name or path, or whose name fits a pattern (`fav filter draft`, `fav filter *.typ`), numbered as in the whole list. See [Folders of favorites](#folders-of-favorites) |
 | `favorites undo` | Put back what `fav remove` removed last |
 | `history [-l]` (`hist`) | List the files opened by name, the newest first, with when (`-l`: the full paths) |
+| `history [-l] filter text` | Show the files opened with a text in their path (`hist filter chapter`), or whose name fits a pattern (`hist filter *.typ`), numbered as in the whole history, so `open 7` is row 7 of `hist` |
 | `recent [-l]` | List the latest files (the first nine of the history), by name (`-l`: the full paths) |
 | `hotlist` (`hot`) | List the directory hotlist |
+| `hotlist filter text` | Show the directories of the hotlist with a text in their name or path (`hot filter novel`), or that a pattern fits, numbered as in the whole hotlist |
 | `fav add file\|n [where]` | Add a file or directory to the favorites in use: last in the list, or where it is told: `top`, `bottom`, the place of a row (`5`) or into a `[folder]` (`fav add notes.md [Drafts]`) |
 | `fav remove file\|n` | Take a file or directory off the favorites in use |
 | `hot add\|remove [dir\|n]` | Add a directory to the hotlist (`hot add` alone: the one you are in), or take it off |
