@@ -333,6 +333,8 @@ internal sealed partial class ShellSession
 
         var width = last.ToString().Length;
         for (var i = first; i <= last; i++) Line(i.ToString().PadLeft(width + 2) + "  " + lines[i - 1]);
+        // $peek: the lines shown, as they are now (to put them in another file: insert plan.md bottom $peek)
+        ShellRegisters.Peek = string.Join("\n", lines.GetRange(first - 1, last - first + 1));
         // (where the window is: also at the end, when it was moved there)
         if (last < lines.Count || step != 0) Line(Lang.F("(lines {0}-{1} of {2})", first, last, lines.Count));
     }

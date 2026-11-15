@@ -44,11 +44,22 @@ internal static partial class ShellRegisters
     internal static bool IsClip(string name) => name.Equals(ClipName, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
-    /// The names set by Blyant, not registers: $clip (the text clip copied last), $pwd (the directory the shell is
+    /// The names set by Blyant, not registers: $clip (the text clip copied last), $peek (the lines peek showed last), $pwd (the directory the shell is
     /// in), $file (the file the last command worked on), $date, $time and $now. They cannot be set or taken away, and
     /// a line of one of them in the file is kept as a line that is not a register
     /// </summary>
-    internal static readonly string[] Reserved = { ClipName, "pwd", "file", "date", "time", "now" };
+    internal static readonly string[] Reserved = { ClipName, PeekName, "pwd", "file", "date", "time", "now" };
+
+    /// <summary>
+    /// The name of $peek: the lines the last peek showed
+    /// </summary>
+    internal const string PeekName = "peek";
+
+    /// <summary>
+    /// $peek: the lines the last peek of this Blyant showed, as they were then (null: none yet). It may have more than
+    /// one line
+    /// </summary>
+    internal static string? Peek { get; set; }
 
     /// <summary>
     /// True for a name set by Blyant (letter case alike)
@@ -74,6 +85,7 @@ internal static partial class ShellRegisters
     private static string? ReservedValue(string name) => name.ToLowerInvariant() switch
     {
         ClipName => Clip,
+        PeekName => Peek,
         "pwd" => DirectorySource?.Invoke(),
         "file" => FileSource?.Invoke(),
         // (as :ts in the editor: ISO, the same in every language)

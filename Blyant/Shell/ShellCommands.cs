@@ -132,6 +132,14 @@ internal sealed partial class ShellSession
             return true;
         }
 
+        // $peek: the lines peek showed last, as $clip
+        if (!help && ShellRegisters.Mentions(line, ShellRegisters.PeekName) && PeekProblem(name, line) is { } peekProblem)
+        {
+            NewPage();
+            Error(peekProblem);
+            return true;
+        }
+
         // $file before a command has worked on a file
         if (!help && _file == null && ShellRegisters.Mentions(line, "file"))
         {
@@ -205,6 +213,17 @@ internal sealed partial class ShellSession
         return name is "insert" or "change"
             ? null
             : Lang.T("$clip has more than one line: only insert and change take it");
+    }
+
+    // Why $peek cannot be used in a command line (null: it can): as $clip
+    private static string? PeekProblem(string name, string line)
+    {
+        if (ShellRegisters.Peek is not { } peek) return Lang.T("Nothing peeked yet: peek shows lines for $peek");
+        if (peek.Length == 0 && name == "change") return Lang.T("$peek is empty: change would delete the lines");
+        if (!peek.Contains('\n') || IsClipOfRegister(line)) return null;
+        return name is "insert" or "change"
+            ? null
+            : Lang.T("$peek has more than one line: only insert and change take it");
     }
 
     private bool RunCommand(string name, string argument)

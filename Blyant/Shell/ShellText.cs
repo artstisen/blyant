@@ -395,7 +395,8 @@ internal sealed partial class ShellSession
             // The names set by Blyant, with their values now ($clip and $file when they have one)
             Line(Lang.T("Set by Blyant:"));
             ClipRow(width);
-            foreach (var reserved in ShellRegisters.Reserved.Skip(1))
+            PeekRow(width);
+            foreach (var reserved in ShellRegisters.Reserved.Skip(2))
             {
                 if (ShellRegisters.Get(reserved) is { } value) Line("  $" + reserved.PadRight(width) + Printable(value));
             }
@@ -504,6 +505,20 @@ internal sealed partial class ShellSession
         Line("  $" + ShellRegisters.ClipName.PadRight(width) + (lines.Count == 1
             ? Lang.F("{0}  (the last clip)", shown)
             : Lang.F("{0}  ({1} lines, the last clip)", shown, lines.Count)));
+    }
+
+    // $peek in the list of the registers: its first line (cut) and how many lines it has, as $clip
+    private void PeekRow(int width)
+    {
+        if (ShellRegisters.Peek is not { } peek) return;
+        var lines = LinesPutIn(peek);
+        var first = Printable(lines[0]).Replace('\t', ' ');
+        var shown = Cut(first, 40);
+        if (shown.Length < first.Length) shown += "...";
+        else if (lines.Count > 1) shown += " ...";
+        Line("  $" + ShellRegisters.PeekName.PadRight(width) + (lines.Count == 1
+            ? Lang.F("{0}  (the last peek)", shown)
+            : Lang.F("{0}  ({1} lines, the last peek)", shown, lines.Count)));
     }
 
     // Lines of the file of the registers that are not registers (edited by hand): told, so a register mistyped there is

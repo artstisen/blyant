@@ -29,6 +29,7 @@ public class ShellTests : IDisposable
         ShellRegisters.FilePathOverride = Path.Combine(_data, ShellRegisters.FileName);
         ShellRegisters.Clear();
         ShellRegisters.Clip = null;
+        ShellRegisters.Peek = null;
         FileFavorites.Parse(string.Empty);
         FileHistory.Parse(string.Empty);
         DirectoryHotlist.Parse(string.Empty);
@@ -49,6 +50,7 @@ public class ShellTests : IDisposable
         ShellRegisters.FilePathOverride = null;
         ShellRegisters.Clear();
         ShellRegisters.Clip = null;
+        ShellRegisters.Peek = null;
         SystemClipboard.WriteOverride = null;
         Tools.ClearLineMemory();
         FileFavorites.Parse(string.Empty);
@@ -3039,5 +3041,32 @@ public class ShellTests : IDisposable
             .Select(w => Lang.F("(lines {0}-{1} of {2})", w.Item1, w.Item2, w.Item3)), windows);
         // help + tells of peek
         Assert.Contains("peek [file|n] +|++|-|--", output);
+    }
+
+    // ---- $peek: the lines the last peek showed
+
+    [Fact]
+    public void PeekVariable_PutsTheLinesShownInAnotherFile()
+    {
+        File.WriteAllText(In("work", "notes.md"), "one\ntwo\nthree\nfour\n");
+        File.WriteAllText(In("work", "plan.md"), "# Plan\n");
+        var (output, errors, _, _) = Run("insert plan.md bottom $peek\npeek notes.md 2-3\ninsert plan.md bottom $peek\n" +
+                                         "+\nchange plan.md +1 $peek\ncd $peek\nreg\nreg peek x\n");
+        Assert.Contains(Lang.T("Nothing peeked yet: peek shows lines for $peek"), errors);
+        Assert.Contains(Lang.T("$peek has more than one line: only insert and change take it"), errors);
+        Assert.Contains(Lang.F("${0} is set by Blyant: it is not a register to set or take away", "peek"), errors);
+        Assert.Equal(3, errors.TrimEnd('\n').Split('\n').Length);
+        // Lines 2-3, then (+) lines 3-4 in place of the heading
+        Assert.Equal("three\nfour\ntwo\nthree\n", Text("plan.md"));
+        Assert.Contains("  $peek " + Lang.F("{0}  ({1} lines, the last peek)", "three ...", 2), output);
+    }
+
+    [Fact]
+    public void PeekVariable_OfOneLine_GoesWhereALineGoes_AndTabOffersIt()
+    {
+        File.WriteAllText(In("work", "notes.md"), "Draft\nother\n");
+        var (_, errors, _, _) = Run("peek notes.md 1\ncd $peek\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("insert plot.md top $peek", Tab(Completion(), "insert plot.md top $pe"));
     }
 }
