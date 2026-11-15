@@ -2259,6 +2259,8 @@ en: "Splits"
 da: "Delte visninger"
 en: "No splits yet: close a file with another beside it (:view)"
 da: "Ingen endnu: luk en fil med en anden ved siden af (:view)"
+en: "Lists the remembered file pairs: files you closed with another file shown beside them (:view or :split name), so you can open the pair again."
+da: "Viser de huskede filpar: filer du lukkede med en anden fil ved siden af (:view eller :split name), så parret kan åbnes igen."
 en: "j/k Select | Enter Open | D Remove | / Filter | Esc Close"
 da: "j/k Vælg | Enter Åbn | D Fjern | / Filter | Esc Luk"
 

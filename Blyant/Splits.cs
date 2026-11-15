@@ -179,8 +179,10 @@ internal static class SplitsBox
             ChoiceBox.Forget();
             if (items.Count == 0)
             {
+                // (what the list is: not :split, which splits the text in two)
                 ChoiceBox.Message(Lang.T("Splits"), Lang.T("No splits yet: close a file with another beside it (:view)"),
-                    string.Empty);
+                    Lang.T("Lists the remembered file pairs: files you closed with another file shown beside them " +
+                           "(:view or :split name), so you can open the pair again."));
                 return null;
             }
 

@@ -2259,6 +2259,8 @@ en: "Splits"
 de: "Geteilte Ansichten"
 en: "No splits yet: close a file with another beside it (:view)"
 de: "Noch keine: eine Datei mit einer anderen daneben schließen (:view)"
+en: "Lists the remembered file pairs: files you closed with another file shown beside them (:view or :split name), so you can open the pair again."
+de: "Listet die gemerkten Dateipaare: Dateien, die Sie mit einer anderen daneben geschlossen haben (:view oder :split name), um das Paar wieder zu öffnen."
 en: "j/k Select | Enter Open | D Remove | / Filter | Esc Close"
 de: "j/k Wählen | Enter Öffnen | D Entfernen | / Filter | Esc Zu"
 

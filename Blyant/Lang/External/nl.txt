@@ -2259,6 +2259,8 @@ en: "Splits"
 nl: "Gesplitste weergaven"
 en: "No splits yet: close a file with another beside it (:view)"
 nl: "Nog geen: sluit een bestand met een ander ernaast (:view)"
+en: "Lists the remembered file pairs: files you closed with another file shown beside them (:view or :split name), so you can open the pair again."
+nl: "Toont de onthouden bestandsparen: bestanden die u sloot met een ander ernaast (:view of :split name), om het paar weer te openen."
 en: "j/k Select | Enter Open | D Remove | / Filter | Esc Close"
 nl: "j/k Kiezen | Enter Openen | D Verwijderen | / Filter | Esc Sluiten"
 

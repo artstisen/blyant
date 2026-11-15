@@ -1,6 +1,7 @@
 # Changes
 
 ## v1.5.2
+- **`:splits` tells what it lists**: with no splits yet, its box says what the list holds (the file pairs you closed with another file beside them, `:view` or `:split name`), so it is not taken for `:split`, which splits the text in two.
 - **`again` in the shell**: lists the commands you typed, numbered, the newest first, and `again 3` (or `!3`) runs number 3 again, written out first; `!!` runs the last one. `!3` and `Tab` puts the command on the line, to be changed before `Enter`. The shell keeps the last 50 commands (before, 20), while Blyant runs only and never in a file; commands from a file, a pipe or `--run` are not kept. See [Typing a command](Guide-to-shell.md#typing-a-command).
 - **A new file in the latest files**: a file made with `new` in the shell is put in the latest files (the history) at once, as one opened in the editor: `recent` and `hist` list it, and `Tab` with nothing typed offers it first. See [Commands](Guide-to-shell.md#commands).
 - **Favorites marked in the shell**: `ls`, `find`, `hist`, `recent` and `book` mark a favorite (of the open list) with ` *` after its name, as the full screen does in the file browser, the history and the search results. A list with `-l` has no marks, so a script reads the paths alone: `ls -l` and `find -l` are new, and give the full paths. See [Prompt and lists](Guide-to-shell.md#prompt-and-lists).

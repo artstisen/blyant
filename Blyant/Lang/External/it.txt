@@ -2259,6 +2259,8 @@ en: "Splits"
 it: "Viste divise"
 en: "No splits yet: close a file with another beside it (:view)"
 it: "Ancora nessuna: chiudi un file con un altro accanto (:view)"
+en: "Lists the remembered file pairs: files you closed with another file shown beside them (:view or :split name), so you can open the pair again."
+it: "Elenca le coppie di file ricordate: file chiusi con un altro accanto (:view o :split name), per riaprire la coppia."
 en: "j/k Select | Enter Open | D Remove | / Filter | Esc Close"
 it: "j/k Seleziona | Enter Apri | D Rimuovi | / Filtro | Esc Chiudi"
 

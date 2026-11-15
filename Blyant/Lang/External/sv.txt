@@ -2259,6 +2259,8 @@ en: "Splits"
 sv: "Delade vyer"
 en: "No splits yet: close a file with another beside it (:view)"
 sv: "Inga än: stäng en fil med en annan bredvid (:view)"
+en: "Lists the remembered file pairs: files you closed with another file shown beside them (:view or :split name), so you can open the pair again."
+sv: "Listar de sparade filparen: filer du stängde med en annan fil bredvid (:view eller :split name), så att paret kan öppnas igen."
 en: "j/k Select | Enter Open | D Remove | / Filter | Esc Close"
 sv: "j/k Välj | Enter Öppna | D Ta bort | / Filter | Esc Stäng"
 
