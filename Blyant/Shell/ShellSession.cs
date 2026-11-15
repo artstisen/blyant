@@ -333,12 +333,15 @@ internal sealed partial class ShellSession
 
     /// <summary>
     /// Files and directories as a list shows them: by name ("/" after a directory), with the folder they are in after
-    /// a name that two rows have ("README.md (novel)"), and "(missing)" when one is not there. "full": the full paths
-    /// ("fav -l"). "info 3" tells the rest
+    /// a name that two rows have ("README.md (novel)"), " *" after a favorite (of the open list, as the full screen
+    /// marks them; not "marked": the favorites themselves), and "(missing)" when one is not there. "full": the full
+    /// paths, without a mark ("fav -l": for scripts). "info 3" tells the rest
     /// </summary>
-    internal static List<string> Names(IReadOnlyList<(string Path, bool IsDirectory)> entries, bool full)
+    internal static List<string> Names(IReadOnlyList<(string Path, bool IsDirectory)> entries, bool full,
+        bool marked = true)
     {
         if (full) return entries.Select(entry => Shown(entry.Path, entry.IsDirectory)).ToList();
+        if (marked) FileFavorites.Load();
         var names = entries.Select(entry => NameOf(entry.Path)).ToList();
         // (names the file system tells apart are not alike: "Plot.md" and "plot.md" on Linux)
         var twice = names.GroupBy(name => name, FileOperations.NameComparer).Where(group => group.Count() > 1)
@@ -349,6 +352,7 @@ internal sealed partial class ShellSession
             var shown = names[i] + (entry.IsDirectory ? "/" : string.Empty);
             var parent = Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(entry.Path));
             if (twice.Contains(names[i]) && parent != null) shown += " (" + NameOf(parent) + ")";
+            if (marked) shown += FavoriteMark(entry.Path);
             return shown + (there ? string.Empty : " " + DialogText.FavoriteMissing);
         }).ToList();
 
@@ -360,6 +364,12 @@ internal sealed partial class ShellSession
             return name.Length > 0 ? name : trimmed;
         }
     }
+
+    /// <summary>
+    /// " *" after the name of a favorite (of the open list: FileFavorites read by the caller), as the full screen
+    /// marks them in the file browser, the history and the search results; else nothing
+    /// </summary>
+    internal static string FavoriteMark(string path) => FileFavorites.Contains(path) ? " *" : string.Empty;
 
     // A text made as wide as the widest of a column (by the columns it takes on the screen), for what follows it
     private static string Padded(string text, int width) =>

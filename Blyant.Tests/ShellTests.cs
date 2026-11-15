@@ -2245,8 +2245,8 @@ public class ShellTests : IDisposable
         Assert.Contains("  gone.md " + DialogText.FavoriteMissing + "\n", output);
         (output, _, _, _) = Run("fav -l\nrecent\nhist -l\n");
         Assert.Contains("  " + In("work", "novel", "plot.md") + "\n", output);
-        // The dates lined up after the names
-        Assert.Contains("  1  plot.md    2026-11-13 10:00\n", output);
+        // The dates lined up after the names (plot.md of novel is a favorite: marked)
+        Assert.Contains("  1  plot.md *  2026-11-13 10:00\n", output);
         Assert.Contains("  2  Ending.md  2026-11-13 09:30\n", output);
         // (-l: the full paths, the date right after each: not lined up, the rows would be too wide)
         Assert.Contains("  2  " + In("work", "Ending.md") + "  2026-11-13 09:30\n", output);
@@ -2718,5 +2718,47 @@ public class ShellTests : IDisposable
         Assert.Equal("fav move 1 bottom", Tab(Completion(), "fav move 1 bo"));
         Assert.Equal("fav move \"[My notes]\"", Tab(Completion(), "fav move [My"));
         Assert.Equal("fav remove [Drafts]", Tab(Completion(), "fav remove [D"));
+    }
+
+    // ---- A favorite marked " *" in the lists by name (not with -l, not in fav)
+
+    [Fact]
+    public void TheListsByName_MarkTheFavorites_AndDashLDoesNot()
+    {
+        FileFavorites.Toggle(In("work", "plot.md"));
+        FileFavorites.Toggle(In("work", "Draft"));
+        FileFavorites.Save();
+        FileHistory.Add(In("work", "plot.md"), new DateTime(2026, 11, 13, 9, 30, 0));
+        FileHistory.Save();
+        var (output, errors, _, _) = Run("ls\nhist\nfav\nfind plot\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains("  Draft/ *\n", output);
+        Assert.Contains("  plot.md *\n", output);
+        Assert.Contains("  Ending.md\n", output);
+        Assert.Contains("  plot.md *  2026-11-13 09:30\n", output);
+        // fav: all of them favorites, no mark
+        Assert.DoesNotContain("  1  Draft/ *", output.Split("List: main")[1]);
+
+        (output, errors, _, _) = Run("ls -l\nls -a -l Draft\nhist -l\nfind -l plot\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.DoesNotContain(" *", output);
+        Assert.Contains("  " + In("work", "plot.md") + "\n", output);
+        Assert.Contains("  " + Path.TrimEndingDirectorySeparator(In("work", "Draft")) + "/\n", output);
+    }
+
+    [Fact]
+    public void Find_ALineFound_IsNotMarked_TheFileIs()
+    {
+        FileFavorites.Toggle(In("work", "plot.md"));
+        FileFavorites.Save();
+        var (output, _, _, _) = Run("find -t Plot\nfind plot\n");
+        Assert.Contains("plot.md:1  Plot\n", output);
+        Assert.Contains("  plot.md *\n", output);
+    }
+
+    [Fact]
+    public void Tab_AfterLsDashAAndDashL_CompletesTheDirectory()
+    {
+        Assert.Equal("ls -a -l Draft/", Tab(Completion(), "ls -a -l Dr"));
     }
 }

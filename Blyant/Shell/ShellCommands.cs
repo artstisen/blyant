@@ -12,14 +12,14 @@ internal sealed partial class ShellSession
     private static IEnumerable<(string Command, string Text)> HelpRows() => new[]
     {
         ("pwd", Lang.T("Show the directory you are in")),
-        ("ls [-a] [dir|n]", Lang.T("List the folders and files of a directory (-a: hidden ones too)")),
+        ("ls [-a] [-l] [dir|n]", Lang.T("List a directory (-a: hidden ones too, -l: full paths)")),
         ("cd [dir|file|n]", Lang.T("Go to a directory, or that of a file (alone: home)")),
         ("up", Lang.T("Go to the directory above")),
         ("home", Lang.T("Go to your home directory")),
         ("data", Lang.T("Go to the data directory of Blyant (settings, lists, log)")),
         ("open file|n [+line]", Lang.T("Edit a file on the full screen (closing it is back here)")),
         ("peek file|n [lines]", Lang.T("Show the lines of a file (the first 20, 40, 100-120, or +100 30)")),
-        ("find [name] [-t text]", Lang.T("Find files here and below, by name (*.md) and by text")),
+        ("find [-l] [name] [-t text]", Lang.T("Find files here and below, by name (*.md) and by text")),
         ("new name", Lang.T("Make a new, empty file here (.md if no extension)")),
         ("mkdir name", Lang.T("Make a new directory here")),
         ("rename file|n name", Lang.T("Give a file or directory a new name")),
@@ -403,9 +403,17 @@ internal sealed partial class ShellSession
     // system ones left out: on Linux and macOS the names that start with "."); "ls -a": those too
     private void ListDirectory(string argument)
     {
-        var trimmed = argument.Trim();
-        var all = trimmed == "-a" || trimmed.StartsWith("-a ");
-        if (all) argument = trimmed[2..];
+        // "-a": hidden ones too; "-l": the full paths, without the mark of a favorite (for scripts); before the
+        // directory, in any order ("ls -a -l notes")
+        var (all, full) = (false, false);
+        while (argument.TrimStart() is ['-', 'a' or 'l', ..] trimmed &&
+               (trimmed.Length == 2 || char.IsWhiteSpace(trimmed[2])))
+        {
+            if (trimmed[1] == 'a') all = true;
+            else full = true;
+            argument = trimmed[2..];
+        }
+
         var item = Resolve(argument, true);
         if (item == null) return;
         if (!System.IO.Directory.Exists(item.Path))
@@ -418,10 +426,13 @@ internal sealed partial class ShellSession
         {
             var info = new DirectoryInfo(item.Path);
             // The folders first, then the files, each by name (letter case alike)
+            // (a favorite marked " *", as in the file browser)
+            FileFavorites.Load();
             var rows = info.EnumerateDirectories().Where(Shown).OrderBy(d => d.Name, StringComparer.OrdinalIgnoreCase)
-                .Select(d => (new Item(d.FullName, true), d.Name + "/"))
+                .Select(d => (new Item(d.FullName, true),
+                    full ? Path.TrimEndingDirectorySeparator(d.FullName) + "/" : d.Name + "/" + FavoriteMark(d.FullName)))
                 .Concat(info.EnumerateFiles().Where(Shown).OrderBy(f => f.Name, StringComparer.OrdinalIgnoreCase)
-                    .Select(f => (new Item(f.FullName, false), f.Name)))
+                    .Select(f => (new Item(f.FullName, false), full ? f.FullName : f.Name + FavoriteMark(f.FullName))))
                 .ToList();
             Line(item.Path);
             List(rows, Lang.T("(empty)"));
@@ -474,7 +485,8 @@ internal sealed partial class ShellSession
             items.Add(new Item(favorite.Path, isDirectory, at));
         }
 
-        var names = Names(items.Select(item => (item.Path, item.IsDirectory)).ToList(), full);
+        // (no mark: they are all favorites)
+        var names = Names(items.Select(item => (item.Path, item.IsDirectory)).ToList(), full, false);
         var rows = items.Select((item, i) => (item, names[i])).ToList();
 
         if (headings.Count == 0)

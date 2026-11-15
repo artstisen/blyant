@@ -118,8 +118,8 @@ internal sealed class ShellCompletion
             case "cd":
                 return (position == 0 ? Kind.Directory : Kind.None, none);
             case "ls":
-                // ("ls -a notes": the directory after -a)
-                return (position == 0 || (position == 1 && after[0] == "-a") ? Kind.Directory : Kind.None, none);
+                // ("ls -a -l notes": the directory after -a and -l)
+                return (after.All(word => word is "-a" or "-l") ? Kind.Directory : Kind.None, none);
             case "open":
             case "peek":
             case "info":

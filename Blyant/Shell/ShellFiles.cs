@@ -333,6 +333,9 @@ internal sealed partial class ShellSession
     // the file browser: hidden files are left out, and only text files are searched for text
     private void Find(string argument)
     {
+        // "-l" first: the full paths, without the mark of a favorite (for scripts)
+        var full = argument.TrimStart() is ['-', 'l', ..] start && (start.Length == 2 || char.IsWhiteSpace(start[2]));
+        if (full) argument = argument.TrimStart()[2..];
         var text = string.Empty;
         var at = argument.IndexOf("-t ", StringComparison.Ordinal);
         if (argument.TrimEnd().EndsWith("-t", StringComparison.Ordinal) && at < 0) at = argument.TrimEnd().Length - 2;
@@ -352,9 +355,14 @@ internal sealed partial class ShellSession
 
         FileExplorer.LogFileOperation("Search", Directory + " (with subfolders)", DialogText.Success);
         var outcome = FileSearch.Search(Directory, options);
+        // (a favorite marked " *" after its name, as in the search results of the full screen; not a line found in a
+        // file, which is not the file)
+        FileFavorites.Load();
         var rows = outcome.Results.Select(result =>
         {
-            var shown = Path.GetRelativePath(Directory, result.Path) + (result.IsDirectory ? "/" : string.Empty);
+            var shown = (full ? result.Path : Path.GetRelativePath(Directory, result.Path)) +
+                        (result.IsDirectory ? "/" : string.Empty);
+            if (!full && result.Line < 0) shown += FavoriteMark(result.Path);
             return result.Line >= 0
                 ? (new Item(result.Path, result.IsDirectory, (result.Line + 1, 1)),
                     shown + ":" + (result.Line + 1) + "  " + result.LineText.Trim())

@@ -49,7 +49,9 @@ blyant ~/projects/novel> open 4
 
 Every list a command shows is numbered, and a number given to a command after it is a row of that list: `open 4` opens `plot.md`, `cd 1` goes to `chapters`. A path works too (`open plot.md`, `cd ../other`), and a path that is not full is taken from the directory you are in. A file or directory that is not there is marked `(missing)`.
 
-The favorites, the history (`hist` and `recent`) and the bookmarks show the names of the files and directories, not their paths, so a list is quick to read. A name that two rows have gets the folder it is in after it (`README.md (novel)`). `info 3` tells the rest of row 3: its full path, size, dates and, for a text, its words and lines. `-l` shows a list with the full paths (`fav -l`, `hist -l`, `recent -l`, `book -l`). The hotlist, the projects, `ls` and `find` show paths, as before.
+The favorites, the history (`hist` and `recent`) and the bookmarks show the names of the files and directories, not their paths, so a list is quick to read. A name that two rows have gets the folder it is in after it (`README.md (novel)`). `info 3` tells the rest of row 3: its full path, size, dates and, for a text, its words and lines. `-l` shows a list with the full paths (`fav -l`, `hist -l`, `recent -l`, `book -l`, and `ls -l`, `find -l`). The hotlist and the projects show paths, as before.
+
+A favorite (of the open list of favorites) is marked ` *` after its name in `ls`, `find`, `hist`, `recent` and `book`, as the full screen marks it in the file browser, the history and the search results: `plot.md *`, `notes/ *`. `fav` has no marks (every row of it is a favorite), and neither has a list with `-l`: its lines are the paths alone, for a script to read. A line found by `find -t` is not marked, only the file found by its name.
 
 The last list is kept for as long as no other command takes its place, however long that is (until Blyant ends: it is not kept for the next time):
 
@@ -75,14 +77,14 @@ To have every output whole (with a screen reader, say), turn the pages off: `set
 | Command | What it does |
 |---|---|
 | `pwd` | Show the directory you are in |
-| `ls [-a] [dir\|n]` | List the folders, then the files, of a directory (by name). Hidden files are left out, as in the file browser (on Linux and macOS the names that start with `.`); `ls -a` lists them too |
+| `ls [-a] [-l] [dir\|n]` | List the folders, then the files, of a directory (by name; a favorite marked ` *`). Hidden files are left out, as in the file browser (on Linux and macOS the names that start with `.`); `ls -a` lists them too, and `ls -l` the full paths, without marks |
 | `cd [dir\|file\|n]` | Go to a directory; `cd` alone goes to your home directory, `cd ~/notes` to one in it. A file (a row of `fav`, `hist`, `find` ...) goes to the directory it is in, and the file is then the last list: `open 1` opens it |
 | `up` | Go to the directory above (`cd ..`) |
 | `home` | Go to your home directory (as `cd` alone) |
 | `data` | Go to the [data directory](Guide-to-installation.md#good-to-know) of Blyant: its settings, lists and log. `cd data` is still a directory named _data_ |
 | `open file\|n [+line]` | Edit a file in the editor of the full screen, at a line if one is given (`open plot.md +12`). A directory is gone to |
 | `peek file\|n [lines]` | Show the lines of a text file, numbered: the first 20, `peek plot.md 40` the first 40, `peek plot.md 100-120` those, `peek plot.md +100` 20 lines from line 100, and `peek plot.md +100 30` 30 of them. Only read. After a peek from a line, `open 1` opens the file at that line |
-| `find [name] [-t text]` | Find files here and in the directories below, by name and by a text in them (see [Files](#files)) |
+| `find [-l] [name] [-t text]` | Find files here and in the directories below, by name and by a text in them (see [Files](#files)); `find -l` gives the full paths |
 | `new name` | Make a new, empty file here (`new ideas` makes `ideas.md`: the kind of new files, when no extension is given) |
 | `mkdir name` | Make a new directory here |
 | `rename file\|n name` | Give a file or directory a new name |
