@@ -1,6 +1,7 @@
 # Changes
 
 ## v1.5.2
+- **`clip lines` takes the lines as `lines` and `shift` do**: `clip lines notes.md 40` copies line 40 (before: the first 40 lines, as `peek` shows them), and `4,7,9-10` and a text in the line work too; `4-6` and `+100 20` are as before. The guide to the shell has a new part, [Line numbers](Guide-to-shell.md#line-numbers): what a plain number, a range, a text and a `+` mean, and which commands take them.
 - **Text in lines in the shell**: `lines` also changes the text in lines and keeps what is there. `lines todo.md 4 start Remember this:` puts a text at the start of line 4 and `end` at its end, with a blank between (in quotes as it is: `start "- [ ] "`, `end ";"`); `unstart` and `unend` take it off again, and `replace draft final` replaces a text in the lines (letter case as typed). The lines as for the other forms (`4-6`, `4,7`, `+10 5`, a text in the line); blank lines are left as they are by `start` and `end`. `Tab` completes the words after the lines. See [Text in lines](Guide-to-shell.md#text-in-lines).
 
 ## v1.5.1 (2026-11-14)

@@ -42,7 +42,7 @@ internal sealed partial class ShellSession
         ("reload", Lang.T("Read the settings file and the registers again, after editing them")),
         ("clip [path|name] file|dir|n|.", Lang.T("Copy a path, or a name, to the clipboard")),
         ("clip text file|n", Lang.T("Copy the text of a file to the clipboard")),
-        ("clip lines file|n lines", Lang.T("Copy lines of a file, as peek takes them")),
+        ("clip lines file|n lines", Lang.T("Copy lines of a file (4, 4-6, 4,7, +100 20)")),
         ("clip $name", Lang.T("Copy the value of a register to the clipboard")),
         ("clip ... $clip", Lang.T("The text copied last, in a command")),
         ("reg [name [text|.|#n]]", Lang.T("Keep a text or a path in a register: $name puts it in a command")),

@@ -107,7 +107,7 @@ To have every output whole (with a screen reader, say), turn the pages off: `set
 | `reg -d name\|all` | Take a register away, or all of them |
 | `clip [path\|name] file\|dir\|n\|.` | Copy the full path of a file or directory (`clip 3`: row 3 of the last list; `clip .`: the directory you are in), or its name, to the clipboard (see [Clipboard](#clipboard)) |
 | `clip text file\|n` | Copy the text of a file to the clipboard |
-| `clip lines file\|n lines` | Copy lines of a file to the clipboard, given as for `peek` (`40`, `100-120`, `+100 30`) |
+| `clip lines file\|n lines` | Copy lines of a file to the clipboard, given as for `lines` (`40`, `4-6`, `4,7,9-10`, `+100 30`, a text in the line). See [Line numbers](#line-numbers) |
 | `clip $name` | Copy the value of a register to the clipboard |
 | `$clip` | The text `clip` copied last, put in a command as a register is (`insert plan.md bottom $clip`: its lines) |
 | `favorites [-l] [list]` (`fav`) | List the favorites of the file browser by name, with their folders as headings (`-l`: the full paths); `fav work` uses the list _work_ from now on, as `:list work` does, and `fav main` the main list again. The open list is told first (`List: main`) |
@@ -142,6 +142,23 @@ In a terminal the line of the shell is read key by key:
 - `Ctrl+C` drops what you have typed, and `Ctrl+D` (or `Ctrl+Z` on Windows) on an empty line leaves, as `exit` does
 
 With a screen reader the line may be read best as the terminal reads it: turn the setting `shellcompletion` off (`set shellcompletion false`, at once, or `shellcompletion=false` in the settings file; not on the pages of Configuration). The line is then read whole after `Enter`, without `Tab` and with the history your terminal gives. Commands from a file, a pipe or `--run` are always read that way.
+
+## Line numbers
+The commands that work on the lines of a file take line numbers in a few ways. A plain number is a line to work on; a `+` before it is a place in the file, or the first line of a stretch counted from it:
+
+| Written | Means | Taken by |
+|---|---|---|
+| `12` | line 12 | `change`, `shift`, `lines`, `clip lines` |
+| `4-6` | lines 4 to 6 | `change`, `shift`, `lines`, `clip lines`, `peek` |
+| `4,7,9-10` | those lines, in their order | `shift`, `lines`, `clip lines` |
+| `"Buy milk"` | the one line with that text in it | `shift`, `lines`, `clip lines` |
+| `+100 20` | 20 lines from line 100 | `peek`, `lines`, `clip lines` |
+| `+12` as a place | at line 12, before the line that is there | `insert`, `shift`, `lines` (after the `>`), and `open` (the cursor there) |
+
+- The `+` marks a place where the word could also be something else: `top`, `bottom` or a heading (a heading can be named _12_), and in `open notes.md +12` the line to go to, as in other editors (`vim +12 notes.md`)
+- `peek` alone takes a plain number as how many: `peek notes.md 40` shows the first 40 lines, as it only shows them. Everywhere else `40` is line 40
+- `change notes.md +12` is line 12 too: for `change` the `+` can be left out
+- A range past the end stops at the last line, and the numbers are those of the file as it is, as `peek` shows them
 
 ## Files
 The shell works on files with the rules of the file browser:
@@ -262,7 +279,7 @@ clip 3                      the full path of row 3 (also: clip path 3)
 clip name 3                 its name only (plot.md)
 clip .                      the directory you are in
 clip text todo.md           the whole text of a file
-clip lines notes.md +40 10  10 lines from line 40 (as peek takes them: 40, 100-120, +100 30)
+clip lines notes.md +40 10  10 lines from line 40 (as lines takes them: 40, 4-6, 4,7, +40 10)
 clip $note                  the value of a register, as it is
 ```
 

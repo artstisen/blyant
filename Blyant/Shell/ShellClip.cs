@@ -9,8 +9,9 @@
 internal sealed partial class ShellSession
 {
     // "clip 3", "clip path 3": the full path of row 3 of the last list (or of a file or directory typed; "." the one
-    // the shell is in); "clip name 3": its name; "clip text 3": the text of the file; "clip lines 3 +100 20": lines of
-    // it, as peek takes them; "clip $note": the value of the register, as it is
+    // the shell is in); "clip name 3": its name; "clip text 3": the text of the file; "clip lines 3 4-6": lines of it,
+    // as "lines" and "shift" take them ("4", "4-6", "4,7,9-10", "+100 20", a text in the line); "clip $note": the
+    // value of the register, as it is
     private void Clip(string argument)
     {
         var words = Words(argument);
@@ -79,7 +80,7 @@ internal sealed partial class ShellSession
                                                                          (words.Count == 3 && !words[1].StartsWith('+')))))
         {
             Error(lines
-                ? Lang.T("Give a file and the lines: clip lines 3 40, clip lines 3 100-120, clip lines 3 +100 30")
+                ? Lang.T("Give a file and the lines: clip lines 3 40, clip lines 3 4-6, clip lines 3 +100 30")
                 : Lang.F("Give one file or directory: clip {0} 3", kind));
             return false;
         }
@@ -101,13 +102,6 @@ internal sealed partial class ShellSession
             return false;
         }
 
-        var (first, last) = (1, int.MaxValue);
-        if (lines && !LinesOf(words[1], words.Count == 3 ? words[2] : null, out first, out last))
-        {
-            Error(Lang.F("Not lines: {0} (as 40, 100-120, or +100 30)", string.Join(' ', words.Skip(1))));
-            return false;
-        }
-
         string all;
         try
         {
@@ -126,18 +120,16 @@ internal sealed partial class ShellSession
             return true;
         }
 
+        // The lines as "lines" and "shift" take them: "40" is line 40 (peek shows the first 40, as it only shows them).
         // (the last line break does not start a line)
         var rows = LinesOfText(all);
-        var count = rows.Count;
-        last = Math.Min(last, count);
-        if (first > last)
-        {
-            Error(Lang.F("{0} has {1} lines", item.Path, count));
-            return false;
-        }
-
-        text = string.Join("\n", rows.GetRange(first - 1, last - first + 1));
-        shown = Lang.F("Lines {0}-{1} of {2}", first, last, path);
+        if (PickedLines(words[1], words.Count == 3 ? words[2] : null, rows, item.Path) is not { } picked) return false;
+        text = string.Join("\n", picked.Select(number => rows[number - 1]));
+        shown = picked.Count == 1
+            ? Lang.F("Line {0} of {1}", picked[0], path)
+            : picked[^1] - picked[0] == picked.Count - 1
+                ? Lang.F("Lines {0}-{1} of {2}", picked[0], picked[^1], path)
+                : Lang.F("Lines {0} of {1}", Numbers(picked), path);
         return true;
     }
 

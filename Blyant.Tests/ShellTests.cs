@@ -2581,4 +2581,21 @@ public class ShellTests : IDisposable
         Assert.Equal("lines plot.md +1 2 unend", Tab(Completion(), "lines plot.md +1 2 une"));
         Assert.Equal("lines plot.md 1 replace", Tab(Completion(), "lines plot.md 1 rep"));
     }
+
+    // ---- Line numbers: clip lines takes the lines as lines and shift do; peek alone takes "40" as how many
+
+    [Fact]
+    public void ClipLines_TakesTheLinesAsLinesDoes_AndPeekTheFirstOnes()
+    {
+        File.WriteAllText(In("work", "five.md"), "one\ntwo\nthree\nfour\nfive\n");
+        var sent = Clipboard();
+        var (output, errors, _, _) = Run("clip lines five.md 2\nclip lines five.md 1,3-4\nclip lines five.md four\n" +
+                                         "clip lines five.md +2 2\npeek five.md 2\n", clipboard: true);
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal(new[] { "two", "one\nthree\nfour", "four", "two\nthree" }, sent);
+        Assert.Contains(Lang.F("Line {0} of {1}", 2, In("work", "five.md")), output);
+        Assert.Contains(Lang.F("Lines {0} of {1}", "1,3,4", In("work", "five.md")), output);
+        // peek: the first 2 lines
+        Assert.Contains("five.md\n  1  one\n  2  two\n", output);
+    }
 }
