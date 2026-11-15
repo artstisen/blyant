@@ -83,7 +83,7 @@ To have every output whole (with a screen reader, say), turn the pages off: `set
 | `home` | Go to your home directory (as `cd` alone) |
 | `data` | Go to the [data directory](Guide-to-installation.md#good-to-know) of Blyant: its settings, lists and log. `cd data` is still a directory named _data_ |
 | `open file\|n [+line]` | Edit a file in the editor of the full screen, at a line if one is given (`open plot.md +12`). A directory is gone to |
-| `peek file\|n [lines]` | Show the lines of a text file, numbered: the first 20, `peek plot.md 40` the first 40, `peek plot.md 100-120` those, `peek plot.md +100` 20 lines from line 100, and `peek plot.md +100 30` 30 of them. Only read. After a peek from a line, `open 1` opens the file at that line |
+| `peek file\|n [lines]` | Show the lines of a text file, numbered: the first 20, `peek plot.md 40` the first 40, `peek plot.md 100-120` those, `peek plot.md +100` 20 lines from line 100, and `peek plot.md +100 30` 30 of them. Only read. After a peek from a line, `open 1` opens the file at that line. See [Peeking into a file](#peeking-into-a-file) |
 | `peek [file\|n] +\|++\|-\|--` | Move the window of the last peek of the file: `+` 1 line further down, `++` 5, `-` and `--` up again (the settings `shellpeekstep` and `shellpeekbigstep`: `set shellpeekstep 2`; 1 to 1000, and `reset` puts back 1 and 5), as many lines as before (`peek plot.md +`, then `peek +`: the file peeked last; `+`, `++`, `-` or `--` alone on the line do the same, also after other commands; nothing is taken after them: `+ 7` is told). The lines shown are `$peek`. From the top for a file not peeked before; at the end the last lines are shown |
 | `find [-l] [name] [-t text]` | Find files here and in the directories below, by name and by a text in them (see [Files](#files)); `find -l` gives the full paths |
 | `new name` | Make a new, empty file here (`new ideas` makes `ideas.md`: the kind of new files, when no extension is given). It is put in the latest files at once, as a file opened: `recent` lists it, and `Tab` with nothing typed offers it first |
@@ -165,7 +165,7 @@ The commands that work on the lines of a file take line numbers in a few ways. A
 | `12` | line 12 | `change`, `shift`, `lines`, `clip lines` |
 | `4-6` | lines 4 to 6 | `change`, `shift`, `lines`, `clip lines`, `peek` |
 | `4,7,9-10` | those lines, in their order | `shift`, `lines`, `clip lines` |
-| `"Buy milk"` | the one line with that text in it | `shift`, `lines`, `clip lines` |
+| `"Get pencils and paper"` | the one line with that text in it | `shift`, `lines`, `clip lines` |
 | `+100 20` | 20 lines from line 100 | `peek`, `lines`, `clip lines` |
 | `+`, `++`, `-`, `--` | the window of the last peek moved: 1 or 5 lines down, or up (as set) | `peek`, and alone on the line (`+` is `peek +`) |
 | `+12` as a place | at line 12, before the line that is there | `insert`, `shift`, `lines` (after the `>`), and `open` (the cursor there) |
@@ -188,6 +188,57 @@ The shell works on files with the rules of the file browser:
 - `find` searches the directory you are in and the directories below it, as the search of the file browser does: hidden files are left out, and at most 5000 files are found. `find plot` finds the names with _plot_ in them, `find *.md` the names that match (`*` and `?`), `find -t storm` the text files with _storm_ in a line (with the line), and `find *.md -t storm` both. The text takes `*` and `?` too: `find -t storm*night` finds a line with _storm_ and then _night_ in it, `find -t st?rm` _storm_ and _starm_ (a `*` in the text you look for, as `**` of bold, is taken so too, and finds more lines). `open` on a file found by its text opens it at that line
 - After `new`, `mkdir`, `rename`, `copy` and `move`, the new place is the last list: `open 1` opens it
 
+To duplicate a file, copy it to the directory it is in, `.`: the copy gets `-copy` in its name, and a second copy `-copy2`. Copied to another directory, it keeps its name:
+
+```
+blyant ~/notes> copy todo.md .
+Copied to /home/anna/notes/todo-copy.md
+blyant ~/notes> copy todo.md .
+Copied to /home/anna/notes/todo-copy2.md
+blyant ~/notes> copy todo.md drafts
+Copied to /home/anna/notes/drafts/todo.md
+blyant ~/notes> open 1
+```
+
+`open 1` opens the copy made last (it is the last list). The copy is given a directory, not a new name: give it its name with `rename` afterwards (`rename todo-copy.md plan.md`).
+
+## Peeking into a file
+`peek` shows the lines of a text file, numbered, without opening it. It only reads: nothing is changed, and the file is not put in the latest files.
+
+```
+peek chapter-3.md                            the first 20 lines
+peek chapter-3.md 40                         the first 40 lines
+peek chapter-3.md 10-12                      lines 10 to 12
+peek chapter-3.md +20                        20 lines from line 20
+peek chapter-3.md +20 3                      3 lines from line 20
+peek 2                                       row 2 of the last list (ls, fav ...)
+peek chapter-3.md +                          the window 1 line further down
++                                            the same, in the file peeked last
+++                                           5 lines further down
+-                                            1 line up (-- 5 lines up)
+```
+
+Under the lines it tells where they are in the file, unless they are the last lines of it:
+
+```
+blyant ~/novel> peek chapter-3.md 10-12
+  10  The storm came in from the west.
+  11  Anna closed the shutters.
+  12  Then the lights went out.
+(lines 10-12 of 30)
+blyant ~/novel> +
+  11  Anna closed the shutters.
+  12  Then the lights went out.
+  13  Nobody spoke.
+(lines 11-13 of 30)
+blyant ~/novel> open 1
+```
+
+- A plain number is how many lines to show, from the top (`peek chapter-3.md 40`), as `peek` only shows them. With a `+` it is the line to start at (see [Line numbers](#line-numbers))
+- `+`, `++`, `-` and `--` move the window of the last peek, as many lines as before: 1 or 5 lines (the settings `shellpeekstep` and `shellpeekbigstep`). They stop at the ends: at the top line 1 is shown, and at the end the last lines. Alone on the line they go on in the file peeked last, also after other commands, so you can read, edit and read on. A file not peeked before is shown from the top
+- After a peek, `open 1` opens the file at the first line shown, and `$file` is the file. The lines shown are `$peek`: `insert plan.md bottom $peek` puts them in another file (see [Registers](#registers))
+- Control characters of a file are shown as `?`, and a file that is not text (an image, a program) is not shown
+
 ## Text and settings
 `format` and `trim` change a file without opening it: they are the commands `:format` and `:trim` of the editor, run on the text of the file, so they do just what they do there (see the [guide to the editor](Guide-to-editor.md#other-commands)). The file is saved only when its text changed, with its line endings and its byte order mark as they were, and it is told with the path of the file: `/home/anna/site/page.html: Formatted`, `/home/anna/poems/poem.md: Lines trimmed: 3`, or `Already formatted` when nothing changed. A file that cannot be formatted safely is left as it is, and why is told.
 
@@ -195,7 +246,7 @@ The shell works on files with the rules of the file browser:
 - A file with more than one kind of line endings (some lines CRLF, some LF) is left as it is too: saved, every line would get one kind. The editor tells it, and saves it with one. This goes for `insert`, `change`, `shift` and `lines` too, and so does leaving the files Blyant uses
 - There is no undo: a file changed by `format` or `trim` is saved at once. Use them on files you can get back (a copy, a project kept in Git)
 
-`insert` puts a line of text in a file, as quick notes are written down: `insert todo.md bottom Buy milk`, `insert notes.md top # Monday`, `insert 3 +12 A new line` (a row of the last list). The text is all that follows the place, as you type it (blanks and quotes too), and it is one line; `$clip` of lines copied puts in its lines. `+12` makes it line 12, before the line that was there, and a line past the end puts it after the last. The file keeps its line endings and its byte order mark, and the file is then the last list, at the line put in: `open 1` opens it there. As for `format`, only a file in UTF-8 is changed, the files Blyant uses are not, and there is no undo.
+`insert` puts a line of text in a file, as quick notes are written down: `insert todo.md bottom Get pencils and paper`, `insert notes.md top # Monday`, `insert 3 +12 A new line` (a row of the last list). The text is all that follows the place, as you type it (blanks and quotes too), and it is one line; `$clip` of lines copied puts in its lines. `+12` makes it line 12, before the line that was there, and a line past the end puts it after the last. The file keeps its line endings and its byte order mark, and the file is then the last list, at the line put in: `open 1` opens it there. As for `format`, only a file in UTF-8 is changed, the files Blyant uses are not, and there is no undo.
 
 `change` changes lines of a file into a text, without opening it: `change notes.md +12 A new line` (line 12), `change notes.md 12-15 One line instead` (lines 12 to 15 become one line). The text is all that follows the lines, as you type it, and it is one line (`$clip` of lines copied: its lines). Without a text, the lines are deleted: `change notes.md 12-15` shows them and asks first (No is selected, as there is no undo), and from a file or with `--run` they are only deleted with `--yes`. A range past the end stops at the last line. As for `insert`, the file keeps its line endings and byte order mark, only a file in UTF-8 is changed and not the files Blyant uses, and the file is then the last list at the place changed (`open 1`). (The `:replace` of the editor finds a text and puts another in its place; `change` works on whole lines.)
 
@@ -209,15 +260,15 @@ The shell works on files with the rules of the file browser:
 `shift` moves lines to another place in the same file, without opening it, as items are moved from _Todo_ to _Done_:
 
 ```
-peek todo.md                       the lines, numbered
-shift todo.md 5 Done               line 5 under the heading Done
-shift todo.md 5-7 Done             lines 5 to 7
-shift todo.md 5,8,10-11 Done       lines that are not together, in their order
-shift todo.md "Buy milk" Done      the line with "Buy milk" in it
-shift todo.md 5 Done+              at the end of the section of Done
-shift todo.md 12 +3                before line 3
-shift todo.md 12 top               to the top (or bottom)
-shift! todo.md "Buy milk" Done     moved, and its task box ticked
+peek todo.md                                 the lines, numbered
+shift todo.md 5 Done                         line 5 under the heading Done
+shift todo.md 5-7 Done                       lines 5 to 7
+shift todo.md 5,8,10-11 Done                 lines apart, in their order
+shift todo.md "Get pencils and paper" Done   the line with that text in it
+shift todo.md 5 Done+                        at the end of the section of Done
+shift todo.md 12 +3                          before line 3
+shift todo.md 12 top                         to the top (or bottom)
+shift! todo.md "Get pencils and paper" Done  moved, and its task box ticked
 ```
 
 - The numbers are those of the file as it is, as `peek` shows them
@@ -232,7 +283,8 @@ shift! todo.md "Buy milk" Done     moved, and its task box ticked
 ```
 lines notes.md 4-6 > plan.md bottom          lines 4 to 6 copied to the end of plan.md
 lines notes.md +10 5 > plan.md top           5 lines from line 10 (as peek takes them)
-lines todo.md "Buy milk" > done.md Done+ cut the line with "Buy milk" moved to the end of Done
+lines todo.md "Get pencils and paper" > done.md Done+ cut
+                                             that line moved to the end of Done
 ```
 
 - The lines are given as for `shift` (`4`, `4-6`, `4,7,9-10`, a text), or as `+10 5`: 5 lines from line 10. After the `>` come the other file and the place in it, as for `shift`: `top`, `bottom`, `+12`, a heading, or `Heading+`
@@ -253,6 +305,33 @@ lines todo.md 4 unstart Remember this:       taken off again
 lines todo.md 5-9 unstart "- [ ] "           the task boxes taken off
 lines notes.md 5-9 replace draft final       "draft" in lines 5 to 9 made "final"
 lines notes.md 5-9 replace " (draft)" ""     " (draft)" taken out of them
+```
+
+A list of things to do, made into task items, given a date, changed and tidied again, a step at a time. Each step shows the lines it changed:
+
+```
+blyant ~/notes> peek todo.md
+  1  # Todo
+  2
+  3  Get pencils and paper
+  4  Call Anna
+  5  Write chapter 3 (draft)
+blyant ~/notes> lines todo.md 3-4 start "- [ ] "
+  3  - [ ] Get pencils and paper
+  4  - [ ] Call Anna
+/home/anna/notes/todo.md: 2 lines changed
+blyant ~/notes> lines todo.md 5 end (by Friday)
+  5  Write chapter 3 (draft) (by Friday)
+/home/anna/notes/todo.md: line 5 changed
+blyant ~/notes> lines todo.md 5 replace "(draft)" "(final)"
+  5  Write chapter 3 (final) (by Friday)
+/home/anna/notes/todo.md: line 5 changed
+blyant ~/notes> lines todo.md 5 unend (by Friday)
+  5  Write chapter 3 (final)
+/home/anna/notes/todo.md: line 5 changed
+blyant ~/notes> lines todo.md 3 unstart "- [ ] "
+  3  Get pencils and paper
+/home/anna/notes/todo.md: line 3 changed
 ```
 
 - The lines are given as for `shift` and the other forms of `lines`: `4`, `4-6`, `4,7,9-10`, `+10 5` (5 lines from line 10), or a text that finds one line (`lines todo.md "some task" start Note:`). Every line of them is changed
