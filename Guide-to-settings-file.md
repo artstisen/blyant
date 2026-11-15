@@ -127,10 +127,10 @@ Changed with `set` in the shell, or in the file: they are not on the pages of Co
 | `shellpaging` | **true**, false | A long output comes in pages in a terminal |
 | `shellcompletion` | **true**, false | `Tab` and the keys of the line; off: the line is read as the terminal reads it (for screen readers) |
 | `shellrecentfirst` | **true**, false | `Tab` with nothing typed offers the files opened last first |
-| `shellautopeek` | **false**, true | After a command that changed the file of the last peek, its window is shown again (as `.` shows it) |
+| `shellautopeek` | **false**, true | After a command that changed the file of the last peek (`insert`, `change`, `undo` ...), its window is shown again, as `.` shows it (see [Editing in a window](Guide-to-shell.md#editing-in-a-window)) |
 | `shellpeekstep` | **1**, 1 to 1000 | Lines that `+` and `-` move the window of the last peek |
 | `shellpeekbigstep` | **5**, 1 to 1000 | Lines that `++` and `--` move it |
-| `shellundosteps` | **10**, 1 to 50 | How many changes of files `undo` can go back through (`insert`, `change`, `lines` ...) |
+| `shellundosteps` | **10**, 1 to 50 | How many changes of files `undo` can go back through (`insert`, `change`, `lines` ...), while Blyant runs (see [Undo](Guide-to-shell.md#undo)) |
 | `shelldir` | **empty**, a path (`~/notes`), last | The directory the shell starts in: empty, the one Blyant is started in; `last`, the one it was left in |
 | `shelllastdir` | a path | With `shelldir=last`, where the shell was left: kept when you leave a shell typed in at a terminal (`exit`, `screen`), never by commands from a file, a pipe or `--run` |
 | `shelllastfile` | a path | `$file` when the shell was left, kept as `shelllastdir` is (whatever `shelldir` is): `$file` again in the next shell typed in at a terminal, while the file is there |

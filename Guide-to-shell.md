@@ -441,6 +441,113 @@ blyant ~/notes> changes
 - `lines a.md 4-6 > $notes cut` is undone in `a.md`; the register keeps the lines (`reg -d notes` takes it away)
 - `new`, `copy`, `rename`, `move` and `delete` are not undone: they change files, not their text (`delete` goes to the trash)
 
+## Editing in a window
+A peek is a window into the part of a file you are working on: find the place, change the lines, and look again, without opening the editor. `undo` takes a change back.
+
+**Find the place.** A window of 5 lines first, then a search moves it to the line, marked with `>`:
+
+```
+blyant ~/novel> peek chapter-3.md 1-5
+...
+blyant ~/novel> peek chapter-3.md /storm came
+   8  ## The storm
+   9
+> 10  The storm came in from the west.
+  11  Anna closed the shutters.
+  12  Then the lights went out.
+(match 1 of 1, lines 8-12 of 14)
+```
+
+**Change the lines, and look again.** `change`, `insert`, `shift` and `lines` change the file; `.` shows the same window again, as the file is now:
+
+```
+blyant ~/novel> change chapter-3.md +10 The storm came in from the west, fast and grey.
+/home/anna/novel/chapter-3.md: line 10 changed
+blyant ~/novel> .
+   8  ## The storm
+   9
+  10  The storm came in from the west, fast and grey.
+  11  Anna closed the shutters.
+  12  Then the lights went out.
+(lines 8-12 of 14)
+blyant ~/novel> insert chapter-3.md +11 The first drops hit the glass.
+/home/anna/novel/chapter-3.md: line 11 put in
+blyant ~/novel> .
+   8  ## The storm
+   9
+  10  The storm came in from the west, fast and grey.
+  11  The first drops hit the glass.
+  12  Anna closed the shutters.
+(lines 8-12 of 15)
+```
+
+**Take a change back.** `undo` puts the file back as it was before the last change, and `redo` does the change again:
+
+```
+blyant ~/novel> undo
+Undone: insert chapter-3.md +11 The first drops hit the glass.
+blyant ~/novel> .
+   8  ## The storm
+   9
+  10  The storm came in from the west, fast and grey.
+  11  Anna closed the shutters.
+  12  Then the lights went out.
+(lines 8-12 of 14)
+blyant ~/novel> redo
+Done again: insert chapter-3.md +11 The first drops hit the glass.
+```
+
+**Let the window follow by itself.** With the setting `shellautopeek` on, the window is shown again after each command that changed its file, `undo` and `redo` too, so `.` is not needed:
+
+```
+blyant ~/novel> set shellautopeek true
+  shellautopeek = true
+blyant ~/novel> change chapter-3.md +12 Anna closed the shutters, one by one.
+/home/anna/novel/chapter-3.md: line 12 changed
+(peek again: chapter-3.md)
+   8  ## The storm
+   9
+  10  The storm came in from the west, fast and grey.
+  11  The first drops hit the glass.
+  12  Anna closed the shutters, one by one.
+(lines 8-12 of 15)
+blyant ~/novel> shift chapter-3.md 14 +12
+  12  Somewhere a door banged.
+/home/anna/novel/chapter-3.md: line moved to line 12
+(peek again: chapter-3.md)
+   8  ## The storm
+   9
+  10  The storm came in from the west, fast and grey.
+  11  The first drops hit the glass.
+  12  Somewhere a door banged.
+(lines 8-12 of 15)
+```
+
+**See what can be taken back.** `changes` lists the changes, the newest first, and `undo 2` takes back the two newest:
+
+```
+blyant ~/novel> changes
+  1  shift chapter-3.md 14 +12
+  2  change chapter-3.md +12 Anna closed the shutters, one by one.
+  3  insert chapter-3.md +11 The first drops hit the glass.
+  4  change chapter-3.md +10 The storm came in from the west, fast and grey.
+blyant ~/novel> undo 2
+Undone: shift chapter-3.md 14 +12
+Undone: change chapter-3.md +12 Anna closed the shutters, one by one.
+(peek again: chapter-3.md)
+   8  ## The storm
+   9
+  10  The storm came in from the west, fast and grey.
+  11  The first drops hit the glass.
+  12  Anna closed the shutters.
+(lines 8-12 of 15)
+```
+
+- The window keeps its place and its size: a line put in above it moves the lines in it down, as you see. `+`, `-`, `top`, `bottom` and a new search move it (see [Peeking into a file](#peeking-into-a-file))
+- `shellautopeek` stays on until you turn it off (`set shellautopeek false`), also the next time Blyant starts: it is kept in the settings file (see [Settings file](Guide-to-settings-file.md))
+- `undo` keeps the last 10 changes while Blyant runs (the setting `shellundosteps`, 1 to 50), and never writes over a change made since in the editor or by another program (see [Undo](#undo))
+- `open 1` opens the file in the editor at the window, for a change that is more than a few lines
+
 ## Folders of favorites
 The favorites can be kept in folders, as on the favorites page of the full screen: a folder holds favorites and subfolders, and a subfolder favorites (two levels). A folder is only in the list of favorites: nothing is made on disk, and no file is moved. `fav` shows the folders in brackets, with what is in them below them:
 

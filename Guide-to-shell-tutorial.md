@@ -1,7 +1,7 @@
 # Shell tutorial
 The shell is Blyant on lines: you type a command at a prompt, and what it shows is written below it, as in a terminal. It does what the full screen does with files (finding them, looking into them, copying, moving, adding a line, ticking off a task) without leaving the line you type on. It works in any terminal, over SSH, with a screen reader, and from scripts.
 
-This tutorial goes through a day of work on a small novel project, one task at a time. Each part shows what you type after the prompt, and what Blyant writes back. The last part, [Practice](#practice), is ten short steps to try on two files of your own. The [guide to the shell](Guide-to-shell.md) tells all the commands and their details.
+This tutorial goes through a day of work on a small novel project, one task at a time. Each part shows what you type after the prompt, and what Blyant writes back. The last part, [Practice](#practice), is fourteen short steps to try on two files of your own, the last of them editing in a window with `undo`. The [guide to the shell](Guide-to-shell.md) tells all the commands and their details.
 
 The project used in the examples is in `~/novel` (`/home/anna/novel`):
 
@@ -517,7 +517,7 @@ What you do on the full screen, and the command for it in the shell:
 | `:shell` | `screen` |
 
 ## Practice
-Ten steps to train the commands of this tutorial, on two files of your own. Type each command after the prompt: what Blyant writes back is shown under it. To keep the files apart, make a directory for them first, and go into it:
+Fourteen steps to train the commands of this tutorial, on two files of your own. Type each command after the prompt: what Blyant writes back is shown under it. To keep the files apart, make a directory for them first, and go into it:
 
 ```
 blyant ~> mkdir practice
@@ -607,4 +607,69 @@ blyant ~/practice> peek file1.md
   3  File 2
 ```
 
-That is the whole round: making files, adding, moving, copying and changing lines, without opening an editor. `open file1.md` shows the result in the editor of the full screen. To try again, `delete file1.md` and `delete file2.md` (they go to the trash), or start over in another directory.
+That is the whole round: making files, adding, moving, copying and changing lines, without opening an editor. `open file1.md` shows the result in the editor of the full screen.
+
+Four more steps use a peek as a window into the file while you change it, and take a change back.
+
+**11. Find a line.** `/` after the file searches it: the window goes to the first line with the text, marked with `>`:
+
+```
+blyant ~/practice> peek file1.md /file 2
+  1  A second line
+  2  File 1
+> 3  File 2
+(match 1 of 1, lines 1-3 of 3)
+```
+
+**12. Change it, and look again.** `.` shows the same window again, as the file is now:
+
+```
+blyant ~/practice> change file1.md +3 File 2, changed
+/home/anna/practice/file1.md: line 3 changed
+blyant ~/practice> .
+  1  A second line
+  2  File 1
+  3  File 2, changed
+(lines 1-3 of 3)
+```
+
+**13. Let the window follow.** With `shellautopeek` on, the window is shown again after each change of the file, without `.`:
+
+```
+blyant ~/practice> set shellautopeek true
+  shellautopeek = true
+blyant ~/practice> insert file1.md bottom File 3
+/home/anna/practice/file1.md: line 4 put in
+(peek again: file1.md)
+  1  A second line
+  2  File 1
+  3  File 2, changed
+  4  File 3
+(lines 1-4 of 4)
+```
+
+**14. Take it back, and do it again.** `undo` puts the file back as it was before the last change, `redo` does the change again, and `changes` lists what `undo` can take back:
+
+```
+blyant ~/practice> undo
+Undone: insert file1.md bottom File 3
+(peek again: file1.md)
+  1  A second line
+  2  File 1
+  3  File 2, changed
+(lines 1-3 of 3)
+blyant ~/practice> redo
+Done again: insert file1.md bottom File 3
+(peek again: file1.md)
+  1  A second line
+  2  File 1
+  3  File 2, changed
+  4  File 3
+(lines 1-4 of 4)
+blyant ~/practice> changes
+  1  insert file1.md bottom File 3
+  2  change file1.md +3 File 2, changed
+blyant ~/practice> set shellautopeek false
+```
+
+To try again, `delete file1.md` and `delete file2.md` (they go to the trash), or start over in another directory. See [Editing in a window](Guide-to-shell.md#editing-in-a-window) in the guide to the shell for more.
