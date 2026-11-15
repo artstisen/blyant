@@ -38,7 +38,7 @@ internal sealed partial class ShellSession
             return;
         }
 
-        var result = file.Save(text);
+        var result = SaveEdit(file, text);
         // (the path and the lines, never the text)
         FileExplorer.LogFileOperation("Shift lines", item.Path + ":" + Numbers(moved) + " to " + at, result);
         if (result != DialogText.Success)

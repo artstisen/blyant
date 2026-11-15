@@ -228,6 +228,7 @@ internal static class Actions
         Shell.AutoPeek = false;
         Shell.PeekStep = Shell.DefaultPeekStep;
         Shell.PeekBigStep = Shell.DefaultPeekBigStep;
+        Shell.UndoSteps = Shell.DefaultUndoSteps;
         Shell.StartInShell = false;
         Shell.StartSetting = string.Empty;
         Shell.LastDirectory = string.Empty;

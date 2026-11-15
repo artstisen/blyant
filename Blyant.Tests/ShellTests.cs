@@ -3989,4 +3989,104 @@ public class ShellTests : IDisposable
         Assert.Equal(In("work", "t.md"), session.CompletionFile("1"));
         Assert.Equal(In("work", "t.md"), session.CompletionFile("$file"));
     }
+
+    // ---- undo, redo, changes
+
+    [Fact]
+    public void Undo_PutsBackTheLastChange_AndRedoDoesItAgain()
+    {
+        File.WriteAllText(In("work", "t.md"), "one\ntwo\n");
+        var (output, errors, _, session) = Run("insert t.md bottom three\nchange t.md +1 ONE\nchanges\nundo\nredo\nundo 2\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("one\ntwo\n", Text("t.md"));
+        Assert.Contains("  1  change t.md +1 ONE\n  2  insert t.md bottom three\n", output);
+        Assert.Contains(Lang.F("Undone: {0}", "change t.md +1 ONE"), output);
+        Assert.Contains(Lang.F("Done again: {0}", "change t.md +1 ONE"), output);
+        // The file written is the last list
+        Assert.Equal(In("work", "t.md"), session.LastList.Single().Path);
+        (output, _, _, _) = Run("undo\nredo\n");
+        Assert.Contains(Lang.T("Nothing to undo: no file has been changed in this shell"), output);
+        Assert.Contains(Lang.T("Nothing to redo"), output);
+    }
+
+    [Fact]
+    public void Undo_LinesCut_PutsBackBothFiles_InOneStep()
+    {
+        File.WriteAllText(In("work", "a.md"), "one\ntwo\n");
+        File.WriteAllText(In("work", "b.md"), "x\n");
+        var (_, errors, _, session) = Run("lines a.md 1 > b.md bottom cut\nundo\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("one\ntwo\n", Text("a.md"));
+        Assert.Equal("x\n", Text("b.md"));
+        Assert.Equal(2, session.LastList.Count);
+    }
+
+    [Fact]
+    public void Undo_AFileChangedSince_IsNotWrittenOver()
+    {
+        File.WriteAllText(In("work", "t.md"), "one\n");
+        var output = new StringWriter();
+        var errors = new StringWriter();
+        var session = new ShellSession(new StringReader(string.Empty), output, errors, In("work"), false);
+        session.Execute("insert t.md bottom two");
+        File.WriteAllText(In("work", "t.md"), "changed elsewhere\n");
+        session.Execute("undo");
+        Assert.Contains(Lang.F("{0} has changed since: {1} is not undone", In("work", "t.md"), "insert t.md bottom two"),
+            errors.ToString());
+        Assert.Equal("changed elsewhere\n", Text("t.md"));
+    }
+
+    [Fact]
+    public void Undo_KeepsTheBytes_LineEndingsAndByteOrderMark()
+    {
+        var bytes = System.Text.Encoding.UTF8.GetPreamble().Concat(System.Text.Encoding.UTF8.GetBytes("one\r\ntwo\r\n")).ToArray();
+        File.WriteAllBytes(In("work", "w.md"), bytes);
+        var (_, errors, _, _) = Run("insert w.md top zero  \ntrim w.md\nundo 2\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal(bytes, File.ReadAllBytes(In("work", "w.md")));
+    }
+
+    [Fact]
+    public void Undo_KeepsAsManyStepsAsSet_AndANewChangeEndsRedo()
+    {
+        try
+        {
+            Shell.UndoSteps = 2;
+            File.WriteAllText(In("work", "t.md"), "a\n");
+            var (output, errors, _, _) = Run("insert t.md bottom b\ninsert t.md bottom c\ninsert t.md bottom d\nchanges\n" +
+                                             "undo 5\nredo\ninsert t.md bottom e\nredo\nundo x\n");
+            Assert.Contains("  1  insert t.md bottom d\n  2  insert t.md bottom c\n", output);
+            Assert.DoesNotContain("  3  insert", output);
+            // Two undone (b stays), one done again (c), then a new change: nothing to redo
+            Assert.Equal("a\nb\nc\ne\n", Text("t.md"));
+            Assert.Contains(Lang.T("Nothing to redo"), output);
+            Assert.Contains(Lang.T("Give how many: undo, undo 3 (changes lists them)"), errors);
+        }
+        finally
+        {
+            Shell.UndoSteps = Shell.DefaultUndoSteps;
+        }
+    }
+
+    [Fact]
+    public void UndoSteps_FromTheSettingsFile_1To50_ElseTen()
+    {
+        Assert.Equal(1, Shell.ParseUndoSteps("1"));
+        Assert.Equal(50, Shell.ParseUndoSteps(" 50 "));
+        Assert.Equal(10, Shell.ParseUndoSteps("51"));
+        Assert.Equal(10, Shell.ParseUndoSteps("0"));
+        Assert.Equal(10, Shell.ParseUndoSteps("x"));
+        Assert.Equal(10, Shell.ParseUndoSteps(null));
+    }
+
+    [Fact]
+    public void Undo_InARun_EachCommandIsAStep()
+    {
+        File.WriteAllText(In("work", "t.md"), "a\n");
+        var (output, errors, _, _) = Run("reg r = insert t.md bottom b\nreg r += insert t.md bottom c\nrun $r\nundo\nchanges\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("a\nb\n", Text("t.md"));
+        Assert.Contains("  1  insert t.md bottom b\n", output);
+        Assert.Contains("insert t.md bottom c", output.Split(Lang.T("Undone (redo does them again):"))[1]);
+    }
 }

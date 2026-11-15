@@ -48,7 +48,7 @@ internal sealed partial class ShellSession
             return;
         }
 
-        var result = file.Save(text);
+        var result = SaveEdit(file, text);
         FileExplorer.LogFileOperation(command == "format" ? "Format" : "Trim", item.Path, result);
         if (result != DialogText.Success)
         {
@@ -96,7 +96,7 @@ internal sealed partial class ShellSession
         var added = LinesPutIn(rest);
         var count = added.Count;
         var (text, number) = WithLinesAt(file.Text, added, at.Value - 1);
-        var result = file.Save(text);
+        var result = SaveEdit(file, text);
         // (the path, never the text)
         FileExplorer.LogFileOperation("Insert", item.Path + ":" + number, result);
         if (result != DialogText.Success)
@@ -168,7 +168,7 @@ internal sealed partial class ShellSession
         }
 
         var (changed, at) = WithLinesChanged(file.Text, first, last, delete ? null : text);
-        var result = file.Save(changed);
+        var result = SaveEdit(file, changed);
         // (the path and the lines, never the text)
         FileExplorer.LogFileOperation(delete ? "Delete lines" : "Change lines", item.Path + ":" + first + "-" + last, result);
         if (result != DialogText.Success)

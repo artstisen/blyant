@@ -113,7 +113,7 @@ internal sealed partial class ShellSession
         }
 
         var normalized = TextBuffer.Normalize(file.Text);
-        var result = file.Save(string.Join("\n", lines) + (normalized.EndsWith('\n') ? "\n" : string.Empty));
+        var result = SaveEdit(file, string.Join("\n", lines) + (normalized.EndsWith('\n') ? "\n" : string.Empty));
         // (the path, what was done and the lines, never the text)
         FileExplorer.LogFileOperation("Edit lines (" + kind + ")", item.Path + ":" + Numbers(changed), result);
         if (result != DialogText.Success)
@@ -216,7 +216,7 @@ internal sealed partial class ShellSession
 
         var taken = picked.Select(n => lines[n - 1]).ToList();
         var (text, at) = WithLinesAt(target.File.Text, taken, position);
-        var result = target.File.Save(text);
+        var result = SaveEdit(target.File, text);
         // (the paths and the lines, never the text)
         var what = source.Item.Path + ":" + Numbers(picked) + " to " + target.Item.Path + ":" + at;
         FileExplorer.LogFileOperation(cut ? "Cut lines" : "Copy lines", what, result);
@@ -246,7 +246,7 @@ internal sealed partial class ShellSession
             return;
         }
 
-        var removed = source.File.Save(WithoutLines(source.File.Text, picked));
+        var removed = SaveEdit(source.File, WithoutLines(source.File.Text, picked));
         FileExplorer.LogFileOperation("Take out lines", source.Item.Path + ":" + Numbers(picked), removed);
         if (removed != DialogText.Success)
         {

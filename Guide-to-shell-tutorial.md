@@ -204,7 +204,7 @@ blyant ~/novel> lines plot.md 4 unstart Draft:
 - `unstart` and `unend` take the text off again, and `lines plot.md 3-5 replace letter note` replaces a word in lines 3 to 5
 - In quotes the text is put as it is, without a blank between: `lines todo.md 5-7 start "- [ ] "` makes lines 5 to 7 tasks
 
-There is no undo for `insert`, `change` and `lines`: `peek` first, to be sure of the line numbers. A file keeps its line endings and its byte order mark, and the files Blyant uses are not changed.
+`undo` puts back the last change of `insert`, `change` or `lines` (`redo` does it again, and `changes` lists them), while Blyant runs. `peek` first all the same, to be sure of the line numbers. A file keeps its line endings and its byte order mark, and the files Blyant uses are not changed.
 
 ## Todo list
 ![A task added with insert, and ticked and moved under Done with shift!](docs/screenshots/shell-todo.svg)

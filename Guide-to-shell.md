@@ -147,6 +147,9 @@ To have every output whole (with a screen reader, say), turn the pages off: `set
 | `screen` | Go on on the full screen, in the file browser of the directory you are in (see [Between the full screen and the shell](#between-the-full-screen-and-the-shell)) |
 | `version` | Show the version of Blyant |
 | `about [license]` | Show the version of Blyant and the commands used the most (`help`, `ls`, `open`, `peek`, `set language de` ...), and `about license` its license, as on the second page of [About](Guide-to-start-page.md#help) |
+| `undo [n]` | Put back the last change a command made to a file (`insert`, `change`, `shift`, `lines`, `format`, `trim`), or the last `n`. See [Undo](#undo) |
+| `redo [n]` | Do again what `undo` put back |
+| `changes` | List the changes `undo` goes back through, the newest first, and those `redo` does again |
 | `again filter text` | Show the commands you typed with a text in them (`again filter lines`), or that a pattern fits (`again filter peek*`), with their numbers: `!7` runs the one numbered 7 |
 | `again [n]` | List the commands you typed, the newest first, or run one again by its number (`again 3`; also `!3`, and `!!` for the last). See [Typing a command](#typing-a-command) |
 | `run $name\|file` | Run the commands of a register or of a file, one a line, each written out first; it stops at the first that fails. See [Running commands](#running-commands) |
@@ -281,11 +284,11 @@ blyant ~/novel> .
 
 - Only files in UTF-8 are changed: a file in another encoding (Windows-1252, say) is left as it is. Open it in the editor, which saves it in UTF-8
 - A file with more than one kind of line endings (some lines CRLF, some LF) is left as it is too: saved, every line would get one kind. The editor tells it, and saves it with one. This goes for `insert`, `change`, `shift` and `lines` too, and so does leaving the files Blyant uses
-- There is no undo: a file changed by `format` or `trim` is saved at once. Use them on files you can get back (a copy, a project kept in Git)
+- A file changed by `format` or `trim` is saved at once; `undo` puts it back, while Blyant runs (see [Undo](#undo))
 
-`insert` puts a line of text in a file, as quick notes are written down: `insert todo.md bottom Get pencils and paper`, `insert notes.md top # Monday`, `insert 3 +12 A new line` (a row of the last list). The text is all that follows the place, as you type it (blanks and quotes too), and it is one line; `$clip` of lines copied puts in its lines. `+12` makes it line 12, before the line that was there, and a line past the end puts it after the last. The file keeps its line endings and its byte order mark, and the file is then the last list, at the line put in: `open 1` opens it there. As for `format`, only a file in UTF-8 is changed, the files Blyant uses are not, and there is no undo.
+`insert` puts a line of text in a file, as quick notes are written down: `insert todo.md bottom Get pencils and paper`, `insert notes.md top # Monday`, `insert 3 +12 A new line` (a row of the last list). The text is all that follows the place, as you type it (blanks and quotes too), and it is one line; `$clip` of lines copied puts in its lines. `+12` makes it line 12, before the line that was there, and a line past the end puts it after the last. The file keeps its line endings and its byte order mark, and the file is then the last list, at the line put in: `open 1` opens it there. As for `format`, only a file in UTF-8 is changed, the files Blyant uses are not, and `undo` puts the file back.
 
-`change` changes lines of a file into a text, without opening it: `change notes.md +12 A new line` (line 12), `change notes.md 12-15 One line instead` (lines 12 to 15 become one line). The text is all that follows the lines, as you type it, and it is one line (`$clip` of lines copied: its lines). Without a text, the lines are deleted: `change notes.md 12-15` shows them and asks first (No is selected, as there is no undo), and from a file or with `--run` they are only deleted with `--yes`. A range past the end stops at the last line. As for `insert`, the file keeps its line endings and byte order mark, only a file in UTF-8 is changed and not the files Blyant uses, and the file is then the last list at the place changed (`open 1`). (The `:replace` of the editor finds a text and puts another in its place; `change` works on whole lines.)
+`change` changes lines of a file into a text, without opening it: `change notes.md +12 A new line` (line 12), `change notes.md 12-15 One line instead` (lines 12 to 15 become one line). The text is all that follows the lines, as you type it, and it is one line (`$clip` of lines copied: its lines). Without a text, the lines are deleted: `change notes.md 12-15` shows them and asks first (No is selected: deleted lines are back only with `undo`, while Blyant runs), and from a file or with `--run` they are only deleted with `--yes`. A range past the end stops at the last line. As for `insert`, the file keeps its line endings and byte order mark, only a file in UTF-8 is changed and not the files Blyant uses, and the file is then the last list at the place changed (`open 1`). (The `:replace` of the editor finds a text and puts another in its place; `change` works on whole lines.)
 
 `set` shows the settings as they are in the settings file (`settings.ini` in the data directory), and changes one as the pages of Configuration do: `set indent 2`, `set wrap false`, `set colorscheme Deep Blue`. The setting is read again at once, as Blyant reads it when it starts, and `set shelldir ""` empties a setting. A value the setting cannot have is told, and the setting stays as it was: `indent cannot be 3: it stays 4`. A settings file written by an earlier version of Blyant lacks the settings that came after it: `set` writes the file whole first (as changing a setting in Configuration does), so every setting of this version can be shown and changed.
 
@@ -315,7 +318,7 @@ shift! todo.md "Get pencils and paper" Done  moved, and its task box ticked
 - A text in place of the lines finds the one line that has it (letter case alike). When more lines have it, or none does, they are shown with their numbers and nothing is moved, and so it is when no heading has the name, or two do (then the headings are shown)
 - `shift!` also ticks the task boxes of the lines moved (`- [ ] Milk` to `- [x] Milk`, also in a numbered list), and unticks those that are ticked: `shift! todo.md Milk Done` when it is done, `shift! todo.md Milk Todo` to have it back. A line without a box is moved as it is
 - The place cannot be in the lines moved (the heading moved, or `+5` with line 5 moved). Lines already at the place are left so
-- The lines moved are shown at their new place, and the file is then the last list there (`open 1`). As for `insert`, the file keeps its line endings and its byte order mark, only a file in UTF-8 is changed and not the files Blyant uses, and there is no undo; nothing is lost by a move, so it is not asked first
+- The lines moved are shown at their new place, and the file is then the last list there (`open 1`). As for `insert`, the file keeps its line endings and its byte order mark, only a file in UTF-8 is changed and not the files Blyant uses, and `undo` puts it back; nothing is lost by a move, so it is not asked first
 
 `lines` copies lines to another file, or moves them there with `cut` last:
 
@@ -379,7 +382,30 @@ blyant ~/notes> lines todo.md 3 unstart "- [ ] "
 - `replace old new` replaces the text everywhere in the lines, with the letter case as typed (`draft`, not `Draft`). A text with blanks is written in quotes, and `""` is no text: what is replaced is taken out
 - After the lines, `Tab` completes `start`, `end`, `unstart`, `unend`, `replace` and `>`. A `>` or one of these words later on is part of the text: `lines notes.md 3 start ">"` makes line 3 a quote
 - `$name` and `$clip` put in their value: `lines todo.md 4 end $note`
-- The lines changed are shown, and the file is then the last list, at the first of them (`open 1`). When no line changes, nothing is written, and it is told. As for `insert`, the file keeps its line endings and byte order mark, only a file in UTF-8 is changed and not the files Blyant uses, and there is no undo; nothing is asked, as no line is lost
+- The lines changed are shown, and the file is then the last list, at the first of them (`open 1`). When no line changes, nothing is written, and it is told. As for `insert`, the file keeps its line endings and byte order mark, only a file in UTF-8 is changed and not the files Blyant uses, and `undo` puts it back; nothing is asked, as no line is lost
+
+## Undo
+The commands that change the text of a file (`insert`, `change`, `shift`, `lines`, `format` and `trim`) keep what the file was before, so `undo` puts it back:
+
+```
+blyant ~/notes> change todo.md +3 Get pencils and paper
+/home/anna/notes/todo.md: line 3 changed
+blyant ~/notes> undo
+Undone: change todo.md +3 Get pencils and paper
+blyant ~/notes> redo
+Done again: change todo.md +3 Get pencils and paper
+blyant ~/notes> changes
+  1  change todo.md +3 Get pencils and paper
+  2  insert todo.md bottom Call Anna
+```
+
+- One command is one step: `lines a.md 4-6 > b.md bottom cut` changed two files, and one `undo` puts both back. A command of a `run` is a step of its own
+- `undo 3` puts back the 3 newest steps, one after another. `redo` does again what `undo` put back, the last first, until a new change is made: then there is nothing more to redo
+- `changes` lists the steps, numbered as `undo 3` counts them, and below them the steps undone, which `redo` does again
+- A file is put back exactly as it was: its line endings and its byte order mark too. The files written are the last list (`open 1`)
+- A step is only undone while its files are as it left them. When a file was changed since (in the editor, by another program), it is told, and nothing of the step is written: your change is never written over. The editor has its own undo (`u`)
+- The last 10 steps are kept (the setting `shellundosteps`, 1 to 50: `set shellundosteps 20`), while Blyant runs: they are never written to a file, so no copy of your text stays on the disk. A file larger than 2 MB is not kept, and it is told
+- `new`, `copy`, `rename`, `move` and `delete` are not undone: they change files, not their text (`delete` goes to the trash)
 
 ## Folders of favorites
 The favorites can be kept in folders, as on the favorites page of the full screen: a folder holds favorites and subfolders, and a subfolder favorites (two levels). A folder is only in the list of favorites: nothing is made on disk, and no file is moved. `fav` shows the folders in brackets, with what is in them below them:

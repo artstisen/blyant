@@ -130,6 +130,7 @@ Changed with `set` in the shell, or in the file: they are not on the pages of Co
 | `shellautopeek` | **false**, true | After a command that changed the file of the last peek, its window is shown again (as `.` shows it) |
 | `shellpeekstep` | **1**, 1 to 1000 | Lines that `+` and `-` move the window of the last peek |
 | `shellpeekbigstep` | **5**, 1 to 1000 | Lines that `++` and `--` move it |
+| `shellundosteps` | **10**, 1 to 50 | How many changes of files `undo` can go back through (`insert`, `change`, `lines` ...) |
 | `shelldir` | **empty**, a path (`~/notes`), last | The directory the shell starts in: empty, the one Blyant is started in; `last`, the one it was left in |
 | `shelllastdir` | a path | With `shelldir=last`, where the shell was left: kept when you leave a shell typed in at a terminal (`exit`, `screen`), never by commands from a file, a pipe or `--run` |
 | `shelllastfile` | a path | `$file` when the shell was left, kept as `shelllastdir` is (whatever `shelldir` is): `$file` again in the next shell typed in at a terminal, while the file is there |

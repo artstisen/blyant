@@ -91,6 +91,9 @@ internal sealed partial class ShellSession
         ("about [license]", Lang.T("Show the version and the commands used the most, or the license")),
         ("again [n]", Lang.T("List the commands typed, or run one again (!n, !!)")),
         ("again filter text", Lang.T("Show the commands typed with a text in them")),
+        ("undo [n]", Lang.T("Undo the last change of a file (insert, change ...)")),
+        ("redo [n]", Lang.T("Do again what undo undid")),
+        ("changes", Lang.T("List the changes undo goes back through")),
         ("run $name|file", Lang.T("Run the commands of a register or a file, one a line")),
         ("help [command]", Lang.T("List the commands, or tell what one does")),
         ("exit", Lang.T("Leave Blyant (also quit, q)"))
@@ -186,7 +189,18 @@ internal sealed partial class ShellSession
 
         // (the line of the command typed is the first row of its page)
         NewPage();
-        var going = RunCommand(name, argument);
+        // (the files the command changes: one step for undo, named by the line as typed)
+        var outer = StartStep();
+        bool going;
+        try
+        {
+            going = RunCommand(name, argument);
+        }
+        finally
+        {
+            EndStep(line, outer);
+        }
+
         // (setting shellautopeek: the window of the last peek again, when the command changed its file)
         if (going) AutoPeek(name);
         return going;
@@ -482,6 +496,16 @@ internal sealed partial class ShellSession
                 break;
             case "again":
                 ListAgain(argument);
+                break;
+            case "undo":
+                Undo(argument, false);
+                break;
+            case "redo":
+                Undo(argument, true);
+                break;
+            case "changes":
+                if (argument.Trim().Length > 0) Error(Lang.T("changes takes nothing after it"));
+                else ListChanges();
                 break;
             case "help":
             case "h":

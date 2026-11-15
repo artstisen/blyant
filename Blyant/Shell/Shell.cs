@@ -59,6 +59,23 @@ internal static class Shell
         int.TryParse(value?.Trim(), out var lines) && lines is >= 1 and <= 1000 ? lines : fallback;
 
     /// <summary>
+    /// How many changes of files "undo" can go back through (setting "shellundosteps", 1 to 50; only in the settings
+    /// file, or with "set")
+    /// </summary>
+    internal static int UndoSteps { get; set; } = DefaultUndoSteps;
+
+    internal const int DefaultUndoSteps = 10;
+
+    /// <summary>
+    /// The steps of undo from the settings file: a whole number from 1 to 50, else the default
+    /// </summary>
+    internal static int ParseUndoSteps(string? value) =>
+        int.TryParse(value?.Trim(), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture,
+            out var steps) && steps is >= 1 and <= 50
+            ? steps
+            : DefaultUndoSteps;
+
+    /// <summary>
     /// Blyant starts as the shell (setting "startshell", Configuration: General), as "blyant --shell" does, unless a
     /// file or directory is given (it is opened on the full screen) or "--screen"
     /// </summary>
