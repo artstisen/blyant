@@ -9,7 +9,7 @@
 internal static class CommandHistory
 {
     /// <summary>
-    /// The most commands kept for a place
+    /// The most commands kept for a place (the shell: ShellMaxCount)
     /// </summary>
     internal const int MaxCount = 20;
 

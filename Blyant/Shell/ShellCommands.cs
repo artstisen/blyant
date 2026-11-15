@@ -97,14 +97,24 @@ internal sealed partial class ShellSession
         if (AgainNumber(line) is { } number)
         {
             var kept = CommandHistory.Of(CommandContext.Shell);
-            if (number < 1 || number > kept.Count)
+            // (in a run, the last command kept is the run itself: it would run again and again)
+            var refused = _runDepth > 0
+                ? Lang.T("again, !n and !! are not run in a run: it would run itself again")
+                : number >= 1 && number <= kept.Count
+                    ? null
+                    : kept.Count == 0
+                        ? Terminal
+                            ? Lang.T("No commands typed yet (they are kept while Blyant runs)")
+                            : Lang.T("No commands typed: from a file or a pipe they are not kept")
+                        : kept.Count == 1
+                            ? Lang.F("No command {0}: 1 is kept (again lists it)", number)
+                            : Lang.F("No command {0}: {1} are kept (again lists them)", number, kept.Count);
+            if (refused != null)
             {
                 // English: the log (by name, as other commands)
                 EventLog.AddCommand(DialogText.LogShell, "again");
                 NewPage();
-                Error(kept.Count == 0
-                    ? Lang.T("No commands typed yet (they are kept while Blyant runs)")
-                    : Lang.F("No command {0}: {1} are kept (again lists them)", line, kept.Count));
+                Error(refused);
                 return true;
             }
 
@@ -123,48 +133,25 @@ internal sealed partial class ShellSession
         EventLog.AddCommand(DialogText.LogShell, line);
         // (the file of the registers edited by hand since: read again, so $name and reg use what is in it)
         ShellRegisters.Refresh();
-        // $name: the value of the register (in the paths a value with blanks is one word; the text of insert, change,
-        // reg and set, and what find and project take, as it is)
-        // $clip: the text clip copied last. Told when nothing is copied yet, and when it has more than one line where
-        // one line is taken (only insert and change put in lines, and "clip $clip" copies it again)
-        // ("help $clip" tells of it: nothing is put in after help)
+        // $name: the value of the register, or of a name set by Blyant ($clip, $peek, $pwd, $file, $date ...): in the
+        // paths a value with blanks is one word; the text of insert, change, reg and set, and what find, project and
+        // run take, as it is. ("help $clip" tells of it: nothing is put in after help)
         var name = CommandLine.Name(line).ToLowerInvariant();
         var argument = CommandLine.Argument(line);
-        // ("run $tidy" or "run tidy.txt": what was typed tells a register from a file)
-        _runTyped = name == "run" ? argument : null;
+        // (what was typed, before the $names are put in: "run $tidy" is a register, "run $pwd/t.txt" a file; "reg
+        // notes += $peek" of an empty $peek is not "reg notes +=" with nothing)
+        _typedArgument = argument;
         var help = name is "help" or "h";
         // ("lines a.md 4-6 > $notes": the register the lines go to, not its value: kept as the name)
         if (name == "lines") argument = ProtectRegisterTarget(argument);
-        if (!help && ShellRegisters.Mentions(line, ShellRegisters.ClipName) && ClipProblem(name, line) is { } problem)
+        // (in a run, "screen" would leave the run for the full screen, and leave the shell at the next exit)
+        var problem = _runDepth > 0 && name == "screen"
+            ? Lang.T("screen is not run in a run: run it after")
+            : help ? null : ExpansionProblem(name, line, argument);
+        if (problem != null)
         {
             NewPage();
             Error(problem);
-            return true;
-        }
-
-        // $peek: the lines peek showed last, as $clip
-        if (!help && ShellRegisters.Mentions(line, ShellRegisters.PeekName) && PeekProblem(name, line) is { } peekProblem)
-        {
-            NewPage();
-            Error(peekProblem);
-            return true;
-        }
-
-        // A register of several lines, as $clip: where one line is taken, told
-        if (!help && name is not ("insert" or "change" or "reg" or "run") && !IsClipOfRegister(line) &&
-            ShellRegisters.All.FirstOrDefault(pair => pair.Value.Contains('\n') && ShellRegisters.Mentions(argument, pair.Key))
-                is { Key: { } several })
-        {
-            NewPage();
-            Error(Lang.F("${0} has more than one line: only insert and change take it", several));
-            return true;
-        }
-
-        // $file before a command has worked on a file
-        if (!help && _file == null && ShellRegisters.Mentions(line, "file"))
-        {
-            NewPage();
-            Error(Lang.T("No file yet: open, peek, insert, new ... give $file"));
             return true;
         }
 
@@ -224,29 +211,52 @@ internal sealed partial class ShellSession
         for (var i = 0; i < kept.Count; i++) Line((i + 1).ToString().PadLeft(width + 2) + "  " + kept[i]);
     }
 
-    // Why $clip cannot be used in a command line (null: it can)
-    private static string? ClipProblem(string name, string line)
+    // The commands that take a value of more than one line: insert and change put in its lines, reg keeps them, and
+    // run runs them
+    private static readonly string[] TakesLines = { "insert", "change", "reg", "run" };
+
+    // Why the $names of a command line cannot be put in (null: they can): $clip or $peek that is not there yet, or
+    // empty where change would delete the lines; a value of more than one line where one line is taken; $file before
+    // a command has worked on a file. ("clip $note" alone copies a value as it is)
+    private string? ExpansionProblem(string name, string line, string argument)
     {
-        if (ShellRegisters.Clip is not { } clip) return Lang.T("Nothing copied yet: clip copies a text for $clip");
-        // (change without a text deletes the lines: an empty $clip is not taken for that)
-        if (clip.Length == 0 && name == "change") return Lang.T("$clip is empty: change would delete the lines");
-        if (!clip.Contains('\n') || IsClipOfRegister(line)) return null;
-        // (reg keeps lines: "reg notes += $clip")
-        return name is "insert" or "change" or "reg" or "run"
-            ? null
-            : Lang.T("$clip has more than one line: only insert and change take it");
+        var oneLine = !TakesLines.Contains(name) && !IsClipOfRegister(line);
+        foreach (var (reserved, value) in new[] { (ShellRegisters.ClipName, ShellRegisters.Clip), (ShellRegisters.PeekName, ShellRegisters.Peek) })
+        {
+            if (!ShellRegisters.Mentions(argument, reserved)) continue;
+            if (value == null)
+            {
+                return reserved == ShellRegisters.ClipName
+                    ? Lang.T("Nothing copied yet: clip copies a text for $clip")
+                    : Lang.T("Nothing peeked yet: peek shows lines for $peek");
+            }
+
+            if (value.Length == 0 && name == "change")
+            {
+                return reserved == ShellRegisters.ClipName
+                    ? Lang.T("$clip is empty: change would delete the lines")
+                    : Lang.T("$peek is empty: change would delete the lines");
+            }
+
+            if (oneLine && value.Contains('\n')) return MoreThanOneLine(reserved);
+        }
+
+        if (oneLine && ShellRegisters.All.FirstOrDefault(pair => pair.Value.Contains('\n') &&
+                ShellRegisters.Mentions(argument, pair.Key)) is { Key: { } several })
+        {
+            return MoreThanOneLine(several);
+        }
+
+        return _file == null && ShellRegisters.Mentions(argument, "file")
+            ? Lang.T("No file yet: open, peek, insert, new ... give $file")
+            : null;
+
+        static string MoreThanOneLine(string name) =>
+            Lang.F("${0} has more than one line: only insert, change, reg and run take it", name);
     }
 
-    // Why $peek cannot be used in a command line (null: it can): as $clip
-    private static string? PeekProblem(string name, string line)
-    {
-        if (ShellRegisters.Peek is not { } peek) return Lang.T("Nothing peeked yet: peek shows lines for $peek");
-        if (peek.Length == 0 && name == "change") return Lang.T("$peek is empty: change would delete the lines");
-        if (!peek.Contains('\n') || IsClipOfRegister(line)) return null;
-        return name is "insert" or "change" or "reg" or "run"
-            ? null
-            : Lang.T("$peek has more than one line: only insert and change take it");
-    }
+    // What followed the command, as typed: before the $names were put in
+    private string? _typedArgument;
 
     private bool RunCommand(string name, string argument)
     {
@@ -305,7 +315,9 @@ internal sealed partial class ShellSession
             case "++":
             case "-":
             case "--":
-                Peek(name);
+                // (alone: "+ 7" is not taken as "peek +")
+                if (argument.Trim().Length > 0) Error(Lang.F("{0} takes nothing after it: {0} alone, or peek file {0}", name));
+                else Peek(name);
                 break;
             case "find":
                 Find(argument);
@@ -552,10 +564,10 @@ internal sealed partial class ShellSession
             // The folders first, then the files, each by name (letter case alike)
             // (a favorite marked " *", as in the file browser)
             FileFavorites.Load();
-            var rows = info.EnumerateDirectories().Where(Shown).OrderBy(d => d.Name, StringComparer.OrdinalIgnoreCase)
+            var rows = info.EnumerateDirectories().Where(Listed).OrderBy(d => d.Name, StringComparer.OrdinalIgnoreCase)
                 .Select(d => (new Item(d.FullName, true),
                     full ? Path.TrimEndingDirectorySeparator(d.FullName) + "/" : d.Name + "/" + FavoriteMark(d.FullName)))
-                .Concat(info.EnumerateFiles().Where(Shown).OrderBy(f => f.Name, StringComparer.OrdinalIgnoreCase)
+                .Concat(info.EnumerateFiles().Where(Listed).OrderBy(f => f.Name, StringComparer.OrdinalIgnoreCase)
                     .Select(f => (new Item(f.FullName, false), full ? f.FullName : f.Name + FavoriteMark(f.FullName))))
                 .ToList();
             Line(item.Path);
@@ -566,7 +578,7 @@ internal sealed partial class ShellSession
             Error(Lang.F("{0} cannot be read: {1}", item.Path, e.Message));
         }
 
-        bool Shown(FileSystemInfo entry) => all || (entry.Attributes & (FileAttributes.Hidden | FileAttributes.System)) == 0;
+        bool Listed(FileSystemInfo entry) => all || (entry.Attributes & (FileAttributes.Hidden | FileAttributes.System)) == 0;
     }
 
     #endregion
@@ -593,6 +605,7 @@ internal sealed partial class ShellSession
         Line(Lang.F("List: {0}", ListWord(FileFavorites.CurrentList)));
         // The folders of the list are shown as headings (not numbered)
         var items = new List<Item>();
+        var levels = new List<int>();
         // (the folders before each row: a folder with a subfolder first in it, or empty folders, are several)
         var headings = new Dictionary<int, List<string>>();
         foreach (var favorite in FileFavorites.Items)
@@ -607,6 +620,7 @@ internal sealed partial class ShellSession
             var isDirectory = System.IO.Directory.Exists(favorite.Path);
             var at = favorite.Line > 0 ? (favorite.Line, Math.Max(1, favorite.Column)) : ((int, int)?)null;
             items.Add(new Item(favorite.Path, isDirectory, at));
+            levels.Add(favorite.Level);
         }
 
         // (no mark: they are all favorites)
@@ -625,7 +639,9 @@ internal sealed partial class ShellSession
         for (var i = 0; i <= rows.Count; i++)
         {
             if (headings.TryGetValue(i, out var before)) foreach (var heading in before) Line(heading);
-            if (i < rows.Count) Line((i + 1).ToString().PadLeft(width + 2) + "  " + rows[i].Item2);
+            // (in as far as its folder: a favorite of a folder after one of its subfolders is not taken for one of the
+            // subfolder's)
+            if (i < rows.Count) Line(new string(' ', 2 * levels[i]) + (i + 1).ToString().PadLeft(width + 2) + "  " + rows[i].Item2);
         }
     }
 
@@ -790,8 +806,9 @@ internal sealed partial class ShellSession
                 "q" or "quit" => "exit",
                 "del" => "delete",
                 "cls" => "clear",
-                "+" or "++" or "-" or "--" => "peek",
+                "+" or "++" or "-" or "--" or "$peek" => "peek",
                 "$clip" => "clip",
+                _ when name.StartsWith('!') => "again",
                 _ => name
             };
             // (all the rows of the command: "help clip" tells each of its forms)

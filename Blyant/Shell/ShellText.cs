@@ -41,6 +41,7 @@ internal sealed partial class ShellSession
 
         if (text == file.Text)
         {
+            LastList = new List<Item> { item };
             Line(command == "format"
                 ? Lang.F("{0}: Already formatted", item.Path)
                 : Lang.F("{0}: {1}", item.Path, editor.Message));
@@ -396,7 +397,9 @@ internal sealed partial class ShellSession
             Line(Lang.T("Set by Blyant:"));
             ClipRow(width);
             PeekRow(width);
-            foreach (var reserved in ShellRegisters.Reserved.Skip(2))
+            // (the others than $clip and $peek: one line each)
+            foreach (var reserved in ShellRegisters.Reserved.Where(reserved =>
+                         !ShellRegisters.IsClip(reserved) && reserved != ShellRegisters.PeekName))
             {
                 if (ShellRegisters.Get(reserved) is { } value) Line("  $" + reserved.PadRight(width) + Printable(value));
             }
@@ -450,13 +453,14 @@ internal sealed partial class ShellSession
             return;
         }
 
-        if (equals && text.Trim().Length == 0)
+        // (nothing typed after "=" or "+="; an empty $peek or $clip is a blank line, and goes in)
+        if (equals && AfterWords(_typedArgument ?? argument, 2).Trim().Length == 0)
         {
             Error(Lang.F("Give the text: reg {0} {1} Buy ink (or $peek, $clip ...)", name, words[1]));
             return;
         }
 
-        if (text.Length == 0)
+        if (text.Length == 0 && !equals)
         {
             // The value alone on its line ("reg clip": the text clip copied last, all its lines)
             if (ShellRegisters.Get(name) is { } value) Line(value);
@@ -500,11 +504,20 @@ internal sealed partial class ShellSession
     private static string RegisterShown(string value)
     {
         if (!value.Contains('\n')) return value;
-        var lines = value.Split('\n');
+        var (shown, lines) = FirstLine(value);
+        return Lang.F("{0}  ({1} lines)", shown, lines);
+    }
+
+    // The first line of a value, as a row shows it (control characters as "?", tabs as blanks, cut so the row fits
+    // the screen: "..." where it is cut, " ..." after a whole first line when more lines follow), and how many lines
+    private static (string Shown, int Lines) FirstLine(string value)
+    {
+        var lines = LinesPutIn(value);
         var first = Printable(lines[0]).Replace('\t', ' ');
         var shown = Cut(first, 40);
-        shown += shown.Length < first.Length ? "..." : " ...";
-        return Lang.F("{0}  ({1} lines)", shown, lines.Length);
+        if (shown.Length < first.Length) shown += "...";
+        else if (lines.Count > 1) shown += " ...";
+        return (shown, lines.Count);
     }
 
     // Why a name set by Blyant is not set or taken away by "reg"
@@ -512,34 +525,24 @@ internal sealed partial class ShellSession
         ? Lang.T("$clip is the text clip copied last: it is not a register to set or take away")
         : Lang.F("${0} is set by Blyant: it is not a register to set or take away", name.ToLowerInvariant());
 
-    // $clip in the list of the registers: the first line of the text clip copied last (cut, so the row fits the
-    // screen), and how many lines it has
+    // $clip in the list of the registers: the first line of the text clip copied last, and how many lines it has
     private void ClipRow(int width)
     {
         if (ShellRegisters.Clip is not { } clip) return;
-        var lines = LinesPutIn(clip);
-        var first = Printable(lines[0]).Replace('\t', ' ');
-        var shown = Cut(first, 40);
-        // ("..." where the line is cut; " ..." after a whole first line, when more lines follow)
-        if (shown.Length < first.Length) shown += "...";
-        else if (lines.Count > 1) shown += " ...";
-        Line("  $" + ShellRegisters.ClipName.PadRight(width) + (lines.Count == 1
+        var (shown, lines) = FirstLine(clip);
+        Line("  $" + ShellRegisters.ClipName.PadRight(width) + (lines == 1
             ? Lang.F("{0}  (the last clip)", shown)
-            : Lang.F("{0}  ({1} lines, the last clip)", shown, lines.Count)));
+            : Lang.F("{0}  ({1} lines, the last clip)", shown, lines)));
     }
 
-    // $peek in the list of the registers: its first line (cut) and how many lines it has, as $clip
+    // $peek in the list of the registers: its first line and how many lines it has, as $clip
     private void PeekRow(int width)
     {
         if (ShellRegisters.Peek is not { } peek) return;
-        var lines = LinesPutIn(peek);
-        var first = Printable(lines[0]).Replace('\t', ' ');
-        var shown = Cut(first, 40);
-        if (shown.Length < first.Length) shown += "...";
-        else if (lines.Count > 1) shown += " ...";
-        Line("  $" + ShellRegisters.PeekName.PadRight(width) + (lines.Count == 1
+        var (shown, lines) = FirstLine(peek);
+        Line("  $" + ShellRegisters.PeekName.PadRight(width) + (lines == 1
             ? Lang.F("{0}  (the last peek)", shown)
-            : Lang.F("{0}  ({1} lines, the last peek)", shown, lines.Count)));
+            : Lang.F("{0}  ({1} lines, the last peek)", shown, lines)));
     }
 
     // Lines of the file of the registers that are not registers (edited by hand): told, so a register mistyped there is

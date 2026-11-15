@@ -3,7 +3,9 @@
 /// <summary>
 /// A shell: the commands read from a reader (the terminal, a file of commands, or a test), and what they show written
 /// to a writer, as lines of text. It keeps the directory it is in and the last list shown (its rows are numbered:
-/// "open 3"). The commands are in ShellCommands.cs; the questions of Blyant (ChoiceBox) are asked here, on lines
+/// "open 3"). The commands are run in ShellCommands.cs (Execute, RunCommand), and written in the other parts of this
+/// class (ShellFiles, ShellText, ShellLines, ShellRun ...); the questions of Blyant (ChoiceBox) are asked here, on
+/// lines
 /// </summary>
 internal sealed partial class ShellSession
 {

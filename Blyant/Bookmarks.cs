@@ -67,11 +67,7 @@ internal static class Bookmarks
         /// <summary>
         /// A bookmark in a folder (or a subfolder in a folder)
         /// </summary>
-        internal bool InFolder
-        {
-            get => Level > 0;
-            init => Level = value ? 1 : 0;
-        }
+        internal bool InFolder => Level > 0;
 
         /// <summary>
         /// The note of the bookmark or folder (empty: none)

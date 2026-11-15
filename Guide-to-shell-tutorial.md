@@ -416,7 +416,7 @@ Moved: plot.md
 List: main
   1  chapters/
 [Story]
-  2  plot.md
+    2  plot.md
 ```
 
 - `fav move 2 top` moves row 2 to the top of its folder, `up` and `down` one step, `out` out of its folder, and `fav move [Story] top` the folder with what is in it

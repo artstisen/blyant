@@ -50,6 +50,8 @@ internal sealed partial class ShellSession
         var end = quoted ? text.IndexOf("]\"", StringComparison.Ordinal) : text.IndexOf(']');
         if (end < 0) return null;
         var close = end + (quoted ? 2 : 1);
+        // ("[2024].md": a file whose name starts with "[", not a folder)
+        if (close < text.Length && !char.IsWhiteSpace(text[close])) return null;
         return (text[..close], text[close..].Trim());
     }
 
@@ -195,7 +197,13 @@ internal sealed partial class ShellSession
             return;
         }
 
-        if (removed.List != FileFavorites.CurrentList || FileFavorites.Serialize() != removed.After)
+        if (removed.List != FileFavorites.CurrentList)
+        {
+            Error(Lang.F("fav undo puts back in the list {0}: open it first (fav {0})", ListWord(removed.List)));
+            return;
+        }
+
+        if (FileFavorites.Serialize() != removed.After)
         {
             Error(Lang.T("The favorites have changed since: nothing is put back"));
             return;
@@ -215,7 +223,7 @@ internal sealed partial class ShellSession
     private void MoveFavorites(string argument)
     {
         FileFavorites.Load();
-        var usage = Lang.T("Give what and where: fav move 3 top (bottom, up, down, out, 5, [Drafts])");
+        var usage = MoveUsage;
         string where;
         FileFavorites.Favorite? folder = null;
         List<FileFavorites.Favorite> moved = new();
@@ -266,6 +274,8 @@ internal sealed partial class ShellSession
         if (error == null) FavoritesChanged(Lang.F("Moved: {0}", what), "move");
         else if (error.Length > 0) Error(error);
     }
+
+    private static string MoveUsage => Lang.T("Give what and where: fav move 3 top (bottom, up, down, out, 5, [Drafts])");
 
     // A folder moved (null: done; "": told already; else what went wrong)
     private string? MoveFolder(FileFavorites.Favorite folder, string where)
@@ -353,7 +363,7 @@ internal sealed partial class ShellSession
 
         // The place of a row: in front of it
         var rows = FavoriteRows();
-        if (!int.TryParse(where, out var row)) return Lang.T("Give what and where: fav move 3 top (bottom, up, down, out, 5, [Drafts])");
+        if (!int.TryParse(where, out var row)) return MoveUsage;
         if (row < 1 || row > rows.Count)
         {
             return rows.Count == 1

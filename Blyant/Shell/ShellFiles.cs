@@ -256,7 +256,8 @@ internal sealed partial class ShellSession
     private void Peek(string argument)
     {
         var words = Words(argument);
-        // "peek 3 +", "peek +": the window of the last peek moved down 5 lines ("++": 10; "-" and "--": up). Without
+        // "peek 3 +", "peek +": the window of the last peek moved down 1 line ("++": 5; "-" and "--": up; settings
+        // shellpeekstep and shellpeekbigstep). Without
         // a file: the file peeked last
         var step = words.Count is 1 or 2 ? PeekStep(words[^1]) : 0;
         if (step != 0 && words.Count == 1)
@@ -288,10 +289,10 @@ internal sealed partial class ShellSession
         {
             // From the window of the last peek of this file, as large; or from the top
             var path = Path.GetFullPath(item.Path);
-            (first, var count) = _lastPeek is { } before && FileOperations.SamePath(before.Path, path)
-                ? (before.First + step, before.Count)
-                : (1 + step, PeekLines);
-            first = Math.Max(1, first);
+            var (from, count) = _lastPeek is { } before && FileOperations.SamePath(before.Path, path)
+                ? ((long)before.First + step, before.Count)
+                : (1L + step, PeekLines);
+            first = (int)Math.Clamp(from, 1, int.MaxValue);
             last = (int)Math.Min((long)first + count - 1, int.MaxValue);
         }
         else if (words.Count >= 2 && !LinesOf(words[1], words.Count == 3 ? words[2] : null, out first, out last))
@@ -320,16 +321,18 @@ internal sealed partial class ShellSession
             first = Math.Max(1, last - size);
         }
 
-        // (kept for "peek +": the file, and the window asked for)
-        _lastPeek = (Path.GetFullPath(item.Path), first, (int)Math.Min((long)last - first + 1, int.MaxValue));
         // (from a line: "open 1" opens the file there)
         LastList = new List<Item> { first > 1 ? item with { At = (first, 1) } : item };
+        var asked = (int)Math.Min((long)last - first + 1, int.MaxValue);
         last = Math.Min(last, lines.Count);
         if (first > last)
         {
             Line(Lang.F("{0} has {1} lines", item.Path, lines.Count));
             return;
         }
+
+        // (kept for "peek +": the file, and the window asked for; $peek below: the lines shown)
+        _lastPeek = (Path.GetFullPath(item.Path), first, asked);
 
         var width = last.ToString().Length;
         for (var i = first; i <= last; i++) Line(i.ToString().PadLeft(width + 2) + "  " + lines[i - 1]);

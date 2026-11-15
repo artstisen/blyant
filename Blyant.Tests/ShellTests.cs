@@ -1537,6 +1537,7 @@ public class ShellTests : IDisposable
         Assert.Equal(string.Empty, errors);
         Assert.Equal(In("work", "d2", "sub"), session.Directory);
         (_, errors, _, session) = Run("cd d2\nmove . ../notes\n");
+        Assert.Equal(string.Empty, errors);
         Assert.Equal(In("work", "notes", "d2"), session.Directory);
         // (the question not asked is told on the error output)
         (_, _, var code, session) = Run("cd notes/d2/sub\ndelete ..\n", yes: true);
@@ -1873,7 +1874,7 @@ public class ShellTests : IDisposable
         var (session, output, _) = Session();
         ShellRegisters.Load();
         session.Execute("reg c three");
-        Assert.Equal("a\tone\nc\tthree\nmistyped line\n2b\tbad name\n", File.ReadAllText(file));
+        Assert.Equal("mistyped line\n2b\tbad name\na\tone\nc\tthree\n", File.ReadAllText(file));
         session.Execute("reg");
         Assert.Contains(Lang.F("({0} lines of {1} are not registers: a name, a tab, and the value)", 2,
             ShellRegisters.FileName), output.ToString());
@@ -1974,7 +1975,7 @@ public class ShellTests : IDisposable
         File.WriteAllText(In("work", "lines.md"), "one\ntwo\n");
         (_, errors, _, _) = Run("clip text lines.md\ncd $clip\nreg note $clip\n");
         Assert.Single(errors.TrimEnd('\n').Split('\n'));
-        Assert.Contains(Lang.T("$clip has more than one line: only insert and change take it"), errors);
+        Assert.Contains(Lang.F("${0} has more than one line: only insert, change, reg and run take it", "clip"), errors);
         // (a register keeps lines)
         Assert.Equal("one\ntwo", ShellRegisters.Get("note"));
         // ($$clip is the text "$clip")
@@ -1996,7 +1997,7 @@ public class ShellTests : IDisposable
         Assert.Contains("plot.md\n", output);
         Assert.Contains("  $clip " + Lang.F("{0}  (the last clip)", "plot.md"), output);
         // (the line of the file is kept as it was, $clip is not written)
-        Assert.Equal("a\tone\nclip\tfrom the file\n", File.ReadAllText(file));
+        Assert.Equal("clip\tfrom the file\na\tone\n", File.ReadAllText(file));
     }
 
     [Fact]
@@ -2153,7 +2154,9 @@ public class ShellTests : IDisposable
         Assert.Contains(Lang.F("{0}: line {1} taken out", In("work", "todo.md"), 2), output);
         Assert.Contains(Lang.F("{0}: {1} lines taken out", In("work", "todo.md"), 2), output);
         // The other file is the last list, at the lines put in
-        (output, _, _, _) = Run("lines todo.md 1 > done.md top\n");
+        var copied = Run("lines done.md 1-2 > todo.md top\n").Session;
+        Assert.Equal(In("work", "todo.md"), copied.LastList.Single().Path);
+        Assert.Equal((1, 1), copied.LastList.Single().At);
     }
 
     [Fact]
@@ -2809,7 +2812,7 @@ public class ShellTests : IDisposable
             Assert.Contains("peek plot.md\n  1  Plot\n", output);
             Assert.Contains("pwd\n" + In("work") + "\n", output);
             Assert.Equal(2, errors.TrimEnd('\n').Split('\n').Length);
-            Assert.Contains(Lang.F("No command {0}: {1} are kept (again lists them)", "!9", 2), errors);
+            Assert.Contains(Lang.F("No command {0}: {1} are kept (again lists them)", 9, 2), errors);
             // From a file nothing is kept: the numbers stay
             Assert.Equal(new[] { "pwd", "peek plot.md" }, CommandHistory.Of(CommandContext.Shell));
             // "again" does not take the place of the last list (peek did)
@@ -3054,7 +3057,7 @@ public class ShellTests : IDisposable
         var (output, errors, _, _) = Run("insert plan.md bottom $peek\npeek notes.md 2-3\ninsert plan.md bottom $peek\n" +
                                          "+\nchange plan.md +1 $peek\ncd $peek\nreg\nreg peek x\n");
         Assert.Contains(Lang.T("Nothing peeked yet: peek shows lines for $peek"), errors);
-        Assert.Contains(Lang.T("$peek has more than one line: only insert and change take it"), errors);
+        Assert.Contains(Lang.F("${0} has more than one line: only insert, change, reg and run take it", "peek"), errors);
         Assert.Contains(Lang.F("${0} is set by Blyant: it is not a register to set or take away", "peek"), errors);
         Assert.Equal(3, errors.TrimEnd('\n').Split('\n').Length);
         // Lines 2-3, then (+) lines 3-4 in place of the heading
@@ -3101,7 +3104,7 @@ public class ShellTests : IDisposable
         var (output, errors, _, _) = Run("reg notes = First idea\npeek a.md 2-3\nreg notes += $peek\nreg notes += Last\n" +
                                          "insert plan.md bottom $notes\ncd $notes\nreg\nreg x =\n");
         Assert.Equal(2, errors.TrimEnd('\n').Split('\n').Length);
-        Assert.Contains(Lang.F("${0} has more than one line: only insert and change take it", "notes"), errors);
+        Assert.Contains(Lang.F("${0} has more than one line: only insert, change, reg and run take it", "notes"), errors);
         Assert.Equal("First idea\ntwo\nthree\nLast", ShellRegisters.Get("notes"));
         Assert.Equal("# Plan\nFirst idea\ntwo\nthree\nLast\n", Text("plan.md"));
         Assert.Contains("  $notes " + Lang.F("{0}  ({1} lines)", "First idea ...", 4), output);
@@ -3193,5 +3196,220 @@ public class ShellTests : IDisposable
         {
             CommandHistory.Clear();
         }
+    }
+
+    // ---- Review of 1.5.2
+
+    [Fact]
+    public void Registers_ALineThatIsNoRegister_StartingWithATab_StaysOutOfTheRegisters()
+    {
+        var file = Path.Combine(_data, ShellRegisters.FileName);
+        File.WriteAllText(file, "\tstray line\nb\tvalue\n");
+        ShellRegisters.Load();
+        Run("reg c = hello\n");
+        ShellRegisters.Load();
+        Assert.Equal("hello", ShellRegisters.Get("c"));
+        Assert.Equal("value", ShellRegisters.Get("b"));
+        Assert.Equal(1, ShellRegisters.Skipped);
+        Assert.Equal("\tstray line\nb\tvalue\nc\thello\n", File.ReadAllText(file));
+    }
+
+    [WindowsFact]
+    public void Registers_UnreadableAtTheStart_AChangeIsWrittenWithThoseOfTheFile_Windows()
+    {
+        var file = Path.Combine(_data, ShellRegisters.FileName);
+        File.WriteAllText(file, "a\tone\n");
+        using (new FileStream(file, FileMode.Open, FileAccess.ReadWrite, FileShare.None)) ShellRegisters.Load();
+        ShellRegisters.Set("b", "two");
+        Assert.Equal(DialogText.Success, ShellRegisters.Save());
+        Assert.Equal("a\tone\nb\ttwo\n", File.ReadAllText(file));
+    }
+
+    [Fact]
+    public void Reg_PlusEquals_OnAnEmptyRegister_AndAnEmptyPeek()
+    {
+        File.WriteAllText(In("work", "a.md"), "one\n\nthree\n");
+        var (_, errors, _, _) = Run("reg x = \"\"\nreg x += first\npeek a.md +2 1\nreg notes = top\nreg notes += $peek\n" +
+                                    "reg notes += end\nreg y +=\n");
+        Assert.Single(errors.TrimEnd('\n').Split('\n'));
+        Assert.Equal("first", ShellRegisters.Get("x"));
+        Assert.Equal("top\n\nend", ShellRegisters.Get("notes"));
+    }
+
+    [Fact]
+    public void Run_AgainAndScreenInARun_AreNotRun()
+    {
+        File.WriteAllText(In("work", "a.md"), "one\n");
+        CommandHistory.Clear();
+        try
+        {
+            var (_, errors, _, _) = Run("reg r = lines a.md 1 start X\nreg r += !!\nrun $r\nreg s = screen\nrun $s\n",
+                terminal: true);
+            Assert.Equal("X one\n", Text("a.md"));
+            Assert.Contains(Lang.T("again, !n and !! are not run in a run: it would run itself again"), errors);
+            Assert.Contains(Lang.T("screen is not run in a run: run it after"), errors);
+        }
+        finally
+        {
+            CommandHistory.Clear();
+        }
+    }
+
+    [Fact]
+    public void Run_AFileByAName_PutsTheNameIn()
+    {
+        Directory.CreateDirectory(In("work", "sub dir"));
+        File.WriteAllText(In("work", "sub dir", "t.txt"), "insert ../log.md bottom ran\n");
+        File.WriteAllText(In("work", "log.md"), "# Log\n");
+        var (_, errors, _, _) = Run("reg d = sub dir\ncd $d\nrun $pwd/t.txt\npeek t.txt\nrun $file\nrun \"" +
+                                    In("work", "sub dir", "t.txt") + "\"\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("# Log\nran\nran\nran\n", Text("log.md"));
+    }
+
+    [Fact]
+    public void Run_AFileWithCrlfAndAByteOrderMark()
+    {
+        File.WriteAllText(In("work", "log.md"), "# Log\n");
+        File.WriteAllBytes(In("work", "w.txt"), System.Text.Encoding.UTF8.GetPreamble()
+            .Concat(System.Text.Encoding.UTF8.GetBytes("# weekly\r\ninsert log.md bottom one\r\n\r\ninsert log.md bottom two\r\n"))
+            .ToArray());
+        var (_, errors, _, _) = Run("run w.txt\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("# Log\none\ntwo\n", Text("log.md"));
+    }
+
+    [Fact]
+    public void Lines_IntoARegisterThatHoldsAPath_IsRefused_AndAMultiLineRegisterChangesLines()
+    {
+        File.WriteAllText(In("work", "a.md"), "one\ntwo\nthree\n");
+        var (_, errors, _, _) = Run("reg plan " + In("work", "plot.md") + "\nlines a.md 1 > $plan\nlines a.md 1 >> $plan\n" +
+                                    "lines a.md 2-3 > $more\nchange a.md +1 $more\n");
+        Assert.Equal(2, errors.TrimEnd('\n').Split('\n').Length);
+        Assert.Contains(Lang.F("${0} holds a path: give the place in that file (> ${0} bottom), or reg -d {0} first", "plan"),
+            errors);
+        Assert.Equal(In("work", "plot.md"), ShellRegisters.Get("plan"));
+        Assert.Equal("two\nthree\ntwo\nthree\n", Text("a.md"));
+    }
+
+    [Fact]
+    public void Peek_StepsAlone_TakeNothingAfterThem_AndStopAtTheEnds()
+    {
+        File.WriteAllText(In("work", "a.md"), "one\ntwo\nthree\n");
+        var (output, errors, _, _) = Run("+ 7\npeek a.md 1\n-\n--\npeek a.md +2147483647\n+\npeek plot.md -\n");
+        Assert.Contains(Lang.F("{0} takes nothing after it: {0} alone, or peek file {0}", "+"), errors);
+        var windows = output.Split('\n').Where(l => l.StartsWith('(')).ToList();
+        // - and -- at the top: line 1; a peek past the end shows nothing, and + steps from the last window shown;
+        // another file: its top
+        Assert.Equal(new[] { (1, 1, 3), (1, 1, 3), (1, 1, 3), (2, 2, 3), (1, 1, 1) }
+            .Select(w => Lang.F("(lines {0}-{1} of {2})", w.Item1, w.Item2, w.Item3)), windows);
+    }
+
+    [Fact]
+    public void Peek_Steps_FromTheSettingsFile_AFaultyValueIsTheDefault()
+    {
+        Assert.Equal(1, Shell.ParsePeekStep("0", 1));
+        Assert.Equal(5, Shell.ParsePeekStep("1001", 5));
+        Assert.Equal(5, Shell.ParsePeekStep("x", 5));
+        Assert.Equal(5, Shell.ParsePeekStep(null, 5));
+        Assert.Equal(1000, Shell.ParsePeekStep(" 1000 ", 5));
+    }
+
+    [Fact]
+    public void Fav_ARowInAFolder_IsShownIn_AndAFileNamedWithABracket_IsRemovedByName()
+    {
+        File.WriteAllText(In("work", "[2024].md"), "x\n");
+        FourFavorites();
+        var (output, errors, _, _) = Run("fav folder A\nfav folder B\nfav move 1-2 [A]\nfav move [B] [A]\nfav move 2 bottom\n" +
+                                         "fav add [2024].md\nfav remove [2024].md\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("c.md|[A]|.a.md|.b.md|.[B]|d.md", FavoritesShape());
+        // The rows of A are shown in under it, its subfolder B as far in as its rows; d.md, moved to the bottom, is
+        // after the folders (in none)
+        Assert.Contains("[A]\n    2  a.md\n    3  b.md\n  [B]\n  4  d.md\n", output);
+        Assert.Contains(Lang.F("Taken off the favorites: {0}", In("work", "[2024].md")), output);
+    }
+
+    [Fact]
+    public void Fav_MoveAFolderDown_KeepsItOpenOrClosed_AndTheEndsAreTold()
+    {
+        FourFavorites();
+        Run("fav folder A\nfav folder B\n");
+        FileFavorites.Load();
+        FileFavorites.Items.First(item => item.Name == "A").Collapsed = true;
+        FileFavorites.Save();
+        var (_, errors, _, _) = Run("fav move [A] down\nfav move [A] down\nfav move 1 up\n");
+        Assert.Equal("a.md|b.md|c.md|d.md|[B]|[A]", FavoritesShape());
+        Assert.True(FileFavorites.Items.First(item => item.Name == "A").Collapsed);
+        Assert.Contains(Lang.F("[{0}] is at the end", "A"), errors);
+        Assert.Contains(Lang.T("The row is at the top"), errors);
+    }
+
+    [Fact]
+    public void Fav_Undo_AfterAnotherListWasOpened_TellsWhichList()
+    {
+        try
+        {
+            FourFavorites();
+            var (_, errors, _, _) = Run("fav\nfav remove 1\nfav new other\nfav undo\nfav main\nfav undo\n", yes: true);
+            Assert.Contains(Lang.F("fav undo puts back in the list {0}: open it first (fav {0})", "main"), errors);
+            Assert.Equal("a.md|b.md|c.md|d.md", FavoritesShape());
+        }
+        finally
+        {
+            FileFavorites.UseList(string.Empty);
+        }
+    }
+
+    [Fact]
+    public void Again_TheMessagesOfNumbersNotKept()
+    {
+        CommandHistory.Clear();
+        CommandHistory.Add(CommandContext.Shell, "pwd");
+        try
+        {
+            var (_, errors, _, _) = Run("!0\n!5\n");
+            Assert.Contains(Lang.F("No command {0}: 1 is kept (again lists it)", 0), errors);
+            Assert.Contains(Lang.F("No command {0}: 1 is kept (again lists it)", 5), errors);
+            CommandHistory.Clear();
+            (_, errors, _, _) = Run("!!\n");
+            Assert.Contains(Lang.T("No commands typed: from a file or a pipe they are not kept"), errors);
+        }
+        finally
+        {
+            CommandHistory.Clear();
+        }
+    }
+
+    [Fact]
+    public void Help_OfPeekVariableAndBang_AndListsAndFindWithDashL()
+    {
+        File.WriteAllText(In("work", ".hidden.md"), "plot here\n");
+        if (OperatingSystem.IsWindows()) File.SetAttributes(In("work", ".hidden.md"), FileAttributes.Hidden);
+        var (output, errors, _, _) = Run("help $peek\nhelp !!\nhelp !3\nls -l -a\nfind -l -t Plot\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains("peek [file|n] +|++|-|--", output);
+        Assert.Contains("again [n]", output);
+        Assert.Contains("  " + In("work", ".hidden.md") + "\n", output);
+        Assert.Contains(In("work", "plot.md") + ":1  Plot", output);
+    }
+
+    [Fact]
+    public void Format_OfAFileThatNeedsNothing_IsStillTheFileWorkedOn()
+    {
+        File.WriteAllText(In("work", "page.css"), "a {\n    color: red;\n}\n");
+        var (_, errors, _, session) = Run("format page.css\npeek $file\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal(In("work", "page.css"), session.LastList.Single().Path);
+    }
+
+    [Fact]
+    public void Tab_AfterRun_AndRegName_AndFavFolders()
+    {
+        Run("fav folder Drafts\n");
+        Assert.Equal("run plot.md", Tab(Completion(), "run plo"));
+        Assert.Equal("reg notes +=", Tab(Completion(), "reg notes +"));
+        Assert.Equal("fav rename [Drafts]", Tab(Completion(), "fav rename [D"));
+        Assert.Equal("fav subfolder [Drafts]", Tab(Completion(), "fav subfolder [D"));
     }
 }

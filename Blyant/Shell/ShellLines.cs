@@ -1,8 +1,8 @@
 ﻿namespace Blyant;
 
 /// <summary>
-/// "lines": lines of a file copied to another file, or cut ("cut": moved there), without opening them; or the text in
-/// them changed: a text put at their start or end ("start", "end"), taken off it ("unstart", "unend"), or a text in
+/// "lines": lines of a file copied to another file or kept in a register ("> $notes", ">> $notes": added), or cut
+/// ("cut": moved there), without opening them; or the text in them changed: a text put at their start or end ("start", "end"), taken off it ("unstart", "unend"), or a text in
 /// them replaced ("replace"). The lines and the place are those of shift. What is written is never logged, only the
 /// paths and the lines
 /// </summary>
@@ -37,8 +37,14 @@ internal sealed partial class ShellSession
     // "lines ...": a copy ("... > other.md place"), or the text in the lines changed
     private void Lines(string argument)
     {
-        var form = LinesForm(Words(argument));
+        var words = Words(argument);
+        var form = LinesForm(words);
         if (form.Edit >= 0) EditLines(argument, form.Edit);
+        // (after the lines: neither a ">" nor a word of what is done)
+        else if (form.Arrow < 0 && words.Count > 2 && !words.Contains(">") && !words.Contains(">>"))
+        {
+            Error(Lang.T("After the lines: > file place, > $name, start, end, unstart, unend or replace"));
+        }
         else CopyLines(argument);
     }
 
@@ -227,17 +233,20 @@ internal sealed partial class ShellSession
         Line(taken.Count == 1
             ? Lang.F("{0}: line {1} put in", target.Item.Path, at)
             : Lang.F("{0}: lines {1}-{2} put in", target.Item.Path, at, at + taken.Count - 1));
-        if (!cut) return;
+        if (cut) TakeOut(source, picked);
+    }
 
-        // Cut: out of their file, as it was read (changed since: left there)
+    // Cut: the lines taken out of their file, after they are in the other file or the register, and only if the file
+    // is as it was read (changed since: they are left there, and it is told)
+    private void TakeOut((Item Item, TextFile File) source, List<int> picked)
+    {
         if (Changed(source.Item.Path, source.File))
         {
             Error(Lang.F("{0} was changed meanwhile: the lines are copied, not taken out", source.Item.Path));
             return;
         }
 
-        var left = WithoutLines(source.File.Text, picked);
-        var removed = source.File.Save(left);
+        var removed = source.File.Save(WithoutLines(source.File.Text, picked));
         FileExplorer.LogFileOperation("Take out lines", source.Item.Path + ":" + Numbers(picked), removed);
         if (removed != DialogText.Success)
         {
@@ -284,6 +293,15 @@ internal sealed partial class ShellSession
     {
         var cut = words.Count == arrow + 3 && words[^1].Equals("cut", StringComparison.OrdinalIgnoreCase);
         var adds = words[arrow] == ">>";
+        // A register that holds the path of a file or directory: the place in it was left out, most likely ("> $plan
+        // bottom"); its path is not written over
+        if (ShellRegisters.Get(register) is { Length: > 0 } held && !held.Contains('\n') &&
+            (File.Exists(PathOf(held)) || System.IO.Directory.Exists(PathOf(held))))
+        {
+            Error(Lang.F("${0} holds a path: give the place in that file (> ${0} bottom), or reg -d {0} first", register));
+            return;
+        }
+
         if (EditableFile(words[0]) is not { } source) return;
         var lines = LinesOfText(source.File.Text);
         if (PickedLines(words[1], arrow == 3 ? words[2] : null, lines, source.Item.Path) is not { } picked) return;
@@ -307,26 +325,7 @@ internal sealed partial class ShellSession
             : picked.Count == 1
                 ? Lang.F("Line {0} kept in ${1}", picked[0], register)
                 : Lang.F("{0} lines kept in ${1}", picked.Count, register));
-        if (!cut) return;
-
-        // Cut: out of their file, as it was read (changed since: left there)
-        if (Changed(source.Item.Path, source.File))
-        {
-            Error(Lang.F("{0} was changed meanwhile: the lines are copied, not taken out", source.Item.Path));
-            return;
-        }
-
-        var removed = source.File.Save(WithoutLines(source.File.Text, picked));
-        FileExplorer.LogFileOperation("Take out lines", source.Item.Path + ":" + Numbers(picked), removed);
-        if (removed != DialogText.Success)
-        {
-            Error(Lang.F("{0}: the lines are copied, but not taken out: {1}", source.Item.Path, removed));
-            return;
-        }
-
-        Line(picked.Count == 1
-            ? Lang.F("{0}: line {1} taken out", source.Item.Path, picked[0])
-            : Lang.F("{0}: {1} lines taken out", source.Item.Path, picked.Count));
+        if (cut) TakeOut(source, picked);
     }
 
     // The file a path is (a link: the file it links to, as the file is saved there), to tell the same file under

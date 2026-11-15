@@ -232,8 +232,13 @@ internal sealed class ShellCompletion
                 return (position == 1 && ClipKinds.Contains(after[0]) ? Kind.Path : Kind.None, none);
             case "reg":
                 if (position == 0) return (Kind.Words, new[] { "-d" }.Concat(ShellRegisters.All.Keys));
+                // ("reg notes = ...", "reg notes += ...")
+                if (position == 1 && after[0] != "-d") return (Kind.Words, new[] { "=", "+=" });
                 return (position == 1 && after[0] == "-d" ? Kind.Words : Kind.None,
                     new[] { "all" }.Concat(ShellRegisters.All.Keys));
+            case "run":
+                // (a file of commands; $ and Tab the registers)
+                return (position == 0 ? Kind.Path : Kind.None, none);
             case "about":
                 return (position == 0 ? Kind.Words : Kind.None, new[] { "license" });
             case "help":
