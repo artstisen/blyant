@@ -144,6 +144,7 @@ internal sealed partial class ShellSession
         var result = FileOperations.Rename(item.Path, words[1], out var path);
         FileExplorer.LogFileOperation("Rename", item.Path + " -> " + words[1], result);
         if (result == DialogText.Success) Moved(item, path);
+        if (result == DialogText.Success) LatestFile(item, path);
         Done(result, Lang.F("Renamed: {0}", path), result == DialogText.Success ? path : null);
     }
 
@@ -171,6 +172,7 @@ internal sealed partial class ShellSession
             : FileOperations.Copy(item.Path, target.Path, out path);
         FileExplorer.LogFileOperation(move ? "Move" : "Copy", item.Path + " -> " + target.Path, result);
         if (move && result == DialogText.Success) Moved(item, path);
+        if (result == DialogText.Success) LatestFile(item, path);
         Done(result, move ? Lang.F("Moved to {0}", path) : Lang.F("Copied to {0}", path),
             result == DialogText.Success ? path : null);
     }
@@ -232,6 +234,13 @@ internal sealed partial class ShellSession
         {
             Directory = Path.GetFullPath(Path.Combine(path, Path.GetRelativePath(item.Path, Directory)));
         }
+    }
+
+    // A file copied, renamed or moved is the newest of the latest files, as one made with "new": to work on it next
+    // ("recent", and Tab with nothing typed, offer it first). A directory is not put there
+    private static void LatestFile(Item item, string path)
+    {
+        if (!item.IsDirectory) FileExplorer.AddToHistory(path);
     }
 
     // The shell is in the directory, or in one below it

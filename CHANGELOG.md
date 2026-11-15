@@ -1,6 +1,7 @@
 # Changes
 
 ## v1.5.3
+- **Copied, renamed and moved files in the latest files**: a file copied (`copy notes.md .`), renamed or moved in the shell is put in the latest files at once, as one made with `new`, so a file duplicated and renamed is there to work on: `recent` lists it first, and `Tab` with nothing typed offers it. Before, a file was only followed there when it was in the list already. A directory is not put there. See [Files](Guide-to-shell.md#files).
 
 ## v1.5.2 (2026-11-15)
 - **More examples in the guide to the shell** (and the user manual): duplicating a file with `copy todo.md .` (in [Files](Guide-to-shell.md#files)), a list of things to do changed step by step with `start`, `end`, `replace`, `unend` and `unstart` (in [Text in lines](Guide-to-shell.md#text-in-lines)), and a new part, [Peeking into a file](Guide-to-shell.md#peeking-into-a-file): the ways of `peek`, and `+`, `++`, `-` and `--`. The examples of a task are now _Get pencils and paper_.

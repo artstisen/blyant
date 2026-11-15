@@ -2770,6 +2770,35 @@ public class ShellTests : IDisposable
     }
 
     [Fact]
+    public void CopyRenameAndMove_PutTheFileInTheLatestFiles_ButNotADirectory()
+    {
+        Directory.CreateDirectory(In("work", "drafts"));
+        // A file duplicated, and the copy renamed: the copy by its new name is the newest
+        var (output, errors, _, _) = Run("copy plot.md .\nrename plot-copy.md plan.md\nrecent\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal(In("work", "plan.md"), FileHistory.Items[0].Path);
+        Assert.DoesNotContain(FileHistory.Items, entry => entry.Path == In("work", "plot-copy.md"));
+        Assert.Contains("  1  plan.md  ", output);
+        (_, errors, _, _) = Run("copy plot.md drafts\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal(In("work", "drafts", "plot.md"), FileHistory.Items[0].Path);
+        (_, errors, _, _) = Run("move plan.md drafts\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal(In("work", "drafts", "plan.md"), FileHistory.Items[0].Path);
+        Assert.DoesNotContain(FileHistory.Items, entry => entry.Path == In("work", "plan.md"));
+        // A directory copied or renamed is not a latest file
+        var count = FileHistory.Items.Count;
+        (_, errors, _, _) = Run("copy drafts .\nrename drafts old\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal(count, FileHistory.Items.Count);
+        Assert.Equal(In("work", "old", "plan.md"), FileHistory.Items[0].Path);
+        // Not copied (a file of that name is there): not put in the list
+        (_, errors, _, _) = Run("copy plot.md old\ncopy plot.md old\n");
+        Assert.NotEmpty(errors);
+        Assert.Single(FileHistory.Items, entry => entry.Path == In("work", "old", "plot.md"));
+    }
+
+    [Fact]
     public void New_PutsTheFileInTheLatestFiles()
     {
         var (output, errors, _, _) = Run("new fresh\nrecent\n");

@@ -88,9 +88,9 @@ To have every output whole (with a screen reader, say), turn the pages off: `set
 | `find [-l] [name] [-t text]` | Find files here and in the directories below, by name and by a text in them (see [Files](#files)); `find -l` gives the full paths |
 | `new name` | Make a new, empty file here (`new ideas` makes `ideas.md`: the kind of new files, when no extension is given). It is put in the latest files at once, as a file opened: `recent` lists it, and `Tab` with nothing typed offers it first |
 | `mkdir name` | Make a new directory here |
-| `rename file\|n name` | Give a file or directory a new name |
-| `copy file\|n dir\|n` | Copy a file or directory into a directory |
-| `move file\|n dir\|n` | Move a file or directory into a directory |
+| `rename file\|n name` | Give a file or directory a new name. A file renamed is put in the latest files, as one made with `new` |
+| `copy file\|n dir\|n` | Copy a file or directory into a directory (`copy notes.md .`: a copy here, `notes-copy.md`). A file copied is put in the latest files, as one made with `new` |
+| `move file\|n dir\|n` | Move a file or directory into a directory. A file moved is put in the latest files, as one made with `new` |
 | `delete file\|n` (`del`) | Delete a file or directory: to the trash, after asking |
 | `info [file\|n]` | Tell about a file or directory (alone: the one you are in): its kind, size, dates and path, and for a text file its characters, words, lines, encoding and line endings. The last list stays as it was |
 | `insert file\|n top\|bottom\|+line text` | Put a line of text in a file without opening it: before the first line, after the last, or as line 12 (`+12`). See [Text and settings](#text-and-settings) |
@@ -200,7 +200,7 @@ Copied to /home/anna/notes/drafts/todo.md
 blyant ~/notes> open 1
 ```
 
-`open 1` opens the copy made last (it is the last list). The copy is given a directory, not a new name: give it its name with `rename` afterwards (`rename todo-copy.md plan.md`).
+`open 1` opens the copy made last (it is the last list), and the copy is the newest of the latest files (`recent`), also after `rename`. The copy is given a directory, not a new name: give it its name with `rename` afterwards (`rename todo-copy.md plan.md`).
 
 ## Peeking into a file
 `peek` shows the lines of a text file, numbered, without opening it. It only reads: nothing is changed, and the file is not put in the latest files.
