@@ -140,6 +140,7 @@ To have every output whole (with a screen reader, say), turn the pages off: `set
 | `version` | Show the version of Blyant |
 | `about [license]` | Show the version of Blyant and the commands used the most (`help`, `ls`, `open`, `peek`, `set language de` ...), and `about license` its license, as on the second page of [About](Guide-to-start-page.md#help) |
 | `again [n]` | List the commands you typed, the newest first, or run one again by its number (`again 3`; also `!3`, and `!!` for the last). See [Typing a command](#typing-a-command) |
+| `run $name\|file` | Run the commands of a register or of a file, one a line, each written out first; it stops at the first that fails. See [Running commands](#running-commands) |
 | `help [command]` (`h`) | List the commands, or tell what one does |
 | `exit` (`quit`, `q`) | Leave Blyant |
 
@@ -421,6 +422,7 @@ printf 'ls\nhist\n' | blyant --shell
 - `open` does not open the editor (it needs a terminal), and a file that is not there is not made
 - The commands run in the directory Blyant is started in (or the one given), not in the start directory of the setting `shelldir`, and where they end is not kept for `shelldir=last`
 - A file of commands saved with a byte order mark (as Notepad and PowerShell can save it) is read as one without
+- A line starting with `#` is a comment, and is left out. Inside the shell, `run file` runs such a file too (see [Running commands](#running-commands))
 
 `--run` gives the commands on the command line instead, one after each `--run`, and Blyant ends when they are done: what they show, their questions and the exit code are as for commands read from a file.
 
@@ -430,6 +432,24 @@ blyant --run "trim notes.md" --run "format site.css" ~/projects/site
 ```
 
 A directory given with them is where they run (the one you are in, if none is given).
+
+## Running commands
+`run` runs the commands of a register, or of a file, one after another, as if you typed them: a small script you keep and run again.
+
+```
+reg tidy = trim notes.md                        a register of commands, one a line
+reg tidy += format page.html
+reg tidy += insert log.md bottom $$date Tidied
+run $tidy                                       runs the three, in order
+run weekly.txt                                  the commands of a file
+```
+
+- Each command is written out before it runs, as `again` does, so you see what is done. `run` stops at the first command that fails, and tells at which line: the commands after it are not run
+- Questions are asked as for any command: `delete` and `change` without a text ask first (from a file or `--run`, the answer is no unless `--yes` is given)
+- A `$name` in a command is put in when that command runs. When you set the register, a `$name` is put in at once: write `$$date` to keep `$date` in the register, so that it is the date of each run (`reg tidy` shows what the register holds)
+- A line starting with `#` is a comment, and blank lines are left out, in a register, in a file for `run`, and in a file of commands read by `blyant --shell < file`
+- A file for `run` is a text file of commands, as for `blyant --shell < file`: one a line. A register or file can run another (`run $more` in it); one that runs itself is stopped, 10 runs deep
+- `again` keeps `run $tidy`, not the commands it ran, so `!!` runs them all again. From the command line of your system: `blyant --run "run $tidy"` (in quotes, and in bash `\$tidy` or single quotes, as `$` is the shell's own there)
 
 ## What stays on the full screen
 The corkboard, the Jump menu, the color schemes and logos, Configuration, split views and Zen mode are not in the shell: start Blyant without `--shell` to use them. Your settings, lists and bookmarks are the same in both, as they are kept in the data directory (see [Good to know](Guide-to-installation.md#good-to-know)).

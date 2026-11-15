@@ -127,6 +127,8 @@ internal static class EventLog
     internal static string CommandName(string command)
     {
         command = command.Trim();
+        // "+", "++", "-", "--" alone: the steps of peek in the shell (not lines)
+        if (command is "+" or "++" or "-" or "--" && Commands.IsKnown(command)) return command;
         // The lines a command works on come first ("%", "2,5", "'<,'>")
         var start = 0;
         while (start < command.Length && !char.IsLetter(command[start])) start++;

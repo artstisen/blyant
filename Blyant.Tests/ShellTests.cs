@@ -3125,4 +3125,73 @@ public class ShellTests : IDisposable
         Assert.Equal("one", ShellRegisters.Get("notes"));
         Assert.Equal("three\nb1\nb2\n", Text("b.md"));
     }
+
+    // ---- run $name, run file: the commands of a register or a file
+
+    [Fact]
+    public void Run_TheCommandsOfARegister_WithANameKeptForWhenTheyRun()
+    {
+        File.WriteAllText(In("work", "log.md"), "# Log\n");
+        ShellRegisters.Clock = () => new DateTime(2026, 11, 15, 14, 5, 33);
+        try
+        {
+            var (output, errors, _, _) = Run("reg tidy = insert log.md bottom $$date Tidied\nreg tidy += peek log.md\n" +
+                                             "run $tidy\n");
+            Assert.Equal(string.Empty, errors);
+            Assert.Equal("insert log.md bottom $date Tidied\npeek log.md", ShellRegisters.Get("tidy"));
+            Assert.Equal("# Log\n2026-11-15 Tidied\n", Text("log.md"));
+            // Each command written out, then run
+            Assert.Contains("insert log.md bottom $date Tidied\n", output);
+            Assert.Contains("peek log.md\n  1  # Log\n  2  2026-11-15 Tidied\n", output);
+        }
+        finally
+        {
+            ShellRegisters.Clock = () => DateTime.Now;
+        }
+    }
+
+    [Fact]
+    public void Run_StopsAtTheFirstCommandThatFails()
+    {
+        File.WriteAllText(In("work", "log.md"), "# Log\n");
+        var (_, errors, code, _) = Run("reg bad = peek nothing.md\nreg bad += insert log.md bottom never\nrun $bad\n");
+        Assert.Contains(Lang.F("run stopped at line {0} of {1}: {2}", 1, "$bad", "peek nothing.md"), errors);
+        Assert.Equal("# Log\n", Text("log.md"));
+        Assert.Equal(1, code);
+    }
+
+    [Fact]
+    public void Run_AFile_WithComments_AndARegisterInIt()
+    {
+        File.WriteAllText(In("work", "log.md"), "# Log\n");
+        File.WriteAllText(In("work", "weekly.txt"), "# The weekly tidy\n\ninsert log.md bottom from the file\nrun $more\n");
+        var (_, errors, _, _) = Run("reg more = insert log.md bottom from the register\nrun weekly.txt\n# a comment typed\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("# Log\nfrom the file\nfrom the register\n", Text("log.md"));
+    }
+
+    [Fact]
+    public void Run_ARegisterThatRunsItself_IsStopped_AndWhatCannotBeRunIsTold()
+    {
+        var (_, errors, _, _) = Run("reg loop = run $$loop\nrun $loop\nrun\nrun $nothing\nrun nothing.txt\nrun Draft\n");
+        Assert.Contains(Lang.F("run is {0} deep: a register or file that runs itself is stopped", 10), errors);
+        Assert.Contains(Lang.T("Give a register or a file: run $tidy, run tidy.txt"), errors);
+        Assert.Contains(Lang.F("No register named {0} (reg lists them)", "nothing"), errors);
+        Assert.Contains(Lang.F("Not a file: {0}", In("work", "Draft")), errors);
+    }
+
+    [Fact]
+    public void Run_IsKeptForAgain_NotTheCommandsItRuns()
+    {
+        CommandHistory.Clear();
+        try
+        {
+            Run("reg two = pwd\nreg two += ls\nrun $two\n", terminal: true);
+            Assert.Equal(new[] { "run $two", "reg two += ls", "reg two = pwd" }, CommandHistory.Of(CommandContext.Shell));
+        }
+        finally
+        {
+            CommandHistory.Clear();
+        }
+    }
 }

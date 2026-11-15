@@ -1890,6 +1890,7 @@ en: "Go on on the full screen, in the file browser here"
 en: "Show the version of Blyant"
 en: "Show the version and the commands used the most, or the license"
 en: "List the commands typed, or run one again (!n, !!)"
+en: "Run the commands of a register or a file, one a line"
 en: "List the commands, or tell what one does"
 en: "Leave Blyant (also quit, q)"
 en: "No commands typed yet (they are kept while Blyant runs)"
@@ -2028,6 +2029,12 @@ en: "{0} lines kept in ${1}"
 # Shell/ShellRegisters.cs
 en: "{0} could not be read: the registers are not written"
 
+# Shell/ShellRun.cs
+en: "Give a register or a file: run $tidy, run tidy.txt"
+en: "No register named {0} (reg lists them)"
+en: "run is {0} deep: a register or file that runs itself is stopped"
+en: "run stopped at line {0} of {1}: {2}"
+
 # Shell/ShellSession.cs
 en: "{0} {1}: help lists the commands, exit leaves"
 en: "The command failed: {0}"
@@ -2074,7 +2081,6 @@ en: "Settings reset to the defaults"
 en: "No registers (reg name text keeps one)"
 en: "Set by Blyant:"
 en: "Give the register to take away: reg -d note (or all)"
-en: "No register named {0} (reg lists them)"
 en: "All registers taken away"
 en: "Register {0} taken away"
 en: "Not a name for a register: {0} (a letter first, then letters, digits or _)"

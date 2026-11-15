@@ -79,6 +79,7 @@ internal sealed partial class ShellSession
         ("version", Lang.T("Show the version of Blyant")),
         ("about [license]", Lang.T("Show the version and the commands used the most, or the license")),
         ("again [n]", Lang.T("List the commands typed, or run one again (!n, !!)")),
+        ("run $name|file", Lang.T("Run the commands of a register or a file, one a line")),
         ("help [command]", Lang.T("List the commands, or tell what one does")),
         ("exit", Lang.T("Leave Blyant (also quit, q)"))
     };
@@ -90,13 +91,16 @@ internal sealed partial class ShellSession
     internal bool Execute(string line)
     {
         line = line.Trim();
-        if (line.Length == 0) return true;
+        // (a line starting with "#": a comment, in a file of commands and a register run)
+        if (line.Length == 0 || line.StartsWith('#')) return true;
         // "!!", "!3", "again 3": a command typed before, written out and run again (as typed then)
         if (AgainNumber(line) is { } number)
         {
             var kept = CommandHistory.Of(CommandContext.Shell);
             if (number < 1 || number > kept.Count)
             {
+                // English: the log (by name, as other commands)
+                EventLog.AddCommand(DialogText.LogShell, "again");
                 NewPage();
                 Error(kept.Count == 0
                     ? Lang.T("No commands typed yet (they are kept while Blyant runs)")
@@ -126,6 +130,8 @@ internal sealed partial class ShellSession
         // ("help $clip" tells of it: nothing is put in after help)
         var name = CommandLine.Name(line).ToLowerInvariant();
         var argument = CommandLine.Argument(line);
+        // ("run $tidy" or "run tidy.txt": what was typed tells a register from a file)
+        _runTyped = name == "run" ? argument : null;
         var help = name is "help" or "h";
         // ("lines a.md 4-6 > $notes": the register the lines go to, not its value: kept as the name)
         if (name == "lines") argument = ProtectRegisterTarget(argument);
@@ -145,7 +151,7 @@ internal sealed partial class ShellSession
         }
 
         // A register of several lines, as $clip: where one line is taken, told
-        if (!help && name is not ("insert" or "change" or "reg") && !IsClipOfRegister(line) &&
+        if (!help && name is not ("insert" or "change" or "reg" or "run") && !IsClipOfRegister(line) &&
             ShellRegisters.All.FirstOrDefault(pair => pair.Value.Contains('\n') && ShellRegisters.Mentions(argument, pair.Key))
                 is { Key: { } several })
         {
@@ -171,7 +177,8 @@ internal sealed partial class ShellSession
             {
                 "insert" or "change" => 2,
                 "reg" or "set" => 1,
-                "find" or "project" => 0,
+                // ("run $tidy": its lines as they are)
+                "find" or "project" or "run" => 0,
                 // (the text of "lines todo.md 4 start ..." as it is)
                 "lines" => LinesWords(argument),
                 _ => int.MaxValue
@@ -225,7 +232,7 @@ internal sealed partial class ShellSession
         if (clip.Length == 0 && name == "change") return Lang.T("$clip is empty: change would delete the lines");
         if (!clip.Contains('\n') || IsClipOfRegister(line)) return null;
         // (reg keeps lines: "reg notes += $clip")
-        return name is "insert" or "change" or "reg"
+        return name is "insert" or "change" or "reg" or "run"
             ? null
             : Lang.T("$clip has more than one line: only insert and change take it");
     }
@@ -236,7 +243,7 @@ internal sealed partial class ShellSession
         if (ShellRegisters.Peek is not { } peek) return Lang.T("Nothing peeked yet: peek shows lines for $peek");
         if (peek.Length == 0 && name == "change") return Lang.T("$peek is empty: change would delete the lines");
         if (!peek.Contains('\n') || IsClipOfRegister(line)) return null;
-        return name is "insert" or "change" or "reg"
+        return name is "insert" or "change" or "reg" or "run"
             ? null
             : Lang.T("$peek has more than one line: only insert and change take it");
     }
@@ -398,6 +405,9 @@ internal sealed partial class ShellSession
             case "cls":
                 // (in a terminal: else there is no screen, and nothing is done)
                 ClearScreen?.Invoke();
+                break;
+            case "run":
+                RunCommands(argument);
                 break;
             case "again":
                 ListAgain();

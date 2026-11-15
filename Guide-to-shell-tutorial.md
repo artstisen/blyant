@@ -472,6 +472,24 @@ blyant --shell ~/novel < weekly.txt
 - Questions are not asked: the answer is no, so nothing is deleted. With `--yes` the answer is yes
 - `reg docs` alone writes the value of a register on its own line, so a script can read it: `blyant --run "reg docs"`
 
+Inside the shell, a register can hold commands, one a line, and `run` runs them: a small script you keep. Write `$$date` for a date that is put in when the script runs, not when it is kept:
+
+```
+blyant ~/novel> reg tidy = trim plot.md
+  $tidy = trim plot.md
+blyant ~/novel> reg tidy += insert done.md bottom - [x] Tidied on $$date
+  $tidy = trim plot.md ...  (2 lines)
+blyant ~/novel> run $tidy
+trim plot.md
+/home/anna/novel/plot.md: No blank space at line ends
+insert done.md bottom - [x] Tidied on $date
+/home/anna/novel/done.md: line 4 put in
+```
+
+- Each command is written out before it runs, and `run` stops at the first that fails
+- `run weekly.txt` runs the commands of a file in the same way: one a line, and a line starting with `#` is a comment
+- `!!` after `run $tidy` runs the whole script again
+
 ## Full screen and shell side by side
 What you do on the full screen, and the command for it in the shell:
 
