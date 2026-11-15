@@ -19,6 +19,7 @@ internal sealed partial class ShellSession
         ("data", Lang.T("Go to the data directory of Blyant (settings, lists, log)")),
         ("open file|n [+line]", Lang.T("Edit a file on the full screen (closing it is back here)")),
         ("peek file|n [lines]", Lang.T("Show the lines of a file (the first 20, 40, 100-120, or +100 30)")),
+        ("peek [file|n] +|++|-|--", Lang.T("Show 5 lines further down (++: 10), or up (-, --)")),
         ("find [-l] [name] [-t text]", Lang.T("Find files here and below, by name (*.md) and by text")),
         ("new name", Lang.T("Make a new, empty file here (.md if no extension)")),
         ("mkdir name", Lang.T("Make a new directory here")),

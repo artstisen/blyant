@@ -256,9 +256,23 @@ internal sealed partial class ShellSession
     private void Peek(string argument)
     {
         var words = Words(argument);
+        // "peek 3 +", "peek +": the window of the last peek moved down 5 lines ("++": 10; "-" and "--": up). Without
+        // a file: the file peeked last
+        var step = words.Count is 1 or 2 ? PeekStep(words[^1]) : 0;
+        if (step != 0 && words.Count == 1)
+        {
+            if (_lastPeek is not { } previous)
+            {
+                Error(Lang.T("No file peeked yet: peek a file first (peek plot.md)"));
+                return;
+            }
+
+            words = new List<string> { previous.Path, words[0] };
+        }
+
         if (words.Count is < 1 or > 3 || (words.Count == 3 && !words[1].StartsWith('+')))
         {
-            Error(Lang.T("Give a file, and the lines if you want: peek 3 10-30, peek 3 +100 30"));
+            Error(Lang.T("Give a file, and the lines if you want: peek 3 10-30, peek 3 +100 30, peek 3 +"));
             return;
         }
 
@@ -270,7 +284,17 @@ internal sealed partial class ShellSession
         }
 
         var (first, last) = (1, PeekLines);
-        if (words.Count >= 2 && !LinesOf(words[1], words.Count == 3 ? words[2] : null, out first, out last))
+        if (step != 0)
+        {
+            // From the window of the last peek of this file, as large; or from the top
+            var path = Path.GetFullPath(item.Path);
+            (first, var count) = _lastPeek is { } before && FileOperations.SamePath(before.Path, path)
+                ? (before.First + step, before.Count)
+                : (1 + step, PeekLines);
+            first = Math.Max(1, first);
+            last = (int)Math.Min((long)first + count - 1, int.MaxValue);
+        }
+        else if (words.Count >= 2 && !LinesOf(words[1], words.Count == 3 ? words[2] : null, out first, out last))
         {
             Error(Lang.F("Not lines: {0} (as 40, 100-120, or +100 30)", string.Join(' ', words.Skip(1))));
             return;
@@ -288,6 +312,16 @@ internal sealed partial class ShellSession
             return;
         }
 
+        // Moved past the end: the last lines, as many as the window
+        if (step != 0 && last > lines.Count && lines.Count > 0)
+        {
+            var size = last - first;
+            last = lines.Count;
+            first = Math.Max(1, last - size);
+        }
+
+        // (kept for "peek +": the file, and the window asked for)
+        _lastPeek = (Path.GetFullPath(item.Path), first, (int)Math.Min((long)last - first + 1, int.MaxValue));
         // (from a line: "open 1" opens the file there)
         LastList = new List<Item> { first > 1 ? item with { At = (first, 1) } : item };
         last = Math.Min(last, lines.Count);
@@ -299,8 +333,22 @@ internal sealed partial class ShellSession
 
         var width = last.ToString().Length;
         for (var i = first; i <= last; i++) Line(i.ToString().PadLeft(width + 2) + "  " + lines[i - 1]);
-        if (last < lines.Count) Line(Lang.F("(lines {0}-{1} of {2})", first, last, lines.Count));
+        // (where the window is: also at the end, when it was moved there)
+        if (last < lines.Count || step != 0) Line(Lang.F("(lines {0}-{1} of {2})", first, last, lines.Count));
     }
+
+    // The last peek of this shell: the file, its first line and how many lines (for "peek +")
+    private (string Path, int First, int Count)? _lastPeek;
+
+    // How far "+", "++", "-" and "--" move the window of peek (0: another word)
+    private static int PeekStep(string word) => word switch
+    {
+        "+" => 5,
+        "++" => 10,
+        "-" => -5,
+        "--" => -10,
+        _ => 0
+    };
 
     // The lines peek shows when none are given
     private const int PeekLines = 20;

@@ -670,7 +670,7 @@ public class ShellTests : IDisposable
     [InlineData("+10 0")]
     [InlineData("+10 x")]
     [InlineData("40 10")]
-    [InlineData("+")]
+    [InlineData("+++")]
     [InlineData("-5")]
     public void Peek_TellsLinesItCannotShow(string lines)
     {
@@ -2953,5 +2953,44 @@ public class ShellTests : IDisposable
         Assert.Contains("Blyant-v151.md:2  A quiet day.\n", output);
         // (found once, by "storm*night": "*.md -t" does not search the text file)
         Assert.Equal(2, output.Split("notes-151.txt:1").Length);
+    }
+
+    // ---- peek +, ++, -, --: the window of the last peek moved
+
+    [Fact]
+    public void Peek_PlusAndMinus_MoveTheWindowOfTheLastPeek()
+    {
+        File.WriteAllText(In("work", "long.md"), string.Concat(Enumerable.Range(1, 60).Select(n => "line " + n + "\n")));
+        var (output, errors, _, session) = Run("peek long.md\npeek 1 +\npeek +\npeek ++\npeek -\npeek --\n");
+        Assert.Equal(string.Empty, errors);
+        // 1-20, then 6-25, 11-30, 21-40, 16-35, 6-25
+        var windows = output.Split('\n').Where(l => l.StartsWith('(')).ToList();
+        Assert.Equal(new[] { (1, 20), (6, 25), (11, 30), (21, 40), (16, 35), (6, 25) }
+            .Select(w => Lang.F("(lines {0}-{1} of {2})", w.Item1, w.Item2, 60)), windows);
+        // "open 1" opens the file at the top of the window
+        Assert.Equal((6, 1), session.LastList.Single().At);
+    }
+
+    [Fact]
+    public void Peek_Plus_KeepsTheSizeOfTheWindow_AndStopsAtTheEnds()
+    {
+        File.WriteAllText(In("work", "long.md"), string.Concat(Enumerable.Range(1, 60).Select(n => "line " + n + "\n")));
+        var (output, _, _, _) = Run("peek long.md +40 10\npeek ++\npeek ++\npeek ++\npeek -- \npeek long.md --\n");
+        var windows = output.Split('\n').Where(l => l.StartsWith('(')).ToList();
+        Assert.Equal(new[]
+        {
+            Lang.F("(lines {0}-{1} of {2})", 40, 49, 60), Lang.F("(lines {0}-{1} of {2})", 50, 59, 60),
+            Lang.F("(lines {0}-{1} of {2})", 51, 60, 60), Lang.F("(lines {0}-{1} of {2})", 51, 60, 60),
+            Lang.F("(lines {0}-{1} of {2})", 41, 50, 60), Lang.F("(lines {0}-{1} of {2})", 31, 40, 60)
+        }, windows);
+    }
+
+    [Fact]
+    public void Peek_Plus_WithNoFilePeekedYet_IsTold_AndAnotherFileStartsAtTheTop()
+    {
+        File.WriteAllText(In("work", "long.md"), string.Concat(Enumerable.Range(1, 60).Select(n => "line " + n + "\n")));
+        var (output, errors, _, _) = Run("peek +\npeek plot.md\npeek long.md +\n");
+        Assert.Contains(Lang.T("No file peeked yet: peek a file first (peek plot.md)"), errors);
+        Assert.Contains(Lang.F("(lines {0}-{1} of {2})", 6, 25, 60), output);
     }
 }

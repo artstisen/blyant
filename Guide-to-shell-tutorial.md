@@ -87,6 +87,7 @@ blyant ~/novel> peek 3
 ```
 
 - `peek plot.md 40` shows the first 40 lines (20 when no number is given), and `peek plot.md 100-120` those lines
+- `peek +` shows the file peeked last 5 lines further down, and `peek ++` 10; `peek -` and `peek --` go back up. Each moves from the last window, so `peek +`, `peek +` goes on down the file (and `!!` repeats the last one)
 - `peek chapters/02-storm.md +3 2` shows 2 lines from line 3. The file is then the last list at that line, so `open 1` opens it right there:
 
 ```
