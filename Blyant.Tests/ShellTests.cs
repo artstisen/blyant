@@ -3352,11 +3352,11 @@ public class ShellTests : IDisposable
     }
 
     [Fact]
-    public void Peek_StepsAlone_TakeNothingAfterThem_AndStopAtTheEnds()
+    public void Peek_StepsAlone_TakeANumberOrNothing_AndStopAtTheEnds()
     {
         File.WriteAllText(In("work", "a.md"), "one\ntwo\nthree\n");
-        var (output, errors, _, _) = Run("+ 7\npeek a.md 1\n-\n--\npeek a.md +2147483647\n+\npeek plot.md -\n");
-        Assert.Contains(Lang.F("{0} takes nothing after it: {0} alone, or peek file {0}", "+"), errors);
+        var (output, errors, _, _) = Run("+ x\npeek a.md 1\n-\n--\npeek a.md +2147483647\n+\npeek plot.md -\n");
+        Assert.Contains(Lang.F("{0} takes a number of steps, or nothing: {0} 20", "+"), errors);
         var windows = output.Split('\n').Where(l => l.StartsWith('(')).ToList();
         // - and -- at the top: line 1; a peek past the end shows nothing, and + steps from the last window shown;
         // another file: its top
@@ -3649,5 +3649,53 @@ public class ShellTests : IDisposable
         {
             Shell.AutoPeek = false;
         }
+    }
+
+    [Fact]
+    public void Peek_TopMiddleBottomPercentAndALine_KeepTheSizeOfTheWindow()
+    {
+        File.WriteAllText(In("work", "long.md"), string.Concat(Enumerable.Range(1, 100).Select(i => "line " + i + "\n")));
+        var (output, errors, _, session) = Run("peek long.md 10-12\npeek bottom\npeek top\npeek middle\npeek 50%\n" +
+                                               "peek +40\npeek long.md 90%\npeek 100%\npeek 0%\n");
+        Assert.Equal(string.Empty, errors);
+        var windows = output.Split('\n').Where(l => l.StartsWith('(')).ToList();
+        Assert.Equal(new[] { (10, 12), (98, 100), (1, 3), (49, 51), (50, 52), (40, 42), (90, 92), (98, 100), (1, 3) }
+            .Select(w => Lang.F("(lines {0}-{1} of {2})", w.Item1, w.Item2, 100)), windows);
+        Assert.Equal((98, 1), Run("peek long.md 10-12\npeek bottom\n").Session.LastList.Single().At);
+        // Another file: the window of 20 lines
+        File.WriteAllText(In("work", "b.md"), string.Concat(Enumerable.Range(1, 50).Select(i => "b " + i + "\n")));
+        (output, _, _, _) = Run("peek b.md bottom\n");
+        Assert.Contains(Lang.F("(lines {0}-{1} of {2})", 31, 50, 50), output);
+        // Not a place: told
+        (_, errors, _, _) = Run("peek long.md 101%\n");
+        Assert.Contains(Lang.F("Not lines: {0} (as 40, 100-120, or +100 30)", "101%"), errors);
+    }
+
+    [Fact]
+    public void Peek_StepsWithANumber_MoveAsManySteps()
+    {
+        File.WriteAllText(In("work", "long.md"), string.Concat(Enumerable.Range(1, 100).Select(i => "line " + i + "\n")));
+        var (output, errors, _, _) = Run("peek long.md 10-12\n+ 20\n- 5\n++ 3\n-- 2\n+ 1000\n");
+        Assert.Equal(string.Empty, errors);
+        var windows = output.Split('\n').Where(l => l.StartsWith('(')).ToList();
+        Assert.Equal(new[] { (10, 12), (30, 32), (25, 27), (40, 42), (30, 32), (98, 100) }
+            .Select(w => Lang.F("(lines {0}-{1} of {2})", w.Item1, w.Item2, 100)), windows);
+        (_, errors, _, _) = Run("++ 0\n-- -2\n");
+        Assert.Equal(2, errors.TrimEnd('\n').Split('\n').Length);
+    }
+
+    [Fact]
+    public void Peek_APlaceAlone_BeforeAnyPeek_IsTold_AndAFileNamedPlusANumberIsPeeked()
+    {
+        var (_, errors, _, _) = Run("peek bottom\npeek +40\n");
+        Assert.Equal(2, errors.TrimEnd('\n').Split('\n').Length);
+        Assert.Contains(Lang.T("No file peeked yet: peek a file first (peek plot.md)"), errors);
+        File.WriteAllText(In("work", "+40"), "the file\n");
+        File.WriteAllText(In("work", "a.md"), "a\n");
+        var (output, _, _, _) = Run("peek a.md\npeek +40\n");
+        Assert.Contains("  1  the file\n", output);
+        Assert.Contains("+ n, - n, ++ n, -- n", Run("help +\n").Output);
+        Assert.Equal("peek bottom", Tab(Completion(), "peek bo"));
+        Assert.Equal("peek plot.md middle", Tab(Completion(), "peek plot.md mi"));
     }
 }

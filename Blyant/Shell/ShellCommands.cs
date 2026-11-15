@@ -1,4 +1,6 @@
-﻿namespace Blyant;
+﻿using System.Globalization;
+
+namespace Blyant;
 
 /// <summary>
 /// The commands of the shell (CommandContext.Shell in Commands.cs). Each takes what it works on as its argument: a
@@ -22,6 +24,9 @@ internal sealed partial class ShellSession
         ("peek [file|n] +|++|-|--", Shell.PeekStep == 1
             ? Lang.F("Show 1 line further down (++: {0}), or up (-, --)", Shell.PeekBigStep)
             : Lang.F("Show {0} lines further down (++: {1}), or up (-, --)", Shell.PeekStep, Shell.PeekBigStep)),
+        ("peek [f] top|middle|bottom|n%", Lang.T("The window at the top, middle, end, or from a part")),
+        ("peek +line", Lang.T("The file peeked last, from that line (peek +120)")),
+        ("+ n, - n, ++ n, -- n", Lang.T("Move the window n steps (+ 20)")),
         ("peek (or .)", Lang.T("Show the last peek again, as the file is now")),
         ("find [-l] [name] [-t text]", Lang.T("Find files here and below, by name (*.md) and by text")),
         ("new name", Lang.T("Make a new, empty file here (.md if no extension)")),
@@ -319,15 +324,26 @@ internal sealed partial class ShellSession
             case "peek":
                 Peek(argument);
                 break;
-            // "+", "++", "-", "--" alone: "peek +" ... (the window of the last peek moved; nothing else they could be)
+            // "+", "++", "-", "--" alone: "peek +" ... (the window of the last peek moved; nothing else they could be).
+            // With a number, as many steps: "+ 20" 20 lines (as set), "++ 3" 3 big steps
             case "+":
             case "++":
             case "-":
             case "--":
-                // (alone: "+ 7" is not taken as "peek +")
-                if (argument.Trim().Length > 0) Error(Lang.F("{0} takes nothing after it: {0} alone, or peek file {0}", name));
-                else Peek(name);
+            {
+                var steps = 1;
+                if (argument.Trim().Length > 0 && !(int.TryParse(argument.Trim(), NumberStyles.None,
+                        CultureInfo.InvariantCulture, out steps) && steps >= 1))
+                {
+                    Error(Lang.F("{0} takes a number of steps, or nothing: {0} 20", name));
+                }
+                else
+                {
+                    Peek(name, steps);
+                }
+
                 break;
+            }
             // "." alone: the last peek again ("peek" alone), as the file is now
             case ".":
                 if (argument.Trim().Length > 0) Error(Lang.T(". takes nothing after it: . alone shows the last peek again"));
@@ -895,7 +911,9 @@ internal sealed partial class ShellSession
             };
             // (all the rows of the command: "help clip" tells each of its forms)
             // ("trim!", "shift!": with the command)
-            var found = rows.Where(r => r.Command.Split(' ')[0].TrimEnd('!') == full.TrimEnd('!')).ToList();
+            // (the steps "+ n" ... with peek)
+            var found = rows.Where(r => r.Command.Split(' ')[0].TrimEnd('!') == full.TrimEnd('!') ||
+                                        (full == "peek" && r.Command.StartsWith('+'))).ToList();
             if (found.Count == 0)
             {
                 Error(Lang.F("Unknown command: {0} (help lists the commands)", name));

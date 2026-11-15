@@ -37,12 +37,16 @@ internal sealed class ShellCompletion
         Directory,
         Words,
         PathOrWords,
+        PathThenWords,
         QuotedWords,
         Names // Words, or those a pattern fits ("chapter-*" to "chapter-1.md"), in quotes with a blank in them
     }
 
     // What "clip" copies
     private static readonly string[] ClipKinds = { "path", "name", "text", "lines" };
+
+    // Where "peek" puts its window
+    private static readonly string[] PeekPlaces = { "top", "middle", "bottom" };
 
     /// <summary>
     /// The line after Tab (forward) or Shift+Tab: the word at its end completed, or the line as it was
@@ -113,6 +117,7 @@ internal sealed class ShellCompletion
             Kind.Directory => PathsFitting(word, true),
             Kind.Words => Fitting(choices, word),
             Kind.PathOrWords => Fitting(choices, word).Concat(PathsFitting(word, false)).ToList(),
+            Kind.PathThenWords => PathsFitting(word, false).Concat(Fitting(choices, word)).ToList(),
             // (a word with a blank in it in quotes: fitting what is typed after a quote)
             Kind.QuotedWords => Fitting(choices, word.TrimStart('"'))
                 .Select(w => w.Any(char.IsWhiteSpace) ? "\"" + w + "\"" : w).ToList(),
@@ -136,7 +141,16 @@ internal sealed class ShellCompletion
                 // ("ls -a -l notes": the directory after -a and -l)
                 return (after.All(word => word is "-a" or "-l") ? Kind.Directory : Kind.None, none);
             case "open":
+                return (position == 0 ? Kind.Path : Kind.None, none);
             case "peek":
+                // ("peek bottom": the file peeked last; "peek plot.md middle"; the files first, as with nothing typed
+                // the files opened last come first)
+                return position switch
+                {
+                    0 => (Kind.PathThenWords, PeekPlaces),
+                    1 => (Kind.Words, PeekPlaces),
+                    _ => (Kind.None, none)
+                };
             case "info":
             case "delete":
             case "del":

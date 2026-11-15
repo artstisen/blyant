@@ -1,4 +1,6 @@
-﻿namespace Blyant;
+﻿using System.Globalization;
+
+namespace Blyant;
 
 /// <summary>
 /// The commands of the shell that work on files: new, mkdir, rename, copy, move, delete, peek and find, and adding to
@@ -261,8 +263,11 @@ internal sealed partial class ShellSession
 
     // "peek 3", "peek notes.md 40", "peek notes.md 100-120", "peek notes.md +100", "peek notes.md +100 30": the lines of
     // a text file, numbered (the first 20 if no lines are given; from a line: 20, or as many as given). The file is
-    // then the last list, at the first line shown: "open 1" opens it there. Only read, never written
-    private void Peek(string argument)
+    // then the last list, at the first line shown: "open 1" opens it there. Only read, never written. A place after
+    // the file (or alone: the file peeked last) puts a window as large as the last one of the file there: "+", "++",
+    // "-", "--" (steps from it; "+ 20": steps, given as "count"), "top", "middle", "bottom", "50%"; "peek +120" alone
+    // is the file peeked last from line 120
+    private void Peek(string argument, int count = 1)
     {
         var words = Words(argument);
         // "peek" alone (and "."): the window of the last peek again, as the file is now
@@ -272,11 +277,12 @@ internal sealed partial class ShellSession
             return;
         }
 
-        // "peek 3 +", "peek +": the window of the last peek moved down 1 line ("++": 5; "-" and "--": up; settings
-        // shellpeekstep and shellpeekbigstep). Without
-        // a file: the file peeked last
-        var step = words.Count is 1 or 2 ? PeekStep(words[^1]) : 0;
-        if (step != 0 && words.Count == 1)
+        var place = words.Count is 1 or 2 ? PlaceOf(words[^1]) : null;
+        // "peek +120": the file peeked last, from line 120, its window as large (unless a file has that name)
+        var fromLine = place == null && words.Count == 1 && words[0].Length > 1 && words[0][0] == '+' &&
+                       words[0][1..].All(char.IsAsciiDigit) && !File.Exists(PathOf(words[0])) &&
+                       !System.IO.Directory.Exists(PathOf(words[0]));
+        if ((place != null && words.Count == 1) || fromLine)
         {
             if (_lastPeek is not { } previous)
             {
@@ -284,12 +290,14 @@ internal sealed partial class ShellSession
                 return;
             }
 
-            words = new List<string> { previous.Path, words[0] };
+            words = fromLine
+                ? new List<string> { previous.Path, words[0], previous.Count.ToString(CultureInfo.InvariantCulture) }
+                : new List<string> { previous.Path, words[0] };
         }
 
-        if (words.Count is < 1 or > 3 || (words.Count == 3 && !words[1].StartsWith('+')))
+        if (place == null && (words.Count > 3 || (words.Count == 3 && !words[1].StartsWith('+'))))
         {
-            Error(Lang.T("Give a file, and the lines if you want: peek 3 10-30, peek 3 +100 30, peek 3 +"));
+            Error(Lang.T("Give a file, and the lines if you want: peek 3 10-30, peek 3 +100 30, peek 3 bottom"));
             return;
         }
 
@@ -300,18 +308,20 @@ internal sealed partial class ShellSession
             return;
         }
 
+        // A place: from the window of the last peek of this file, as large; for another file the first 20 lines are
+        // the window it is moved from
+        var path = Path.GetFullPath(item.Path);
+        var (before, size) = _lastPeek is { } last1 && FileOperations.SamePath(last1.Path, path)
+            ? (last1.First, last1.Count)
+            : (1, PeekLines);
         var (first, last) = (1, PeekLines);
-        if (step != 0)
+        if (place is { Place: PeekPlace.Step } step)
         {
-            // From the window of the last peek of this file, as large; or from the top
-            var path = Path.GetFullPath(item.Path);
-            var (from, count) = _lastPeek is { } before && FileOperations.SamePath(before.Path, path)
-                ? ((long)before.First + step, before.Count)
-                : (1L + step, PeekLines);
+            var from = before + (long)step.Value * count;
             first = (int)Math.Clamp(from, 1, int.MaxValue);
-            last = (int)Math.Min((long)first + count - 1, int.MaxValue);
+            last = (int)Math.Min((long)first + size - 1, int.MaxValue);
         }
-        else if (words.Count >= 2 && !LinesOf(words[1], words.Count == 3 ? words[2] : null, out first, out last))
+        else if (place == null && words.Count >= 2 && !LinesOf(words[1], words.Count == 3 ? words[2] : null, out first, out last))
         {
             Error(Lang.F("Not lines: {0} (as 40, 100-120, or +100 30)", string.Join(' ', words.Skip(1))));
             return;
@@ -329,12 +339,26 @@ internal sealed partial class ShellSession
             return;
         }
 
-        // Moved past the end: the last lines, as many as the window
-        if (step != 0 && last > lines.Count && lines.Count > 0)
+        // The top, the middle, the bottom, or a part of the file ("50%": from halfway)
+        if (place is { Place: not PeekPlace.Step } at)
         {
-            var size = last - first;
+            long start = at.Place switch
+            {
+                PeekPlace.Middle => (lines.Count - size) / 2 + 1,
+                PeekPlace.Bottom => lines.Count - size + 1,
+                PeekPlace.Percent => 1 + (long)Math.Max(0, lines.Count - 1) * at.Value / 100,
+                _ => 1
+            };
+            first = (int)Math.Clamp(start, 1, int.MaxValue);
+            last = (int)Math.Min((long)first + size - 1, int.MaxValue);
+        }
+
+        // Moved past the end: the last lines, as many as the window
+        if (place != null && last > lines.Count && lines.Count > 0)
+        {
+            var span = last - first;
             last = lines.Count;
-            first = Math.Max(1, last - size);
+            first = Math.Max(1, last - span);
         }
 
         // (from a line: "open 1" opens the file there)
@@ -349,14 +373,45 @@ internal sealed partial class ShellSession
 
         // (kept for "peek +" and ".": the file, the window asked for, and the file as it was then, for the setting
         // shellautopeek; $peek below: the lines shown)
-        _lastPeek = (Path.GetFullPath(item.Path), first, asked, StampOf(item.Path));
+        _lastPeek = (path, first, asked, StampOf(item.Path));
 
         var width = last.ToString().Length;
         for (var i = first; i <= last; i++) Line(i.ToString().PadLeft(width + 2) + "  " + lines[i - 1]);
         // $peek: the lines shown, as they are now (to put them in another file: insert plan.md bottom $peek)
         ShellRegisters.Peek = string.Join("\n", lines.GetRange(first - 1, last - first + 1));
         // (where the window is: also at the end, when it was moved there)
-        if (last < lines.Count || step != 0) Line(Lang.F("(lines {0}-{1} of {2})", first, last, lines.Count));
+        if (last < lines.Count || place != null) Line(Lang.F("(lines {0}-{1} of {2})", first, last, lines.Count));
+    }
+
+    // Where a window of peek is put: a step from the last window, the top, the middle, the bottom, or a part of the
+    // file
+    private enum PeekPlace
+    {
+        Step,
+        Top,
+        Middle,
+        Bottom,
+        Percent
+    }
+
+    // The place a word after peek is ("+": a step of 1 line, as set; "50%": 50), or null
+    private static (PeekPlace Place, int Value)? PlaceOf(string word)
+    {
+        if (PeekStep(word) is var step && step != 0) return (PeekPlace.Step, step);
+        switch (word.ToLowerInvariant())
+        {
+            case "top":
+                return (PeekPlace.Top, 0);
+            case "middle":
+                return (PeekPlace.Middle, 0);
+            case "bottom":
+                return (PeekPlace.Bottom, 0);
+        }
+
+        return word.Length is > 1 and <= 4 && word[^1] == '%' &&
+               int.TryParse(word[..^1], NumberStyles.None, CultureInfo.InvariantCulture, out var percent) && percent <= 100
+            ? (PeekPlace.Percent, percent)
+            : null;
     }
 
     // The last peek of this shell: the file, its first line and how many lines (for "peek +" and "."), and when the
