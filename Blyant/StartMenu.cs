@@ -1382,6 +1382,17 @@ internal static class StartMenu
             case Setting.StartShell:
                 // From the next start ("blyant --screen" starts on the full screen once)
                 Shell.StartInShell = !Shell.StartInShell;
+                // Turned on: what it does, and the way back, told (the shell has no screen of boxes and menus)
+                if (Shell.StartInShell)
+                {
+                    ChoiceBox.Message(Lang.T("Start in the shell"),
+                        Lang.T("Blyant will start in the shell, without the full screen"),
+                        Lang.T("From the next start, Blyant shows a prompt for typed commands, as blyant --shell does, " +
+                               "with no menus or pages. A file given (blyant notes.md) still opens in the editor. " +
+                               "Back to the full screen: screen in the shell, or blyant --screen. To turn it off: " +
+                               "here, or set startshell false in the shell."));
+                }
+
                 break;
             case Setting.NewLineEndings:
                 // System, LF, CRLF, and round again

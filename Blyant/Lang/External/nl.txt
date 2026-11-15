@@ -2417,6 +2417,12 @@ en: "Hint {0} of {1}"
 nl: "Tip {0} van {1}"
 en: "Hide hints"
 nl: "Tips verbergen"
+en: "Start in the shell"
+nl: "Starten in de shell"
+en: "Blyant will start in the shell, without the full screen"
+nl: "Blyant start in de shell, zonder het volledige scherm"
+en: "From the next start, Blyant shows a prompt for typed commands, as blyant --shell does, with no menus or pages. A file given (blyant notes.md) still opens in the editor. Back to the full screen: screen in the shell, or blyant --screen. To turn it off: here, or set startshell false in the shell."
+nl: "Vanaf de volgende start toont Blyant een prompt voor getypte commando's, zoals blyant --shell, zonder menu's en pagina's. Een opgegeven bestand (blyant notes.md) opent nog steeds in de editor. Terug naar het volledige scherm: screen in de shell, of blyant --screen. Uitzetten: hier, of set startshell false in de shell."
 
 # SystemClipboard.cs
 en: "That is a directory: type the path of a file"

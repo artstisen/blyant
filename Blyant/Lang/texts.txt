@@ -1245,6 +1245,9 @@ en: "Data:"
 en: "Settings:"
 en: "Hint {0} of {1}"
 en: "Hide hints"
+en: "Start in the shell"
+en: "Blyant will start in the shell, without the full screen"
+en: "From the next start, Blyant shows a prompt for typed commands, as blyant --shell does, with no menus or pages. A file given (blyant notes.md) still opens in the editor. Back to the full screen: screen in the shell, or blyant --screen. To turn it off: here, or set startshell false in the shell."
 
 # SystemClipboard.cs
 en: "That is a directory: type the path of a file"

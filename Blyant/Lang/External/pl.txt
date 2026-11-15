@@ -2417,6 +2417,12 @@ en: "Hint {0} of {1}"
 pl: "Wskazówka {0} z {1}"
 en: "Hide hints"
 pl: "Ukryj wskazówki"
+en: "Start in the shell"
+pl: "Uruchamiaj w powłoce"
+en: "Blyant will start in the shell, without the full screen"
+pl: "Blyant uruchomi się w powłoce, bez pełnego ekranu"
+en: "From the next start, Blyant shows a prompt for typed commands, as blyant --shell does, with no menus or pages. A file given (blyant notes.md) still opens in the editor. Back to the full screen: screen in the shell, or blyant --screen. To turn it off: here, or set startshell false in the shell."
+pl: "Od następnego uruchomienia Blyant pokazuje znak zachęty do wpisywanych poleceń, jak blyant --shell, bez menu i stron. Podany plik (blyant notes.md) nadal otwiera się w edytorze. Powrót do pełnego ekranu: screen w powłoce lub blyant --screen. Aby wyłączyć: tutaj lub set startshell false w powłoce."
 
 # SystemClipboard.cs
 en: "That is a directory: type the path of a file"

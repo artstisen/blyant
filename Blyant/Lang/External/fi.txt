@@ -2417,6 +2417,12 @@ en: "Hint {0} of {1}"
 fi: "Vinkki {0}/{1}"
 en: "Hide hints"
 fi: "Piilota vinkit"
+en: "Start in the shell"
+fi: "Käynnistä shellissä"
+en: "Blyant will start in the shell, without the full screen"
+fi: "Blyant käynnistyy shellissä, ilman koko näyttöä"
+en: "From the next start, Blyant shows a prompt for typed commands, as blyant --shell does, with no menus or pages. A file given (blyant notes.md) still opens in the editor. Back to the full screen: screen in the shell, or blyant --screen. To turn it off: here, or set startshell false in the shell."
+fi: "Seuraavasta käynnistyksestä Blyant näyttää kehotteen kirjoitetuille komennoille, kuten blyant --shell, ilman valikoita ja sivuja. Annettu tiedosto (blyant notes.md) avautuu yhä editorissa. Takaisin koko näyttöön: screen shellissä, tai blyant --screen. Poista käytöstä: täällä, tai set startshell false shellissä."
 
 # SystemClipboard.cs
 en: "That is a directory: type the path of a file"
