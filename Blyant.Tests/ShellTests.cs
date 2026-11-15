@@ -2938,4 +2938,20 @@ public class ShellTests : IDisposable
         Assert.Equal("insert plot.md top $now", Tab(Completion(), "insert plot.md top $no"));
         Assert.Equal("open $fi", Tab(Completion(), "open $fi"));
     }
+
+    [Fact]
+    public void Find_TakesStarAndQuestionMark_InTheNameAndInTheText()
+    {
+        File.WriteAllText(In("work", "Blyant-v151.md"), "The storm came at night.\nA quiet day.\n");
+        File.WriteAllText(In("work", "notes-151.txt"), "Storms and nights\n");
+        var (output, errors, _, _) = Run("find *151*\nfind -t storm*night\nfind *.md -t st?rm came\nfind -t qu?et\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains("  Blyant-v151.md\n", output);
+        Assert.Contains("  notes-151.txt\n", output);
+        Assert.Contains("Blyant-v151.md:1  The storm came at night.\n", output);
+        Assert.Contains("notes-151.txt:1  Storms and nights\n", output);
+        Assert.Contains("Blyant-v151.md:2  A quiet day.\n", output);
+        // (found once, by "storm*night": "*.md -t" does not search the text file)
+        Assert.Equal(2, output.Split("notes-151.txt:1").Length);
+    }
 }

@@ -347,7 +347,11 @@ internal sealed partial class ShellSession
             argument = argument[..at];
         }
 
-        var options = new FileSearch.Options { Name = argument.Trim().Trim('"'), Text = text, Subfolders = true };
+        // ("*" and "?" in the name, as in the file browser, and in the text: "find -t storm*night")
+        var options = new FileSearch.Options
+        {
+            Name = argument.Trim().Trim('"'), Text = text, Subfolders = true, TextWildcards = true
+        };
         var problem = FileSearch.Validate(options);
         if (problem != DialogText.Success)
         {

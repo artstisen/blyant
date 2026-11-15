@@ -28,6 +28,7 @@ internal static class FileSearch
         internal bool IsRegex;
         internal bool MatchCase;
         internal bool Subfolders = true;
+        internal bool TextWildcards; // "*" and "?" in the text stand for any characters and any one (the shell's find)
     }
 
     internal sealed class Result
@@ -92,7 +93,11 @@ internal static class FileSearch
     {
         if (options.Text.Length == 0) return null;
         var regexOptions = RegexOptions.CultureInvariant | (options.MatchCase ? RegexOptions.None : RegexOptions.IgnoreCase);
-        return new Regex(options.IsRegex ? options.Text : Regex.Escape(options.Text), regexOptions, MatchTimeout);
+        if (options.IsRegex) return new Regex(options.Text, regexOptions, MatchTimeout);
+        var pattern = Regex.Escape(options.Text);
+        // "storm*night": "storm", then anything in the same line, then "night" (a part of a line, as without them)
+        if (options.TextWildcards) pattern = pattern.Replace("\\*", ".*").Replace("\\?", ".");
+        return new Regex(pattern, regexOptions, MatchTimeout);
     }
 
     private static bool IsMatch(Regex? pattern, string text)
