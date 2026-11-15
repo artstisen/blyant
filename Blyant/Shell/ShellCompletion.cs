@@ -23,6 +23,12 @@ internal sealed class ShellCompletion
 
     /// <param name="directory">The directory the shell is in</param>
     /// <param name="fullPath">A path typed as a full path (as the shell takes it: from its directory, "~")</param>
+    /// <summary>
+    /// The file a word typed stands for, as the commands take it (a row of the last list, $file ...): for the headings
+    /// of "shift" and "lines". Without it, the word is a path
+    /// </summary>
+    internal Func<string, string>? FileOf { get; init; }
+
     internal ShellCompletion(Func<string> directory, Func<string, string> fullPath)
     {
         _directory = directory;
@@ -175,7 +181,7 @@ internal sealed class ShellCompletion
                 return position switch
                 {
                     0 => (Kind.Path, none),
-                    2 => (Kind.QuotedWords, new[] { "top", "bottom" }.Concat(HeadingsOf(_words[0]))),
+                    2 => (Kind.Names, new[] { "top", "bottom" }.Concat(HeadingsOf(_words[0]))),
                     _ => (Kind.None, none)
                 };
             case "lines":
@@ -193,7 +199,7 @@ internal sealed class ShellCompletion
 
                 if (position == arrow + 1) return (Kind.Path, none);
                 if (position == arrow + 2)
-                    return (Kind.QuotedWords, new[] { "top", "bottom" }.Concat(HeadingsOf(_words[arrow + 1])));
+                    return (Kind.Names, new[] { "top", "bottom" }.Concat(HeadingsOf(_words[arrow + 1])));
                 return (position == arrow + 3 ? Kind.Words : Kind.None, new[] { "copy", "cut" });
             }
             case "insert":
@@ -312,7 +318,7 @@ internal sealed class ShellCompletion
     {
         try
         {
-            var path = _fullPath(typed.Trim('"'));
+            var path = FileOf?.Invoke(typed) ?? _fullPath(typed.Trim('"'));
             if (!File.Exists(path) || new FileInfo(path).Length > TextFile.MaxSize) return Enumerable.Empty<string>();
             return ShellSession.Headings(TextBuffer.Normalize(File.ReadAllText(path)), ShellSession.IsTypst(path))
                 .Select(h => h.Name).ToList();

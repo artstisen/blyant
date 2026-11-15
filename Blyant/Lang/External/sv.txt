@@ -4051,6 +4051,8 @@ en: "The place is in the lines moved: {0}"
 sv: "Platsen är bland raderna som flyttas: {0}"
 en: "No heading {0} in {1} (or +12, top, bottom)"
 sv: "Ingen rubrik {0} i {1} (eller +12, top, bottom)"
+en: "{0} headings fit {1}: give more of the name, or the line (+12)"
+sv: "{0} rubriker passar {1}: ange mer av namnet, eller raden (+12)"
 en: "{0} headings are named {1}: give the line (+12)"
 sv: "{0} rubriker heter {1}: ange raden (+12)"
 

@@ -111,7 +111,7 @@ internal sealed partial class ShellSession
     /// </summary>
     internal void ReadLinesWith(Func<ConsoleKeyInfo> readKey, Func<int> width)
     {
-        var completion = new ShellCompletion(() => Directory, PathOf);
+        var completion = new ShellCompletion(() => Directory, PathOf) { FileOf = CompletionFile };
         _lineReader = new ShellLineReader(readKey, _output, width, completion.Next);
     }
 

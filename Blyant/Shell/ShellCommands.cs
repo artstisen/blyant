@@ -545,6 +545,22 @@ internal sealed partial class ShellSession
         static bool Exists(string path) => File.Exists(path) || System.IO.Directory.Exists(path);
     }
 
+    /// <summary>
+    /// The file a word typed stands for, as the commands take it, for Tab (the headings of "shift 3 5 Do"): $names put
+    /// in, a row of the last list ("3"), or a path. Nothing is told
+    /// </summary>
+    internal string CompletionFile(string typed)
+    {
+        var word = ShellRegisters.Expand(typed, int.MaxValue).Trim().Trim('"');
+        if (word.Length > 0 && word.All(char.IsAsciiDigit) && !File.Exists(PathOf(word)) &&
+            int.TryParse(word, out var row) && row >= 1 && row <= LastList.Count && LastList[row - 1].Path.Length > 0)
+        {
+            return LastList[row - 1].Path;
+        }
+
+        return PathOf(word);
+    }
+
     // A path typed, as a full path: "~" is the home directory, and a path that is not full is taken from the
     // directory the shell is in (on Windows "/docs" from its drive, not from the drive Blyant was started on)
     internal string PathOf(string typed)

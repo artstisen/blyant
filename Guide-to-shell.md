@@ -310,6 +310,8 @@ shift! todo.md "Get pencils and paper" Done  moved, and its task box ticked
 
 - The numbers are those of the file as it is, as `peek` shows them
 - A place that is not `top`, `bottom` or `+12` is a heading: `Done` is `## Done` (any level, and letter case alike; `"## Done"` and `"Done today"` in quotes also do). The lines go right under it, after a blank line under it, so the newest come first; `Done+` puts them after the last line of its section, before the next heading of its level or above. In a Typst file (`.typ`) the headings are `= Done`. Headings in a block of code are not headings
+- A heading is named by its whole text first. When no heading has it, the one heading that starts with it is taken (`Done` for `##### Done herunder`), and `*` and `?` make a pattern that fits the whole heading (`"*herunder"`, `"Chap*"`, also `"Chap*+"` for the end of its section). When more headings start with it or fit it, they are shown with their lines and nothing is moved: give more of the name, or the line (`+12`). A heading with `*` or `?` in it (`## What?`) is found by its whole text as it is
+- `Tab` after the lines completes `top`, `bottom` and the headings of the file, also from a pattern (`*herunder` and `Tab`), and also when the file is a row (`shift 3 5 Do`) or `$file`
 - A text in place of the lines finds the one line that has it (letter case alike). When more lines have it, or none does, they are shown with their numbers and nothing is moved, and so it is when no heading has the name, or two do (then the headings are shown)
 - `shift!` also ticks the task boxes of the lines moved (`- [ ] Milk` to `- [x] Milk`, also in a numbered list), and unticks those that are ticked: `shift! todo.md Milk Done` when it is done, `shift! todo.md Milk Todo` to have it back. A line without a box is moved as it is
 - The place cannot be in the lines moved (the heading moved, or `+5` with line 5 moved). Lines already at the place are left so
@@ -327,7 +329,7 @@ lines todo.md "Get pencils and paper" > done.md Done+ cut
 - The lines are given as for `shift` (`4`, `4-6`, `4,7,9-10`, a text), or as `+10 5`: 5 lines from line 10. After the `>` come the other file and the place in it, as for `shift`: `top`, `bottom`, `+12`, a heading, or `Heading+`
 - `copy` is the default, and can be written too. `cut` takes the lines out of their file, after they are in the other: when something goes wrong, they are in both files, never in neither. The first file is not changed when it was changed since it was read (the lines are then copied, and it is told). A heading named _Cut_ is written in quotes (`"Cut"`), as the place
 - The lines put in are shown, and the other file is then the last list there (`open 1`). Both files keep their line endings and byte order mark, only files in UTF-8 are changed and not the files Blyant uses, and nothing is asked: no line is lost. The same file on both sides is for `shift`
-- `Tab` completes the other file after the `>`, then the headings of that file, then `copy` and `cut`
+- `Tab` completes the other file after the `>`, then the headings of that file (also from a pattern, and of a row or `$file`), then `copy` and `cut`. A heading is found by its whole text, its start or a pattern, as for `shift`
 - From the command line of your system, give the command in quotes: `blyant --run "lines notes.md 4-6 > plan.md bottom"`. Without them, bash, PowerShell and cmd take the `>` as a redirection to a file
 
 ## Text in lines

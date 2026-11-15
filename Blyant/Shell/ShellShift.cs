@@ -105,7 +105,9 @@ internal sealed partial class ShellSession
     }
 
     // The place in a file (its lines and text) where lines go: before which line (from 0) of the file as it is.
-    // "top", "bottom", "+12" (before line 12), a heading (under it), "Heading+" (at the end of its section). The lines
+    // "top", "bottom", "+12" (before line 12), a heading (under it), "Heading+" (at the end of its section). A heading
+    // is named by its whole text (letter case alike); when none has it, the one heading that starts with it ("Done"
+    // for "Done today"), or the one a pattern fits ("Chap*", "*today"). The lines
     // moved in the same file ("moved"; null: from another file) cannot hold the place. Null (and told) if it is not
     // there
     private int? PlaceIn(string place, List<string> lines, string text, string path, List<int>? moved)
@@ -128,12 +130,23 @@ internal sealed partial class ShellSession
         var atEnd = place.EndsWith('+');
         var name = HeadingName(atEnd ? place[..^1] : place);
         var found = headings.Where(h => string.Equals(h.Name, name, StringComparison.OrdinalIgnoreCase)).ToList();
+        // (no heading of that whole name: the start of one, or a pattern; a heading with "*" in it is found whole first)
+        var fitted = found.Count == 0 && name.Length > 0;
+        if (fitted)
+        {
+            found = ShellCompletion.IsPattern(name)
+                ? headings.Where(h => ShellCompletion.PatternFits(name, h.Name)).ToList()
+                : headings.Where(h => h.Name.StartsWith(name, StringComparison.OrdinalIgnoreCase)).ToList();
+        }
+
         if (found.Count != 1)
         {
             foreach (var h in found.Count > 1 ? found : headings) Line("  " + h.Line + "  " + lines[h.Line - 1]);
             Error(found.Count == 0
                 ? Lang.F("No heading {0} in {1} (or +12, top, bottom)", name, Path.GetFileName(path))
-                : Lang.F("{0} headings are named {1}: give the line (+12)", found.Count, name));
+                : fitted
+                    ? Lang.F("{0} headings fit {1}: give more of the name, or the line (+12)", found.Count, name)
+                    : Lang.F("{0} headings are named {1}: give the line (+12)", found.Count, name));
             return null;
         }
 

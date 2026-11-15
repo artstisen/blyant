@@ -4051,6 +4051,8 @@ en: "The place is in the lines moved: {0}"
 es: "El lugar está en las líneas movidas: {0}"
 en: "No heading {0} in {1} (or +12, top, bottom)"
 es: "No hay título {0} en {1} (o +12, top, bottom)"
+en: "{0} headings fit {1}: give more of the name, or the line (+12)"
+es: "{0} títulos encajan con {1}: indica más del nombre, o la línea (+12)"
 en: "{0} headings are named {1}: give the line (+12)"
 es: "{0} títulos se llaman {1}: indica la línea (+12)"
 

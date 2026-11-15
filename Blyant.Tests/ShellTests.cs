@@ -3910,4 +3910,83 @@ public class ShellTests : IDisposable
         FileFavorites.Load();
         Assert.Equal(In("work", "notes.md"), FileFavorites.Items[0].Path);
     }
+
+    // ---- Headings by their start or a pattern; Tab with a row or $file
+
+    [Fact]
+    public void Shift_AHeading_ByItsStart_OrAPattern_TheWholeNameFirst()
+    {
+        const string todo = "item\n##### Done herunder\n## Done\n## What?\n";
+        foreach (var (place, expected) in new[]
+                 {
+                     // The whole name first: "Done" is a heading, not the start of "Done herunder"
+                     ("Done", "##### Done herunder\n## Done\nitem\n## What?\n"),
+                     ("\"Done her\"", "##### Done herunder\nitem\n## Done\n## What?\n"),
+                     ("\"*herunder\"", "##### Done herunder\nitem\n## Done\n## What?\n"),
+                     // A heading with "?" in it: by its whole name
+                     ("\"What?\"", "##### Done herunder\n## Done\n## What?\nitem\n"),
+                 })
+        {
+            File.WriteAllText(In("work", "t.md"), todo);
+            var (_, errors, _, _) = Run("shift t.md 1 " + place + "\n");
+            Assert.Equal(string.Empty, errors);
+            Assert.Equal(expected, Text("t.md"));
+        }
+
+        // The start of one heading only, in the command of the report: "shift! $file +35 Done"
+        File.WriteAllText(In("work", "u.md"), "- [ ] Buy pencils\n##### Done herunder\n");
+        var (_, more, _, _) = Run("peek u.md\nshift! $file +1 Done\n");
+        Assert.Equal(string.Empty, more);
+        Assert.Equal("##### Done herunder\n- [x] Buy pencils\n", Text("u.md"));
+    }
+
+    [Fact]
+    public void Shift_AStartOrPatternMoreHeadingsFit_IsTold_AndNothingMoves()
+    {
+        File.WriteAllText(In("work", "t.md"), "item\n## Chapter 1\n## Chapter 2\n## Notes\n");
+        var (output, errors, _, _) = Run("shift t.md 1 Chap\nshift t.md 1 Ch*\nshift t.md 1 Nothing\n");
+        Assert.Contains(Lang.F("{0} headings fit {1}: give more of the name, or the line (+12)", 2, "Chap"), errors);
+        Assert.Contains(Lang.F("{0} headings fit {1}: give more of the name, or the line (+12)", 2, "Ch*"), errors);
+        Assert.Contains(Lang.F("No heading {0} in {1} (or +12, top, bottom)", "Nothing", "t.md"), errors);
+        Assert.Contains("  2  ## Chapter 1\n  3  ## Chapter 2\n", output);
+        Assert.Equal("item\n## Chapter 1\n## Chapter 2\n## Notes\n", Text("t.md"));
+        // The end of a section, by a pattern
+        (_, errors, _, _) = Run("shift t.md 1 \"*2+\"\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("## Chapter 1\n## Chapter 2\nitem\n## Notes\n", Text("t.md"));
+    }
+
+    [Fact]
+    public void Lines_ToAHeading_ByItsStart()
+    {
+        File.WriteAllText(In("work", "a.md"), "one\n");
+        File.WriteAllText(In("work", "b.md"), "# B\n\n## Done herunder\n");
+        var (_, errors, _, _) = Run("lines a.md 1 > b.md Done\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("# B\n\n## Done herunder\none\n", Text("b.md"));
+    }
+
+    [Fact]
+    public void Tab_TheHeadingsOfARowOrOfFile_AlsoFromAPattern()
+    {
+        File.WriteAllText(In("work", "t.md"), "x\n## Done herunder\n## Chapter 1\n");
+        var session = Run("peek t.md\n").Session;
+        var completion = new ShellCompletion(() => In("work"), typed => Path.GetFullPath(typed, In("work")))
+        {
+            FileOf = session.CompletionFile
+        };
+        Assert.Equal("shift 1 1 \"Done herunder\"", Tab(completion, "shift 1 1 Do"));
+        completion = new ShellCompletion(() => In("work"), typed => Path.GetFullPath(typed, In("work")))
+        {
+            FileOf = session.CompletionFile
+        };
+        Assert.Equal("shift $file 1 \"Done herunder\"", Tab(completion, "shift $file 1 *herunder"));
+        completion = new ShellCompletion(() => In("work"), typed => Path.GetFullPath(typed, In("work")))
+        {
+            FileOf = session.CompletionFile
+        };
+        Assert.Equal("lines plot.md 1 > $file \"Chapter 1\"", Tab(completion, "lines plot.md 1 > $file Ch"));
+        Assert.Equal(In("work", "t.md"), session.CompletionFile("1"));
+        Assert.Equal(In("work", "t.md"), session.CompletionFile("$file"));
+    }
 }

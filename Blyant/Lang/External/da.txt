@@ -4051,6 +4051,8 @@ en: "The place is in the lines moved: {0}"
 da: "Stedet er i de flyttede linjer: {0}"
 en: "No heading {0} in {1} (or +12, top, bottom)"
 da: "Ingen overskrift {0} i {1} (eller +12, top, bottom)"
+en: "{0} headings fit {1}: give more of the name, or the line (+12)"
+da: "{0} overskrifter passer til {1}: angiv mere af navnet, eller linjen (+12)"
 en: "{0} headings are named {1}: give the line (+12)"
 da: "{0} overskrifter hedder {1}: angiv linjen (+12)"
 

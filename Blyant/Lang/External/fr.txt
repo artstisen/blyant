@@ -4051,6 +4051,8 @@ en: "The place is in the lines moved: {0}"
 fr: "L'endroit est dans les lignes déplacées : {0}"
 en: "No heading {0} in {1} (or +12, top, bottom)"
 fr: "Aucun titre {0} dans {1} (ou +12, top, bottom)"
+en: "{0} headings fit {1}: give more of the name, or the line (+12)"
+fr: "{0} titres correspondent à {1} : donnez plus du nom, ou la ligne (+12)"
 en: "{0} headings are named {1}: give the line (+12)"
 fr: "{0} titres s'appellent {1} : indiquez la ligne (+12)"
 

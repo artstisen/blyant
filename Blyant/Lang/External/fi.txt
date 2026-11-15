@@ -4051,6 +4051,8 @@ en: "The place is in the lines moved: {0}"
 fi: "Paikka on siirrettävien rivien joukossa: {0}"
 en: "No heading {0} in {1} (or +12, top, bottom)"
 fi: "Ei otsikkoa {0} tiedostossa {1} (tai +12, top, bottom)"
+en: "{0} headings fit {1}: give more of the name, or the line (+12)"
+fi: "{0} otsikkoa sopii {1}: anna enemmän nimestä tai rivi (+12)"
 en: "{0} headings are named {1}: give the line (+12)"
 fi: "{0} otsikkoa on nimeltään {1}: anna rivi (+12)"
 

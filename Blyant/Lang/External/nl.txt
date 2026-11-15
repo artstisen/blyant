@@ -4051,6 +4051,8 @@ en: "The place is in the lines moved: {0}"
 nl: "De plek ligt in de verplaatste regels: {0}"
 en: "No heading {0} in {1} (or +12, top, bottom)"
 nl: "Geen kop {0} in {1} (of +12, top, bottom)"
+en: "{0} headings fit {1}: give more of the name, or the line (+12)"
+nl: "{0} koppen passen bij {1}: geef meer van de naam, of de regel (+12)"
 en: "{0} headings are named {1}: give the line (+12)"
 nl: "{0} koppen heten {1}: geef de regel (+12)"
 
