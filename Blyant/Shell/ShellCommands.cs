@@ -54,6 +54,7 @@ internal sealed partial class ShellSession
         ("reset", Lang.T("Reset all settings to the defaults (asks first)")),
         ("reload", Lang.T("Read the settings file and the registers again, after editing them")),
         ("clip [path|name] file|dir|n|.", Lang.T("Copy a path, or a name, to the clipboard")),
+        ("path [file|n], name [file|n]", Lang.T("Copy the path, or name, of $file (or of a file)")),
         ("clip text file|n", Lang.T("Copy the text of a file to the clipboard")),
         ("clip lines file|n lines", Lang.T("Copy lines of a file (4, 4-6, 4,7, +100 20)")),
         ("clip $name", Lang.T("Copy the value of a register to the clipboard")),
@@ -486,6 +487,11 @@ internal sealed partial class ShellSession
                 break;
             case "clip":
                 Clip(argument);
+                break;
+            // As :path and :name in the editor: of $file, or of a file or row given
+            case "path":
+            case "name":
+                ClipPathOrName(name, argument);
                 break;
             case "bookmarks":
             case "book":
@@ -1000,6 +1006,8 @@ internal sealed partial class ShellSession
                 "q" or "quit" => "exit",
                 "del" => "delete",
                 "cls" => "clear",
+                // (one row tells both)
+                "name" => "path",
                 "+" or "++" or "-" or "--" or "." or "/" or "?" or "$peek" => "peek",
                 _ when name.Length > 1 && name[0] == '/' => "peek",
                 "$clip" => "clip",

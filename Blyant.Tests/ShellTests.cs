@@ -4472,4 +4472,31 @@ public class ShellTests : IDisposable
         Assert.Equal(string.Empty, errors);
         Assert.Contains("Tidying in " + In("work") + "\n", output);
     }
+
+    // ---- path and name (as :path and :name in the editor)
+
+    [Fact]
+    public void PathAndName_CopyThoseOfFile_OrOfAFileOrRowGiven()
+    {
+        File.WriteAllText(In("work", "a.md"), "x\n");
+        var sent = Clipboard();
+        var (output, errors, _, _) = Run("peek a.md\npath\nname\nfind Ending\npath 1\nname plot.md\n", clipboard: true);
+        Assert.Equal(string.Empty, errors);
+        // Row 1 of find: Ending.md
+        Assert.Equal(new[] { In("work", "a.md"), "a.md", In("work", "Ending.md"), "plot.md" }, sent);
+        Assert.Contains(DialogText.CopiedToClipboardAndMemory, output);
+        Assert.Equal("plot.md", ShellRegisters.Clip);
+        Assert.Equal("path", EventLog.CommandName("path"));
+    }
+
+    [Fact]
+    public void PathAndName_BeforeAnyFile_AreTold_AndTabCompletesAFile()
+    {
+        var (_, errors, _, _) = Run("path\nname a.md b.md\n", clipboard: true);
+        Assert.Contains(Lang.T("No file yet: open, peek, insert, new ... give $file"), errors);
+        Assert.Contains(Lang.F("Give one file or directory: clip {0} 3", "name"), errors);
+        Assert.Equal("path plot.md", Tab(Completion(), "path plo"));
+        Assert.Equal("name plot.md", Tab(Completion(), "name plo"));
+        Assert.Contains("path [file|n], name [file|n]", Run("help name\n").Output);
+    }
 }

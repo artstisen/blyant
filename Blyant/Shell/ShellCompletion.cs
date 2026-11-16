@@ -158,6 +158,8 @@ internal sealed class ShellCompletion
                     1 => (Kind.Words, PeekPlaces),
                     _ => (Kind.None, none)
                 };
+            case "path":
+            case "name":
             case "info":
             case "delete":
             case "del":

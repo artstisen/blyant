@@ -1,6 +1,7 @@
 # Changes
 
 ## v1.5.4
+- **`path` and `name` in the shell**: as `:path` and `:name` in the editor, `path` copies the full path of the file you worked on last (`$file`), and `name` its name, to the clipboard (and/or the paste bin, as set), the string memory of the editor and `$clip`. With a file or a row they copy those of it: `path 3`, `name plot.md`. `Tab` completes the file. See [Clipboard](Guide-to-shell.md#clipboard).
 - **`echo` in the shell**: `echo $file` writes the value of a register or a name set by Blyant, and `echo $docs has $date` a line of your own with the values put in (a value of several lines with all its lines, `$$` a `$`), to check a value, or the line a command will get, on the fly. A `$name` that is no register is told. It changes nothing (not the last list, not `$file`), and in a `run` it writes a line between the steps. See [Registers](Guide-to-shell.md#registers).
 
 ## v1.5.3 (2026-11-15)

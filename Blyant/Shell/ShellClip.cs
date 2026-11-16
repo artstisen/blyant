@@ -37,6 +37,34 @@ internal sealed partial class ShellSession
             if (!ClipText(kind, words, out text, out shown)) return;
         }
 
+        CopyClip(kind, text, shown);
+    }
+
+    // "path", "name" (as :path and :name in the editor): the full path, or the name, of the file worked on last ($file)
+    // copied; "path 3", "name plot.md": of that file or directory, as "clip path 3" and "clip name 3"
+    private void ClipPathOrName(string kind, string argument)
+    {
+        var words = Words(argument);
+        if (words.Count == 0)
+        {
+            if (_file == null)
+            {
+                Error(Lang.T("No file yet: open, peek, insert, new ... give $file"));
+                return;
+            }
+
+            // (the path as a word of its own: a name with a quote in it is still one word)
+            words.Add(_file);
+        }
+
+        if (!ClipText(kind, words, out var text, out var shown)) return;
+        CopyClip(kind, text, shown);
+    }
+
+    // A text copied: to $clip, the clipboard (through the terminal, and/or the paste bin, as set) and the string memory
+    // of the editor, and told
+    private void CopyClip(string kind, string text, string shown)
+    {
         if (text.Length == 0)
         {
             Error(Lang.T("Nothing to copy: it is empty"));

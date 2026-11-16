@@ -120,6 +120,7 @@ To have every output whole (with a screen reader, say), turn the pages off: `set
 | `clip text file\|n` | Copy the text of a file to the clipboard |
 | `clip lines file\|n lines` | Copy lines of a file to the clipboard, given as for `lines` (`40`, `4-6`, `4,7,9-10`, `+100 30`, a text in the line). See [Line numbers](#line-numbers) |
 | `clip $name` | Copy the value of a register to the clipboard |
+| `path [file\|n]`, `name [file\|n]` | Copy the full path, or the name, of the file you worked on last (`$file`), as `:path` and `:name` do in the editor; of a file or row given: `path 3`, `name plot.md`. See [Clipboard](#clipboard) |
 | `$clip` | The text `clip` copied last, put in a command as a register is (`insert plan.md bottom $clip`: its lines) |
 | `favorites [-l] [list]` (`fav`) | List the favorites of the file browser by name, with their folders as headings (`-l`: the full paths); `fav work` uses the list _work_ from now on, as `:list work` does, and `fav main` the main list again. The open list is told first (`List: main`) |
 | `favorites lists` | List the lists of favorites, `*` at the one that is open |
@@ -681,7 +682,11 @@ clip .                      the directory you are in
 clip text todo.md           the whole text of a file
 clip lines notes.md +40 10  10 lines from line 40 (as lines takes them: 40, 4-6, 4,7, +40 10)
 clip $note                  the value of a register, as it is
+path                        the full path of the file you worked on last ($file), as :path in the editor
+name                        its name, as :name
 ```
+
+`path` and `name` are short for `clip path $file` and `clip name $file`: after `peek`, `open`, `insert` or `new`, the file you work on. With a file or a row they are `clip path` and `clip name` of it (`path 3`, `name plot.md`). Before any file, `path` alone tells that there is none yet.
 
 What `clip` copied last is `$clip`, which puts it in a command, as a register does:
 
