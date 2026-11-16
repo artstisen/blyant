@@ -133,8 +133,8 @@ internal sealed partial class ShellSession
             {
                 "start" or "end" => Lang.T("Nothing changed: the lines are blank"),
                 "sort" => Lang.T("Nothing changed: the lines are in that order already"),
-                "upper" => Lang.T("Nothing changed: the lines are uppercase already"),
-                "lower" => Lang.T("Nothing changed: the lines are lowercase already"),
+                "upper" => Lang.T("Nothing changed: no lowercase letters in the lines"),
+                "lower" => Lang.T("Nothing changed: no uppercase letters in the lines"),
                 "unstart" => Lang.F("Nothing changed: no line starts with {0}", text),
                 "unend" => Lang.F("Nothing changed: no line ends with {0}", text),
                 _ => Lang.F("Nothing changed: no line has {0} in it", text)

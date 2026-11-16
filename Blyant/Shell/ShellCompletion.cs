@@ -169,6 +169,7 @@ internal sealed class ShellCompletion
             case "trim":
             case "trim!":
             case "change":
+                return (position == 0 ? Kind.Path : Kind.None, none);
             case "rename":
                 // The new name: the name it has now, to change ("rename file1.md " and Tab: "file1.md")
                 if (position == 1) return (Kind.QuotedWords, NameOf(_words[0]));
@@ -198,9 +199,10 @@ internal sealed class ShellCompletion
                 // After the lines (or "+10 5"): ">" for a copy, or what is done to the text in them
                 if (arrow < 0)
                 {
-                    // ("sort -a", "sort -d")
-                    var sort = after.ToList().IndexOf("sort");
-                    if (sort >= 2 && position == sort + 1) return (Kind.Words, new[] { "-a", "-d" });
+                    // ("sort -a", "sort -d": after "sort" as the word of what is done, not in a text)
+                    var edit = ShellSession.LinesForm(after).Edit;
+                    if (edit >= 0 && after[edit] == "sort" && position == edit + 1)
+                        return (Kind.Words, new[] { "-a", "-d" });
                     var what = position == 2 || (position == 3 && after[1].StartsWith('+'));
                     return (what ? Kind.Words : Kind.None,
                         new[] { ">", "start", "end", "unstart", "unend", "replace", "sort", "upper", "lower" });

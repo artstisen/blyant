@@ -141,7 +141,7 @@ To get all output at once (with a screen reader, say), turn the pages off: `set 
 | `favorites undo` | Put back what `fav remove` removed last |
 | `history [-l] [-s] [-f] [-n]` (`hist`) | List the files opened, by name, newest first, with when they were opened. The options are those of `recent` |
 | `history [-l] filter text` | Show the files opened with a text in their path (`hist filter chapter`), or whose name fits a pattern (`hist filter *.typ`), numbered as in the whole history, so `open 7` is row 7 of `hist`. The options of `recent` go before `filter` (`hist -n -f filter chapter`) |
-| `recent [-l] [-s] [-f] [-n]` | List the latest files (the first nine of the history), by name. `-l` shows the full paths, `-s` the size of each file (`-` for a file that is gone), `-f` the folder and the name (`Book/chapter-3.md`), and `-n` sorts the rows by name, A to Z, numbered as shown, so `open 3` opens row 3. The options go in any order: `recent -n -f -s` |
+| `recent [-l] [-s] [-f] [-n]` | List the latest files (the first nine of the history), by name. `-l` shows the full paths, `-s` the size of each file (`-` for a file that is gone), `-f` the folder and the name (`Book/chapter-3.md`; two rows alike get the folder above it: `Book/a.md (novel)`), and `-n` sorts the rows by name, A to Z, numbered as shown, so `open 3` opens row 3. The options go in any order: `recent -n -f -s` |
 | `hotlist` (`hot`) | List the directory hotlist |
 | `hotlist filter text` | Show the directories of the hotlist with a text in their name or path (`hot filter novel`), or that match a pattern, numbered as in the whole hotlist |
 | `fav add file\|n [where]` | Add a file or directory to the favorites in use: at the top of the list (row 1, outside the folders), or at the place given: `top`, `bottom`, the place of a row (`5`) or into a `[folder]` (`fav add notes.md [Drafts]`) |
@@ -690,10 +690,11 @@ blyant ~/novel> calc $calc / 12
 
 - The signs are `+`, `-`, `*`, `/`, `%` (the remainder: `17 % 5` is `2`) and `^` (a power: `2 ^ 10` is `1024`), with parentheses: `(2 + 3) * 4`. `*`, `/` and `%` are calculated before `+` and `-`, and `^` before them all (`-2 ^ 2` is `-4`). Blanks do not matter: `calc 2+3*4` is `14`
 - A number takes `.` or `,` as the decimal point (`1.5` or `1,5`; there are no thousands separators). The result is written with `.`, the same on every computer, and with at most 10 decimals: `10 / 3` is `3.3333333333`, `10 / 4` is `2.5`
-- The calculation is exact for decimals: `0.1 + 0.2` is `0.3`. Only a power that is not a whole number (`2 ^ 0.5`) is as near as it comes
-- `$calc` and the registers can be used in a calculation: `calc $calc * 2`, `calc $price * 3`
+- The calculation is exact for decimals: `0.1 + 0.2` is `0.3`. Only a power that is not a whole number (or a whole number above a billion) (`2 ^ 0.5`) is as near as it comes
+- `$calc` and the registers can be used in a calculation: `calc $calc * 2`, `calc $price * 3`. Each is put in as one number, in parentheses: with `$calc` at `-3`, `calc $calc ^ 2` is `9`, and a register holding `1 + 2` counts as `3`
 - `calc` alone shows `$calc`. It is kept while Blyant runs, as `$clip`, and is not a register: `reg` lists it with the names set by Blyant, but cannot set it or take it away
-- What cannot be calculated is told, with the place: `Not understood: 12x (position 3)`, `Division by zero`, `A ) is missing`. `$calc` then stays as it was
+- At most 200 parentheses or signs can be inside each other (`((1))`, `--1`)
+- What cannot be calculated is told, with the place (counted in the calculation after the `$names` are put in): `Not understood: 12x (position 3)`, `Division by zero`, `A ) is missing`. `$calc` then stays as it was
 
 ## Clipboard
 `clip` copies to the clipboard what you would otherwise select and copy by hand:

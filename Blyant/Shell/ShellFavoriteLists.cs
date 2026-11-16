@@ -64,8 +64,8 @@ internal sealed partial class ShellSession
         }
     }
 
-    // "filter text" after "fav", "hist", "hot" or "again" (with "-l" before it: the full paths, for "fav" and
-    // "hist"): the text (without the quotes it can be written in), or null when it is not a filter
+    // "filter text" after "fav", "hot" or "again" (with "-l" before it: the full paths, for "fav"; "hist" reads its
+    // options itself): the text (without the quotes it can be written in), or null when it is not a filter
     private static (string Text, bool Full)? FilterOf(string argument)
     {
         var text = argument.Trim();

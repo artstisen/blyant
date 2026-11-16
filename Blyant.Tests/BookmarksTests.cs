@@ -389,4 +389,16 @@ public class BookmarksTests : IDisposable
         Bookmarks.Load();
         Assert.Equal(2, Bookmarks.Places.Count);
     }
+
+    [Fact]
+    public void Bookmarks_MovedIntoAFolder_GoToTheTopOfIt()
+    {
+        foreach (var name in new[] { "a", "b", "c" }) Bookmarks.Add(FileAt(name));
+        Assert.Equal(0, Bookmarks.AddFolder("Work", 0));
+        Bookmarks.MoveToFolder(Bookmarks.Places.Where(entry => entry.Shown == "b").ToList(), Bookmarks.Items[0]);
+        Bookmarks.MoveToFolder(Bookmarks.Places.Where(entry => entry.Shown == "c").ToList(), Bookmarks.Items[0]);
+        // c moved last: first in the folder
+        Assert.Equal(new[] { "c", "b" }, Bookmarks.Items.Skip(1).Take(2).Select(entry => entry.Shown));
+        Assert.All(Bookmarks.Items.Skip(1).Take(2), entry => Assert.Equal(1, entry.Level));
+    }
 }

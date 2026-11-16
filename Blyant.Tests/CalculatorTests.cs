@@ -35,6 +35,13 @@ public class CalculatorTests
     [InlineData("10 - 2 - 3", "5")]
     [InlineData("100 / 10 / 2", "5")]
     [InlineData("0.00000000001", "0")]
+    [InlineData("0.5 ^ -90", "1237940039285380274899124224")]
+    [InlineData("2 ^ -100", "0")]
+    [InlineData("10 ^ -30", "0")]
+    [InlineData("1 / 3 * 3", "1")]
+    [InlineData("(-1) ^ 1000001", "-1")]
+    [InlineData("1 ^ 99999999999", "1")]
+    [InlineData("0.1234567890123456789012345678901234567890", "0.123456789")]
     public void Calculate_GivesTheResult(string expression, string result)
     {
         Assert.Equal((result, (string?)null), Calculator.Calculate(expression));
@@ -55,6 +62,10 @@ public class CalculatorTests
         Assert.Equal(Lang.F("Not understood: {0} (position {1})", "*", 5), Calculator.Calculate("2 + * 3").Error);
         Assert.Equal(Lang.F("Not understood: {0} (position {1})", "(1", 4), Calculator.Calculate("(2)(1)").Error);
         Assert.Equal(Lang.T("The number is too large"), Calculator.Calculate("10 ^ 40").Error);
+        Assert.Equal(Lang.T("The number is too large"), Calculator.Calculate("0.5 ^ -100").Error);
+        Assert.Equal(Lang.T("The number is too large"), Calculator.Calculate("10 ^ 30.5").Error);
+        Assert.Equal(Lang.T("Division by zero"), Calculator.Calculate("0 ^ -0.5").Error);
+        Assert.Equal(Lang.T("The number is too large"), Calculator.Calculate(new string('9', 40)).Error);
         Assert.Equal(Lang.T("The number is too large"), Calculator.Calculate("79228162514264337593543950335 + 1").Error);
         Assert.Equal(Lang.T("No result: a negative number to a power that is not whole"),
             Calculator.Calculate("(-8) ^ 0.5").Error);
@@ -69,5 +80,18 @@ public class CalculatorTests
         Assert.Equal("0.1234567891", Calculator.Format(0.12345678905m));
         Assert.Equal("-1.5", Calculator.Format(-1.5m));
         Assert.Equal("1000000", Calculator.Format(1000000m));
+    }
+
+    [Fact]
+    public void Calculate_TellsTooManyParenthesesOrSigns_InsteadOfRunningOutOfStack()
+    {
+        var tooDeep = Lang.F("Too many parentheses or signs inside each other (at most {0})", Calculator.MaxDepth);
+        Assert.Equal(tooDeep, Calculator.Calculate(new string('(', 100000) + "1" + new string(')', 100000)).Error);
+        Assert.Equal(tooDeep, Calculator.Calculate(new string('-', 100000) + "1").Error);
+        Assert.Equal(tooDeep, Calculator.Calculate(string.Join(" ^ ", Enumerable.Repeat("1", 100000))).Error);
+        // Many after each other are not inside each other
+        Assert.Equal("1000", Calculator.Calculate(string.Join(" + ", Enumerable.Repeat("(1)", 1000))).Result);
+        // Up to the limit: calculated
+        Assert.Equal("1", Calculator.Calculate(new string('(', 150) + "1" + new string(')', 150)).Result);
     }
 }

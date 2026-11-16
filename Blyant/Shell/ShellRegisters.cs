@@ -110,6 +110,24 @@ internal static partial class ShellRegisters
     private static partial Regex NamePattern();
 
     /// <summary>
+    /// A line with each $name that has a value put in parentheses, for "calc": "$calc ^ 2" with $calc -3 is
+    /// "($calc) ^ 2", so 9 and not -9, and a register "1 + 2" is one number in "$x * 2". "$$" and a $name without a
+    /// value stay as typed
+    /// </summary>
+    internal static string Parenthesized(string line) => DollarsOrName().Replace(line, match =>
+        match.Groups[1].Success && Get(match.Groups[1].Value) != null ? "(" + match.Value + ")" : match.Value);
+
+    [GeneratedRegex(@"\$\$|\$([A-Za-z][A-Za-z0-9_]*)")]
+    private static partial Regex DollarsOrName();
+
+    /// <summary>
+    /// The names set by Blyant that a line of the file has as the name of a register (a register "calc" kept before
+    /// $calc came): told by "reg", as such a line is not a register any more
+    /// </summary>
+    internal static IEnumerable<string> ReservedInFile => Kept.Select(line => line.Split('\t', 2)[0].Trim())
+        .Where(name => name.Length > 0 && IsReserved(name)).Select(name => name.ToLowerInvariant()).Distinct();
+
+    /// <summary>
     /// True for a name a register can have ("docs", "draft_2"; not "2", "my docs")
     /// </summary>
     internal static bool IsName(string name) => NamePattern().IsMatch(name);

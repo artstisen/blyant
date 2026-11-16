@@ -376,8 +376,8 @@ internal sealed partial class ShellSession
     {
         if (full) return entries.Select(entry => Shown(entry.Path, entry.IsDirectory)).ToList();
         if (marked) FileFavorites.Load();
-        // "withFolder": the folder before the name ("Book/chapter-3.md"; "recent -f"), so a name two rows have is
-        // told apart already
+        // "withFolder": the folder before the name ("Book/chapter-3.md"; "recent -f"); two rows alike then get the
+        // folder above that after them ("Book/a.md (novel)")
         var names = entries.Select(entry => withFolder ? FolderAndName(entry.Path) : NameOf(entry.Path)).ToList();
         // (names the file system tells apart are not alike: "Plot.md" and "plot.md" on Linux)
         var twice = names.GroupBy(name => name, FileOperations.NameComparer).Where(group => group.Count() > 1)
@@ -387,7 +387,11 @@ internal sealed partial class ShellSession
             var there = entry.IsDirectory ? System.IO.Directory.Exists(entry.Path) : FileOperations.IsFileThere(entry.Path);
             var shown = names[i] + (entry.IsDirectory ? "/" : string.Empty);
             var parent = Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(entry.Path));
-            if (!withFolder && twice.Contains(names[i]) && parent != null) shown += " (" + NameOf(parent) + ")";
+            if (twice.Contains(names[i]) && parent != null)
+            {
+                var told = withFolder ? Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(parent)) ?? parent : parent;
+                shown += " (" + NameOf(told) + ")";
+            }
             if (marked) shown += FavoriteMark(entry.Path);
             return shown + (there ? string.Empty : " " + DialogText.FavoriteMissing);
         }).ToList();
@@ -420,7 +424,7 @@ internal sealed partial class ShellSession
     private static string Padded(string text, int width) =>
         text + new string(' ', Math.Max(0, width - TextMetrics.WidthOf(text)));
 
-    // "hist", "recent", "book": only "-l" can follow (true: given). Null (and told) for another word
+    // "book": only "-l" can follow (true: given). Null (and told) for another word
     private bool? OnlyLong(string argument)
     {
         var (full, others) = LongList(argument);
@@ -450,7 +454,7 @@ internal sealed partial class ShellSession
     {
         try
         {
-            if (FileOperations.IsFileThere(path)) return FileSizeFormatter.FormatSize(new FileInfo(path).Length);
+            if (FileOperations.IsFileThere(path)) return FileSizeFormatter.FormatSize(FileOperations.FileLength(path));
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or NotSupportedException)
         {

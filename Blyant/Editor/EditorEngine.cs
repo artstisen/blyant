@@ -1983,10 +1983,6 @@ internal sealed partial class EditorEngine
     }
 
     /// <summary>
-    /// ":sort": sort lines (by the value of their characters; "i": not telling upper and lower case apart).
-    /// ":sort!" sorts them the other way. One step to undo
-    /// </summary>
-    /// <summary>
     /// Lines sorted as :sort sorts them (by the value of their characters; "ignoreCase": upper and lower case alike),
     /// or the other way ("reverse"). Also "lines ... sort" in the shell
     /// </summary>
@@ -1998,6 +1994,10 @@ internal sealed partial class EditorEngine
         return sorted;
     }
 
+    /// <summary>
+    /// ":sort": sort lines (by the value of their characters; "i": not telling upper and lower case apart).
+    /// ":sort!" sorts them the other way. One step to undo
+    /// </summary>
     private void SortLines(int first, int last, bool reverse, bool ignoreCase)
     {
         if (SingleLine || last <= first) return;

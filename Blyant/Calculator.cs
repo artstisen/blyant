@@ -17,6 +17,15 @@ internal static class Calculator
     internal const int MaxDecimals = 10;
 
     /// <summary>
+    /// The most parentheses and signs inside each other ("((((1))))", "---1", "2 ^ 2 ^ 2"): more is told, as the
+    /// reader would otherwise run out of stack, which ends Blyant
+    /// </summary>
+    internal const int MaxDepth = 200;
+
+    // A whole exponent up to this is calculated exactly, by multiplying (a larger one by double)
+    private const long MaxWholeExponent = 1_000_000_000;
+
+    /// <summary>
     /// The result of an expression as text ("1642.5"), or the error that stopped it (null when there is a result)
     /// </summary>
     internal static (string? Result, string? Error) Calculate(string expression)
@@ -63,6 +72,7 @@ internal static class Calculator
     private sealed class Reader(string text)
     {
         private int _at;
+        private int _depth;
 
         internal bool AtEnd => _at >= text.Length;
 
@@ -103,11 +113,25 @@ internal static class Calculator
             }
         }
 
+        // (every parenthesis, sign in front and power goes through here: the depth is counted here)
         private decimal Signed()
         {
-            if (Take('-')) return -Signed();
-            if (Take('+')) return Signed();
-            return Power();
+            if (++_depth > MaxDepth)
+            {
+                throw new CalcException(Lang.F("Too many parentheses or signs inside each other (at most {0})",
+                    MaxDepth));
+            }
+
+            try
+            {
+                if (Take('-')) return -Signed();
+                if (Take('+')) return Signed();
+                return Power();
+            }
+            finally
+            {
+                _depth--;
+            }
         }
 
         // (the power before the sign in front: "-2 ^ 2" is -4; from the right: "2 ^ 3 ^ 2" is 2 ^ 9)
@@ -166,13 +190,17 @@ internal static class Calculator
             return Lang.F("Not understood: {0} (position {1})", text[start..end], _at + 1);
         }
 
-        // A power: a whole exponent exactly (by multiplying), another by double (as near as it comes)
+        // A power: a whole exponent exactly (by multiplying), another by double (as near as it comes). 0 to a
+        // negative power is a division by zero
         private static decimal Raise(decimal value, decimal exponent)
         {
-            if (exponent == decimal.Truncate(exponent) && Math.Abs(exponent) <= 10000)
+            if (value == 0 && exponent < 0) throw new DivideByZeroException();
+            if (exponent == decimal.Truncate(exponent) && Math.Abs(exponent) <= MaxWholeExponent)
             {
+                // (a negative exponent as a positive one of 1 / value: 0.5 ^ -90 is 2 ^ 90, exactly; 2 ^ -100 comes
+                // out as 0, not as a power of 2 too large first)
+                var factor = exponent < 0 ? 1m / value : value;
                 var result = 1m;
-                var factor = value;
                 var n = (long)Math.Abs(exponent);
                 while (n > 0)
                 {
@@ -181,7 +209,7 @@ internal static class Calculator
                     if (n > 0) factor *= factor;
                 }
 
-                return exponent < 0 ? 1m / result : result;
+                return result;
             }
 
             var power = Math.Pow((double)value, (double)exponent);

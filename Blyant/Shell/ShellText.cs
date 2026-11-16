@@ -558,6 +558,12 @@ internal sealed partial class ShellSession
             ? Lang.F("(1 line of {0} is not a register: a name, a tab, and the value)", ShellRegisters.FileName)
             : Lang.F("({0} lines of {1} are not registers: a name, a tab, and the value)", ShellRegisters.Skipped,
                 ShellRegisters.FileName));
+        // (a register named as one Blyant sets now, as "calc" from before $calc)
+        foreach (var name in ShellRegisters.ReservedInFile)
+        {
+            Line(Lang.F("(${0} in {1} is set by Blyant now: give that register another name)", name,
+                ShellRegisters.FileName));
+        }
     }
 
     // "reload": the settings file read again, and applied as when Blyant starts (after editing it by hand), and the

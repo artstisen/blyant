@@ -1438,7 +1438,7 @@ internal static partial class FileExplorer
         if (isDirectory) return (DialogText.DirectoryMark, true, true);
         try
         {
-            return (FileSizeFormatter.FormatSize(new FileInfo(favorite.Path).Length), false, true);
+            return (FileSizeFormatter.FormatSize(FileOperations.FileLength(favorite.Path)), false, true);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {

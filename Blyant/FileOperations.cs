@@ -9,6 +9,16 @@
 internal static class FileOperations
 {
     /// <summary>
+    /// The size of a file in bytes; of a link, the size of the file it points to (not of the link itself, which is 0
+    /// on Windows and the length of the path on Linux and macOS)
+    /// </summary>
+    internal static long FileLength(string path)
+    {
+        var info = new FileInfo(path);
+        return info.LinkTarget != null && info.ResolveLinkTarget(true) is FileInfo target ? target.Length : info.Length;
+    }
+
+    /// <summary>
     /// Markdown, the kind of new files from the start
     /// </summary>
     internal const string MarkdownExtension = ".md";

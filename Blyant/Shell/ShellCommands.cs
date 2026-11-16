@@ -49,7 +49,7 @@ internal sealed partial class ShellSession
         ("lines file|n lines start|end text", Lang.T("Put a text at the start or the end of lines")),
         ("lines file lines unstart|unend text", Lang.T("Take a text off the start or the end of lines")),
         ("lines file|n lines replace old new", Lang.T("Replace a text in lines, the rest kept")),
-        ("lines file|n lines sort [-a|-d]", Lang.T("Sort lines: -a A to Z (the default), -d Z to A")),
+        ("lines file|n lines sort [-a|-d]", Lang.T("Sort lines: -a A to Z, capitals first (default), -d Z to A")),
         ("lines file|n lines upper|lower", Lang.T("Make lines UPPERCASE or lowercase")),
         ("format file|n", Lang.T("Format an HTML, CSS or XML file, as :format does")),
         ("trim file|n", Lang.T("Remove blank space at line ends, as :trim does (trim!)")),
@@ -169,6 +169,8 @@ internal sealed partial class ShellSession
         var help = name is "help" or "h";
         // ("lines a.md 4-6 > $notes": the register the lines go to, not its value: kept as the name)
         if (name == "lines") argument = ProtectRegisterTarget(argument);
+        // ("calc $calc ^ 2": each value one number, in parentheses)
+        if (name == "calc") argument = ShellRegisters.Parenthesized(argument);
         // (in a run, "screen" would leave the run for the full screen, and leave the shell at the next exit)
         var problem = _runDepth > 0 && name == "screen"
             ? Lang.T("screen is refused in a run: run it after")
@@ -432,7 +434,7 @@ internal sealed partial class ShellSession
                 Open(argument);
                 break;
             case "resume":
-                if (ResumeArgument(argument) is { } open) Open(open);
+                if (ResumeTarget(argument) is { } target) OpenFile(new Item(target.Path, false), target.Line);
                 break;
             case "favorites":
             case "fav":
@@ -888,7 +890,7 @@ internal sealed partial class ShellSession
         var order = Enumerable.Range(0, entries.Count).ToList();
         if (byName)
         {
-            order = order.OrderBy(i => names[i], StringComparer.CurrentCultureIgnoreCase)
+            order = order.OrderBy(i => names[i], StringComparer.OrdinalIgnoreCase)
                 .ThenBy(i => entries[i].Path, StringComparer.Ordinal).ToList();
         }
 
@@ -1110,6 +1112,7 @@ internal sealed partial class ShellSession
                 "+" or "++" or "-" or "--" or "." or "/" or "?" or "$peek" => "peek",
                 _ when name.Length > 1 && name[0] == '/' => "peek",
                 "$clip" => "clip",
+                "$calc" => "calc",
                 _ when name.StartsWith('!') => "again",
                 _ => name
             };
@@ -1153,8 +1156,12 @@ internal sealed partial class ShellSession
             return;
         }
 
-        var item = Resolve(name, false);
-        if (item == null) return;
+        if (Resolve(name, false) is { } item) OpenFile(item, line);
+    }
+
+    // A file in the editor ("open", "resume"), at a line or the line of the item; a directory: gone to
+    private void OpenFile(Item item, int? line)
+    {
         if (item.IsDirectory)
         {
             ChangeDirectory(item.Path);
@@ -1198,17 +1205,28 @@ internal sealed partial class ShellSession
         var at = line is { } l ? (l, 1) : item.At;
         // (the file opened: $file; a directory went to it above)
         _file = Path.GetFullPath(result.Path);
-        if (EditOnScreen(result.Path, at)) Line(Lang.F("Back from the editor: {0}", result.Path));
+        var stayed = EditOnScreen(result.Path, at);
+        EditorClosed();
+        if (stayed) Line(Lang.F("Back from the editor: {0}", result.Path));
         else Line(Lang.F("Back from the editor: {0} (the place jumped to is not shown here)", result.Path));
     }
 
+    // The last list when the editor of the full screen was closed last: a line in it is from before the editing, and
+    // not where you worked last any more ("resume" then opens where the cursor of the editor was)
+    private List<Item>? _listAtEditor;
+
     /// <summary>
-    /// What "resume" opens, as "open" takes it: $file (kept when the shell is left, so "resume" goes on after a
-    /// restart), at the line given ("resume +120"), else at the line of the last list when that is $file at a line
-    /// (after insert, lines, change, a search of peek), else where the cursor of the editor was in it. Null (and told)
-    /// when there is no $file, it is gone, or more than a line is given
+    /// The editor was closed (open, resume): the line of the last list is from before it
     /// </summary>
-    internal string? ResumeArgument(string argument)
+    internal void EditorClosed() => _listAtEditor = LastList;
+
+    /// <summary>
+    /// What "resume" opens: $file (kept when the shell is left, so "resume" goes on after a restart), at the line
+    /// given ("resume +120"), else at the line of the last list when that is $file at a line made after the editor
+    /// was closed last (insert, lines, change, a search of peek), else (null) where the cursor of the editor was in
+    /// it. Null (and told) when there is no $file, it is gone, or more than a line is given
+    /// </summary>
+    internal (string Path, int? Line)? ResumeTarget(string argument)
     {
         var words = Words(argument);
         if (words.Count > 1 || (words.Count == 1 && !IsLine(words[0])))
@@ -1230,15 +1248,14 @@ internal sealed partial class ShellSession
             return null;
         }
 
-        var line = words.Count == 1 ? words[0] : null;
-        if (line == null && LastList is [{ At: { } at } only] &&
+        if (words.Count == 1) return (_file, int.TryParse(words[0][1..], out var given) ? Math.Max(1, given) : int.MaxValue);
+        if (!ReferenceEquals(LastList, _listAtEditor) && LastList is [{ At: { } at } only] &&
             FileOperations.NameComparer.Equals(Path.GetFullPath(only.Path), _file))
         {
-            line = "+" + at.Line;
+            return (_file, at.Line);
         }
 
-        // (the path as one word, whatever is in it)
-        return "\"" + _file + "\"" + (line == null ? string.Empty : " " + line);
+        return (_file, null);
     }
 
     // "+12": a line to open the file at

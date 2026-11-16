@@ -4764,7 +4764,7 @@ public class ShellTests : IDisposable
         Run("lines t.md 1-4 lower\n");
         Assert.Equal("title one\nsecond line\n\næble og ørn\n", File.ReadAllText(In("work", "t.md")));
         (output, _, _, _) = Run("lines t.md 1-4 lower\n");
-        Assert.Contains(Lang.T("Nothing changed: the lines are lowercase already"), output);
+        Assert.Contains(Lang.T("Nothing changed: no uppercase letters in the lines"), output);
         var (_, wrong, _, _) = Run("lines t.md 1 upper now\nlines t.md 1 sideways\n");
         Assert.Contains(Lang.F("Nothing goes after {0}: lines notes.md 3-20 {0}", "upper"), wrong);
         Assert.Contains(Lang.T("After the lines: > file place, > $name, start, end, unstart, unend, replace, sort, upper or lower"), wrong);
@@ -4861,18 +4861,18 @@ public class ShellTests : IDisposable
         var errors = new StringWriter();
         var session = Session(errors);
         session.Execute("insert chapter-3.md bottom four");
-        var quoted = "\"" + In("work", "chapter-3.md") + "\"";
+        var path = In("work", "chapter-3.md");
         // The line put in last
-        Assert.Equal(quoted + " +4", session.ResumeArgument(string.Empty));
-        Assert.Equal(quoted + " +2", session.ResumeArgument("+2"));
+        Assert.Equal((path, (int?)4), session.ResumeTarget(string.Empty));
+        Assert.Equal((path, (int?)2), session.ResumeTarget("+2"));
         // Another last list: where the cursor of the editor was
         session.Execute("ls");
-        Assert.Equal(quoted, session.ResumeArgument(string.Empty));
+        Assert.Equal((path, (int?)null), session.ResumeTarget(string.Empty));
         // The last list is another file at a line: not that line
         File.WriteAllText(In("work", "other.md"), "a\nb\n");
         session.Execute("peek other.md 2");
         session.Execute("file chapter-3.md");
-        Assert.Equal(quoted, session.ResumeArgument(string.Empty));
+        Assert.Equal((path, (int?)null), session.ResumeTarget(string.Empty));
         Assert.Equal(string.Empty, errors.ToString());
     }
 
@@ -4881,18 +4881,18 @@ public class ShellTests : IDisposable
     {
         var errors = new StringWriter();
         var session = Session(errors);
-        Assert.Null(session.ResumeArgument(string.Empty));
+        Assert.Null(session.ResumeTarget(string.Empty));
         Assert.Contains(Lang.T("No file yet: open, peek, insert, new ... give $file"), errors.ToString());
         File.WriteAllText(In("work", "gone.md"), "x\n");
         session.Execute("peek gone.md");
         File.Delete(In("work", "gone.md"));
-        Assert.Null(session.ResumeArgument(string.Empty));
+        Assert.Null(session.ResumeTarget(string.Empty));
         Assert.Contains(Lang.F("Not found: {0}", In("work", "gone.md")), errors.ToString());
         Assert.False(File.Exists(In("work", "gone.md")));
         File.WriteAllText(In("work", "here.md"), "x\n");
         session.Execute("peek here.md");
-        Assert.Null(session.ResumeArgument("here.md"));
-        Assert.Null(session.ResumeArgument("+2 +3"));
+        Assert.Null(session.ResumeTarget("here.md"));
+        Assert.Null(session.ResumeTarget("+2 +3"));
         Assert.Contains(Lang.T("Give only a line, or nothing: resume +120"), errors.ToString());
     }
 
@@ -4904,5 +4904,155 @@ public class ShellTests : IDisposable
         Assert.Contains(Lang.F("{0} is not opened: the editor needs a terminal", In("work", "a.md")), errors);
         Assert.Contains("resume [+line]", Run("help resume\n").Output);
         Assert.Equal("resume", Tab(Completion(), "resu"));
+    }
+
+    // ---- Review of 1.5.5
+
+    [Fact]
+    public void Tab_AfterAFile_OfChangeDeleteAndTheOthers_OffersNoName_OnlyRenameDoes()
+    {
+        File.WriteAllText(In("work", "t.md"), "x\n");
+        foreach (var command in new[] { "change", "delete", "info", "path", "name", "file", "format", "trim", "trim!", "del" })
+        {
+            Assert.Equal(command + " t.md ", Tab(Completion(), command + " t.md "));
+        }
+
+        Assert.Equal("rename t.md t.md", Tab(Completion(), "rename t.md "));
+    }
+
+    [Fact]
+    public void Tab_OffersTheOrderOfSort_OnlyAfterSortAsTheWordOfWhatIsDone()
+    {
+        File.WriteAllText(In("work", "t.md"), "x\n");
+        Assert.Equal("lines t.md 1-2 sort -a", Tab(Completion(), "lines t.md 1-2 sort "));
+        Assert.Equal("lines t.md 1-2 replace sort ", Tab(Completion(), "lines t.md 1-2 replace sort "));
+        Assert.Equal("lines t.md 1-2 start sort ", Tab(Completion(), "lines t.md 1-2 start sort "));
+    }
+
+    [Fact]
+    public void Calc_PutsANameInParentheses_SoANegativeValueOrAnExpressionIsOneNumber()
+    {
+        var (output, errors, _, _) = Run("calc 1 - 4\ncalc $calc ^ 2\nreg x 1 + 2\ncalc $x * 2\ncalc $$5 + 1\n");
+        Assert.Contains("-3\n9\n", output);
+        Assert.Contains("\n6\n", output);
+        // ("$$" a "$", which is not a number: told, not put in)
+        Assert.Contains(Lang.F("Not understood: {0} (position {1})", "$5", 1), errors);
+        Assert.Equal("6", ShellRegisters.Calc);
+        Assert.Contains("calc expression", Run("help $calc\n").Output);
+    }
+
+    [Fact]
+    public void Reg_TellsARegisterNamedAsANameSetByBlyant()
+    {
+        File.WriteAllText(In("data", ShellRegisters.FileName), "calc\t12\nnotes\tx\n");
+        ShellRegisters.Refresh();
+        var (output, _, _, _) = Run("reg\n");
+        Assert.Contains(Lang.F("(${0} in {1} is set by Blyant now: give that register another name)", "calc",
+            ShellRegisters.FileName), output);
+        Assert.Contains("$notes", output);
+    }
+
+    [Fact]
+    public void Resume_AfterTheEditorWasClosed_OpensWhereTheCursorWas_NotAtAnOldLine()
+    {
+        File.WriteAllText(In("work", "notes.md"), "a\nb\n");
+        var errors = new StringWriter();
+        var session = Session(errors);
+        session.Execute("insert notes.md bottom c");
+        var path = In("work", "notes.md");
+        Assert.Equal((path, (int?)3), session.ResumeTarget(string.Empty));
+        // The editor was closed (open, resume): the line of the insert is from before it
+        session.EditorClosed();
+        Assert.Equal((path, (int?)null), session.ResumeTarget(string.Empty));
+        // A change after it: its line again
+        session.Execute("insert notes.md top z");
+        Assert.Equal((path, (int?)1), session.ResumeTarget(string.Empty));
+        Assert.Equal(string.Empty, errors.ToString());
+    }
+
+    [UnixFact]
+    public void Resume_OfAFileWithAQuoteInItsName_GivesThePathAsItIs()
+    {
+        Directory.CreateDirectory(In("work", "q"));
+        var path = In("work", "q", "say \"hi\".md");
+        File.WriteAllText(path, "x\n");
+        var errors = new StringWriter();
+        var session = Session(errors);
+        // (made $file from a row: the name is not typed)
+        session.Execute("ls q");
+        session.Execute("file 1");
+        Assert.Equal(string.Empty, errors.ToString());
+        Assert.Equal((path, (int?)null), session.ResumeTarget(string.Empty));
+    }
+
+    [Fact]
+    public void LinesUpperAndLower_AreUndoneAndRedone()
+    {
+        File.WriteAllText(In("work", "t.md"), "Title\n");
+        var session = Session(new StringWriter());
+        session.Execute("lines t.md 1 upper");
+        Assert.Equal("TITLE\n", File.ReadAllText(In("work", "t.md")));
+        session.Execute("undo");
+        Assert.Equal("Title\n", File.ReadAllText(In("work", "t.md")));
+        session.Execute("redo");
+        Assert.Equal("TITLE\n", File.ReadAllText(In("work", "t.md")));
+        session.Execute("lines t.md 1 lower");
+        session.Execute("undo");
+        Assert.Equal("TITLE\n", File.ReadAllText(In("work", "t.md")));
+        // A line without letters: nothing to change
+        File.WriteAllText(In("work", "n.md"), "123\n");
+        var (output, _, _, _) = Run("lines n.md 1 upper\n");
+        Assert.Contains(Lang.T("Nothing changed: no lowercase letters in the lines"), output);
+    }
+
+    [Fact]
+    public void Recent_SizesWithFullPaths_AndHistSizesWithAFilter()
+    {
+        ThreeOpened();
+        var (output, errors, _, _) = Run("recent -s -l\nhist -s filter Drafts\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains("  1  " + In("work", "Drafts", "b.md") + "  2026-11-13 11:00  ", output);
+        Assert.Contains(FileSizeFormatter.FormatSize(2048), output);
+        // (hist filter: the row of b.md, numbered as in the whole history, with its size at the end)
+        var row = output.Split('\n').Single(line => line.StartsWith("  1  b.md", StringComparison.Ordinal));
+        Assert.EndsWith(FileSizeFormatter.FormatSize(2), row);
+    }
+
+    [Fact]
+    public void Recent_Folder_TwoRowsAlike_GetTheFolderAboveThat()
+    {
+        Directory.CreateDirectory(In("work", "x", "Book"));
+        Directory.CreateDirectory(In("work", "y", "Book"));
+        File.WriteAllText(In("work", "x", "Book", "a.md"), "x\n");
+        File.WriteAllText(In("work", "y", "Book", "a.md"), "y\n");
+        FileHistory.Add(In("work", "x", "Book", "a.md"), new DateTime(2026, 11, 13, 9, 0, 0));
+        FileHistory.Add(In("work", "y", "Book", "a.md"), new DateTime(2026, 11, 13, 10, 0, 0));
+        FileHistory.Save();
+        var (output, _, _, _) = Run("recent -f\n");
+        Assert.Contains("  1  Book/a.md (y)", output);
+        Assert.Contains("  2  Book/a.md (x)", output);
+    }
+
+    [Fact]
+    public void Names_WithFolder_OfAFileAtTheRoot_IsItsPath()
+    {
+        // (the root of the drive the tests run on: "C:\" on Windows, "/" on Linux and macOS)
+        var root = Path.GetPathRoot(In("work"))!;
+        var path = Path.Combine(root, "notes-blyant-test.md");
+        Assert.Equal(new[] { path + " " + DialogText.FavoriteMissing },
+            ShellSession.Names(new[] { (path, false) }, false, false, withFolder: true));
+        Assert.Equal(new[] { "work/" + "x.md " + DialogText.FavoriteMissing },
+            ShellSession.Names(new[] { (In("work", "x.md"), false) }, false, false, withFolder: true));
+    }
+
+    [UnixFact]
+    public void Recent_Sizes_OfALink_AreTheSizesOfTheFileItPointsTo()
+    {
+        File.WriteAllText(In("work", "target.md"), new string('t', 3000));
+        File.CreateSymbolicLink(In("work", "link.md"), In("work", "target.md"));
+        FileHistory.Add(In("work", "link.md"), new DateTime(2026, 11, 13, 9, 0, 0));
+        FileHistory.Save();
+        var (output, _, _, _) = Run("recent -s\n");
+        Assert.Contains(FileSizeFormatter.FormatSize(3000), output);
     }
 }
