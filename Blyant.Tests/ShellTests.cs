@@ -4705,4 +4705,105 @@ public class ShellTests : IDisposable
         Assert.Equal("hist -n filter", Tab(Completion(), "hist -n f"));
         Assert.Equal("recent -f", Tab(Completion(), "recent -f"));
     }
+
+    // ---- edit, lines sort/upper/lower, fav move into a folder, Tab after rename
+
+    [Fact]
+    public void Edit_IsOpen_ByAnotherName()
+    {
+        var (_, openErrors, _, _) = Run("open nothing.md\n");
+        var (_, editErrors, _, _) = Run("edit nothing.md\n");
+        Assert.NotEqual(string.Empty, editErrors);
+        Assert.Equal(openErrors, editErrors);
+        Assert.Contains("open file|n [+line] (edit)", Run("help edit\n").Output);
+        Assert.Equal("edit plot.md", Tab(Completion(), "edit pl"));
+    }
+
+    [Fact]
+    public void LinesSort_SortsAToZ_OrZToA_AsSortInTheEditor_AndUndoTakesItBack()
+    {
+        File.WriteAllText(In("work", "fruit.md"), "# List\ncherry\napple\nbanana\nEnd\n");
+        var (output, errors, _, _) = Run("lines fruit.md 2-4 sort\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("# List\napple\nbanana\ncherry\nEnd\n", File.ReadAllText(In("work", "fruit.md")));
+        Assert.Contains("  2  apple\n  3  banana\n  4  cherry\n", output);
+        Assert.Contains(Lang.F("{0}: {1} lines sorted", In("work", "fruit.md"), 3), output);
+        Run("lines fruit.md 2-4 sort -d\n");
+        Assert.Equal("# List\ncherry\nbanana\napple\nEnd\n", File.ReadAllText(In("work", "fruit.md")));
+        Run("lines fruit.md 2-4 sort -a\n");
+        Assert.Equal("# List\napple\nbanana\ncherry\nEnd\n", File.ReadAllText(In("work", "fruit.md")));
+        // The order of :sort: by the value of the characters (upper case first)
+        Assert.Equal(new[] { "Date", "apple" }, EditorEngine.SortedLines(new[] { "apple", "Date" }, false, false));
+        (output, _, _, _) = Run("lines fruit.md 2-4 sort\n");
+        Assert.Contains(Lang.T("Nothing changed: the lines are in that order already"), output);
+        var (_, wrong, _, _) = Run("lines fruit.md 2-4 sort -x\n");
+        Assert.Contains(Lang.T("After sort: -a (A to Z, the default) or -d (Z to A)"), wrong);
+    }
+
+    [Fact]
+    public void LinesSort_OfLinesApart_PutsThemBackInTheirPlaces_AndUndoTakesItBack()
+    {
+        File.WriteAllText(In("work", "t.md"), "c\nx\nb\ny\na\n");
+        var session = new ShellSession(new StringReader(string.Empty), new StringWriter(), new StringWriter(), In("work"), false);
+        session.Execute("lines t.md 1,3,5 sort");
+        Assert.Equal("a\nx\nb\ny\nc\n", File.ReadAllText(In("work", "t.md")));
+        session.Execute("undo");
+        Assert.Equal("c\nx\nb\ny\na\n", File.ReadAllText(In("work", "t.md")));
+    }
+
+    [Fact]
+    public void LinesUpperAndLower_ChangeTheLetterCase_AndTakeNothingAfterThem()
+    {
+        File.WriteAllText(In("work", "t.md"), "Title one\nsecond Line\n\nÆble og Ørn\n");
+        var (output, errors, _, _) = Run("lines t.md 1-2 upper\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("TITLE ONE\nSECOND LINE\n\nÆble og Ørn\n", File.ReadAllText(In("work", "t.md")));
+        Assert.Contains(Lang.F("{0}: {1} lines changed", In("work", "t.md"), 2), output);
+        Run("lines t.md 1-4 lower\n");
+        Assert.Equal("title one\nsecond line\n\næble og ørn\n", File.ReadAllText(In("work", "t.md")));
+        (output, _, _, _) = Run("lines t.md 1-4 lower\n");
+        Assert.Contains(Lang.T("Nothing changed: the lines are lowercase already"), output);
+        var (_, wrong, _, _) = Run("lines t.md 1 upper now\nlines t.md 1 sideways\n");
+        Assert.Contains(Lang.F("Nothing goes after {0}: lines notes.md 3-20 {0}", "upper"), wrong);
+        Assert.Contains(Lang.T("After the lines: > file place, > $name, start, end, unstart, unend, replace, sort, upper or lower"), wrong);
+    }
+
+    [Fact]
+    public void Tab_AfterLines_OffersSortUpperLower_AndAfterSortTheOrder()
+    {
+        File.WriteAllText(In("work", "t.md"), "x\n");
+        Assert.Equal("lines t.md 1-2 sort", Tab(Completion(), "lines t.md 1-2 so"));
+        Assert.Equal("lines t.md 1-2 upper", Tab(Completion(), "lines t.md 1-2 up"));
+        Assert.Equal("lines t.md 1-2 sort -a", Tab(Completion(), "lines t.md 1-2 sort "));
+        Assert.Equal("lines t.md 1-2 sort -d", Tab(Completion(), "lines t.md 1-2 sort -", true, true));
+    }
+
+    [Fact]
+    public void FavMove_IntoAFolder_PutsTheFavoritesAtTheTopOfIt()
+    {
+        FourFavorites();
+        Run("fav folder F\nfav move 1 [F]\n");
+        Assert.Equal("b.md|c.md|d.md|[F]|.a.md", FavoritesShape());
+        // The next one goes above it, at the top of the folder
+        Run("fav move c.md [F]\n");
+        Assert.Equal("b.md|d.md|[F]|.c.md|.a.md", FavoritesShape());
+        // fav add with a folder too
+        File.WriteAllText(In("work", "e.md"), "x\n");
+        Run("fav add e.md [F]\n");
+        Assert.Equal("b.md|d.md|[F]|.e.md|.c.md|.a.md", FavoritesShape());
+    }
+
+    [Fact]
+    public void Tab_AfterRenameAndAFile_OffersTheNameItHas()
+    {
+        File.WriteAllText(In("work", "chapter-1.md"), "x\n");
+        File.WriteAllText(In("work", "my notes.md"), "x\n");
+        Directory.CreateDirectory(In("work", "drafts"));
+        Assert.Equal("rename chapter-1.md chapter-1.md", Tab(Completion(), "rename chapter-1.md "));
+        Assert.Equal("rename chapter-1.md chapter-1.md", Tab(Completion(), "rename chapter-1.md ch"));
+        Assert.Equal("rename \"my notes.md\" \"my notes.md\"", Tab(Completion(), "rename \"my notes.md\" "));
+        Assert.Equal("rename drafts/ drafts", Tab(Completion(), "rename drafts/ "));
+        // Nothing after the new name
+        Assert.Equal("rename chapter-1.md x.md ", Tab(Completion(), "rename chapter-1.md x.md "));
+    }
 }

@@ -150,8 +150,8 @@ internal sealed class FolderList<T> where T : class, IFolderItem
     }
 
     /// <summary>
-    /// Move items into a folder or subfolder (last in it, in the order they have in the list), or out of their
-    /// folders
+    /// Move items into a folder or subfolder (at the top of it, in the order they have in the list, where they are
+    /// seen at once), or out of their folders
     /// </summary>
     /// <param name="items">The items</param>
     /// <param name="folder">The folder, or null to place them last in the list, outside the folders</param>
@@ -166,7 +166,7 @@ internal sealed class FolderList<T> where T : class, IFolderItem
         if (folder != null)
         {
             var at = Items.IndexOf(folder);
-            index = FolderEnd(at) + 1;
+            index = at + 1;
             // Opened, so that what was moved into it can be seen
             Open(at);
         }

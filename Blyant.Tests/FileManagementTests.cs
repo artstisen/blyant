@@ -666,19 +666,19 @@ public class FileManagementTests : IDisposable
     public void Folders_SeveralFavoritesAreMovedToAFolder()
     {
         FileFavorites.Parse("\t/x/a\n\t/x/b\n\t[F]\tcollapsed\n \t/x/c\n\t/x/d\n\t[G]\n \t/x/e\n");
-        // Last in the folder, in the order they have in the list (the folder opens)
-        Assert.Equal(3, FileFavorites.MoveToFolder(Items("d", "a", "e"), FileFavorites.Items[Find("F")]));
-        Assert.Equal("b [F] .c .a .d .e [G]", Show());
+        // At the top of the folder, in the order they have in the list (the folder opens)
+        Assert.Equal(2, FileFavorites.MoveToFolder(Items("d", "a", "e"), FileFavorites.Items[Find("F")]));
+        Assert.Equal("b [F] .a .d .e .c [G]", Show());
         // Out of the folders: last in the list
         Assert.Equal(5, FileFavorites.MoveToFolder(Items("c", "e"), null));
-        Assert.Equal("b [F] .a .d [G] c e", Show());
+        Assert.Equal("b [F] .a .d [G] e c", Show());
         // Folders are not moved, and a favorite is not a folder to move to
         Assert.Equal(-1, FileFavorites.MoveToFolder(Items("G"), FileFavorites.Items[Find("F")]));
         Assert.Equal(-1, FileFavorites.MoveToFolder(Items("b"), FileFavorites.Items[Find("c")]));
-        Assert.Equal("b [F] .a .d [G] c e", Show());
-        // A favorite that is in the folder already goes last in it
-        FileFavorites.MoveToFolder(Items("a"), FileFavorites.Items[Find("F")]);
-        Assert.Equal("b [F] .d .a [G] c e", Show());
+        Assert.Equal("b [F] .a .d [G] e c", Show());
+        // A favorite that is in the folder already goes to the top of it
+        FileFavorites.MoveToFolder(Items("d"), FileFavorites.Items[Find("F")]);
+        Assert.Equal("b [F] .d .a [G] e c", Show());
     }
 
     [Fact]

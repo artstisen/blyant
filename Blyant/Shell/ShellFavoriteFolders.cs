@@ -219,7 +219,7 @@ internal sealed partial class ShellSession
     // [Drafts] up": favorites (by their rows in "fav": "3", "3-5", "3,7", or by their names, a pattern or a path; see
     // FavoritesNamed) or a folder ("[Drafts]") moved: "top" or "bottom" (of the folder they are in, or of the list),
     // "up" or "down" one step (one favorite or folder, as V with j and k), "out" (out of their folders: favorites
-    // last in the list, a subfolder after its folder), into a folder ("[Drafts]": last in it; a folder goes into a
+    // last in the list, a subfolder after its folder), into a folder ("[Drafts]": at the top of it; a folder goes into a
     // folder at the top as a subfolder), or, for favorites, to the place of a row ("5": in front of it, in its
     // folder)
     private void MoveFavorites(string argument)

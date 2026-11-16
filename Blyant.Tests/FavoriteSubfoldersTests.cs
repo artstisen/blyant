@@ -173,11 +173,11 @@ public class FavoriteSubfoldersTests : IDisposable
         FileFavorites.Parse(Article);
         var pending = FileFavorites.Items[Find("Pending")];
         FileFavorites.MoveToFolder(new[] { FileFavorites.Items[Find("a")], FileFavorites.Items[Find("f")] }, pending);
-        Assert.Equal("[Article] .b .[Done] ..c .[Pending] ..d ..a ..f .e", Show());
+        Assert.Equal("[Article] .b .[Done] ..c .[Pending] ..a ..f ..d .e", Show());
         FileFavorites.MoveToEnd(new[] { FileFavorites.Items[Find("f")] }, true);
-        Assert.Equal("[Article] .b .[Done] ..c .[Pending] ..f ..d ..a .e", Show());
+        Assert.Equal("[Article] .b .[Done] ..c .[Pending] ..f ..a ..d .e", Show());
         FileFavorites.MoveToEnd(new[] { FileFavorites.Items[Find("Done")] }, false);
-        Assert.Equal("[Article] .b .[Pending] ..f ..d ..a .e .[Done] ..c", Show());
+        Assert.Equal("[Article] .b .[Pending] ..f ..a ..d .e .[Done] ..c", Show());
     }
 
     [Fact]

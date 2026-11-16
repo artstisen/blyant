@@ -82,7 +82,7 @@ To get all output at once (with a screen reader, say), turn the pages off: `set 
 | `up` | Go to the directory above (`cd ..`) |
 | `home` | Go to your home directory (as `cd` alone) |
 | `data` | Go to Blyant's [data directory](Guide-to-installation.md#good-to-know), with the settings, lists and log. `cd data` still goes to a directory named _data_ |
-| `open file\|n [+line]` | Edit a file in the full-screen editor, at a line if one is given (`open plot.md +12`). On a directory, go to it |
+| `open file\|n [+line]` (`edit`) | Edit a file in the full-screen editor, at a line if one is given (`open plot.md +12`). On a directory, go to it. `edit` does the same |
 | `peek file\|n [lines]` | Show the lines of a text file, numbered: the first 20, `peek plot.md 40` the first 40, `peek plot.md 100-120` lines 100 to 120, `peek plot.md +100` 20 lines from line 100, and `peek plot.md +100 30` 30 lines from line 100. Read-only. After a peek from a line, `open 1` opens the file at that line. See [Peeking into a file](#peeking-into-a-file) |
 | `peek [file\|n] top\|middle\|bottom\|50%` | Put the window of the last peek (same number of lines) at the top, in the middle, at the end, or at a point in the file (`peek 50%`: from halfway). Without a file: the file peeked last. See [Peeking into a file](#peeking-into-a-file) |
 | `peek +120` | The file peeked last, from line 120, with the same window size (a file named _+120_ is peeked instead, if there is one) |
@@ -93,7 +93,7 @@ To get all output at once (with a screen reader, say), turn the pages off: `set 
 | `find [-l] [name] [-t text]` | Find files here and in the directories below, by name and by text they contain (see [Files](#files)); `find -l` gives the full paths |
 | `new name` | Make a new, empty file here (`new ideas` makes `ideas.md`: without an extension, the kind of new files is used). It is added to the latest files at once, as an opened file is: `recent` lists it, and `Tab` with nothing typed offers it first |
 | `mkdir name` | Make a new directory here |
-| `rename file\|n name` | Give a file or directory a new name. A renamed file is added to the latest files, as with `new` |
+| `rename file\|n name` | Give a file or directory a new name. A renamed file is added to the latest files, as with `new`. `Tab` after the file gives the name it has now, to change: `rename chapter-1.md ` and `Tab` gives `rename chapter-1.md chapter-1.md` |
 | `copy file\|n dir\|n` | Copy a file or directory into a directory (`copy notes.md .`: a copy here, `notes-copy.md`). A copied file is added to the latest files, as with `new` |
 | `move file\|n dir\|n` | Move a file or directory into a directory. A moved file is added to the latest files, as with `new` |
 | `delete file\|n` (`del`) | Delete a file or directory: to the trash, after asking |
@@ -107,6 +107,8 @@ To get all output at once (with a screen reader, say), turn the pages off: `set 
 | `lines file\|n lines start\|end text` | Put a text at the start or the end of lines, keeping the rest (`lines todo.md 4 start Remember this:`). See [Text in lines](#text-in-lines) |
 | `lines file\|n lines unstart\|unend text` | Take a text off the start or the end of the lines that have it |
 | `lines file\|n lines replace old new` | Replace a text in lines, keeping the rest (`lines notes.md 5-9 replace draft final`) |
+| `lines file\|n lines sort [-a\|-d]` | Sort lines A to Z (`-a`, the default) or Z to A (`-d`): `lines notes.md 3-20 sort`. The order is that of `:sort` in the editor, by the value of the characters, so capital letters come before small ones. Lines given apart (`1,5,9`) are sorted among their places |
+| `lines file\|n lines upper\|lower` | Make lines UPPERCASE or lowercase, as `gU` and `gu` in the editor: `lines notes.md 1 upper` |
 | `format file\|n` | Format an HTML, CSS or XML file, as `:format` in the editor does (see [Text and settings](#text-and-settings)) |
 | `trim file\|n` | Remove blank space at the end of lines, as `:trim` in the editor does; `trim!` also removes Markdown line breaks |
 | `set [name [value]]` | Show the settings (`set`), one setting (`set indent`), or change one (`set indent 2`, also `set indent=2` as in the settings file) |
@@ -414,7 +416,7 @@ blyant ~/notes> lines todo.md 3 unstart "- [ ] "
 - `start` and `end` put the text with a blank between it and the line. In quotes it is put as it is: no blank, or the blanks in the quotes (`"- [ ] "`). A blank line is left as it is
 - `unstart` and `unend` take the text off the lines that have it at their start or end, with the blank `start` and `end` put there (in quotes: the text only), so they undo `start` and `end`. The other lines are left as they are
 - `replace old new` replaces the text everywhere in the lines, with the letter case as typed (`draft`, not `Draft`). A text with blanks is written in quotes, and `""` is an empty text: what is replaced is removed
-- After the lines, `Tab` completes `start`, `end`, `unstart`, `unend`, `replace` and `>`. A `>` or one of these words later on is part of the text: `lines notes.md 3 start ">"` makes line 3 a quote
+- After the lines, `Tab` completes `start`, `end`, `unstart`, `unend`, `replace`, `sort`, `upper`, `lower` and `>`, and after `sort` it completes `-a` and `-d`. A `>` or one of these words later on is part of the text: `lines notes.md 3 start ">"` makes line 3 a quote
 - `$name` and `$clip` put in their value: `lines todo.md 4 end $note`
 - The lines changed are shown, and the file is then the last list, at the first of them (`open 1`). When no line changes, nothing is written, and the shell says so. As for `insert`, the file keeps its line endings and byte order mark, only a file in UTF-8 is changed and not the files Blyant uses, and `undo` puts it back; nothing is asked, as no line is lost
 
@@ -575,7 +577,7 @@ A folder is named as `fav` shows it, in brackets: `[Writing]`, and a subfolder w
 fav folder Research                  a folder, last in the list
 fav subfolder [Writing] Drafts       a subfolder, first in Writing
 fav rename [Research] Sources        a folder renamed
-fav move 1 [Writing]                 row 1 into Writing, last in it
+fav move 1 [Writing]                 row 1 into Writing, at the top
 fav move 2,3 [Writing/Drafts]        rows 2 and 3 into the subfolder
 fav move 4 top                       to the top of its folder (or of the list)
 fav move 4 bottom                    to the end
@@ -598,7 +600,7 @@ fav filter chapter                   only the rows with "chapter" in them
 - A folder with subfolders does not go into another folder, as there are two levels at most, and a subfolder goes into a folder at the top. If a move cannot be done, the shell says so and moves nothing
 - After each change the list is shown again with the new rows, and it is the last list: `open 2` opens row 2 of it. A folder name with blanks is written in quotes (`"[My drafts]"`), and `Tab` completes the names of the folders after `[`, and the places after `fav move 3`
 - `fav remove [Sources]` asks first, and tells how many favorites and subfolders go with the folder; the files stay where they are. `fav undo` puts back what `fav remove` (a folder, or a favorite: `fav remove 3`) removed last in this shell, as long as the list has not changed since
-- `fav add` takes a place after the file: `top`, `bottom`, the place of a row (`5`) or a `[folder]` (last in it), as `fav move` does. Without one the favorite is added at the top of the list, outside the folders, as `P` on the full screen adds it: it is row 1, ready for `fav move 1 [Drafts]`. `fav add notes.md bottom` puts it last. When the place is not there (no such folder), nothing is added. `Tab` after the file completes `top`, `bottom` and the folders
+- `fav add` takes a place after the file: `top`, `bottom`, the place of a row (`5`) or a `[folder]` (at the top of it), as `fav move` does. Without one the favorite is added at the top of the list, outside the folders, as `P` on the full screen adds it: it is row 1, ready for `fav move 1 [Drafts]`. `fav add notes.md bottom` puts it last. When the place is not there (no such folder), nothing is added. `Tab` after the file completes `top`, `bottom` and the folders
 - `fav filter draft` shows the favorites with _draft_ in their name or path (ignoring letter case), and `fav filter *.typ` those whose name matches the pattern, with the folders they are in above them. The rows keep their numbers from the whole list, so `open 7` and `fav move 7 top` are the same row as in `fav`. The filter is not kept: `fav` shows all favorites again. `fav -l filter draft` gives the full paths
 - These commands work on the open list of favorites, and each change is saved at once, so the full screen shows the same folders. `fav undo` puts back in the list it removed from: if another list was opened since, it tells you which list to open first
 - A list of favorites named like one of these words (`folder`, `subfolder`, `move`, `undo`, `filter` ...) is opened with `fav use folder`, as for `new` (see [Commands](#commands))

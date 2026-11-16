@@ -3,13 +3,15 @@
 /// <summary>
 /// "lines": lines of a file copied to another file or kept in a register ("> $notes", ">> $notes": added), or cut
 /// ("cut": moved there), without opening them; or the text in them changed: a text put at their start or end ("start", "end"), taken off it ("unstart", "unend"), or a text in
-/// them replaced ("replace"). The lines and the place are those of shift. What is written is never logged, only the
+/// them replaced ("replace"), the lines sorted ("sort", "sort -d") or made upper or lower case ("upper", "lower"). The
+/// lines and the place are those of shift. What is written is never logged, only the
 /// paths and the lines
 /// </summary>
 internal sealed partial class ShellSession
 {
     // What "lines" does to the text in the lines (after the lines: "lines todo.md 4 start Note:")
-    private static readonly string[] LineEdits = { "start", "end", "unstart", "unend", "replace" };
+    private static readonly string[] LineEdits =
+        { "start", "end", "unstart", "unend", "replace", "sort", "upper", "lower" };
 
     /// <summary>
     /// What the words after "lines" are: the place of the ">" of a copy (2, or 3 after "+10 5"), or of a word of
@@ -43,7 +45,7 @@ internal sealed partial class ShellSession
         // (after the lines: neither a ">" nor a word of what is done)
         else if (form.Arrow < 0 && words.Count > 2 && !words.Contains(">") && !words.Contains(">>"))
         {
-            Error(Lang.T("After the lines: > file place, > $name, start, end, unstart, unend or replace"));
+            Error(Lang.T("After the lines: > file place, > $name, start, end, unstart, unend, replace, sort, upper or lower"));
         }
         else CopyLines(argument);
     }
@@ -54,7 +56,9 @@ internal sealed partial class ShellSession
     // put there; in quotes: the text only). "replace old new": a text in the lines replaced (letter case as typed;
     // "" for none). As insert: the line endings and byte order mark of the file kept, only a file in UTF-8 and not
     // one Blyant uses, and the file is then the last list, at the first line changed. Nothing is lost by it (unstart
-    // undoes start), so it is not asked
+    // undoes start), so it is not asked. "sort" sorts the lines A to Z ("-a", the default) or Z to A ("-d"), in the
+    // same order as :sort in the editor, and puts them back in the places of the lines; "upper" and "lower" make them
+    // upper or lower case, as gU and gu in the editor. "undo" takes each back
     private void EditLines(string argument, int at)
     {
         var words = Words(argument);
@@ -74,6 +78,24 @@ internal sealed partial class ShellSession
 
             (text, replacement) = (parts[0], parts[1]);
         }
+        else if (kind is "sort" or "upper" or "lower")
+        {
+            text = string.Empty;
+            if (kind == "sort" && rest is not ("" or "-a" or "-d"))
+            {
+                Error(Lang.T("After sort: -a (A to Z, the default) or -d (Z to A)"));
+                return;
+            }
+
+            if (kind != "sort" && rest.Length > 0)
+            {
+                Error(Lang.F("Nothing goes after {0}: lines notes.md 3-20 {0}", kind));
+                return;
+            }
+
+            // ("-d": Z to A; the order is kept in "replacement")
+            replacement = rest;
+        }
         else
         {
             // (in quotes: as it is, the blanks in it too)
@@ -92,9 +114,14 @@ internal sealed partial class ShellSession
         if (PickedLines(words[1], at == 3 ? words[2] : null, lines, item.Path) is not { } picked) return;
 
         var changed = new List<int>();
-        foreach (var number in picked)
+        // Sorted: the lines in the order they get, put back in the places of the lines picked
+        var sorted = kind == "sort"
+            ? EditorEngine.SortedLines(picked.Select(number => lines[number - 1]).ToList(), replacement == "-d", false)
+            : null;
+        for (var i = 0; i < picked.Count; i++)
         {
-            var edited = EditedLine(lines[number - 1], kind, text, exact, replacement);
+            var number = picked[i];
+            var edited = sorted != null ? sorted[i] : EditedLine(lines[number - 1], kind, text, exact, replacement);
             if (edited == lines[number - 1]) continue;
             lines[number - 1] = edited;
             changed.Add(number);
@@ -105,6 +132,9 @@ internal sealed partial class ShellSession
             Line(kind switch
             {
                 "start" or "end" => Lang.T("Nothing changed: the lines are blank"),
+                "sort" => Lang.T("Nothing changed: the lines are in that order already"),
+                "upper" => Lang.T("Nothing changed: the lines are uppercase already"),
+                "lower" => Lang.T("Nothing changed: the lines are lowercase already"),
                 "unstart" => Lang.F("Nothing changed: no line starts with {0}", text),
                 "unend" => Lang.F("Nothing changed: no line ends with {0}", text),
                 _ => Lang.F("Nothing changed: no line has {0} in it", text)
@@ -123,22 +153,33 @@ internal sealed partial class ShellSession
         }
 
         LastList = new List<Item> { new(item.Path, false, (changed[0], 1)) };
-        var width = changed[^1].ToString().Length;
-        foreach (var number in changed) Line(number.ToString().PadLeft(width + 2) + "  " + lines[number - 1]);
-        Line(changed.Count == 1
-            ? Lang.F("{0}: line {1} changed", item.Path, changed[0])
-            : Lang.F("{0}: {1} lines changed", item.Path, changed.Count));
+        // (sorted: all the lines, in their new order)
+        var shown = sorted != null ? picked.ToList() : changed;
+        var width = shown[^1].ToString().Length;
+        foreach (var number in shown) Line(number.ToString().PadLeft(width + 2) + "  " + lines[number - 1]);
+        if (sorted != null) Line(Lang.F("{0}: {1} lines sorted", item.Path, picked.Count));
+        else
+        {
+            Line(changed.Count == 1
+                ? Lang.F("{0}: line {1} changed", item.Path, changed[0])
+                : Lang.F("{0}: {1} lines changed", item.Path, changed.Count));
+        }
     }
 
     /// <summary>
     /// A line with a text put at its start or end ("start", "end": with a blank between, or "exact" as it is; a blank
     /// line as it is), taken off them ("unstart", "unend": with the blank start and end put there, or "exact" the text
-    /// only; a line without it as it is), or a text in it replaced ("replace", letter case as given)
+    /// only; a line without it as it is), a text in it replaced ("replace", letter case as given), or the line made
+    /// upper or lower case ("upper", "lower", as gU and gu in the editor)
     /// </summary>
     internal static string EditedLine(string line, string kind, string text, bool exact, string replacement = "")
     {
         switch (kind)
         {
+            case "upper":
+                return line.ToUpperInvariant();
+            case "lower":
+                return line.ToLowerInvariant();
             case "start":
                 return line.Trim().Length == 0 ? line : text + (exact ? string.Empty : " ") + line;
             case "end":

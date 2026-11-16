@@ -202,9 +202,10 @@ blyant ~/novel> lines plot.md 4 unstart Draft:
 ```
 
 - `unstart` and `unend` take the text off again, and `lines plot.md 3-5 replace letter note` replaces a word in lines 3 to 5
+- `lines plot.md 3-5 sort` sorts lines 3 to 5 A to Z (`sort -d`: Z to A), and `lines plot.md 1 upper` makes line 1 UPPERCASE (`lower`: lowercase)
 - A text in quotes is put in exactly as written, with no blank added: `lines todo.md 5-7 start "- [ ] "` makes lines 5 to 7 tasks
 
-`undo` takes back the last change made by `insert`, `change` or `lines` while Blyant is running (`redo` makes it again, and `changes` lists the changes). Still, `peek` first to be sure of the line numbers. A file keeps its line endings and byte order mark, and these commands leave the files Blyant uses alone.
+`undo` takes back the last change made by `insert`, `change` or `lines` (also a sort) while Blyant is running (`redo` makes it again, and `changes` lists the changes). Still, `peek` first to be sure of the line numbers. A file keeps its line endings and byte order mark, and these commands leave the files Blyant uses alone.
 
 ## Todo list
 ![A task added with insert, and ticked and moved under Done with shift!](docs/screenshots/shell-todo.svg)
@@ -501,7 +502,7 @@ What you do on the full screen, and the command for it in the shell:
 | On the full screen | In the shell |
 |---|---|
 | The file browser of a directory | `ls`, `cd 2`, `up` |
-| `Enter` on a file | `open 3` |
+| `Enter` on a file | `open 3` (or `edit 3`) |
 | Peek (`V` in the file browser) | `peek 3`, `peek 3 +100 20` |
 | Search for files (`S` or `:find`) | `find plot`, `find -t storm` |
 | New file, new directory | `new ideas`, `mkdir drafts` |
@@ -514,6 +515,7 @@ What you do on the full screen, and the command for it in the shell:
 | Lines changed or deleted in the editor | `change 3 +12 text`, `change 3 12-15` |
 | Lines cut and put under another heading | `shift 3 4-6 Done` |
 | Lines copied or moved to another file | `lines 3 4-6 > 5 bottom`, `lines 3 4-6 > 5 bottom cut` |
+| `:sort`, `gU`, `gu` in the editor | `lines 3 4-9 sort`, `lines 3 1 upper`, `lines 3 1 lower` |
 | Copy and paste | `clip lines 3 4-6`, then `insert 5 top $clip` |
 | Configuration | `set`, `set indent 2` |
 | `:shell` | `screen` |

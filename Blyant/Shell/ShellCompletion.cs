@@ -148,6 +148,7 @@ internal sealed class ShellCompletion
                 // ("ls -a -l notes": the directory after -a and -l)
                 return (after.All(word => word is "-a" or "-l") ? Kind.Directory : Kind.None, none);
             case "open":
+            case "edit":
                 return (position == 0 ? Kind.Path : Kind.None, none);
             case "peek":
                 // ("peek bottom": the file peeked last; "peek plot.md middle"; the files first, as with nothing typed
@@ -169,6 +170,8 @@ internal sealed class ShellCompletion
             case "trim!":
             case "change":
             case "rename":
+                // The new name: the name it has now, to change ("rename file1.md " and Tab: "file1.md")
+                if (position == 1) return (Kind.QuotedWords, NameOf(_words[0]));
                 return (position == 0 ? Kind.Path : Kind.None, none);
             case "copy":
             case "move":
@@ -195,9 +198,12 @@ internal sealed class ShellCompletion
                 // After the lines (or "+10 5"): ">" for a copy, or what is done to the text in them
                 if (arrow < 0)
                 {
+                    // ("sort -a", "sort -d")
+                    var sort = after.ToList().IndexOf("sort");
+                    if (sort >= 2 && position == sort + 1) return (Kind.Words, new[] { "-a", "-d" });
                     var what = position == 2 || (position == 3 && after[1].StartsWith('+'));
                     return (what ? Kind.Words : Kind.None,
-                        new[] { ">", "start", "end", "unstart", "unend", "replace" });
+                        new[] { ">", "start", "end", "unstart", "unend", "replace", "sort", "upper", "lower" });
                 }
 
                 if (position == arrow + 1) return (Kind.Path, none);
@@ -317,6 +323,22 @@ internal sealed class ShellCompletion
         var fitting = list.Where(word => PatternFits(typed, word.TrimEnd('/'))).Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
         return fitting.Count > 0 ? fitting : Fitting(list, typed);
+    }
+
+    // The name of a file or directory as typed (a row of the last list, $file, a path), for "rename"; none for a
+    // path with characters a path cannot have
+    private IEnumerable<string> NameOf(string typed)
+    {
+        try
+        {
+            var path = FileOf?.Invoke(typed) ?? _fullPath(typed.Trim('"'));
+            var name = Path.GetFileName(Path.TrimEndingDirectorySeparator(path));
+            return name.Length > 0 ? new[] { name } : Enumerable.Empty<string>();
+        }
+        catch (Exception e) when (e is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            return Enumerable.Empty<string>();
+        }
     }
 
     // The names of the headings of a file (for "shift"); none if it cannot be read

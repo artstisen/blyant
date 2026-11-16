@@ -1986,13 +1986,23 @@ internal sealed partial class EditorEngine
     /// ":sort": sort lines (by the value of their characters; "i": not telling upper and lower case apart).
     /// ":sort!" sorts them the other way. One step to undo
     /// </summary>
+    /// <summary>
+    /// Lines sorted as :sort sorts them (by the value of their characters; "ignoreCase": upper and lower case alike),
+    /// or the other way ("reverse"). Also "lines ... sort" in the shell
+    /// </summary>
+    internal static List<string> SortedLines(IReadOnlyList<string> lines, bool reverse, bool ignoreCase)
+    {
+        var comparer = ignoreCase ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
+        var sorted = lines.Order(comparer).ToList();
+        if (reverse) sorted.Reverse();
+        return sorted;
+    }
+
     private void SortLines(int first, int last, bool reverse, bool ignoreCase)
     {
         if (SingleLine || last <= first) return;
         var lines = Enumerable.Range(first, last - first + 1).Select(line => Buffer[line]).ToList();
-        var comparer = ignoreCase ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
-        var sorted = lines.Order(comparer).ToList();
-        if (reverse) sorted.Reverse();
+        var sorted = SortedLines(lines, reverse, ignoreCase);
         if (sorted.SequenceEqual(lines)) return;
         var from = new TextPos(first, 0);
         var to = new TextPos(last, Buffer.LineLength(last));

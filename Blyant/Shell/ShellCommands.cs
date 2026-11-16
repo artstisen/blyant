@@ -19,7 +19,7 @@ internal sealed partial class ShellSession
         ("up", Lang.T("Go to the directory above")),
         ("home", Lang.T("Go to your home directory")),
         ("data", Lang.T("Go to Blyant's data directory (settings, lists, log)")),
-        ("open file|n [+line]", Lang.T("Edit a file on the full screen (closing it returns here)")),
+        ("open file|n [+line] (edit)", Lang.T("Edit a file on the full screen (closing it returns here)")),
         ("peek file|n [lines]", Lang.T("Show the lines of a file (the first 20, 40, 100-120, or +100 30)")),
         ("peek [file|n] +|++|-|--", Shell.PeekStep == 1
             ? Lang.F("Show 1 line further down (++: {0}), or up (-, --)", Shell.PeekBigStep)
@@ -48,6 +48,8 @@ internal sealed partial class ShellSession
         ("lines file|n lines start|end text", Lang.T("Put a text at the start or the end of lines")),
         ("lines file lines unstart|unend text", Lang.T("Take a text off the start or the end of lines")),
         ("lines file|n lines replace old new", Lang.T("Replace a text in lines, the rest kept")),
+        ("lines file|n lines sort [-a|-d]", Lang.T("Sort lines: -a A to Z (the default), -d Z to A")),
+        ("lines file|n lines upper|lower", Lang.T("Make lines UPPERCASE or lowercase")),
         ("format file|n", Lang.T("Format an HTML, CSS or XML file, as :format does")),
         ("trim file|n", Lang.T("Remove blank space at line ends, as :trim does (trim!)")),
         ("set [name [value]]", Lang.T("Show the settings, or change one")),
@@ -396,6 +398,7 @@ internal sealed partial class ShellSession
                 ChangeDirectory(Path.GetFullPath(FileIo.GetDataDirectoryName()));
                 break;
             case "open":
+            case "edit":
                 Open(argument);
                 break;
             case "favorites":
@@ -1067,6 +1070,7 @@ internal sealed partial class ShellSession
                 "cls" => "clear",
                 // (one row tells both)
                 "name" => "path",
+                "edit" => "open",
                 "+" or "++" or "-" or "--" or "." or "/" or "?" or "$peek" => "peek",
                 _ when name.Length > 1 && name[0] == '/' => "peek",
                 "$clip" => "clip",
