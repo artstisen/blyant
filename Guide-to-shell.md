@@ -115,6 +115,7 @@ To have every output whole (with a screen reader, say), turn the pages off: `set
 | `reg [name [text\|.\|#n]]` | Keep a text or a path in a register, show one, or list them (see [Registers](#registers)) |
 | `reg name = text`, `reg name += text` | Keep a text in a register (as `reg name text`), or add it to its end, as lines (`reg notes += $peek`) |
 | `reg -d name\|all` | Take a register away, or all of them |
+| `echo text` | Write a text with the `$names` put in: `echo $file`, `echo $pwd $date`, `echo $peek` (all its lines). To see a value, or the line a command will get (`echo insert $file bottom $date Done`). See [Registers](#registers) |
 | `clip [path\|name] file\|dir\|n\|.` | Copy the full path of a file or directory (`clip 3`: row 3 of the last list; `clip .`: the directory you are in), or its name, to the clipboard (see [Clipboard](#clipboard)) |
 | `clip text file\|n` | Copy the text of a file to the clipboard |
 | `clip lines file\|n lines` | Copy lines of a file to the clipboard, given as for `lines` (`40`, `4-6`, `4,7,9-10`, `+100 30`, a text in the line). See [Line numbers](#line-numbers) |
@@ -633,6 +634,7 @@ lines plot.md 3-5 > $notes          ">": the register is those lines alone
 
 - A text in quotes is kept without them: `reg docs "~/my docs"` keeps the path, so `copy plot.md $docs` takes it as one
 - `reg` lists the registers, `reg docs` shows the value of one (alone on its line, as a script reads it with `blyant --run "reg docs"`), `reg -d docs` takes it away, and `reg -d all` all of them
+- `echo` writes a text with the `$names` put in, as the other commands put them in: `echo $file` shows the file the last command worked on, `echo $docs has $date` a line of your own with the values in it, and `echo $notes` all the lines of a register. `$$` is a `$`. A `$name` that is no register is told, and nothing is written. `echo` changes nothing: no file, not the last list, not `$file`. In a `run`, it writes a line between the steps (`echo Tidying the chapters`)
 - A name starts with a letter, and has letters, digits and `_` (`docs`, `draft_2`); letter case is alike
 - `$name` is put in only for a register that is there: anything else stays as typed, so `insert prices.md bottom Ink costs $5` keeps its `$5`. `$$` is a `$`
 - A path with a blank in it is put in quotes where a path is taken (`copy plot.md $docs` with _my docs_), and the text of `insert`, `change`, `reg` and `set` gets the value as it is
@@ -662,6 +664,7 @@ lines plot.md 3-5 > $notes          ">": the register is those lines alone
   | `find -t $peek` | yes: that text is looked for | no |
   | `reg note $peek`, `reg notes += $peek` | yes | yes: a register keeps lines |
   | `clip $peek` | yes | yes: all of it |
+  | `echo $peek` | yes | yes: all its lines are written |
 
   An empty `$clip` or `$peek` is not taken by `change` (no text deletes the lines), and `insert` puts it in as a blank line. A value is put in when the command line starts: after `peek a.md 2-3`, `insert $file bottom $peek` puts the lines back into `a.md`; to put them in another file, give its name (`insert b.md bottom $peek`)
 - `Tab` completes the names of the registers after a `$` (and the names set by Blyant that have a value: `$clip` once something is copied, `$file` once a file is worked on), and after `reg`
@@ -746,6 +749,7 @@ run weekly.txt                                  the commands of a file
 - Questions are asked as for any command: `delete` and `change` without a text ask first (from a file or `--run`, the answer is no unless `--yes` is given)
 - A `$name` in a command is put in when that command runs. When you set the register, a `$name` is put in at once: write `$$date` to keep `$date` in the register, so that it is the date of each run (`reg tidy` shows what the register holds)
 - A line starting with `#` is a comment, and blank lines are left out, in a register, in a file for `run`, and in a file of commands read by `blyant --shell < file`
+- `echo` in a register or file writes a line while it runs (`echo Tidied on $date`), to tell what was done
 - A file for `run` is a text file of commands, as for `blyant --shell < file`: one a line. A register or file can run another (`run $more` in it); one that runs itself is stopped, 10 runs deep
 - `run file` takes a path as other commands do: `run weekly.txt`, `run $pwd/weekly.txt`, `run $file` (the file the last command worked on) or a register that holds a path (`run $docs/weekly.txt`). `run $tidy` runs the lines of the register `tidy` itself
 - `exit` in a run ends the run, not Blyant, and `screen`, `again`, `!3` and `!!` are not run in a run (`!!` would run the run again): they are told, and the run stops there

@@ -1,6 +1,7 @@
 # Changes
 
 ## v1.5.4
+- **`echo` in the shell**: `echo $file` writes the value of a register or a name set by Blyant, and `echo $docs has $date` a line of your own with the values put in (a value of several lines with all its lines, `$$` a `$`), to check a value, or the line a command will get, on the fly. A `$name` that is no register is told. It changes nothing (not the last list, not `$file`), and in a `run` it writes a line between the steps. See [Registers](Guide-to-shell.md#registers).
 
 ## v1.5.3 (2026-11-15)
 - **Editing in a window, in the guides and the user manual**: the guide to the shell has a new part, [Editing in a window](Guide-to-shell.md#editing-in-a-window): find the place with a search, change the lines, look again with `.`, let `shellautopeek` show the window by itself, and take changes back with `undo`, `redo` and `changes`, step by step with what Blyant answers, and a screenshot of it (`docs/screenshots/shell-window.svg`). The practice of the shell tutorial has four more steps that do the same ([Practice](Guide-to-shell-tutorial.md#practice)), and the settings file guide links `shellautopeek` and `shellundosteps` to them.

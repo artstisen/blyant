@@ -2005,7 +2005,7 @@ public class ShellTests : IDisposable
         File.WriteAllText(In("work", "lines.md"), "one\ntwo\n");
         (_, errors, _, _) = Run("clip text lines.md\ncd $clip\nreg note $clip\n");
         Assert.Single(errors.TrimEnd('\n').Split('\n'));
-        Assert.Contains(Lang.F("${0} has more than one line: only insert, change, reg and run take it", "clip"), errors);
+        Assert.Contains(Lang.F("${0} has more than one line: only insert, change, reg, run and echo take it", "clip"), errors);
         // (a register keeps lines)
         Assert.Equal("one\ntwo", ShellRegisters.Get("note"));
         // ($$clip is the text "$clip")
@@ -3117,7 +3117,7 @@ public class ShellTests : IDisposable
         var (output, errors, _, _) = Run("insert plan.md bottom $peek\npeek notes.md 2-3\ninsert plan.md bottom $peek\n" +
                                          "+\nchange plan.md +1 $peek\ncd $peek\nreg\nreg peek x\n");
         Assert.Contains(Lang.T("Nothing peeked yet: peek shows lines for $peek"), errors);
-        Assert.Contains(Lang.F("${0} has more than one line: only insert, change, reg and run take it", "peek"), errors);
+        Assert.Contains(Lang.F("${0} has more than one line: only insert, change, reg, run and echo take it", "peek"), errors);
         Assert.Contains(Lang.F("${0} is set by Blyant: it is not a register to set or take away", "peek"), errors);
         Assert.Equal(3, errors.TrimEnd('\n').Split('\n').Length);
         // Lines 2-3, then (+) lines 3-4 in place of the heading
@@ -3164,7 +3164,7 @@ public class ShellTests : IDisposable
         var (output, errors, _, _) = Run("reg notes = First idea\npeek a.md 2-3\nreg notes += $peek\nreg notes += Last\n" +
                                          "insert plan.md bottom $notes\ncd $notes\nreg\nreg x =\n");
         Assert.Equal(2, errors.TrimEnd('\n').Split('\n').Length);
-        Assert.Contains(Lang.F("${0} has more than one line: only insert, change, reg and run take it", "notes"), errors);
+        Assert.Contains(Lang.F("${0} has more than one line: only insert, change, reg, run and echo take it", "notes"), errors);
         Assert.Equal("First idea\ntwo\nthree\nLast", ShellRegisters.Get("notes"));
         Assert.Equal("# Plan\nFirst idea\ntwo\nthree\nLast\n", Text("plan.md"));
         Assert.Contains("  $notes " + Lang.F("{0}  ({1} lines)", "First idea ...", 4), output);
@@ -4433,5 +4433,43 @@ public class ShellTests : IDisposable
         var session = Run("reg n = " + In("work", "my notes", "n.md") + "\n").Session;
         Assert.Equal(In("work", "my notes", "n.md"), session.CompletionFile("$n"));
         Assert.Equal(In("work", "7"), session.CompletionFile("7"));
+    }
+
+    // ---- echo
+
+    [Fact]
+    public void Echo_WritesTheText_WithTheNamesPutIn_AndChangesNothing()
+    {
+        File.WriteAllText(In("work", "a.md"), "one\ntwo\n");
+        var (output, errors, _, session) = Run("peek a.md 1-2\nls\necho $file was peeked on $date\necho cost $$5\necho\n" +
+                                               "echo $peek\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains(In("work", "a.md") + " was peeked on " + DateTime.Now.ToString("yyyy-MM-dd") + "\n", output);
+        Assert.Contains("\ncost $5\n\n", output);
+        // A value of several lines: all of them
+        Assert.EndsWith("one\ntwo\n", output);
+        // The last list is still that of ls, and $file the file peeked
+        Assert.True(session.LastList.Count > 1);
+        Assert.Equal(In("work", "a.md"), session.WorkedFile);
+    }
+
+    [Fact]
+    public void Echo_ANameThatIsNoRegister_IsTold_AndNothingIsWritten()
+    {
+        var (output, errors, _, _) = Run("reg docs = " + In("work") + "\necho $docs and $nothing\necho $clip\n");
+        Assert.Contains(Lang.F("No register named {0} (reg lists them)", "nothing"), errors);
+        Assert.Contains(Lang.T("Nothing copied yet: clip copies a text for $clip"), errors);
+        Assert.DoesNotContain(" and $nothing", output);
+        // (by name only: never the text)
+        Assert.Equal("echo ...", EventLog.CommandName("echo $docs secret text"));
+    }
+
+    [Fact]
+    public void Echo_InARun_WritesItsLine()
+    {
+        File.WriteAllText(In("work", "t.txt"), "echo Tidying in $pwd\n");
+        var (output, errors, _, _) = Run("run t.txt\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains("Tidying in " + In("work") + "\n", output);
     }
 }

@@ -473,6 +473,7 @@ blyant --shell ~/novel < weekly.txt
 
 - No prompt is shown, and what went wrong goes to the error output. The exit code is 1 when a command failed
 - Questions are not asked: the answer is no, so nothing is deleted. With `--yes` the answer is yes
+- `echo $docs` writes it too, inside a line of your own (`echo $file was changed on $date`): a quick way to see a value, or what a command will get
 - `reg docs` alone writes the value of a register on its own line, so a script can read it: `blyant --run "reg docs"`
 
 Inside the shell, a register can hold commands, one a line, and `run` runs them: a small script you keep. Write `$$date` for a date that is put in when the script runs, not when it is kept:

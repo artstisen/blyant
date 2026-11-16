@@ -300,6 +300,32 @@ internal static partial class ShellRegisters
     }
 
     /// <summary>
+    /// The $names of a command line, as Expand finds them (not "$$name"), in their order: registers, names set by
+    /// Blyant, and names that are neither
+    /// </summary>
+    internal static List<string> NamesIn(string line)
+    {
+        var names = new List<string>();
+        for (var i = 0; i + 1 < line.Length; i++)
+        {
+            if (line[i] != '$') continue;
+            if (line[i + 1] == '$')
+            {
+                i++;
+                continue;
+            }
+
+            if (!char.IsAsciiLetter(line[i + 1])) continue;
+            var end = i + 1;
+            while (end < line.Length && (char.IsAsciiLetterOrDigit(line[end]) || line[end] == '_')) end++;
+            names.Add(line[(i + 1)..end]);
+            i = end - 1;
+        }
+
+        return names;
+    }
+
+    /// <summary>
     /// True if a command line has $name in it (as Expand finds it: not "$$name", and not "$names")
     /// </summary>
     internal static bool Mentions(string line, string name)

@@ -92,6 +92,7 @@ internal sealed partial class ShellSession
         ("screen", Lang.T("Go on on the full screen, in the file browser here")),
         ("version", Lang.T("Show the version of Blyant")),
         ("about [license]", Lang.T("Show the version and the commands used the most, or the license")),
+        ("echo text", Lang.T("Write a text, with $names put in (echo $file)")),
         ("again [n]", Lang.T("List the commands typed, or run one again (!n, !!)")),
         ("again filter text", Lang.T("Show the commands typed with a text in them")),
         ("undo [n]", Lang.T("Undo the last change of a file (insert, change ...)")),
@@ -183,7 +184,8 @@ internal sealed partial class ShellSession
                 "insert" or "change" => 2,
                 "reg" or "set" => 1,
                 // ("run $tidy": its lines as they are)
-                "find" or "project" or "run" => 0,
+                // ("echo $file and $date": the values as they are)
+                "find" or "project" or "run" or "echo" => 0,
                 // (the text of "lines todo.md 4 start ..." as it is)
                 "lines" => LinesWords(argument),
                 _ => int.MaxValue
@@ -273,7 +275,7 @@ internal sealed partial class ShellSession
 
     // The commands that take a value of more than one line: insert and change put in its lines, reg keeps them, and
     // run runs them
-    private static readonly string[] TakesLines = { "insert", "change", "reg", "run" };
+    private static readonly string[] TakesLines = { "insert", "change", "reg", "run", "echo" };
 
     // Why the $names of a command line cannot be put in (null: they can): $clip or $peek that is not there yet, or
     // empty where change would delete the lines; a value of more than one line where one line is taken; $file before
@@ -312,11 +314,27 @@ internal sealed partial class ShellSession
             : null;
 
         static string MoreThanOneLine(string name) =>
-            Lang.F("${0} has more than one line: only insert, change, reg and run take it", name);
+            Lang.F("${0} has more than one line: only insert, change, reg, run and echo take it", name);
     }
 
     // What followed the command, as typed: before the $names were put in
     private string? _typedArgument;
+
+    // "echo $file", "echo Tidied on $date": the text written as typed, with the $names put in ("$$": a "$"), a value
+    // of several lines with all its lines. A $name that is no register and no name set by Blyant is told: nothing is
+    // written. Changes nothing (no file, no last list, not $file)
+    private void Echo(string text)
+    {
+        var unknown = ShellRegisters.NamesIn(_typedArgument ?? string.Empty)
+            .FirstOrDefault(name => ShellRegisters.Get(name) == null && !ShellRegisters.IsReserved(name));
+        if (unknown != null)
+        {
+            Error(Lang.F("No register named {0} (reg lists them)", unknown));
+            return;
+        }
+
+        Line(text);
+    }
 
     private bool RunCommand(string name, string argument)
     {
@@ -506,6 +524,9 @@ internal sealed partial class ShellSession
                 break;
             case "run":
                 RunCommands(argument);
+                break;
+            case "echo":
+                Echo(argument);
                 break;
             case "again":
                 ListAgain(argument);
