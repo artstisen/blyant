@@ -327,7 +327,7 @@ blyant ~/novel/chapters>
 - Put a path with blanks in quotes: `reg docs "~/my docs"`
 - `Tab` completes the names of the registers after a `$`
 - A register can collect lines from several places: `peek plot.md 3-4`, then `reg notes += $peek`, and `lines todo.md 6 >> $notes` adds a line from another file. `insert ideas.md bottom $notes` puts all the lines in a file
-- Blyant sets some names itself: `$pwd` is the directory you are in, `$file` the file the last command worked on, and `$date`, `$time` and `$now` the time now. `insert todo.md bottom $date Called the editor` puts in a line with the date, and `peek plot.md` then `insert $file bottom The end` adds to the file you looked at
+- Blyant sets some names itself: `$pwd` is the directory you are in, `$file` the file the last command worked on, `$calc` the result of the last `calc` (`calc 1250 * 1.25`, then `insert budget.md bottom Total: $calc`), and `$date`, `$time` and `$now` the time now. `insert todo.md bottom $date Called the editor` puts in a line with the date, and `peek plot.md` then `insert $file bottom The end` adds to the file you looked at
 - The registers of the shell are separate from the string memory of the editor
 
 ## Clipboard

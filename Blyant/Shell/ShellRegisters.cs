@@ -46,10 +46,20 @@ internal static partial class ShellRegisters
 
     /// <summary>
     /// The names set by Blyant, not registers: $clip (the text clip copied last), $peek (the lines peek showed last), $pwd (the directory the shell is
-    /// in), $file (the file the last command worked on), $date, $time and $now. They cannot be set or taken away, and
-    /// a line of one of them in the file is kept as a line that is not a register
+    /// in), $file (the file the last command worked on), $calc (the result of the last calc), $date, $time and $now.
+    /// They cannot be set or taken away, and a line of one of them in the file is kept as a line that is not a register
     /// </summary>
-    internal static readonly string[] Reserved = { ClipName, PeekName, "pwd", "file", "date", "time", "now" };
+    internal static readonly string[] Reserved = { ClipName, PeekName, "pwd", "file", CalcName, "date", "time", "now" };
+
+    /// <summary>
+    /// The name of $calc: the result of the last "calc"
+    /// </summary>
+    internal const string CalcName = "calc";
+
+    /// <summary>
+    /// $calc: the result of the last "calc" of this Blyant ("1642.5"; null: none yet). Kept in Blyant only, as $clip
+    /// </summary>
+    internal static string? Calc { get; set; }
 
     /// <summary>
     /// The name of $peek: the lines the last peek showed
@@ -89,6 +99,7 @@ internal static partial class ShellRegisters
         PeekName => Peek,
         "pwd" => DirectorySource?.Invoke(),
         "file" => FileSource?.Invoke(),
+        CalcName => Calc,
         // (as :ts in the editor: ISO, the same in every language)
         "date" => Clock().ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
         "time" => Clock().ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture),

@@ -118,6 +118,7 @@ To get all output at once (with a screen reader, say), turn the pages off: `set 
 | `reg name = text`, `reg name += text` | Keep a text in a register (as `reg name text`), or add it at the end, as lines (`reg notes += $peek`) |
 | `reg -d name\|all` | Take away one register, or all |
 | `echo text` | Write a text with the `$names` put in: `echo $file`, `echo $pwd $date`, `echo $peek` (all the lines). Use it to see a value, or what a command will get (`echo insert $file bottom $date Done`; a command that takes paths gets a value with blanks in quotes). See [Registers](#registers) |
+| `calc expression` | Calculate, and keep the result in `$calc`: `calc 1250 * 1.25 + 80` writes `1642.5`, and `insert budget.md bottom Total: $calc` puts it in a file. See [Calculating](#calculating) |
 | `file [file\|n]` | Make a file from a list `$file` without opening or peeking it: `recent`, then `file 2`; or name the file (`file plot.md`). The last list stays, so `file 3` or `open 4` still use it. `file` alone shows `$file`. See [Registers](#registers) |
 | `clip [path\|name] file\|dir\|n\|.` | Copy the full path of a file or directory (`clip 3`: row 3 of the last list; `clip .`: the directory you are in), or its name, to the clipboard (see [Clipboard](#clipboard)) |
 | `clip text file\|n` | Copy the text of a file to the clipboard |
@@ -652,13 +653,14 @@ lines plot.md 3-5 > $notes          ">": the register is those lines alone
   | `$date` | today, as `2026-11-15` |
   | `$time` | the time now, as `14:05` |
   | `$now` | the date and the time, as `2026-11-15 14:05:33` (as `:ts` in the editor) |
+  | `$calc` | the result of the last `calc` (see [Calculating](#calculating)) |
   | `$clip` | the text `clip` copied last |
   | `$peek` | the lines `peek` showed last, as they were then: `peek notes.md 4-6`, then `insert plan.md bottom $peek` puts them in another file (`+` and `-` change it, as they move the window) |
 
   `insert log.md bottom $date Finished chapter 3` puts in a line with the date. The date and the time are written the same in every language. These names are not registers: `reg pwd x` and `reg -d date` are refused, and a line for one of them in `registers.txt` stays there, unused, as a line that is not a register. `reg` lists them after the registers, under _Set by Blyant_, with their values now, and `reg pwd` shows one. `$file` used before any command has worked on a file gets the message that there is no file yet, and `$$date` is the text `$date`
 - Where they can be used: every register and name set by Blyant is put in before the command runs, so all commands take them. Only a value of more than one line (`$clip` or `$peek` of lines) is limited: `insert` and `change` put in its lines, `reg` keeps them, `run` runs them and `echo` writes them, and other commands refuse it (nothing is changed):
 
-  | | One line (`$pwd`, `$file`, `$date`, `$time`, `$now`, a register, and `$clip` or `$peek` of one line) | More lines (`$clip`, `$peek`) |
+  | | One line (`$pwd`, `$file`, `$date`, `$time`, `$now`, `$calc`, a register, and `$clip` or `$peek` of one line) | More lines (`$clip`, `$peek`) |
   |---|---|---|
   | `insert file top\|bottom\|+N $peek` | yes | yes, as lines |
   | `change file 3-5 $peek` | yes | yes: lines 3 to 5 become those lines |
@@ -673,6 +675,24 @@ lines plot.md 3-5 > $notes          ">": the register is those lines alone
   An empty `$clip` or `$peek` is not taken by `change` (no text deletes the lines), and `insert` puts it in as a blank line. A value is put in when the command line starts: after `peek a.md 2-3`, `insert $file bottom $peek` puts the lines back into `a.md`; to put them in another file, give its name (`insert b.md bottom $peek`)
 - `Tab` completes the names of the registers after a `$` (and the names set by Blyant that have a value: `$clip` once something is copied, `$file` once a file is worked on), and after `reg`
 - The registers are kept in the data directory (`registers.txt`), so they are there the next time. The file can be edited in another program: a line is the name, a tab, and the value. If the file changed since the shell read it, it is read again before the next command, and `reg` points out lines that are not registers (no tab, or a name a register cannot have): they are kept in the file, at its end, so you can put them right. The editor has separate registers. `reset` does not take them away (they are not settings), and the log has the names of registers, never the values
+
+## Calculating
+`calc` does simple calculations, and keeps the result in `$calc`, so it can be put in a file:
+
+```
+blyant ~/novel> calc 1250 * 1.25 + 80
+1642.5
+blyant ~/novel> insert budget.md bottom Total: $calc
+blyant ~/novel> calc $calc / 12
+136.875
+```
+
+- The signs are `+`, `-`, `*`, `/`, `%` (the remainder: `17 % 5` is `2`) and `^` (a power: `2 ^ 10` is `1024`), with parentheses: `(2 + 3) * 4`. `*`, `/` and `%` are calculated before `+` and `-`, and `^` before them all (`-2 ^ 2` is `-4`). Blanks do not matter: `calc 2+3*4` is `14`
+- A number takes `.` or `,` as the decimal point (`1.5` or `1,5`; there are no thousands separators). The result is written with `.`, the same on every computer, and with at most 10 decimals: `10 / 3` is `3.3333333333`, `10 / 4` is `2.5`
+- The calculation is exact for decimals: `0.1 + 0.2` is `0.3`. Only a power that is not a whole number (`2 ^ 0.5`) is as near as it comes
+- `$calc` and the registers can be used in a calculation: `calc $calc * 2`, `calc $price * 3`
+- `calc` alone shows `$calc`. It is kept while Blyant runs, as `$clip`, and is not a register: `reg` lists it with the names set by Blyant, but cannot set it or take it away
+- What cannot be calculated is told, with the place: `Not understood: 12x (position 3)`, `Division by zero`, `A ) is missing`. `$calc` then stays as it was
 
 ## Clipboard
 `clip` copies to the clipboard what you would otherwise select and copy by hand:

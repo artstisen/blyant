@@ -30,6 +30,7 @@ public class ShellTests : IDisposable
         ShellRegisters.Clear();
         ShellRegisters.Clip = null;
         ShellRegisters.Peek = null;
+        ShellRegisters.Calc = null;
         FileFavorites.Parse(string.Empty);
         FileHistory.Parse(string.Empty);
         DirectoryHotlist.Parse(string.Empty);
@@ -51,6 +52,7 @@ public class ShellTests : IDisposable
         ShellRegisters.Clear();
         ShellRegisters.Clip = null;
         ShellRegisters.Peek = null;
+        ShellRegisters.Calc = null;
         SystemClipboard.WriteOverride = null;
         Tools.ClearLineMemory();
         FileFavorites.Parse(string.Empty);
@@ -4805,5 +4807,45 @@ public class ShellTests : IDisposable
         Assert.Equal("rename drafts/ drafts", Tab(Completion(), "rename drafts/ "));
         // Nothing after the new name
         Assert.Equal("rename chapter-1.md x.md ", Tab(Completion(), "rename chapter-1.md x.md "));
+    }
+
+    // ---- calc and $calc
+
+    [Fact]
+    public void Calc_WritesTheResult_KeepsItInCalc_ForTheNextCommands()
+    {
+        File.WriteAllText(In("work", "budget.md"), "# Budget\n");
+        var (output, errors, _, _) = Run("calc 1250 * 1.25 + 80\ninsert budget.md bottom Total: $calc\ncalc $calc / 2\n" +
+                                         "echo $calc\ncalc\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains("1642.5\n", output);
+        Assert.Equal("# Budget\nTotal: 1642.5\n", File.ReadAllText(In("work", "budget.md")));
+        Assert.Contains("821.25\n821.25\n", output);
+        Assert.Contains(Lang.F("$calc: {0}", "821.25"), output);
+        Assert.Equal("821.25", ShellRegisters.Calc);
+    }
+
+    [Fact]
+    public void Calc_ThatFails_KeepsCalc_AndIsTold()
+    {
+        var (_, errors, _, _) = Run("calc 6 * 7\ncalc 1 / 0\ncalc 12x\n");
+        Assert.Contains(Lang.T("Division by zero"), errors);
+        Assert.Contains(Lang.F("Not understood: {0} (position {1})", "12x", 3), errors);
+        Assert.Equal("42", ShellRegisters.Calc);
+    }
+
+    [Fact]
+    public void Calc_BeforeAnyCalculation_IsTold_AndCannotBeSetOrTakenAway()
+    {
+        var (_, errors, _, _) = Run("calc\necho $calc\ninsert t.md bottom $calc\n");
+        Assert.Contains(Lang.T("Give a calculation: calc 2 + 3 * 4"), errors);
+        Assert.Contains(Lang.T("Nothing calculated yet: calc 2 + 3 gives $calc"), errors);
+        Assert.False(File.Exists(In("work", "t.md")));
+        (_, errors, _, _) = Run("reg calc 5\nreg -d calc\n");
+        Assert.Contains(Lang.F("${0} is set by Blyant: it is not a register to set or take away", "calc"), errors);
+        // Listed with the names set by Blyant
+        var (output, _, _, _) = Run("calc 2 + 2\nreg\n");
+        Assert.Contains("  $calc", output);
+        Assert.Contains("calc expression", Run("help calc\n").Output);
     }
 }

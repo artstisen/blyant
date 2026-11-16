@@ -65,6 +65,7 @@ internal sealed partial class ShellSession
         ("reg name += text", Lang.T("Add a text to a register, as lines (reg notes += $peek)")),
         ("reg -d name|all", Lang.T("Take away one register, or all")),
         ("echo text", Lang.T("Write a text, with $names put in (echo $file)")),
+        ("calc expression", Lang.T("Calculate: + - * / % ^ ( ), the result kept in $calc")),
         ("file [file|n]", Lang.T("Set $file to a file or row (file 3), or show $file")),
         ("favorites [-l] [list]", Lang.T("List the favorites (fav), or another list")),
         ("favorites -l", Lang.T("Lists with full paths (also hist, recent, book)")),
@@ -189,7 +190,8 @@ internal sealed partial class ShellSession
                 "reg" or "set" => 1,
                 // ("run $tidy": its lines as they are)
                 // ("echo $file and $date": the values as they are)
-                "find" or "project" or "run" or "echo" => 0,
+                // ("calc $calc * 2": the value as it is)
+                "find" or "project" or "run" or "echo" or "calc" => 0,
                 // (the text of "lines todo.md 4 start ..." as it is)
                 "lines" => LinesWords(argument),
                 _ => int.MaxValue
@@ -313,6 +315,11 @@ internal sealed partial class ShellSession
             return MoreThanOneLine(several);
         }
 
+        if (ShellRegisters.Calc == null && ShellRegisters.Mentions(argument, ShellRegisters.CalcName))
+        {
+            return Lang.T("Nothing calculated yet: calc 2 + 3 gives $calc");
+        }
+
         return _file == null && ShellRegisters.Mentions(argument, "file")
             ? Lang.T("No file yet: open, peek, insert, new ... give $file")
             : null;
@@ -351,6 +358,28 @@ internal sealed partial class ShellSession
 
         _file = Path.GetFullPath(item.Path);
         Line(Lang.F("$file: {0}", _file));
+    }
+
+    // "calc 1250 * 1.25 + 80": the result written, and kept in $calc ("insert budget.md bottom Total: $calc", "calc
+    // $calc / 12"); "calc" alone shows it. A calculation that fails leaves $calc as it was. See Calculator
+    private void Calc(string expression)
+    {
+        if (expression.Trim().Length == 0)
+        {
+            if (ShellRegisters.Calc is { } last) Line(Lang.F("$calc: {0}", last));
+            else Error(Lang.T("Give a calculation: calc 2 + 3 * 4"));
+            return;
+        }
+
+        var (result, error) = Calculator.Calculate(expression);
+        if (result == null)
+        {
+            Error(error ?? string.Empty);
+            return;
+        }
+
+        ShellRegisters.Calc = result;
+        Line(result);
     }
 
     // "echo $file", "echo Tidied on $date": the text written as typed, with the $names put in ("$$": a "$"), a value
@@ -570,6 +599,9 @@ internal sealed partial class ShellSession
                 break;
             case "echo":
                 Echo(argument);
+                break;
+            case "calc":
+                Calc(argument);
                 break;
             case "again":
                 ListAgain(argument);
