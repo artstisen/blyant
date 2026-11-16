@@ -2650,7 +2650,7 @@ public class ShellTests : IDisposable
     private void FourFavorites()
     {
         foreach (var name in new[] { "a.md", "b.md", "c.md", "d.md" }) File.WriteAllText(In("work", name), "x\n");
-        Run("fav add a.md\nfav add b.md\nfav add c.md\nfav add d.md\n");
+        Run("fav add a.md bottom\nfav add b.md bottom\nfav add c.md bottom\nfav add d.md bottom\n");
     }
 
     [Fact]
@@ -2725,10 +2725,12 @@ public class ShellTests : IDisposable
         Assert.Contains(Lang.T("Nothing to put back: fav remove has removed nothing here"), errors);
         // fav remove 3 too; and only while the list is as the removal left it
         Run("fav add a.md\nfav\nfav remove 2\nfav undo\n", yes: true);
-        Assert.Equal("c.md|d.md|a.md", FavoritesShape());
-        errors = Run("fav\nfav remove 1\nfav add c.md\nfav undo\n", yes: true).Errors;
+        // (a.md added at the top)
+        Assert.Equal("a.md|c.md|d.md", FavoritesShape());
+        // (a.md removed, then b.md added: the list is not as the removal left it)
+        errors = Run("fav\nfav remove 1\nfav add b.md\nfav undo\n", yes: true).Errors;
         Assert.Contains(Lang.T("The favorites have changed since: nothing is put back"), errors);
-        Assert.Equal("d.md|a.md|c.md", FavoritesShape());
+        Assert.Equal("b.md|c.md|d.md", FavoritesShape());
     }
 
     [Fact]
@@ -3476,14 +3478,16 @@ public class ShellTests : IDisposable
     // ---- Favorites: a place to add at, names to move, a filter (1.5.3)
 
     [Fact]
-    public void FavAdd_WithAPlace_GoesThere_AndWithoutOne_AtTheBottom()
+    public void FavAdd_WithAPlace_GoesThere_AndWithoutOne_AtTheTop()
     {
         FourFavorites();
         foreach (var name in new[] { "e.md", "f.md", "g.md", "h.md" }) File.WriteAllText(In("work", name), "x\n");
+        File.WriteAllText(In("work", "i.md"), "x\n");
         var (output, errors, _, _) = Run("fav folder Drafts\nfav add e.md top\nfav add f.md [Drafts]\nfav add g.md 2\n" +
-                                         "fav add h.md\n");
+                                         "fav add h.md\nfav add i.md bottom\n");
         Assert.Equal(string.Empty, errors);
-        Assert.Equal("e.md|g.md|a.md|b.md|c.md|d.md|[Drafts]|.f.md|h.md", FavoritesShape());
+        // h.md without a place: at the top; i.md at the bottom, after the folder
+        Assert.Equal("h.md|e.md|g.md|a.md|b.md|c.md|d.md|[Drafts]|.f.md|i.md", FavoritesShape());
         Assert.Contains(Lang.F("Added to the favorites: {0}", In("work", "f.md")) + "\n" + Lang.F("List: {0}", "main"),
             output);
     }
@@ -3508,7 +3512,7 @@ public class ShellTests : IDisposable
     {
         foreach (var name in new[] { "chapter-1.md", "chapter-2.md", "notes.md" }) File.WriteAllText(In("work", name), "x\n");
         Directory.CreateDirectory(In("work", "research"));
-        var (_, errors, _, _) = Run("fav add notes.md\nfav add chapter-1.md\nfav add research\nfav add chapter-2.md\n" +
+        var (_, errors, _, _) = Run("fav add notes.md bottom\nfav add chapter-1.md bottom\nfav add research bottom\nfav add chapter-2.md bottom\n" +
                                     "fav folder Book\nfav move chapter-*.md [Book]\nfav move NOTES.md bottom\n" +
                                     "fav move research/ top\n");
         Assert.Equal(string.Empty, errors);
@@ -3527,7 +3531,7 @@ public class ShellTests : IDisposable
         File.WriteAllText(In("work", "one", "README.md"), "x\n");
         File.WriteAllText(In("work", "two", "README.md"), "x\n");
         File.WriteAllText(In("work", "a.md"), "x\n");
-        var (_, errors, _, _) = Run("fav add a.md\nfav add one/README.md\nfav add two/README.md\nfav move readme.md top\n" +
+        var (_, errors, _, _) = Run("fav add a.md bottom\nfav add one/README.md bottom\nfav add two/README.md bottom\nfav move readme.md top\n" +
                                     "fav move two/README.md top\n");
         Assert.Contains(Lang.F("{0} favorites are named {1}: give the row ({2})", 2, "readme.md", "2, 3"), errors);
         Assert.Single(errors.TrimEnd('\n').Split('\n'));
@@ -3540,7 +3544,7 @@ public class ShellTests : IDisposable
     {
         foreach (var name in new[] { "plot.md", "draft-1.md", "notes.md", "draft-2.typ" })
             File.WriteAllText(In("work", name), "x\n");
-        Run("fav add plot.md\nfav add draft-1.md\nfav add notes.md\nfav add draft-2.typ\nfav folder Drafts\n" +
+        Run("fav add plot.md bottom\nfav add draft-1.md bottom\nfav add notes.md bottom\nfav add draft-2.typ bottom\nfav folder Drafts\n" +
             "fav subfolder [Drafts] Old\nfav move 4 [Drafts/Old]\n");
         var (output, errors, _, session) = Run("fav filter DRAFT\n");
         Assert.Equal(string.Empty, errors);
@@ -3561,7 +3565,7 @@ public class ShellTests : IDisposable
     public void Tab_AfterFavMove_TheNamesOfTheFavorites_AlsoFromAPattern_AndAfterFavAdd_ThePlaces()
     {
         foreach (var name in new[] { "chapter-1.md", "chapter-2.md", "my notes.md" }) File.WriteAllText(In("work", name), "x\n");
-        Run("fav add chapter-1.md\nfav add chapter-2.md\nfav add \"my notes.md\"\nfav folder Drafts\n");
+        Run("fav add chapter-1.md bottom\nfav add chapter-2.md bottom\nfav add \"my notes.md\" bottom\nfav folder Drafts\n");
         Assert.Equal("fav move chapter-1.md", Tab(Completion(), "fav move ch"));
         Assert.Equal("fav move chapter-2.md", Tab(Completion(), "fav move *2*"));
         Assert.Equal("fav move \"my notes.md\"", Tab(Completion(), "fav move my"));
@@ -3904,7 +3908,7 @@ public class ShellTests : IDisposable
         File.WriteAllText(In("work", "notes.md"), "y\n");
         // (a file system that takes them as one name, as macOS usually does: nothing to tell apart)
         if (Directory.GetFiles(In("work"), "*otes.md").Length < 2) return;
-        var (_, errors, _, _) = Run("fav add Notes.md\nfav add notes.md\nfav move notes.md top\nfav move ./notes.md top\n");
+        var (_, errors, _, _) = Run("fav add Notes.md bottom\nfav add notes.md bottom\nfav move notes.md top\nfav move ./notes.md top\n");
         Assert.Contains(Lang.F("{0} favorites are named {1}: give the row ({2})", 2, "notes.md", "1, 2"), errors);
         Assert.Single(errors.TrimEnd('\n').Split('\n'));
         FileFavorites.Load();
@@ -4529,5 +4533,18 @@ public class ShellTests : IDisposable
         Assert.Null(session.WorkedFile);
         Assert.Equal("file plot.md", Tab(Completion(), "file plo"));
         Assert.Contains("file [file|n]", Run("help file\n").Output);
+    }
+
+    // ---- Favorites added at the top
+
+    [Fact]
+    public void FavAdd_WithoutAPlace_GoesToTheTop_OutsideTheFolders()
+    {
+        FourFavorites();
+        File.WriteAllText(In("work", "new.md"), "x\n");
+        Run("fav folder F\nfav move 1 [F]\nfav add new.md\n");
+        Assert.Equal("new.md|b.md|c.md|d.md|[F]|.a.md", FavoritesShape());
+        // Row 1 in fav, to be moved where it belongs
+        Assert.Contains(Lang.F("List: {0}", "main") + "\n  1  new.md\n", Run("fav\n").Output);
     }
 }

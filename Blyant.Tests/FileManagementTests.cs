@@ -385,9 +385,9 @@ public class FileManagementTests : IDisposable
     {
         var a = MakeFile("a", "a.txt");
         var b = MakeFile("b", "b.txt");
-        Assert.True(FileFavorites.Toggle(a));
-        Assert.True(FileFavorites.Toggle(b));
-        Assert.True(FileFavorites.Toggle(_root));
+        Assert.True(FileFavorites.Toggle(a, int.MaxValue));
+        Assert.True(FileFavorites.Toggle(b, int.MaxValue));
+        Assert.True(FileFavorites.Toggle(_root, int.MaxValue));
         Assert.True(FileFavorites.Contains(a));
         FileFavorites.SetColor(1, ConsoleColor.Yellow);
         Assert.True(FileFavorites.Move(2, true));
@@ -402,7 +402,7 @@ public class FileManagementTests : IDisposable
         Assert.Equal(new ConsoleColor?[] { null, null, ConsoleColor.Yellow }, FileFavorites.Items.Select(f => f.Color));
 
         // Toggling again removes it
-        Assert.False(FileFavorites.Toggle(a));
+        Assert.False(FileFavorites.Toggle(a, int.MaxValue));
         Assert.False(FileFavorites.Contains(a));
         FileFavorites.RemoveAt(0);
         Assert.Equal(new[] { b }, FileFavorites.Items.Select(f => f.Path));
@@ -463,9 +463,9 @@ public class FileManagementTests : IDisposable
     {
         var file = MakeFile("a", "dir", "a.txt");
         var other = MakeFile("b", "b.txt");
-        FileFavorites.Toggle(file);
-        FileFavorites.Toggle(In("dir"));
-        FileFavorites.Toggle(other);
+        FileFavorites.Toggle(file, int.MaxValue);
+        FileFavorites.Toggle(In("dir"), int.MaxValue);
+        FileFavorites.Toggle(other, int.MaxValue);
 
         // The directory is renamed: the directory and the file in it follow
         Assert.True(FileFavorites.PathChanged(In("dir"), In("new")));
@@ -560,7 +560,7 @@ public class FileManagementTests : IDisposable
         // The files of the favorites are found whether they are in a folder or not
         FileFavorites.Parse("\t[One]\n \t/x/b\n");
         Assert.True(FileFavorites.Contains("/x/b"));
-        Assert.False(FileFavorites.Toggle("/x/b"));
+        Assert.False(FileFavorites.Toggle("/x/b", int.MaxValue));
         Assert.Equal("[One]", Show());
     }
 
@@ -652,7 +652,7 @@ public class FileManagementTests : IDisposable
         Assert.Equal("[F] d", Show());
         // A favorite that is in the list again is not added twice
         FileFavorites.RemoveAt(Find("d"));
-        FileFavorites.Toggle("/x/d");
+        FileFavorites.Toggle("/x/d", int.MaxValue);
         Assert.Equal(-1, FileFavorites.UndoRemove());
         Assert.Equal("[F] d", Show());
     }
@@ -714,4 +714,19 @@ public class FileManagementTests : IDisposable
     }
 
     #endregion
+
+    [Fact]
+    public void Favorites_AFileAdded_GoesToTheTop_AndSeveralKeepTheirOrder()
+    {
+        FileFavorites.Load();
+        foreach (var item in FileFavorites.Items.ToList()) FileFavorites.Toggle(item.Path);
+        Assert.True(FileFavorites.Toggle("/x/old", int.MaxValue));
+        Assert.True(FileFavorites.Toggle("/x/new"));
+        Assert.Equal(Path.GetFullPath("/x/new"), FileFavorites.Items[0].Path);
+        // Several, as the file browser adds the marked files: at the top, in their order
+        Assert.True(FileFavorites.Toggle("/x/a", 0));
+        Assert.True(FileFavorites.Toggle("/x/b", 1));
+        Assert.Equal(new[] { "/x/a", "/x/b", "/x/new", "/x/old" }.Select(Path.GetFullPath),
+            FileFavorites.Items.Select(item => item.Path));
+    }
 }

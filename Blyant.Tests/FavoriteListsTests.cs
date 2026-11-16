@@ -37,7 +37,7 @@ public class FavoriteListsTests : IDisposable
     {
         Assert.Equal(DialogText.Success, FileFavorites.NewList(name));
         FileFavorites.UseList(name);
-        foreach (var file in files) FileFavorites.Toggle(In(file));
+        foreach (var file in files) FileFavorites.Toggle(In(file), int.MaxValue);
         Assert.Equal(DialogText.Success, FileFavorites.Save());
     }
 
@@ -51,7 +51,7 @@ public class FavoriteListsTests : IDisposable
     [Fact]
     public void AList_IsAFileOfItsOwn_AndOneIsOpen()
     {
-        FileFavorites.Toggle(In("main.md"));
+        FileFavorites.Toggle(In("main.md"), int.MaxValue);
         FileFavorites.Save();
         MakeList("Work", "report.md");
         Assert.Equal(Path.Combine(_directory, "favorites", "Work.txt"), FileFavorites.FilePath);
@@ -132,7 +132,7 @@ public class FavoriteListsTests : IDisposable
     [Fact]
     public void DeletingTheOpenList_OpensTheMainList()
     {
-        FileFavorites.Toggle(In("main.md"));
+        FileFavorites.Toggle(In("main.md"), int.MaxValue);
         FileFavorites.Save();
         MakeList("Work", "report.md");
         Assert.Equal(DialogText.Success, FileFavorites.DeleteList("Work", out _));
@@ -153,7 +153,7 @@ public class FavoriteListsTests : IDisposable
     [Fact]
     public void ARenamedFile_IsFollowedInAllTheLists()
     {
-        FileFavorites.Toggle(In("draft.md"));
+        FileFavorites.Toggle(In("draft.md"), int.MaxValue);
         FileFavorites.Save();
         MakeList("Work", "draft.md", "report.md");
         MakeList("Home", "other.md");
@@ -186,7 +186,7 @@ public class FavoriteListsTests : IDisposable
     {
         MakeList("Work", "a.md", "b.md", "c.md");
         FileFavorites.UseList(string.Empty);
-        FileFavorites.Toggle(In("b.md"));
+        FileFavorites.Toggle(In("b.md"), int.MaxValue);
         // All of them, also when the first has changed something
         Assert.True(FileFavorites.PathsChanged(new[] { (In("b.md"), In("x.md")), (In("c.md"), In("y.md")), (In("a.md"), In("z.md")) }));
         Assert.Equal("x.md", Names());
@@ -198,7 +198,7 @@ public class FavoriteListsTests : IDisposable
     [Fact]
     public void WhatIsSaved_NeverGoesToAListItWasNotReadFrom()
     {
-        FileFavorites.Toggle(In("main.md"));
+        FileFavorites.Toggle(In("main.md"), int.MaxValue);
         FileFavorites.Save();
         MakeList("Work", "report.md");
         // The setting changes the list that is open (the settings read again, or reset)
@@ -249,7 +249,7 @@ public class FavoriteListsTests : IDisposable
     [Fact]
     public void ThePreview_ShowsWhatIsInAList_AndLeavesTheOpenListAlone()
     {
-        FileFavorites.Toggle(In("main.md"));
+        FileFavorites.Toggle(In("main.md"), int.MaxValue);
         FileFavorites.Save();
         MakeList("Work", "report.md");
         FileFavorites.UseList(string.Empty);

@@ -1427,9 +1427,11 @@ internal static partial class FileExplorer
             // All become favorites, or none if they all are
             var add = !items.All(item => FileFavorites.Contains(item.Path));
             if (!add && !ConfirmNotesRemoved(items.Select(item => item.Path))) return;
+            // (added at the top, in their order)
+            var at = 0;
             foreach (var item in items.Where(item => FileFavorites.Contains(item.Path) != add))
             {
-                FileFavorites.Toggle(item.Path);
+                FileFavorites.Toggle(item.Path, at++);
             }
 
             _message = add

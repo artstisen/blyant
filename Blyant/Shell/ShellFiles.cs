@@ -882,7 +882,7 @@ internal sealed partial class ShellSession
 
         // (added at the end, then moved as "fav move" moves it; put back as it was when the place is not there)
         var before = FileFavorites.Serialize();
-        if (!FileFavorites.Toggle(item.Path))
+        if (!FileFavorites.Toggle(item.Path, int.MaxValue))
         {
             Error(Lang.F("Not added to the favorites: {0}", item.Path));
             return;

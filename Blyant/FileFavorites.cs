@@ -394,10 +394,12 @@ internal static class FileFavorites
     }
 
     /// <summary>
-    /// Add a file or directory to the favorites, or remove it if it is one
+    /// Add a file or directory to the favorites, or remove it if it is one. It is added at the top of the list (outside
+    /// the folders), where it is found to be moved where it belongs, or at the place given (several added one after
+    /// another keep their order: 0, 1, 2 ...; int.MaxValue: at the end)
     /// </summary>
     /// <returns>True if it is a favorite now</returns>
-    internal static bool Toggle(string path)
+    internal static bool Toggle(string path, int at = 0)
     {
         var index = IndexOf(path);
         if (index >= 0)
@@ -409,7 +411,7 @@ internal static class FileFavorites
         // A path with a line break would break the lines of the file
         if (path.IndexOfAny(new[] { '\r', '\n' }) >= 0) return false;
 
-        List.Add(new Favorite { Path = Path.GetFullPath(path) });
+        List.Insert(Math.Clamp(at, 0, List.Count), new Favorite { Path = Path.GetFullPath(path) });
         return true;
     }
 

@@ -72,7 +72,7 @@ public class FavoriteFolderImportTests : IDisposable
     public void AFolder_IsAdded_WithItsSubfolders_AndAgainOnlyItsNewFiles()
     {
         // A favorite there already stays where it is
-        FileFavorites.Toggle(Path.Combine(_book, "b.txt"));
+        FileFavorites.Toggle(Path.Combine(_book, "b.txt"), int.MaxValue);
         var all = FileFavorites.ReadFolder(_book, true)!;
         var plan = FileFavorites.ImportFolder(all, false);
         Assert.Equal((6, 1, 1), (plan.Added, plan.Skipped, plan.NewFolders));

@@ -374,7 +374,7 @@ The files found are shown in a list with three columns, as the favorites: _Name_
 
 Files and directories you use often can be marked as favorites:
 
-- `P` or `:fav` Add the selected file or directory to the favorites, or remove it (one with a note: after asking). Favorites are marked with a `*`
+- `P` or `:fav` Add the selected file or directory to the favorites, or remove it (one with a note: after asking). Favorites are marked with a `*`. A favorite added goes to the top of the list, outside the folders, where it is found to be moved where it belongs; several marked files go to the top in their order. The same goes for `P` in the history and the search results, and `:favorite` in the editor
 - `F` or `:favorites` Show the list of favorites
 - `:list` in the favorites Show the [lists of favorites](#lists-of-favorites), to keep other favorites in another list
 

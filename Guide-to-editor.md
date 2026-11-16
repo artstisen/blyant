@@ -682,7 +682,7 @@ Commands:
   - One that is gone is told about, and the file opens alone
   - These are kept in `splits.txt` in the data directory, the newest first (at most 100), one on each line: the file, a tab character, the file beside it, a tab character, and the line and column in it (`14:1`); renaming or moving a file in the file browser is followed
 - `:splits` The files closed with another beside them, the newest first (`chapter-03.md  |  outline.md`), with their paths under the list: `Enter` opens the one selected (the file with the other beside it, as a jump: changes that are not saved are asked about first), `D` takes it out of the list (the files stay), and `/` filters. Also on the start page and in the file browser
-- `:favorite` (or `:fav`) Make the file being edited a favorite of the [file browser](Guide-to-start-page.md#favorites), or take it out of the favorites if it is one, as `P` in the file browser. It is saved at once
+- `:favorite` (or `:fav`) Make the file being edited a favorite of the [file browser](Guide-to-start-page.md#favorites), or take it out of the favorites if it is one, as `P` in the file browser (at the top of the list). It is saved at once
 - `:bookmark name` Bookmark the place of the cursor with a name to jump to it by: `:book name` jumps there from anywhere, as `:book 14` (upper and lower case alike, and `Tab` after `:book ` completes the names).
   - A name is used by one bookmark only: `:bookmark! name` moves the bookmark with the name here (keeping its number, folder and note), for a place that changes, as `:bookmark! now` at the end of a day's writing
   - A place that is bookmarked already gets the name

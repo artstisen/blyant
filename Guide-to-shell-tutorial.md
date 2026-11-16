@@ -366,10 +366,10 @@ blyant ~/novel> insert ideas.md bottom $clip
 The lists of the full screen are the lists of the shell:
 
 ```
-blyant ~/novel> fav add plot.md
-Added to the favorites: /home/anna/novel/plot.md
 blyant ~/novel> fav add chapters
 Added to the favorites: /home/anna/novel/chapters
+blyant ~/novel> fav add plot.md
+Added to the favorites: /home/anna/novel/plot.md
 blyant ~/novel> fav
 List: main
   1  plot.md
@@ -378,6 +378,7 @@ blyant ~/novel> hot add
 Added to the hotlist: /home/anna/novel
 ```
 
+- A favorite added goes to the top of the list, so the one added last is row 1
 - `fav` lists the favorites, `hist` the files you have opened (newest first), and `recent` the latest nine of them. `open 1`, `peek 1` and `cd 1` work on each of them
 - A favorite is marked with ` *` after its name in the other lists: `ls` now shows `plot.md *` and `chapters/ *`
 - They show the names. `info 1` tells where row 1 is, its size and dates, and the list stays, so `info 2` and `open 2` work after it. `fav -l` shows the full paths
