@@ -678,6 +678,8 @@ lines plot.md 3-5 > $notes          ">": the register is those lines alone
 - The registers are kept in the data directory (`registers.txt`), so they are there the next time. The file can be edited in another program: a line is the name, a tab, and the value. If the file changed since the shell read it, it is read again before the next command, and `reg` points out lines that are not registers (no tab, or a name a register cannot have): they are kept in the file, at its end, so you can put them right. The editor has separate registers. `reset` does not take them away (they are not settings), and the log has the names of registers, never the values
 
 ## Calculating
+![A word target worked out with calc, put in the outline, and a task made from $calc](docs/screenshots/shell-calc.svg)
+
 `calc` does simple calculations, and keeps the result in `$calc`, so it can be put in a file:
 
 ```

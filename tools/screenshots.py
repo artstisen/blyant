@@ -584,6 +584,12 @@ SCENES = [
                             'peek chapter-01.md /wound the clock<Enter>',
                             'change chapter-01.md +22 She wound the clock, then the lamp.<Enter>',
                             'undo<Enter>'], True),
+    # calc: a word target worked out, put in the outline, and a task made from it with $calc
+    ('shell-calc', 'Blyant: the shell, calculations kept in $calc and put in files',
+     {},
+     ['--shell', PROJECT], ['<wait>', 'calc 22 * 3500<Enter>', 'insert outline.md bottom Target: $calc words<Enter>',
+                            'calc $calc / 70<Enter>', 'insert todo.md +8 - [ ] Write $calc words a day<Enter>',
+                            'peek todo.md 3-9<Enter>'], True),
 ]
 
 
