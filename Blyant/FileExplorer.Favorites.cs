@@ -618,7 +618,7 @@ internal static partial class FileExplorer
         if (plan.Added == 0 && plan.Notes == 0)
         {
             _favoriteMessage = plan.Skipped == 0
-                ? Lang.T("Only bookmarks of pages: a favorite is a file or a directory")
+                ? Lang.T("All bookmarks are pages: favorites are files or directories")
                 : Lang.T("All the bookmarks are favorites already");
             return;
         }
@@ -631,7 +631,7 @@ internal static partial class FileExplorer
         if (plan.MergedFolders > 0) sentences.Add(Lang.F("Added to folders of the same name: {0}.", plan.MergedFolders));
         if (plan.Skipped > 0) sentences.Add(Lang.F("Favorites already, left out: {0}.", plan.Skipped));
         if (plan.LeftOut > 0) sentences.Add(Lang.F("Bookmarks of pages left out: {0}.", plan.LeftOut));
-        if (plan.Notes > 0) sentences.Add(Lang.F("Notes copied: {0} (a note a favorite has is kept).", plan.Notes));
+        if (plan.Notes > 0) sentences.Add(Lang.F("Notes copied: {0} (existing notes are kept).", plan.Notes));
         // A favorite shows the name of its file
         if (bookmarks.Any(bookmark => !bookmark.IsFolder && bookmark.Name.Length > 0 &&
                                       bookmark.Target.Kind is JumpKind.File or JumpKind.Directory &&
@@ -714,8 +714,8 @@ internal static partial class FileExplorer
                     return;
                 }
 
-                if (!ChoiceBox.Confirm(DialogText.CaptionsFavorites, Lang.T("Add only its own files?"),
-                        Lang.F("Files in {0}: {1}. With its subfolders: more than {2} (too many to add).", name,
+                if (!ChoiceBox.Confirm(DialogText.CaptionsFavorites, Lang.T("Add only those files?"),
+                        Lang.F("Files in {0}: {1}. With subfolders: more than {2} (too many to add).", name,
                             own.Count, FileFavorites.FolderImportMax), false))
                 {
                     return;
@@ -725,8 +725,8 @@ internal static partial class FileExplorer
             {
                 // (the counts after a colon: no plural that must agree with the number, in any language)
                 var picked = ChoiceBox.Pick(DialogText.CaptionsFavorites,
-                    Lang.T("Include the files of its subfolders?"),
-                    Lang.F("Files in {0}: {1}. With its subfolders: {2}.", name, own.Count, all.Count),
+                    Lang.T("Include files in subfolders?"),
+                    Lang.F("Files in {0}: {1}. With subfolders: {2}.", name, own.Count, all.Count),
                     new[] { DialogText.ChoiceYes, DialogText.ChoiceNo }, new[] { "Y", "N" }, 0, false);
                 if (picked < 0) return;
                 if (picked == 0) files = all;
@@ -753,13 +753,13 @@ internal static partial class FileExplorer
         {
             plan.NewFolders > 0
                 ? Lang.F("New folder: {0}, at the end of the list.", name)
-                : Lang.F("Added to the folder there: {0}.", name)
+                : Lang.F("Added to existing folder: {0}.", name)
         };
         if (plan.Skipped > 0) sentences.Add(Lang.F("Favorites already, left out: {0}.", plan.Skipped));
         if (files.Other > 0) sentences.Add(Lang.F("Other kinds, left out: {0}.", files.Other));
         if (plan.LeftOut > 0) sentences.Add(Lang.F("Left out, with a line break in the name: {0}.", plan.LeftOut));
         if (files.Unreadable > 0) sentences.Add(Lang.F("Unreadable directories: {0}", files.Unreadable) + ".");
-        if (plan.Added > 500) sentences.Add(Lang.T("That is many favorites."));
+        if (plan.Added > 500) sentences.Add(Lang.T("Many favorites at once."));
         ChoiceBox.Forget();
         if (!ChoiceBox.Confirm(DialogText.CaptionsFavorites, Lang.F("Add files to favorites ({0})?", plan.Added),
                 string.Join(" ", sentences), false))
@@ -1140,7 +1140,7 @@ internal static partial class FileExplorer
                         ? Lang.T("Remove the marked favorite from the list?")
                         : DialogText.FavoriteRemoveMany(count),
                     Lang.T("The files stay where they are.") +
-                    (notes > 0 ? " " + Lang.T("Their notes are removed with them.") : ""),
+                    (notes > 0 ? " " + Lang.T("Any notes are removed too.") : ""),
                     false))
             {
                 return;
@@ -1161,14 +1161,14 @@ internal static partial class FileExplorer
             var count = FileFavorites.FolderCount(number);
             var subfolders = FileFavorites.SubfolderCount(number);
             var note = subfolders > 0
-                ? Lang.F("Removed from the list with it (the files stay), favorites: {0}, subfolders: {1}.",
+                ? Lang.F("Removed with the folder (the files stay), favorites: {0}, subfolders: {1}.",
                     count, subfolders)
                 : count == 0
                     ? Lang.T("The folder is empty.")
                     : count == 1
                         ? Lang.T("The favorite in it is removed from the list too (the file stays).")
                         : Lang.F("The favorites in it are removed from the list too (the files stay): {0}.", count);
-            if (item.Note.Length > 0) note += " " + Lang.T("Its note is removed with it.");
+            if (item.Note.Length > 0) note += " " + Lang.T("The note is removed too.");
             if (!ChoiceBox.Confirm(item.Level > 0 ? Lang.T("Remove subfolder") : DialogText.FavoriteDeleteFolder,
                     Lang.F("Remove \"{0}\" from the favorites?", Tools.TruncateString(item.Name, 40, true)), note,
                     false))
@@ -1186,7 +1186,7 @@ internal static partial class FileExplorer
         if (!ChoiceBox.Confirm(Lang.T("Remove favorite"),
                 Lang.F("Remove \"{0}\" from the favorites?", Tools.TruncateString(FavoriteName(item.Path), 40, true)),
                 Lang.T("The file stays where it is.") +
-                (item.Note.Length > 0 ? " " + Lang.T("Its note is removed with it.") : ""),
+                (item.Note.Length > 0 ? " " + Lang.T("The note is removed too.") : ""),
                 false))
         {
             return;

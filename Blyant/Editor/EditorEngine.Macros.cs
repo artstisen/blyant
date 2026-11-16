@@ -168,7 +168,7 @@ internal sealed partial class EditorEngine
     // Play a macro; the message about why it stopped, or empty
     private string PlayMacroSteps(string name, int times)
     {
-        if (_macroDepth >= MaxMacroDepth) return Lang.T("Macros play other macros too deep");
+        if (_macroDepth >= MaxMacroDepth) return Lang.T("Macros nest too deeply");
         var first = _macroDepth == 0;
         if (first) _macroCache.Clear();
         var steps = MacroSteps(name, out var error);
@@ -190,11 +190,11 @@ internal sealed partial class EditorEngine
             for (var time = 0; time < times; time++)
             {
                 // Each time a macro is played counts too (also one without steps)
-                if (--_macroKeysLeft < 0) return Lang.T("The macro is stopped: it has too many steps");
+                if (--_macroKeysLeft < 0) return Lang.T("Macro stopped: too many steps");
                 foreach (var step in steps)
                 {
                     // Each step counts (also one that plays another macro, or one without keys)
-                    if (--_macroKeysLeft < 0) return Lang.T("The macro is stopped: it has too many steps");
+                    if (--_macroKeysLeft < 0) return Lang.T("Macro stopped: too many steps");
                     if (step.Play != null)
                     {
                         var inner = PlayMacroSteps(step.Play, step.Times);
@@ -204,12 +204,12 @@ internal sealed partial class EditorEngine
 
                     foreach (var key in step.Keys)
                     {
-                        if (--_macroKeysLeft < 0) return Lang.T("The macro is stopped: it has too many steps");
+                        if (--_macroKeysLeft < 0) return Lang.T("Macro stopped: too many steps");
                         var request = HandleKey(key);
                         if (request != EditorRequest.None && !IsSideEffect(request))
                         {
                             // Saving, closing, leaving the text or opening a box is not done in a macro
-                            return Lang.F("Line {0} of the macro is not done in a macro: {1}", step.Line,
+                            return Lang.F("Line {0} of the macro cannot run in a macro: {1}", step.Line,
                                 MacroLanguage.FormatKey(key) ?? string.Empty);
                         }
 

@@ -209,7 +209,7 @@ internal sealed partial class EditorEngine
     {
         if (IsPlayingMacro)
         {
-            SetError(Lang.T("Words are not added to the word list by a macro"));
+            SetError(Lang.T("A macro cannot add words to the word list"));
             return;
         }
 

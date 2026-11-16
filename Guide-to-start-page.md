@@ -72,7 +72,7 @@ _Open project_ lists the projects, in alphabetical order. When two projects have
 
 - `P` (`:new`) makes a **new project**, in a folder you pick in the file browser
 - `A` (`:add`) **adds** a folder you pick in the file browser. A folder that is a project already is not added
-- `D` (`:remove`) takes a project **off the list**, after asking. The folder and its files stay as they are
+- `D` (`:remove`) takes a project **off the list**, after asking. The folder and files stay as they are
 
 A project is worked on in the file browser: `N` makes a file in it (a Markdown file when the name has no extension), `A` a folder, and `Enter` opens a file in the editor.
 

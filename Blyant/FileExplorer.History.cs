@@ -491,7 +491,7 @@ internal static partial class FileExplorer
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.HeaderColor);
         Console.Write(Tools.TruncateString(FileHistory.Items.Count == 0
             ? DialogText.HistoryEmpty
-            : Lang.F("Files opened from the file browser, the last opened first (at most {0})",
+            : Lang.F("Files opened from the file browser, last opened first (at most {0})",
                 FileHistory.MaxCount), Init.LineWidth - 2, true));
         Tools.SetCursorEx(2, 0);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);

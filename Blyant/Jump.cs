@@ -600,7 +600,7 @@ internal static class Jump
         if (PagesBelow.Any(hasChanges => hasChanges()))
         {
             ChoiceBox.Message(DialogText.Exit, Lang.T("A page below this one has changes that are not saved"),
-                Lang.T("Close this page, and save or discard them there first."));
+                Lang.T("Close this page, then save or discard changes there."));
             return;
         }
 
@@ -635,7 +635,7 @@ internal static class Jump
         {
             ChoiceBox.Forget();
             ChoiceBox.Message(DialogText.CaptionsJump, Lang.T("A page below this one has changes that are not saved"),
-                Lang.T("Close this page, and save or discard them there first."));
+                Lang.T("Close this page, then save or discard changes there."));
             return false;
         }
 

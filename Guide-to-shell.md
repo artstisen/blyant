@@ -114,7 +114,7 @@ To get all output at once (with a screen reader, say), turn the pages off: `set 
 | `reload` | Read the settings file and the registers again, after you have edited them in another program (see [Text and settings](#text-and-settings)) |
 | `reg [name [text\|.\|#n]]` | Keep a text or a path in a register, show one, or list them (see [Registers](#registers)) |
 | `reg name = text`, `reg name += text` | Keep a text in a register (as `reg name text`), or add it at the end, as lines (`reg notes += $peek`) |
-| `reg -d name\|all` | Take a register away, or all of them |
+| `reg -d name\|all` | Take away one register, or all |
 | `echo text` | Write a text with the `$names` put in: `echo $file`, `echo $pwd $date`, `echo $peek` (all the lines). Use it to see a value, or what a command will get (`echo insert $file bottom $date Done`; a command that takes paths gets a value with blanks in quotes). See [Registers](#registers) |
 | `file [file\|n]` | Make a file from a list `$file` without opening or peeking it: `recent`, then `file 2`; or name the file (`file plot.md`). The last list stays, so `file 3` or `open 4` still use it. `file` alone shows `$file`. See [Registers](#registers) |
 | `clip [path\|name] file\|dir\|n\|.` | Copy the full path of a file or directory (`clip 3`: row 3 of the last list; `clip .`: the directory you are in), or its name, to the clipboard (see [Clipboard](#clipboard)) |
@@ -126,7 +126,7 @@ To get all output at once (with a screen reader, say), turn the pages off: `set 
 | `favorites [-l] [list]` (`fav`) | List the favorites of the file browser by name, with their folders as headings (`-l`: the full paths); `fav work` uses the list _work_ from now on, as `:list work` does, and `fav main` the main list again. The open list is named first (`List: main`) |
 | `favorites lists` | List the lists of favorites, with `*` at the open one |
 | `favorites new\|delete name` | Make a list and open it (`fav new reading`), or delete one: after asking, to the trash (the files in it stay where they are; deleting the open list opens the main list) |
-| `favorites rename name new` | Give a list a new name (`fav rename work writing`). The main list keeps its name |
+| `favorites rename name new` | Give a list a new name (`fav rename work writing`). The main list cannot be renamed |
 | `favorites use name` | Open a list whose name is also a word of the `fav` command (`fav use new` for a list named _new_) |
 | `favorites folder name` | Make a folder of favorites, last in the list (`fav folder Drafts`). See [Folders of favorites](#folders-of-favorites) |
 | `favorites subfolder [folder] name` | Make a subfolder, first in a folder (`fav subfolder [Writing] Drafts`) |

@@ -226,7 +226,7 @@ internal static class ProjectsBox
         ChoiceBox.Forget();
         if (!ChoiceBox.ConfirmGuarded(Lang.T("Remove from the projects"),
                 Lang.F("Take \"{0}\" off the list of projects?", Tools.TruncateString(project.Name, 40, true)),
-                Lang.T("The folder and its files stay as they are")))
+                Lang.T("The folder and files stay as they are")))
         {
             return false;
         }

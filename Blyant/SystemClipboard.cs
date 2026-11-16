@@ -139,8 +139,8 @@ internal static class SystemClipboard
         if (tooLong)
         {
             return PasteBin
-                ? (Lang.T("Copied to the paste bin (too long for the clipboard of the terminal)"), false)
-                : (Lang.F("Too long for the clipboard of the terminal (more than {0} KB): not copied",
+                ? (Lang.T("Copied to the paste bin (too long for the terminal's clipboard)"), false)
+                : (Lang.F("Too long for the terminal's clipboard (over {0} KB): not copied",
                     MaxOsc52Bytes / 1000), true);
         }
 

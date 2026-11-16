@@ -43,7 +43,7 @@ internal sealed partial class EditorEngine
 
         if (Marks.Get(back ? TextMarks.Back : name) is not { } at)
         {
-            SetError(back ? Lang.T("No jump to go back from yet") : Lang.F("Mark {0} is not set (m{0} sets it)", name));
+            SetError(back ? Lang.T("No jump made yet") : Lang.F("Mark {0} is not set (m{0} sets it)", name));
             return;
         }
 

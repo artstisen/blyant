@@ -456,7 +456,7 @@ internal sealed partial class ShellSession
             // On the error output, as it is not what the command shows: and when nothing is done, the command failed
             var answer = _yes && choices.Count > 0 ? 0 : -1;
             Asked(Question(caption, question), note, answer == 0
-                ? Lang.F("(not asked: {0}, as --yes tells)", choices[0])
+                ? Lang.F("(not asked: {0}, --yes given)", choices[0])
                 : Lang.T("(not asked: the commands are not typed, so nothing is done)"), answer < 0);
             return answer;
         }

@@ -19,7 +19,7 @@ internal static partial class QuickGuide
         (Kind.Item, Lang.T("Bookmarks"), Lang.T("Places kept with B, or :bookmark in the editor")),
         (Kind.Item, Lang.T("Recent"), Lang.T("The places jumped to, the latest first (jump.txt)")),
         (Kind.Item, Lang.T("Projects"), Lang.T("The projects: Enter shows one in the file browser")),
-        (Kind.Item, DialogText.HelpSectionFiles, Lang.T("Its lists: History, Favorites, Hotlist")),
+        (Kind.Item, DialogText.HelpSectionFiles, Lang.T("Lists: History, Favorites, Hotlist")),
         (Kind.Item, DialogText.ApplicationName, Lang.T("The pages of Blyant: settings, color schemes, logos, help")),
         (Kind.Text, "", ""),
         (Kind.Heading, "", Lang.T("Keys")),
@@ -39,10 +39,10 @@ internal static partial class QuickGuide
         (Kind.Item, "S", Lang.T("Bookmarks: new subfolder in the folder")),
         (Kind.Item, "W", Lang.T("Bookmarks: new file, bookmarked below, opened")),
         (Kind.Item, "N", Lang.T("Bookmarks: write the note of the bookmark")),
-        (Kind.Item, "C", Lang.T("Bookmarks: text color (used before a favorite's)")),
+        (Kind.Item, "C", Lang.T("Bookmarks: text color (overrides favorite color)")),
         (Kind.Item, ":path  :name", Lang.T("Copy the path/the name of the file (all tabs)")),
         (Kind.Text, "", ""),
-        (Kind.Text, "", Lang.T("There is more: press ? here or on the page to see all its keys."))
+        (Kind.Text, "", Lang.T("There is more: press ? here or on the page to see all keys."))
     };
 
     private static List<(Kind Kind, string Key, string Text)> FilesGuide() => new()
@@ -82,7 +82,7 @@ internal static partial class QuickGuide
         (Kind.Item, "S", Lang.T("Search for files by name and by text")),
         (Kind.Item, "Esc", Lang.T("Close the file browser")),
         (Kind.Text, "", ""),
-        (Kind.Text, "", Lang.T("There is more: press ? here or on the page to see all its keys."))
+        (Kind.Text, "", Lang.T("There is more: press ? here or on the page to see all keys."))
     };
 
     private static List<(Kind Kind, string Key, string Text)> EditorGuide() => new()
@@ -136,7 +136,7 @@ internal static partial class QuickGuide
         (Kind.Item, "gf", Lang.T("Open the file named at the cursor (or selected)")),
         (Kind.Item, ":split  Tab", Lang.T("Two panes on/off (Tab: go to the other)")),
         (Kind.Text, "", ""),
-        (Kind.Text, "", Lang.T("There is more: press ? here, or type :help in the editor, to see all its keys."))
+        (Kind.Text, "", Lang.T("There is more: press ? here, or type :help in the editor, to see all keys."))
     };
 
     private static List<(Kind Kind, string Key, string Text)> ProjectsGuide() => new()
@@ -145,7 +145,7 @@ internal static partial class QuickGuide
         (Kind.Text, "", ""),
         (Kind.Text, "", Lang.T("A project is a folder with the files of a piece of writing in it: the chapters of a " +
                                "book, the parts of an article, notes and drafts. You pick where each new project " +
-                               "goes, and a folder you have already can be added to the projects.")),
+                               "goes, and an existing folder can be added to the projects.")),
         (Kind.Text, "", ""),
         (Kind.Heading, "", Lang.T("On the start page")),
         (Kind.Item, "P  :project", Lang.T("New project, in a folder you pick")),
@@ -166,7 +166,7 @@ internal static partial class QuickGuide
         (Kind.Item, ":home", Lang.T("Go to the home directory")),
         (Kind.Item, ":bookmark", Lang.T("Bookmark the selected file or directory (Jump menu)")),
         (Kind.Text, "", ""),
-        (Kind.Text, "", Lang.T("There is more: press ? here or on the page to see all its keys."))
+        (Kind.Text, "", Lang.T("There is more: press ? here or on the page to see all keys."))
     };
 
     private static List<(Kind Kind, string Key, string Text)> BoardGuide() => new()
@@ -175,8 +175,8 @@ internal static partial class QuickGuide
         (Kind.Text, "", ""),
         (Kind.Text, "", Lang.T("The corkboard shows your files, folders and notes as cards, placed where you want " +
                                "them: a card for each chapter of a book, with notes of what to write. Color them, " +
-                               "and group them with dividers, lines and frames. Each project has a board of its " +
-                               "own, and the files stay where they are.")),
+                               "and group them with dividers, lines and frames. Each project has a separate " +
+                               "board, and the files stay where they are.")),
         (Kind.Text, "", ""),
         (Kind.Heading, "", Lang.T("Opening it")),
         (Kind.Item, ":board", Lang.T("The corkboard: files pinned as cards")),
@@ -186,14 +186,14 @@ internal static partial class QuickGuide
         (Kind.Heading, "", Lang.T("Cards")),
         (Kind.Item, "N", Lang.T("Pin a file, picked in the file browser")),
         (Kind.Item, "F", Lang.T("Pin a folder, picked in the file browser")),
-        (Kind.Item, "A", Lang.T("A note card: its text written in the editor")),
-        (Kind.Item, "W", Lang.T("Note to a file: its text written to a new file")),
+        (Kind.Item, "A", Lang.T("A note card, written in the editor")),
+        (Kind.Item, "W", Lang.T("Note to a file: the text goes to a new file")),
         (Kind.Item, "Enter", Lang.T("Open the card's file or folder (a note: edit it)")),
         (Kind.Item, "C  X", Lang.T("Color/Title of the card")),
         (Kind.Item, "D  u", Lang.T("Remove the card (the file stays)/Put it back")),
         (Kind.Text, "", ""),
         (Kind.Heading, "", Lang.T("Moving around")),
-        (Kind.Item, "h  j  k  l", Lang.T("Select the next card that way (its row/column first)")),
+        (Kind.Item, "h  j  k  l", Lang.T("Select next card that way (same row/column first)")),
         (Kind.Item, "12  Enter", Lang.T("Select card 12")),
         (Kind.Item, "V", Lang.T("Move the card (hjkl, HJKL: 5 steps; Esc: done)")),
         (Kind.Item, "Space", Lang.T("Mark/Unmark: V C T E D work on all marked")),
@@ -205,6 +205,6 @@ internal static partial class QuickGuide
         (Kind.Item, ":arrange name", Lang.T("Cards in rows by number, name or color")),
         (Kind.Item, ":list", Lang.T("Boards: open, add, rename, delete")),
         (Kind.Text, "", ""),
-        (Kind.Text, "", Lang.T("There is more: press ? here or on the page to see all its keys."))
+        (Kind.Text, "", Lang.T("There is more: press ? here or on the page to see all keys."))
     };
 }

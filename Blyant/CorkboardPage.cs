@@ -852,7 +852,7 @@ internal static class CorkboardPage
         if (card == null) return;
         if (card.IsBadge)
         {
-            _message = Lang.T("A badge has no title: Enter writes its note");
+            _message = Lang.T("A badge has no title: Enter writes the note");
             return;
         }
 
@@ -945,7 +945,7 @@ internal static class CorkboardPage
                 _message = Lang.F("Put back: {0}", Corkboard.UndoneCard!.Name);
                 break;
             case Corkboard.Undone.Places:
-                _message = Lang.T("The cards are back in their places");
+                _message = Lang.T("Cards are back where they were");
                 break;
             case Corkboard.Undone.Note:
                 Select(Corkboard.UndoneCard!);
@@ -1254,13 +1254,13 @@ internal static class CorkboardPage
         ChoiceBox.Forget();
         if (name.Length == 0)
         {
-            ChoiceBox.Message(Lang.T("Rename board"), Lang.T("The main board keeps its name"), string.Empty);
+            ChoiceBox.Message(Lang.T("Rename board"), Lang.T("Main board cannot be renamed"), string.Empty);
             return PickListBox.KeyUse.Used;
         }
 
         if (Corkboard.IsProjectBoard(name))
         {
-            ChoiceBox.Message(Lang.T("Rename board"), Lang.T("The board of a project has the name of its folder"),
+            ChoiceBox.Message(Lang.T("Rename board"), Lang.T("A project board is named after the project folder"),
                 string.Empty);
             return PickListBox.KeyUse.Used;
         }

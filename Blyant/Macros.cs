@@ -544,7 +544,7 @@ internal static class MacroFiles
     {
         if (name.Length == 0 || name != name.Trim() || name.Length > 60) return DialogText.InvalidFileName;
         // ":play copy 2" plays "copy" twice
-        if (Regex.IsMatch(name, @"\s\d+$")) return Lang.T("A name of a macro cannot end with a number");
+        if (Regex.IsMatch(name, @"\s\d+$")) return Lang.T("A macro name cannot end with a number");
         return Tools.FileNameProblem(name);
     }
 
@@ -778,7 +778,7 @@ internal static class MacroBoxes
                     NoWrap = true,
                     SaveText = save,
                     Hint = Lang.T("Edit the macro: :w saves it (checked first), Esc closes"),
-                    ReadOnlyText = Lang.T("Not done in the box of the macro")
+                    ReadOnlyText = Lang.T("Not possible in the macro box")
                 });
         }
         finally

@@ -18,18 +18,18 @@ internal sealed partial class ShellSession
         ("cd [dir|file|n]", Lang.T("Go to a directory, or that of a file (alone: home)")),
         ("up", Lang.T("Go to the directory above")),
         ("home", Lang.T("Go to your home directory")),
-        ("data", Lang.T("Go to the data directory of Blyant (settings, lists, log)")),
-        ("open file|n [+line]", Lang.T("Edit a file on the full screen (closing it is back here)")),
+        ("data", Lang.T("Go to Blyant's data directory (settings, lists, log)")),
+        ("open file|n [+line]", Lang.T("Edit a file on the full screen (closing it returns here)")),
         ("peek file|n [lines]", Lang.T("Show the lines of a file (the first 20, 40, 100-120, or +100 30)")),
         ("peek [file|n] +|++|-|--", Shell.PeekStep == 1
             ? Lang.F("Show 1 line further down (++: {0}), or up (-, --)", Shell.PeekBigStep)
             : Lang.F("Show {0} lines further down (++: {1}), or up (-, --)", Shell.PeekStep, Shell.PeekBigStep)),
-        ("peek [f] top|middle|bottom|n%", Lang.T("The window at the top, middle, end, or from a part")),
-        ("peek +line", Lang.T("The file peeked last, from that line (peek +120)")),
+        ("peek [f] top|middle|bottom|n%", Lang.T("Show the top, middle, end, or from n% down")),
+        ("peek +line", Lang.T("Peek the last file again from a line (peek +120)")),
         ("+ n, - n, ++ n, -- n", Lang.T("Move the window n steps (+ 20)")),
         ("peek (or .)", Lang.T("Show the last peek again, as the file is now")),
-        ("peek [file|n] /text", Lang.T("The window at the first line with a text in it")),
-        ("/, ?", Lang.T("The next line with it (/), or the one before (?)")),
+        ("peek [file|n] /text", Lang.T("Show the first line with the text")),
+        ("/, ?", Lang.T("Next match (/), or the one before (?)")),
         ("/text", Lang.T("Search the file peeked last (as peek /text)")),
         ("find [-l] [name] [-t text]", Lang.T("Find files here and below, by name (*.md) and by text")),
         ("new name", Lang.T("Make a new, empty file here (.md if no extension)")),
@@ -38,11 +38,11 @@ internal sealed partial class ShellSession
         ("copy file|n dir|n", Lang.T("Copy a file or directory into a directory")),
         ("move file|n dir|n", Lang.T("Move a file or directory into a directory")),
         ("delete file|n", Lang.T("Delete a file or directory, to the trash (del)")),
-        ("info [file|n]", Lang.T("Tell about a file or directory (alone: this one)")),
+        ("info [file|n]", Lang.T("Describe a file or directory (alone: this one)")),
         ("insert file|n top|bottom|+line text", Lang.T("Put a line of text in a file, without opening it")),
-        ("change file|n +line|from-to [text]", Lang.T("Change lines of a file into a text, or delete them")),
+        ("change file|n +line|from-to [text]", Lang.T("Replace lines of a file with text, or delete them")),
         ("shift file|n lines place", Lang.T("Move lines in a file: under a heading, +line, top or bottom")),
-        ("shift! file|n lines place", Lang.T("Move lines, and tick or untick their task boxes")),
+        ("shift! file|n lines place", Lang.T("Move lines, and tick or untick any task boxes")),
         ("lines file|n lines > file|n place", Lang.T("Copy lines to another file (cut last: move them)")),
         ("lines file|n lines >|>> $name", Lang.T("Keep lines in a register (>>: add them to it)")),
         ("lines file|n lines start|end text", Lang.T("Put a text at the start or the end of lines")),
@@ -61,25 +61,25 @@ internal sealed partial class ShellSession
         ("path [file|n], name [file|n]", Lang.T("Copy the path, or name, of $file (or of a file)")),
         ("reg [name [text|.|#n]]", Lang.T("Keep a text or a path in a register: $name puts it in a command")),
         ("reg name += text", Lang.T("Add a text to a register, as lines (reg notes += $peek)")),
-        ("reg -d name|all", Lang.T("Take a register away, or all of them")),
+        ("reg -d name|all", Lang.T("Take away one register, or all")),
         ("echo text", Lang.T("Write a text, with $names put in (echo $file)")),
-        ("file [file|n]", Lang.T("Make a file of a list $file (file 3), or show $file")),
-        ("favorites [-l] [list]", Lang.T("List the favorites (fav), or those of another list")),
+        ("file [file|n]", Lang.T("Set $file to a file or row (file 3), or show $file")),
+        ("favorites [-l] [list]", Lang.T("List the favorites (fav), or another list")),
         ("favorites -l", Lang.T("Lists with full paths (also hist, recent, book)")),
         ("favorites lists", Lang.T("List the lists of favorites (*: the open one)")),
         ("favorites main", Lang.T("Open the main list of favorites again")),
         ("favorites new|delete name", Lang.T("Make a list and open it, or delete one")),
         ("favorites rename name new", Lang.T("Give a list of favorites a new name")),
-        ("favorites use name", Lang.T("Open a list named as a word (new, lists ...)")),
+        ("favorites use name", Lang.T("Open a list named like a command (new ...)")),
         ("favorites folder name", Lang.T("Make a folder of favorites, last in the list")),
         ("favorites subfolder [f] name", Lang.T("Make a subfolder, first in the folder [f]")),
         ("favorites rename [f] name", Lang.T("Give a folder of favorites a new name")),
         ("favorites remove [f]", Lang.T("Remove a folder with its favorites (asks first)")),
         ("favorites move rows|[f] where", Lang.T("Move: top, bottom, up, down, out, 5, [folder]")),
-        ("favorites move name where", Lang.T("Move by name, or all a pattern fits (ch*.md)")),
+        ("favorites move name where", Lang.T("Move by name, or all matching (ch*.md)")),
         ("favorites filter text", Lang.T("Show the favorites with a text in them (or *.md)")),
-        ("favorites undo", Lang.T("Put back what fav remove removed last")),
-        ("favorites add file|n [where]", Lang.T("Add to the favorites: top, or bottom, 5, [folder]")),
+        ("favorites undo", Lang.T("Undo the last fav remove")),
+        ("favorites add file|n [where]", Lang.T("Add to the favorites: top, bottom, 5, [folder]")),
         ("favorites remove file|n", Lang.T("Take off the favorites")),
         ("history [-l]", Lang.T("List the files opened (hist)")),
         ("history filter text", Lang.T("Show the files opened with a text in them (or *.md)")),
@@ -92,15 +92,15 @@ internal sealed partial class ShellSession
         ("project n|name", Lang.T("Go to the directory of a project")),
         ("log [n]", Lang.T("Show the last lines of the log (20)")),
         ("clear", Lang.T("Clear the screen (also cls)")),
-        ("screen", Lang.T("Go on on the full screen, in the file browser here")),
+        ("screen", Lang.T("Go to the file browser here, on the full screen")),
         ("version", Lang.T("Show the version of Blyant")),
-        ("about [license]", Lang.T("Show the version and the commands used the most, or the license")),
+        ("about [license]", Lang.T("Show the version and most used commands, or the license")),
         ("again [n]", Lang.T("List the commands typed, or run one again (!n, !!)")),
         ("again filter text", Lang.T("Show the commands typed with a text in them")),
         ("undo [n]", Lang.T("Undo the last change of a file (insert, change ...)")),
-        ("redo [n]", Lang.T("Do again what undo undid")),
+        ("redo [n]", Lang.T("Undo the last undo")),
         ("changes", Lang.T("List the changes undo goes back through")),
-        ("run $name|file", Lang.T("Run the commands of a register or a file, one a line")),
+        ("run $name|file", Lang.T("Run commands from a register or file, one per line")),
         ("help [command]", Lang.T("List the commands, or tell what one does")),
         ("exit", Lang.T("Leave Blyant (also quit, q)"))
     };
@@ -120,7 +120,7 @@ internal sealed partial class ShellSession
             var kept = CommandHistory.Of(CommandContext.Shell);
             // (in a run, the last command kept is the run itself: it would run again and again)
             var refused = _runDepth > 0
-                ? Lang.T("again, !n and !! are not run in a run: it would run itself again")
+                ? Lang.T("again, !n and !! are refused in a run: it would repeat itself")
                 : number >= 1 && number <= kept.Count
                     ? null
                     : kept.Count == 0
@@ -167,7 +167,7 @@ internal sealed partial class ShellSession
         if (name == "lines") argument = ProtectRegisterTarget(argument);
         // (in a run, "screen" would leave the run for the full screen, and leave the shell at the next exit)
         var problem = _runDepth > 0 && name == "screen"
-            ? Lang.T("screen is not run in a run: run it after")
+            ? Lang.T("screen is refused in a run: run it after")
             : help ? null : ExpansionProblem(name, line, argument);
         if (problem != null)
         {
@@ -992,12 +992,12 @@ internal sealed partial class ShellSession
         var rows = new[]
         {
             ("help [command]", Lang.T("List the commands, or tell what one does")),
-            ("ls, cd 2, up", Lang.T("List a directory, go into row 2 of it, or up")),
-            ("open 3", Lang.T("Edit a file on the full screen (closing it is back here)")),
+            ("ls, cd 2, up", Lang.T("List a directory, go into row 2, or up")),
+            ("open 3", Lang.T("Edit a file on the full screen (closing it returns here)")),
             ("peek 3, find plot", Lang.T("Show lines of a file; find files by name (-t: by text)")),
             ("recent, fav, hot", Lang.T("The latest files, the favorites, the directory hotlist")),
             ("set language de", Lang.T("Language: en, de, da, nb, sv, es, fr, it, pl, nl or fi")),
-            ("screen", Lang.T("Go on on the full screen, in the file browser here")),
+            ("screen", Lang.T("Go to the file browser here, on the full screen")),
             ("exit", Lang.T("Leave Blyant (also quit, q)"))
         };
         CommandRows(rows, "  ");

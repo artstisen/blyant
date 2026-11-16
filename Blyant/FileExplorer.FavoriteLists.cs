@@ -82,7 +82,7 @@ internal static partial class FileExplorer
         ChoiceBox.Forget();
         if (name.Length == 0)
         {
-            ChoiceBox.Message(Lang.T("Rename list"), Lang.T("The main list keeps its name"), string.Empty);
+            ChoiceBox.Message(Lang.T("Rename list"), Lang.T("Main list cannot be renamed"), string.Empty);
             return PickListBox.KeyUse.Used;
         }
 

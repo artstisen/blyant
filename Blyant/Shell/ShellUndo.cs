@@ -144,10 +144,10 @@ internal sealed partial class ShellSession
                 if (IsNow(path, redo ? before : after)) continue;
                 Error(!File.Exists(path)
                     ? redo
-                        ? Lang.F("{0} is no longer there: {1} is not done again", path, step.Command)
+                        ? Lang.F("{0} is no longer there: {1} is not redone", path, step.Command)
                         : Lang.F("{0} is no longer there: {1} is not undone", path, step.Command)
                     : redo
-                        ? Lang.F("{0} has changed since it was undone: {1} is not done again", path, step.Command)
+                        ? Lang.F("{0} has changed since it was undone: {1} is not redone", path, step.Command)
                         : Lang.F("{0} has changed since: {1} is not undone", path, step.Command));
                 Done(changed);
                 return;
@@ -188,7 +188,7 @@ internal sealed partial class ShellSession
             (redo ? _undo : _redo).Add(step);
             // English: the log (the command by name only)
             EventLog.Add(DialogText.LogShell + (redo ? ": redo: " : ": undo: ") + EventLog.CommandName(step.Command));
-            Line(redo ? Lang.F("Done again: {0}", step.Command) : Lang.F("Undone: {0}", step.Command));
+            Line(redo ? Lang.F("Redone: {0}", step.Command) : Lang.F("Undone: {0}", step.Command));
         }
 
         Done(changed);

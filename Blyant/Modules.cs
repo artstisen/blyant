@@ -137,10 +137,10 @@ internal static class Modules
         Lang.T("Go to a page of Blyant (Tab lists the names)"),
         Lang.T("Jump to bookmark 3 (:book alone: the bookmarks)"),
         Lang.T("The number is shown at the right of the bookmark"),
-        Lang.T("Bookmark the place of the cursor (Jump menu)"),
+        Lang.T("Bookmark the cursor position (Jump menu)"),
         Lang.T("Bookmark the selected file or directory (Jump menu)"),
         Lang.T("... with a name: :book name jumps to it"),
-        Lang.T("Move the bookmark with the name here")
+        Lang.T("Move the named bookmark here")
     };
 
     /// <summary>

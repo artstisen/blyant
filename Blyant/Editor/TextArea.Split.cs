@@ -97,7 +97,7 @@ public partial class TextArea
         if (_referencePath == null || _otherPane == null) return;
         var other = _otherPane.Engine;
         other.SetCursorIndex(CaretPosition.IndexOf(other.Buffer.GetText(), entry.Line, entry.Column));
-        _engine.SetMessage(Lang.F("{0} beside it, as it was (Tab: go to it, :only: close it)", name), false);
+        _engine.SetMessage(Lang.F("{0} at the right as before (Tab: go there, :only: close)", name), false);
     }
 
     // ":splits" picked a split: the file being edited gets the file beside it; another file is opened with it, as a

@@ -37,7 +37,7 @@ internal sealed partial class ShellSession
         if (found.Count == 1) return found[0];
         Error(found.Count == 0
             ? Lang.F("No folder [{0}] in the favorites (fav shows them)", name)
-            : Lang.F("{0} folders are named [{1}]: give the folder it is in too, [Writing/{1}]", found.Count, name));
+            : Lang.F("{0} folders are named [{1}]: give the parent folder too, [Writing/{1}]", found.Count, name));
         return -1;
     }
 
@@ -89,7 +89,7 @@ internal sealed partial class ShellSession
         FileFavorites.Load();
         if (FileFavorites.AddFolder(name, -1) < 0)
         {
-            Error(Lang.F("Not a name for a folder: {0} ([ and ] cannot be in it)", name));
+            Error(Lang.F("Not a folder name: {0} ([ and ] are not allowed)", name));
             return;
         }
 
@@ -110,14 +110,14 @@ internal sealed partial class ShellSession
         var name = parts.After.Trim('"').Trim();
         if (FileFavorites.Items[folder].Level > 0)
         {
-            Error(Lang.F("[{0}] is a subfolder: a subfolder goes in a folder at the top (two levels at most)",
+            Error(Lang.F("[{0}] is a subfolder: subfolders go in top-level folders (two levels at most)",
                 FileFavorites.Items[folder].Name));
             return;
         }
 
         if (FileFavorites.AddSubfolder(name, folder) < 0)
         {
-            Error(Lang.F("Not a name for a folder: {0} ([ and ] cannot be in it)", name));
+            Error(Lang.F("Not a folder name: {0} ([ and ] are not allowed)", name));
             return;
         }
 
@@ -138,7 +138,7 @@ internal sealed partial class ShellSession
         var name = parts.After.Trim('"').Trim();
         if (!FileFavorites.RenameFolder(folder, name))
         {
-            Error(Lang.F("Not a name for a folder: {0} ([ and ] cannot be in it)", name));
+            Error(Lang.F("Not a folder name: {0} ([ and ] are not allowed)", name));
             return;
         }
 
@@ -161,7 +161,7 @@ internal sealed partial class ShellSession
         var count = FileFavorites.FolderCount(index);
         var subfolders = FileFavorites.SubfolderCount(index);
         var note = subfolders > 0
-            ? Lang.F("Removed from the list with it (the files stay), favorites: {0}, subfolders: {1}.", count,
+            ? Lang.F("Removed with the folder (the files stay), favorites: {0}, subfolders: {1}.", count,
                 subfolders)
             : count == 0
                 ? Lang.T("The folder is empty.")
@@ -375,7 +375,7 @@ internal sealed partial class ShellSession
         }
 
         return FileFavorites.MoveFolderTo(folder, FileFavorites.Items[target]) < 0
-            ? Lang.F("[{0}] cannot go into [{1}]: only into another folder at the top", folder.Name,
+            ? Lang.F("[{0}] cannot go into [{1}]: only into another top-level folder", folder.Name,
                 FileFavorites.Items[target].Name)
             : null;
     }
@@ -428,7 +428,7 @@ internal sealed partial class ShellSession
         }
 
         var place = rows[row - 1];
-        if (moved.Contains(place)) return Lang.F("The place is in the rows moved: {0}", row);
+        if (moved.Contains(place)) return Lang.F("Target {0} is among the rows moved", row);
         foreach (var favorite in moved) FileFavorites.MoveBefore(favorite, place);
         return null;
     }

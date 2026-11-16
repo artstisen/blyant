@@ -889,7 +889,7 @@ public class ShellTests : IDisposable
         Assert.Equal(8, EditorEngine.IndentSetting);
         // From a file: not asked, and nothing is reset
         var (kept, _, _, _) = Run("reset\n");
-        Assert.Contains(Lang.T("The settings are as they were"), kept);
+        Assert.Contains(Lang.T("Settings unchanged"), kept);
         Assert.Equal(8, EditorEngine.IndentSetting);
         // In a terminal: No is selected (Enter alone), and "n"
         Run("reset\n\nreset\nn\n", terminal: true);
@@ -1940,7 +1940,7 @@ public class ShellTests : IDisposable
         var before = FileIo.SettingsText().Split('\n').Skip(1).ToList();
         FileIo.WriteSettingsFile("; nothing here\n");
         var (output, errors, _, _) = Run("reload\n");
-        Assert.Contains(Lang.F("{0} has no settings: the settings stay as they were", FileIo.SettingsFileName), errors);
+        Assert.Contains(Lang.F("{0} has no settings: settings unchanged", FileIo.SettingsFileName), errors);
         Assert.DoesNotContain(Lang.T("Settings and registers read again"), output);
         Assert.Equal(before, FileIo.SettingsText().Split('\n').Skip(1).ToList());
     }
@@ -2023,7 +2023,7 @@ public class ShellTests : IDisposable
         Assert.Null(ShellRegisters.Get("clip"));
         var (output, errors, _, _) = Run("reg clip something\nreg -d clip\nclip name plot.md\nreg clip\nreg\nreg a one\n");
         Assert.Equal(2, errors.TrimEnd('\n').Split('\n').Length);
-        Assert.Contains(Lang.T("$clip is the text clip copied last: it is not a register to set or take away"), errors);
+        Assert.Contains(Lang.T("$clip is the text clip copied last: it cannot be set or taken away"), errors);
         Assert.Contains("plot.md\n", output);
         Assert.Contains("  $clip " + Lang.F("{0}  (the last clip)", "plot.md"), output);
         // (the line of the file is kept as it was, $clip is not written)
@@ -2355,7 +2355,7 @@ public class ShellTests : IDisposable
             var (_, errors, _, _) = Run("fav new\nfav new main\nfav new work\nfav rename main x\nfav delete main\n" +
                                         "fav delete nothing\nfav rename work\nfav nothing\n", yes: true);
             Assert.Equal(8, errors.TrimEnd('\n').Split('\n').Length);
-            Assert.Contains(Lang.T("The main list keeps its name"), errors);
+            Assert.Contains(Lang.T("Main list cannot be renamed"), errors);
             Assert.Contains(Lang.T("The main list cannot be deleted"), errors);
             // Not asked from a file without --yes: nothing deleted
             var (output, _, _, _) = Run("fav delete work\n");
@@ -2743,7 +2743,7 @@ public class ShellTests : IDisposable
                                        "fav move [X] top\nfav folder [bad]\nfav subfolder [F/X] Y\nfav rename [F]\n" +
                                        "fav move 1 1\nfav move 1 out\n");
         Assert.Equal(10, errors.TrimEnd('\n').Split('\n').Length);
-        Assert.Contains(Lang.F("{0} folders are named [{1}]: give the folder it is in too, [Writing/{1}]", 2, "X"), errors);
+        Assert.Contains(Lang.F("{0} folders are named [{1}]: give the parent folder too, [Writing/{1}]", 2, "X"), errors);
         Assert.Equal(1, code);
         Assert.Equal(shape, FavoritesShape());
     }
@@ -3308,8 +3308,8 @@ public class ShellTests : IDisposable
             var (_, errors, _, _) = Run("reg r = lines a.md 1 start X\nreg r += !!\nrun $r\nreg s = screen\nrun $s\n",
                 terminal: true);
             Assert.Equal("X one\n", Text("a.md"));
-            Assert.Contains(Lang.T("again, !n and !! are not run in a run: it would run itself again"), errors);
-            Assert.Contains(Lang.T("screen is not run in a run: run it after"), errors);
+            Assert.Contains(Lang.T("again, !n and !! are refused in a run: it would repeat itself"), errors);
+            Assert.Contains(Lang.T("screen is refused in a run: run it after"), errors);
         }
         finally
         {
@@ -4005,7 +4005,7 @@ public class ShellTests : IDisposable
         Assert.Equal("one\ntwo\n", Text("t.md"));
         Assert.Contains("  1  change t.md +1 ONE\n  2  insert t.md bottom three\n", output);
         Assert.Contains(Lang.F("Undone: {0}", "change t.md +1 ONE"), output);
-        Assert.Contains(Lang.F("Done again: {0}", "change t.md +1 ONE"), output);
+        Assert.Contains(Lang.F("Redone: {0}", "change t.md +1 ONE"), output);
         // The file written is the last list
         Assert.Equal(In("work", "t.md"), session.LastList.Single().Path);
         (output, _, _, _) = Run("undo\nredo\n");
@@ -4214,7 +4214,7 @@ public class ShellTests : IDisposable
         session.Execute("undo");
         File.WriteAllText(In("work", "t.md"), "edited\n");
         session.Execute("redo");
-        Assert.Contains(Lang.F("{0} has changed since it was undone: {1} is not done again", In("work", "t.md"),
+        Assert.Contains(Lang.F("{0} has changed since it was undone: {1} is not redone", In("work", "t.md"),
             "insert t.md bottom b"), errors.ToString());
         Assert.Equal("edited\n", Text("t.md"));
         session.Execute("insert t.md bottom c");

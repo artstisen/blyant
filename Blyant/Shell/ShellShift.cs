@@ -88,7 +88,7 @@ internal sealed partial class ShellSession
                 foreach (var row in having) Line("  " + row.Number + "  " + row.Line);
                 Error(having.Count == 0
                     ? Lang.F("No line has {0} in it (or give the lines: 4, 4-6, 4,7,9-10)", word)
-                    : Lang.F("{0} lines have {1} in them: give the number of the line", having.Count, word));
+                    : Lang.F("{0} lines have {1} in them: give the line number", having.Count, word));
                 return null;
             }
 
@@ -119,7 +119,7 @@ internal sealed partial class ShellSession
         {
             if (moved != null && moved.Contains(before))
             {
-                Error(Lang.F("The place is in the lines moved: {0}", place));
+                Error(Lang.F("Target {0} is among the lines moved", place));
                 return null;
             }
 
@@ -163,7 +163,7 @@ internal sealed partial class ShellSession
 
         if (moved != null && moved.Contains(found[0].Line))
         {
-            Error(Lang.F("The place is in the lines moved: {0}", place));
+            Error(Lang.F("Target {0} is among the lines moved", place));
             return null;
         }
 

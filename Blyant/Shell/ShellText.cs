@@ -217,7 +217,7 @@ internal sealed partial class ShellSession
 
         if (!file.IsUtf8)
         {
-            Error(Lang.F("{0} is not in UTF-8 ({1}): open it in the editor, which saves it in UTF-8", item.Path,
+            Error(Lang.F("{0} is not in UTF-8 ({1}): the editor can open it and save in UTF-8", item.Path,
                 file.EncodingName));
             return null;
         }
@@ -225,7 +225,7 @@ internal sealed partial class ShellSession
         // (saved, every line would get the one kind most lines have: the file is not as it was, also after undo)
         if (file.MixedLineEndings)
         {
-            Error(Lang.F("{0} has more than one kind of line endings: open it in the editor, which tells it",
+            Error(Lang.F("{0} has mixed line endings: the editor can open it and set one kind",
                 item.Path));
             return null;
         }
@@ -369,7 +369,7 @@ internal sealed partial class ShellSession
     {
         if (!ChoiceBox.Confirm(DialogText.CaptionsSettings, DialogText.ResetSettingsQuestion, string.Empty, true))
         {
-            Line(Lang.T("The settings are as they were"));
+            Line(Lang.T("Settings unchanged"));
             return;
         }
 
@@ -526,7 +526,7 @@ internal sealed partial class ShellSession
 
     // Why a name set by Blyant is not set or taken away by "reg"
     private static string ReservedRefused(string name) => ShellRegisters.IsClip(name)
-        ? Lang.T("$clip is the text clip copied last: it is not a register to set or take away")
+        ? Lang.T("$clip is the text clip copied last: it cannot be set or taken away")
         : Lang.F("${0} is set by Blyant: it is not a register to set or take away", name.ToLowerInvariant());
 
     // $clip in the list of the registers: the first line of the text clip copied last, and how many lines it has
@@ -580,7 +580,7 @@ internal sealed partial class ShellSession
         // (the text read once: what is used is what is compared below)
         if (!FileIo.ApplySettingsText(content))
         {
-            Error(Lang.F("{0} has no settings: the settings stay as they were", FileIo.SettingsFileName));
+            Error(Lang.F("{0} has no settings: settings unchanged", FileIo.SettingsFileName));
             return;
         }
 

@@ -1,6 +1,7 @@
 # Changes
 
 ## v1.5.5
+- **Screen texts in plainer English**: 168 texts of the program (messages, questions, help rows, key hints, the about text) follow the same rules as the guides: "The note is removed too", not "Its note is removed with it"; "Redone", not "Done again". Each is as short as before or shorter, and the translations are kept.
 - **Guides and user manual in plainer English**: the guides, the README and the user manual are rewritten to read more naturally. They name things instead of pointing back at them with "its" and "their", say who does what, and say any sentence that needed reading twice in a plainer way. Commands, keys, headings and links are unchanged. Some facts were wrong and are corrected: completing words is on from the start and line numbers are off ([Editor](Guide-to-editor.md)), Configuration has six sub-tabs (General, Layout, Editor, Lists, Modules and System), the Colors tab of the color schemes has five pages, and _Terminal sessions_ is the fifth built-in logo ([Jump menu](Guide-to-jump-menu.md)). `:w name` on a blank page opens the box with the name filled in. AGENTS.md has the rules for writing them.
 
 ## v1.5.4 (2026-11-16)

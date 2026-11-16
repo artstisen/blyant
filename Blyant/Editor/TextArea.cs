@@ -250,7 +250,7 @@ public partial class TextArea
     {
         if (!IsFileEditor)
         {
-            _engine.ShowMessage(Lang.T("Zen mode is for the editor of files"), true);
+            _engine.ShowMessage(Lang.T("Zen mode is only for editing files"), true);
             return;
         }
 
@@ -1412,7 +1412,7 @@ public partial class TextArea
     {
         if (_engine.IsRecording)
         {
-            _engine.SetMessage(Lang.T("A new file is not made while recording"), true);
+            _engine.SetMessage(Lang.T("Cannot make a new file while recording"), true);
             return;
         }
 
@@ -1527,7 +1527,7 @@ public partial class TextArea
         _engine.Syntax = SyntaxHighlighter.ColorFiles ? type : SyntaxType.None;
         _engine.FormatKind = FormatKindOfFile();
         RedrawAll();
-        _engine.SetMessage(Lang.F("Saved as {0}: it is the file edited now", written), false);
+        _engine.SetMessage(Lang.F("Saved as {0}: now editing that file", written), false);
     }
 
     // ":info": the text being edited in a box: its name, how many characters, words and lines it has as it is now
@@ -2108,8 +2108,8 @@ public partial class TextArea
             (Lang.T("What:"), Lang.T("A byte order mark (BOM) is three bytes (EF BB BF) at the start of a file that " +
                                      "mark it as UTF-8. UTF-8 does not need it, and most programs do without; some " +
                                      "Windows programs add it or want it, and scripts and some tools on Linux and " +
-                                     "macOS fail with it. Blyant does not show it, and saves a file with one if it " +
-                                     "had one, and without one if it had none.")),
+                                     "macOS fail with it. Blyant does not show it, and saves a file with a BOM only " +
+                                     "if it had one.")),
             (string.Empty, string.Empty),
             (":bom on", Lang.T("Save the file with a BOM")), // English: the commands
             (":bom off", Lang.T("Save the file without a BOM")) // English: the commands

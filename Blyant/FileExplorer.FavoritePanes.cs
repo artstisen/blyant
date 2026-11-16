@@ -110,9 +110,9 @@ internal static partial class FileExplorer
         ChoiceBox.Forget();
         return ChoiceBox.Confirm(Lang.T("Remove favorite"),
             notes == 1
-                ? Lang.T("Remove the favorite with its note?")
-                : Lang.F("Remove the favorites with their notes ({0})?", notes),
-            Lang.T("The note is kept in the favorites, and is removed with the favorite."), false);
+                ? Lang.T("Remove the favorite and its note?")
+                : Lang.F("Remove the favorites and their notes ({0})?", notes),
+            Lang.T("The note is kept in the favorites until the favorite is removed."), false);
     }
 
     /// <summary>
@@ -143,7 +143,7 @@ internal static partial class FileExplorer
     internal static string? EditListNote(string note, string fileName, string caption, Action<string> keep)
     {
         // The same note in the editor again (from the Jump menu opened in its editor): its file is in use
-        if (!OpenListNotes.Add(fileName)) return Lang.T("This note is being written already");
+        if (!OpenListNotes.Add(fileName)) return Lang.T("This note is already open");
         try
         {
             return EditListNoteFile(note, fileName, caption, keep);

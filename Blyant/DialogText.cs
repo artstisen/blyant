@@ -11,25 +11,22 @@ internal static class DialogText
     //                                                                                \n <- Max line length
     //-----------------------------------------------------------------------------
     public static string About => Lang.T(
-        "Blyant is a text editor for writing, in the style of Vim: files and\n" +
-        "projects (folders of files) on your own computer, in Markdown or any other\n" +
-        "kind of text. It is written in C# and uses UTF-8 console I/O encoding.\n\n" +
-        "Your settings, favorites, bookmarks, snippets and macros are stored in the\n" +
-        "\"data\" directory alongside the Blyant program files, and your projects in\n" +
-        "the folders you choose for them. You can copy them to any backup,\n" +
-        "portable or cloud medium.\n\n" +
-        "This application is cross-platform software that can run on different\n" +
-        "systems. Due to the difference between terminal programs and their\n" +
-        "tradition of using specific keyboard shortcuts for built-in functions,\n" +
-        "Blyant is operated with plain keys and commands in the style of Vim.\n" +
-        "Press ? for help.");
+        "Blyant is a text editor for writing, in the style of Vim: files and\nprojects " +
+        "(folders of files) on your own computer, in Markdown or any other\nkind of text. " +
+        "It is written in C# and uses UTF-8 console I/O encoding.\n\nYour settings, " +
+        "favorites, bookmarks, snippets and macros are stored in the\n\"data\" directory " +
+        "alongside the Blyant program files, and your projects in\nthe folders you " +
+        "choose. You can copy both to any backup, portable or\ncloud medium.\n\nBlyant is " +
+        "cross-platform: it runs on different systems. Terminal programs\nreserve many " +
+        "keyboard shortcuts for built-in functions, so Blyant is\noperated with plain " +
+        "keys and commands in the style of Vim. Press ? for\nhelp.");
 
     //                                                                                \n <- Max line length
     // --------------------------------------------------------------------------------
-    public static string MultipleInstances => Lang.T("TIP: Run multiple instances of Blyant using folder duplicates with different\n" +
-        "names. Change color settings to distinguish between instances. Running\n" +
-        "multiple instances from the same folder can overwrite the lists and the\n" +
-        "settings of each other, as they share the same data directory.\n");
+    public static string MultipleInstances => Lang.T("TIP: To run several instances of Blyant, copy the Blyant folder under\nother " +
+        "names, and give each copy different colors to tell them apart.\nInstances run " +
+        "from the same folder share the data directory and can\noverwrite each other's " +
+        "lists and settings.\n");
 
 
     // Mode labels and Caption
@@ -67,8 +64,8 @@ internal static class DialogText
     public static string TextColorCaption => Lang.T("Text color");
     public static string BackgroundCaption => Lang.T("Background");
     public static string NewFile => Lang.T("New file");
-    public static string BookmarkFileOnly => Lang.T("Only a file is bookmarked from the editor");
-    public static string FavoriteNoteNotAFile => Lang.T("This is a note, kept in its list (not a file)");
+    public static string BookmarkFileOnly => Lang.T("Only a file can be bookmarked here");
+    public static string FavoriteNoteNotAFile => Lang.T("This is a note in a list, not a file");
     public static string RenameFile => Lang.T("Rename file");
     public static string DeleteFile => Lang.T("Delete file");
     public static string FileInfo => Lang.T("Info");
@@ -111,7 +108,7 @@ internal static class DialogText
     public static string CaptionsLogos => Lang.T("Logos");
     public static string LogoSaveCaption => Lang.T("Save the logo");
     public static string LogoSavePrompt => Lang.T("Type a name for the logo and press Enter");
-    public static string LogoNameInvalid => Lang.T("Not a name a logo can have");
+    public static string LogoNameInvalid => Lang.T("Not a valid logo name");
     public static string LogoNameBuiltIn => Lang.T("A built-in logo has that name");
     public static string LogoNameTaken => Lang.T("Another logo has that name");
     public static string LogoRenameCaption => Lang.T("Rename the logo");
@@ -126,7 +123,7 @@ internal static class DialogText
     public static string LogoCellVisualKeys => Lang.T("hjkl Move | Space Paint | x Clear | Esc NORMAL");
     public static string LogoReplaceKeys => Lang.T("Backspace Clear | Enter Next row | Esc NORMAL");
     public static string SchemeSavePrompt => Lang.T("Type a name for the color scheme and press Enter");
-    public static string SchemeNameInvalid => Lang.T("Not a name a color scheme can have");
+    public static string SchemeNameInvalid => Lang.T("Not a valid color scheme name");
     public static string SchemeNameBuiltIn => Lang.T("A built-in color scheme has that name");
     public static string SchemeNameTaken => Lang.T("Another color scheme has that name");
     public static string SchemeRenameCaption => Lang.T("Rename the color scheme");
@@ -135,7 +132,7 @@ internal static class DialogText
     public static string SchemeDiscardQuestion => Lang.T("Use another scheme?");
     public static string ChangesNotSaved => Lang.T("The changes are not saved.");
     public static string SchemeBuiltInDelete => Lang.T("The built-in color schemes cannot be deleted");
-    public static string SchemeDeleteNote => Lang.T("Its file is deleted.");
+    public static string SchemeDeleteNote => Lang.T("The file is deleted.");
     public static string SchemeListKeys => Lang.T("j/k Select | Enter Use | Y Duplicate | R Rename | D Delete | Tab Colors");
     public static string PickLanguageCaption => Lang.T("Language");
     public static string PickLanguageQuestion => Lang.T("Select the language");
@@ -175,7 +172,7 @@ internal static class DialogText
     public static string NameEnd => Lang.T("A name cannot end with a dot or a space");
     public static string NameTooLong => Lang.T("A name can be at most 255 characters long");
     public static string NameCharacter(char c) => Lang.F("A name cannot contain the character {0}", c.ToString());
-    public static string NameReserved(string name) => Lang.F("{0} is a name kept by Windows and cannot be used", name);
+    public static string NameReserved(string name) => Lang.F("{0} is reserved by Windows and cannot be used", name);
     public static string FileDeleted => Lang.T("File deleted");
 
 
@@ -240,7 +237,7 @@ internal static class DialogText
     public const string LogShell = "Shell";
     public const string LogFilesCommand = "Files";
     public const string LogFile = "File: ";
-    public static string MonochromeIsOn => Lang.T("Black and white is on: the colors are used when it is turned off");
+    public static string MonochromeIsOn => Lang.T("Black and white is on: colors show when it is turned off");
     public static string Drives => Lang.T("Drives");
     public const string DirectoryMark = "<DIR>";
     public static string FileBrowserKeys => Modules.Projects
@@ -263,7 +260,7 @@ internal static class DialogText
     public static string DeleteMarkedCaption => Lang.T("Delete files and directories");
     // Deleting to the trash ("trash" in the data directory)
     public static string TrashNamed => Lang.T("Move \"{0}\" to the trash?");
-    public static string TrashFileNote => Lang.T("It can be found again with :trash");
+    public static string TrashFileNote => Lang.T("Find it again with :trash");
     public static string TrashNotPossible => Lang.T("It cannot be moved to the trash");
     public static string FileItemTrashed => Lang.T("Moved to the trash: ");
     public static string TrashEmpty => Lang.T("The trash is empty");
@@ -278,7 +275,7 @@ internal static class DialogText
     public static string CaptionsClipboard => Lang.T("Clipboard");
     public static string HelpSectionClipboard => Lang.T("Clipboard and paste bin");
     public static string ClipboardKeys => Lang.T("j/k Select | Enter/Space Change | h/l Choice | ? Help | Esc Back");
-    public static string ClipboardNote => Lang.T("The system clipboard is reached through the terminal (OSC 52): it works in Windows Terminal, iTerm2, kitty, WezTerm and tmux, also over SSH, but not in the console of a Raspberry Pi or the Terminal of macOS. There the paste bin file can be used: other programs can read it, and :pbread puts its text in the editor.");
+    public static string ClipboardNote => Lang.T("Blyant reaches the system clipboard through the terminal (OSC 52): it works in Windows Terminal, iTerm2, kitty, WezTerm and tmux, also over SSH, but not in the console of a Raspberry Pi or the Terminal of macOS. There, use the paste bin file: other programs can read it, and :pbread reads it into the editor.");
     public static string ClipboardAllOff => Lang.T("The clipboard is off (:clipboard)");
     public static string CopiedToClipboard => Lang.T("Copied to the clipboard");
     public static string CopiedToPasteBin => Lang.T("Copied to the paste bin");
@@ -319,7 +316,7 @@ internal static class DialogText
     public static string SnippetsFileOpen => Lang.T("This is the file of snippets");
     public static string CompletionsFileOpen => Lang.T("This is the file of completions");
     public static string CompletionsSwitchNote =>
-        Lang.T("The file of completions is opened, and this text again when it is closed.");
+        Lang.T("The file of completions is opened. Closing it returns to this text.");
     public static string CaptionsCompletions => Lang.T("Completions");
     // Comparisons (":diff")
     public static string CaptionsCompare => Lang.T("COMPARE");
@@ -350,9 +347,9 @@ internal static class DialogText
     public static string PeekSelectFile => Lang.T("Select a file to peek at");
     public static string PeekNotText => Lang.T("Not a text file");
     public static string PeekMore => Lang.T("... (open the file to see the rest)");
-    public static string FileKeepsItsName => Lang.T("This file keeps its name: Blyant uses it");
+    public static string FileKeepsItsName => Lang.T("Not renamed: Blyant uses this file");
     public static string SnippetsNotHere => Lang.T("Not while the settings are edited");
-    public static string SnippetSwitchNote => Lang.T("The file of snippets is opened, and this text again when it is closed.");
+    public static string SnippetSwitchNote => Lang.T("The file of snippets is opened. Closing it returns to this text.");
     public static string MatchNeedsTwoPanes => Lang.T("Only with two panes (T shows them)");
     public static string TypeNameAndPressEnter => Lang.T("Type the name and press Enter");
     public static string ChoiceYes => Lang.T("Yes");
@@ -383,7 +380,7 @@ internal static class DialogText
     public static string BookNumbersNote => Lang.T("The numbers are on the Bookmarks tab of the Jump menu.");
     public static string BookmarksEmpty => Lang.T("No bookmarks yet: B on a list, or :bookmark");
     public static string BookmarkRename => Lang.T("Name of the bookmark");
-    public static string BookmarkRenameNote => Lang.T("The place keeps its name (empty: its name is shown)");
+    public static string BookmarkRenameNote => Lang.T("The place is not renamed (empty: its name is shown)");
     public static string BookmarksClearNote => Lang.T("The places themselves stay.");
     public static string BookmarksCleared => Lang.T("The bookmarks are cleared");
     public static string JumpKeys => Lang.T("j/k Select | Enter Jump | B Bookmark | / Filter | I Info | Esc Close");
@@ -436,9 +433,9 @@ internal static class DialogText
     public static string Moving => Lang.T("Moving: j/k, then Esc");
     public static string HotlistMoveFiltered => Lang.T("Remove the filter (Esc) to move");
     public static string HotlistNoDirectory => Lang.T("Go to a directory first");
-    public static string FavoriteFolderNoPath => Lang.T("A folder of favorites has no path (:name copies its name)");
+    public static string FavoriteFolderNoPath => Lang.T("A folder of favorites has no path (:name copies the name)");
     public static string HotlistRename => Lang.T("Name in the hotlist");
-    public static string HotlistRenameNote => Lang.T("The directory keeps its name (empty: its name is shown)");
+    public static string HotlistRenameNote => Lang.T("The directory is not renamed (empty: its name is shown)");
     public static string HotlistCleared => Lang.T("The hotlist is cleared");
     public static string HotlistClearNote => Lang.T("The directories themselves stay.");
     public static string HistoryKeys => Lang.T("Enter Open | B Show | P Fave | D Remove | X Clear | / Filter | Esc Close");
@@ -468,14 +465,14 @@ internal static class DialogText
     public static string FavoriteMovedOne => Lang.T("Moved to: ");
     public static string FavoriteMovedMany(int count, string where) => Lang.F("Favorites moved: {0}, to {1}", count, where);
     public static string FavoriteMarkFolder => Lang.T("Only favorites can be marked and moved to a folder (not folders)");
-    public static string FavoritesMarkedKeys => Lang.T("Space Mark | M To folder | T/E Top/End | D Remove | Esc Clear the marks");
+    public static string FavoritesMarkedKeys => Lang.T("Space Mark | M To folder | T/E Top/End | D Remove | Esc Clear marks");
     public static string FavoriteRemoveCaption => Lang.T("Remove favorites");
     public static string FavoriteRemoveMany(int count) => Lang.F("Remove the marked favorites from the list ({0})?", count);
     public static string FavoriteRemovedMany(int count) => Lang.F("Favorites removed: {0} (u: Undo)", count);
     public static string BookmarksRemoveCaption => Lang.T("Remove bookmarks");
     public static string FavoriteRenameFolder => Lang.T("Rename folder");
     public static string FavoriteDeleteFolder => Lang.T("Remove folder");
-    public static string FavoriteFolderRemoved => Lang.T("Removed the folder: ");
+    public static string FavoriteFolderRemoved => Lang.T("Folder removed: ");
     public static string FavoriteFolderName => Lang.T("The name cannot be used for a folder");
     public static string FavoriteNothingToUndo => Lang.T("Nothing to undo");
     public static string FavoriteRestored => Lang.T("Put back in the favorites");
@@ -531,9 +528,9 @@ internal static class DialogText
     public static string FileNotFound => Lang.T("File not found");
     public static string ErrorReadingFile => Lang.T("Error reading file");
     public static string StatusUnableToSave => Lang.T("Error: Unable to save changes");
-    public static string ErrorFileAlreadyExist => Lang.T("A file with the same name already exists in the target location");
-    public static string ErrorBufferSize => Lang.T("Attention: Unable to use specified output dimensions. Reverting to default.");
-    public static string ErrorClientSize => Lang.T("Current terminal dimensions are unsupported.");
+    public static string ErrorFileAlreadyExist => Lang.T("A file with that name is already there");
+    public static string ErrorBufferSize => Lang.T("These output dimensions cannot be used: using the default.");
+    public static string ErrorClientSize => Lang.T("This terminal size is not supported.");
     public static string ErrorUnsupportedAction => Lang.T("Action unsupported");
 
 

@@ -180,7 +180,7 @@ internal sealed partial class ShellSession
         if (FavoriteList(words[0]) is not { } name) return;
         if (name.Length == 0)
         {
-            Error(Lang.T("The main list keeps its name"));
+            Error(Lang.T("Main list cannot be renamed"));
             return;
         }
 

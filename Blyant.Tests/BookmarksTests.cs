@@ -308,7 +308,7 @@ public class BookmarksTests : IDisposable
             Bookmarks.AddWithMessage(notes, "notes", false, true, out _));
         Assert.Single(Bookmarks.Places);
         // Only digits would be a number of :book
-        Assert.Equal(Lang.T("A name of only digits is the number of a bookmark: add a letter"),
+        Assert.Equal(Lang.T("A name of only digits reads as a bookmark number: add a letter"),
             Bookmarks.AddWithMessage(FileAt("x.md"), "2024", false, true, out failed));
         Assert.True(failed);
         // Renaming to the name of another bookmark is refused too

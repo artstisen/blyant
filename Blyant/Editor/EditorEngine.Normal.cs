@@ -133,7 +133,7 @@ internal sealed partial class EditorEngine
             ResetPending();
             if (IsRecording && !IsPlayingMacro)
             {
-                SetError(Lang.T("The other pane is not used while recording"));
+                SetError(Lang.T("Other pane cannot be used while recording"));
                 // Not a step of the macro
                 _macroCommandLeftOut = true;
             }
@@ -220,7 +220,7 @@ internal sealed partial class EditorEngine
             ResetPending();
             if (IsRecording)
             {
-                SetError(Lang.T("The jump to a word is not used while recording"));
+                SetError(Lang.T("Jump to a word cannot be used while recording"));
                 // Not a step of the macro
                 _macroCommandLeftOut = true;
             }
@@ -1486,7 +1486,7 @@ internal sealed partial class EditorEngine
     private bool TooMuchToPut(long length)
     {
         if (length <= MaxPutLength) return false;
-        SetError(Lang.T("Too much text to put in at once (use a smaller count)"));
+        SetError(Lang.T("Too much text to insert at once (use a smaller count)"));
         return true;
     }
 

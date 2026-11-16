@@ -72,7 +72,7 @@ internal sealed partial class EditorEngine
             {
                 if (severalLines)
                 {
-                    SetError(Lang.T("A block is surrounded line by line: use a completion of one line"));
+                    SetError(Lang.T("A block is surrounded line by line: use a one-line completion"));
                     return;
                 }
 

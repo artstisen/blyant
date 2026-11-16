@@ -295,7 +295,7 @@ internal static class Bookmarks
     internal static string? NameProblem(string name, Entry? entry)
     {
         if (name.Length == 0) return null;
-        if (name.All(char.IsAsciiDigit)) return Lang.T("A name of only digits is the number of a bookmark: add a letter");
+        if (name.All(char.IsAsciiDigit)) return Lang.T("A name of only digits reads as a bookmark number: add a letter");
         return FindByName(name) is { } other && other != entry
             ? Lang.F("The name {0} is used by bookmark {1}", other.Name, NumberOf(other))
             : null;

@@ -1385,7 +1385,7 @@ internal static class JumpMenu
             ChoiceBox.Forget();
             if ((marked.Count > 1 || notes > 0) && !ChoiceBox.Confirm(DialogText.BookmarksRemoveCaption,
                     Lang.F("Remove the marked bookmarks from the list ({0})?", marked.Count),
-                    (notes > 0 ? Lang.T("Their notes are removed with them.") + " " : string.Empty) +
+                    (notes > 0 ? Lang.T("Any notes are removed too.") + " " : string.Empty) +
                     DialogText.BookmarksClearNote, true))
             {
                 return;
@@ -1408,10 +1408,10 @@ internal static class JumpMenu
             if ((count > 0 || subfolders > 0 || entry.Note.Length > 0) && !ChoiceBox.Confirm(
                     DialogText.FavoriteDeleteFolder,
                     DialogText.DeleteNamed.Replace("{0}", Tools.TruncateString(entry.Name, 40, true)),
-                    (entry.Note.Length > 0 ? Lang.T("Its note is removed with it.") + " " : string.Empty) +
+                    (entry.Note.Length > 0 ? Lang.T("The note is removed too.") + " " : string.Empty) +
                     (count == 0 && subfolders == 0 ? string.Empty
                     : subfolders > 0
-                        ? Lang.F("Removed from the list with it (the places stay), bookmarks: {0}, subfolders: {1}",
+                        ? Lang.F("Removed with the folder (the places stay), bookmarks: {0}, subfolders: {1}",
                             count, subfolders)
                         : count == 1 ? Lang.T("The bookmark in it is removed from the list too (the place stays)")
                         : Lang.F("The bookmarks in it are removed from the list too (the places stay): {0}", count)),
@@ -1421,7 +1421,7 @@ internal static class JumpMenu
             }
 
             Bookmarks.RemoveAt(index);
-            _message = Lang.F("Removed the folder: {0}", entry.Name);
+            _message = Lang.F("Folder removed: {0}", entry.Name);
             SaveBookmarks();
             return;
         }
@@ -1431,7 +1431,7 @@ internal static class JumpMenu
             ChoiceBox.Forget();
             if (!ChoiceBox.Confirm(Lang.T("Remove bookmark"),
                     Lang.F("Remove \"{0}\" from the bookmarks?", Tools.TruncateString(entry.Shown, 40, true)),
-                    Lang.T("Its note is removed with it."), false))
+                    Lang.T("The note is removed too."), false))
             {
                 return;
             }
@@ -1582,7 +1582,7 @@ internal static class JumpMenu
         if (plan.NewFolders > 0) sentences.Add(Lang.F("New folders: {0}.", plan.NewFolders));
         if (plan.MergedFolders > 0) sentences.Add(Lang.F("Added to folders of the same name: {0}.", plan.MergedFolders));
         if (plan.Skipped > 0) sentences.Add(Lang.F("Bookmarks already, left out: {0}.", plan.Skipped));
-        if (plan.Notes > 0) sentences.Add(Lang.F("Notes copied: {0} (a note a bookmark has is kept).", plan.Notes));
+        if (plan.Notes > 0) sentences.Add(Lang.F("Notes copied: {0} (existing notes are kept).", plan.Notes));
         var note = string.Join(" ", sentences);
         if (!ChoiceBox.Confirm(Lang.T("Bookmarks"), Lang.T("Copy the favorites to the bookmarks?"), note, false)) return;
         var done = Bookmarks.ImportFavorites(favorites, true);

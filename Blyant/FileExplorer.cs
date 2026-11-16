@@ -1708,7 +1708,7 @@ internal static partial class FileExplorer
         {
             ChoiceBox.Forget();
             if (!ChoiceBox.Confirm(DialogText.SaveAs, Lang.F("Replace {0}?", fileName),
-                    Lang.T("A file of that name is there: it is replaced by this text."), true))
+                    Lang.T("A file of that name exists: this text replaces it."), true))
             {
                 return string.Empty;
             }

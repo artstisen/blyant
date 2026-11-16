@@ -648,7 +648,7 @@ internal static class LogoEditor
                 // Where the logos of the user's own are kept
                 Tools.SetCursorEx(area.Top + area.Height - 1, area.Left + 3);
                 ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
-                Console.Write(Tools.TruncateString(Lang.F("Your own logos are saved in {0}",
+                Console.Write(Tools.TruncateString(Lang.F("Your logos are saved in {0}",
                     Path.Combine(FileIo.GetDataDirectoryName(), Logos.DirectoryName)), area.Width - 3, true));
                 ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
                 _shown = -1;

@@ -248,7 +248,7 @@ internal static partial class FileExplorer
     private static string UsedByBlyantNote(Item item)
     {
         return item.IsDirectory
-            ? Lang.F("Blyant uses this ({0}): its settings and lists are in it.", item.Name)
+            ? Lang.F("Blyant keeps settings and lists in this ({0}).", item.Name)
             : Lang.F("Blyant uses this file ({0}): a new one is made when it is needed.", item.Name);
     }
 

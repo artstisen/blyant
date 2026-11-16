@@ -489,7 +489,7 @@ internal static class StartMenu
         var keys = ChoiceBox.NumberKeys(types.Count);
         var selected = Math.Max(0, types.ToList().FindIndex(type => type.Extension == FileOperations.DefaultExtension));
         var picked = ChoiceBox.Pick(Lang.T("New files and blank pages"),
-            Lang.T("Assumed file type (redefined upon saving)"), string.Empty, choices,
+            Lang.T("Type of new files (saving may change it)"), string.Empty, choices,
             keys, selected, false);
         if (picked < 0) return;
         FileOperations.DefaultExtension = types[picked].Extension;
