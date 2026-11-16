@@ -1,4 +1,4 @@
-﻿// Copied from Blyant Validator 0.6.0 (src/Blyant.Validator.Xml/XmlValidator.cs) by tools/formatters.py: not changed by hand in Blyant.
+﻿// Copied from Blyant Validator 0.6.1 (src/Blyant.Validator.Xml/XmlValidator.cs) by tools/formatters.py: not changed by hand in Blyant.
 // Change it in Blyant Validator, and copy it again. English: its messages are not translated
 using System.Text.RegularExpressions;
 using System.Xml;

@@ -71,6 +71,7 @@ See the [guide to the corkboard](Guide-to-corkboard.md).
 - A shell for lines of text (`blyant --shell`): your files and lists with typed commands and numbered lists, for screen readers and scripts, and the full editor a command away ([tutorial](Guide-to-shell-tutorial.md))
   - Make files, and add, move, copy and change lines in them without opening an editor: `insert todo.md bottom Get pencils and paper`, `shift todo.md 4-6 Done`, `lines notes.md 4-6 > plan.md bottom` (`cut` moves them), `change notes.md +12 New text` (and `undo` puts it back), and copy and paste with `clip` and `$clip` ([practice](Guide-to-shell-tutorial.md#practice))
   - Read through a file with `peek` and `+` or `-`, and search it (`peek notes.md /storm`), collect lines from several files in a register (`reg notes += $peek`), keep commands in a register or file and run them as a small script (`run $tidy`), and run a command again with `!!` ([running commands](Guide-to-shell.md#running-commands))
+  - Work with the file of a list: `file 2` makes row 2 of `recent` or `fav` the file you work on (`$file`), `echo $file` shows it, and `path` and `name` copy its path or name, as `:path` and `:name` do in the editor
 
 ## Blyant Validator
 **[Blyant Validator](https://github.com/artstisen/blyant-validator)** is a companion tool, which also works on its own: validate HTML, CSS, XML, Markdown and Typst, and format HTML, CSS and XML, side by side with your editor, in any terminal. It checks a file again each time it is saved, and makes a Typst document into a PDF with `:typst`.
