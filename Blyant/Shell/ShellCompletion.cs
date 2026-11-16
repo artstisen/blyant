@@ -160,6 +160,7 @@ internal sealed class ShellCompletion
                 };
             case "path":
             case "name":
+            case "file":
             case "info":
             case "delete":
             case "del":

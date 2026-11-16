@@ -55,6 +55,7 @@ internal sealed partial class ShellSession
         ("reload", Lang.T("Read the settings file and the registers again, after editing them")),
         ("clip [path|name] file|dir|n|.", Lang.T("Copy a path, or a name, to the clipboard")),
         ("path [file|n], name [file|n]", Lang.T("Copy the path, or name, of $file (or of a file)")),
+        ("file [file|n]", Lang.T("Make a file of a list $file (file 3), or show $file")),
         ("clip text file|n", Lang.T("Copy the text of a file to the clipboard")),
         ("clip lines file|n lines", Lang.T("Copy lines of a file (4, 4-6, 4,7, +100 20)")),
         ("clip $name", Lang.T("Copy the value of a register to the clipboard")),
@@ -321,6 +322,35 @@ internal sealed partial class ShellSession
     // What followed the command, as typed: before the $names were put in
     private string? _typedArgument;
 
+    // "file 3", "file plot.md": the file of a row of the last list, or one named, made $file, without peeking or
+    // opening it; the last list stays as it was ("file 4", "open 3" go on in it). "file" alone: $file shown
+    private void FileCommand(string argument)
+    {
+        var words = Words(argument);
+        if (words.Count == 0)
+        {
+            if (_file == null) Error(Lang.T("No file yet: open, peek, insert, new ... give $file"));
+            else Line(Lang.F("$file: {0}", _file));
+            return;
+        }
+
+        if (words.Count > 1)
+        {
+            Error(Lang.T("Give one file: file 3, file plot.md"));
+            return;
+        }
+
+        if (Existing(words[0]) is not { } item) return;
+        if (item.IsDirectory)
+        {
+            Error(Lang.F("Not a file: {0} (cd goes to a directory)", item.Path));
+            return;
+        }
+
+        _file = Path.GetFullPath(item.Path);
+        Line(Lang.F("$file: {0}", _file));
+    }
+
     // "echo $file", "echo Tidied on $date": the text written as typed, with the $names put in ("$$": a "$"), a value
     // of several lines with all its lines. A $name that is no register and no name set by Blyant is told: nothing is
     // written. Changes nothing (no file, no last list, not $file)
@@ -487,6 +517,9 @@ internal sealed partial class ShellSession
                 break;
             case "clip":
                 Clip(argument);
+                break;
+            case "file":
+                FileCommand(argument);
                 break;
             // As :path and :name in the editor: of $file, or of a file or row given
             case "path":

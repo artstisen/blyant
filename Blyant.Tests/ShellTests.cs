@@ -4499,4 +4499,35 @@ public class ShellTests : IDisposable
         Assert.Equal("name plot.md", Tab(Completion(), "name plo"));
         Assert.Contains("path [file|n], name [file|n]", Run("help name\n").Output);
     }
+
+    // ---- file: a file of a list made $file
+
+    [Fact]
+    public void File_MakesARowOfTheList_File_AndTheListStays()
+    {
+        File.WriteAllText(In("work", "a.md"), "x\n");
+        var (output, errors, _, session) = Run("file\nfind a.md\nfile 1\nfile\ninsert $file bottom y\n");
+        Assert.Contains(Lang.T("No file yet: open, peek, insert, new ... give $file"), errors);
+        Assert.Single(errors.TrimEnd('\n').Split('\n'));
+        Assert.Equal(2, output.Split('\n').Count(line => line == Lang.F("$file: {0}", In("work", "a.md"))));
+        Assert.Equal("x\ny\n", Text("a.md"));
+        // By its name; the list shown stays the last list
+        (output, errors, _, session) = Run("ls\nfile plot.md\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal(In("work", "plot.md"), session.WorkedFile);
+        Assert.True(session.LastList.Count > 1);
+    }
+
+    [Fact]
+    public void File_ADirectory_TwoWords_AndAFileGone_AreTold()
+    {
+        Directory.CreateDirectory(In("work", "d"));
+        var (_, errors, _, session) = Run("file d\nfile a b\nfile gone.md\n");
+        Assert.Contains(Lang.F("Not a file: {0} (cd goes to a directory)", In("work", "d")), errors);
+        Assert.Contains(Lang.T("Give one file: file 3, file plot.md"), errors);
+        Assert.Contains(Lang.F("Not found: {0}", In("work", "gone.md")), errors);
+        Assert.Null(session.WorkedFile);
+        Assert.Equal("file plot.md", Tab(Completion(), "file plo"));
+        Assert.Contains("file [file|n]", Run("help file\n").Output);
+    }
 }

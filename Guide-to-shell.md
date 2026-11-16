@@ -121,6 +121,7 @@ To have every output whole (with a screen reader, say), turn the pages off: `set
 | `clip lines file\|n lines` | Copy lines of a file to the clipboard, given as for `lines` (`40`, `4-6`, `4,7,9-10`, `+100 30`, a text in the line). See [Line numbers](#line-numbers) |
 | `clip $name` | Copy the value of a register to the clipboard |
 | `path [file\|n]`, `name [file\|n]` | Copy the full path, or the name, of the file you worked on last (`$file`), as `:path` and `:name` do in the editor; of a file or row given: `path 3`, `name plot.md`. See [Clipboard](#clipboard) |
+| `file [file\|n]` | Make a file of a list `$file`, without opening or peeking it: `recent`, then `file 2`; or a file by its name (`file plot.md`). The last list stays, so `file 3` or `open 4` go on in it. `file` alone shows `$file`. See [Registers](#registers) |
 | `$clip` | The text `clip` copied last, put in a command as a register is (`insert plan.md bottom $clip`: its lines) |
 | `favorites [-l] [list]` (`fav`) | List the favorites of the file browser by name, with their folders as headings (`-l`: the full paths); `fav work` uses the list _work_ from now on, as `:list work` does, and `fav main` the main list again. The open list is told first (`List: main`) |
 | `favorites lists` | List the lists of favorites, `*` at the one that is open |
@@ -645,7 +646,7 @@ lines plot.md 3-5 > $notes          ">": the register is those lines alone
   | Name | Value |
   |---|---|
   | `$pwd` | the directory you are in (`copy 3 $pwd`) |
-  | `$file` | the file the last command worked on: opened, peeked, put lines in, made with `new` ... (`peek plot.md`, then `insert $file bottom Done`). It is kept when you leave the shell, and is `$file` again the next time you start it, while the file is there (setting `shelllastfile`; not for commands from a file, a pipe or `--run`). A list shown (`ls`, `fav`) does not change it |
+  | `$file` | the file the last command worked on: opened, peeked, put lines in, made with `new` ... (`peek plot.md`, then `insert $file bottom Done`). It is kept when you leave the shell, and is `$file` again the next time you start it, while the file is there (setting `shelllastfile`; not for commands from a file, a pipe or `--run`). A list shown (`ls`, `fav`) does not change it. `file 3` makes row 3 of a list `$file` without peeking it |
   | `$date` | today, as `2026-11-15` |
   | `$time` | the time now, as `14:05` |
   | `$now` | the date and the time, as `2026-11-15 14:05:33` (as `:ts` in the editor) |
