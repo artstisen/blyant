@@ -4660,7 +4660,8 @@ public class ShellTests : IDisposable
         Assert.Contains("  3  Notes/c.md " + DialogText.FavoriteMissing, output);
         (output, _, _, _) = Run("recent -f -l\n");
         Assert.Contains("  1  " + In("work", "Drafts", "b.md") + "  ", output);
-        Assert.DoesNotContain("Drafts/b.md", output);
+        // (not the folder and the name; on Linux and macOS the full path has "Drafts/b.md" at its end)
+        Assert.DoesNotContain("  1  Drafts/b.md", output);
     }
 
     [Fact]
