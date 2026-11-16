@@ -54,15 +54,16 @@ internal sealed partial class ShellSession
         ("reset", Lang.T("Reset all settings to the defaults (asks first)")),
         ("reload", Lang.T("Read the settings file and the registers again, after editing them")),
         ("clip [path|name] file|dir|n|.", Lang.T("Copy a path, or a name, to the clipboard")),
-        ("path [file|n], name [file|n]", Lang.T("Copy the path, or name, of $file (or of a file)")),
-        ("file [file|n]", Lang.T("Make a file of a list $file (file 3), or show $file")),
         ("clip text file|n", Lang.T("Copy the text of a file to the clipboard")),
         ("clip lines file|n lines", Lang.T("Copy lines of a file (4, 4-6, 4,7, +100 20)")),
         ("clip $name", Lang.T("Copy the value of a register to the clipboard")),
         ("clip ... $clip", Lang.T("The text copied last, in a command")),
+        ("path [file|n], name [file|n]", Lang.T("Copy the path, or name, of $file (or of a file)")),
         ("reg [name [text|.|#n]]", Lang.T("Keep a text or a path in a register: $name puts it in a command")),
         ("reg name += text", Lang.T("Add a text to a register, as lines (reg notes += $peek)")),
         ("reg -d name|all", Lang.T("Take a register away, or all of them")),
+        ("echo text", Lang.T("Write a text, with $names put in (echo $file)")),
+        ("file [file|n]", Lang.T("Make a file of a list $file (file 3), or show $file")),
         ("favorites [-l] [list]", Lang.T("List the favorites (fav), or those of another list")),
         ("favorites -l", Lang.T("Lists with full paths (also hist, recent, book)")),
         ("favorites lists", Lang.T("List the lists of favorites (*: the open one)")),
@@ -78,7 +79,7 @@ internal sealed partial class ShellSession
         ("favorites move name where", Lang.T("Move by name, or all a pattern fits (ch*.md)")),
         ("favorites filter text", Lang.T("Show the favorites with a text in them (or *.md)")),
         ("favorites undo", Lang.T("Put back what fav remove removed last")),
-        ("favorites add file|n [where]", Lang.T("Add to the favorites: last, or top, 5, [folder]")),
+        ("favorites add file|n [where]", Lang.T("Add to the favorites: top, or bottom, 5, [folder]")),
         ("favorites remove file|n", Lang.T("Take off the favorites")),
         ("history [-l]", Lang.T("List the files opened (hist)")),
         ("history filter text", Lang.T("Show the files opened with a text in them (or *.md)")),
@@ -94,7 +95,6 @@ internal sealed partial class ShellSession
         ("screen", Lang.T("Go on on the full screen, in the file browser here")),
         ("version", Lang.T("Show the version of Blyant")),
         ("about [license]", Lang.T("Show the version and the commands used the most, or the license")),
-        ("echo text", Lang.T("Write a text, with $names put in (echo $file)")),
         ("again [n]", Lang.T("List the commands typed, or run one again (!n, !!)")),
         ("again filter text", Lang.T("Show the commands typed with a text in them")),
         ("undo [n]", Lang.T("Undo the last change of a file (insert, change ...)")),
@@ -275,8 +275,8 @@ internal sealed partial class ShellSession
         if (found == 0) Line(Lang.F("No commands with {0} in them", filter ?? string.Empty));
     }
 
-    // The commands that take a value of more than one line: insert and change put in its lines, reg keeps them, and
-    // run runs them
+    // The commands that take a value of more than one line: insert and change put in its lines, reg keeps them, run
+    // runs them, and echo writes them
     private static readonly string[] TakesLines = { "insert", "change", "reg", "run", "echo" };
 
     // Why the $names of a command line cannot be put in (null: they can): $clip or $peek that is not there yet, or
@@ -364,7 +364,8 @@ internal sealed partial class ShellSession
             return;
         }
 
-        Line(text);
+        // (a line at a time: a long value comes in pages)
+        foreach (var line in text.Split('\n')) Line(line);
     }
 
     private bool RunCommand(string name, string argument)

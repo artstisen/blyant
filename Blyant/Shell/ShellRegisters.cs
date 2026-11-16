@@ -328,26 +328,8 @@ internal static partial class ShellRegisters
     /// <summary>
     /// True if a command line has $name in it (as Expand finds it: not "$$name", and not "$names")
     /// </summary>
-    internal static bool Mentions(string line, string name)
-    {
-        for (var i = 0; i + 1 < line.Length; i++)
-        {
-            if (line[i] != '$') continue;
-            if (line[i + 1] == '$')
-            {
-                i++;
-                continue;
-            }
-
-            if (!char.IsAsciiLetter(line[i + 1])) continue;
-            var end = i + 1;
-            while (end < line.Length && (char.IsAsciiLetterOrDigit(line[end]) || line[end] == '_')) end++;
-            if (line[(i + 1)..end].Equals(name, StringComparison.OrdinalIgnoreCase)) return true;
-            i = end - 1;
-        }
-
-        return false;
-    }
+    internal static bool Mentions(string line, string name) =>
+        NamesIn(line).Any(found => found.Equals(name, StringComparison.OrdinalIgnoreCase));
 
     // $name for the value of the register (a name not of a register: as typed), and $$ for $
     private static string Replace(string text)

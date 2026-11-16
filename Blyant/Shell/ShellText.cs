@@ -463,7 +463,11 @@ internal sealed partial class ShellSession
         if (text.Length == 0 && !equals)
         {
             // The value alone on its line ("reg clip": the text clip copied last, all its lines)
-            if (ShellRegisters.Get(name) is { } value) Line(value);
+            // (a line at a time: a long value comes in pages)
+            if (ShellRegisters.Get(name) is { } value)
+            {
+                foreach (var line in value.Split('\n')) Line(line);
+            }
             else Error(Lang.F("No register named {0} (reg lists them)", name));
             return;
         }

@@ -91,6 +91,17 @@ internal static partial class FileExplorer
         _favoriteIndex = Math.Max(0, _favorites.IndexOf(number));
     }
 
+    // Favorites added at the top elsewhere (P in the file browser, the history, the search results, :favorite in the
+    // editor, fav add in the shell): the selection moves down as many rows as are shown, so the favorite selected
+    // before is selected still (the rows shown are not moved: the new ones at the top are seen when there is room)
+    private static void FollowAddedAtTop()
+    {
+        var added = FileFavorites.TakeAddedAtTop();
+        if (added == 0) return;
+        var shown = _favorites.Count(number => number < added);
+        _favoriteIndex += shown;
+    }
+
     private static void FilterFavorites()
     {
         _favorites = new List<int>();
@@ -122,6 +133,7 @@ internal static partial class FileExplorer
         while (true)
         {
             FilterFavorites();
+            FollowAddedAtTop();
             _favoriteIndex = Math.Clamp(_favoriteIndex, 0, Math.Max(0, _favorites.Count - 1));
             // Follow the size of the terminal window, and draw again if the page could not be drawn
             if (Init.ApplyAutoSize()) redraw = true;

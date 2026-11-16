@@ -4498,7 +4498,7 @@ public class ShellTests : IDisposable
     {
         var (_, errors, _, _) = Run("path\nname a.md b.md\n", clipboard: true);
         Assert.Contains(Lang.T("No file yet: open, peek, insert, new ... give $file"), errors);
-        Assert.Contains(Lang.F("Give one file or directory: clip {0} 3", "name"), errors);
+        Assert.Contains(Lang.F("Give one file or directory: {0} 3", "name"), errors);
         Assert.Equal("path plot.md", Tab(Completion(), "path plo"));
         Assert.Equal("name plot.md", Tab(Completion(), "name plo"));
         Assert.Contains("path [file|n], name [file|n]", Run("help name\n").Output);
@@ -4546,5 +4546,75 @@ public class ShellTests : IDisposable
         Assert.Equal("new.md|b.md|c.md|d.md|[F]|.a.md", FavoritesShape());
         // Row 1 in fav, to be moved where it belongs
         Assert.Contains(Lang.F("List: {0}", "main") + "\n  1  new.md\n", Run("fav\n").Output);
+    }
+
+    // ---- Review of 1.5.4
+
+    [Fact]
+    public void FavAdd_WithoutAPlace_ShowsTheListAgain_AsItsRowsHaveMoved()
+    {
+        FourFavorites();
+        File.WriteAllText(In("work", "x.md"), "x\n");
+        var (output, _, _, session) = Run("fav\nfav add x.md\nfav move 3 top\n");
+        Assert.Contains(Lang.F("Added to the favorites: {0}", In("work", "x.md")) + "\n" + Lang.F("List: {0}", "main") +
+                        "\n  1  x.md\n  2  a.md\n", output);
+        // Row 3 is the one shown as row 3 after the add: b.md
+        Assert.Equal("b.md|x.md|a.md|c.md|d.md", FavoritesShape());
+    }
+
+    [Fact]
+    public void PathAndName_OfAFileGone_AreThePathAndNameKnown_AndADirectory()
+    {
+        File.WriteAllText(In("work", "a.md"), "x\n");
+        Directory.CreateDirectory(In("work", "d"));
+        var sent = Clipboard();
+        var output = new StringWriter();
+        var errors = new StringWriter();
+        var session = new ShellSession(new StringReader(string.Empty), output, errors, In("work"), false)
+        {
+            Clipboard = true
+        };
+        session.Execute("peek a.md");
+        File.Delete(In("work", "a.md"));
+        session.Execute("path");
+        session.Execute("name");
+        session.Execute("path d");
+        Assert.Equal(string.Empty, errors.ToString());
+        Assert.Equal(new[] { In("work", "a.md"), "a.md", In("work", "d") }, sent);
+        // Without a terminal: kept for $clip
+        var (text, _, _, _) = Run("peek plot.md\npath\n");
+        Assert.Contains(Lang.T("Kept for $clip (the clipboard needs a terminal)"), text);
+    }
+
+    [Fact]
+    public void File_OfAFindRow_AndOfAHistoryRowGone()
+    {
+        File.WriteAllText(In("work", "a.md"), "storm\n");
+        var (output, errors, _, session) = Run("find -t storm\nfile 1\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal(In("work", "a.md"), session.WorkedFile);
+        Run("new gone\n");
+        File.Delete(In("work", "gone.md"));
+        (_, errors, _, _) = Run("hist\nfile 1\n");
+        Assert.Contains(Lang.F("Not found: {0}", In("work", "gone.md")), errors);
+    }
+
+    [Fact]
+    public void Echo_ANameInQuotes_TwoDollars_AnUnknownNameThroughAgain_AndHelp()
+    {
+        CommandHistory.Clear();
+        try
+        {
+            var (output, errors, _, _) = Run("echo \"$pwd\" $$pwd\n", terminal: true);
+            Assert.Contains("\"" + In("work") + "\" $pwd\n", output);
+            CommandHistory.Add(CommandContext.Shell, "echo $nothing");
+            (_, errors, _, _) = Run("!!\n");
+            Assert.Contains(Lang.F("No register named {0} (reg lists them)", "nothing"), errors);
+            Assert.Contains("echo text", Run("help echo\n").Output);
+        }
+        finally
+        {
+            CommandHistory.Clear();
+        }
     }
 }

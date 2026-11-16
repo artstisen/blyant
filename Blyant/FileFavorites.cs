@@ -411,8 +411,26 @@ internal static class FileFavorites
         // A path with a line break would break the lines of the file
         if (path.IndexOfAny(new[] { '\r', '\n' }) >= 0) return false;
 
-        List.Insert(Math.Clamp(at, 0, List.Count), new Favorite { Path = Path.GetFullPath(path) });
+        var place = Math.Clamp(at, 0, List.Count);
+        List.Insert(place, new Favorite { Path = Path.GetFullPath(path) });
+        // (what the favorites page put back with undo goes where it was, one row further down now)
+        Folders.Inserted(place);
+        if (place < List.Count - 1) _addedAtTop++;
         return true;
+    }
+
+    // Favorites added at the top (not at the end) since the favorites page was shown last
+    private static int _addedAtTop;
+
+    /// <summary>
+    /// How many favorites were added at the top since this was asked last (the favorites page moves its selection down
+    /// as many rows, so it stays on the favorite it was on)
+    /// </summary>
+    internal static int TakeAddedAtTop()
+    {
+        var added = _addedAtTop;
+        _addedAtTop = 0;
+        return added;
     }
 
     /// <summary>

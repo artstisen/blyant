@@ -729,4 +729,30 @@ public class FileManagementTests : IDisposable
         Assert.Equal(new[] { "/x/a", "/x/b", "/x/new", "/x/old" }.Select(Path.GetFullPath),
             FileFavorites.Items.Select(item => item.Path));
     }
+
+    [Fact]
+    public void Favorites_AddedAtTheTop_WhenTheListStartsWithAFolder_AreOutsideIt_AndUndoFollows()
+    {
+        FileFavorites.Load();
+        foreach (var item in FileFavorites.Items.ToList()) FileFavorites.RemoveAt(FileFavorites.IndexOf(item));
+        FileFavorites.TakeAddedAtTop();
+        var folder = FileFavorites.AddFolder("F", -1);
+        Assert.True(FileFavorites.Toggle("/x/in", int.MaxValue));
+        FileFavorites.MoveToFolder(new List<FileFavorites.Favorite> { FileFavorites.Items[^1] }, FileFavorites.Items[folder]);
+        Assert.True(FileFavorites.Toggle("/x/keep", int.MaxValue));
+        // Removed (as D on the favorites page does), then another added at the top: undo puts it back where it was
+        FileFavorites.RemoveAt(FileFavorites.IndexOf(FileFavorites.Items.First(item => item.Path == Path.GetFullPath("/x/keep"))));
+        Assert.True(FileFavorites.Toggle("/x/new"));
+        Assert.Equal(0, FileFavorites.Items[0].Level);
+        Assert.Equal(Path.GetFullPath("/x/new"), FileFavorites.Items[0].Path);
+        Assert.True(FileFavorites.UndoRemove() >= 0);
+        // new, [F], in (in F), keep (after the folder, as it was)
+        Assert.Equal(Path.GetFullPath("/x/keep"), FileFavorites.Items[^1].Path);
+        Assert.Equal(0, FileFavorites.Items[^1].Level);
+        Assert.Equal(1, FileFavorites.TakeAddedAtTop());
+        Assert.Equal(0, FileFavorites.TakeAddedAtTop());
+        // Added at the end: not counted
+        Assert.True(FileFavorites.Toggle("/x/last", int.MaxValue));
+        Assert.Equal(0, FileFavorites.TakeAddedAtTop());
+    }
 }

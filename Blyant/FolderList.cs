@@ -99,6 +99,16 @@ internal sealed class FolderList<T> where T : class, IFolderItem
     }
 
     /// <summary>
+    /// An item was put in the list at this place (a favorite added at the top): what was removed last and had a place
+    /// at it or after it goes back one place further on
+    /// </summary>
+    internal void Inserted(int index)
+    {
+        if (_removed == null) return;
+        _removed = _removed.Select(part => (part.Index >= index ? part.Index + 1 : part.Index, part.Items)).ToList();
+    }
+
+    /// <summary>
     /// Nothing can be put back (the list was emptied)
     /// </summary>
     internal void ForgetRemoved()

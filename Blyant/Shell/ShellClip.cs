@@ -53,8 +53,16 @@ internal sealed partial class ShellSession
                 return;
             }
 
-            // (the path as a word of its own: a name with a quote in it is still one word)
-            words.Add(_file);
+            // (the path and name are known: copied also when the file was moved or deleted since, as $file shows it)
+            var known = kind == "path" ? _file : Path.GetFileName(_file);
+            CopyClip(kind, known, known);
+            return;
+        }
+
+        if (words.Count > 1)
+        {
+            Error(Lang.F("Give one file or directory: {0} 3", kind));
+            return;
         }
 
         if (!ClipText(kind, words, out var text, out var shown)) return;

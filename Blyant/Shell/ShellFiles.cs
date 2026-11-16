@@ -809,7 +809,8 @@ internal sealed partial class ShellSession
 
     // "fav add 3", "fav remove notes.md": a file or directory added to the favorites in use, or taken off them. A
     // place after the file of "fav add" puts it there: "top", "bottom", the place of a row ("5") or a folder
-    // ("[Drafts]": last in it), as "fav move" moves it; without one it goes at the bottom
+    // ("[Drafts]": last in it), as "fav move" moves it; without one it goes at the top (row 1), and the list is shown
+    // again, as its rows have moved
     private void ChangeFavorites(string argument, bool add)
     {
         var words = Words(argument);
@@ -842,6 +843,8 @@ internal sealed partial class ShellSession
         EventLog.Add(DialogText.LogFile + (add ? "Favorite add: " : "Favorite remove: ") + item.Path);
         Done(result, add ? Lang.F("Added to the favorites: {0}", item.Path)
             : Lang.F("Taken off the favorites: {0}", item.Path), null);
+        // (added at the top: the rows of the list shown before have moved down, so it is shown again)
+        if (add && result == DialogText.Success) ListFavorites(string.Empty);
     }
 
     // "fav add notes.md [Drafts]": a favorite added at a place (top, bottom, a row, a folder). Nothing is added when

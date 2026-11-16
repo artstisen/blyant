@@ -474,8 +474,8 @@ blyant --shell ~/novel < weekly.txt
 
 - No prompt is shown, and what went wrong goes to the error output. The exit code is 1 when a command failed
 - Questions are not asked: the answer is no, so nothing is deleted. With `--yes` the answer is yes
-- `echo $docs` writes it too, inside a line of your own (`echo $file was changed on $date`): a quick way to see a value, or what a command will get
 - `reg docs` alone writes the value of a register on its own line, so a script can read it: `blyant --run "reg docs"`
+- `echo $docs` writes it too, inside a line of your own (`echo $file was changed on $date`): a quick way to see a value, or what a command will get
 
 Inside the shell, a register can hold commands, one a line, and `run` runs them: a small script you keep. Write `$$date` for a date that is put in when the script runs, not when it is kept:
 
@@ -508,7 +508,7 @@ What you do on the full screen, and the command for it in the shell:
 | Copy, move, rename, delete | `copy 3 1`, `move 3 1`, `rename 3 notes.md`, `delete 3` |
 | Favorites, history, hotlist | `fav`, `hist`, `recent`, `hot` |
 | Projects, bookmarks | `projects`, `project novel`, `book` |
-| `:path`, `:name` | `clip 3`, `clip name 3` |
+| `:path`, `:name` | `path`, `name` (of `$file`), or `clip 3`, `clip name 3` (of a row) |
 | `:format`, `:trim` in the editor | `format 3`, `trim 3` |
 | A line added in the editor | `insert 3 bottom text` |
 | Lines changed or deleted in the editor | `change 3 +12 text`, `change 3 12-15` |

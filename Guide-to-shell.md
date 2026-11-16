@@ -57,7 +57,7 @@ The last list is kept for as long as no other command takes its place, however l
 
 - A list shown takes its place: `ls`, `fav`, `hist`, `recent`, `hot`, `book`, `projects` and `find`
 - So does the file or directory a command worked on, as a list of one row (`open 1` opens it): `peek`, `insert`, `change`, `shift`, `format` and `trim` (the file, at its line), `lines` (the other file, at the lines put in), `undo` and `redo` (the files written), `new`, `mkdir`, `copy`, `move` and `rename` (the new place), and `cd` on a file (the file)
-- Other commands leave it as it was: `info` (so `fav`, `info 3`, `info 4` and `open 4` work), `cd` into a directory, `up`, `home`, `data`, `pwd`, `open`, `delete`, `clip`, `reg`, `set`, `changes`, `help`, `about` and `clear`. The rows are full paths, so `fav`, then `cd` somewhere else, and `open 3` still opens row 3 of the favorites
+- Other commands leave it as it was: `info` (so `fav`, `info 3`, `info 4` and `open 4` work), `cd` into a directory, `up`, `home`, `data`, `pwd`, `open`, `delete`, `clip`, `path`, `name`, `echo`, `reg`, `set`, `changes`, `help`, `about` and `clear`, and `file` (it changes only `$file`). The rows are full paths, so `fav`, then `cd` somewhere else, and `open 3` still opens row 3 of the favorites
 - A row deleted since (`delete 3`) stays in the list, and is told as not there. When a number is not a row of the list you meant (after `peek 2`, the last list is that file), show the list again
 
 The shell writes in the colors of your terminal (the color scheme is for the full screen), and a character of a file that would steer the terminal (an escape sequence: a color, a title, the clipboard) is shown as `?`. A command that fails in a way it should not is told (`The command failed: ...`), and the shell goes on.
@@ -115,13 +115,13 @@ To have every output whole (with a screen reader, say), turn the pages off: `set
 | `reg [name [text\|.\|#n]]` | Keep a text or a path in a register, show one, or list them (see [Registers](#registers)) |
 | `reg name = text`, `reg name += text` | Keep a text in a register (as `reg name text`), or add it to its end, as lines (`reg notes += $peek`) |
 | `reg -d name\|all` | Take a register away, or all of them |
-| `echo text` | Write a text with the `$names` put in: `echo $file`, `echo $pwd $date`, `echo $peek` (all its lines). To see a value, or the line a command will get (`echo insert $file bottom $date Done`). See [Registers](#registers) |
+| `echo text` | Write a text with the `$names` put in: `echo $file`, `echo $pwd $date`, `echo $peek` (all its lines). To see a value, or what a command will be given (`echo insert $file bottom $date Done`; a command that takes paths gets a value with blanks in quotes). See [Registers](#registers) |
+| `file [file\|n]` | Make a file of a list `$file`, without opening or peeking it: `recent`, then `file 2`; or a file by its name (`file plot.md`). The last list stays, so `file 3` or `open 4` go on in it. `file` alone shows `$file`. See [Registers](#registers) |
 | `clip [path\|name] file\|dir\|n\|.` | Copy the full path of a file or directory (`clip 3`: row 3 of the last list; `clip .`: the directory you are in), or its name, to the clipboard (see [Clipboard](#clipboard)) |
 | `clip text file\|n` | Copy the text of a file to the clipboard |
 | `clip lines file\|n lines` | Copy lines of a file to the clipboard, given as for `lines` (`40`, `4-6`, `4,7,9-10`, `+100 30`, a text in the line). See [Line numbers](#line-numbers) |
 | `clip $name` | Copy the value of a register to the clipboard |
 | `path [file\|n]`, `name [file\|n]` | Copy the full path, or the name, of the file you worked on last (`$file`), as `:path` and `:name` do in the editor; of a file or row given: `path 3`, `name plot.md`. See [Clipboard](#clipboard) |
-| `file [file\|n]` | Make a file of a list `$file`, without opening or peeking it: `recent`, then `file 2`; or a file by its name (`file plot.md`). The last list stays, so `file 3` or `open 4` go on in it. `file` alone shows `$file`. See [Registers](#registers) |
 | `$clip` | The text `clip` copied last, put in a command as a register is (`insert plan.md bottom $clip`: its lines) |
 | `favorites [-l] [list]` (`fav`) | List the favorites of the file browser by name, with their folders as headings (`-l`: the full paths); `fav work` uses the list _work_ from now on, as `:list work` does, and `fav main` the main list again. The open list is told first (`List: main`) |
 | `favorites lists` | List the lists of favorites, `*` at the one that is open |
@@ -631,7 +631,7 @@ lines plot.md 3-5 > $notes          ">": the register is those lines alone
 ```
 
 - `+=` and `>>` add to the end of a register, as lines (a register that is not there is made); `=`, `>` and `reg name text` set it. `$clip`, `$peek` and the other registers can be added (`reg notes += $clip`)
-- A register of more than one line is put in as `$clip` and `$peek` are: `insert` and `change` put in its lines, and the other commands are told. `reg` lists its first line and how many lines it has, and `reg notes` shows all of them
+- A register of more than one line is put in as `$clip` and `$peek` are: `insert` and `change` put in its lines, `reg` keeps them, `run` runs them and `echo` writes them, and the other commands are told. `reg` lists its first line and how many lines it has, and `reg notes` shows all of them
 - In `registers.txt` the lines after the first start with a tab, so the file can still be edited by hand. The lines you collect are kept there until you take the register away (`reg -d notes`): the text of your files is in that file, in the data directory (never in the log)
 
 - A text in quotes is kept without them: `reg docs "~/my docs"` keeps the path, so `copy plot.md $docs` takes it as one
@@ -654,7 +654,7 @@ lines plot.md 3-5 > $notes          ">": the register is those lines alone
   | `$peek` | the lines `peek` showed last, as they were then: `peek notes.md 4-6`, then `insert plan.md bottom $peek` puts them in another file (`+` and `-` change it, as they move the window) |
 
   `insert log.md bottom $date Finished chapter 3` puts in a line with the date. The date and the time are written the same in every language. These names are not registers: `reg pwd x` and `reg -d date` are refused, and a line of one of them in `registers.txt` is kept there as a line that is not a register, and not used. `reg` lists them after the registers, under _Set by Blyant_, with their values now, and `reg pwd` shows one. `$file` before a command has worked on a file is told (no file yet), and `$$date` is the text `$date`
-- In which commands they can be used: every register and name set by Blyant is put in before the command runs, so all commands take them. Only a value of more than one line (`$clip` or `$peek` of lines) is limited: `insert` and `change` put in its lines, and the other commands are told (nothing is changed):
+- In which commands they can be used: every register and name set by Blyant is put in before the command runs, so all commands take them. Only a value of more than one line (`$clip` or `$peek` of lines) is limited: `insert` and `change` put in its lines, `reg` keeps them, `run` runs them and `echo` writes them, and the other commands are told (nothing is changed):
 
   | | One line (`$pwd`, `$file`, `$date`, `$time`, `$now`, a register, and `$clip` or `$peek` of one line) | More lines (`$clip`, `$peek`) |
   |---|---|---|

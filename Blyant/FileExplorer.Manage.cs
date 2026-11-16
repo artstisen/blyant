@@ -1431,7 +1431,8 @@ internal static partial class FileExplorer
             var at = 0;
             foreach (var item in items.Where(item => FileFavorites.Contains(item.Path) != add))
             {
-                FileFavorites.Toggle(item.Path, at++);
+                // (one that is not added, a path with a line break, takes no place)
+                if (FileFavorites.Toggle(item.Path, at)) at++;
             }
 
             _message = add
