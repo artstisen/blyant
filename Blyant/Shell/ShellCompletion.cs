@@ -247,10 +247,13 @@ internal sealed class ShellCompletion
                 return (position == 1 && after[0] == "add" ? Kind.Path : Kind.None, none);
             case "history":
             case "hist":
-                // ("hist filter draft", "hist -l filter draft")
-                if (position == 0) return (Kind.Words, new[] { "-l", "filter" });
-                return (position == 1 && after[0] == "-l" ? Kind.Words : Kind.None, new[] { "filter" });
             case "recent":
+            {
+                // The options not given yet, after the options only ("recent -s -n", "hist -l filter draft")
+                if (after.Take(position).Any(word => !word.StartsWith('-'))) return (Kind.None, none);
+                var options = new[] { "-l", "-s", "-f", "-n" }.Except(after.Take(position));
+                return (Kind.Words, command == "recent" ? options : options.Append("filter"));
+            }
             case "bookmarks":
             case "book":
                 return (position == 0 ? Kind.Words : Kind.None, new[] { "-l" });

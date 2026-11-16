@@ -2459,7 +2459,8 @@ public class ShellTests : IDisposable
 
         var (_, others, code, _) = Run("hist 5\nrecent x\nbook work\nhist -l\n");
         Assert.Equal(3, others.TrimEnd('\n').Split('\n').Length);
-        Assert.Contains(Lang.F("Not taken: {0} (only -l, for the full paths)", "5"), others);
+        Assert.Contains(Lang.F("Not taken: {0} (-l full paths, -s sizes, -f folder/name, -n by name)", "5"), others);
+        Assert.Contains(Lang.F("Not taken: {0} (only -l, for the full paths)", "work"), others);
         Assert.Equal(1, code);
     }
 
@@ -3595,7 +3596,7 @@ public class ShellTests : IDisposable
         Assert.Contains(Lang.F("No files with {0} in them", "nothing"), output);
         (_, errors, _, _) = Run("hist filter\nrecent filter x\n");
         Assert.Contains(Lang.T("Give a text: hist filter draft (or *.md)"), errors);
-        Assert.Contains(Lang.F("Not taken: {0} (only -l, for the full paths)", "filter x"), errors);
+        Assert.Contains(Lang.F("Not taken: {0} (-l full paths, -s sizes, -f folder/name, -n by name)", "filter x"), errors);
     }
 
     [Fact]
@@ -4616,5 +4617,92 @@ public class ShellTests : IDisposable
         {
             CommandHistory.Clear();
         }
+    }
+
+    // ---- recent and hist: -s, -f, -n
+
+    // Three files opened: b.md (Drafts) first, then a.md (Notes), then c.md (Notes, gone since)
+    private void ThreeOpened()
+    {
+        Directory.CreateDirectory(In("work", "Notes"));
+        Directory.CreateDirectory(In("work", "Drafts"));
+        File.WriteAllText(In("work", "Notes", "a.md"), new string('a', 2048));
+        File.WriteAllText(In("work", "Drafts", "b.md"), "bb");
+        FileHistory.Add(In("work", "Notes", "c.md"), new DateTime(2026, 11, 13, 9, 0, 0));
+        FileHistory.Add(In("work", "Notes", "a.md"), new DateTime(2026, 11, 13, 10, 0, 0));
+        FileHistory.Add(In("work", "Drafts", "b.md"), new DateTime(2026, 11, 13, 11, 0, 0));
+        FileHistory.Save();
+    }
+
+    [Fact]
+    public void Recent_Sizes_ShowTheSizeOfEachFile_AndADashForOneGone()
+    {
+        ThreeOpened();
+        var (output, errors, _, _) = Run("recent -s\n");
+        Assert.Equal(string.Empty, errors);
+        var lines = output.TrimEnd('\n').Split('\n');
+        Assert.StartsWith("  1  b.md", lines[0]);
+        var width = new[] { FileSizeFormatter.FormatSize(2), FileSizeFormatter.FormatSize(2048), "-" }.Max(t => t.Length);
+        Assert.EndsWith("2026-11-13 11:00  " + FileSizeFormatter.FormatSize(2).PadLeft(width), lines[0]);
+        Assert.EndsWith("2026-11-13 10:00  " + FileSizeFormatter.FormatSize(2048).PadLeft(width), lines[1]);
+        Assert.EndsWith("  " + "-".PadLeft(width), lines[2]);
+    }
+
+    [Fact]
+    public void Recent_Folder_ShowsTheFolderAndTheName_AndFullPathsWin()
+    {
+        ThreeOpened();
+        var (output, _, _, _) = Run("recent -f\n");
+        Assert.Contains("  1  Drafts/b.md  ", output);
+        Assert.Contains("  2  Notes/a.md   ", output);
+        Assert.Contains("  3  Notes/c.md " + DialogText.FavoriteMissing, output);
+        (output, _, _, _) = Run("recent -f -l\n");
+        Assert.Contains("  1  " + In("work", "Drafts", "b.md") + "  ", output);
+        Assert.DoesNotContain("Drafts/b.md", output);
+    }
+
+    [Fact]
+    public void Recent_ByName_SortsTheRows_AndOpenTakesTheRowAsShown()
+    {
+        ThreeOpened();
+        var (output, errors, _, session) = Run("recent -n\n");
+        Assert.Equal(string.Empty, errors);
+        var lines = output.TrimEnd('\n').Split('\n');
+        Assert.StartsWith("  1  a.md", lines[0]);
+        Assert.StartsWith("  2  b.md", lines[1]);
+        Assert.StartsWith("  3  c.md", lines[2]);
+        Assert.Equal(In("work", "Notes", "a.md"), session.LastList[0].Path);
+        // With the folder: by what is shown (Drafts/ before Notes/)
+        (output, _, _, session) = Run("recent -f -n -s\n");
+        lines = output.TrimEnd('\n').Split('\n');
+        Assert.StartsWith("  1  Drafts/b.md", lines[0]);
+        Assert.StartsWith("  2  Notes/a.md", lines[1]);
+        Assert.Equal(In("work", "Drafts", "b.md"), session.LastList[0].Path);
+    }
+
+    [Fact]
+    public void Hist_TakesTheOptions_AlsoBeforeFilter_AndTellsOneItDoesNotKnow()
+    {
+        ThreeOpened();
+        var (output, errors, _, _) = Run("hist -n -f filter Notes\n");
+        Assert.Equal(string.Empty, errors);
+        // Numbered as in the whole sorted list: Drafts/b.md is row 1
+        Assert.Contains("  2  Notes/a.md", output);
+        Assert.Contains("  3  Notes/c.md", output);
+        Assert.DoesNotContain("b.md", output);
+        (_, errors, _, _) = Run("recent -s -x\nhist -q filter a\n");
+        Assert.Contains(Lang.F("Not taken: {0} (-l full paths, -s sizes, -f folder/name, -n by name)", "-x"), errors);
+        Assert.Contains(Lang.F("Not taken: {0} (-l full paths, -s sizes, -f folder/name, -n by name)", "-q"), errors);
+    }
+
+    [Fact]
+    public void Tab_AfterRecentAndHist_OffersTheOptionsNotGivenYet()
+    {
+        Assert.Equal("recent -l", Tab(Completion(), "recent "));
+        Assert.Equal("recent -s -l", Tab(Completion(), "recent -s "));
+        Assert.Equal("recent -l -s -f -n", Tab(Completion(), "recent -l -s -f -"));
+        Assert.Equal("hist -l -s -f -n filter", Tab(Completion(), "hist -l -s -f -n "));
+        Assert.Equal("hist -n filter", Tab(Completion(), "hist -n f"));
+        Assert.Equal("recent -f", Tab(Completion(), "recent -f"));
     }
 }

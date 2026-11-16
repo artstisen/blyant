@@ -81,9 +81,9 @@ internal sealed partial class ShellSession
         ("favorites undo", Lang.T("Undo the last fav remove")),
         ("favorites add file|n [where]", Lang.T("Add to the favorites: top, bottom, 5, [folder]")),
         ("favorites remove file|n", Lang.T("Take off the favorites")),
-        ("history [-l]", Lang.T("List the files opened (hist)")),
+        ("history [-l] [-s] [-f] [-n]", Lang.T("List the files opened (hist), options as for recent")),
         ("history filter text", Lang.T("Show the files opened with a text in them (or *.md)")),
-        ("recent [-l]", Lang.T("List the latest files")),
+        ("recent [-l] [-s] [-f] [-n]", Lang.T("List the latest files (-s sizes, -f folder/name, -n by name)")),
         ("hotlist", Lang.T("List the directory hotlist (hot)")),
         ("hotlist filter text", Lang.T("Show the directories with a text in them")),
         ("hotlist add|remove [dir|n]", Lang.T("Add a directory to the hotlist (this one), or take it off")),
@@ -812,31 +812,56 @@ internal sealed partial class ShellSession
         }
     }
 
-    // "hist", "recent": the files by name and when they were opened ("-l": the full paths)
+    // "hist", "recent": the files by name and when they were opened. Options before anything else, in any order:
+    // "-l" the full paths, "-s" the size of each file, "-f" the folder and the name ("Book/chapter-3.md"), "-n" sorted
+    // by name (the rows are numbered as shown, so "open 3" is row 3 of the sorted list)
     private void ListHistory(int most, string argument)
     {
-        // "hist filter draft" ("hist -l filter draft": the full paths)
+        var (options, rest) = LeadingOptions(argument);
+        // "hist filter draft" ("hist -l -s filter draft": with options)
         string? filter = null;
-        if (most == int.MaxValue && FilterOf(argument) is { } asked)
+        if (most == int.MaxValue && rest.Split(' ', 2)[0].Equals("filter", StringComparison.OrdinalIgnoreCase))
         {
-            filter = asked.Text;
+            filter = Rest(rest).Trim().Trim('"');
             if (filter.Length == 0)
             {
                 Error(Lang.T("Give a text: hist filter draft (or *.md)"));
                 return;
             }
 
-            argument = asked.Full ? "-l" : string.Empty;
+            rest = string.Empty;
         }
 
-        if (OnlyLong(argument) is not { } full) return;
+        var unknown = options.Where(option => option is not ("-l" or "-s" or "-f" or "-n")).Concat(Words(rest)).ToList();
+        if (unknown.Count > 0)
+        {
+            Error(Lang.F("Not taken: {0} (-l full paths, -s sizes, -f folder/name, -n by name)", string.Join(' ', unknown)));
+            return;
+        }
+
+        var (full, sizes, folder, byName) =
+            (options.Contains("-l"), options.Contains("-s"), options.Contains("-f"), options.Contains("-n"));
         FileHistory.Load();
         var entries = FileHistory.Items.Take(most).ToList();
-        var names = Names(entries.Select(entry => (entry.Path, false)).ToList(), full);
+        // (with the full paths the folder is in them already)
+        var names = Names(entries.Select(entry => (entry.Path, false)).ToList(), full, withFolder: folder && !full);
+        // Sorted by what is shown (letter case alike), and the same names by path, so the order is always the same
+        var order = Enumerable.Range(0, entries.Count).ToList();
+        if (byName)
+        {
+            order = order.OrderBy(i => names[i], StringComparer.CurrentCultureIgnoreCase)
+                .ThenBy(i => entries[i].Path, StringComparer.Ordinal).ToList();
+        }
+
+        entries = order.Select(i => entries[i]).ToList();
+        names = order.Select(i => names[i]).ToList();
         // (the dates lined up after the names; after full paths not: the rows would be wider than the window)
         var width = full || names.Count == 0 ? 0 : names.Max(TextMetrics.WidthOf);
+        var sizeTexts = sizes ? entries.Select(entry => SizeOf(entry.Path)).ToList() : null;
+        var sizeWidth = sizeTexts is { Count: > 0 } ? sizeTexts.Max(TextMetrics.WidthOf) : 0;
         var rows = entries.Select((entry, i) => (new Item(entry.Path, false),
-            Padded(names[i], width) + "  " + entry.Opened.ToString("yyyy-MM-dd HH:mm"))).ToList();
+            Padded(names[i], width) + "  " + entry.Opened.ToString("yyyy-MM-dd HH:mm") +
+            (sizeTexts == null ? string.Empty : "  " + sizeTexts[i].PadLeft(sizeWidth)))).ToList();
         if (filter != null)
         {
             Filtered(rows, i => Fits(filter, entries[i].Path, null), Lang.F("No files with {0} in them", filter));

@@ -372,11 +372,13 @@ internal sealed partial class ShellSession
     /// paths, without a mark ("fav -l": for scripts). "info 3" tells the rest
     /// </summary>
     internal static List<string> Names(IReadOnlyList<(string Path, bool IsDirectory)> entries, bool full,
-        bool marked = true)
+        bool marked = true, bool withFolder = false)
     {
         if (full) return entries.Select(entry => Shown(entry.Path, entry.IsDirectory)).ToList();
         if (marked) FileFavorites.Load();
-        var names = entries.Select(entry => NameOf(entry.Path)).ToList();
+        // "withFolder": the folder before the name ("Book/chapter-3.md"; "recent -f"), so a name two rows have is
+        // told apart already
+        var names = entries.Select(entry => withFolder ? FolderAndName(entry.Path) : NameOf(entry.Path)).ToList();
         // (names the file system tells apart are not alike: "Plot.md" and "plot.md" on Linux)
         var twice = names.GroupBy(name => name, FileOperations.NameComparer).Where(group => group.Count() > 1)
             .Select(group => group.Key).ToHashSet(FileOperations.NameComparer);
@@ -385,7 +387,7 @@ internal sealed partial class ShellSession
             var there = entry.IsDirectory ? System.IO.Directory.Exists(entry.Path) : FileOperations.IsFileThere(entry.Path);
             var shown = names[i] + (entry.IsDirectory ? "/" : string.Empty);
             var parent = Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(entry.Path));
-            if (twice.Contains(names[i]) && parent != null) shown += " (" + NameOf(parent) + ")";
+            if (!withFolder && twice.Contains(names[i]) && parent != null) shown += " (" + NameOf(parent) + ")";
             if (marked) shown += FavoriteMark(entry.Path);
             return shown + (there ? string.Empty : " " + DialogText.FavoriteMissing);
         }).ToList();
@@ -396,6 +398,15 @@ internal sealed partial class ShellSession
             var trimmed = Path.TrimEndingDirectorySeparator(path);
             var name = Path.GetFileName(trimmed);
             return name.Length > 0 ? name : trimmed;
+        }
+
+        // "Book/chapter-3.md" (with "/" on all systems); a file at the root of a drive: its path ("C:\notes.md")
+        static string FolderAndName(string path)
+        {
+            var trimmed = Path.TrimEndingDirectorySeparator(path);
+            var parent = Path.GetDirectoryName(trimmed);
+            var folder = parent == null ? string.Empty : Path.GetFileName(Path.TrimEndingDirectorySeparator(parent));
+            return folder.Length > 0 ? folder + "/" + Path.GetFileName(trimmed) : trimmed;
         }
     }
 
@@ -416,6 +427,37 @@ internal sealed partial class ShellSession
         if (others.Length == 0) return full;
         Error(Lang.F("Not taken: {0} (only -l, for the full paths)", others));
         return null;
+    }
+
+    // The words that start with "-" at the start of the words after a command ("-l -s filter draft": "-l" and "-s"),
+    // and what follows them
+    private static (List<string> Options, string After) LeadingOptions(string argument)
+    {
+        var options = new List<string>();
+        var text = argument.Trim();
+        while (text.StartsWith('-'))
+        {
+            var word = text.Split(' ', 2)[0];
+            options.Add(word);
+            text = text[word.Length..].TrimStart();
+        }
+
+        return (options, text);
+    }
+
+    // The size of a file as the file browser shows it ("12.4 kB"), or "-" when it is not there
+    private static string SizeOf(string path)
+    {
+        try
+        {
+            if (FileOperations.IsFileThere(path)) return FileSizeFormatter.FormatSize(new FileInfo(path).Length);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or NotSupportedException)
+        {
+            // (not readable: as one that is not there)
+        }
+
+        return "-";
     }
 
     // "-l" in the words after a list command: the full paths. The words without it
