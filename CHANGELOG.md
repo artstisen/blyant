@@ -1,5 +1,7 @@
 # Changes
 
+## v1.5.4
+
 ## v1.5.3 (2026-11-15)
 - **Editing in a window, in the guides and the user manual**: the guide to the shell has a new part, [Editing in a window](Guide-to-shell.md#editing-in-a-window): find the place with a search, change the lines, look again with `.`, let `shellautopeek` show the window by itself, and take changes back with `undo`, `redo` and `changes`, step by step with what Blyant answers, and a screenshot of it (`docs/screenshots/shell-window.svg`). The practice of the shell tutorial has four more steps that do the same ([Practice](Guide-to-shell-tutorial.md#practice)), and the settings file guide links `shellautopeek` and `shellundosteps` to them.
 - **Searching with peek**: `peek notes.md /storm` shows the window at the first line with a text in it (letter case alike, `*` and `?` as in `find -t`), two lines of it above, the line marked with `>`, and how many lines have it: `(match 1 of 3, lines 8-27 of 120)`. `/` alone goes to the next line with it and `?` to the one before, round at the ends; `peek /storm` searches the file peeked last, and `open 1` opens the file at the line found. A row of `find -t` is peeked at the line found: `find -t storm`, then `peek 2`. See [Peeking into a file](Guide-to-shell.md#peeking-into-a-file).

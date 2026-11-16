@@ -24,7 +24,7 @@ blyant --shell ~/novel
 ```
 
 ```
-Blyant v1.5.3: help lists the commands, exit leaves
+Blyant v1.5.4: help lists the commands, exit leaves
 blyant ~/novel>
 ```
 
