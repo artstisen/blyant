@@ -50,8 +50,8 @@ internal static class Completions
     }
 
     /// <summary>
-    /// Complete words while typing (setting "autocomplete", ":complete" in the editor). Off unless turned on: turning
-    /// it on makes the file of completions, with the lists it starts with
+    /// Complete words while typing (setting "autocomplete", ":complete" in the editor). On unless turned off (setting
+    /// "false"); the file of completions is made, with the lists it starts with, when it is missing
     /// </summary>
     internal static bool Enabled { get; set; } = true;
 

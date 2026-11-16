@@ -762,7 +762,7 @@ internal static class FileIo
         // (named "mdcolors" in an earlier version)
         SyntaxHighlighter.ColorFiles = Tools.TrimToLower(Get("syntaxcolors")) != DialogText.BFalse &&
                                        Tools.TrimToLower(Get("mdcolors")) != DialogText.BFalse;
-        // On unless turned off
+        // Off unless turned on
         TextArea.LineNumbers = Tools.TrimToLower(Get("linenumbers")) == DialogText.BTrue;
         TextArea.BlankGutter = Tools.TrimToLower(Get("gutter")) == DialogText.BTrue;
         TextArea.WordWrap = Tools.TrimToLower(Get("wrap")) != DialogText.BFalse;

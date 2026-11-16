@@ -1,7 +1,7 @@
 # Shell tutorial
-The shell is Blyant on lines: you type a command at a prompt, and what it shows is written below it, as in a terminal. It does what the full screen does with files (finding them, looking into them, copying, moving, adding a line, ticking off a task) without leaving the line you type on. It works in any terminal, over SSH, with a screen reader, and from scripts.
+The shell is Blyant on lines of text: you type a command at a prompt, and Blyant writes the answer below it, as in a terminal. It does what the full screen does with files (finding them, looking into them, copying, moving, adding a line, ticking off a task) without leaving the line you type on. It works in any terminal, over SSH, with a screen reader, and from scripts.
 
-This tutorial goes through a day of work on a small novel project, one task at a time. Each part shows what you type after the prompt, and what Blyant writes back. The last part, [Practice](#practice), is fourteen short steps to try on two files of your own, the last of them editing in a window with `undo`. The [guide to the shell](Guide-to-shell.md) tells all the commands and their details.
+This tutorial goes through a day of work on a small novel project, one task at a time. Each part shows what you type after the prompt, and what Blyant writes back. The last part, [Practice](#practice), has fourteen short steps to try on two new files, ending with editing in a window and `undo`. The [guide to the shell](Guide-to-shell.md) describes all the commands in detail.
 
 The project used in the examples is in `~/novel` (`/home/anna/novel`):
 
@@ -24,17 +24,17 @@ blyant --shell ~/novel
 ```
 
 ```
-Blyant v1.5.4: help lists the commands, exit leaves
+Blyant v1.5.5: help lists the commands, exit leaves
 blyant ~/novel>
 ```
 
-The prompt shows where you are: `~` is your home directory. `about` shows the commands used the most, `help` lists them all, `help shift` tells what one of them does, and `exit` (or `Ctrl+D`) leaves Blyant. `set language de` has Blyant speak German (`en`, `da`, `nb`, `sv`, `es`, `fr`, `it`, `pl`, `nl` and `fi` are there too); the commands stay as they are.
+The prompt shows where you are: `~` is your home directory. `about` shows the commands used the most, `help` lists them all, `help shift` explains one command, and `exit` (or `Ctrl+D`) leaves Blyant. `set language de` switches Blyant to German (`en`, `da`, `nb`, `sv`, `es`, `fr`, `it`, `pl`, `nl` and `fi` are also available); the commands stay the same.
 
 Other ways in:
 
-- `:shell` on any command line of the full screen goes on as the shell, in the directory of the page you were on, and `screen` in the shell goes back to the file browser there. You can go back and forth as often as you like
-- _Start in the shell_ on the General page of Configuration has Blyant start as the shell every time (`blyant --screen` then starts on the full screen once)
-- The setting `shelldir` is the directory the shell starts in: `set shelldir ~/novel`, or `set shelldir last` to start where you left it
+- `:shell` on any command line of the full screen switches to the shell, in the directory of the page you were on, and `screen` in the shell goes back to the file browser in that directory. You can go back and forth as often as you like
+- _Start in the shell_ on the General page of Configuration makes Blyant start in the shell every time (`blyant --screen` then starts on the full screen once)
+- The setting `shelldir` is the directory the shell starts in: `set shelldir ~/novel`, or `set shelldir last` to start where you left off
 
 ## Getting around
 `ls` lists the directory you are in: the folders first, then the files, each with a number:
@@ -48,7 +48,7 @@ blyant ~/novel> ls
   4  todo.md
 ```
 
-The numbers are the key to the shell. A number given to a command is a row of the last list shown, so you seldom type a name. The list is kept until another list is shown, or a command works on a file (`peek`, `insert`, `copy` ...: that file is then the list, as row 1); `cd` into a directory, `open`, `clip` and `reg` leave it as it was. See [Prompt and lists](Guide-to-shell.md#prompt-and-lists) for all of them:
+The numbers are the key to the shell. A number given to a command means that row of the last list shown, so you seldom need to type a name. The list is kept until another list is shown, or a command works on a file (`peek`, `insert`, `copy` ...: that file then becomes the list, as row 1); `cd` into a directory, `open`, `clip` and `reg` leave the list as it is. See [Prompt and lists](Guide-to-shell.md#prompt-and-lists) for the details:
 
 ```
 blyant ~/novel> cd 1
@@ -62,11 +62,11 @@ blyant ~/novel>
 
 - `cd 1` goes into row 1, `cd chapters` does the same by name, and `cd ../other` or `cd ~/letters` take a path
 - `up` goes to the directory above, `home` (or `cd` alone) to your home directory, and `pwd` shows where you are
-- `ls -a` lists hidden files too (as `.gitignore`), which `ls` leaves out, as the file browser does
-- `Tab` completes what you type: `cd ch` and `Tab` gives `cd chapters/`, and `Tab` again goes on into it. `Up` and `Down` bring back the commands you typed before
-- `again` lists the commands you typed, numbered, and `again 3` (or `!3`) runs number 3 again; `!!` runs the last one. `!3` and `Tab` puts it on the line, to change it first
-- `open ` and `Tab` with nothing typed gives the file you opened last in this directory, and `Tab` again the one before it: quick to go between the files you are working on. `open chapters/*storm*` and `Tab` gives `open chapters/02-storm.md`: `*` stands for any characters, and `?` for one
-- `cd` on a file goes to the directory it is in, and makes the file the last list, so `open 1` opens it:
+- `ls -a` also lists hidden files (such as `.gitignore`), which `ls` leaves out, as the file browser does
+- `Tab` completes what you type: `cd ch` and `Tab` gives `cd chapters/`, and `Tab` again continues inside that directory. `Up` and `Down` bring back the commands you typed before
+- `again` lists the commands you typed, numbered, and `again 3` (or `!3`) runs number 3 again; `!!` runs the last one. `!3` and `Tab` puts the command on the line, so you can change it first
+- `open ` and `Tab` with nothing typed gives the file you opened last in this directory, and `Tab` again the one before it: a quick way to switch between the files you are working on. `open chapters/*storm*` and `Tab` gives `open chapters/02-storm.md`: `*` stands for any characters, and `?` for one
+- `cd` on a file goes to the file's directory, and makes the file the last list, so `open 1` opens it:
 
 ```
 blyant ~/novel> cd chapters/02-storm.md
@@ -76,7 +76,7 @@ In /home/anna/novel/chapters (the directory of 02-storm.md)
 A list longer than the window comes in pages: `Enter` or `Space` gives the next page, and `q` stops it.
 
 ## Looking into a file
-`peek` shows the lines of a text file, numbered, without opening it (and it never changes it):
+`peek` shows the numbered lines of a text file without opening the file (and never changes it):
 
 ```
 blyant ~/novel> peek 3
@@ -86,12 +86,12 @@ blyant ~/novel> peek 3
   4  The storm comes that night.
 ```
 
-- `peek plot.md 40` shows the first 40 lines (20 when no number is given), and `peek plot.md 100-120` those lines
-- `peek +` shows the file peeked last 1 line further down, and `peek ++` 5 (`set shellpeekstep 2` and `set shellpeekbigstep 10` change them); `peek -` and `peek --` go back up. Each moves from the last window, so `peek +`, `peek +` goes on down the file. Shorter still: `+`, `++`, `-` and `--` alone on the line, also after an `insert` in between
-- `+ 20` moves the window 20 lines, and `peek bottom`, `peek top`, `peek middle` or `peek 75%` put it there, in the file peeked last
-- `.` (or `peek` alone) shows the last peek again, as the file is now: a window into the lines you are changing. `set shellautopeek true` shows it by itself after each change of that file
+- `peek plot.md 40` shows the first 40 lines (20 when no number is given), and `peek plot.md 100-120` lines 100 to 120
+- `peek +` moves the last peek 1 line further down, and `peek ++` 5 lines (`set shellpeekstep 2` and `set shellpeekbigstep 10` change the steps); `peek -` and `peek --` go back up. Each one moves from the last window, so `peek +`, `peek +` goes on down the file. Shorter still: `+`, `++`, `-` and `--` alone on the line, even after an `insert` in between
+- `+ 20` moves the window 20 lines, and `peek bottom`, `peek top`, `peek middle` or `peek 75%` move the window to that place in the file peeked last
+- `.` (or `peek` alone) shows the last peek again, as the file is now: a window into the lines you are changing. `set shellautopeek true` shows it automatically after each change to that file
 - What `peek` showed last is `$peek`, to put in another file: `peek plot.md 3-4`, then `insert ideas.md bottom $peek`
-- `peek chapters/02-storm.md +3 2` shows 2 lines from line 3. The file is then the last list at that line, so `open 1` opens it right there:
+- `peek chapters/02-storm.md +3 2` shows 2 lines from line 3. The file then becomes the last list, at that line, so `open 1` opens the file right there:
 
 ```
 blyant ~/novel> peek chapters/02-storm.md +3 2
@@ -100,10 +100,10 @@ blyant ~/novel> peek chapters/02-storm.md +3 2
 blyant ~/novel> open 1
 ```
 
-`info plot.md` tells about a file: its size and dates, and for a text file its characters, words, lines, encoding and line endings.
+`info plot.md` shows the size and dates of a file, and for a text file the number of characters, words and lines, the encoding and the line endings.
 
 ## Finding files
-`find` searches the directory you are in and those below it, by name, by a text in the files, or both:
+`find` searches the directory you are in and its subdirectories, by name, by a text in the files, or both:
 
 ```
 blyant ~/novel> find storm
@@ -116,20 +116,20 @@ blyant ~/novel> find *.md -t attic
   2  chapters/01-attic.md:4  Anna climbed to the attic.
 ```
 
-What is found is a list like any other: `peek 2` shows the lines around the line found (marked with `>`), and `open 2` opens it there. In one file, `peek plot.md /storm` goes to the first line with "storm", and `/` to the next.
+The results are a list like any other: `peek 2` shows the lines around the line found (marked with `>`), and `open 2` opens the file at that line. In one file, `peek plot.md /storm` goes to the first line with "storm", and `/` to the next.
 
 ## Editing a file
-`open` edits a file in the editor of the full screen, with all its keys and commands:
+`open` edits a file in the editor of the full screen, with all the keys and commands of the editor:
 
 ```
 blyant ~/novel> open plot.md
 blyant ~/novel> open 3 +12
 ```
 
-`+12` opens it at line 12. When you close the editor (`:wq`, `:q`), you are back at the prompt, where you were. A file that is not there is made if you want that: the shell asks first.
+`+12` opens the file at line 12. When you close the editor (`:wq`, `:q`), you are back at the prompt, in the same directory. If the file does not exist, the shell asks whether to make it.
 
 ## Making, copying and moving
-The shell works on files with the rules of the file browser: nothing is overwritten, and what is deleted goes to the trash.
+The shell follows the rules of the file browser: nothing is overwritten, and what is deleted goes to the trash.
 
 ```
 blyant ~/novel> new scenes
@@ -144,12 +144,12 @@ blyant ~/novel> move scene-list.md notes
 Moved to /home/anna/novel/notes/scene-list.md
 ```
 
-- `new` makes an empty file (`.md` when no extension is given), and `mkdir` a directory. A new file is in `recent` at once
-- `copy` and `move` take what, and the directory it goes into; `rename` takes what, and its new name. Rows work for both: `copy 3 1` copies row 3 into row 1
-- After them the new place is the last list: `open 1` opens it
-- A name with blanks in it is written in quotes: `rename "old notes.md" notes.md`
+- `new` makes an empty file (`.md` when no extension is given), and `mkdir` a directory. A new file shows up in `recent` at once
+- `copy` and `move` take what to copy or move, and the directory to put it in; `rename` takes what to rename, and the new name. Rows work too: `copy 3 1` copies row 3 into row 1
+- Afterwards the new place is the last list, so `open 1` opens it
+- Put a name with blanks in quotes: `rename "old notes.md" notes.md`
 
-`delete` asks first, and tells what goes with a directory. You type the answer in full to go ahead:
+`delete` asks first, and for a directory tells what is in it. Type the answer in full to go ahead:
 
 ```
 blyant ~/novel> delete old
@@ -159,10 +159,10 @@ Delete directory: Move "old" to the trash?
 Moved to the trash: /home/anna/novel/old
 ```
 
-The trash is opened with `:trash` in the file browser (`screen` takes you there), where a file can be put back.
+To open the trash, type `:trash` in the file browser (`screen` takes you there); there you can put a file back.
 
 ## Adding and changing lines
-`insert` puts a line of text in a file without opening it, as quick notes are written down: at the `top`, at the `bottom`, or as line 12 (`+12`). The text is all that follows, as you type it:
+`insert` adds a line of text to a file without opening it, for quick notes: at the `top`, at the `bottom`, or as line 12 (`+12`). The text is everything after the place, as you type it:
 
 ```
 blyant ~/novel> insert plot.md bottom Then the phone rings.
@@ -178,7 +178,7 @@ blyant ~/novel> peek plot.md
   6  Then the phone rings.
 ```
 
-`change` changes a line (`+4`), or lines (`4-6`, which become one line), into a text. Without a text, the lines are deleted, after they are shown and you answer yes:
+`change` replaces a line (`+4`) or several lines (`4-6`, which become one line) with a text. Without a text, the lines are shown, and deleted when you answer yes:
 
 ```
 blyant ~/novel> change plot.md +4 The letter is from her mother.
@@ -190,7 +190,7 @@ Delete lines: Delete line 6 of plot.md?
 /home/anna/novel/plot.md: line 6 deleted
 ```
 
-`lines` changes the text in lines, and keeps what is there: `start` puts a text before a line, and `end` after it:
+`lines` changes the text of lines but keeps what is already there: `start` puts a text at the start of a line, and `end` at the end:
 
 ```
 blyant ~/novel> lines plot.md 4 start Draft:
@@ -202,9 +202,9 @@ blyant ~/novel> lines plot.md 4 unstart Draft:
 ```
 
 - `unstart` and `unend` take the text off again, and `lines plot.md 3-5 replace letter note` replaces a word in lines 3 to 5
-- In quotes the text is put as it is, without a blank between: `lines todo.md 5-7 start "- [ ] "` makes lines 5 to 7 tasks
+- A text in quotes is put in exactly as written, with no blank added: `lines todo.md 5-7 start "- [ ] "` makes lines 5 to 7 tasks
 
-`undo` puts back the last change of `insert`, `change` or `lines` (`redo` does it again, and `changes` lists them), while Blyant runs. `peek` first all the same, to be sure of the line numbers. A file keeps its line endings and its byte order mark, and the files Blyant uses are not changed.
+`undo` takes back the last change made by `insert`, `change` or `lines` while Blyant is running (`redo` makes it again, and `changes` lists the changes). Still, `peek` first to be sure of the line numbers. A file keeps its line endings and byte order mark, and these commands leave the files Blyant uses alone.
 
 ## Todo list
 ![A task added with insert, and ticked and moved under Done with shift!](docs/screenshots/shell-todo.svg)
@@ -226,7 +226,7 @@ blyant ~/novel> peek todo.md
   11  - [x] Outline
 ```
 
-`shift` moves lines to another place in the same file, and a heading can be the place. `shift!` also ticks the task box of each line it moves. The dates are checked:
+`shift` moves lines to another place in the same file, such as under a heading. `shift!` also ticks any task boxes on the lines it moves. Once the dates are checked:
 
 ```
 blyant ~/novel> shift! todo.md 6 Done
@@ -235,7 +235,7 @@ blyant ~/novel> shift! todo.md 6 Done
 Task boxes ticked or unticked: 1
 ```
 
-A text finds the line, so you need not look up its number:
+A text from the line finds it, so you don't need to look up the line number:
 
 ```
 blyant ~/novel> shift! todo.md "Call the editor" Done
@@ -256,14 +256,14 @@ blyant ~/novel> peek todo.md
   11  - [x] Outline
 ```
 
-- The lines go right under the heading, so the newest come first. `Done+` puts them at the end of its section instead: `shift! todo.md Rewrite Done+`
+- The lines go right under the heading, so the newest come first. `Done+` puts them at the end of the section instead: `shift! todo.md Rewrite Done+`
 - `shift!` on a ticked line unticks it, so a task moved back is open again: `shift! todo.md Outline Todo`
-- Several lines move together, in their order: `shift todo.md 5-7 Done`, `shift todo.md 5,8,10 Done`
+- Several lines move together, keeping their order: `shift todo.md 5-7 Done`, `shift todo.md 5,8,10 Done`
 - Other places: `+3` (before line 3), `top` and `bottom`
 - `shift` without `!` moves the lines as they are, for any kind of list: scenes in an outline, items in a shopping list
 - `Tab` after the lines completes the headings of the file
 
-At the end of the week the tasks done go to a file of their own. `lines` copies lines to another file, and with `cut` moves them there:
+At the end of the week the finished tasks go to a separate file. `lines` copies lines to another file, and with `cut` moves them there:
 
 ```
 blyant ~/novel> new done
@@ -277,12 +277,12 @@ blyant ~/novel> lines todo.md 9-11 > done.md bottom cut
 ```
 
 - Without `cut` the lines are copied, and stay where they were
-- The places are those of `shift`: `top`, `bottom`, `+12`, a heading or `Heading+`, now in the other file. The lines too, also `+9 3` (3 lines from line 9)
+- The places are the same as for `shift` (`top`, `bottom`, `+12`, a heading or `Heading+`), but in the other file. So are the lines, including `+9 3` (3 lines from line 9)
 
 ## Registers
-A register keeps a path or a text under a name, and `$name` puts it in any command. They are kept until you take them away, also when Blyant is started again.
+A register keeps a path or a text under a name, and `$name` puts it in any command. Registers are kept until you remove them, even when Blyant is started again.
 
-Keep the directory you are in with `.`, and a row of the last list with `#`:
+Use `.` to keep the directory you are in, and `#` to keep a row of the last list:
 
 ```
 blyant ~/novel> cd chapters
@@ -300,7 +300,7 @@ blyant ~/novel> reg plot #4
   $plot = /home/anna/novel/plot.md
 ```
 
-Or a text, all that follows the name:
+Or keep a text, everything after the name:
 
 ```
 blyant ~/novel> reg note Check the dates in chapter two
@@ -322,12 +322,12 @@ blyant ~/novel> cd $chap
 blyant ~/novel/chapters>
 ```
 
-- `reg -d note` takes a register away, and `reg -d all` all of them
-- A path with a blank in it is kept in quotes: `reg docs "~/my docs"`
+- `reg -d note` removes a register, and `reg -d all` removes every register
+- Put a path with blanks in quotes: `reg docs "~/my docs"`
 - `Tab` completes the names of the registers after a `$`
-- A register can collect lines from several places: `peek plot.md 3-4`, then `reg notes += $peek`, and `lines todo.md 6 >> $notes` adds a line of another file. `insert ideas.md bottom $notes` puts them all in a file
-- Some names are set by Blyant: `$pwd` is the directory you are in, `$file` the file the last command worked on, and `$date`, `$time` and `$now` the time now. `insert todo.md bottom $date Called the editor` puts in a line with the date, and `peek plot.md` then `insert $file bottom The end` adds to the file you looked at
-- The registers of the shell are its own: the string memory of the editor is not these
+- A register can collect lines from several places: `peek plot.md 3-4`, then `reg notes += $peek`, and `lines todo.md 6 >> $notes` adds a line from another file. `insert ideas.md bottom $notes` puts all the lines in a file
+- Blyant sets some names itself: `$pwd` is the directory you are in, `$file` the file the last command worked on, and `$date`, `$time` and `$now` the time now. `insert todo.md bottom $date Called the editor` puts in a line with the date, and `peek plot.md` then `insert $file bottom The end` adds to the file you looked at
+- The registers of the shell are separate from the string memory of the editor
 
 ## Clipboard
 `clip` copies to the clipboard what you would otherwise select and copy by hand, as `:path` and `:name` do in the file browser:
@@ -344,10 +344,10 @@ Copied to the clipboard and the string memory
 ```
 
 - `clip .` copies the path of the directory you are in, `clip text plot.md` the whole text of a file, `clip lines plot.md +3 2` two lines from line 3, and `clip $note` the value of a register
-- It goes where the clipboard settings of the editor send a yank: the clipboard of your system (through the terminal), and/or the paste bin file
-- It also goes to the string memory of the editor: after `open`, `p` in the editor puts it in. That works also in a terminal without a clipboard
+- The copy goes where the clipboard settings of the editor send a yank: the clipboard of your system (through the terminal), the paste bin file, or both
+- It also goes to the string memory of the editor: after `open`, `p` in the editor pastes it. This works even in a terminal without a clipboard
 
-What you copied last is `$clip`, which puts it in a command, as a register does. Lines copied go in as lines:
+`$clip` puts what you copied last in a command, as a register does. Copied lines go in as lines:
 
 ```
 blyant ~/novel> clip lines plot.md +3 2
@@ -359,11 +359,11 @@ blyant ~/novel> insert ideas.md bottom $clip
 /home/anna/novel/ideas.md: lines 1-2 put in
 ```
 
-- `$clip` is kept in Blyant until it ends: it is not read from the clipboard of your system. Text copied in another program is pasted on the line with the keys of your terminal
+- `$clip` is kept until Blyant ends: it is not read from the clipboard of your system. To paste text copied in another program, use the paste keys of your terminal
 - `reg` lists it after the registers, and `reg clip` shows all of it
 
 ## Favorites, history and hotlist
-The lists of the full screen are the lists of the shell:
+The shell uses the same lists as the full screen:
 
 ```
 blyant ~/novel> fav add chapters
@@ -379,14 +379,14 @@ Added to the hotlist: /home/anna/novel
 ```
 
 - A favorite added goes to the top of the list, so the one added last is row 1
-- `fav` lists the favorites, `hist` the files you have opened (newest first), and `recent` the latest nine of them. `open 1`, `peek 1` and `cd 1` work on each of them
+- `fav` lists the favorites, `hist` the files you have opened (newest first), and `recent` the latest nine of them. `open 1`, `peek 1` and `cd 1` work in each list
 - A favorite is marked with ` *` after its name in the other lists: `ls` now shows `plot.md *` and `chapters/ *`
-- They show the names. `info 1` tells where row 1 is, its size and dates, and the list stays, so `info 2` and `open 2` work after it. `fav -l` shows the full paths
-- `hot` lists the directory hotlist, and `cd 2` goes to row 2 of it. `hot add` adds the directory you are in, and `hot remove 2` takes one off
-- `book` lists the bookmarks of the Jump menu, `projects` the projects, and `project novel` goes to the directory of one
+- The lists show names only. `info 1` tells where row 1 is and shows its size and dates, and the list stays, so `info 2` and `open 2` work after it. `fav -l` shows the full paths
+- `hot` lists the directory hotlist, and `cd 2` goes to row 2 of it. `hot add` adds the directory you are in, and `hot remove 2` takes row 2 off
+- `book` lists the bookmarks of the Jump menu, `projects` the projects, and `project novel` goes to the directory of a project
 - `fav remove 1` takes a favorite off the list (the file itself stays)
 
-The favorites can be kept in several lists, as with `:list` in the file browser: one for the novel, one for research. The list you open is the one the full screen shows too:
+You can keep favorites in several lists, as with `:list` in the file browser: one for the novel, one for research. The list you open is also the one the full screen shows:
 
 ```
 blyant ~/novel> fav new research
@@ -405,7 +405,7 @@ List: main
 - `fav research` opens the list again, and `fav main` goes back to the main list
 - `fav rename research sources` gives a list a new name, and `fav delete sources` deletes it, after asking (the files in it stay where they are)
 
-Within a list the favorites can be kept in folders, as on the favorites page of the full screen. A folder is named in brackets, as `fav` shows it, and a favorite by its row:
+Within a list, favorites can be kept in folders, as on the favorites page of the full screen. Name a folder in brackets, as `fav` shows it, and a favorite by its row:
 
 ```
 blyant ~/novel> fav folder Story
@@ -422,8 +422,8 @@ List: main
     2  plot.md
 ```
 
-- `fav move 2 top` moves row 2 to the top of its folder, `up` and `down` one step, `out` out of its folder, and `fav move [Story] top` the folder with what is in it. A favorite can also be named: `fav move plot.md top`, and `fav move *.md [Story]` moves all that fit
-- `fav add notes [Story]` adds a favorite right into a folder (or `top`), and `fav filter plot` shows only the rows with _plot_ in them, with their numbers of the whole list
+- `fav move 2 top` moves row 2 to the top of its folder, `up` and `down` move it one step, `out` takes it out of the folder, and `fav move [Story] top` moves the folder with everything in it. You can also name a favorite: `fav move plot.md top`, and `fav move *.md [Story]` moves all that match
+- `fav add notes [Story]` adds a favorite right into a folder (or `top`), and `fav filter plot` shows only the rows with _plot_ in them, numbered as in the whole list
 - `fav subfolder [Story] Ideas` makes a subfolder, `fav rename [Story] Novel` renames a folder, and `fav remove [Story]` removes it after asking. `fav undo` puts it back
 
 ## Tidying files
@@ -436,10 +436,10 @@ blyant ~/novel> trim plot.md
 /home/anna/novel/plot.md: No blank space at line ends
 ```
 
-`format` formats HTML, CSS and XML files, as Blyant Validator does. `trim` removes the blank space at the ends of the lines (`trim!` also the line breaks of Markdown).
+`format` formats HTML, CSS and XML files, as Blyant Validator does. `trim` removes blank space at line ends (`trim!` also removes the line breaks of Markdown).
 
 ## Settings
-`set` shows the settings, one of them, or changes one, as the pages of Configuration do:
+`set` shows all settings or one setting, or changes one, as the pages of Configuration do:
 
 ```
 blyant ~/novel> set indent
@@ -452,7 +452,7 @@ blyant ~/novel> set shelldir ~/novel
 
 `reset` puts all the settings back to their defaults (it asks first). Your files and lists are kept.
 
-Settings can also be changed in the settings file itself. `data` goes to the data directory of Blyant (`~/blyant/data` when Blyant is in `~/blyant`), where it is. `open settings.ini` edits it in the editor, and what you save there is used at once. When you edit it in another program, `reload` uses what you saved, without starting Blyant again:
+You can also change settings in the settings file itself. `data` goes to the data directory of Blyant, where the file is (`~/blyant/data` when Blyant is in `~/blyant`). `open settings.ini` edits it in the editor, and what you save there is used at once. When you edit it in another program, `reload` uses what you saved, without starting Blyant again:
 
 ```
 blyant ~/novel> data
@@ -460,10 +460,10 @@ blyant ~/blyant/data> reload
 Settings and registers read again
 ```
 
-The registers are kept in the same directory, in `registers.txt` (a name, a tab, and the value on each line). When you edit that file, the shell reads it again by itself before the next command.
+The registers are kept in the same directory, in `registers.txt` (a name, a tab, and the value on each line). When you edit that file, the shell reads it again automatically before the next command.
 
 ## Scripts
-The commands of the shell can also be run from the command line, or read from a file, as a small script:
+Shell commands can also be run from the command line, or read from a file as a small script:
 
 ```
 blyant --run "format index.html" ~/site
@@ -472,12 +472,12 @@ printf 'cd chapters\nfind -t storm\n' | blyant --shell ~/novel
 blyant --shell ~/novel < weekly.txt
 ```
 
-- No prompt is shown, and what went wrong goes to the error output. The exit code is 1 when a command failed
-- Questions are not asked: the answer is no, so nothing is deleted. With `--yes` the answer is yes
-- `reg docs` alone writes the value of a register on its own line, so a script can read it: `blyant --run "reg docs"`
-- `echo $docs` writes it too, inside a line of your own (`echo $file was changed on $date`): a quick way to see a value, or what a command will get
+- No prompt is shown, and errors go to the error output. The exit code is 1 when a command failed
+- No questions are asked: the answer is always no, so nothing is deleted. With `--yes` the answer is yes
+- `reg docs` alone writes the value of the register on a line by itself, so a script can read it: `blyant --run "reg docs"`
+- `echo $docs` writes the value too, inside a line you write (`echo $file was changed on $date`): a quick way to see a value, or what a command will get
 
-Inside the shell, a register can hold commands, one a line, and `run` runs them: a small script you keep. Write `$$date` for a date that is put in when the script runs, not when it is kept:
+Inside the shell, a register can hold commands, one per line, and `run` runs them: a small script you keep. Write `$$date` for a date that is put in when the script runs, not when it is kept:
 
 ```
 blyant ~/novel> reg tidy = trim plot.md
@@ -491,8 +491,8 @@ insert done.md bottom - [x] Tidied on $date
 /home/anna/novel/done.md: line 4 put in
 ```
 
-- Each command is written out before it runs, and `run` stops at the first that fails
-- `run weekly.txt` runs the commands of a file in the same way: one a line, and a line starting with `#` is a comment
+- Each command is written out before it runs, and `run` stops at the first one that fails
+- `run weekly.txt` runs the commands of a file in the same way: one per line, and a line starting with `#` is a comment
 - `!!` after `run $tidy` runs the whole script again
 
 ## Full screen and shell side by side
@@ -519,7 +519,7 @@ What you do on the full screen, and the command for it in the shell:
 | `:shell` | `screen` |
 
 ## Practice
-Fourteen steps to train the commands of this tutorial, on two files of your own. Type each command after the prompt: what Blyant writes back is shown under it. To keep the files apart, make a directory for them first, and go into it:
+Fourteen steps to practice the commands of this tutorial on two new files. Type each command after the prompt: what Blyant writes back is shown under it. To keep the practice files separate, first make a directory for them, and go into it:
 
 ```
 blyant ~> mkdir practice
@@ -534,7 +534,7 @@ blyant ~/practice> new file1
 Made: /home/anna/practice/file1.md
 ```
 
-**2. Insert the text "File 1" at the top of the file.** All that follows `top` is the text:
+**2. Insert the text "File 1" at the top of the file.** Everything after `top` is the text:
 
 ```
 blyant ~/practice> insert file1.md top File 1
@@ -558,7 +558,7 @@ blyant ~/practice> peek file1.md
   2  A second line
 ```
 
-**5. Move the first line below the second.** `shift` moves lines in a file: line 1 to the `bottom`. The line is shown at its new place:
+**5. Move the first line below the second.** `shift` moves lines within a file, here line 1 to the `bottom`. The line is shown in its new place:
 
 ```
 blyant ~/practice> shift file1.md 1 bottom
@@ -611,9 +611,9 @@ blyant ~/practice> peek file1.md
 
 That is the whole round: making files, adding, moving, copying and changing lines, without opening an editor. `open file1.md` shows the result in the editor of the full screen.
 
-Four more steps use a peek as a window into the file while you change it, and take a change back.
+The last four steps use a peek as a window into the file while you change it, and then take a change back.
 
-**11. Find a line.** `/` after the file searches it: the window goes to the first line with the text, marked with `>`:
+**11. Find a line.** `/` after the file name searches the file: the window goes to the first line with the text, marked with `>`:
 
 ```
 blyant ~/practice> peek file1.md /file 2
@@ -635,7 +635,7 @@ blyant ~/practice> .
 (lines 1-3 of 3)
 ```
 
-**13. Let the window follow.** With `shellautopeek` on, the window is shown again after each change of the file, without `.`:
+**13. Let the window follow.** With `shellautopeek` on, the window is shown again after each change to the file, without `.`:
 
 ```
 blyant ~/practice> set shellautopeek true

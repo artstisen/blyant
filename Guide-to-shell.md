@@ -1,7 +1,7 @@
 # Guide to the shell
 ![The shell: a project listed, a file peeked into, a search by text and a register](docs/screenshots/shell.svg)
 
-The shell is Blyant on lines: you type a command at a prompt, and Blyant writes its answer as plain lines of text, in the colors of your terminal. It works in any terminal, with a screen reader, and from a script. Files are edited in the editor of the full screen, and closing the editor brings you back to the prompt.
+The shell is Blyant on lines: you type a command at a prompt, and Blyant writes the answer as plain lines of text, in the colors of your terminal. It works in any terminal, with a screen reader, and from a script. Files are edited in the full-screen editor, and closing the editor brings you back to the prompt.
 
 Start it with `--shell`, and leave it with `exit`:
 
@@ -12,27 +12,27 @@ blyant --shell ~/projects      The shell, in that directory
 
 (On Windows `Blyant.exe --shell`, and `dotnet Blyant.dll --shell` for the portable version.)
 
-New to the shell? The [shell tutorial](Guide-to-shell-tutorial.md) goes through a day of work with it, task by task: getting around, looking into files, copying and moving, adding lines, a todo list, registers and the clipboard. This guide tells every command.
+New to the shell? The [shell tutorial](Guide-to-shell-tutorial.md) goes through a day of work with it, task by task: getting around, looking into files, copying and moving, adding lines, a todo list, registers and the clipboard. This guide describes every command.
 
 ## Starting in the shell
-To have Blyant always start as the shell, turn on _Start in the shell_ on the General page of Configuration (or `set startshell true` in the shell). Then `blyant` alone starts as `blyant --shell` does. A file or directory given (`blyant notes.md`, `blyant +12 page.html`) is still opened on the full screen, so programs that open a file in Blyant (as Blyant Validator does) get the editor. `blyant --screen` starts on the full screen once, and `screen` in the shell comes there too.
+To have Blyant always start as the shell, turn on _Start in the shell_ on the General page of Configuration (or `set startshell true` in the shell). Then `blyant` alone starts as `blyant --shell` does. A file or directory given (`blyant notes.md`, `blyant +12 page.html`) is still opened on the full screen, so programs that open a file in Blyant (as Blyant Validator does) get the editor. `blyant --screen` starts on the full screen this once, and `screen` in the shell switches to it too.
 
 ## Start directory
-Without a directory given, the shell starts in the directory you are in, unless the setting `shelldir` tells another:
+Without a directory given, the shell starts in the directory you are in, unless the setting `shelldir` names another:
 
 - `set shelldir ~/projects` (or a full path): the shell starts there. `~` is your home directory
-- `set shelldir last`: the shell starts where you left it the last time (kept as `shelllastdir`)
+- `set shelldir last`: the shell starts where you left it last time (kept as `shelllastdir`)
 - `set shelldir .`: in the directory you are in, as without the setting
 
-A directory given (`blyant --shell ~/notes`) is used instead, and so is the directory of the page you leave with `:shell` (the start page, the Jump menu and the corkboard have none: then `shelldir`). Commands given with `--run` run in the directory you are in, so scripts do what they say wherever `shelldir` points. A start directory that is not there (moved, on a drive taken out) is told, and the shell starts in the directory you are in. The settings are in the settings file, and not on the pages of Configuration.
+A directory given (`blyant --shell ~/notes`) is used instead, and so is the directory of the page you leave with `:shell` (the start page, the Jump menu and the corkboard have no directory, so `shelldir` is used). Commands given with `--run` run in the directory you are in, so scripts do what they say wherever `shelldir` points. If the start directory is not there (moved, or on a drive that was taken out), the shell says so and starts in the directory you are in. These settings are in the settings file only, not on the pages of Configuration.
 
 ## Between the full screen and the shell
 You can go from one to the other while Blyant runs:
 
-- `:shell` on any command line of the full screen goes on as the shell, in the directory of the page you leave: from the file browser (and its lists) the directory of the pane, from the editor the directory of the file (which is then the last list: `open 1` opens it again), from the list of projects the directory of the selected project, and else (the start page, the Jump menu, the corkboard) the start directory of `shelldir`, or the directory Blyant was started in
-- `screen` in the shell goes on on the full screen, in the file browser of the directory you are in. Closing the file browser shows the start page
+- `:shell` on any command line of the full screen switches to the shell, in the directory of the page you leave: from the file browser (and its lists) the directory of the pane, from the editor the directory of the file (which is then the last list: `open 1` opens it again), from the list of projects the directory of the selected project, and otherwise (the start page, the Jump menu, the corkboard) the start directory of `shelldir`, or the directory Blyant was started in
+- `screen` in the shell switches to the full screen, opening the file browser in the directory you are in. Closing the file browser shows the start page
 
-Leaving with `:shell` is as leaving for a jump of the Jump menu: the editor asks about changes that are not saved first (save, discard, or stay), and on a page opened on top of the editor (the Jump menu, the corkboard, the list of projects) `:shell` is not done while the editor has such changes. `exit` in the shell leaves Blyant, wherever it was started.
+Leaving with `:shell` works like a jump from the Jump menu: the editor first asks about unsaved changes (save, discard, or stay), and on a page opened on top of the editor (the Jump menu, the corkboard, the list of projects) `:shell` is refused while the editor has unsaved changes. `exit` in the shell leaves Blyant, wherever it was started.
 
 ## Prompt and lists
 The prompt shows the directory you are in, from `~` in your home directory:
@@ -47,134 +47,134 @@ blyant ~/projects/novel> ls
 blyant ~/projects/novel> open 4
 ```
 
-Every list a command shows is numbered, and a number given to a command after it is a row of that list: `open 4` opens `plot.md`, `cd 1` goes to `chapters`. A path works too (`open plot.md`, `cd ../other`), and a path that is not full is taken from the directory you are in. A file or directory that is not there is marked `(missing)`.
+Every list a command shows is numbered, and a number given to the next command is a row of that list: `open 4` opens `plot.md`, `cd 1` goes to `chapters`. A path works too (`open plot.md`, `cd ../other`), and a relative path starts from the directory you are in. A file or directory that is not there is marked `(missing)`.
 
-The favorites, the history (`hist` and `recent`) and the bookmarks show the names of the files and directories, not their paths, so a list is quick to read. A name that two rows have gets the folder it is in after it (`README.md (novel)`). `info 3` tells the rest of row 3: its full path, size, dates and, for a text, its words and lines. `-l` shows a list with the full paths (`fav -l`, `hist -l`, `recent -l`, `book -l`, and `ls -l`, `find -l`). The hotlist and the projects show paths, as before.
+The favorites, the history (`hist` and `recent`) and the bookmarks show the names of the files and directories, not their paths, so a list is quick to read. When two rows have the same name, each gets its folder after it (`README.md (novel)`). `info 3` gives the rest for row 3: full path, size, dates and, for a text, words and lines. `-l` shows a list with the full paths (`fav -l`, `hist -l`, `recent -l`, `book -l`, and `ls -l`, `find -l`). The hotlist and the projects still show paths.
 
-A favorite (of the open list of favorites) is marked ` *` after its name in `ls`, `find`, `hist`, `recent` and `book`, as the full screen marks it in the file browser, the history and the search results: `plot.md *`, `notes/ *`. `fav` has no marks (every row of it is a favorite), and neither has a list with `-l`: its lines are the paths alone, for a script to read. A line found by `find -t` is not marked, only the file found by its name.
+A favorite (in the open list of favorites) gets ` *` after its name in `ls`, `find`, `hist`, `recent` and `book`, as the full screen marks it in the file browser, the history and the search results: `plot.md *`, `notes/ *`. `fav` has no marks (every row is a favorite), and neither has a list with `-l`: its lines are only paths, for a script to read. A line found by `find -t` is not marked; only a file found by name is.
 
-The last list is kept for as long as no other command takes its place, however long that is (until Blyant ends: it is not kept for the next time):
+The last list stays until another command replaces it, however long that takes (but only until Blyant ends: it is not kept for the next time):
 
-- A list shown takes its place: `ls`, `fav`, `hist`, `recent`, `hot`, `book`, `projects` and `find`
+- A list shown replaces it: `ls`, `fav`, `hist`, `recent`, `hot`, `book`, `projects` and `find`
 - So does the file or directory a command worked on, as a list of one row (`open 1` opens it): `peek`, `insert`, `change`, `shift`, `format` and `trim` (the file, at its line), `lines` (the other file, at the lines put in), `undo` and `redo` (the files written), `new`, `mkdir`, `copy`, `move` and `rename` (the new place), and `cd` on a file (the file)
 - Other commands leave it as it was: `info` (so `fav`, `info 3`, `info 4` and `open 4` work), `cd` into a directory, `up`, `home`, `data`, `pwd`, `open`, `delete`, `clip`, `path`, `name`, `echo`, `reg`, `set`, `changes`, `help`, `about` and `clear`, and `file` (it changes only `$file`). The rows are full paths, so `fav`, then `cd` somewhere else, and `open 3` still opens row 3 of the favorites
-- A row deleted since (`delete 3`) stays in the list, and is told as not there. When a number is not a row of the list you meant (after `peek 2`, the last list is that file), show the list again
+- A row deleted since (`delete 3`) stays in the list, and is reported as missing. When a number is not a row of the list you meant (after `peek 2`, the last list is that file), show the list again
 
-The shell writes in the colors of your terminal (the color scheme is for the full screen), and a character of a file that would steer the terminal (an escape sequence: a color, a title, the clipboard) is shown as `?`. A command that fails in a way it should not is told (`The command failed: ...`), and the shell goes on.
+The shell writes in the colors of your terminal (the color scheme is for the full screen), and a character of a file that would steer the terminal (an escape sequence: a color, a title, the clipboard) is shown as `?`. When a command fails unexpectedly, the shell says so (`The command failed: ...`) and goes on.
 
 ## Long lists
-In a terminal, an output longer than the window comes in pages: when the window is full, the shell waits, with `-- More: Enter or Space next page, q stop --` on the last row.
+In a terminal, output longer than the window is shown in pages: when the window is full, the shell waits, with `-- More: Enter or Space next page, q stop --` on the last row.
 
 - `Enter` or `Space` (or another key) shows the next page
 - `q`, `Esc` or `Ctrl+C` stops: the rest is not shown, and the prompt comes back
-- A line wider than the window takes the rows it needs, and the size of the window is looked at again for each page
+- A line wider than the window takes the rows it needs, and the window size is checked again for each page
 
-Commands read from a file or a pipe, and `--run`, are never paged, so `blyant --run "find *.md" | less` gets the whole list. A terminal that does not tell its size is not paged either.
+Commands read from a file or a pipe, and `--run`, are never paged, so `blyant --run "find *.md" | less` gets the whole list. A terminal that does not report its size is not paged either.
 
-To have every output whole (with a screen reader, say), turn the pages off: `set shellpaging false` in the shell, or `shellpaging=false` in the settings file (`settings.ini` in the data directory). The setting is not on the pages of Configuration.
+To get all output at once (with a screen reader, say), turn the pages off: `set shellpaging false` in the shell, or `shellpaging=false` in the settings file (`settings.ini` in the data directory). The setting is not on the pages of Configuration.
 
 ## Commands
 | Command | What it does |
 |---|---|
 | `pwd` | Show the directory you are in |
 | `ls [-a] [-l] [dir\|n]` | List the folders, then the files, of a directory (by name; a favorite marked ` *`). Hidden files are left out, as in the file browser (on Linux and macOS the names that start with `.`); `ls -a` lists them too, and `ls -l` the full paths, without marks |
-| `cd [dir\|file\|n]` | Go to a directory; `cd` alone goes to your home directory, `cd ~/notes` to one in it. A file (a row of `fav`, `hist`, `find` ...) goes to the directory it is in, and the file is then the last list: `open 1` opens it |
+| `cd [dir\|file\|n]` | Go to a directory; `cd` alone goes to your home directory, `cd ~/notes` to a directory in it. A file (a row of `fav`, `hist`, `find` ...) goes to the directory it is in, and the file is then the last list: `open 1` opens it |
 | `up` | Go to the directory above (`cd ..`) |
 | `home` | Go to your home directory (as `cd` alone) |
-| `data` | Go to the [data directory](Guide-to-installation.md#good-to-know) of Blyant: its settings, lists and log. `cd data` is still a directory named _data_ |
-| `open file\|n [+line]` | Edit a file in the editor of the full screen, at a line if one is given (`open plot.md +12`). A directory is gone to |
-| `peek file\|n [lines]` | Show the lines of a text file, numbered: the first 20, `peek plot.md 40` the first 40, `peek plot.md 100-120` those, `peek plot.md +100` 20 lines from line 100, and `peek plot.md +100 30` 30 of them. Only read. After a peek from a line, `open 1` opens the file at that line. See [Peeking into a file](#peeking-into-a-file) |
-| `peek [file\|n] top\|middle\|bottom\|50%` | Put the window of the last peek (as many lines) at the top, in the middle, at the end, or from a part of the file (`peek 50%`: from halfway). Without a file: the file peeked last. See [Peeking into a file](#peeking-into-a-file) |
-| `peek +120` | The file peeked last from line 120, the window as large (a file named _+120_ is peeked, if there is one) |
-| `+ 20`, `- 20`, `++ 3`, `-- 3` | Move the window of the last peek as many steps: `+ 20` 20 lines down (with `shellpeekstep` 1), `++ 3` 3 big steps |
-| `peek [file\|n] /text` | The window at the first line with a text in it, marked with `>` (`peek notes.md /storm`; without a file: the file peeked last). `/` alone goes to the next line with it, `?` to the one before. See [Peeking into a file](#peeking-into-a-file) |
+| `data` | Go to Blyant's [data directory](Guide-to-installation.md#good-to-know), with the settings, lists and log. `cd data` still goes to a directory named _data_ |
+| `open file\|n [+line]` | Edit a file in the full-screen editor, at a line if one is given (`open plot.md +12`). On a directory, go to it |
+| `peek file\|n [lines]` | Show the lines of a text file, numbered: the first 20, `peek plot.md 40` the first 40, `peek plot.md 100-120` lines 100 to 120, `peek plot.md +100` 20 lines from line 100, and `peek plot.md +100 30` 30 lines from line 100. Read-only. After a peek from a line, `open 1` opens the file at that line. See [Peeking into a file](#peeking-into-a-file) |
+| `peek [file\|n] top\|middle\|bottom\|50%` | Put the window of the last peek (same number of lines) at the top, in the middle, at the end, or at a point in the file (`peek 50%`: from halfway). Without a file: the file peeked last. See [Peeking into a file](#peeking-into-a-file) |
+| `peek +120` | The file peeked last, from line 120, with the same window size (a file named _+120_ is peeked instead, if there is one) |
+| `+ 20`, `- 20`, `++ 3`, `-- 3` | Move the window of the last peek by that many steps: `+ 20` 20 lines down (with `shellpeekstep` 1), `++ 3` 3 big steps |
+| `peek [file\|n] /text` | Move the window to the first line containing a text, marked with `>` (`peek notes.md /storm`; without a file: the file peeked last). `/` alone goes to the next line with the text, `?` to the previous one. See [Peeking into a file](#peeking-into-a-file) |
 | `peek` (or `.`) | Show the last peek again: the same lines of the same file, as it is now (after `insert`, `change`, `lines` or the editor). See [Peeking into a file](#peeking-into-a-file) |
-| `peek [file\|n] +\|++\|-\|--` | Move the window of the last peek: `+` 1 line further down, `++` 5, `-` and `--` up again (the settings `shellpeekstep` and `shellpeekbigstep`: `set shellpeekstep 2`; 1 to 1000, and `reset` puts back 1 and 5), as many lines as before (`peek plot.md +`, then `peek +`: the file peeked last; `+`, `++`, `-` or `--` alone on the line do the same, also after other commands; a number after them is a count of steps: `+ 20`). The lines shown are `$peek`. Another file than the one peeked last is moved from its top (`peek other.md +`: from line 2); at the end the last lines are shown |
-| `find [-l] [name] [-t text]` | Find files here and in the directories below, by name and by a text in them (see [Files](#files)); `find -l` gives the full paths |
-| `new name` | Make a new, empty file here (`new ideas` makes `ideas.md`: the kind of new files, when no extension is given). It is put in the latest files at once, as a file opened: `recent` lists it, and `Tab` with nothing typed offers it first |
+| `peek [file\|n] +\|++\|-\|--` | Move the window of the last peek: `+` 1 line further down, `++` 5, `-` and `--` up again (the settings `shellpeekstep` and `shellpeekbigstep`: `set shellpeekstep 2`; 1 to 1000, and `reset` puts back 1 and 5), as many lines as before (`peek plot.md +`, then `peek +`: the file peeked last; `+`, `++`, `-` or `--` alone on the line do the same, also after other commands; a number after them is a count of steps: `+ 20`). The lines shown are `$peek`. A file other than the one peeked last starts from the top (`peek other.md +`: from line 2); at the end the last lines are shown |
+| `find [-l] [name] [-t text]` | Find files here and in the directories below, by name and by text they contain (see [Files](#files)); `find -l` gives the full paths |
+| `new name` | Make a new, empty file here (`new ideas` makes `ideas.md`: without an extension, the kind of new files is used). It is added to the latest files at once, as an opened file is: `recent` lists it, and `Tab` with nothing typed offers it first |
 | `mkdir name` | Make a new directory here |
-| `rename file\|n name` | Give a file or directory a new name. A file renamed is put in the latest files, as one made with `new` |
-| `copy file\|n dir\|n` | Copy a file or directory into a directory (`copy notes.md .`: a copy here, `notes-copy.md`). A file copied is put in the latest files, as one made with `new` |
-| `move file\|n dir\|n` | Move a file or directory into a directory. A file moved is put in the latest files, as one made with `new` |
+| `rename file\|n name` | Give a file or directory a new name. A renamed file is added to the latest files, as with `new` |
+| `copy file\|n dir\|n` | Copy a file or directory into a directory (`copy notes.md .`: a copy here, `notes-copy.md`). A copied file is added to the latest files, as with `new` |
+| `move file\|n dir\|n` | Move a file or directory into a directory. A moved file is added to the latest files, as with `new` |
 | `delete file\|n` (`del`) | Delete a file or directory: to the trash, after asking |
-| `info [file\|n]` | Tell about a file or directory (alone: the one you are in): its kind, size, dates and path, and for a text file its characters, words, lines, encoding and line endings. The last list stays as it was |
+| `info [file\|n]` | Describe a file or directory (alone: the one you are in): kind, size, dates and path, and for a text file characters, words, lines, encoding and line endings. The last list stays as it was |
 | `insert file\|n top\|bottom\|+line text` | Put a line of text in a file without opening it: before the first line, after the last, or as line 12 (`+12`). See [Text and settings](#text-and-settings) |
-| `change file\|n +line\|from-to [text]` | Change a line (`+12`) or lines (`12-15`) of a file into a text, or delete them when no text is given (asks first). See [Text and settings](#text-and-settings) |
+| `change file\|n +line\|from-to [text]` | Replace a line (`+12`) or lines (`12-15`) of a file with a text, or delete them when no text is given (asks first). See [Text and settings](#text-and-settings) |
 | `shift file\|n lines place` | Move lines in a file without opening it: under a heading (`shift todo.md 4-6 Done`), at the end of its section (`Done+`), before a line (`+12`), to the `top` or the `bottom`. See [Moving lines](#moving-lines) |
-| `shift! file\|n lines place` | Move lines as `shift` does, and tick their task boxes (`- [ ]` to `- [x]`), or untick those that are ticked |
-| `lines file\|n lines > file\|n place [copy\|cut]` | Copy lines to another file without opening them (`lines notes.md 4-6 > plan.md bottom`), or with `cut` move them there. See [Moving lines](#moving-lines) |
-| `lines file\|n lines >\|>> $name [copy\|cut]` | Keep lines in a register (`lines notes.md 4-6 > $notes`), or add them to its end with `>>`; with `cut`, also take them out of the file. A register that holds a path is not written over: give the place in that file (`> $plan bottom`). See [Registers](#registers) |
-| `lines file\|n lines start\|end text` | Put a text at the start or the end of lines, the rest of them kept (`lines todo.md 4 start Remember this:`). See [Text in lines](#text-in-lines) |
+| `shift! file\|n lines place` | Move lines as `shift` does, and tick any task boxes (`- [ ]` to `- [x]`), or untick any that are ticked |
+| `lines file\|n lines > file\|n place [copy\|cut]` | Copy lines to another file without opening the files (`lines notes.md 4-6 > plan.md bottom`), or with `cut` move them there. See [Moving lines](#moving-lines) |
+| `lines file\|n lines >\|>> $name [copy\|cut]` | Keep lines in a register (`lines notes.md 4-6 > $notes`), or add them at the end with `>>`; with `cut`, also take them out of the file. A register that holds a path is not written over: give the place in that file (`> $plan bottom`). See [Registers](#registers) |
+| `lines file\|n lines start\|end text` | Put a text at the start or the end of lines, keeping the rest (`lines todo.md 4 start Remember this:`). See [Text in lines](#text-in-lines) |
 | `lines file\|n lines unstart\|unend text` | Take a text off the start or the end of the lines that have it |
-| `lines file\|n lines replace old new` | Replace a text in lines, the rest of them kept (`lines notes.md 5-9 replace draft final`) |
+| `lines file\|n lines replace old new` | Replace a text in lines, keeping the rest (`lines notes.md 5-9 replace draft final`) |
 | `format file\|n` | Format an HTML, CSS or XML file, as `:format` in the editor does (see [Text and settings](#text-and-settings)) |
-| `trim file\|n` | Remove the blank space at the end of the lines, as `:trim` in the editor does; `trim!` also the line breaks of Markdown |
-| `set [name [value]]` | Show the settings (`set`), one of them (`set indent`), or change one (`set indent 2`, also `set indent=2` as in the settings file) |
+| `trim file\|n` | Remove blank space at the end of lines, as `:trim` in the editor does; `trim!` also removes Markdown line breaks |
+| `set [name [value]]` | Show the settings (`set`), one setting (`set indent`), or change one (`set indent 2`, also `set indent=2` as in the settings file) |
 | `reset` | Put all the settings back to their defaults, as _Reset all settings_ on the System page of Configuration (asks first) |
 | `reload` | Read the settings file and the registers again, after you have edited them in another program (see [Text and settings](#text-and-settings)) |
 | `reg [name [text\|.\|#n]]` | Keep a text or a path in a register, show one, or list them (see [Registers](#registers)) |
-| `reg name = text`, `reg name += text` | Keep a text in a register (as `reg name text`), or add it to its end, as lines (`reg notes += $peek`) |
+| `reg name = text`, `reg name += text` | Keep a text in a register (as `reg name text`), or add it at the end, as lines (`reg notes += $peek`) |
 | `reg -d name\|all` | Take a register away, or all of them |
-| `echo text` | Write a text with the `$names` put in: `echo $file`, `echo $pwd $date`, `echo $peek` (all its lines). To see a value, or what a command will be given (`echo insert $file bottom $date Done`; a command that takes paths gets a value with blanks in quotes). See [Registers](#registers) |
-| `file [file\|n]` | Make a file of a list `$file`, without opening or peeking it: `recent`, then `file 2`; or a file by its name (`file plot.md`). The last list stays, so `file 3` or `open 4` go on in it. `file` alone shows `$file`. See [Registers](#registers) |
+| `echo text` | Write a text with the `$names` put in: `echo $file`, `echo $pwd $date`, `echo $peek` (all the lines). Use it to see a value, or what a command will get (`echo insert $file bottom $date Done`; a command that takes paths gets a value with blanks in quotes). See [Registers](#registers) |
+| `file [file\|n]` | Make a file from a list `$file` without opening or peeking it: `recent`, then `file 2`; or name the file (`file plot.md`). The last list stays, so `file 3` or `open 4` still use it. `file` alone shows `$file`. See [Registers](#registers) |
 | `clip [path\|name] file\|dir\|n\|.` | Copy the full path of a file or directory (`clip 3`: row 3 of the last list; `clip .`: the directory you are in), or its name, to the clipboard (see [Clipboard](#clipboard)) |
 | `clip text file\|n` | Copy the text of a file to the clipboard |
 | `clip lines file\|n lines` | Copy lines of a file to the clipboard, given as for `lines` (`40`, `4-6`, `4,7,9-10`, `+100 30`, a text in the line). See [Line numbers](#line-numbers) |
 | `clip $name` | Copy the value of a register to the clipboard |
-| `path [file\|n]`, `name [file\|n]` | Copy the full path, or the name, of the file you worked on last (`$file`), as `:path` and `:name` do in the editor; of a file or row given: `path 3`, `name plot.md`. See [Clipboard](#clipboard) |
-| `$clip` | The text `clip` copied last, put in a command as a register is (`insert plan.md bottom $clip`: its lines) |
-| `favorites [-l] [list]` (`fav`) | List the favorites of the file browser by name, with their folders as headings (`-l`: the full paths); `fav work` uses the list _work_ from now on, as `:list work` does, and `fav main` the main list again. The open list is told first (`List: main`) |
-| `favorites lists` | List the lists of favorites, `*` at the one that is open |
-| `favorites new\|delete name` | Make a list and open it (`fav new reading`), or delete one: asked first, to the trash (the files in it stay where they are; the main list is open after the open one is deleted) |
+| `path [file\|n]`, `name [file\|n]` | Copy the full path, or the name, of the file you worked on last (`$file`), as `:path` and `:name` do in the editor, or of a given file or row: `path 3`, `name plot.md`. See [Clipboard](#clipboard) |
+| `$clip` | The text `clip` copied last, used in a command like a register (`insert plan.md bottom $clip`: the lines copied) |
+| `favorites [-l] [list]` (`fav`) | List the favorites of the file browser by name, with their folders as headings (`-l`: the full paths); `fav work` uses the list _work_ from now on, as `:list work` does, and `fav main` the main list again. The open list is named first (`List: main`) |
+| `favorites lists` | List the lists of favorites, with `*` at the open one |
+| `favorites new\|delete name` | Make a list and open it (`fav new reading`), or delete one: after asking, to the trash (the files in it stay where they are; deleting the open list opens the main list) |
 | `favorites rename name new` | Give a list a new name (`fav rename work writing`). The main list keeps its name |
-| `favorites use name` | Open a list whose name is a word of `fav` (`fav use new` for a list named _new_) |
+| `favorites use name` | Open a list whose name is also a word of the `fav` command (`fav use new` for a list named _new_) |
 | `favorites folder name` | Make a folder of favorites, last in the list (`fav folder Drafts`). See [Folders of favorites](#folders-of-favorites) |
 | `favorites subfolder [folder] name` | Make a subfolder, first in a folder (`fav subfolder [Writing] Drafts`) |
 | `favorites rename [folder] name` | Give a folder a new name (`fav rename [Drafts] Old drafts`) |
 | `favorites remove [folder]` | Remove a folder with its favorites and subfolders, after asking (the files stay) |
-| `favorites move rows\|name\|[folder] where` | Move favorites or a folder: `top`, `bottom`, `up`, `down`, `out`, to the place of a row (`5`), or into a `[folder]`. A favorite by its row or its name (`fav move plot.md top`), and several by a pattern (`fav move chapter-*.md [Drafts]`) |
+| `favorites move rows\|name\|[folder] where` | Move favorites or a folder: `top`, `bottom`, `up`, `down`, `out`, to the place of a row (`5`), or into a `[folder]`. Name a favorite by row or name (`fav move plot.md top`), and several by a pattern (`fav move chapter-*.md [Drafts]`) |
 | `favorites filter text` | Show the favorites with a text in their name or path, or whose name fits a pattern (`fav filter draft`, `fav filter *.typ`), numbered as in the whole list. See [Folders of favorites](#folders-of-favorites) |
 | `favorites undo` | Put back what `fav remove` removed last |
-| `history [-l]` (`hist`) | List the files opened by name, the newest first, with when (`-l`: the full paths) |
+| `history [-l]` (`hist`) | List the files opened, by name, newest first, with when they were opened (`-l`: the full paths) |
 | `history [-l] filter text` | Show the files opened with a text in their path (`hist filter chapter`), or whose name fits a pattern (`hist filter *.typ`), numbered as in the whole history, so `open 7` is row 7 of `hist` |
 | `recent [-l]` | List the latest files (the first nine of the history), by name (`-l`: the full paths) |
 | `hotlist` (`hot`) | List the directory hotlist |
-| `hotlist filter text` | Show the directories of the hotlist with a text in their name or path (`hot filter novel`), or that a pattern fits, numbered as in the whole hotlist |
-| `fav add file\|n [where]` | Add a file or directory to the favorites in use: at the top of the list (row 1, outside the folders), or where it is told: `top`, `bottom`, the place of a row (`5`) or into a `[folder]` (`fav add notes.md [Drafts]`) |
+| `hotlist filter text` | Show the directories of the hotlist with a text in their name or path (`hot filter novel`), or that match a pattern, numbered as in the whole hotlist |
+| `fav add file\|n [where]` | Add a file or directory to the favorites in use: at the top of the list (row 1, outside the folders), or at the place given: `top`, `bottom`, the place of a row (`5`) or into a `[folder]` (`fav add notes.md [Drafts]`) |
 | `fav remove file\|n` | Take a file or directory off the favorites in use |
 | `hot add\|remove [dir\|n]` | Add a directory to the hotlist (`hot add` alone: the one you are in), or take it off |
-| `bookmarks [-l]` (`book`) | List the bookmarks of the Jump menu, by name (`-l`: the full paths; a page of Blyant is shown, but opened on the full screen only) |
+| `bookmarks [-l]` (`book`) | List the bookmarks of the Jump menu, by name (`-l`: the full paths; a Blyant page is listed, but opens only on the full screen) |
 | `projects` (`proj`) | List the projects |
 | `project n\|name` | Go to the directory of a project (`project 2`, `project novel`) |
 | `log [n]` | Show the last lines of the [log](Guide-to-start-page.md#log) (20, or as many as you give) |
 | `clear` (`cls`) | Clear the screen: the prompt is at the top again |
-| `screen` | Go on on the full screen, in the file browser of the directory you are in (see [Between the full screen and the shell](#between-the-full-screen-and-the-shell)) |
+| `screen` | Switch to the full screen, opening the file browser in the directory you are in (see [Between the full screen and the shell](#between-the-full-screen-and-the-shell)) |
 | `version` | Show the version of Blyant |
-| `about [license]` | Show the version of Blyant and the commands used the most (`help`, `ls`, `open`, `peek`, `set language de` ...), and `about license` its license, as on the second page of [About](Guide-to-start-page.md#help) |
+| `about [license]` | Show the version of Blyant and the commands used the most (`help`, `ls`, `open`, `peek`, `set language de` ...), and `about license` shows the license, as on the second page of [About](Guide-to-start-page.md#help) |
 | `undo [n]` | Put back the last change a command made to a file (`insert`, `change`, `shift`, `lines`, `format`, `trim`), or the last `n`. See [Undo](#undo) |
 | `redo [n]` | Do again what `undo` put back |
 | `changes` | List the changes `undo` goes back through, the newest first, and those `redo` does again |
-| `again filter text` | Show the commands you typed with a text in them (`again filter lines`), or that a pattern fits (`again filter peek*`), with their numbers: `!7` runs the one numbered 7 |
+| `again filter text` | Show the commands you typed with a text in them (`again filter lines`), or that match a pattern (`again filter peek*`), with their numbers: `!7` runs the one numbered 7 |
 | `again [n]` | List the commands you typed, the newest first, or run one again by its number (`again 3`; also `!3`, and `!!` for the last). See [Typing a command](#typing-a-command) |
-| `run $name\|file` | Run the commands of a register or of a file, one a line, each written out first; it stops at the first that fails. See [Running commands](#running-commands) |
-| `help [command]` (`h`) | List the commands, or tell what one does |
+| `run $name\|file` | Run the commands of a register or of a file, one per line, each written out first; it stops at the first that fails. See [Running commands](#running-commands) |
+| `help [command]` (`h`) | List the commands, or explain one |
 | `exit` (`quit`, `q`) | Leave Blyant |
 
 ### Typing a command
 In a terminal the line of the shell is read key by key:
 
-- `Tab` completes the word you are typing, and `Tab` again gives the next that fits (after the last: what you typed; `Shift+Tab` goes back): the name of a command (`fa` to `favorites`), the words that can follow some of them (the names of the settings after `set`, the lists after `fav`, the projects after `project`, `add` and `remove` after `fav` and `hot`, `top` and `bottom` after `insert`, `top`, `bottom` and the headings of the file after the lines of `shift` and after the other file of `lines` (also from a pattern, and of a row or `$file`), `path`, `name`, `text` and `lines` after `clip`), and the names of files and directories after the commands that take a path (`open pl` to `open plot.md`). `cd` and `ls`, and the directory of `copy` and `move`, take directories only. A directory gets `/` after it, and when it is the only name that fits, `Tab` again goes on into it (`cd pr` to `cd projects/`, then `cd projects/Article/`). A name with a blank in it is put in quotes, and hidden names come only after a `.`
-- With nothing typed after a command that takes a file (`open ` and `Tab`), the files you opened last that are in that directory come first, the last opened first: `Tab`, `Tab` goes between the files you are working on. The other names follow by name. It works after a directory too (`open drafts/` and `Tab`), and for a directory (`cd ` and `Tab`) the directories that have those files come first. Once you have typed a letter, the names come by name. The files opened last are those of `recent` and `hist`. To have all names by name, turn the setting `shellrecentfirst` off (`set shellrecentfirst false`, or `shellrecentfirst=false` in the settings file; not on the pages of Configuration)
-- A name with `*` (any characters) or `?` (one character) in it is a pattern: `open *151*` and `Tab` gives `open Blyant-v151.md`, and `Tab` again the next name it fits (letter case alike). It works in the name, also after a directory (`open drafts/*151*`), but not in the directories before it. A hidden name only for a pattern that starts with `.`. Without `Tab`, `*` and `?` are taken as they are: `open *151*` looks for a file of that name
-- `Up` and `Down` bring back the commands you typed before, on Windows, Linux and macOS alike; what you have typed is what they start with (`pe` and `Up`: the last `peek`)
-- `again` lists the commands you typed, numbered, the newest first, and `again 3` (or `!3`) runs number 3 again, as it was typed: it is written out, then run. `!!` runs the last one. `!3` and `Tab` puts the command on the line instead, to be changed before `Enter` (another line number, another file). A command run again becomes the newest, number 1, and `again` itself is not kept. The last 50 are kept while Blyant runs, never in a file (a command can hold text of a file); commands from a file, a pipe or `--run` are not kept. When the list grows long, `again filter lines` shows only the commands with _lines_ in them (or `again filter peek*`, a pattern), with their numbers. The list of `again` does not take the place of the last list: `open 3` is still a row of the list shown before it
+- `Tab` completes the word you are typing, and `Tab` again gives the next match (after the last: what you typed; `Shift+Tab` goes back): the name of a command (`fa` to `favorites`), the words that can follow some of them (the names of the settings after `set`, the lists after `fav`, the projects after `project`, `add` and `remove` after `fav` and `hot`, `top` and `bottom` after `insert`, `top`, `bottom` and the headings of the file after the lines of `shift` and after the other file of `lines` (also from a pattern, and of a row or `$file`), `path`, `name`, `text` and `lines` after `clip`), and the names of files and directories after the commands that take a path (`open pl` to `open plot.md`). `cd` and `ls`, and the directory of `copy` and `move`, take directories only. A directory gets `/` after it, and when it is the only name that fits, `Tab` again goes on into it (`cd pr` to `cd projects/`, then `cd projects/Article/`). A name with a blank in it is put in quotes, and hidden names are offered only after a `.`
+- With nothing typed after a command that takes a file (`open ` and `Tab`), the files you opened last that are in that directory come first, the last opened first: `Tab`, `Tab` goes between the files you are working on. The other names follow, sorted by name. It works after a directory too (`open drafts/` and `Tab`), and for a directory (`cd ` and `Tab`) the directories that have those files come first. Once you have typed a letter, the names are sorted by name. The files opened last are those of `recent` and `hist`. To have all names sorted by name, turn the setting `shellrecentfirst` off (`set shellrecentfirst false`, or `shellrecentfirst=false` in the settings file; not on the pages of Configuration)
+- A name with `*` (any characters) or `?` (one character) in it is a pattern: `open *151*` and `Tab` gives `open Blyant-v151.md`, and `Tab` again the next name that matches (ignoring letter case). It works in the name, also after a directory (`open drafts/*151*`), but not in the directories before it. Hidden names match only a pattern that starts with `.`. Without `Tab`, `*` and `?` are taken literally: `open *151*` looks for a file of that name
+- `Up` and `Down` bring back the commands you typed before, on Windows, Linux and macOS alike; they bring back only commands that start with what you have typed (`pe` and `Up`: the last `peek`)
+- `again` lists the commands you typed, numbered, the newest first, and `again 3` (or `!3`) runs number 3 again, as it was typed: it is written out, then run. `!!` runs the last one. `!3` and `Tab` puts the command on the line instead, to be changed before `Enter` (another line number, another file). A command run again becomes the newest, number 1, and `again` itself is not kept. The last 50 are kept while Blyant runs, never in a file (a command can contain text from a file); commands from a file, a pipe or `--run` are not kept. When the list grows long, `again filter lines` shows only the commands with _lines_ in them (or `again filter peek*`, a pattern), with their numbers. The list of `again` does not replace the last list: `open 3` is still a row of the list shown before it
 - `Left`, `Right`, `Home` and `End` move on the line, `Backspace` and `Delete` delete, `Ctrl+U` deletes the line before the cursor, `Ctrl+W` the word before it, and `Esc` the whole line. A line wider than the window is scrolled sideways on its row
 - `Ctrl+C` drops what you have typed, and `Ctrl+D` (or `Ctrl+Z` on Windows) on an empty line leaves, as `exit` does
 
-With a screen reader the line may be read best as the terminal reads it: turn the setting `shellcompletion` off (`set shellcompletion false`, at once, or `shellcompletion=false` in the settings file; not on the pages of Configuration). The line is then read whole after `Enter`, without `Tab` and with the history your terminal gives. Commands from a file, a pipe or `--run` are always read that way.
+With a screen reader the line may work best when the terminal reads it: turn the setting `shellcompletion` off (`set shellcompletion false` takes effect at once, or `shellcompletion=false` in the settings file; not on the pages of Configuration). The line is then read whole after `Enter`, without `Tab` and with the history your terminal gives. Commands from a file, a pipe or `--run` are always read that way.
 
 ## Line numbers
-The commands that work on the lines of a file take line numbers in a few ways. A plain number is a line to work on; a `+` before it is a place in the file, or the first line of a stretch counted from it:
+The commands that work on the lines of a file take line numbers in a few ways. A plain number is a line to work on; a `+` before it is a place in the file, or the first line of a range counted from there:
 
 | Written | Means | Taken by |
 |---|---|---|
@@ -187,7 +187,7 @@ The commands that work on the lines of a file take line numbers in a few ways. A
 | `+12` as a place | at line 12, before the line that is there | `insert`, `shift`, `lines` (after the `>`), and `open` (the cursor there) |
 
 - The `+` marks a place where the word could also be something else: `top`, `bottom` or a heading (a heading can be named _12_), and in `open notes.md +12` the line to go to, as in other editors (`vim +12 notes.md`)
-- `peek` alone takes a plain number as how many: `peek notes.md 40` shows the first 40 lines, as it only shows them. Everywhere else `40` is line 40
+- Only `peek` takes a plain number as a count: `peek notes.md 40` shows the first 40 lines, since `peek` only shows lines. Everywhere else `40` is line 40
 - `change notes.md +12` is line 12 too: for `change` the `+` can be left out
 - A range past the end stops at the last line, and the numbers are those of the file as it is, as `peek` shows them
 
@@ -196,12 +196,12 @@ The shell works on files with the rules of the file browser:
 
 - A name with blanks in it is written in double quotes: `rename "old notes.md" notes.md`
 - When you rename, move or delete the directory you are in (`rename . drafts`, `delete ..`), the shell goes with it, or to the directory above it
-- `fav remove` and `hot remove` also take off a file or directory that is gone
-- `copy` and `move` never overwrite a file or directory of the same name: it is told, and nothing is done. A copy made in the directory it is in gets a new name (`plot-copy.md`)
-- `delete` asks first, telling what goes with a directory, and you type the answer in full (`Yes`) to go ahead. It goes to the trash, which you open from the file browser with `:trash`, unless _Delete to trash_ is turned off on the General page of Configuration. Something that cannot be moved to the trash is deleted for good only if you say so
+- `fav remove` and `hot remove` also remove a file or directory that no longer exists
+- `copy` and `move` never overwrite a file or directory of the same name: the shell says so and does nothing. A copy made in the same directory gets a new name (`plot-copy.md`)
+- `delete` asks first, telling what would be deleted with a directory, and you type the answer in full (`Yes`) to go ahead. It goes to the trash, which you open from the file browser with `:trash`, unless _Delete to trash_ is turned off on the General page of Configuration. Something that cannot be moved to the trash is deleted for good only if you say so
 - The files and directories Blyant uses (its data directory, the settings, the favorites, the history) cannot be renamed, moved or deleted from the shell
-- What is renamed or moved is followed by the favorites, the history, the hotlist, the projects and the bookmarks, as in the file browser, and what is deleted leaves the favorites
-- `find` searches the directory you are in and the directories below it, as the search of the file browser does: hidden files are left out, and at most 5000 files are found. `find plot` finds the names with _plot_ in them, `find *.md` the names that match (`*` and `?`), `find -t storm` the text files with _storm_ in a line (with the line), and `find *.md -t storm` both. The text takes `*` and `?` too: `find -t storm*night` finds a line with _storm_ and then _night_ in it, `find -t st?rm` _storm_ and _starm_ (a `*` in the text you look for, as `**` of bold, is taken so too, and finds more lines). `open` on a file found by its text opens it at that line, and `peek` shows the window around it
+- The favorites, the history, the hotlist, the projects and the bookmarks follow what is renamed or moved, as in the file browser, and what is deleted is removed from the favorites
+- `find` searches the directory you are in and the directories below it, as the search of the file browser does: hidden files are left out, and at most 5000 files are found. `find plot` finds the names with _plot_ in them, `find *.md` the names that match (`*` and `?`), `find -t storm` the text files with _storm_ in a line (with the line), and `find *.md -t storm` both. The text takes `*` and `?` too: `find -t storm*night` finds a line with _storm_ and then _night_ in it, `find -t st?rm` _storm_ and _starm_ (a `*` you mean literally, as in `**` for bold, is also taken as a wildcard, and finds more lines). `open` on a file found by its text opens it at that line, and `peek` shows the window around it
 - After `new`, `mkdir`, `rename`, `copy` and `move`, the new place is the last list: `open 1` opens it
 
 To duplicate a file, copy it to the directory it is in, `.`: the copy gets `-copy` in its name, and a second copy `-copy2`. Copied to another directory, it keeps its name:
@@ -216,7 +216,7 @@ Copied to /home/anna/notes/drafts/todo.md
 blyant ~/notes> open 1
 ```
 
-`open 1` opens the copy made last (it is the last list), and the copy is the newest of the latest files (`recent`), also after `rename`. The copy is given a directory, not a new name: give it its name with `rename` afterwards (`rename todo-copy.md plan.md`).
+`open 1` opens the copy made last (it is the last list), and the copy is the newest of the latest files (`recent`), also after `rename`. `copy` takes a directory, not a new name: rename the copy afterwards (`rename todo-copy.md plan.md`).
 
 ## Peeking into a file
 `peek` shows the lines of a text file, numbered, without opening it. It only reads: nothing is changed, and the file is not put in the latest files.
@@ -244,7 +244,7 @@ peek chapter-3.md /storm                     at the first line with "storm" in i
 /                                            the next line with it (? the one before)
 ```
 
-Under the lines it tells where they are in the file, unless they are the last lines of it (after `bottom`, a step, or a window moved to the end, it tells it there too):
+Below the lines, `peek` tells where they are in the file. It leaves this out when the lines reach the end of the file, except after `bottom`, a step, or a window moved to the end:
 
 ```
 blyant ~/novel> peek chapter-3.md 10-12
@@ -260,7 +260,7 @@ blyant ~/novel> +
 blyant ~/novel> open 1
 ```
 
-As a window into the part of the file you are working on: peek it, change it, and `.` (or `peek` alone) shows the same lines again, as they are now:
+Use it as a window into the part of the file you are working on: peek, change, and `.` (or `peek` alone) shows the same lines again, as they are now:
 
 ```
 blyant ~/novel> peek chapter-3.md 10-12
@@ -277,11 +277,11 @@ blyant ~/novel> .
 (lines 10-12 of 30)
 ```
 
-- A plain number is how many lines to show, from the top (`peek chapter-3.md 40`), as `peek` only shows them. With a `+` it is the line to start at (see [Line numbers](#line-numbers))
-- `+`, `++`, `-` and `--` move the window of the last peek, as many lines as before: 1 or 5 lines (the settings `shellpeekstep` and `shellpeekbigstep`), or as many steps as the number after them (`+ 20`). They stop at the ends: at the top line 1 is shown, and at the end the last lines. Alone on the line they go on in the file peeked last, also after other commands, so you can read, edit and read on. Another file than the one peeked last is moved from its top (`peek other.md +` shows it from line 2)
-- `top`, `middle`, `bottom` and a part (`50%`, `0%` to `100%`) put the window of the last peek there, as many lines as it had (3 after `peek chapter-3.md 10-12`). After a file (`peek chapter-3.md bottom`) they put a window there in that file: as large as the last peek when it was of that file, else 20 lines. `peek +120` alone goes to line 120 in the file peeked last; `+ 20` and `- 20` move the window 20 steps from where it is, and `++ 3` and `-- 3` 3 big steps. At the ends the window stops, as it does for `+` and `-`. `Tab` after `peek` completes `top`, `middle` and `bottom`
+- A plain number is how many lines to show, from the top (`peek chapter-3.md 40`), since `peek` only shows lines. With a `+` it is the line to start at (see [Line numbers](#line-numbers))
+- `+`, `++`, `-` and `--` move the window of the last peek, as many lines as before: 1 or 5 lines (the settings `shellpeekstep` and `shellpeekbigstep`), or as many steps as the number after them (`+ 20`). They stop at the ends: at the top line 1 is shown, and at the end the last lines. Alone on the line they go on in the file peeked last, also after other commands, so you can read, edit and read on. A file other than the one peeked last starts from the top (`peek other.md +` shows it from line 2)
+- `top`, `middle`, `bottom` and a percentage (`50%`, `0%` to `100%`) put the window of the last peek there, with the same number of lines (3 after `peek chapter-3.md 10-12`). After a file (`peek chapter-3.md bottom`) they put a window there in that file: the size of the last peek if it was of that file, otherwise 20 lines. `peek +120` alone goes to line 120 in the file peeked last; `+ 20` and `- 20` move the window 20 steps from where it is, and `++ 3` and `-- 3` 3 big steps. At the ends the window stops, as it does for `+` and `-`. `Tab` after `peek` completes `top`, `middle` and `bottom`
 
-To find a place, search: the window goes to the first line with the text, two lines of it above, and the line found is marked with `>`. `/` goes on to the next line with it, and `?` back:
+To find a place, search: the window goes to the first line with the text, with two lines above it, and the line found is marked with `>`. `/` goes on to the next match, and `?` back:
 
 ```
 blyant ~/novel> peek chapter-3.md 1-5
@@ -302,33 +302,33 @@ blyant ~/novel> /
 (match 2 of 3, lines 18-22 of 30)
 ```
 
-- The text is a part of a line, letter case alike, as `find -t` takes it: `*` and `?` in it as there (`peek chapter-3.md /storm*night`), and all that follows the `/` (`peek notes.md /the storm came`). Without a file, `peek /storm` searches the file peeked last
-- `/` and `?` alone go to the next and the line before with the text searched last, in the file peeked last. At the end they go round, and it is told: `(from the top again)`, `(from the end again)`
-- The window is as large as the last one of that file (20 lines for another; a window of 1 or 2 lines starts at the line found). `open 1` opens the file at the line found, and `.`, `+` and `-` go on from the window. `/storm` alone, typed as a command, searches the file peeked last too
-- A word starting with `/` that is a file or directory, or that has another `/` in it, is a path: `peek /home/anna/notes.md /storm` searches that file, and a path mistyped is told as not found, not searched. Another file than the one searched last is searched from its top
+- The text is part of a line, ignoring letter case, as for `find -t`: `*` and `?` work as there (`peek chapter-3.md /storm*night`), and the text is everything after the `/` (`peek notes.md /the storm came`). Without a file, `peek /storm` searches the file peeked last
+- `/` and `?` alone go to the next and the previous line with the last text searched, in the file peeked last. At the end they wrap around and say so: `(from the top again)`, `(from the end again)`
+- The window has the size of the last one in that file (20 lines for another file; a window of 1 or 2 lines starts at the line found). `open 1` opens the file at the line found, and `.`, `+` and `-` go on from the window. `/storm` alone, typed as a command, searches the file peeked last too
+- A word starting with `/` that is a file or directory, or that has another `/` in it, is a path: `peek /home/anna/notes.md /storm` searches that file, and a mistyped path is reported as not found instead of being searched. A file other than the one searched last is searched from the top
 - A row of `find -t` (a line found in a file) is peeked at that line: `find -t storm`, then `peek 2` shows the window around the line found, marked, as `open 2` opens it there. When the file was changed since, the line with the text nearest to it is marked
 
-- `.` and `peek` alone show the window of the last peek again: the same file, the same first line and as many lines, read again. It is the window you peeked, whatever the commands after it worked on (`$file` can be another file by then). A line put in above the window moves the lines in it down, as you see. Before any peek, it is told
-- With the setting `shellautopeek` on (`set shellautopeek true`; off from the start), the window is shown again by itself after each command that changed its file: `insert`, `change`, `lines`, `shift`, `format`, `trim`, or the editor opened with `open`. `(peek again: chapter-3.md)` is written above it. A command that changed another file, or nothing, shows nothing more
+- `.` and `peek` alone show the window of the last peek again: the same file, the same first line and as many lines, read again. It is the window you peeked, whatever the commands after it worked on (`$file` can be another file by then). A line put in above the window moves the lines in it down, as you see. Before the first peek, the shell says there is nothing to show
+- With the setting `shellautopeek` on (`set shellautopeek true`; off from the start), the window is shown again automatically after each command that changed the file: `insert`, `change`, `lines`, `shift`, `format`, `trim`, or the editor opened with `open`. `(peek again: chapter-3.md)` is written above it. A command that changed another file, or nothing, shows nothing more
 - After a peek, `open 1` opens the file at the first line shown, and `$file` is the file. The lines shown are `$peek`: `insert plan.md bottom $peek` puts them in another file (see [Registers](#registers))
 - Control characters of a file are shown as `?`, and a file that is not text (an image, a program) is not shown
 
 ## Text and settings
-`format` and `trim` change a file without opening it: they are the commands `:format` and `:trim` of the editor, run on the text of the file, so they do just what they do there (see the [guide to the editor](Guide-to-editor.md#other-commands)). The file is saved only when its text changed, with its line endings and its byte order mark as they were, and it is told with the path of the file: `/home/anna/site/page.html: Formatted`, `/home/anna/poems/poem.md: Lines trimmed: 3`, or `Already formatted` when nothing changed. A file that cannot be formatted safely is left as it is, and why is told.
+`format` and `trim` change a file without opening it: they run the editor commands `:format` and `:trim` on the text of the file, so they do exactly what they do there (see the [guide to the editor](Guide-to-editor.md#other-commands)). The file is saved only when the text changed, keeping the line endings and byte order mark as they were, and the shell reports it with the path of the file: `/home/anna/site/page.html: Formatted`, `/home/anna/poems/poem.md: Lines trimmed: 3`, or `Already formatted` when nothing changed. A file that cannot be formatted safely is left as it is, and the shell says why.
 
 - Only files in UTF-8 are changed: a file in another encoding (Windows-1252, say) is left as it is. Open it in the editor, which saves it in UTF-8
-- A file with more than one kind of line endings (some lines CRLF, some LF) is left as it is too: saved, every line would get one kind. The editor tells it, and saves it with one. This goes for `insert`, `change`, `shift` and `lines` too, and so does leaving the files Blyant uses
+- A file with more than one kind of line endings (some lines CRLF, some LF) is left as it is too: saving it would give every line the same kind. The editor reports it, and saves it with one kind. This also goes for `insert`, `change`, `shift` and `lines`, as does leaving alone the files Blyant uses
 - A file changed by `format` or `trim` is saved at once; `undo` puts it back, while Blyant runs (see [Undo](#undo))
 
-`insert` puts a line of text in a file, as quick notes are written down: `insert todo.md bottom Get pencils and paper`, `insert notes.md top # Monday`, `insert 3 +12 A new line` (a row of the last list). The text is all that follows the place, as you type it (blanks and quotes too), and it is one line; `$clip` of lines copied puts in its lines. `+12` makes it line 12, before the line that was there, and a line past the end puts it after the last. The file keeps its line endings and its byte order mark, and the file is then the last list, at the line put in: `open 1` opens it there. As for `format`, only a file in UTF-8 is changed, the files Blyant uses are not, and `undo` puts the file back.
+`insert` puts a line of text in a file, like jotting down a quick note: `insert todo.md bottom Get pencils and paper`, `insert notes.md top # Monday`, `insert 3 +12 A new line` (a row of the last list). The text is all that follows the place, as you type it (blanks and quotes too), and it is one line; `$clip` holding copied lines puts in those lines. `+12` makes it line 12, before the line that was there, and a line past the end puts it after the last. The file keeps its line endings and byte order mark, and the file is then the last list, at the line put in: `open 1` opens it there. As for `format`, only a file in UTF-8 is changed, the files Blyant uses are not, and `undo` puts the file back.
 
-`change` changes lines of a file into a text, without opening it: `change notes.md +12 A new line` (line 12), `change notes.md 12-15 One line instead` (lines 12 to 15 become one line). The text is all that follows the lines, as you type it, and it is one line (`$clip` of lines copied: its lines). Without a text, the lines are deleted: `change notes.md 12-15` shows them and asks first (No is selected: deleted lines are back only with `undo`, while Blyant runs), and from a file or with `--run` they are only deleted with `--yes`. A range past the end stops at the last line. As for `insert`, the file keeps its line endings and byte order mark, only a file in UTF-8 is changed and not the files Blyant uses, and the file is then the last list at the place changed (`open 1`). (The `:replace` of the editor finds a text and puts another in its place; `change` works on whole lines.)
+`change` replaces lines of a file with a text, without opening it: `change notes.md +12 A new line` (line 12), `change notes.md 12-15 One line instead` (lines 12 to 15 become one line). The text is all that follows the lines, as you type it, and it is one line (`$clip` holding copied lines: those lines). Without a text, the lines are deleted: `change notes.md 12-15` shows them and asks first (No is selected: deleted lines are back only with `undo`, while Blyant runs), and from a file or with `--run` they are only deleted with `--yes`. A range past the end stops at the last line. As for `insert`, the file keeps its line endings and byte order mark, only a file in UTF-8 is changed and not the files Blyant uses, and the file is then the last list at the place changed (`open 1`). (The editor's `:replace` finds a text and replaces it with another; `change` works on whole lines.)
 
-`set` shows the settings as they are in the settings file (`settings.ini` in the data directory), and changes one as the pages of Configuration do: `set indent 2`, `set wrap false`, `set colorscheme Deep Blue`. The setting is read again at once, as Blyant reads it when it starts, and `set shelldir ""` empties a setting. A value the setting cannot have is told, and the setting stays as it was: `indent cannot be 3: it stays 4`. A settings file written by an earlier version of Blyant lacks the settings that came after it: `set` writes the file whole first (as changing a setting in Configuration does), so every setting of this version can be shown and changed.
+`set` shows the settings as they are in the settings file (`settings.ini` in the data directory), and changes one as the pages of Configuration do: `set indent 2`, `set wrap false`, `set colorscheme Deep Blue`. The setting is read again at once, as Blyant reads it when it starts, and `set shelldir ""` empties a setting. An invalid value is reported, and the setting stays as it was: `indent cannot be 3: it stays 4`. A settings file written by an earlier version of Blyant lacks the newer settings: `set` writes the file whole first (as changing a setting in Configuration does), so every setting of this version can be shown and changed.
 
-`reset` puts all the settings back to their defaults, as _Reset all settings_ on the System page of Configuration does: your lists, favorites, bookmarks and files are kept. It asks first, and only `y` (or `Yes`) goes ahead: `Enter` alone answers no. The settings of the shell go back too (`shellpaging` on, `shelldir` empty), but the language stays as it is, and so do the places Blyant keeps (the directories of the file browser, the hint shown next) and the spell languages. From a file or with `--run`, nothing is reset unless `--yes` is given. The names and values are those of the settings file: [Settings file](Guide-to-settings-file.md) lists them all, with their defaults, and the guide to [Configuration](Guide-to-start-page.md#configuration) tells more of what each setting does.
+`reset` puts all the settings back to their defaults, as _Reset all settings_ on the System page of Configuration does: your lists, favorites, bookmarks and files are kept. It asks first, and only `y` (or `Yes`) goes ahead: `Enter` alone answers no. The settings of the shell go back too (`shellpaging` on, `shelldir` empty), but the language stays as it is, and so do the places Blyant keeps (the directories of the file browser, the hint shown next) and the spell languages. From a file or with `--run`, nothing is reset unless `--yes` is given. The names and values are those of the settings file: [Settings file](Guide-to-settings-file.md) lists them all, with their defaults, and the guide to [Configuration](Guide-to-start-page.md#configuration) tells more about what each setting does.
 
-`reload` reads the settings file again after you have edited it in another program (saved in the editor of Blyant, `open settings.ini` from `data`, it is used at once), and uses it as Blyant does when it starts: `Settings and registers read again`. A value a setting cannot have is told (`shellpaging cannot be often: it is true`), and the setting has its default, as when Blyant starts. The language changes at once; the color scheme and the other settings of the full screen are used the next time it is shown. The directory you are in, the last list and the commands typed before stay as they were. `reload` also reads the registers again.
+`reload` reads the settings file again after you have edited it in another program (when you save it in Blyant's editor, `open settings.ini` from `data`, it is used at once), and uses it as Blyant does when it starts: `Settings and registers read again`. An invalid value is reported (`shellpaging cannot be often: it is true`), and the setting gets its default, as when Blyant starts. The language changes at once; the color scheme and the other settings of the full screen are used the next time it is shown. The directory you are in, the last list and the commands typed before stay as they were. `reload` also reads the registers again.
 
 ## Moving lines
 `shift` moves lines to another place in the same file, without opening it, as items are moved from _Todo_ to _Done_:
@@ -346,13 +346,13 @@ shift! todo.md "Get pencils and paper" Done  moved, and its task box ticked
 ```
 
 - The numbers are those of the file as it is, as `peek` shows them
-- A place that is not `top`, `bottom` or `+12` is a heading: `Done` is `## Done` (any level, and letter case alike; `"## Done"` and `"Done today"` in quotes also do). The lines go right under it, after a blank line under it, so the newest come first; `Done+` puts them after the last line of its section, before the next heading of its level or above. In a Typst file (`.typ`) the headings are `= Done`. Headings in a block of code are not headings
-- A heading is named by its whole text first. When no heading has it, the one heading that starts with it is taken (`Done` for `##### Done herunder`), and `*` and `?` make a pattern that fits the whole heading (`"*herunder"`, `"Chap*"`, also `"Chap*+"` for the end of its section). When more headings start with it or fit it, they are shown with their lines and nothing is moved: give more of the name, or the line (`+12`). A heading with `*` or `?` in it (`## What?`) is found by its whole text as it is
+- A place that is not `top`, `bottom` or `+12` is a heading: `Done` is `## Done` (any level, ignoring letter case; `"## Done"` and `"Done today"` in quotes also do). The lines go right under the heading (after a blank line below it), so the newest come first; `Done+` puts them after the last line of the section, before the next heading of the same or a higher level. In a Typst file (`.typ`) the headings are `= Done`. Headings in a code block do not count
+- A heading is named by its whole text first. When no heading has it, the one heading that starts with it is taken (`Done` for `##### Done herunder`), and `*` and `?` make a pattern that matches the whole heading (`"*herunder"`, `"Chap*"`, also `"Chap*+"` for the end of its section). When several headings start with it or match it, they are shown with their lines and nothing is moved: give more of the name, or the line (`+12`). A heading with `*` or `?` in it (`## What?`) is found by its whole text as it is
 - `Tab` after the lines completes `top`, `bottom` and the headings of the file, also from a pattern (`*herunder` and `Tab`), and also when the file is a row (`shift 3 5 Do`) or `$file`
-- A text in place of the lines finds the one line that has it (letter case alike). When more lines have it, or none does, they are shown with their numbers and nothing is moved, and so it is when no heading has the name, or two do (then the headings are shown)
-- `shift!` also ticks the task boxes of the lines moved (`- [ ] Milk` to `- [x] Milk`, also in a numbered list), and unticks those that are ticked: `shift! todo.md Milk Done` when it is done, `shift! todo.md Milk Todo` to have it back. A line without a box is moved as it is
-- The place cannot be in the lines moved (the heading moved, or `+5` with line 5 moved). Lines already at the place are left so
-- The lines moved are shown at their new place, and the file is then the last list there (`open 1`). As for `insert`, the file keeps its line endings and its byte order mark, only a file in UTF-8 is changed and not the files Blyant uses, and `undo` puts it back; nothing is lost by a move, so it is not asked first
+- A text in place of the lines finds the one line that has it (ignoring letter case). When several lines have it, or none does, they are shown with their numbers and nothing is moved; the same goes when no heading has the name, or two do (then the headings are shown)
+- `shift!` also ticks any task boxes in the lines moved (`- [ ] Milk` to `- [x] Milk`, also in a numbered list), and unticks any that are ticked: `shift! todo.md Milk Done` when it is done, `shift! todo.md Milk Todo` to move it back. A line without a box is moved as it is
+- The place cannot be in the lines moved (the heading moved, or `+5` with line 5 moved). Lines already at the place are left there
+- The lines moved are shown at their new place, and the file is then the last list there (`open 1`). As for `insert`, the file keeps its line endings and byte order mark, only a file in UTF-8 is changed and not the files Blyant uses, and `undo` puts it back; a move loses nothing, so there is no question first
 
 `lines` copies lines to another file, or moves them there with `cut` last:
 
@@ -364,13 +364,13 @@ lines todo.md "Get pencils and paper" > done.md Done+ cut
 ```
 
 - The lines are given as for `shift` (`4`, `4-6`, `4,7,9-10`, a text), or as `+10 5`: 5 lines from line 10. After the `>` come the other file and the place in it, as for `shift`: `top`, `bottom`, `+12`, a heading, or `Heading+`
-- `copy` is the default, and can be written too. `cut` takes the lines out of their file, after they are in the other: when something goes wrong, they are in both files, never in neither. The first file is not changed when it was changed since it was read (the lines are then copied, and it is told). A heading named _Cut_ is written in quotes (`"Cut"`), as the place
-- The lines put in are shown, and the other file is then the last list there (`open 1`). Both files keep their line endings and byte order mark, only files in UTF-8 are changed and not the files Blyant uses, and nothing is asked: no line is lost. The same file on both sides is for `shift`
-- `Tab` completes the other file after the `>`, then the headings of that file (also from a pattern, and of a row or `$file`), then `copy` and `cut`. A heading is found by its whole text, its start or a pattern, as for `shift`
+- `copy` is the default, and can be written too. `cut` removes the lines from the first file after they are in the other: when something goes wrong, they are in both files, never in neither. The first file is not changed if it was changed by something else since it was read (the lines are then only copied, and the shell says so). A heading named _Cut_ is written in quotes (`"Cut"`), as the place
+- The lines put in are shown, and the other file is then the last list there (`open 1`). Both files keep their line endings and byte order mark, only files in UTF-8 are changed and not the files Blyant uses, and nothing is asked: no line is lost. To move lines within one file, use `shift`
+- `Tab` completes the other file after the `>`, then the headings of that file (also from a pattern, and of a row or `$file`), then `copy` and `cut`. A heading is found by the whole text, the start or a pattern, as for `shift`
 - From the command line of your system, give the command in quotes: `blyant --run "lines notes.md 4-6 > plan.md bottom"`. Without them, bash, PowerShell and cmd take the `>` as a redirection to a file
 
 ## Text in lines
-`lines` also changes the text in lines, keeping what is there: a text put at their start or end, taken off it again, or a text in them replaced. The word after the lines tells what is done:
+`lines` also changes the text in lines, keeping what is there: it puts a text at the start or end, takes it off again, or replaces a text. The word after the lines says which:
 
 ```
 lines todo.md 4 start Remember this:         "Remember this: This is some task"
@@ -383,7 +383,7 @@ lines notes.md 5-9 replace draft final       "draft" in lines 5 to 9 made "final
 lines notes.md 5-9 replace " (draft)" ""     " (draft)" taken out of them
 ```
 
-A list of things to do, made into task items, given a date, changed and tidied again, a step at a time. Each step shows the lines it changed:
+Here a todo list is made into task items, given a date, changed and tidied again, one step at a time. Each step shows the lines it changed:
 
 ```
 blyant ~/notes> peek todo.md
@@ -410,13 +410,13 @@ blyant ~/notes> lines todo.md 3 unstart "- [ ] "
 /home/anna/notes/todo.md: line 3 changed
 ```
 
-- The lines are given as for `shift` and the other forms of `lines`: `4`, `4-6`, `4,7,9-10`, `+10 5` (5 lines from line 10), or a text that finds one line (`lines todo.md "some task" start Note:`). Every line of them is changed
+- The lines are given as for `shift` and the other forms of `lines`: `4`, `4-6`, `4,7,9-10`, `+10 5` (5 lines from line 10), or a text that finds one line (`lines todo.md "some task" start Note:`). Every line given is changed
 - `start` and `end` put the text with a blank between it and the line. In quotes it is put as it is: no blank, or the blanks in the quotes (`"- [ ] "`). A blank line is left as it is
 - `unstart` and `unend` take the text off the lines that have it at their start or end, with the blank `start` and `end` put there (in quotes: the text only), so they undo `start` and `end`. The other lines are left as they are
-- `replace old new` replaces the text everywhere in the lines, with the letter case as typed (`draft`, not `Draft`). A text with blanks is written in quotes, and `""` is no text: what is replaced is taken out
+- `replace old new` replaces the text everywhere in the lines, with the letter case as typed (`draft`, not `Draft`). A text with blanks is written in quotes, and `""` is an empty text: what is replaced is removed
 - After the lines, `Tab` completes `start`, `end`, `unstart`, `unend`, `replace` and `>`. A `>` or one of these words later on is part of the text: `lines notes.md 3 start ">"` makes line 3 a quote
 - `$name` and `$clip` put in their value: `lines todo.md 4 end $note`
-- The lines changed are shown, and the file is then the last list, at the first of them (`open 1`). When no line changes, nothing is written, and it is told. As for `insert`, the file keeps its line endings and byte order mark, only a file in UTF-8 is changed and not the files Blyant uses, and `undo` puts it back; nothing is asked, as no line is lost
+- The lines changed are shown, and the file is then the last list, at the first of them (`open 1`). When no line changes, nothing is written, and the shell says so. As for `insert`, the file keeps its line endings and byte order mark, only a file in UTF-8 is changed and not the files Blyant uses, and `undo` puts it back; nothing is asked, as no line is lost
 
 ## Undo
 The commands that change the text of a file (`insert`, `change`, `shift`, `lines`, `format` and `trim`) keep what the file was before, so `undo` puts it back:
@@ -433,14 +433,14 @@ blyant ~/notes> changes
   2  insert todo.md bottom Call Anna
 ```
 
-- One command is one step: `lines a.md 4-6 > b.md bottom cut` changed two files, and one `undo` puts both back. A command of a `run` is a step of its own
+- One command is one step: `lines a.md 4-6 > b.md bottom cut` changed two files, and one `undo` puts both back. Each command in a `run` is a separate step
 - `undo 3` puts back the 3 newest steps, one after another. `redo` does again what `undo` put back, the last first, until a new change is made: then there is nothing more to redo
 - `changes` lists the steps, numbered as `undo 3` counts them, and below them the steps undone, which `redo` does again
-- A file is put back exactly as it was: its line endings and its byte order mark too. The files written are the last list (`open 1`)
-- A step is only undone while its files are as it left them. When a file was changed since (in the editor, by another program), it is told, and nothing of the step is written: your change is never written over. The editor has its own undo (`u`)
+- A file is put back exactly as it was: line endings and byte order mark too. The files written are the last list (`open 1`)
+- A step is only undone while its files are as the step left them. If a file was changed since (in the editor, by another program), the shell says so and writes none of the step: your change is never written over. The editor has a separate undo (`u`)
 - The last 10 steps are kept (the setting `shellundosteps`, 1 to 50: `set shellundosteps 20`), while Blyant runs: they are never written to a file, so no copy of your text stays on the disk.
-- A command one of whose files is larger than 2 MB (or could not be read first) cannot be undone: it is told, and what was undone before it can no longer be redone. A change that leaves a file as it was is no step. All the steps keep at most 32 MB: past it, the oldest are let go
-- When the files of a step are no longer there (renamed, moved, deleted), it is told. When a file cannot be written, the files of the step written already are put back, so the step stays whole
+- A command that works on a file larger than 2 MB (or on a file that could not be read first) cannot be undone: the shell says so, and what was undone before it can no longer be redone. A change that leaves a file as it was is not a step. All steps together keep at most 32 MB: beyond that, the oldest are dropped
+- When the files of a step are no longer there (renamed, moved, deleted), the shell says so. When a file cannot be written, the files of the step written already are put back, so the step stays whole
 - `lines a.md 4-6 > $notes cut` is undone in `a.md`; the register keeps the lines (`reg -d notes` takes it away)
 - `new`, `copy`, `rename`, `move` and `delete` are not undone: they change files, not their text (`delete` goes to the trash)
 
@@ -502,7 +502,7 @@ blyant ~/novel> redo
 Done again: insert chapter-3.md +11 The first drops hit the glass.
 ```
 
-**Let the window follow by itself.** With the setting `shellautopeek` on, the window is shown again after each command that changed its file, `undo` and `redo` too, so `.` is not needed:
+**Let the window follow by itself.** With the setting `shellautopeek` on, the window is shown again after each command that changed the file, `undo` and `redo` too, so `.` is not needed:
 
 ```
 blyant ~/novel> set shellautopeek true
@@ -548,13 +548,13 @@ Undone: change chapter-3.md +12 Anna closed the shutters, one by one.
 (lines 8-12 of 15)
 ```
 
-- The window keeps its place and its size: a line put in above it moves the lines in it down, as you see. `+`, `-`, `top`, `bottom` and a new search move it (see [Peeking into a file](#peeking-into-a-file))
+- The window keeps its place and size: a line put in above it moves the lines in it down, as you see. `+`, `-`, `top`, `bottom` and a new search move it (see [Peeking into a file](#peeking-into-a-file))
 - `shellautopeek` stays on until you turn it off (`set shellautopeek false`), also the next time Blyant starts: it is kept in the settings file (see [Settings file](Guide-to-settings-file.md))
 - `undo` keeps the last 10 changes while Blyant runs (the setting `shellundosteps`, 1 to 50), and never writes over a change made since in the editor or by another program (see [Undo](#undo))
 - `open 1` opens the file in the editor at the window, for a change that is more than a few lines
 
 ## Folders of favorites
-The favorites can be kept in folders, as on the favorites page of the full screen: a folder holds favorites and subfolders, and a subfolder favorites (two levels). A folder is only in the list of favorites: nothing is made on disk, and no file is moved. `fav` shows the folders in brackets, with what is in them below them:
+The favorites can be kept in folders, as on the favorites page of the full screen: a folder holds favorites and subfolders, and a subfolder holds favorites (two levels). A folder is only in the list of favorites: nothing is made on disk, and no file is moved. `fav` shows the folders in brackets, with their contents below:
 
 ```
 blyant ~> fav
@@ -567,7 +567,7 @@ List: main
     4  notes.md
 ```
 
-The rows of a folder are shown further in than those of no folder, and the rows of a subfolder further still: here `chapter-1.md` and `chapter-2.md` are in Drafts, and `notes.md` is in Writing.
+Rows in a folder are indented more than rows outside folders, and rows in a subfolder more still: here `chapter-1.md` and `chapter-2.md` are in Drafts, and `notes.md` is in Writing.
 
 A folder is named as `fav` shows it, in brackets: `[Writing]`, and a subfolder with its folder, `[Writing/Drafts]` (or `[Drafts]` when no other folder has that name). A favorite is named by its row, as `fav` numbers it: the folders are not rows.
 
@@ -594,14 +594,14 @@ fav add ideas.md top                 a new favorite, at the top
 fav filter chapter                   only the rows with "chapter" in them
 ```
 
-- The rows are given as in [Line numbers](#line-numbers): `3`, `3-5`, `3,7`. `fav move` also takes a favorite by its name, as `fav` shows it (`plot.md`, `chapters/`), or by its path, and all the favorites whose names fit a pattern (`chapter-*.md`), in their order. When two favorites have the name (`README.md` of two projects), their rows are told: give the row. `Tab` after `fav move` completes the names of the favorites, also from a pattern that fits the whole name, as for files (`fav move *ch*` and `Tab`), and the folders. `up` and `down` move one row, or one folder, a step at a time, as `V` with `j` and `k` does on the full screen: a favorite moved onto a folder goes into it, and one moved past the first or last favorite of its folder leaves it
-- A folder with subfolders does not go into another folder, as there are two levels at most, and a subfolder goes into a folder at the top. What cannot be done is told, and nothing is moved
-- After each change the list is shown again with its new rows, and it is the last list: `open 2` opens row 2 of it. A folder name with blanks is written in quotes (`"[My drafts]"`), and `Tab` completes the names of the folders after `[`, and the places after `fav move 3`
-- `fav remove [Sources]` asks first, and tells how many favorites and subfolders go with the folder; the files stay where they are. `fav undo` puts back what `fav remove` (a folder, or a favorite: `fav remove 3`) removed last in this shell, as long as the list is as it left it
+- The rows are given as in [Line numbers](#line-numbers): `3`, `3-5`, `3,7`. `fav move` also takes a favorite by name, as `fav` shows it (`plot.md`, `chapters/`), or by path, and all the favorites whose names fit a pattern (`chapter-*.md`), in list order. When two favorites have the same name (`README.md` of two projects), the shell lists their rows: give the row. `Tab` after `fav move` completes the names of the favorites, also from a pattern that fits the whole name, as for files (`fav move *ch*` and `Tab`), and the folders. `up` and `down` move one row, or one folder, a step at a time, as `V` with `j` and `k` does on the full screen: a favorite moved onto a folder goes into it, and one moved past the first or last favorite of its folder leaves it
+- A folder with subfolders does not go into another folder, as there are two levels at most, and a subfolder goes into a folder at the top. If a move cannot be done, the shell says so and moves nothing
+- After each change the list is shown again with the new rows, and it is the last list: `open 2` opens row 2 of it. A folder name with blanks is written in quotes (`"[My drafts]"`), and `Tab` completes the names of the folders after `[`, and the places after `fav move 3`
+- `fav remove [Sources]` asks first, and tells how many favorites and subfolders go with the folder; the files stay where they are. `fav undo` puts back what `fav remove` (a folder, or a favorite: `fav remove 3`) removed last in this shell, as long as the list has not changed since
 - `fav add` takes a place after the file: `top`, `bottom`, the place of a row (`5`) or a `[folder]` (last in it), as `fav move` does. Without one the favorite is added at the top of the list, outside the folders, as `P` on the full screen adds it: it is row 1, ready for `fav move 1 [Drafts]`. `fav add notes.md bottom` puts it last. When the place is not there (no such folder), nothing is added. `Tab` after the file completes `top`, `bottom` and the folders
-- `fav filter draft` shows the favorites with _draft_ in their name or path (letter case alike), and `fav filter *.typ` those whose name fits the pattern, with the folders they are in above them. The rows keep their numbers of the whole list, so `open 7` and `fav move 7 top` are the same row as in `fav`. Nothing is kept: `fav` shows them all again. `fav -l filter draft` gives the full paths
-- They work on the open list of favorites, and each change is saved at once, so the full screen shows the same folders. `fav undo` puts back in the list it removed from: after another list was opened, it tells which one to open first
-- A list of favorites named as one of these words (`folder`, `subfolder`, `move`, `undo`, `filter` ...) is opened with `fav use folder`, as for `new` (see [Commands](#commands))
+- `fav filter draft` shows the favorites with _draft_ in their name or path (ignoring letter case), and `fav filter *.typ` those whose name matches the pattern, with the folders they are in above them. The rows keep their numbers from the whole list, so `open 7` and `fav move 7 top` are the same row as in `fav`. The filter is not kept: `fav` shows all favorites again. `fav -l filter draft` gives the full paths
+- These commands work on the open list of favorites, and each change is saved at once, so the full screen shows the same folders. `fav undo` puts back in the list it removed from: if another list was opened since, it tells you which list to open first
+- A list of favorites named like one of these words (`folder`, `subfolder`, `move`, `undo`, `filter` ...) is opened with `fav use folder`, as for `new` (see [Commands](#commands))
 - A file whose name starts with a bracket (`[2024].md`) is a file, not a folder, after `fav add` and `fav remove`: a folder is a name in brackets alone
 
 ## Registers
@@ -630,17 +630,17 @@ insert ideas.md bottom $notes       all of them put in a file
 lines plot.md 3-5 > $notes          ">": the register is those lines alone
 ```
 
-- `+=` and `>>` add to the end of a register, as lines (a register that is not there is made); `=`, `>` and `reg name text` set it. `$clip`, `$peek` and the other registers can be added (`reg notes += $clip`)
-- A register of more than one line is put in as `$clip` and `$peek` are: `insert` and `change` put in its lines, `reg` keeps them, `run` runs them and `echo` writes them, and the other commands are told. `reg` lists its first line and how many lines it has, and `reg notes` shows all of them
+- `+=` and `>>` add to the end of a register, as lines (a missing register is created); `=`, `>` and `reg name text` set it. `$clip`, `$peek` and the other registers can be added (`reg notes += $clip`)
+- A register of more than one line is put in as `$clip` and `$peek` are: `insert` and `change` put in its lines, `reg` keeps them, `run` runs them and `echo` writes them, and other commands refuse it. `reg` lists the first line and the number of lines, and `reg notes` shows all of them
 - In `registers.txt` the lines after the first start with a tab, so the file can still be edited by hand. The lines you collect are kept there until you take the register away (`reg -d notes`): the text of your files is in that file, in the data directory (never in the log)
 
 - A text in quotes is kept without them: `reg docs "~/my docs"` keeps the path, so `copy plot.md $docs` takes it as one
-- `reg` lists the registers, `reg docs` shows the value of one (alone on its line, as a script reads it with `blyant --run "reg docs"`), `reg -d docs` takes it away, and `reg -d all` all of them
-- `echo` writes a text with the `$names` put in, as the other commands put them in: `echo $file` shows the file the last command worked on, `echo $docs has $date` a line of your own with the values in it, and `echo $notes` all the lines of a register. `$$` is a `$`. A `$name` that is no register is told, and nothing is written. `echo` changes nothing: no file, not the last list, not `$file`. In a `run`, it writes a line between the steps (`echo Tidying the chapters`)
-- A name starts with a letter, and has letters, digits and `_` (`docs`, `draft_2`); letter case is alike
+- `reg` lists the registers, `reg docs` shows the value of one (alone on a line, as a script reads it with `blyant --run "reg docs"`), `reg -d docs` takes it away, and `reg -d all` all of them
+- `echo` writes a text with the `$names` put in, as the other commands put them in: `echo $file` shows the file the last command worked on, `echo $docs has $date` a line you write, with the values in it, and `echo $notes` all the lines of a register. `$$` is a `$`. A `$name` that is not a register is reported, and nothing is written. `echo` changes nothing: no file, not the last list, not `$file`. In a `run`, it writes a line between the steps (`echo Tidying the chapters`)
+- A name starts with a letter, and has letters, digits and `_` (`docs`, `draft_2`); letter case does not matter
 - `$name` is put in only for a register that is there: anything else stays as typed, so `insert prices.md bottom Ink costs $5` keeps its `$5`. `$$` is a `$`
 - A path with a blank in it is put in quotes where a path is taken (`copy plot.md $docs` with _my docs_), and the text of `insert`, `change`, `reg` and `set` gets the value as it is
-- `$clip` is the text `clip` copied last (see [Clipboard](#clipboard)): it is put in as a register is, but it is not one to set, and it is not kept in the file
+- `$clip` is the text `clip` copied last (see [Clipboard](#clipboard)): it is put in like a register, but you cannot set it, and it is not kept in the file
 - Some names are set by Blyant, and put in as a register is:
 
   | Name | Value |
@@ -653,8 +653,8 @@ lines plot.md 3-5 > $notes          ">": the register is those lines alone
   | `$clip` | the text `clip` copied last |
   | `$peek` | the lines `peek` showed last, as they were then: `peek notes.md 4-6`, then `insert plan.md bottom $peek` puts them in another file (`+` and `-` change it, as they move the window) |
 
-  `insert log.md bottom $date Finished chapter 3` puts in a line with the date. The date and the time are written the same in every language. These names are not registers: `reg pwd x` and `reg -d date` are refused, and a line of one of them in `registers.txt` is kept there as a line that is not a register, and not used. `reg` lists them after the registers, under _Set by Blyant_, with their values now, and `reg pwd` shows one. `$file` before a command has worked on a file is told (no file yet), and `$$date` is the text `$date`
-- In which commands they can be used: every register and name set by Blyant is put in before the command runs, so all commands take them. Only a value of more than one line (`$clip` or `$peek` of lines) is limited: `insert` and `change` put in its lines, `reg` keeps them, `run` runs them and `echo` writes them, and the other commands are told (nothing is changed):
+  `insert log.md bottom $date Finished chapter 3` puts in a line with the date. The date and the time are written the same in every language. These names are not registers: `reg pwd x` and `reg -d date` are refused, and a line for one of them in `registers.txt` stays there, unused, as a line that is not a register. `reg` lists them after the registers, under _Set by Blyant_, with their values now, and `reg pwd` shows one. `$file` used before any command has worked on a file gets the message that there is no file yet, and `$$date` is the text `$date`
+- Where they can be used: every register and name set by Blyant is put in before the command runs, so all commands take them. Only a value of more than one line (`$clip` or `$peek` of lines) is limited: `insert` and `change` put in its lines, `reg` keeps them, `run` runs them and `echo` writes them, and other commands refuse it (nothing is changed):
 
   | | One line (`$pwd`, `$file`, `$date`, `$time`, `$now`, a register, and `$clip` or `$peek` of one line) | More lines (`$clip`, `$peek`) |
   |---|---|---|
@@ -670,7 +670,7 @@ lines plot.md 3-5 > $notes          ">": the register is those lines alone
 
   An empty `$clip` or `$peek` is not taken by `change` (no text deletes the lines), and `insert` puts it in as a blank line. A value is put in when the command line starts: after `peek a.md 2-3`, `insert $file bottom $peek` puts the lines back into `a.md`; to put them in another file, give its name (`insert b.md bottom $peek`)
 - `Tab` completes the names of the registers after a `$` (and the names set by Blyant that have a value: `$clip` once something is copied, `$file` once a file is worked on), and after `reg`
-- The registers are kept in the data directory (`registers.txt`), so they are there the next time. The file can be edited in another program: a line is the name, a tab, and the value. A file changed since the shell read it is read again before the next command, and `reg` tells of lines that are not registers (no tab, or a name a register cannot have): they are kept in the file, at its end, so you can put them right. They are the shell's own: the registers of the editor are not these. `reset` does not take them away (they are not settings), and the log has their names, never their values
+- The registers are kept in the data directory (`registers.txt`), so they are there the next time. The file can be edited in another program: a line is the name, a tab, and the value. If the file changed since the shell read it, it is read again before the next command, and `reg` points out lines that are not registers (no tab, or a name a register cannot have): they are kept in the file, at its end, so you can put them right. The editor has separate registers. `reset` does not take them away (they are not settings), and the log has the names of registers, never the values
 
 ## Clipboard
 `clip` copies to the clipboard what you would otherwise select and copy by hand:
@@ -687,7 +687,7 @@ path                        the full path of the file you worked on last ($file)
 name                        its name, as :name
 ```
 
-`path` and `name` are short for `clip path $file` and `clip name $file`: after `peek`, `open`, `insert` or `new`, the file you work on. With a file or a row they are `clip path` and `clip name` of it (`path 3`, `name plot.md`). Before any file, `path` alone tells that there is none yet.
+`path` and `name` are short for `clip path $file` and `clip name $file`: after `peek`, `open`, `insert` or `new`, the file you are working on. Given a file or a row (`path 3`, `name plot.md`), they work as `clip path` and `clip name` on it. Before you have worked on a file, `path` alone says there is none yet.
 
 What `clip` copied last is `$clip`, which puts it in a command, as a register does:
 
@@ -698,15 +698,15 @@ clip name 3
 insert todo.md top Read $clip
 ```
 
-- It goes where the [clipboard settings](Guide-to-editor.md#system-clipboard-and-paste-bin) of the editor send a yank: to the clipboard of the system through the terminal (OSC 52, also over SSH) and/or to the paste bin file. Text too long for the terminal goes only to the paste bin, if it is on. What was copied is told, and the path, or how much
-- It also goes to the string memory of the editor: after `open` (or `screen`), `p` in the editor puts it in, and `:reglist` lists it. That works also where the terminal has no clipboard (the console of Linux, the Terminal of macOS), or with the clipboard turned off
+- It goes where the [clipboard settings](Guide-to-editor.md#system-clipboard-and-paste-bin) of the editor send a yank: to the clipboard of the system through the terminal (OSC 52, also over SSH) and/or to the paste bin file. Text too long for the terminal goes only to the paste bin, if it is on. The shell tells what was copied: the path, or how much
+- It also goes to the string memory of the editor: after `open` (or `screen`), `p` in the editor puts it in, and `:reglist` lists it. This also works where the terminal has no clipboard (the console of Linux, the Terminal of macOS), or with the clipboard turned off
 - `text` and `lines` take text files only. Lines copied are joined by line breaks, without one after the last
-- `$clip` is kept in Blyant, not taken from the clipboard of the system: text copied in another program is pasted on the line with the keys of the terminal (`Ctrl+Shift+V`). It is there until Blyant ends, and the next `clip` replaces it. Before the first `clip`, a command with `$clip` is told that nothing is copied yet. Lines copied are put in as lines by `insert` and `change` (`change plan.md 3-5 $clip`), blank lines and blanks at their end too, and the text of a file (`clip text`) as its lines; other commands take one line, and are told when `$clip` has more. An empty `$clip` (the text of a file of one blank line) is not taken by `change`, where no text deletes the lines. `reg` lists it after the registers, with its first line and how many lines it has, and `reg clip` shows it all. `$clip` is not a register: `reg clip text` and `reg -d clip` are refused, and a line `clip` in `registers.txt` is kept there as a line that is not a register
-- From a file, a pipe or with `--run` and the output going to a file or a program, the clipboard sequence would end up in that output: then only the paste bin is used, if it is on, and `$clip`, so a script can copy lines and put them in another file
+- `$clip` is kept in Blyant, not taken from the clipboard of the system: text copied in another program is pasted on the line with the keys of the terminal (`Ctrl+Shift+V`). It is there until Blyant ends, and the next `clip` replaces it. Before the first `clip`, a command with `$clip` says that nothing is copied yet. Lines copied are put in as lines by `insert` and `change` (`change plan.md 3-5 $clip`), blank lines and trailing blanks too, and the text of a file (`clip text`) as lines; other commands take one line, and refuse it when `$clip` has more. An empty `$clip` (the text of a file of one blank line) is not taken by `change`, where no text deletes the lines. `reg` lists it after the registers, with the first line and the number of lines, and `reg clip` shows it all. `$clip` is not a register: `reg clip text` and `reg -d clip` are refused, and a line `clip` in `registers.txt` is kept there as a line that is not a register
+- When commands come from a file, a pipe or `--run` and the output goes to a file or a program, the clipboard sequence would end up in that output: then only the paste bin is used, if it is on, and `$clip`, so a script can copy lines and put them in another file
 - The log tells only that something was copied, and what kind (`clip: path`), never the text
 
 ## Editing a file
-`open` shows the editor of the full screen, with all its keys and commands (see the [guide to the editor](Guide-to-editor.md)). When you close it (`:q`, `:wq`), you are back at the prompt, in the directory you were in. A file that is not there yet is made if you want that: the shell asks first.
+`open` shows the full-screen editor, with all the keys and commands (see the [guide to the editor](Guide-to-editor.md)). When you close it (`:q`, `:wq`), you are back at the prompt, in the directory you were in. If the file does not exist yet, the shell asks whether to make it.
 
 From the editor:
 
@@ -714,10 +714,10 @@ From the editor:
 - A jump to another place (the Jump menu, `:favorites`, `:browse` ...) closes the editor, asking about changes first, and brings you back to the prompt: the place is not shown. Open it from the shell instead
 
 ## Questions
-A question of Blyant is asked on a line, with its answers after it: `Y Yes*  N No:`. Type the letter or the number of an answer, or the answer itself; `Enter` alone takes the one with the star. Deleting asks you to type the answer in full, so that a key typed by mistake cannot answer it.
+Blyant asks a question on one line, with the answers after it: `Y Yes*  N No:`. Type the letter or the number of an answer, or the answer itself; `Enter` alone takes the one with the star. Deleting asks you to type the answer in full, so that a key typed by mistake cannot answer it.
 
 ## Commands from a file
-The shell also reads its commands from a file or a pipe, one on each line, and stops at the end of them:
+The shell also reads commands from a file or a pipe, one on each line, and stops after the last one:
 
 ```
 blyant --shell ~/projects/novel < commands.txt
@@ -731,7 +731,7 @@ printf 'ls\nhist\n' | blyant --shell
 - A file of commands saved with a byte order mark (as Notepad and PowerShell can save it) is read as one without
 - A line starting with `#` is a comment, and is left out. Inside the shell, `run file` runs such a file too (see [Running commands](#running-commands))
 
-`--run` gives the commands on the command line instead, one after each `--run`, and Blyant ends when they are done: what they show, their questions and the exit code are as for commands read from a file.
+`--run` gives the commands on the command line instead, one after each `--run`, and Blyant ends when they are done: output, questions and the exit code work as for commands read from a file.
 
 ```
 blyant --run "format page.html"
@@ -756,10 +756,10 @@ run weekly.txt                                  the commands of a file
 - A `$name` in a command is put in when that command runs. When you set the register, a `$name` is put in at once: write `$$date` to keep `$date` in the register, so that it is the date of each run (`reg tidy` shows what the register holds)
 - A line starting with `#` is a comment, and blank lines are left out, in a register, in a file for `run`, and in a file of commands read by `blyant --shell < file`
 - `echo` in a register or file writes a line while it runs (`echo Tidied on $date`), to tell what was done
-- A file for `run` is a text file of commands, as for `blyant --shell < file`: one a line. A register or file can run another (`run $more` in it); one that runs itself is stopped, 10 runs deep
+- A file for `run` is a text file of commands, as for `blyant --shell < file`: one a line. A register or file can run another (`run $more` in it); one that runs itself is stopped at 10 runs deep
 - `run file` takes a path as other commands do: `run weekly.txt`, `run $pwd/weekly.txt`, `run $file` (the file the last command worked on) or a register that holds a path (`run $docs/weekly.txt`). `run $tidy` runs the lines of the register `tidy` itself
-- `exit` in a run ends the run, not Blyant, and `screen`, `again`, `!3` and `!!` are not run in a run (`!!` would run the run again): they are told, and the run stops there
-- `again` keeps `run $tidy`, not the commands it ran, so `!!` runs them all again. From the command line of your system: `blyant --run "run $tidy"` (in quotes, and in bash `\$tidy` or single quotes, as `$` is the shell's own there)
+- `exit` in a run ends the run, not Blyant, and `screen`, `again`, `!3` and `!!` are not run in a run (`!!` would run the run again): the shell says so, and the run stops there
+- `again` keeps `run $tidy`, not the commands it ran, so `!!` runs them all again. From the command line of your system: `blyant --run "run $tidy"` (in quotes, and in bash `\$tidy` or single quotes, as bash uses `$` itself)
 
 ## What stays on the full screen
 The corkboard, the Jump menu, the color schemes and logos, Configuration, split views and Zen mode are not in the shell: start Blyant without `--shell` to use them. Your settings, lists and bookmarks are the same in both, as they are kept in the data directory (see [Good to know](Guide-to-installation.md#good-to-know)).
