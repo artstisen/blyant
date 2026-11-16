@@ -397,7 +397,7 @@ internal sealed partial class ShellSession
                 else SearchAgain(name == "/" ? 1 : -1);
                 break;
             // "/storm" (a word starting with "/"): a search in the file peeked last, as "peek /storm"
-            case not null when name.Length > 1 && name[0] == '/':
+            case var _ when name.Length > 1 && name[0] == '/':
                 SearchLastPeek((name + " " + argument).Trim()[1..]);
                 break;
             // "." alone: the last peek again ("peek" alone), as the file is now
