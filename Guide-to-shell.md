@@ -108,7 +108,7 @@ To get all output at once (with a screen reader, say), turn the pages off: `set 
 | `lines file\|n lines start\|end text` | Put a text at the start or the end of lines, keeping the rest (`lines todo.md 4 start Remember this:`). See [Text in lines](#text-in-lines) |
 | `lines file\|n lines unstart\|unend text` | Take a text off the start or the end of the lines that have it |
 | `lines file\|n lines replace old new` | Replace a text in lines, keeping the rest (`lines notes.md 5-9 replace draft final`) |
-| `lines file\|n lines sort [-a\|-d]` | Sort lines A to Z (`-a`, the default) or Z to A (`-d`): `lines notes.md 3-20 sort`. The order is that of `:sort` in the editor, by the value of the characters, so capital letters come before small ones. Lines given apart (`1,5,9`) are sorted among their places |
+| `lines file\|n lines sort [-a\|-d]` | Sort lines A to Z (`-a`, the default) or Z to A (`-d`): `lines notes.md 3-20 sort`. The order is that of `:sort` in the editor, by the value of the characters, so capital letters come before small ones. Lines given apart (`1,5,9`) are sorted among those places |
 | `lines file\|n lines upper\|lower` | Make lines UPPERCASE or lowercase, as `gU` and `gu` in the editor: `lines notes.md 1 upper` |
 | `format file\|n` | Format an HTML, CSS or XML file, as `:format` in the editor does (see [Text and settings](#text-and-settings)) |
 | `trim file\|n` | Remove blank space at the end of lines, as `:trim` in the editor does; `trim!` also removes Markdown line breaks |
@@ -602,7 +602,7 @@ fav filter chapter                   only the rows with "chapter" in them
 - A folder with subfolders does not go into another folder, as there are two levels at most, and a subfolder goes into a folder at the top. If a move cannot be done, the shell says so and moves nothing
 - After each change the list is shown again with the new rows, and it is the last list: `open 2` opens row 2 of it. A folder name with blanks is written in quotes (`"[My drafts]"`), and `Tab` completes the names of the folders after `[`, and the places after `fav move 3`
 - `fav remove [Sources]` asks first, and tells how many favorites and subfolders go with the folder; the files stay where they are. `fav undo` puts back what `fav remove` (a folder, or a favorite: `fav remove 3`) removed last in this shell, as long as the list has not changed since
-- `fav add` takes a place after the file: `top`, `bottom`, the place of a row (`5`) or a `[folder]` (at the top of it), as `fav move` does. Without one the favorite is added at the top of the list, outside the folders, as `P` on the full screen adds it: it is row 1, ready for `fav move 1 [Drafts]`. `fav add notes.md bottom` puts it last. When the place is not there (no such folder), nothing is added. `Tab` after the file completes `top`, `bottom` and the folders
+- `fav add` takes a place after the file: `top`, `bottom`, the place of a row (`5`) or a `[folder]` (at the top of the folder), as `fav move` does. Without one the favorite is added at the top of the list, outside the folders, as `P` on the full screen adds it: it is row 1, ready for `fav move 1 [Drafts]`. `fav add notes.md bottom` puts it last. When the place is not there (no such folder), nothing is added. `Tab` after the file completes `top`, `bottom` and the folders
 - `fav filter draft` shows the favorites with _draft_ in their name or path (ignoring letter case), and `fav filter *.typ` those whose name matches the pattern, with the folders they are in above them. The rows keep their numbers from the whole list, so `open 7` and `fav move 7 top` are the same row as in `fav`. The filter is not kept: `fav` shows all favorites again. `fav -l filter draft` gives the full paths
 - These commands work on the open list of favorites, and each change is saved at once, so the full screen shows the same folders. `fav undo` puts back in the list it removed from: if another list was opened since, it tells you which list to open first
 - A list of favorites named like one of these words (`folder`, `subfolder`, `move`, `undo`, `filter` ...) is opened with `fav use folder`, as for `new` (see [Commands](#commands))
@@ -690,11 +690,11 @@ blyant ~/novel> calc $calc / 12
 
 - The signs are `+`, `-`, `*`, `/`, `%` (the remainder: `17 % 5` is `2`) and `^` (a power: `2 ^ 10` is `1024`), with parentheses: `(2 + 3) * 4`. `*`, `/` and `%` are calculated before `+` and `-`, and `^` before them all (`-2 ^ 2` is `-4`). Blanks do not matter: `calc 2+3*4` is `14`
 - A number takes `.` or `,` as the decimal point (`1.5` or `1,5`; there are no thousands separators). The result is written with `.`, the same on every computer, and with at most 10 decimals: `10 / 3` is `3.3333333333`, `10 / 4` is `2.5`
-- The calculation is exact for decimals: `0.1 + 0.2` is `0.3`. Only a power that is not a whole number (or a whole number above a billion) (`2 ^ 0.5`) is as near as it comes
-- `$calc` and the registers can be used in a calculation: `calc $calc * 2`, `calc $price * 3`. Each is put in as one number, in parentheses: with `$calc` at `-3`, `calc $calc ^ 2` is `9`, and a register holding `1 + 2` counts as `3`
+- The calculation is exact for decimals: `0.1 + 0.2` is `0.3`. Only a power whose exponent is not a whole number, such as `2 ^ 0.5` (or a whole number above a billion), is as near as it comes
+- `$calc` and the registers can be used in a calculation: `calc $calc * 2`, `calc $price * 3`. Each value counts as one number, as if in parentheses: with `$calc` at `-3`, `calc $calc ^ 2` is `9`, and a register holding `1 + 2` counts as `3`
 - `calc` alone shows `$calc`. It is kept while Blyant runs, as `$clip`, and is not a register: `reg` lists it with the names set by Blyant, but cannot set it or take it away
 - At most 200 parentheses or signs can be inside each other (`((1))`, `--1`)
-- What cannot be calculated is told, with the place (counted in the calculation after the `$names` are put in): `Not understood: 12x (position 3)`, `Division by zero`, `A ) is missing`. `$calc` then stays as it was
+- When something cannot be calculated, `calc` says what and where (the place is counted after the `$names` are put in): `Not understood: 12x (position 3)`, `Division by zero`, `A ) is missing`. `$calc` then stays as it was
 
 ## Clipboard
 `clip` copies to the clipboard what you would otherwise select and copy by hand:

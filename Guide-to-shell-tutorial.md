@@ -390,6 +390,7 @@ Added to the hotlist: /home/anna/novel
 
 - A favorite added goes to the top of the list, so the one added last is row 1
 - `fav` lists the favorites, `hist` the files you have opened (newest first), and `recent` the latest nine of them. `open 1`, `peek 1` and `cd 1` work in each list
+- `recent -s` adds the size of each file, `recent -f` shows the folder before the name (`novel/plot.md`), and `recent -n` sorts the list by name. They work together (`recent -n -f -s`), and with `hist` too
 - A favorite is marked with ` *` after its name in the other lists: `ls` now shows `plot.md *` and `chapters/ *`
 - The lists show names only. `info 1` tells where row 1 is and shows its size and dates, and the list stays, so `info 2` and `open 2` work after it. `fav -l` shows the full paths
 - `hot` lists the directory hotlist, and `cd 2` goes to row 2 of it. `hot add` adds the directory you are in, and `hot remove 2` takes row 2 off

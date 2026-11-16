@@ -117,7 +117,7 @@ On the Bookmarks tab:
 - `Enter` on a folder: Open or close it. `:expand` opens all the folders, `:collapse` closes them
 - **Into and out of a folder:** move a bookmark (`V`, then `j` `k`) onto a folder to put it in, and past the first or last bookmark of the folder to take it out (inside a folder, subfolders work the same way). A folder moves with everything in it; a subfolder moves among the bookmarks of its folder, and on into the folder above or below
 - **Several at once:** mark bookmarks with `Space` (a marked bookmark has a `+` in front)
-  - `M` (or `:move`) moves the marked bookmarks (or the selected one) to a folder picked from a list (at the top of it; or a new folder, or out of the folders), `T` `E` to the top or the end, and `D` removes them
+  - `M` (or `:move`) moves the marked bookmarks (or the selected one) to a folder picked from a list (at the top of the folder), to a new folder, or out of the folders, `T` `E` to the top or the end, and `D` removes them
   - `Esc` takes the marks away
   - `M` on a selected folder (nothing marked) moves the folder with everything in it: into another folder, as the last subfolder there (color, note and open or closed go with it), or, for a subfolder, _(No folder)_ takes it out and makes it a folder again, right after the one it was in
   - _New folder..._ puts it in a new folder, created where it is
