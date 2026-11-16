@@ -4848,4 +4848,61 @@ public class ShellTests : IDisposable
         Assert.Contains("  $calc", output);
         Assert.Contains("calc expression", Run("help calc\n").Output);
     }
+
+    // ---- resume
+
+    private ShellSession Session(StringWriter errors) =>
+        new(new StringReader(string.Empty), new StringWriter(), errors, In("work"), false);
+
+    [Fact]
+    public void Resume_OpensFileAtTheLineWorkedOnLast_OrAtTheLineGiven()
+    {
+        File.WriteAllText(In("work", "chapter-3.md"), "one\ntwo\nthree\n");
+        var errors = new StringWriter();
+        var session = Session(errors);
+        session.Execute("insert chapter-3.md bottom four");
+        var quoted = "\"" + In("work", "chapter-3.md") + "\"";
+        // The line put in last
+        Assert.Equal(quoted + " +4", session.ResumeArgument(string.Empty));
+        Assert.Equal(quoted + " +2", session.ResumeArgument("+2"));
+        // Another last list: where the cursor of the editor was
+        session.Execute("ls");
+        Assert.Equal(quoted, session.ResumeArgument(string.Empty));
+        // The last list is another file at a line: not that line
+        File.WriteAllText(In("work", "other.md"), "a\nb\n");
+        session.Execute("peek other.md 2");
+        session.Execute("file chapter-3.md");
+        Assert.Equal(quoted, session.ResumeArgument(string.Empty));
+        Assert.Equal(string.Empty, errors.ToString());
+    }
+
+    [Fact]
+    public void Resume_WithoutFile_ForAFileGone_AndWithMoreThanALine_IsTold()
+    {
+        var errors = new StringWriter();
+        var session = Session(errors);
+        Assert.Null(session.ResumeArgument(string.Empty));
+        Assert.Contains(Lang.T("No file yet: open, peek, insert, new ... give $file"), errors.ToString());
+        File.WriteAllText(In("work", "gone.md"), "x\n");
+        session.Execute("peek gone.md");
+        File.Delete(In("work", "gone.md"));
+        Assert.Null(session.ResumeArgument(string.Empty));
+        Assert.Contains(Lang.F("Not found: {0}", In("work", "gone.md")), errors.ToString());
+        Assert.False(File.Exists(In("work", "gone.md")));
+        File.WriteAllText(In("work", "here.md"), "x\n");
+        session.Execute("peek here.md");
+        Assert.Null(session.ResumeArgument("here.md"));
+        Assert.Null(session.ResumeArgument("+2 +3"));
+        Assert.Contains(Lang.T("Give only a line, or nothing: resume +120"), errors.ToString());
+    }
+
+    [Fact]
+    public void Resume_WithoutATerminal_IsRefusedAsOpenIs_AndHelpTellsIt()
+    {
+        File.WriteAllText(In("work", "a.md"), "x\n");
+        var (_, errors, _, _) = Run("peek a.md\nresume\n");
+        Assert.Contains(Lang.F("{0} is not opened: the editor needs a terminal", In("work", "a.md")), errors);
+        Assert.Contains("resume [+line]", Run("help resume\n").Output);
+        Assert.Equal("resume", Tab(Completion(), "resu"));
+    }
 }

@@ -133,4 +133,4 @@ Changed with `set` in the shell, or in the file: they are not on the pages of Co
 | `shellundosteps` | **10**, 1 to 50 | How many file changes (`insert`, `change`, `lines` ...) `undo` can go back through while Blyant runs (see [Undo](Guide-to-shell.md#undo)) |
 | `shelldir` | **empty**, a path (`~/notes`), last | The directory the shell starts in: empty is the directory Blyant is started in; `last` is the one the shell was left in |
 | `shelllastdir` | a path | With `shelldir=last`, the directory the shell was left in: saved when you leave a shell you typed in at a terminal (`exit`, `screen`), never by commands from a file, a pipe or `--run` |
-| `shelllastfile` | a path | `$file` when the shell was left, saved the same way as `shelllastdir` (whatever `shelldir` is): it is `$file` again in the next shell you type in at a terminal, if the file still exists |
+| `shelllastfile` | a path | `$file` when the shell was left, saved the same way as `shelllastdir` (whatever `shelldir` is): it is `$file` again in the next shell you type in at a terminal, if the file still exists, so `resume` opens it there |

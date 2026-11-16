@@ -128,6 +128,15 @@ blyant ~/novel> open 3 +12
 
 `+12` opens the file at line 12. When you close the editor (`:wq`, `:q`), you are back at the prompt, in the same directory. If the file does not exist, the shell asks whether to make it.
 
+`resume` opens the file you worked on last (`$file`) again, where you left off. The shell keeps `$file` when you leave it, so the next day `blyant --shell` and `resume` take you back into your text:
+
+```
+blyant ~/novel> insert chapter-3.md bottom She opened the letter.
+blyant ~/novel> resume
+```
+
+Here `resume` opens chapter-3.md at the line just put in.
+
 ## Making, copying and moving
 The shell follows the rules of the file browser: nothing is overwritten, and what is deleted goes to the trash.
 

@@ -20,6 +20,7 @@ internal sealed partial class ShellSession
         ("home", Lang.T("Go to your home directory")),
         ("data", Lang.T("Go to Blyant's data directory (settings, lists, log)")),
         ("open file|n [+line] (edit)", Lang.T("Edit a file on the full screen (closing it returns here)")),
+        ("resume [+line]", Lang.T("Edit $file again, where you worked last")),
         ("peek file|n [lines]", Lang.T("Show the lines of a file (the first 20, 40, 100-120, or +100 30)")),
         ("peek [file|n] +|++|-|--", Shell.PeekStep == 1
             ? Lang.F("Show 1 line further down (++: {0}), or up (-, --)", Shell.PeekBigStep)
@@ -429,6 +430,9 @@ internal sealed partial class ShellSession
             case "open":
             case "edit":
                 Open(argument);
+                break;
+            case "resume":
+                if (ResumeArgument(argument) is { } open) Open(open);
                 break;
             case "favorites":
             case "fav":
@@ -1196,6 +1200,45 @@ internal sealed partial class ShellSession
         _file = Path.GetFullPath(result.Path);
         if (EditOnScreen(result.Path, at)) Line(Lang.F("Back from the editor: {0}", result.Path));
         else Line(Lang.F("Back from the editor: {0} (the place jumped to is not shown here)", result.Path));
+    }
+
+    /// <summary>
+    /// What "resume" opens, as "open" takes it: $file (kept when the shell is left, so "resume" goes on after a
+    /// restart), at the line given ("resume +120"), else at the line of the last list when that is $file at a line
+    /// (after insert, lines, change, a search of peek), else where the cursor of the editor was in it. Null (and told)
+    /// when there is no $file, it is gone, or more than a line is given
+    /// </summary>
+    internal string? ResumeArgument(string argument)
+    {
+        var words = Words(argument);
+        if (words.Count > 1 || (words.Count == 1 && !IsLine(words[0])))
+        {
+            Error(Lang.T("Give only a line, or nothing: resume +120"));
+            return null;
+        }
+
+        if (_file == null)
+        {
+            Error(Lang.T("No file yet: open, peek, insert, new ... give $file"));
+            return null;
+        }
+
+        // (not made again, as open would offer for a file that is not there)
+        if (!FileOperations.IsFileThere(_file))
+        {
+            Error(Lang.F("Not found: {0}", _file));
+            return null;
+        }
+
+        var line = words.Count == 1 ? words[0] : null;
+        if (line == null && LastList is [{ At: { } at } only] &&
+            FileOperations.NameComparer.Equals(Path.GetFullPath(only.Path), _file))
+        {
+            line = "+" + at.Line;
+        }
+
+        // (the path as one word, whatever is in it)
+        return "\"" + _file + "\"" + (line == null ? string.Empty : " " + line);
     }
 
     // "+12": a line to open the file at

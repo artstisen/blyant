@@ -83,6 +83,7 @@ To get all output at once (with a screen reader, say), turn the pages off: `set 
 | `home` | Go to your home directory (as `cd` alone) |
 | `data` | Go to Blyant's [data directory](Guide-to-installation.md#good-to-know), with the settings, lists and log. `cd data` still goes to a directory named _data_ |
 | `open file\|n [+line]` (`edit`) | Edit a file in the full-screen editor, at a line if one is given (`open plot.md +12`). On a directory, go to it. `edit` does the same |
+| `resume [+line]` | Edit `$file` again, where you worked last: at the line the last command worked on in it (after `insert`, `lines`, `change` or a search with `peek`), else where the cursor of the editor was. `$file` is kept when you leave the shell, so `resume` goes on after a restart. `resume +120` opens it at line 120 |
 | `peek file\|n [lines]` | Show the lines of a text file, numbered: the first 20, `peek plot.md 40` the first 40, `peek plot.md 100-120` lines 100 to 120, `peek plot.md +100` 20 lines from line 100, and `peek plot.md +100 30` 30 lines from line 100. Read-only. After a peek from a line, `open 1` opens the file at that line. See [Peeking into a file](#peeking-into-a-file) |
 | `peek [file\|n] top\|middle\|bottom\|50%` | Put the window of the last peek (same number of lines) at the top, in the middle, at the end, or at a point in the file (`peek 50%`: from halfway). Without a file: the file peeked last. See [Peeking into a file](#peeking-into-a-file) |
 | `peek +120` | The file peeked last, from line 120, with the same window size (a file named _+120_ is peeked instead, if there is one) |
@@ -649,7 +650,7 @@ lines plot.md 3-5 > $notes          ">": the register is those lines alone
   | Name | Value |
   |---|---|
   | `$pwd` | the directory you are in (`copy 3 $pwd`) |
-  | `$file` | the file the last command worked on: opened, peeked, put lines in, made with `new` ... (`peek plot.md`, then `insert $file bottom Done`). It is kept when you leave the shell, and is `$file` again the next time you start it, while the file is there (setting `shelllastfile`; not for commands from a file, a pipe or `--run`). A list shown (`ls`, `fav`) does not change it. `file 3` makes row 3 of a list `$file` without peeking it |
+  | `$file` | the file the last command worked on: opened, peeked, put lines in, made with `new` ... (`peek plot.md`, then `insert $file bottom Done`). It is kept when you leave the shell, and is `$file` again the next time you start it, while the file is there (setting `shelllastfile`; not for commands from a file, a pipe or `--run`). A list shown (`ls`, `fav`) does not change it. `file 3` makes row 3 of a list `$file` without peeking it, and `resume` opens it in the editor |
   | `$date` | today, as `2026-11-15` |
   | `$time` | the time now, as `14:05` |
   | `$now` | the date and the time, as `2026-11-15 14:05:33` (as `:ts` in the editor) |
