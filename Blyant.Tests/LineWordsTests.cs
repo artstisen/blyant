@@ -28,7 +28,8 @@ public class LineWordsTests
     [InlineData("keep **bold** here", 2, 2, "upper", "", "keep **BOLD** here")]
     [InlineData("SHOUT here", 1, 1, "lower", "", "shout here")]
     [InlineData("this is a line", 1, 4, "title", "", "This Is A Line")]
-    [InlineData("tHE (well-known) end", 1, 2, "title", "", "The (Well-known) end")]
+    [InlineData("the (well-known) end", 1, 2, "title", "", "The (Well-known) end")]
+    [InlineData("NASA and iPhone", 1, 3, "title", "", "NASA And IPhone")]
     public void Change_ChangesTheWords_AndLeavesWhatIsAroundThem(string line, int first, int last, string action,
         string text, string result)
     {
@@ -39,9 +40,18 @@ public class LineWordsTests
     [InlineData("a b c", 2, 2, "a c")]
     [InlineData("a b c", 1, 1, "b c")]
     [InlineData("a b c", 3, 3, "a b")]
-    [InlineData("that I want to change, with", 5, 5, "that I want to with")]
+    [InlineData("that I want to change, with", 5, 5, "that I want to, with")]
+    [InlineData("This is the end.", 4, 4, "This is the.")]
+    [InlineData("Read the guide (see chapter 3) now.", 4, 4, "Read the guide (chapter 3) now.")]
+    [InlineData("**very bold** text", 1, 1, "**bold** text")]
+    [InlineData("a (word) b", 2, 2, "a b")]
+    [InlineData("say \"why\" now", 2, 2, "say now")]
+    [InlineData("a\tb\tc", 2, 2, "a\tc")]
+    [InlineData("a  b", 2, 2, "a")]
+    [InlineData("- item", 1, 1, "-")]
+    [InlineData("  indented word", 1, 1, "  word")]
     [InlineData("keep **bold** and", 2, 2, "keep and")]
-    [InlineData("with a few commands...", 3, 4, "with a")]
+    [InlineData("with a few commands...", 3, 4, "with a...")]
     [InlineData("see a/b here", 2, 2, "see /b here")]
     [InlineData("one", 1, 1, "")]
     public void Delete_TakesTheWordsWithWhatIsAroundThem_AndOneBlank(string line, int first, int last, string result)
@@ -88,9 +98,33 @@ public class LineWordsTests
     [Fact]
     public void Title_CapitalizesTheFirstLetter_AfterMarks()
     {
-        Assert.Equal("**Bold**", LineWords.Title("**bOLD**"));
+        Assert.Equal("**Bold**", LineWords.Title("**bold**"));
+        Assert.Equal("**BOLD**", LineWords.Title("**bOLD**"));
         Assert.Equal("\"Why?\"", LineWords.Title("\"why?\""));
         Assert.Equal("--", LineWords.Title("--"));
-        Assert.Equal("The", LineWords.Title("tHE"));
+        Assert.Equal("THE", LineWords.Title("tHE"));
+    }
+
+    [Fact]
+    public void AWord_RunsOnOverAccentsAndMarks_AndLettersOutsideTheBasicRange()
+    {
+        // "café" with the accent as a character of its own (as in files from macOS)
+        var decomposed = "cafe\u0301 au lait";
+        Assert.Equal(new[] { "cafe\u0301", "au", "lait" }, WordsOf(decomposed));
+        Assert.Equal("tea au lait", LineWords.Change(decomposed, 1, 1, "replace", "tea"));
+        // Hindi: the vowel signs and the virama are part of the word
+        Assert.Single(WordsOf("हिन्दी"));
+        // A letter outside the basic range (two chars)
+        Assert.Equal(new[] { "a\U0001D49Cb" }, WordsOf("a\U0001D49Cb"));
+    }
+
+    [Fact]
+    public void TitleLine_LeavesLinksCodeAndWebAddressesAsTheyAre()
+    {
+        Assert.Equal("See [Docs](https://Example.com/API) And NASA",
+            LineWords.TitleLine("See [docs](https://Example.com/API) and NASA"));
+        Assert.Equal("Use `myVar` Here", LineWords.TitleLine("use `myVar` here"));
+        Assert.Equal("Go To https://x.io/path Now", LineWords.TitleLine("go to https://x.io/path now"));
+        Assert.Equal("Mail <me@x.io> Today", LineWords.TitleLine("mail <me@x.io> today"));
     }
 }

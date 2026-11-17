@@ -5644,7 +5644,10 @@ public class ShellTests : IDisposable
         Assert.Contains(Lang.F("The script takes {0} words ($1 to ${0}): {1} given", 2, 1), errors);
         (_, errors, _, _) = Run("run $check a.md 2 3\n");
         Assert.Contains(Lang.F("The script takes {0} words ($1 to ${0}): {1} given", 2, 3), errors);
+        // Without words: a script with $1 is refused ($* alone is nothing)
         (_, errors, _, _) = Run("reg some echo $1 $*\nrun $some\n");
+        Assert.Contains(Lang.F("The script takes {0} words ($1 to ${0}): {1} given", 1, 0), errors);
+        (_, errors, _, _) = Run("reg every echo [$*]\nrun $every\n");
         Assert.Equal(string.Empty, errors);
         (_, errors, _, _) = Run("reg two = pwd\nreg two += pwd\nrun $two x\n");
         Assert.Contains(Lang.T("The script has no $1: write $1, $2 ... where the words go (reg tidy = trim $1)"), errors);
@@ -5705,5 +5708,140 @@ public class ShellTests : IDisposable
         Assert.Contains(Lang.T("Give a text: reg -t storm (or chap*)"), wrong);
         Assert.Equal("reg -t", Tab(Completion(), "reg -t"));
         Assert.Contains("reg -t text", Run("help reg\n").Output);
+    }
+
+    // ---- Review of 1.5.6
+
+    [Fact]
+    public void Run_AComment_WithDollarTwo_IsLeftAsItIs_AndAScriptThatSetsARegisterKeepsDollarOne()
+    {
+        File.WriteAllText(In("work", "tidy.txt"), "# $2 is the line\necho got $1\n");
+        var (output, errors, _, _) = Run("run tidy.txt a.md\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains("got a.md\n", output);
+        // A reg line keeps $1 as text, without words
+        File.WriteAllText(In("work", "make.txt"), "reg check words $1 $2\n");
+        (_, errors, _, _) = Run("run make.txt\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("words $1 $2", ShellRegisters.Get("check"));
+    }
+
+    [Fact]
+    public void Run_TheWords_AreNotPutInTwice_AndAWordWithBlanksAndQuotesIsRefused()
+    {
+        var (output, errors, _, _) = Run("reg s echo [$1]\nrun $s $$date\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains("[$date]\n", output);
+        File.WriteAllText(In("work", "notes$draft.md"), "x\n");
+        (output, errors, _, _) = Run("reg t echo [$1]\nrun $t notes$draft.md\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains("[notes$draft.md]\n", output);
+        (_, errors, _, _) = Run("reg v a \"b\" c\nrun $t $v\n");
+        Assert.Contains(Lang.F("A word with blanks and quotes cannot be given to a script: {0}", "a \"b\" c"), errors);
+    }
+
+    [Fact]
+    public void ARegisterAsTheStartOfACommand_MustStartWithACommand_AndIsReadAgainFirst()
+    {
+        File.WriteAllText(In("work", "plot2.md"), "x\n");
+        var (_, errors, _, _) = Run("file plot2.md > $r\n$r\nreg note Buy ink\n$note\n");
+        Assert.Contains(Lang.F("${0} does not start with a command: put it in one (open ${0})", "r"), errors);
+        Assert.Contains(Lang.F("${0} does not start with a command: put it in one (open ${0})", "note"), errors);
+        // Edited by hand: the new value
+        Run("reg w pwd\n");
+        File.WriteAllText(In("data", ShellRegisters.FileName), "w\techo new\n");
+        var (output, _, _, _) = Run("$w value\n");
+        Assert.Contains("new value\n", output);
+    }
+
+    [Fact]
+    public void ARegisterThatRunsAgain_IsAgain_AsTyped()
+    {
+        CommandHistory.Clear();
+        try
+        {
+            var (output, errors) = (new StringWriter(), new StringWriter());
+            var session = new ShellSession(new StringReader(string.Empty), output, errors, In("work"), false);
+            CommandHistory.Add(CommandContext.Shell, "echo hello");
+            session.Execute("reg a again 1");
+            session.Execute("$a");
+            Assert.Equal(string.Empty, errors.ToString());
+            Assert.Contains("hello\n", output.ToString().Replace("\r\n", "\n"));
+            // again with nothing typed: told so
+            CommandHistory.Clear();
+            session.Execute("again 1 > $x");
+            Assert.Contains(Lang.T("No commands typed: from a file or a pipe they are not kept"), errors.ToString());
+        }
+        finally
+        {
+            CommandHistory.Clear();
+        }
+    }
+
+    [Fact]
+    public void ATarget_IsOnlyOneTyped_NotOneInAValueOrWrittenWithTwoDollars()
+    {
+        File.WriteAllText(In("work", "a.md"), "a > $b\n");
+        var (output, errors, _, _) = Run("reg q a > $$b\nfind -t $q\nfind -t a > $$y\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Null(ShellRegisters.Get("b"));
+        Assert.Null(ShellRegisters.Get("y"));
+        Assert.Contains("a.md:1", output);
+    }
+
+    [Fact]
+    public void HistT_WithoutAText_NamesHist_AndFindL_HasNoMark()
+    {
+        var (_, errors, _, _) = Run("hist -t\n");
+        Assert.Contains(Lang.T("Give a text after -t: hist -t storm, hist -t *"), errors);
+        File.WriteAllText(In("work", "gone.md"), "x\n");
+        var (output, _, _, session) = Run("fav add gone.md\nfind gone\n");
+        File.Delete(In("work", "gone.md"));
+        output = Run("find\nfind -l\n").Output;
+        // The mark of a favorite before "(missing)", and none with -l
+        Assert.Contains("gone.md * " + DialogText.FavoriteMissing, output);
+        Assert.Contains("  1  " + In("work", "gone.md") + "\n", output);
+    }
+
+    [Fact]
+    public void Names_TwoRowsAlikeUpToTheRoot_DoNotShowTheRootAsAFolder()
+    {
+        var root = Path.GetPathRoot(In("work"))!;
+        var one = Path.Combine(root, "a", "x.md");
+        var two = Path.Combine(root, "b", "a", "x.md");
+        var names = ShellSession.Names(new[] { (one, false), (two, false) }, false, false);
+        // ("a" and "b/a" tell them apart: the root is no folder name to show)
+        Assert.Equal("x.md (a) " + DialogText.FavoriteMissing, names[0]);
+        Assert.Equal("x.md (b/a) " + DialogText.FavoriteMissing, names[1]);
+    }
+
+    [Fact]
+    public void Words_OneWord_AnEmptyLine_AndATextOfSeveralLines_AreToldPlainly()
+    {
+        File.WriteAllText(In("work", "w.md"), "Hello\n\n");
+        var (output, errors, _, _) = Run("words w.md 1\nword w.md 2 1 upper\nreg two = a\nreg two += b\n" +
+                                         "word w.md 1 1 replace $two\n");
+        Assert.Contains(Lang.F("{0}, line {1}: 1 word", In("work", "w.md"), 1), output);
+        Assert.Contains(Lang.F("Line {0} has no words", 2), errors);
+        Assert.Contains(Lang.F("${0} has more than one line: only insert, change, reg, run and echo take it", "two"), errors);
+        Assert.Equal("Hello\n\n", File.ReadAllText(In("work", "w.md")));
+    }
+
+    [UnixFact]
+    public void Run_AFileWithQuotesAndBlanksInItsName_IsRefusedAsAWord_NotSplit()
+    {
+        File.WriteAllText(In("work", "my \"odd\" notes.md"), "x\n");
+        var (_, errors, _, _) = Run("reg s echo [$1]\nls\nfile 1\nrun $s $file\n");
+        Assert.Contains(Lang.F("A word with blanks and quotes cannot be given to a script: {0}",
+            In("work", "my \"odd\" notes.md")), errors);
+    }
+
+    [UnixFact]
+    public void ARegisterHoldingAPath_IsNotTakenAsAPeekSearch_OnLinuxAndMacOs()
+    {
+        File.WriteAllText(In("work", "p.md"), "x\n");
+        var (output, errors, _, _) = Run("file p.md > $r\n$r\n");
+        Assert.Contains(Lang.F("${0} does not start with a command: put it in one (open ${0})", "r"), errors);
+        Assert.DoesNotContain("match", output);
     }
 }

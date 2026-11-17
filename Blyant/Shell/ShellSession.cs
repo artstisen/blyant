@@ -434,8 +434,11 @@ internal sealed partial class ShellSession
             var folder = Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(path));
             for (var i = 0; folder != null && parts.Count < depth; i++)
             {
+                var above = Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(folder));
+                // (the root, "C:\" or "/", has no name to show: there the whole folder is told instead)
+                if (above == null) break;
                 if (i >= skip) parts.Insert(0, NameOf(folder));
-                folder = Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(folder));
+                folder = above;
             }
 
             return string.Join("/", parts);

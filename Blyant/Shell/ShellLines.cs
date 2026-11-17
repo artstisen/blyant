@@ -3,7 +3,8 @@
 /// <summary>
 /// "lines": lines of a file copied to another file or kept in a register ("> $notes", ">> $notes": added), or cut
 /// ("cut": moved there), without opening them; or the text in them changed: a text put at their start or end ("start", "end"), taken off it ("unstart", "unend"), or a text in
-/// them replaced ("replace"), the lines sorted ("sort", "sort -d") or made upper or lower case ("upper", "lower"). The
+/// them replaced ("replace"), the lines sorted ("sort", "sort -d") or made upper or lower case or Title Case ("upper",
+/// "lower", "title"). The
 /// lines and the place are those of shift. What is written is never logged, only the
 /// paths and the lines
 /// </summary>
@@ -58,7 +59,8 @@ internal sealed partial class ShellSession
     // one Blyant uses, and the file is then the last list, at the first line changed. Nothing is lost by it (unstart
     // undoes start), so it is not asked. "sort" sorts the lines A to Z ("-a", the default) or Z to A ("-d"), in the
     // same order as :sort in the editor, and puts them back in the places of the lines; "upper" and "lower" make them
-    // upper or lower case, as gU and gu in the editor. "undo" takes each back
+    // upper or lower case, as gU and gu in the editor, and "title" each word with a capital first letter (see
+    // LineWords.TitleLine). "undo" takes each back
     private void EditLines(string argument, int at)
     {
         var words = Words(argument);
@@ -171,7 +173,7 @@ internal sealed partial class ShellSession
     /// A line with a text put at its start or end ("start", "end": with a blank between, or "exact" as it is; a blank
     /// line as it is), taken off them ("unstart", "unend": with the blank start and end put there, or "exact" the text
     /// only; a line without it as it is), a text in it replaced ("replace", letter case as given), or the line made
-    /// upper or lower case ("upper", "lower", as gU and gu in the editor)
+    /// upper or lower case ("upper", "lower", as gU and gu in the editor) or Title Case ("title")
     /// </summary>
     internal static string EditedLine(string line, string kind, string text, bool exact, string replacement = "")
     {

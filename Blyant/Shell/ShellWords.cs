@@ -80,7 +80,9 @@ internal sealed partial class ShellSession
         }
 
         ShowWords(text, blanks);
-        Line(Lang.F("{0}, line {1}: {2} words", at.Item.Path, at.Line, count));
+        Line(count == 1
+            ? Lang.F("{0}, line {1}: 1 word", at.Item.Path, at.Line)
+            : Lang.F("{0}, line {1}: {2} words", at.Item.Path, at.Line, count));
     }
 
     // "word notes.md 12 9 replace wish", "word notes.md 12 14 before handful of", "word notes.md 12 5-6 delete",
@@ -130,6 +132,12 @@ internal sealed partial class ShellSession
         if (LineOf(words[0], words[1], usage) is not { } at) return;
         var line = at.Lines[at.Line - 1];
         var count = LineWords.Find(line, blanks).Count;
+        if (count == 0)
+        {
+            Error(Lang.F("Line {0} has no words", at.Line));
+            return;
+        }
+
         if (last > count)
         {
             Error(count == 1

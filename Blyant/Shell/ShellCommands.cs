@@ -134,8 +134,40 @@ internal sealed partial class ShellSession
         line = line.Trim();
         // (a line starting with "#": a comment, in a file of commands and a register run)
         if (line.Length == 0 || line.StartsWith('#')) return true;
+        var typedLine = line;
+        // "$ed $file": a register of one line that starts with a command ("reg ed open") as the start of the
+        // command, the rest after it. First, so "$a" with "again 3" is again; the registers read again before
+        if (CommandLine.Name(line) is ['$', .. var start] && ShellRegisters.IsName(start) &&
+            !ShellRegisters.IsReserved(start))
+        {
+            ShellRegisters.Refresh();
+            if (ShellRegisters.Get(start) is { } value)
+            {
+                start = start.ToLowerInvariant();
+                if (value.Contains('\n'))
+                {
+                    NewPage();
+                    Error(Lang.F("${0} has more than one line: run ${0} runs it", start));
+                    return true;
+                }
+
+                // (a path or a text in a register is not a command: "$r" of "file x > $r" is not run)
+                var first = CommandLine.Name(value.Trim());
+                if (!Commands.IsKnown(CommandContext.Shell, first.ToLowerInvariant()) && !first.StartsWith('!'))
+                {
+                    NewPage();
+                    Error(Lang.F("${0} does not start with a command: put it in one (open ${0})", start));
+                    return true;
+                }
+
+                var rest = CommandLine.Argument(line);
+                line = (value.Trim() + (rest.Length > 0 ? " " + rest : string.Empty)).Trim();
+            }
+        }
+
         // "!!", "!3", "again 3": a command typed before, written out and run again (as typed then)
-        if (AgainNumber(line) is { } number)
+        var again = AgainNumber(line);
+        if (again is { } number)
         {
             var kept = CommandHistory.Of(CommandContext.Shell);
             // (in a run, the last command kept is the run itself: it would run again and again)
@@ -164,26 +196,11 @@ internal sealed partial class ShellSession
             Line(line);
         }
 
-        // Typed at the prompt: kept for Up and Down and for "again" (the command an "again" ran, not the "again")
+        // Typed at the prompt: kept for Up and Down and for "again" (the command an "again" ran, not the "again";
+        // "$w notes.md 12" as typed)
         if (_typed && !CommandLine.Name(line).Equals("again", StringComparison.OrdinalIgnoreCase))
         {
-            CommandHistory.Add(CommandContext.Shell, line);
-        }
-
-        // "$ed $file": a register of one line ("reg ed open") as the start of the command, the rest after it
-        if (CommandLine.Name(line) is ['$', .. var start] && ShellRegisters.IsName(start) &&
-            !ShellRegisters.IsReserved(start) && ShellRegisters.Get(start) is { } value)
-        {
-            if (value.Contains('\n'))
-            {
-                NewPage();
-                Error(Lang.F("${0} has more than one line: run ${0} runs it", start.ToLowerInvariant()));
-                return true;
-            }
-
-            var rest = CommandLine.Argument(line);
-            line = (value.Trim() + (rest.Length > 0 ? " " + rest : string.Empty)).Trim();
-            if (line.Length == 0) return true;
+            CommandHistory.Add(CommandContext.Shell, again == null ? typedLine : line);
         }
 
         // By name only (never what follows it: a path, a name, the value of a register)
@@ -198,6 +215,8 @@ internal sealed partial class ShellSession
         // (what was typed, before the $names are put in: "run $tidy" is a register, "run $pwd/t.txt" a file; "reg
         // notes += $peek" of an empty $peek is not "reg notes +=" with nothing)
         _typedArgument = argument;
+        // (a "> $name" at the end as typed: one in a value put in, or "> $$name", is text)
+        _typedTarget = TakesTarget.Contains(name) && TypedTarget().IsMatch(argument);
         var help = name is "help" or "h";
         // ("lines a.md 4-6 > $notes": the register the lines go to, not its value: kept as the name)
         if (name == "lines") argument = ProtectRegisterTarget(argument);
@@ -283,7 +302,7 @@ internal sealed partial class ShellSession
     // runs the one numbered 7
     private void ListAgain(string argument)
     {
-        if (TargetAtEnd(argument) is { } target)
+        if (Target(argument) is { } target)
         {
             AgainInto(target.Before, target.Name, target.Adds);
             return;
@@ -394,6 +413,17 @@ internal sealed partial class ShellSession
             : argument;
     }
 
+    // A "> $name" or ">> $name" at the end of the command as typed (not "$$name")
+    [System.Text.RegularExpressions.GeneratedRegex(@"(^|\s)>>?\s+\$[A-Za-z][A-Za-z0-9_]*\s*$")]
+    private static partial System.Text.RegularExpressions.Regex TypedTarget();
+
+    // The command as typed has a register at the end ("calc 2 * 3 > $x"): the handlers take it only then
+    private bool _typedTarget;
+
+    // The register at the end of a command, when it was typed there (see TargetAtEnd)
+    private (string Before, string Name, bool Adds)? Target(string argument) =>
+        _typedTarget ? TargetAtEnd(argument) : null;
+
     /// <summary>
     /// A register named at the end of what follows a command: "> $name" (set) or ">> $name" (added to it as lines).
     /// What comes before it, the name (lowercase), and if it is added to; null when there is none
@@ -439,7 +469,7 @@ internal sealed partial class ShellSession
     // options show (-b, -f). An empty list, or one that fails, leaves the register as it was
     private void ListInto(string argument, Action<string> list)
     {
-        if (TargetAtEnd(argument) is not { } target)
+        if (Target(argument) is not { } target)
         {
             list(argument);
             return;
@@ -475,13 +505,13 @@ internal sealed partial class ShellSession
     private void FileCommand(string argument)
     {
         var words = Words(argument);
-        if (words.Count == 3 && words[1] == ">")
+        if (words.Count == 3 && words[1] == ">" && _typedTarget)
         {
             FileToRegister(words[0], words[2]);
             return;
         }
 
-        if (words.Count == 3 && words[1] == ">>")
+        if (words.Count == 3 && words[1] == ">>" && _typedTarget)
         {
             Error(Lang.T("file keeps one path: file plot.md > $other (lines ... >> $name adds lines)"));
             return;
@@ -522,7 +552,7 @@ internal sealed partial class ShellSession
     private void Calc(string expression)
     {
         // "calc 22 * 3500 > $words": also kept in a register ($calc too); ">> $results" adds it as a line
-        var target = TargetAtEnd(expression);
+        var target = Target(expression);
         if (target is { } given)
         {
             if (TargetRefused(given.Name)) return;
@@ -601,6 +631,14 @@ internal sealed partial class ShellSession
         }
 
         var kept = CommandHistory.Of(CommandContext.Shell);
+        if (kept.Count == 0)
+        {
+            Error(Terminal
+                ? Lang.T("No commands typed yet (they are kept while Blyant runs)")
+                : Lang.T("No commands typed: from a file or a pipe they are not kept"));
+            return;
+        }
+
         var (low, high) = (Math.Min(first, last), Math.Max(first, last));
         if (low < 1 || high > kept.Count)
         {
@@ -647,6 +685,7 @@ internal sealed partial class ShellSession
         _lastSearch = null;
         _undo.Clear();
         _redo.Clear();
+        _changeLost = false;
         Line(Lang.T("Forgotten: the commands typed, $clip, $peek, $calc, the last search and the undo steps"));
     }
 
@@ -707,7 +746,7 @@ internal sealed partial class ShellSession
                 // "fav add 3", "fav remove 3", the lists ("fav lists", "fav new", "fav rename", "fav delete"), else the
                 // list ("fav work", "fav use work": another list; "fav main": the main list). "fav > $files": the
                 // paths of the list in a register
-                if (TargetAtEnd(argument) is { } favTarget && !ListsFavorites(favTarget.Before))
+                if (Target(argument) is { } favTarget && !ListsFavorites(favTarget.Before))
                 {
                     Error(Lang.T("Only a list of favorites goes to a register: fav > $name, fav filter draft > $name"));
                     break;
@@ -1154,7 +1193,9 @@ internal sealed partial class ShellSession
         var (before, search) = TextOption(argument);
         if (search == string.Empty)
         {
-            Error(Lang.T("Give a text after -t: recent -t storm, recent -t *"));
+            Error(most == int.MaxValue
+                ? Lang.T("Give a text after -t: hist -t storm, hist -t *")
+                : Lang.T("Give a text after -t: recent -t storm, recent -t *"));
             return;
         }
 

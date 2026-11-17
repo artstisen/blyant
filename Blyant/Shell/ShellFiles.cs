@@ -887,13 +887,17 @@ internal sealed partial class ShellSession
         var names = !full && (folder || bare)
             ? Names(outcome.Results.Select(result => (result.Path, result.IsDirectory)).ToList(), false, false, folder)
             : null;
+        var missing = " " + DialogText.FavoriteMissing;
         var rows = outcome.Results.Select((result, i) =>
         {
-            var shown = names != null ? names[i]
+            // The name or path, then the mark of a favorite (not after a line found), then "(missing)" (not with -l:
+            // the full paths for scripts), as recent and fav show them
+            var name = names != null
+                ? names[i].EndsWith(missing, StringComparison.Ordinal) ? names[i][..^missing.Length] : names[i]
                 : (full ? result.Path : Path.GetRelativePath(search.Directory, result.Path)) +
-                  (result.IsDirectory ? "/" : string.Empty) +
-                  (Gone(result) ? " " + DialogText.FavoriteMissing : string.Empty);
-            if (!full && result.Line < 0) shown += FavoriteMark(result.Path);
+                  (result.IsDirectory ? "/" : string.Empty);
+            var shown = name + (!full && result.Line < 0 ? FavoriteMark(result.Path) : string.Empty) +
+                        (!full && Gone(result) ? missing : string.Empty);
             return result.Line >= 0
                 ? (new Item(result.Path, result.IsDirectory, (result.Line + 1, 1), text),
                     shown + ":" + (result.Line + 1) + "  " + result.LineText.Trim())

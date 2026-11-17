@@ -34,6 +34,15 @@ internal sealed partial class ShellSession
         if (parts.Count > 1 && !File.Exists(PathOf(argument.Trim().Trim('"'))))
         {
             var rest = AfterWords(typed, 1);
+            // (a value with blanks and quotes cannot be one word: it would be split wrongly)
+            if (ShellRegisters.NamesIn(rest).Select(ShellRegisters.Get)
+                    .FirstOrDefault(value => value != null && value.Any(char.IsWhiteSpace) && value.Contains('"')) is
+                { } quoted)
+            {
+                Error(Lang.F("A word with blanks and quotes cannot be given to a script: {0}", quoted));
+                return;
+            }
+
             // ($names put in, a value with blanks as one word)
             arguments = Words(ShellRegisters.Expand(rest, int.MaxValue));
             typed = typed[..^rest.Length].Trim();
@@ -133,23 +142,33 @@ internal sealed partial class ShellSession
     /// </summary>
     internal List<string>? WithArguments(List<string> lines, IReadOnlyList<string> arguments)
     {
-        // (no words: the script as it is, as before; a "$1" in it is left, as in a script that sets a register)
-        if (arguments.Count == 0) return lines;
         var commands = lines.Where(line => line.Trim().Length > 0 && !line.TrimStart().StartsWith('#')).ToList();
-        var highest = 0;
-        var all = false;
-        foreach (var command in commands)
+        var (highest, all) = ArgumentsUsed(commands);
+        if (arguments.Count == 0)
         {
-            foreach (System.Text.RegularExpressions.Match match in ArgumentPattern().Matches(command))
+            // Without words: a command that takes $1 ... is refused, as it would get "$1" itself ("new $1" would make
+            // a file named so); a "reg" line keeps $1 as text on purpose, for a script it makes. $* is nothing
+            var (needed, _) = ArgumentsUsed(commands.Where(command =>
+                !CommandLine.Name(command).Equals("reg", StringComparison.OrdinalIgnoreCase)));
+            if (needed > 0)
             {
-                if (!match.Groups[1].Success) continue;
-                if (match.Groups[1].Value == "*") all = true;
-                else highest = Math.Max(highest, match.Groups[1].Value[0] - '0');
+                Error(Lang.F("The script takes {0} words ($1 to ${0}): {1} given", needed, 0));
+                return null;
             }
+
+            return all ? Substituted(lines, Array.Empty<string>()) : lines;
         }
 
-        // (a value with blanks put in as one word)
-        var words = arguments.Select(word => word.Any(char.IsWhiteSpace) ? "\"" + word + "\"" : word).ToList();
+        // (a value with blanks put in as one word, in quotes; a "$" in a word stays a "$": the words were put in
+        // already, and are not put in again when the command runs)
+        if (arguments.FirstOrDefault(word => word.Any(char.IsWhiteSpace) && word.Contains('"')) is { } quoted)
+        {
+            Error(Lang.F("A word with blanks and quotes cannot be given to a script: {0}", quoted));
+            return null;
+        }
+
+        var words = arguments.Select(word => word.Replace("$", "$$"))
+            .Select(word => word.Any(char.IsWhiteSpace) ? "\"" + word + "\"" : word).ToList();
         if (highest == 0 && !all)
         {
             if (commands.Count == 1)
@@ -171,9 +190,32 @@ internal sealed partial class ShellSession
             return null;
         }
 
-        return lines.Select(line => ArgumentPattern().Replace(line, match =>
+        return Substituted(lines, words);
+    }
+
+    // The highest $n in commands, and whether $* is in one
+    private static (int Highest, bool All) ArgumentsUsed(IEnumerable<string> commands)
+    {
+        var highest = 0;
+        var all = false;
+        foreach (var command in commands)
+        {
+            foreach (System.Text.RegularExpressions.Match match in ArgumentPattern().Matches(command))
+            {
+                if (!match.Groups[1].Success) continue;
+                if (match.Groups[1].Value == "*") all = true;
+                else highest = Math.Max(highest, match.Groups[1].Value[0] - '0');
+            }
+        }
+
+        return (highest, all);
+    }
+
+    // The words put in for $1 ... and $* in the commands; a comment ("# $2 is the line") as it is
+    private static List<string> Substituted(List<string> lines, IReadOnlyList<string> words) =>
+        lines.Select(line => line.TrimStart().StartsWith('#') ? line : ArgumentPattern().Replace(line, match =>
             !match.Groups[1].Success ? match.Value
             : match.Groups[1].Value == "*" ? string.Join(' ', words)
-            : words[match.Groups[1].Value[0] - '1'])).ToList();
-    }
+            : match.Groups[1].Value[0] - '1' < words.Count ? words[match.Groups[1].Value[0] - '1'] : match.Value))
+            .ToList();
 }

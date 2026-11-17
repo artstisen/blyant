@@ -458,16 +458,17 @@ blyant ~/novel> word notes.md 12 9 replace wish
 | `word file line n before text` | Put the text in front of the word, with a blank: `word notes.md 12 14 before handful of` |
 | `word file line n after text` | Put the text after the word, with a blank: `word notes.md 12 6 after or two` |
 | `word file line n delete` | Take the word out, with one of the blanks around it |
-| `word file line n upper`, `lower`, `title` | Make the word UPPERCASE, lowercase or Title Case (the first letter capital, the rest small) |
+| `word file line n upper`, `lower`, `title` | Make the word UPPERCASE, lowercase or Title Case (the first letter capital, the rest as it is: `NASA` stays `NASA`) |
 
 - A word is letters and digits, and a `'` or `-` between two of them belongs to it (`don't`, `well-known`). Punctuation and the marks of Markdown are not part of a word, and stay where they are: `text,` replaced by `note` is `note,`, and `**bold**` made upper case is `**BOLD**`. A dash or a mark alone is not a word, and has no number
-- `delete` takes the word out with the marks and punctuation around it up to the blanks (`change,` and `**bold**` go whole), unless another word is there too (`a` of `a/b`)
+- `delete` takes the word out with the marks around it that open and close each other (`**bold**`, `(see)` and `"why"` go whole). A mark that opens or closes something else stays (`(see chapter 3)` without `see` is `(chapter 3)`), and so does punctuation after the word (`the end.` without `end` is `the.`). One of the blanks around the word goes with it, and none is left at the start or the end of the line
+- A word is letters and digits with any accents or marks that go with them, also when an accent is a separate character, as in files from macOS
 - Several words are given as `5-7`: `replace` puts the text in place of all of them, and `before` and `after` go in front of the first and after the last
 - The line is given as `12` or `+12`, and the file as a name, a row of the last list or `$file`: `words` makes the file `$file`, so the next command can be `word $file 12 9 ...`
 - After a change the line is shown, with the words numbered again, as the numbers after a word put in or taken out move
 - The text is all that follows `replace`, `before` or `after`, as typed; in quotes it is put in exactly as written. `$name` puts in a value
 - `undo` takes a change back. A file Blyant uses, or one that is not UTF-8, is not changed, and the line endings and byte order mark of the file are kept, as with `lines`
-- `lines notes.md 3-9 title` makes whole lines Title Case, as `upper` and `lower` do
+- `lines notes.md 3-9 title` makes whole lines Title Case, as `upper` and `lower` do: the first letter of each word capital, the rest as it is. Code in backticks, the address of a link (`[text](address)`, `<address>`) and web addresses are left as they are
 
 With `-p` before the file, a word is all between blanks, with the punctuation and the marks around it, so a change takes them too, without counting characters:
 
@@ -903,7 +904,7 @@ run $tidy notes.md                      both commands on notes.md
 run weekly.txt chapter-3.md             a file of commands takes words too
 ```
 
-- `$1` stays as typed when the register is set (a name starts with a letter, so `$1` is never a register), and is put in when the script runs. Without words, the script runs as it is
+- `$1` stays as typed when the register is set (a name starts with a letter, so `$1` is never a register), and is put in when the script runs. A script whose commands take `$1` is refused without words, so `new $1` cannot make a file named `$1`; a `reg` line keeps `$1` as text, for a script that makes another (`reg check words $1 $2`)
 - A script of one command without `$1` gets the words added at the end: after `reg test open`, `run $test $file` opens the file
 - The words must fit: a script with `$1` and `$2` takes two words, and with `$*` at least as many as the highest `$n`. A script of several commands without `$1` takes no words. `$$1` is a `$1` as it is
 - A word with blanks is put in as one, in quotes: `run $check "my notes.md" 3`. `$names` in the words are put in first, as `$file` above
@@ -917,7 +918,7 @@ reg ed open
 $ed plot.md                             runs: open plot.md
 ```
 
-The register is put in front of the rest of the line. A register of several lines is run with `run`, and a name set by Blyant (`$file`, `$clip` ...) is not a command.
+The register is put in front of the rest of the line, when it starts with a command: a register that holds a path (`file x > $r`) or a text is put in a command instead (`open $r`), and a register of several lines is run with `run`. A name set by Blyant (`$file`, `$clip` ...) is not a command. The words given to a script are put in once: a `$` in them stays a `$`, and a word with blanks and quotes in it cannot be given (it would be split).
 
 ## What stays on the full screen
 The corkboard, the Jump menu, the color schemes and logos, Configuration, split views and Zen mode are not in the shell: start Blyant without `--shell` to use them. Your settings, lists and bookmarks are the same in both, as they are kept in the data directory (see [Good to know](Guide-to-installation.md#good-to-know)).
