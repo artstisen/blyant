@@ -5362,4 +5362,67 @@ public class ShellTests : IDisposable
         Assert.Equal("find -r", Tab(Completion(), "find -r"));
         Assert.Contains("find -r", Run("help find\n").Output);
     }
+
+    // ---- forget
+
+    // Something kept while Blyant runs: commands typed, $clip, and (in the script) $peek, $calc, a search, an undo step
+    private const string Memory = "peek t.md\ncalc 6 * 7\nfind t.md\ninsert t.md bottom two\nreg keep this\n";
+
+    private void MemoryBefore()
+    {
+        CommandHistory.Clear();
+        File.WriteAllText(In("work", "t.md"), "one\n");
+        CommandHistory.Add(CommandContext.Shell, "pwd");
+        CommandHistory.Add(CommandContext.Editor, "w");
+        ShellRegisters.Clip = "copied";
+    }
+
+    [Fact]
+    public void Forget_AfterYes_ForgetsWhatIsKeptWhileBlyantRuns_AndKeepsWhatIsSaved()
+    {
+        try
+        {
+            MemoryBefore();
+            var (output, errors, _, session) = Run(Memory + "forget\nfind -r\nundo\n", yes: true);
+            Assert.Contains(Lang.T("Forgotten: the commands typed, $clip, $peek, $calc, the last search and the undo steps"),
+                output);
+            Assert.Empty(CommandHistory.Of(CommandContext.Shell));
+            Assert.Null(ShellRegisters.Clip);
+            Assert.Null(ShellRegisters.Peek);
+            Assert.Null(ShellRegisters.Calc);
+            // The other places keep their commands; the registers, $file and the file stay
+            Assert.Equal(new[] { "w" }, CommandHistory.Of(CommandContext.Editor));
+            Assert.Equal("this", ShellRegisters.Get("keep"));
+            Assert.Equal(In("work", "t.md"), session.WorkedFile);
+            // No search to make again, no step to undo: the line put in stays
+            Assert.Contains(Lang.T("No search yet: find plot, find -t storm"), errors);
+            Assert.Equal("one\ntwo\n", File.ReadAllText(In("work", "t.md")));
+        }
+        finally
+        {
+            CommandHistory.Clear();
+        }
+    }
+
+    [Fact]
+    public void Forget_IsAsked_AndWithoutYesNothingIsForgotten()
+    {
+        try
+        {
+            MemoryBefore();
+            var (output, errors, _, _) = Run(Memory + "forget\nundo\nforget all\n");
+            Assert.Contains(Lang.T("Nothing forgotten"), output);
+            Assert.Equal("copied", ShellRegisters.Clip);
+            Assert.Equal("42", ShellRegisters.Calc);
+            Assert.NotEmpty(CommandHistory.Of(CommandContext.Shell));
+            // The undo step was kept: undo took the line back
+            Assert.Equal("one\n", File.ReadAllText(In("work", "t.md")));
+            Assert.Contains(Lang.T("forget takes nothing after it"), errors);
+            Assert.Contains("forget", Run("help forget\n").Output);
+        }
+        finally
+        {
+            CommandHistory.Clear();
+        }
+    }
 }

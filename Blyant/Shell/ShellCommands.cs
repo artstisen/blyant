@@ -60,6 +60,7 @@ internal sealed partial class ShellSession
         ("set [name [value]]", Lang.T("Show the settings, or change one")),
         ("reset", Lang.T("Reset all settings to the defaults (asks first)")),
         ("reload", Lang.T("Read the settings file and the registers again, after editing them")),
+        ("forget", Lang.T("Forget commands typed, $clip, $peek, $calc, last search, undo (asks)")),
         ("clip [path|name] file|dir|n|.", Lang.T("Copy a path, or a name, to the clipboard")),
         ("clip text file|n", Lang.T("Copy the text of a file to the clipboard")),
         ("clip lines file|n lines", Lang.T("Copy lines of a file (4, 4-6, 4,7, +100 20)")),
@@ -589,6 +590,40 @@ internal sealed partial class ShellSession
         KeepInRegister(name, string.Join("\n", commands), adds);
     }
 
+    // "forget": what the shell keeps only while Blyant runs, forgotten after asking (in a script or with --run, the
+    // answer is no unless --yes is given): the commands typed (again, Up and !n), $clip, $peek and the window of the
+    // last peek, $calc, the last search (find alone, find -r), and the undo and redo steps. Saved things stay: the
+    // registers, the settings, $file, the directory and the last list
+    private void Forget(string argument)
+    {
+        if (argument.Trim().Length > 0)
+        {
+            Error(Lang.T("forget takes nothing after it"));
+            return;
+        }
+
+        // (this command is the newest of the commands typed: not counted)
+        var commands = Math.Max(0, CommandHistory.Of(CommandContext.Shell).Count - (_typed ? 1 : 0));
+        var note = Lang.F("Commands typed: {0}. Undo steps: {1}. And $clip, $peek, $calc and the last search. " +
+                          "Registers, settings and $file stay.", commands, _undo.Count + _redo.Count);
+        if (!ChoiceBox.Confirm(Lang.T("Shell memory"), Lang.T("Forget what the shell keeps while Blyant runs?"), note, true))
+        {
+            Line(Lang.T("Nothing forgotten"));
+            return;
+        }
+
+        CommandHistory.Clear(CommandContext.Shell);
+        ShellRegisters.Clip = null;
+        ShellRegisters.Peek = null;
+        ShellRegisters.Calc = null;
+        ForgetFind();
+        _lastPeek = null;
+        _lastSearch = null;
+        _undo.Clear();
+        _redo.Clear();
+        Line(Lang.T("Forgotten: the commands typed, $clip, $peek, $calc, the last search and the undo steps"));
+    }
+
     // "echo $file", "echo Tidied on $date": the text written as typed, with the $names put in ("$$": a "$"), a value
     // of several lines with all its lines. A $name that is no register and no name set by Blyant is told: nothing is
     // written. Changes nothing (no file, no last list, not $file)
@@ -819,6 +854,9 @@ internal sealed partial class ShellSession
                 break;
             case "calc":
                 Calc(argument);
+                break;
+            case "forget":
+                Forget(argument);
                 break;
             case "again":
                 ListAgain(argument);

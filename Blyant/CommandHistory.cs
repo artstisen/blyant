@@ -44,6 +44,11 @@ internal static class CommandHistory
     /// Forget all the commands
     /// </summary>
     internal static void Clear() => Places.Clear();
+
+    /// <summary>
+    /// Forget the commands of one place ("forget" in the shell: the other places keep theirs)
+    /// </summary>
+    internal static void Clear(CommandContext context) => Places.Remove(context);
 }
 
 /// <summary>
