@@ -5617,4 +5617,59 @@ public class ShellTests : IDisposable
         Assert.Equal("word -p n.md 1 2 replace", Tab(Completion(), "word -p n.md 1 2 "));
         Assert.Equal("words -p", Tab(Completion(), "words -"));
     }
+
+    // ---- run with words, a register as the start of a command
+
+    [Fact]
+    public void Run_WithWords_PutsThemInForDollarOneAndTwo_AndAddsThemToAScriptOfOneLine()
+    {
+        File.WriteAllText(In("work", "n.md"), "# Notes\nThe letter.\n");
+        var (output, errors, _, _) = Run("peek n.md 1\nreg test words\nrun $test $file 2\n" +
+                                         "reg check words $1 $2\nrun $check n.md +2\n" +
+                                         "reg tidy = word $1 2 1 upper\nreg tidy += word $1 2 2 upper\nrun $tidy n.md\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains("words " + In("work", "n.md") + " 2\n", output);
+        Assert.Contains("words n.md +2\n", output);
+        Assert.Equal("# Notes\nTHE LETTER.\n", File.ReadAllText(In("work", "n.md")));
+        // $* all, a word with blanks as one; and the registers keep $1 as typed
+        (output, _, _, _) = Run("reg every echo [$*]\nrun $every one \"two three\"\n");
+        Assert.Contains("echo [one \"two three\"]\n", output);
+        Assert.Equal("words $1 $2", ShellRegisters.Get("check"));
+    }
+
+    [Fact]
+    public void Run_WithWordsThatDoNotFit_IsRefused_AndWithoutWordsAScriptIsAsBefore()
+    {
+        var (_, errors, _, _) = Run("reg check words $1 $2\nrun $check a.md\n");
+        Assert.Contains(Lang.F("The script takes {0} words ($1 to ${0}): {1} given", 2, 1), errors);
+        (_, errors, _, _) = Run("run $check a.md 2 3\n");
+        Assert.Contains(Lang.F("The script takes {0} words ($1 to ${0}): {1} given", 2, 3), errors);
+        (_, errors, _, _) = Run("reg some echo $1 $*\nrun $some\n");
+        Assert.Equal(string.Empty, errors);
+        (_, errors, _, _) = Run("reg two = pwd\nreg two += pwd\nrun $two x\n");
+        Assert.Contains(Lang.T("The script has no $1: write $1, $2 ... where the words go (reg tidy = trim $1)"), errors);
+        // A file whose name has a blank is still a file
+        File.WriteAllText(In("work", "my script.txt"), "pwd\n");
+        var (output, wrong, _, _) = Run("run my script.txt\n");
+        Assert.Equal(string.Empty, wrong);
+        Assert.Contains(In("work") + "\n", output);
+        // A file with words
+        File.WriteAllText(In("work", "w.txt"), "echo got $1\n");
+        (output, _, _, _) = Run("run w.txt here\n");
+        Assert.Contains("got here\n", output);
+    }
+
+    [Fact]
+    public void ARegisterOfOneLine_IsTheStartOfACommand()
+    {
+        File.WriteAllText(In("work", "n.md"), "# Notes\nThe letter.\n");
+        var (output, errors, _, _) = Run("reg w words\n$w n.md 2\nreg up word $$file 2 1 upper\npeek n.md\n$up\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains("  1 The  2 letter\n", output);
+        Assert.Equal("# Notes\nTHE letter.\n", File.ReadAllText(In("work", "n.md")));
+        var (_, wrong, _, _) = Run("reg two = pwd\nreg two += pwd\n$two\n$nothere x\n$file x\n");
+        Assert.Contains(Lang.F("${0} has more than one line: run ${0} runs it", "two"), wrong);
+        Assert.Contains(Lang.F("Unknown command: {0} (help lists the commands)", "$nothere"), wrong);
+        Assert.Contains(Lang.F("Unknown command: {0} (help lists the commands)", "$file"), wrong);
+    }
 }

@@ -4,7 +4,9 @@
 /// "run $tidy", "run tidy.txt", "run $pwd/weekly.txt": the commands of a register (a register of several lines: one a line) or of a file run
 /// one after another, each written out before it runs, as "again" does. It stops at the first that fails, and
 /// questions are asked as for any command. A $name in a command is put in when that command runs ("$$date" in the
-/// register keeps "$date" for then). A line starting with "#" is a comment
+/// register keeps "$date" for then). A line starting with "#" is a comment. Words after the register or file are
+/// put in where a command has $1, $2 ... ($* all of them): "run $check $file 12"; a script of one line without them
+/// gets them at its end ("reg test open", "run $test $file")
 /// </summary>
 internal sealed partial class ShellSession
 {
@@ -14,7 +16,8 @@ internal sealed partial class ShellSession
     private int _runDepth;
 
 
-    // "run $tidy": its value (put in already: the commands); "run tidy.txt": the lines of the file
+    // "run $tidy": its value (put in already: the commands); "run tidy.txt": the lines of the file; "run $check
+    // $file 12": with words for $1 and $2 in its commands
     private void RunCommands(string argument)
     {
         var typed = (_typedArgument ?? argument).Trim();
@@ -22,6 +25,19 @@ internal sealed partial class ShellSession
         {
             Error(Lang.T("Give a register or a file: run $tidy, run tidy.txt"));
             return;
+        }
+
+        // The words after the register or file: for $1, $2 ... (a file named with blanks, "run my script.txt",
+        // is the file as before: the whole line is the path when that file is there)
+        var arguments = new List<string>();
+        var parts = Words(typed);
+        if (parts.Count > 1 && !File.Exists(PathOf(argument.Trim().Trim('"'))))
+        {
+            var rest = AfterWords(typed, 1);
+            // ($names put in, a value with blanks as one word)
+            arguments = Words(ShellRegisters.Expand(rest, int.MaxValue));
+            typed = typed[..^rest.Length].Trim();
+            argument = ShellRegisters.Expand(typed, 0);
         }
 
         string text;
@@ -72,9 +88,11 @@ internal sealed partial class ShellSession
             return;
         }
 
+        var lines = LinesOfText(text);
+        if (WithArguments(lines, arguments) is not { } given) return;
+        lines = given;
         // English: the log (the register or the file, never its commands: each is logged by its name as it runs)
         EventLog.Add(DialogText.LogShell + ": run " + (what.StartsWith('$') ? what : "file " + what));
-        var lines = LinesOfText(text);
         var typedBefore = _typed;
         _runDepth++;
         // (the commands run are not kept for again: "run $tidy" is, so !! runs them all again)
@@ -101,5 +119,61 @@ internal sealed partial class ShellSession
             _runDepth--;
             _typed = typedBefore;
         }
+    }
+
+    // $1 to $9 and $* in the commands of a script ("$$1" is "$1" as it is)
+    [System.Text.RegularExpressions.GeneratedRegex(@"\$\$|\$([1-9*])")]
+    private static partial System.Text.RegularExpressions.Regex ArgumentPattern();
+
+    /// <summary>
+    /// The commands of a script with the words given after it put in: $1 the first, $2 the second ..., $* all of them.
+    /// A script of one command without any of them gets the words at its end. Null (and told) when the words do not
+    /// fit: fewer than the highest $n, more than it without $*, or words for a script of several commands without $n.
+    /// Without words the script is as it is
+    /// </summary>
+    internal List<string>? WithArguments(List<string> lines, IReadOnlyList<string> arguments)
+    {
+        // (no words: the script as it is, as before; a "$1" in it is left, as in a script that sets a register)
+        if (arguments.Count == 0) return lines;
+        var commands = lines.Where(line => line.Trim().Length > 0 && !line.TrimStart().StartsWith('#')).ToList();
+        var highest = 0;
+        var all = false;
+        foreach (var command in commands)
+        {
+            foreach (System.Text.RegularExpressions.Match match in ArgumentPattern().Matches(command))
+            {
+                if (!match.Groups[1].Success) continue;
+                if (match.Groups[1].Value == "*") all = true;
+                else highest = Math.Max(highest, match.Groups[1].Value[0] - '0');
+            }
+        }
+
+        // (a value with blanks put in as one word)
+        var words = arguments.Select(word => word.Any(char.IsWhiteSpace) ? "\"" + word + "\"" : word).ToList();
+        if (highest == 0 && !all)
+        {
+            if (commands.Count == 1)
+            {
+                return lines.Select(line => ReferenceEquals(line, commands[0]) || line == commands[0]
+                    ? line.TrimEnd() + " " + string.Join(' ', words)
+                    : line).ToList();
+            }
+
+            Error(Lang.T("The script has no $1: write $1, $2 ... where the words go (reg tidy = trim $1)"));
+            return null;
+        }
+
+        if (words.Count < highest || (!all && words.Count > highest))
+        {
+            Error(all
+                ? Lang.F("The script takes at least {0} words ($1 to ${0}): {1} given", highest, words.Count)
+                : Lang.F("The script takes {0} words ($1 to ${0}): {1} given", highest, words.Count));
+            return null;
+        }
+
+        return lines.Select(line => ArgumentPattern().Replace(line, match =>
+            !match.Groups[1].Success ? match.Value
+            : match.Groups[1].Value == "*" ? string.Join(' ', words)
+            : words[match.Groups[1].Value[0] - '1'])).ToList();
     }
 }

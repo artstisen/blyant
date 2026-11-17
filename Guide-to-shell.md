@@ -169,6 +169,8 @@ To get all output at once (with a screen reader, say), turn the pages off: `set 
 | `again [n]` | List the commands you typed, the newest first, or run one again by its number (`again 3`; also `!3`, and `!!` for the last). See [Typing a command](#typing-a-command) |
 | `again n\|n-m > $name` | Keep commands you typed in a register, as typed and the oldest first, for `run` (`again 3-5 > $tidy`); `>> $name` adds them. See [Running commands](#running-commands) |
 | `run $name\|file` | Run the commands of a register or of a file, one per line, each written out first; it stops at the first that fails. See [Running commands](#running-commands) |
+| `run $name\|file words` | Run it with the words put in where the commands have `$1`, `$2` ... (`$*`: all of them): `run $check $file 12`. A script of one command without `$1` gets the words added at the end. See [Script with words](#script-with-words) |
+| `$name words` | A register of one line as the start of a command: after `reg w words`, `$w $file 12` runs `words` with the file and the line. See [Script with words](#script-with-words) |
 | `help [command]` (`h`) | List the commands, or explain one |
 | `exit` (`quit`, `q`) | Leave Blyant |
 
@@ -879,6 +881,34 @@ Commands you have typed can go in a register as they are: `again` lists them, th
 - `run file` takes a path as other commands do: `run weekly.txt`, `run $pwd/weekly.txt`, `run $file` (the file the last command worked on) or a register that holds a path (`run $docs/weekly.txt`). `run $tidy` runs the lines of the register `tidy` itself
 - `exit` in a run ends the run, not Blyant, and `screen`, `again`, `!3` and `!!` are not run in a run (`!!` would run the run again): the shell says so, and the run stops there
 - `again` keeps `run $tidy`, not the commands it ran, so `!!` runs them all again. From the command line of your system: `blyant --run "run $tidy"` (in quotes, and in bash `\$tidy` or single quotes, as bash uses `$` itself)
+
+### Script with words
+A script can take words when it runs, as a command does: write `$1` where the first word goes, `$2` for the second, and `$*` for all of them, and give the words after the register or file:
+
+```
+reg check = words $1 $2                 a script that takes a file and a line
+run $check $file 12                     runs: words <the file> 12
+reg tidy = trim $1
+reg tidy += insert $1 bottom Tidied on $$date
+run $tidy notes.md                      both commands on notes.md
+run weekly.txt chapter-3.md             a file of commands takes words too
+```
+
+- `$1` stays as typed when the register is set (a name starts with a letter, so `$1` is never a register), and is put in when the script runs. Without words, the script runs as it is
+- A script of one command without `$1` gets the words added at the end: after `reg test open`, `run $test $file` opens the file
+- The words must fit: a script with `$1` and `$2` takes two words, and with `$*` at least as many as the highest `$n`. A script of several commands without `$1` takes no words. `$$1` is a `$1` as it is
+- A word with blanks is put in as one, in quotes: `run $check "my notes.md" 3`. `$names` in the words are put in first, as `$file` above
+
+A register of one line can also be the start of a command, like a short name you choose:
+
+```
+reg w words
+$w $file 12                             runs: words <the file> 12
+reg ed open
+$ed plot.md                             runs: open plot.md
+```
+
+The register is put in front of the rest of the line. A register of several lines is run with `run`, and a name set by Blyant (`$file`, `$clip` ...) is not a command.
 
 ## What stays on the full screen
 The corkboard, the Jump menu, the color schemes and logos, Configuration, split views and Zen mode are not in the shell: start Blyant without `--shell` to use them. Your settings, lists and bookmarks are the same in both, as they are kept in the data directory (see [Good to know](Guide-to-installation.md#good-to-know)).

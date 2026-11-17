@@ -118,6 +118,8 @@ internal sealed partial class ShellSession
         ("redo [n]", Lang.T("Undo the last undo")),
         ("changes", Lang.T("List the changes undo goes back through")),
         ("run $name|file", Lang.T("Run commands from a register or file, one per line")),
+        ("run $name|file words", Lang.T("Run it with words for $1, $2 ... ($*: all of them)")),
+        ("$name words", Lang.T("A register of one line as the start of a command")),
         ("help [command]", Lang.T("List the commands, or tell what one does")),
         ("exit", Lang.T("Leave Blyant (also quit, q)"))
     };
@@ -165,6 +167,22 @@ internal sealed partial class ShellSession
         if (_typed && !CommandLine.Name(line).Equals("again", StringComparison.OrdinalIgnoreCase))
         {
             CommandHistory.Add(CommandContext.Shell, line);
+        }
+
+        // "$ed $file": a register of one line ("reg ed open") as the start of the command, the rest after it
+        if (CommandLine.Name(line) is ['$', .. var start] && ShellRegisters.IsName(start) &&
+            !ShellRegisters.IsReserved(start) && ShellRegisters.Get(start) is { } value)
+        {
+            if (value.Contains('\n'))
+            {
+                NewPage();
+                Error(Lang.F("${0} has more than one line: run ${0} runs it", start.ToLowerInvariant()));
+                return true;
+            }
+
+            var rest = CommandLine.Argument(line);
+            line = (value.Trim() + (rest.Length > 0 ? " " + rest : string.Empty)).Trim();
+            if (line.Length == 0) return true;
         }
 
         // By name only (never what follows it: a path, a name, the value of a register)

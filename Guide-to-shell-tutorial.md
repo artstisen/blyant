@@ -596,6 +596,18 @@ Other ways to put commands on separate lines:
 - Write them in a text file, one per line, and run the file: `run check.txt`. A line starting with `#` is a comment
 - In the editor (`open check.txt`) a script file is easy to change and to read
 
+A script can also take words when it runs: write `$1` where the first word goes, `$2` for the second:
+
+```
+blyant ~/novel> reg show = words $1 $2
+  $show = words $1 $2
+blyant ~/novel> run $show plot.md 4
+words plot.md 4
+  1 The  2 letter  3 is  4 from  5 her  6 aunt
+```
+
+A register of one line can be the start of a command, like a short name: after `reg w words`, `$w plot.md 4` does the same.
+
 ## Full screen and shell side by side
 What you do on the full screen, and the command for it in the shell:
 
