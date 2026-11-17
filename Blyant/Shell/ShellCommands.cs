@@ -54,7 +54,10 @@ internal sealed partial class ShellSession
         ("lines file lines unstart|unend text", Lang.T("Take a text off the start or the end of lines")),
         ("lines file|n lines replace old new", Lang.T("Replace a text in lines, the rest kept")),
         ("lines file|n lines sort [-a|-d]", Lang.T("Sort lines: -a A to Z, capitals first (default), -d Z to A")),
-        ("lines file|n lines upper|lower", Lang.T("Make lines UPPERCASE or lowercase")),
+        ("lines file|n lines upper|lower|title", Lang.T("Make lines UPPERCASE, lowercase or Title Case")),
+        ("words file|n line", Lang.T("Show the words of a line, numbered, for word")),
+        ("word file|n line n|n-m action [text]", Lang.T("Change words by number: replace, before, after, delete")),
+        ("word ... upper|lower|title", Lang.T("Make words UPPERCASE, lowercase or Title Case")),
         ("format file|n", Lang.T("Format an HTML, CSS or XML file, as :format does")),
         ("trim file|n", Lang.T("Remove blank space at line ends, as :trim does (trim!)")),
         ("set [name [value]]", Lang.T("Show the settings, or change one")),
@@ -202,6 +205,8 @@ internal sealed partial class ShellSession
             argument = ShellRegisters.Expand(argument, name switch
             {
                 "insert" or "change" => 2,
+                // (the text of "word notes.md 12 9 replace ..." as it is)
+                "word" => 4,
                 "reg" or "set" => 1,
                 // ("run $tidy": its lines as they are)
                 // ("echo $file and $date": the values as they are)
@@ -855,6 +860,12 @@ internal sealed partial class ShellSession
                 break;
             case "calc":
                 Calc(argument);
+                break;
+            case "words":
+                WordsCommand(argument);
+                break;
+            case "word":
+                WordCommand(argument);
                 break;
             case "forget":
                 Forget(argument);

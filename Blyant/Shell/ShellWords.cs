@@ -1,0 +1,147 @@
+﻿namespace Blyant;
+
+/// <summary>
+/// "words" and "word": the words of one line of a file numbered ("words notes.md 12"), and a word or words of it
+/// changed by their numbers ("word notes.md 12 9 replace wish"), without opening the file. See LineWords for what a
+/// word is. As the other line commands: only a file in UTF-8 and not one Blyant uses, the line endings and byte order
+/// mark kept, the file then the last list at that line ($file), undo takes a change back. What is written is never
+/// logged, only the path and the line
+/// </summary>
+internal sealed partial class ShellSession
+{
+    // What "word" does to the words: the first three take a text after them
+    private static readonly string[] WordActions = { "replace", "before", "after", "delete", "upper", "lower", "title" };
+
+    // The width the numbered words are shown in (79 columns when it is not known, as to a file)
+    private int WordsWidth() => Terminal && WindowSize?.Invoke() is { Width: > 20 } size ? size.Width - 3 : 77;
+
+    // The line of a file a command is about ("words notes.md 12", "+12" too): the file, its lines and the line (from
+    // 1); null (and told) when it is not there
+    private (Item Item, TextFile File, List<string> Lines, int Line)? LineOf(string fileWord, string lineWord, string usage)
+    {
+        if (!LinesToChange(lineWord, out var line, out var last) || last != line)
+        {
+            Error(usage);
+            return null;
+        }
+
+        if (EditableFile(fileWord) is not { } editable) return null;
+        var lines = LinesOfText(editable.File.Text);
+        if (line > lines.Count)
+        {
+            Error(Lang.F("{0} has {1} lines", editable.Item.Path, lines.Count));
+            return null;
+        }
+
+        return (editable.Item, editable.File, lines, line);
+    }
+
+    // The words of a line, numbered, a row at a time
+    private void ShowWords(string line)
+    {
+        foreach (var row in LineWords.Numbered(line, WordsWidth())) Line("  " + row);
+    }
+
+    // "words notes.md 12": the words of line 12, numbered, for "word"; the file is then $file, at that line
+    private void WordsCommand(string argument)
+    {
+        var words = Words(argument);
+        var usage = Lang.T("Give a file and a line: words notes.md 12");
+        if (words.Count != 2)
+        {
+            Error(usage);
+            return;
+        }
+
+        if (LineOf(words[0], words[1], usage) is not { } at) return;
+        var text = at.Lines[at.Line - 1];
+        LastList = new List<Item> { new(at.Item.Path, false, (at.Line, 1)) };
+        var count = LineWords.Find(text).Count;
+        if (count == 0)
+        {
+            Line(Lang.F("{0}, line {1}: no words", at.Item.Path, at.Line));
+            return;
+        }
+
+        ShowWords(text);
+        Line(Lang.F("{0}, line {1}: {2} words", at.Item.Path, at.Line, count));
+    }
+
+    // "word notes.md 12 9 replace wish", "word notes.md 12 14 before handful of", "word notes.md 12 5-6 delete",
+    // "word notes.md 12 1-4 title": the words of line 12 changed by their numbers (as "words" shows them). The text is
+    // all that follows the action, as typed (in quotes as it is). The line is shown changed, and its words numbered
+    // again, as the numbers can have moved
+    private void WordCommand(string argument)
+    {
+        var words = Words(argument);
+        var usage = Lang.T("Give a file, a line, the words and what to do: word notes.md 12 9 replace wish");
+        if (words.Count < 4)
+        {
+            Error(usage);
+            return;
+        }
+
+        var action = words[3].ToLowerInvariant();
+        if (!WordActions.Contains(action))
+        {
+            Error(Lang.F("Not taken: {0} (replace, before, after, delete, upper, lower or title)", words[3]));
+            return;
+        }
+
+        if (!LinesToChange(words[2], out var first, out var last))
+        {
+            Error(Lang.F("Not words: {0} (as 9, or 5-7)", words[2]));
+            return;
+        }
+
+        // The text after replace, before and after: as typed (in quotes: as it is, blanks too)
+        var text = AfterWords(argument, 4).Trim();
+        if (text.Length >= 2 && text[0] == '"' && text[^1] == '"' && text.Count(c => c == '"') == 2) text = text[1..^1];
+        var takesText = action is "replace" or "before" or "after";
+        if (takesText && text.Length == 0)
+        {
+            Error(Lang.F("Give the text: word notes.md 12 9 {0} wish", action));
+            return;
+        }
+
+        if (!takesText && text.Length > 0)
+        {
+            Error(Lang.F("Nothing goes after {0}: word notes.md 12 9 {0}", action));
+            return;
+        }
+
+        if (LineOf(words[0], words[1], usage) is not { } at) return;
+        var line = at.Lines[at.Line - 1];
+        var count = LineWords.Find(line).Count;
+        if (last > count)
+        {
+            Error(count == 1
+                ? Lang.F("Line {0} has 1 word: {1} is not one", at.Line, last)
+                : Lang.F("Line {0} has {1} words: {2} is not one", at.Line, count, last));
+            return;
+        }
+
+        var changed = LineWords.Change(line, first, last, action, text);
+        if (changed == line)
+        {
+            Line(Lang.T("Nothing changed: the words are so already"));
+            return;
+        }
+
+        at.Lines[at.Line - 1] = changed;
+        var normalized = TextBuffer.Normalize(at.File.Text);
+        var result = SaveEdit(at.File, string.Join("\n", at.Lines) + (normalized.EndsWith('\n') ? "\n" : string.Empty));
+        // (the path, what was done and the line, never the text)
+        FileExplorer.LogFileOperation("Edit words (" + action + ")", at.Item.Path + ":" + at.Line, result);
+        if (result != DialogText.Success)
+        {
+            Error(result);
+            return;
+        }
+
+        LastList = new List<Item> { new(at.Item.Path, false, (at.Line, 1)) };
+        Line(at.Line.ToString().PadLeft(4) + "  " + changed);
+        Line(Lang.F("{0}: line {1} changed", at.Item.Path, at.Line));
+        if (LineWords.Find(changed).Count > 0) ShowWords(changed);
+    }
+}

@@ -11,7 +11,7 @@ internal sealed partial class ShellSession
 {
     // What "lines" does to the text in the lines (after the lines: "lines todo.md 4 start Note:")
     private static readonly string[] LineEdits =
-        { "start", "end", "unstart", "unend", "replace", "sort", "upper", "lower" };
+        { "start", "end", "unstart", "unend", "replace", "sort", "upper", "lower", "title" };
 
     /// <summary>
     /// What the words after "lines" are: the place of the ">" of a copy (2, or 3 after "+10 5"), or of a word of
@@ -45,7 +45,7 @@ internal sealed partial class ShellSession
         // (after the lines: neither a ">" nor a word of what is done)
         else if (form.Arrow < 0 && words.Count > 2 && !words.Contains(">") && !words.Contains(">>"))
         {
-            Error(Lang.T("After the lines: > file place, > $name, start, end, unstart, unend, replace, sort, upper or lower"));
+            Error(Lang.T("After the lines: > file place, > $name, start, end, unstart, unend, replace, sort, upper, lower or title"));
         }
         else CopyLines(argument);
     }
@@ -78,7 +78,7 @@ internal sealed partial class ShellSession
 
             (text, replacement) = (parts[0], parts[1]);
         }
-        else if (kind is "sort" or "upper" or "lower")
+        else if (kind is "sort" or "upper" or "lower" or "title")
         {
             text = string.Empty;
             if (kind == "sort" && rest is not ("" or "-a" or "-d"))
@@ -135,6 +135,7 @@ internal sealed partial class ShellSession
                 "sort" => Lang.T("Nothing changed: the lines are in that order already"),
                 "upper" => Lang.T("Nothing changed: no lowercase letters in the lines"),
                 "lower" => Lang.T("Nothing changed: no uppercase letters in the lines"),
+                "title" => Lang.T("Nothing changed: the words start with capitals already"),
                 "unstart" => Lang.F("Nothing changed: no line starts with {0}", text),
                 "unend" => Lang.F("Nothing changed: no line ends with {0}", text),
                 _ => Lang.F("Nothing changed: no line has {0} in it", text)
@@ -180,6 +181,8 @@ internal sealed partial class ShellSession
                 return line.ToUpperInvariant();
             case "lower":
                 return line.ToLowerInvariant();
+            case "title":
+                return LineWords.TitleLine(line);
             case "start":
                 return line.Trim().Length == 0 ? line : text + (exact ? string.Empty : " ") + line;
             case "end":

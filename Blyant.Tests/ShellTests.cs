@@ -4772,7 +4772,7 @@ public class ShellTests : IDisposable
         Assert.Contains(Lang.T("Nothing changed: no uppercase letters in the lines"), output);
         var (_, wrong, _, _) = Run("lines t.md 1 upper now\nlines t.md 1 sideways\n");
         Assert.Contains(Lang.F("Nothing goes after {0}: lines notes.md 3-20 {0}", "upper"), wrong);
-        Assert.Contains(Lang.T("After the lines: > file place, > $name, start, end, unstart, unend, replace, sort, upper or lower"), wrong);
+        Assert.Contains(Lang.T("After the lines: > file place, > $name, start, end, unstart, unend, replace, sort, upper, lower or title"), wrong);
     }
 
     [Fact]
@@ -5513,5 +5513,83 @@ public class ShellTests : IDisposable
         Assert.Equal(("filter draft", "a b"), ShellSession.TextOption("filter draft -t a b"));
         Assert.Equal(("-l", ""), ShellSession.TextOption("-l -t"));
         Assert.Equal(("-l filter x-t", (string?)null), ShellSession.TextOption("-l filter x-t"));
+    }
+
+    // ---- words, word, lines title
+
+    private const string WordLine = "This is a line of text, that I want to change, with a few commands...";
+
+    [Fact]
+    public void Words_ShowsTheWordsOfALineNumbered_AndMakesTheFileTheFileWorkedOn()
+    {
+        File.WriteAllText(In("work", "n.md"), "# Notes\n" + WordLine + "\n");
+        var (output, errors, _, session) = Run("words n.md 2\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains("  1 This  2 is  3 a  4 line  5 of  6 text  7 that", output);
+        Assert.Contains(Lang.F("{0}, line {1}: {2} words", In("work", "n.md"), 2, 15), output);
+        Assert.Equal(In("work", "n.md"), session.WorkedFile);
+        Assert.Equal((2, 1), session.LastList[0].At);
+        (output, _, _, _) = Run("words n.md +1\n");
+        Assert.Contains("  1 Notes\n", output);
+    }
+
+    [Fact]
+    public void Word_ChangesWordsByNumber_KeepsTheFile_AndUndoTakesItBack()
+    {
+        File.WriteAllBytes(In("work", "n.md"), System.Text.Encoding.UTF8.GetPreamble()
+            .Concat(System.Text.Encoding.UTF8.GetBytes("# Notes\r\n" + WordLine + "\r\n")).ToArray());
+        var output = new StringWriter();
+        var errors = new StringWriter();
+        var session = new ShellSession(new StringReader(string.Empty), output, errors, In("work"), false);
+        session.Execute("word n.md 2 9 replace wish");
+        session.Execute("word $file 2 14 before handful of");
+        session.Execute("word $file +2 1-4 title");
+        Assert.Equal(string.Empty, errors.ToString());
+        var bytes = File.ReadAllBytes(In("work", "n.md"));
+        // The byte order mark and the line endings kept
+        Assert.True(bytes.Take(3).SequenceEqual(System.Text.Encoding.UTF8.GetPreamble()));
+        Assert.Equal("# Notes\r\nThis Is A Line of text, that I wish to change, with a handful of few commands...\r\n",
+            System.Text.Encoding.UTF8.GetString(bytes, 3, bytes.Length - 3));
+        Assert.Contains(Lang.F("{0}: line {1} changed", In("work", "n.md"), 2), output.ToString());
+        // The words numbered again after a change
+        Assert.Contains("14 handful  15 of  16 few", output.ToString());
+        session.Execute("undo");
+        session.Execute("undo");
+        session.Execute("undo");
+        Assert.Contains(WordLine, File.ReadAllText(In("work", "n.md")));
+    }
+
+    [Fact]
+    public void Word_IsRefused_ForAWordNotThere_AnActionNotKnown_AndATextMissingOrTooMuch()
+    {
+        File.WriteAllText(In("work", "n.md"), "one two\n");
+        var (_, errors, _, _) = Run("word n.md 1 3 delete\nword n.md 1 1 sideways\nword n.md 1 1 replace\n" +
+                                    "word n.md 1 1 upper now\nword n.md 5 1 delete\nword n.md 1 x delete\nword n.md 1\n" +
+                                    "words n.md\n");
+        Assert.Contains(Lang.F("Line {0} has {1} words: {2} is not one", 1, 2, 3), errors);
+        Assert.Contains(Lang.F("Not taken: {0} (replace, before, after, delete, upper, lower or title)", "sideways"), errors);
+        Assert.Contains(Lang.F("Give the text: word notes.md 12 9 {0} wish", "replace"), errors);
+        Assert.Contains(Lang.F("Nothing goes after {0}: word notes.md 12 9 {0}", "upper"), errors);
+        Assert.Contains(Lang.F("{0} has {1} lines", In("work", "n.md"), 1), errors);
+        Assert.Contains(Lang.F("Not words: {0} (as 9, or 5-7)", "x"), errors);
+        Assert.Contains(Lang.T("Give a file, a line, the words and what to do: word notes.md 12 9 replace wish"), errors);
+        Assert.Contains(Lang.T("Give a file and a line: words notes.md 12"), errors);
+        Assert.Equal("one two\n", File.ReadAllText(In("work", "n.md")));
+        var (output, _, _, _) = Run("word n.md 1 1 lower\n");
+        Assert.Contains(Lang.T("Nothing changed: the words are so already"), output);
+    }
+
+    [Fact]
+    public void LinesTitle_AndTab_AfterWordAndLines()
+    {
+        File.WriteAllText(In("work", "n.md"), "# my notes on the storm\nAlready Title\n");
+        var (output, errors, _, _) = Run("lines n.md 1 title\nlines n.md 2 title\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("# My Notes On The Storm\nAlready Title\n", File.ReadAllText(In("work", "n.md")));
+        Assert.Contains(Lang.T("Nothing changed: the words start with capitals already"), output);
+        Assert.Equal("word n.md 1 2 replace", Tab(Completion(), "word n.md 1 2 "));
+        Assert.Equal("word n.md 1 2 title", Tab(Completion(), "word n.md 1 2 ti"));
+        Assert.Equal("lines n.md 1 title", Tab(Completion(), "lines n.md 1 ti"));
+        Assert.Contains("words file|n line", Run("help words\n").Output);
     }
 }

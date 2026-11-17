@@ -224,7 +224,23 @@ blyant ~/novel> lines plot.md 4 unstart Draft:
 - `lines plot.md 3-5 sort` sorts lines 3 to 5 A to Z (`sort -d`: Z to A), and `lines plot.md 1 upper` makes line 1 UPPERCASE (`lower`: lowercase)
 - A text in quotes is put in exactly as written, with no blank added: `lines todo.md 5-7 start "- [ ] "` makes lines 5 to 7 tasks
 
-`undo` takes back the last change made by `insert`, `change` or `lines` (also a sort) while Blyant is running (`redo` makes it again, and `changes` lists the changes). Still, `peek` first to be sure of the line numbers. A file keeps its line endings and byte order mark, and these commands leave the files Blyant uses alone.
+To change one word, without typing the line again, see the words of the line numbered, and change a word by number:
+
+```
+blyant ~/novel> words plot.md 4
+  1 The  2 letter  3 is  4 from  5 her  6 mother
+/home/anna/novel/plot.md, line 4: 6 words
+blyant ~/novel> word plot.md 4 6 replace aunt
+   4  The letter is from her aunt.
+/home/anna/novel/plot.md: line 4 changed
+  1 The  2 letter  3 is  4 from  5 her  6 aunt
+```
+
+- `word plot.md 4 5 before rich` puts a word in front of word 5, `after` after it, and `delete` takes it out
+- `word plot.md 4 1-2 upper` makes words 1 and 2 UPPERCASE (`lower`, `title` too)
+- The full stop after `mother` stays where it is: punctuation is not part of a word
+
+`undo` takes back the last change made by `insert`, `change`, `lines` (also a sort) or `word` while Blyant is running (`redo` makes it again, and `changes` lists the changes). Still, `peek` first to be sure of the line numbers. A file keeps its line endings and byte order mark, and these commands leave the files Blyant uses alone.
 
 ## Todo list
 ![A task added with insert, and ticked and moved under Done with shift!](docs/screenshots/shell-todo.svg)
@@ -600,6 +616,7 @@ What you do on the full screen, and the command for it in the shell:
 | Lines cut and put under another heading | `shift 3 4-6 Done` |
 | Lines copied or moved to another file | `lines 3 4-6 > 5 bottom`, `lines 3 4-6 > 5 bottom cut` |
 | `:sort`, `gU`, `gu` in the editor | `lines 3 4-9 sort`, `lines 3 1 upper`, `lines 3 1 lower` |
+| A word changed in the editor (`cw`, `gUiw`) | `words 3 12`, then `word 3 12 9 replace wish`, `word 3 12 9 upper` |
 | Copy and paste | `clip lines 3 4-6`, then `insert 5 top $clip` |
 | Configuration | `set`, `set indent 2` |
 | `:shell` | `screen` |

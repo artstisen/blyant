@@ -177,6 +177,13 @@ internal sealed class ShellCompletion
                 // The new name: the name it has now, to change ("rename file1.md " and Tab: "file1.md")
                 if (position == 1) return (Kind.QuotedWords, NameOf(_words[0]));
                 return (position == 0 ? Kind.Path : Kind.None, none);
+            case "words":
+                return (position == 0 ? Kind.Path : Kind.None, none);
+            case "word":
+                // The file, the line and the words (typed), then what is done
+                if (position == 3)
+                    return (Kind.Words, new[] { "replace", "before", "after", "delete", "upper", "lower", "title" });
+                return (position == 0 ? Kind.Path : Kind.None, none);
             case "copy":
             case "move":
                 return position switch
@@ -208,7 +215,7 @@ internal sealed class ShellCompletion
                         return (Kind.Words, new[] { "-a", "-d" });
                     var what = position == 2 || (position == 3 && after[1].StartsWith('+'));
                     return (what ? Kind.Words : Kind.None,
-                        new[] { ">", "start", "end", "unstart", "unend", "replace", "sort", "upper", "lower" });
+                        new[] { ">", "start", "end", "unstart", "unend", "replace", "sort", "upper", "lower", "title" });
                 }
 
                 if (position == arrow + 1) return (Kind.Path, none);

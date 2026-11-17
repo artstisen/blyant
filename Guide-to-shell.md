@@ -111,7 +111,9 @@ To get all output at once (with a screen reader, say), turn the pages off: `set 
 | `lines file\|n lines unstart\|unend text` | Take a text off the start or the end of the lines that have it |
 | `lines file\|n lines replace old new` | Replace a text in lines, keeping the rest (`lines notes.md 5-9 replace draft final`) |
 | `lines file\|n lines sort [-a\|-d]` | Sort lines A to Z (`-a`, the default) or Z to A (`-d`): `lines notes.md 3-20 sort`. The order is that of `:sort` in the editor, by the value of the characters, so capital letters come before small ones. Lines given apart (`1,5,9`) are sorted among those places |
-| `lines file\|n lines upper\|lower` | Make lines UPPERCASE or lowercase, as `gU` and `gu` in the editor: `lines notes.md 1 upper` |
+| `lines file\|n lines upper\|lower\|title` | Make lines UPPERCASE, lowercase or Title Case (each word with a capital first letter), as `gU` and `gu` in the editor: `lines notes.md 1 upper` |
+| `words file\|n line` | Show the words of a line, numbered, for `word`: `words notes.md 12`. See [Words in a line](#words-in-a-line) |
+| `word file\|n line n\|n-m action [text]` | Change words of a line by number: `replace`, `before`, `after` and `delete` (`word notes.md 12 9 replace wish`), or `upper`, `lower` and `title`. See [Words in a line](#words-in-a-line) |
 | `format file\|n` | Format an HTML, CSS or XML file, as `:format` in the editor does (see [Text and settings](#text-and-settings)) |
 | `trim file\|n` | Remove blank space at the end of lines, as `:trim` in the editor does; `trim!` also removes Markdown line breaks |
 | `set [name [value]]` | Show the settings (`set`), one setting (`set indent`), or change one (`set indent 2`, also `set indent=2` as in the settings file) |
@@ -428,9 +430,41 @@ blyant ~/notes> lines todo.md 3 unstart "- [ ] "
 - `start` and `end` put the text with a blank between it and the line. In quotes it is put as it is: no blank, or the blanks in the quotes (`"- [ ] "`). A blank line is left as it is
 - `unstart` and `unend` take the text off the lines that have it at their start or end, with the blank `start` and `end` put there (in quotes: the text only), so they undo `start` and `end`. The other lines are left as they are
 - `replace old new` replaces the text everywhere in the lines, with the letter case as typed (`draft`, not `Draft`). A text with blanks is written in quotes, and `""` is an empty text: what is replaced is removed
-- After the lines, `Tab` completes `start`, `end`, `unstart`, `unend`, `replace`, `sort`, `upper`, `lower` and `>`, and after `sort` it completes `-a` and `-d`. A `>` or one of these words later on is part of the text: `lines notes.md 3 start ">"` makes line 3 a quote
+- After the lines, `Tab` completes `start`, `end`, `unstart`, `unend`, `replace`, `sort`, `upper`, `lower`, `title` and `>`, and after `sort` it completes `-a` and `-d`. A `>` or one of these words later on is part of the text: `lines notes.md 3 start ">"` makes line 3 a quote
 - `$name` and `$clip` put in their value: `lines todo.md 4 end $note`
 - The lines changed are shown, and the file is then the last list, at the first of them (`open 1`). When no line changes, nothing is written, and the shell says so. As for `insert`, the file keeps its line endings and byte order mark, only a file in UTF-8 is changed and not the files Blyant uses, and `undo` puts it back; nothing is asked, as no line is lost
+
+## Words in a line
+`words` shows the words of one line, numbered, and `word` changes a word, or several, by number, without opening the file and without typing the line again:
+
+```
+blyant ~/novel> words notes.md 12
+  1 This  2 is  3 a  4 line  5 of  6 text  7 that  8 I  9 want  10 to
+  11 change  12 with  13 a  14 few  15 commands
+/home/anna/novel/notes.md, line 12: 15 words
+blyant ~/novel> word notes.md 12 9 replace wish
+  12  This is a line of text, that I wish to change, with a few commands...
+/home/anna/novel/notes.md: line 12 changed
+  1 This  2 is  3 a  4 line  5 of  6 text  7 that  8 I  9 wish  10 to
+  11 change  12 with  13 a  14 few  15 commands
+```
+
+| Command | What it does |
+|---|---|
+| `word file line n replace text` | Put the text in place of the word: `word notes.md 12 9 replace wish` |
+| `word file line n before text` | Put the text in front of the word, with a blank: `word notes.md 12 14 before handful of` |
+| `word file line n after text` | Put the text after the word, with a blank: `word notes.md 12 6 after or two` |
+| `word file line n delete` | Take the word out, with one of the blanks around it |
+| `word file line n upper`, `lower`, `title` | Make the word UPPERCASE, lowercase or Title Case (the first letter capital, the rest small) |
+
+- A word is letters and digits, and a `'` or `-` between two of them belongs to it (`don't`, `well-known`). Punctuation and the marks of Markdown are not part of a word, and stay where they are: `text,` replaced by `note` is `note,`, and `**bold**` made upper case is `**BOLD**`. A dash or a mark alone is not a word, and has no number
+- `delete` takes the word out with the marks and punctuation around it up to the blanks (`change,` and `**bold**` go whole), unless another word is there too (`a` of `a/b`)
+- Several words are given as `5-7`: `replace` puts the text in place of all of them, and `before` and `after` go in front of the first and after the last
+- The line is given as `12` or `+12`, and the file as a name, a row of the last list or `$file`: `words` makes the file `$file`, so the next command can be `word $file 12 9 ...`
+- After a change the line is shown, with the words numbered again, as the numbers after a word put in or taken out move
+- The text is all that follows `replace`, `before` or `after`, as typed; in quotes it is put in exactly as written. `$name` puts in a value
+- `undo` takes a change back. A file Blyant uses, or one that is not UTF-8, is not changed, and the line endings and byte order mark of the file are kept, as with `lines`
+- `lines notes.md 3-9 title` makes whole lines Title Case, as `upper` and `lower` do
 
 ## Undo
 The commands that change the text of a file (`insert`, `change`, `shift`, `lines`, `format` and `trim`) keep what the file was before, so `undo` puts it back:
