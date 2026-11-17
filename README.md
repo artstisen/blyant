@@ -74,6 +74,9 @@ See the [guide to the corkboard](Guide-to-corkboard.md).
   - Work with a file from a list: `file 2` makes row 2 of `recent` or `fav` the file you work on (`$file`), `echo $file` shows which file it is, and `path` and `name` copy the path or name of the file, as `:path` and `:name` do in the editor
   - Go back to the text you worked on last with `resume`, also the next day: it opens `$file` in the editor where you left off
   - Sort lines and change the letter case without opening an editor (`lines notes.md 3-20 sort`, `upper`, `lower`), do simple calculations with `calc` and put the result in a file (`insert budget.md bottom Total: $calc`), and see the latest files with sizes and folders (`recent -s -f`) ([calculating](Guide-to-shell.md#calculating))
+  - Change a word without typing the line again: `words notes.md 12` numbers the words of a line, and `word notes.md 12 9 replace wish` changes word 9 (also `before`, `after`, `delete`, `upper`, `lower`, `title`)
+  - Keep results in registers with `>`: a file (`file plot.md > $other`), a calculation (`calc 22 * 3500 > $words`), the files of a search (`find -t TODO > $open`), or commands you just typed as a script (`again 3-5 > $tidy`), and give a script words (`run $check $file 12`) ([registers](Guide-to-shell.md#registers))
+  - Find files in a large tree with short rows (`find -b storm`: the names only), see the last search again with `find`, and search the latest files, the history and the favorites for a text (`recent -t storm`)
 
 ## Blyant Validator
 **[Blyant Validator](https://github.com/artstisen/blyant-validator)** is a companion tool, which also works as a standalone program: validate HTML, CSS, XML, Markdown and Typst, and format HTML, CSS and XML, side by side with your editor, in any terminal. It checks a file again each time it is saved, and turns a Typst document into a PDF with `:typst`.

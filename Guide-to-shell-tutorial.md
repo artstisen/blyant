@@ -374,6 +374,9 @@ blyant ~/novel> lines notes.md 2 > $other bottom
 `file chapter-3.md > $other` keeps the full path of chapter 3 in `$other`, and `$file` stays `notes.md`. Line 2 of the notes is now at the end of chapter 3, and `$other` still points to chapter 3 for the next command. `file 3 > $other` keeps a row of the last list, and `reg other $file` the file you are working on.
 
 - `reg -d note` removes a register, and `reg -d all` removes every register
+- `reg -t storm` finds the registers with _storm_ in the name or the value, when there are many
+- `calc 22 * 3500 > $words` keeps a result under a name, so several can be kept (`$calc` holds only the last)
+- `forget` clears what the shell keeps while Blyant runs (the commands typed, `$clip`, `$peek`, `$calc`, the last search, the undo steps), after asking; the registers stay
 - Put a path with blanks in quotes: `reg docs "~/my docs"`
 - `Tab` completes the names of the registers after a `$`
 - A register can collect lines from several places: `peek plot.md 3-4`, then `reg notes += $peek`, and `lines todo.md 6 >> $notes` adds a line from another file. `insert ideas.md bottom $notes` puts all the lines in a file

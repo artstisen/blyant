@@ -170,7 +170,7 @@ To get all output at once (with a screen reader, say), turn the pages off: `set 
 | `again [n]` | List the commands you typed, the newest first, or run one again by its number (`again 3`; also `!3`, and `!!` for the last). See [Typing a command](#typing-a-command) |
 | `again n\|n-m > $name` | Keep commands you typed in a register, as typed and the oldest first, for `run` (`again 3-5 > $tidy`); `>> $name` adds them. See [Running commands](#running-commands) |
 | `run $name\|file` | Run the commands of a register or of a file, one per line, each written out first; it stops at the first that fails. See [Running commands](#running-commands) |
-| `run $name\|file words` | Run it with the words put in where the commands have `$1`, `$2` ... (`$*`: all of them): `run $check $file 12`. A script of one command without `$1` gets the words added at the end. See [Script with words](#script-with-words) |
+| `run $name\|file words` | Run it with the words put in where the commands have `$1`, `$2` ... (`$*`: all the words): `run $check $file 12`. A script of one command without `$1` gets the words added at the end. See [Script with words](#script-with-words) |
 | `$name words` | A register of one line as the start of a command: after `reg w words`, `$w $file 12` runs `words` with the file and the line. See [Script with words](#script-with-words) |
 | `help [command]` (`h`) | List the commands, or explain one |
 | `exit` (`quit`, `q`) | Leave Blyant |
@@ -460,10 +460,10 @@ blyant ~/novel> word notes.md 12 9 replace wish
 | `word file line n delete` | Take the word out, with one of the blanks around it |
 | `word file line n upper`, `lower`, `title` | Make the word UPPERCASE, lowercase or Title Case (the first letter capital, the rest as it is: `NASA` stays `NASA`) |
 
-- A word is letters and digits, and a `'` or `-` between two of them belongs to it (`don't`, `well-known`). Punctuation and the marks of Markdown are not part of a word, and stay where they are: `text,` replaced by `note` is `note,`, and `**bold**` made upper case is `**BOLD**`. A dash or a mark alone is not a word, and has no number
+- A word is letters and digits, and a `'` or `-` between two letters belongs to the word (`don't`, `well-known`). Punctuation and the marks of Markdown are not part of a word, and stay where they are: `text,` replaced by `note` is `note,`, and `**bold**` made upper case is `**BOLD**`. A dash or a mark alone is not a word, and has no number
 - `delete` takes the word out with the marks around it that open and close each other (`**bold**`, `(see)` and `"why"` go whole). A mark that opens or closes something else stays (`(see chapter 3)` without `see` is `(chapter 3)`), and so does punctuation after the word (`the end.` without `end` is `the.`). One of the blanks around the word goes with it, and none is left at the start or the end of the line
 - A word is letters and digits with any accents or marks that go with them, also when an accent is a separate character, as in files from macOS
-- Several words are given as `5-7`: `replace` puts the text in place of all of them, and `before` and `after` go in front of the first and after the last
+- Several words are given as `5-7`: `replace` puts the text in place of all those words, and `before` and `after` go in front of the first and after the last
 - The line is given as `12` or `+12`, and the file as a name, a row of the last list or `$file`: `words` makes the file `$file`, so the next command can be `word $file 12 9 ...`
 - After a change the line is shown, with the words numbered again, as the numbers after a word put in or taken out move
 - The text is all that follows `replace`, `before` or `after`, as typed; in quotes it is put in exactly as written. `$name` puts in a value
@@ -763,7 +763,7 @@ lines plot.md 3-5 > $notes          ">": the register is those lines alone
 - The registers are kept in the data directory (`registers.txt`), so they are there the next time. The file can be edited in another program: a line is the name, a tab, and the value. If the file changed since the shell read it, it is read again before the next command, and `reg` points out lines that are not registers (no tab, or a name a register cannot have): they are kept in the file, at its end, so you can put them right. The editor has separate registers. `reset` does not take them away (they are not settings), and the log has the names of registers, never the values
 
 ### Results in a register
-Some commands put what they find in a register named after `>` at the end, as `lines` does: `>` sets the register, and `>>` adds to the end of it, as lines.
+Some commands put what they find in a register named after `>` at the end, as `lines` does: `>` sets the register, and `>>` adds to the end of the register, as lines.
 
 ```
 lines notes.md 4-6 > $notes         the lines
@@ -893,7 +893,7 @@ Commands you have typed can go in a register as they are: `again` lists them, th
 - `again` keeps `run $tidy`, not the commands it ran, so `!!` runs them all again. From the command line of your system: `blyant --run "run $tidy"` (in quotes, and in bash `\$tidy` or single quotes, as bash uses `$` itself)
 
 ### Script with words
-A script can take words when it runs, as a command does: write `$1` where the first word goes, `$2` for the second, and `$*` for all of them, and give the words after the register or file:
+A script can take words when it runs, as a command does: write `$1` where the first word goes, `$2` for the second, and `$*` for all the words, and give the words after the register or file:
 
 ```
 reg check = words $1 $2                 a script that takes a file and a line
