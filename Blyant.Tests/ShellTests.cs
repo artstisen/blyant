@@ -5702,7 +5702,9 @@ public class ShellTests : IDisposable
     {
         var (output, errors, _, _) = Run("calc 6 * 7\nreg -t 42\nreg -t nothing-here\n");
         Assert.Equal(string.Empty, errors);
-        Assert.Contains(Lang.T("Set by Blyant:") + "\n  $calc", output);
+        // ($pwd can have 42 in it too, as the temporary folder of a test machine: $calc is a row, not the first)
+        Assert.Contains(Lang.T("Set by Blyant:") + "\n", output);
+        Assert.Matches(@"\n  \$calc +42\n", output);
         Assert.Contains(Lang.F("No register with {0} in the name or the value", "nothing-here"), output);
         var (_, wrong, _, _) = Run("reg -t\n");
         Assert.Contains(Lang.T("Give a text: reg -t storm (or chap*)"), wrong);
@@ -5831,7 +5833,7 @@ public class ShellTests : IDisposable
     public void Run_AFileWithQuotesAndBlanksInItsName_IsRefusedAsAWord_NotSplit()
     {
         File.WriteAllText(In("work", "my \"odd\" notes.md"), "x\n");
-        var (_, errors, _, _) = Run("reg s echo [$1]\nls\nfile 1\nrun $s $file\n");
+        var (_, errors, _, _) = Run("reg s echo [$1]\nfind odd\nfile 1\nrun $s $file\n");
         Assert.Contains(Lang.F("A word with blanks and quotes cannot be given to a script: {0}",
             In("work", "my \"odd\" notes.md")), errors);
     }
