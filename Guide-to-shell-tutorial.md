@@ -532,6 +532,53 @@ insert done.md bottom - [x] Tidied on $date
 - `!!` after `run $tidy` runs the whole script again
 - Commands you have just typed become a script with `again`: it lists them, the newest first, and `again 2-3 > $tidy` keeps numbers 2 and 3 in `$tidy`, the oldest first, as they were typed
 
+## Make your own script
+A script is a register with one command on each line. `run` runs the lines one after another, and each command is done before the next one starts, so a command can work on what the one before it showed. Here the script lists the latest files with sizes, and then shows the details of the first file:
+
+```
+blyant ~/novel> reg check = recent -s
+  $check = recent -s
+blyant ~/novel> reg check += info 1
+  $check = recent -s ...  (2 lines)
+blyant ~/novel> reg check
+recent -s
+info 1
+blyant ~/novel> run $check
+recent -s
+  1  plot.md      2026-11-17 09:12     1.2 kB
+  2  02-storm.md  2026-11-16 21:40     4.8 kB
+  3  todo.md      2026-11-16 18:05  312 bytes
+info 1
+  Name:          plot.md
+  Type:          MD file
+  Size:          1.2 kB
+  ...
+```
+
+1. `reg check = recent -s` makes the register with the first command
+2. `reg check += info 1` adds the second command as a new line. Add one line for each command
+3. `reg check` shows the lines, so you can check that each command is on a separate line
+4. `run $check` runs them. `info 1` takes row 1 of the list `recent -s` showed just before
+
+Keep each command on a separate line. Two commands typed on one line are one command: the first command takes the second as extra words, and refuses them:
+
+```
+blyant ~/novel> reg check recent -s info 1
+  $check = recent -s info 1
+blyant ~/novel> run $check
+recent -s info 1
+Not taken: info 1 (-l full paths, -s sizes, -f folder/name, -n by name)
+run stopped at line 1 of $check: recent -s info 1
+```
+
+To start again, set the register anew with `reg check = recent -s`, and add the other lines with `+=`.
+
+Other ways to put commands on separate lines:
+
+- Type the commands once at the prompt, and keep them: `again` lists them, newest first, and `again 1-2 > $check` keeps the last two in `$check`, oldest first
+- Write them in a text file, one per line, and run the file: `run check.txt`. A line starting with `#` is a comment
+- In the editor (`open check.txt`) a script file is easy to change and to read
+
 ## Full screen and shell side by side
 What you do on the full screen, and the command for it in the shell:
 

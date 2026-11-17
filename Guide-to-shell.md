@@ -818,6 +818,7 @@ run weekly.txt                                  the commands of a file
 
 Commands you have typed can go in a register as they are: `again` lists them, the newest first, and `again 3-5 > $tidy` keeps numbers 3 to 5, the oldest first, so `run $tidy` runs them in the order you typed them. A `$date` in them is kept as typed, and put in when the register runs. `again 6 >> $tidy` adds one more at the end. This is the quickest way to make a script: do it once by hand, then keep it.
 
+- One command on each line: each is done before the next one starts, so `info 1` after `recent -s` takes row 1 of that list. Two commands typed on one line are one command (`reg check recent -s info 1` gives `recent` the words `info 1`): add each with `reg check += ...`, or keep them with `again 1-2 > $check`. See [Make your own script](Guide-to-shell-tutorial.md#make-your-own-script) in the shell tutorial
 - Each command is written out before it runs, as `again` does, so you see what is done. `run` stops at the first command that fails, and tells at which line: the commands after it are not run
 - Questions are asked as for any command: `delete` and `change` without a text ask first (from a file or `--run`, the answer is no unless `--yes` is given)
 - A `$name` in a command is put in when that command runs. When you set the register, a `$name` is put in at once: write `$$date` to keep `$date` in the register, so that it is the date of each run (`reg tidy` shows what the register holds)
