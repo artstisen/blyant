@@ -238,7 +238,7 @@ blyant ~/novel> word plot.md 4 6 replace aunt
 
 - `word plot.md 4 5 before rich` puts a word in front of word 5, `after` after it, and `delete` takes it out
 - `word plot.md 4 1-2 upper` makes words 1 and 2 UPPERCASE (`lower`, `title` too)
-- The full stop after `mother` stays where it is: punctuation is not part of a word
+- The full stop after `mother` stays where it is: punctuation is not part of a word. With `-p` a word is all between blanks, so `word -p plot.md 4 6 replace aunt!` takes the full stop too, and the line ends with `her aunt!` (`words -p` shows the numbers)
 
 `undo` takes back the last change made by `insert`, `change`, `lines` (also a sort) or `word` while Blyant is running (`redo` makes it again, and `changes` lists the changes). Still, `peek` first to be sure of the line numbers. A file keeps its line endings and byte order mark, and these commands leave the files Blyant uses alone.
 

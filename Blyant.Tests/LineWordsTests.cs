@@ -60,4 +60,37 @@ public class LineWordsTests
             string.Join("  ", rows));
         Assert.Empty(LineWords.Numbered("-- **", 30));
     }
+
+    private static List<string> BetweenBlanks(string line) =>
+        LineWords.Find(line, true).Select(word => line.Substring(word.Start, word.Length)).ToList();
+
+    [Fact]
+    public void BetweenBlanks_AWordIsAllBetweenBlanks_WithPunctuationAndMarks()
+    {
+        Assert.Equal(new[] { "Keep", "**bold**", "and", "a/b,", "\"why?\"", "—", "here." },
+            BetweenBlanks("  Keep **bold** and a/b, \"why?\" — here.  "));
+        Assert.Empty(BetweenBlanks("   "));
+    }
+
+    [Theory]
+    [InlineData("a line of text, that", 4, 4, "replace", "note:", "a line of note: that")]
+    [InlineData("a few commands...", 3, 3, "replace", "commands.", "a few commands.")]
+    [InlineData("keep **bold** here", 2, 2, "title", "", "keep **Bold** here")]
+    [InlineData("say \"why?\" now", 2, 2, "upper", "", "say \"WHY?\" now")]
+    [InlineData("see a/b, here", 2, 2, "delete", "", "see here")]
+    [InlineData("one two", 1, 1, "after", "and a half", "one and a half two")]
+    public void BetweenBlanks_Change_TakesTheWholePart(string line, int first, int last, string action, string text,
+        string result)
+    {
+        Assert.Equal(result, LineWords.Change(line, first, last, action, text, true));
+    }
+
+    [Fact]
+    public void Title_CapitalizesTheFirstLetter_AfterMarks()
+    {
+        Assert.Equal("**Bold**", LineWords.Title("**bOLD**"));
+        Assert.Equal("\"Why?\"", LineWords.Title("\"why?\""));
+        Assert.Equal("--", LineWords.Title("--"));
+        Assert.Equal("The", LineWords.Title("tHE"));
+    }
 }

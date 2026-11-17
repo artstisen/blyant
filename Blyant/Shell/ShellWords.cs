@@ -36,16 +36,32 @@ internal sealed partial class ShellSession
         return (editable.Item, editable.File, lines, line);
     }
 
-    // The words of a line, numbered, a row at a time
-    private void ShowWords(string line)
+    // The words of a line, numbered, a row at a time ("blanks": all between blanks, "-p")
+    private void ShowWords(string line, bool blanks)
     {
-        foreach (var row in LineWords.Numbered(line, WordsWidth())) Line("  " + row);
+        foreach (var row in LineWords.Numbered(line, WordsWidth(), blanks)) Line("  " + row);
+    }
+
+    // "-p" first ("words -p notes.md 12", "word -p ..."): a word is all between blanks, with the punctuation and the
+    // marks around it. Taken off the words; null (and told) for another option
+    private bool? BlanksOption(List<string> words)
+    {
+        if (words.Count == 0 || !words[0].StartsWith('-')) return false;
+        if (words[0] != "-p")
+        {
+            Error(Lang.F("Not taken: {0} (-p: words between blanks, with punctuation)", words[0]));
+            return null;
+        }
+
+        words.RemoveAt(0);
+        return true;
     }
 
     // "words notes.md 12": the words of line 12, numbered, for "word"; the file is then $file, at that line
     private void WordsCommand(string argument)
     {
         var words = Words(argument);
+        if (BlanksOption(words) is not { } blanks) return;
         var usage = Lang.T("Give a file and a line: words notes.md 12");
         if (words.Count != 2)
         {
@@ -56,14 +72,14 @@ internal sealed partial class ShellSession
         if (LineOf(words[0], words[1], usage) is not { } at) return;
         var text = at.Lines[at.Line - 1];
         LastList = new List<Item> { new(at.Item.Path, false, (at.Line, 1)) };
-        var count = LineWords.Find(text).Count;
+        var count = LineWords.Find(text, blanks).Count;
         if (count == 0)
         {
             Line(Lang.F("{0}, line {1}: no words", at.Item.Path, at.Line));
             return;
         }
 
-        ShowWords(text);
+        ShowWords(text, blanks);
         Line(Lang.F("{0}, line {1}: {2} words", at.Item.Path, at.Line, count));
     }
 
@@ -74,6 +90,7 @@ internal sealed partial class ShellSession
     private void WordCommand(string argument)
     {
         var words = Words(argument);
+        if (BlanksOption(words) is not { } blanks) return;
         var usage = Lang.T("Give a file, a line, the words and what to do: word notes.md 12 9 replace wish");
         if (words.Count < 4)
         {
@@ -95,7 +112,7 @@ internal sealed partial class ShellSession
         }
 
         // The text after replace, before and after: as typed (in quotes: as it is, blanks too)
-        var text = AfterWords(argument, 4).Trim();
+        var text = AfterWords(argument, blanks ? 5 : 4).Trim();
         if (text.Length >= 2 && text[0] == '"' && text[^1] == '"' && text.Count(c => c == '"') == 2) text = text[1..^1];
         var takesText = action is "replace" or "before" or "after";
         if (takesText && text.Length == 0)
@@ -112,7 +129,7 @@ internal sealed partial class ShellSession
 
         if (LineOf(words[0], words[1], usage) is not { } at) return;
         var line = at.Lines[at.Line - 1];
-        var count = LineWords.Find(line).Count;
+        var count = LineWords.Find(line, blanks).Count;
         if (last > count)
         {
             Error(count == 1
@@ -121,7 +138,7 @@ internal sealed partial class ShellSession
             return;
         }
 
-        var changed = LineWords.Change(line, first, last, action, text);
+        var changed = LineWords.Change(line, first, last, action, text, blanks);
         if (changed == line)
         {
             Line(Lang.T("Nothing changed: the words are so already"));
@@ -142,6 +159,6 @@ internal sealed partial class ShellSession
         LastList = new List<Item> { new(at.Item.Path, false, (at.Line, 1)) };
         Line(at.Line.ToString().PadLeft(4) + "  " + changed);
         Line(Lang.F("{0}: line {1} changed", at.Item.Path, at.Line));
-        if (LineWords.Find(changed).Count > 0) ShowWords(changed);
+        if (LineWords.Find(changed, blanks).Count > 0) ShowWords(changed, blanks);
     }
 }

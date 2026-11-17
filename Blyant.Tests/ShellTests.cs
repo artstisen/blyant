@@ -5590,6 +5590,31 @@ public class ShellTests : IDisposable
         Assert.Equal("word n.md 1 2 replace", Tab(Completion(), "word n.md 1 2 "));
         Assert.Equal("word n.md 1 2 title", Tab(Completion(), "word n.md 1 2 ti"));
         Assert.Equal("lines n.md 1 title", Tab(Completion(), "lines n.md 1 ti"));
-        Assert.Contains("words file|n line", Run("help words\n").Output);
+        Assert.Contains("words [-p] file|n line", Run("help words\n").Output);
+    }
+
+    // ---- words -p, word -p
+
+    [Fact]
+    public void WordsAndWord_WithP_TakeAllBetweenBlanks()
+    {
+        File.WriteAllText(In("work", "n.md"), "# Notes\n" + WordLine + "\nKeep **bold** and a/b here.\n");
+        var (output, errors, _, _) = Run("words -p n.md 2\nword -p n.md 2 6 replace note:\n" +
+                                         "word -p n.md 2 15 replace commands.\nword -p n.md 3 2 title\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains("  1 This  2 is  3 a  4 line  5 of  6 text,  7 that", output);
+        Assert.Contains("15 commands...", output);
+        Assert.Equal("# Notes\nThis is a line of note: that I want to change, with a few commands.\n" +
+                     "Keep **Bold** and a/b here.\n", File.ReadAllText(In("work", "n.md")));
+        // Numbered again in the same way after the change
+        Assert.Contains("  1 Keep  2 **Bold**  3 and  4 a/b  5 here.", output);
+        // Without -p, a/b is two words
+        (output, _, _, _) = Run("words n.md 3\n");
+        Assert.Contains("4 a  5 b  6 here", output);
+        var (_, wrong, _, _) = Run("words -x n.md 3\nword -q n.md 3 1 upper\n");
+        Assert.Contains(Lang.F("Not taken: {0} (-p: words between blanks, with punctuation)", "-x"), wrong);
+        Assert.Contains(Lang.F("Not taken: {0} (-p: words between blanks, with punctuation)", "-q"), wrong);
+        Assert.Equal("word -p n.md 1 2 replace", Tab(Completion(), "word -p n.md 1 2 "));
+        Assert.Equal("words -p", Tab(Completion(), "words -"));
     }
 }

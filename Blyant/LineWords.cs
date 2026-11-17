@@ -3,8 +3,9 @@
 /// <summary>
 /// The words of a line, for "words" and "word" in the shell (and "lines ... title"): a word is letters and digits,
 /// with a "'" or "-" between two of them in it ("don't", "well-known"). What is around a word (punctuation, the marks
-/// of Markdown, blanks) is not part of it, and stays where it is when the word is changed. Does not touch the
-/// console, so it can be tested
+/// of Markdown, blanks) is not part of it, and stays where it is when the word is changed. With "blanks" ("words
+/// -p" in the shell) a word is all between blanks instead: "text," and "**bold**" with what is around them. Does not
+/// touch the console, so it can be tested
 /// </summary>
 internal static class LineWords
 {
@@ -12,12 +13,30 @@ internal static class LineWords
     private static bool Joins(char c) => c is '\'' or '’' or '-';
 
     /// <summary>
-    /// The words of a line, in order: where each starts, and how long it is
+    /// The words of a line, in order: where each starts, and how long it is ("blanks": all between blanks)
     /// </summary>
-    internal static List<(int Start, int Length)> Find(string line)
+    internal static List<(int Start, int Length)> Find(string line, bool blanks = false)
     {
         var words = new List<(int, int)>();
         var i = 0;
+        if (blanks)
+        {
+            while (i < line.Length)
+            {
+                if (char.IsWhiteSpace(line[i]))
+                {
+                    i++;
+                    continue;
+                }
+
+                var from = i;
+                while (i < line.Length && !char.IsWhiteSpace(line[i])) i++;
+                words.Add((from, i - from));
+            }
+
+            return words;
+        }
+
         while (i < line.Length)
         {
             if (!char.IsLetterOrDigit(line[i]))
@@ -43,11 +62,11 @@ internal static class LineWords
     /// The words of a line numbered for the screen, "1 This  2 is  3 a ...", in rows no wider than the width (a word
     /// longer than that has a row to itself)
     /// </summary>
-    internal static List<string> Numbered(string line, int width)
+    internal static List<string> Numbered(string line, int width, bool blanks = false)
     {
         var rows = new List<string>();
         var row = string.Empty;
-        var words = Find(line);
+        var words = Find(line, blanks);
         for (var n = 0; n < words.Count; n++)
         {
             var part = (n + 1) + " " + line.Substring(words[n].Start, words[n].Length);
@@ -65,10 +84,16 @@ internal static class LineWords
     }
 
     /// <summary>
-    /// A word with the first letter capital and the rest small ("tHE" is "The"); "title" of "word" and "lines"
+    /// A word with the first letter capital and the rest small ("tHE" is "The"; with marks before it, as a word
+    /// between blanks has them: "**bold**" is "**Bold**"); "title" of "word" and "lines"
     /// </summary>
-    internal static string Title(string word) =>
-        word.Length == 0 ? word : char.ToUpperInvariant(word[0]) + word[1..].ToLowerInvariant();
+    internal static string Title(string word)
+    {
+        var first = 0;
+        while (first < word.Length && !char.IsLetterOrDigit(word[first])) first++;
+        if (first == word.Length) return word;
+        return word[..first] + char.ToUpperInvariant(word[first]) + word[(first + 1)..].ToLowerInvariant();
+    }
 
     /// <summary>
     /// A line with each word in title case ("lines ... title"); the rest as it is
@@ -80,9 +105,9 @@ internal static class LineWords
     /// (the text put in front of the first or after the last, with a blank between), "delete" (taken out, with what
     /// is around them up to the blanks when nothing else is there, and one blank), "upper", "lower" and "title"
     /// </summary>
-    internal static string Change(string line, int first, int last, string action, string text)
+    internal static string Change(string line, int first, int last, string action, string text, bool blanks = false)
     {
-        var words = Find(line);
+        var words = Find(line, blanks);
         var from = words[first - 1].Start;
         var to = words[last - 1].Start + words[last - 1].Length;
         switch (action)

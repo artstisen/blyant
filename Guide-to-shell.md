@@ -112,7 +112,7 @@ To get all output at once (with a screen reader, say), turn the pages off: `set 
 | `lines file\|n lines replace old new` | Replace a text in lines, keeping the rest (`lines notes.md 5-9 replace draft final`) |
 | `lines file\|n lines sort [-a\|-d]` | Sort lines A to Z (`-a`, the default) or Z to A (`-d`): `lines notes.md 3-20 sort`. The order is that of `:sort` in the editor, by the value of the characters, so capital letters come before small ones. Lines given apart (`1,5,9`) are sorted among those places |
 | `lines file\|n lines upper\|lower\|title` | Make lines UPPERCASE, lowercase or Title Case (each word with a capital first letter), as `gU` and `gu` in the editor: `lines notes.md 1 upper` |
-| `words file\|n line` | Show the words of a line, numbered, for `word`: `words notes.md 12`. See [Words in a line](#words-in-a-line) |
+| `words [-p] file\|n line` | Show the words of a line, numbered, for `word`: `words notes.md 12`; with `-p` a word is all between blanks, punctuation too. See [Words in a line](#words-in-a-line) |
 | `word file\|n line n\|n-m action [text]` | Change words of a line by number: `replace`, `before`, `after` and `delete` (`word notes.md 12 9 replace wish`), or `upper`, `lower` and `title`. See [Words in a line](#words-in-a-line) |
 | `format file\|n` | Format an HTML, CSS or XML file, as `:format` in the editor does (see [Text and settings](#text-and-settings)) |
 | `trim file\|n` | Remove blank space at the end of lines, as `:trim` in the editor does; `trim!` also removes Markdown line breaks |
@@ -465,6 +465,20 @@ blyant ~/novel> word notes.md 12 9 replace wish
 - The text is all that follows `replace`, `before` or `after`, as typed; in quotes it is put in exactly as written. `$name` puts in a value
 - `undo` takes a change back. A file Blyant uses, or one that is not UTF-8, is not changed, and the line endings and byte order mark of the file are kept, as with `lines`
 - `lines notes.md 3-9 title` makes whole lines Title Case, as `upper` and `lower` do
+
+With `-p` before the file, a word is all between blanks, with the punctuation and the marks around it, so a change takes them too, without counting characters:
+
+```
+blyant ~/novel> words -p notes.md 12
+  1 This  2 is  3 a  4 line  5 of  6 text,  7 that  8 I  9 want  10 to
+  11 change,  12 with  13 a  14 few  15 commands...
+blyant ~/novel> word -p notes.md 12 6 replace note:
+blyant ~/novel> word -p notes.md 12 15 replace commands.
+```
+
+- `text,` becomes `note:` and `commands...` becomes `commands.`; without `-p` the comma and the dots stay
+- The words can be numbered another way with `-p`: `a/b` is one word, not two. Use `words -p` to see the numbers, and give `-p` to `word` too
+- `title` makes the first letter capital, after any marks: `**bold**` becomes `**Bold**`, and `"why?"` becomes `"Why?"`
 
 ## Undo
 The commands that change the text of a file (`insert`, `change`, `shift`, `lines`, `format` and `trim`) keep what the file was before, so `undo` puts it back:

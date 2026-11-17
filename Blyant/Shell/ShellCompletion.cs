@@ -178,12 +178,15 @@ internal sealed class ShellCompletion
                 if (position == 1) return (Kind.QuotedWords, NameOf(_words[0]));
                 return (position == 0 ? Kind.Path : Kind.None, none);
             case "words":
-                return (position == 0 ? Kind.Path : Kind.None, none);
             case "word":
-                // The file, the line and the words (typed), then what is done
-                if (position == 3)
+            {
+                // ("-p" first: words between blanks) The file, the line and the words (typed), then what is done
+                var p = position > 0 && after[0] == "-p" ? 1 : 0;
+                if (position == 0) return (Kind.PathOrWords, new[] { "-p" });
+                if (command == "word" && position == p + 3)
                     return (Kind.Words, new[] { "replace", "before", "after", "delete", "upper", "lower", "title" });
-                return (position == 0 ? Kind.Path : Kind.None, none);
+                return (position == p ? Kind.Path : Kind.None, none);
+            }
             case "copy":
             case "move":
                 return position switch
