@@ -291,7 +291,7 @@ internal sealed class ShellCompletion
                 if (position == 0) return (Kind.PathOrWords, ClipKinds);
                 return (position == 1 && ClipKinds.Contains(after[0]) ? Kind.Path : Kind.None, none);
             case "reg":
-                if (position == 0) return (Kind.Words, new[] { "-d" }.Concat(ShellRegisters.All.Keys));
+                if (position == 0) return (Kind.Words, new[] { "-d", "-t" }.Concat(ShellRegisters.All.Keys));
                 // ("reg notes = ...", "reg notes += ...")
                 if (position == 1 && after[0] != "-d") return (Kind.Words, new[] { "=", "+=" });
                 return (position == 1 && after[0] == "-d" ? Kind.Words : Kind.None,

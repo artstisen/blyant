@@ -5672,4 +5672,38 @@ public class ShellTests : IDisposable
         Assert.Contains(Lang.F("Unknown command: {0} (help lists the commands)", "$nothere"), wrong);
         Assert.Contains(Lang.F("Unknown command: {0} (help lists the commands)", "$file"), wrong);
     }
+
+    // ---- reg -t
+
+    [Fact]
+    public void RegT_FindsRegistersByNameAndValue_AndShowsALaterLineFound()
+    {
+        var (output, errors, _, _) = Run("reg notes = First idea\nreg notes += A calm sea\nreg notes += The STORM came\n" +
+                                         "reg chap3 C:\\Writing\\03-storm.md\nreg other plain\nreg -t storm\n");
+        Assert.Equal(string.Empty, errors);
+        // (the rows of reg -t after the lines reg wrote when the registers were set)
+        var found = output[output.IndexOf("  $chap3 C:", output.IndexOf("$other = plain", StringComparison.Ordinal), StringComparison.Ordinal)..];
+        Assert.Contains("$chap3", found);
+        Assert.Contains("$notes", found);
+        Assert.Contains(Lang.F("line {0}: {1}", 3, "The STORM came"), found);
+        Assert.DoesNotContain("$other", found);
+        // By name, with a pattern; the first line found: no line shown under it
+        (output, _, _, _) = Run("reg -t chap*\nreg -t first\n");
+        Assert.Contains("$chap3", output);
+        Assert.DoesNotContain(Lang.F("line {0}: {1}", 1, "First idea"), output);
+        Assert.DoesNotContain("$other", output);
+    }
+
+    [Fact]
+    public void RegT_SearchesTheNamesSetByBlyantToo_AndTellsWhenNoneHasIt()
+    {
+        var (output, errors, _, _) = Run("calc 6 * 7\nreg -t 42\nreg -t nothing-here\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains(Lang.T("Set by Blyant:") + "\n  $calc", output);
+        Assert.Contains(Lang.F("No register with {0} in the name or the value", "nothing-here"), output);
+        var (_, wrong, _, _) = Run("reg -t\n");
+        Assert.Contains(Lang.T("Give a text: reg -t storm (or chap*)"), wrong);
+        Assert.Equal("reg -t", Tab(Completion(), "reg -t"));
+        Assert.Contains("reg -t text", Run("help reg\n").Output);
+    }
 }

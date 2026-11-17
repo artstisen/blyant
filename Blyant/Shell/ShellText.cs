@@ -407,6 +407,25 @@ internal sealed partial class ShellSession
             return;
         }
 
+        // "reg -t storm": the registers with a text in the name or the value
+        if (words[0] == "-t")
+        {
+            var sought = AfterWords(argument, 1).Trim();
+            if (sought.Length >= 2 && sought[0] == '"' && sought[^1] == '"' && sought.Count(c => c == '"') == 2)
+            {
+                sought = sought[1..^1];
+            }
+
+            if (sought.Length == 0)
+            {
+                Error(Lang.T("Give a text: reg -t storm (or chap*)"));
+                return;
+            }
+
+            SearchRegisters(sought);
+            return;
+        }
+
         if (words[0] == "-d")
         {
             if (words.Count != 2)
@@ -502,6 +521,54 @@ internal sealed partial class ShellSession
         // English: the log (the name only, never the value)
         EventLog.Add(DialogText.LogShell + (adds ? ": register added to: " : ": register set: ") + name.ToLowerInvariant());
         SaveRegisters("  $" + name.ToLowerInvariant() + " = " + RegisterShown(ShellRegisters.Get(name) ?? string.Empty));
+    }
+
+    // "reg -t storm", "reg -t chap*": the registers, and the names set by Blyant, with the text in the name or in a
+    // line of the value (as find -t takes a text: letter case alike, * and ?), as "reg" lists them; when it is in a
+    // later line than the first, that line is shown under the row. Shows only: nothing is changed
+    private void SearchRegisters(string text)
+    {
+        var pattern = FileSearch.WildcardText(text);
+        var width = ShellRegisters.All.Keys.Concat(ShellRegisters.Reserved).Max(key => key.Length) + 1;
+        var found = 0;
+        foreach (var (key, value) in ShellRegisters.All)
+        {
+            if (RegisterFound(key, value, pattern, width)) found++;
+        }
+
+        var setByBlyant = false;
+        foreach (var reserved in ShellRegisters.Reserved)
+        {
+            if (ShellRegisters.Get(reserved) is not { } value || !RegisterFits(reserved, value, pattern)) continue;
+            if (!setByBlyant) Line(Lang.T("Set by Blyant:"));
+            setByBlyant = true;
+            RegisterFound(reserved, value, pattern, width);
+            found++;
+        }
+
+        if (found == 0) Line(Lang.F("No register with {0} in the name or the value", text));
+    }
+
+    // The text is in the name of a register or in a line of the value
+    private static bool RegisterFits(string name, string value, System.Text.RegularExpressions.Regex pattern) =>
+        FileSearch.Matches(pattern, name) || LinesPutIn(value).Any(line => FileSearch.Matches(pattern, line));
+
+    // A register the text is in, as "reg" lists it, and the line found under it when that is not the first (true:
+    // shown)
+    private bool RegisterFound(string name, string value, System.Text.RegularExpressions.Regex pattern, int width)
+    {
+        if (!RegisterFits(name, value, pattern)) return false;
+        Line("  $" + name.PadRight(width) + RegisterShown(value));
+        var lines = LinesPutIn(value);
+        if (FileSearch.Matches(pattern, name) || FileSearch.Matches(pattern, lines[0])) return true;
+        var at = lines.FindIndex(line => FileSearch.Matches(pattern, line));
+        if (at > 0)
+        {
+            Line(new string(' ', width + 3) +
+                 Lang.F("line {0}: {1}", at + 1, Cut(Printable(lines[at]).Replace('\t', ' ').Trim(), 60)));
+        }
+
+        return true;
     }
 
     // A value as the list of the registers shows it: as it is, or the first line of lines (cut) and how many lines

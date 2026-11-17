@@ -74,6 +74,7 @@ internal sealed partial class ShellSession
         ("reg [name [text|.|#n]]", Lang.T("Keep a text or a path in a register: $name puts it in a command")),
         ("reg name += text", Lang.T("Add a text to a register, as lines (reg notes += $peek)")),
         ("reg -d name|all", Lang.T("Take away one register, or all")),
+        ("reg -t text", Lang.T("Find registers with a text in the name or value (*, ?)")),
         ("echo text", Lang.T("Write a text, with $names put in (echo $file)")),
         ("calc expression", Lang.T("Calculate: + - * / % ^ ( ), the result kept in $calc")),
         ("calc expression > $name", Lang.T("Also keep the result in a register (>>: add it)")),

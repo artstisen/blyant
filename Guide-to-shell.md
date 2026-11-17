@@ -121,6 +121,7 @@ To get all output at once (with a screen reader, say), turn the pages off: `set 
 | `reload` | Read the settings file and the registers again, after you have edited them in another program (see [Text and settings](#text-and-settings)) |
 | `forget` | Forget what the shell keeps only while Blyant runs: the commands typed (`again`, `Up`), `$clip`, `$peek`, `$calc`, the last search and the undo steps, after asking. The registers, the settings and `$file` stay |
 | `reg [name [text\|.\|#n]]` | Keep a text or a path in a register, show one, or list them (see [Registers](#registers)) |
+| `reg -t text` | Find the registers with a text in the name or in the value (`reg -t storm`, `reg -t chap*`), the names set by Blyant too |
 | `reg name = text`, `reg name += text` | Keep a text in a register (as `reg name text`), or add it at the end, as lines (`reg notes += $peek`) |
 | `reg -d name\|all` | Take away one register, or all |
 | `echo text` | Write a text with the `$names` put in: `echo $file`, `echo $pwd $date`, `echo $peek` (all the lines). Use it to see a value, or what a command will get (`echo insert $file bottom $date Done`; a command that takes paths gets a value with blanks in quotes). See [Registers](#registers) |
@@ -715,6 +716,14 @@ lines plot.md 3-5 > $notes          ">": the register is those lines alone
 
 - A text in quotes is kept without them: `reg docs "~/my docs"` keeps the path, so `copy plot.md $docs` takes it as one
 - `reg` lists the registers, `reg docs` shows the value of one (alone on a line, as a script reads it with `blyant --run "reg docs"`), `reg -d docs` takes it away, and `reg -d all` all of them
+- `reg -t storm` finds the registers with a text in the name or in a line of the value, when there are many: as `find -t` takes a text (letter case alike, `*` and `?`). They are listed as `reg` lists them, and when the text is in a later line than the first, that line is shown under the row (`line 3: The storm came`). The names set by Blyant are searched too, under _Set by Blyant_. `reg -t` only shows: nothing is changed
+
+  ```
+  blyant ~/novel> reg -t storm
+    $chap3 /home/anna/novel/chapters/03-storm.md
+    $notes First idea ...  (3 lines)
+           line 3: The storm came at night
+  ```
 - `echo` writes a text with the `$names` put in, as the other commands put them in: `echo $file` shows the file the last command worked on, `echo $docs has $date` a line you write, with the values in it, and `echo $notes` all the lines of a register. `$$` is a `$`. A `$name` that is not a register is reported, and nothing is written. `echo` changes nothing: no file, not the last list, not `$file`. In a `run`, it writes a line between the steps (`echo Tidying the chapters`)
 - A name starts with a letter, and has letters, digits and `_` (`docs`, `draft_2`); letter case does not matter
 - `$name` is put in only for a register that is there: anything else stays as typed, so `insert prices.md bottom Ink costs $5` keeps its `$5`. `$$` is a `$`
