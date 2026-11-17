@@ -288,6 +288,12 @@ internal sealed class ShellCompletion
                     new[] { "all" }.Concat(ShellRegisters.All.Keys));
             case "again":
                 return (position == 0 ? Kind.Words : Kind.None, new[] { "filter" });
+            case "find":
+            {
+                // The options not given yet, before the name ("find -f -t storm"); after -t the text
+                if (after.Take(position).Any(word => !word.StartsWith('-') || word == "-t")) return (Kind.None, none);
+                return (Kind.Words, new[] { "-l", "-f", "-b", "-t" }.Except(after.Take(position)));
+            }
             case "run":
                 // (a file of commands; $ and Tab the registers)
                 return (position == 0 ? Kind.Path : Kind.None, none);

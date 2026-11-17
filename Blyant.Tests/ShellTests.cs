@@ -5110,4 +5110,80 @@ public class ShellTests : IDisposable
         Assert.Equal("file a.md", Tab(Completion(), "file a."));
         Assert.Contains("file file|n > $name", Run("help file\n").Output);
     }
+
+    // ---- find -f, -b
+
+    // Two storm.md in folders named drafts, one notes.md
+    private void StormTree()
+    {
+        Directory.CreateDirectory(In("work", "novel", "part-1", "drafts"));
+        Directory.CreateDirectory(In("work", "novel", "part-2", "scenes", "drafts"));
+        File.WriteAllText(In("work", "novel", "part-1", "drafts", "storm.md"), "A calm sea.\nstorm later\n");
+        File.WriteAllText(In("work", "novel", "part-2", "scenes", "drafts", "storm.md"), "The storm broke.\n");
+        File.WriteAllText(In("work", "novel", "notes.md"), "x\n");
+    }
+
+    [Fact]
+    public void Find_FolderAndName_AndNamesOnly_ToldApart_AndTheRowsAreTheSame()
+    {
+        StormTree();
+        var (output, errors, _, session) = Run("find -b storm\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains("  1  storm.md (part-1/drafts)\n  2  storm.md (scenes/drafts)\n", output);
+        Assert.Equal(In("work", "novel", "part-1", "drafts", "storm.md"), session.LastList[0].Path);
+        (output, _, _, _) = Run("find -f storm\n");
+        Assert.Contains("  1  drafts/storm.md (part-1)\n  2  drafts/storm.md (scenes)\n", output);
+        // The default: the path from here
+        (output, _, _, _) = Run("find storm\n");
+        Assert.Contains("  1  " + Path.Combine("novel", "part-1", "drafts", "storm.md") + "\n", output);
+        // A name only one row has: no folder
+        (output, _, _, _) = Run("find -b notes\n");
+        Assert.EndsWith("  2  notes.md\n", output);
+        // -l wins
+        (output, _, _, _) = Run("find -b -l storm\n");
+        Assert.Contains("  1  " + In("work", "novel", "part-1", "drafts", "storm.md") + "\n", output);
+    }
+
+    [Fact]
+    public void Find_Options_WithText_InAnyOrder_AndOneNotKnown()
+    {
+        StormTree();
+        var (output, errors, _, session) = Run("find -b -t storm\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains("  1  storm.md (part-1/drafts):2  storm later\n", output);
+        Assert.Contains("  2  storm.md (scenes/drafts):1  The storm broke.\n", output);
+        Assert.Equal((2, 1), session.LastList[0].At);
+        (output, _, _, _) = Run("find -f -l -b *.md -t storm\n");
+        Assert.Contains(In("work", "novel", "part-1", "drafts", "storm.md") + ":2", output);
+        var (_, wrong, _, _) = Run("find -x storm\nfind -b -q\n");
+        Assert.Contains(Lang.F("Not taken: {0} (-l full paths, -f folder/name, -b names only, -t text)", "-x"), wrong);
+        Assert.Contains(Lang.F("Not taken: {0} (-l full paths, -f folder/name, -b names only, -t text)", "-q"), wrong);
+        // A name that starts with "-", in quotes
+        File.WriteAllText(In("work", "-draft.md"), "x\n");
+        (output, errors, _, _) = Run("find \"-draft\"\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains("-draft.md", output);
+    }
+
+    [Fact]
+    public void Tab_AfterFind_OffersTheOptionsNotGivenYet()
+    {
+        Assert.Equal("find -l", Tab(Completion(), "find "));
+        Assert.Equal("find -b", Tab(Completion(), "find -b"));
+        Assert.Equal("find -f -l", Tab(Completion(), "find -f "));
+        Assert.Equal("find storm ", Tab(Completion(), "find storm "));
+        Assert.Equal("find -t ", Tab(Completion(), "find -t "));
+    }
+
+    [Fact]
+    public void Recent_TwoNamesInFoldersAlike_GetAsManyFoldersAsTellThemApart()
+    {
+        StormTree();
+        FileHistory.Add(In("work", "novel", "part-1", "drafts", "storm.md"), new DateTime(2026, 11, 13, 9, 0, 0));
+        FileHistory.Add(In("work", "novel", "part-2", "scenes", "drafts", "storm.md"), new DateTime(2026, 11, 13, 10, 0, 0));
+        FileHistory.Save();
+        var (output, _, _, _) = Run("recent\n");
+        Assert.Contains("  1  storm.md (scenes/drafts)", output);
+        Assert.Contains("  2  storm.md (part-1/drafts)", output);
+    }
 }

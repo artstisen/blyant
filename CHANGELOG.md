@@ -1,6 +1,8 @@
 # Changes
 
 ## v1.5.6
+- **`find -f` and `find -b` in the shell**: in a large tree the paths of `find` get long. `find -f storm` shows the folder and the name (`drafts/storm.md`), and `find -b storm` the name only, as `recent -f` and `recent` do; the path from here stays the default, and `-l` the full paths. The rows are the same with each option, so `open 2` and `info 2` (the full path) work on the same file. The options go before the name in any order (`find -b -t storm`), and `Tab` offers them.
+- **Rows with the same name told apart further**: when two rows of a list have the same name in folders that are also named alike, as many folders as tell them apart are shown (`storm.md (part-1/drafts)`, `storm.md (scenes/drafts)`), in `find`, `recent`, `hist`, `fav` and `book`. Before, both showed `storm.md (drafts)`.
 - **`file name > $register` in the shell**: keeps the full path of a file in a register, so it works from any directory and after a restart, and leaves `$file` and the last list as they are: `file chapter-3.md > $other`, `file 3 > $other` (a row), `file $file > $other`. The file must be there, and `Tab` offers the `>` after the file. Before, `reg other chapter-3.md` kept only the text typed. See [Registers](Guide-to-shell.md#registers).
 - **Keep a second file in a register**: the guide to the shell and the tutorial show how a register keeps another file at hand while `$file` moves with the commands: `reg other $file` (or `reg other #3`), then `lines notes.md 2 > $other bottom` and `insert $other bottom ...`. See [Registers](Guide-to-shell.md#registers).
 

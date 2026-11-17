@@ -760,12 +760,31 @@ internal sealed partial class ShellSession
 
     // "find plot", "find *.md", "find -t storm", "find *.md -t the storm": files in the directory you are in and the
     // directories in it, by name (a part of it, or with * and ?), and by a text in them (after -t). As the search of
-    // the file browser: hidden files are left out, and only text files are searched for text
+    // the file browser: hidden files are left out, and only text files are searched for text. The rows show the path
+    // from the directory you are in; options before the name, in any order: "-l" the full paths (without the mark of
+    // a favorite, for scripts), "-f" the folder and the name ("drafts/storm.md"), "-b" the name only ("storm.md"),
+    // with the folder after a name two rows have. The rows are the same in each: "open 3", "info 3" take row 3
     private void Find(string argument)
     {
-        // "-l" first: the full paths, without the mark of a favorite (for scripts)
-        var full = argument.TrimStart() is ['-', 'l', ..] start && (start.Length == 2 || char.IsWhiteSpace(start[2]));
-        if (full) argument = argument.TrimStart()[2..];
+        var (full, folder, bare) = (false, false, false);
+        argument = argument.TrimStart();
+        while (argument.StartsWith('-'))
+        {
+            var word = argument.Split((char[]?)null, 2)[0];
+            // ("-t": the text, read below)
+            if (word == "-t") break;
+            if (word is not ("-l" or "-f" or "-b"))
+            {
+                Error(Lang.F("Not taken: {0} (-l full paths, -f folder/name, -b names only, -t text)", word));
+                return;
+            }
+
+            if (word == "-l") full = true;
+            else if (word == "-f") folder = true;
+            else bare = true;
+            argument = argument[word.Length..].TrimStart();
+        }
+
         var text = string.Empty;
         var at = argument.IndexOf("-t ", StringComparison.Ordinal);
         if (argument.TrimEnd().EndsWith("-t", StringComparison.Ordinal) && at < 0) at = argument.TrimEnd().Length - 2;
@@ -792,10 +811,15 @@ internal sealed partial class ShellSession
         // (a favorite marked " *" after its name, as in the search results of the full screen; not a line found in a
         // file, which is not the file)
         FileFavorites.Load();
-        var rows = outcome.Results.Select(result =>
+        // "-f" and "-b": as recent and fav show them (with "-l" the full paths win)
+        var names = !full && (folder || bare)
+            ? Names(outcome.Results.Select(result => (result.Path, result.IsDirectory)).ToList(), false, false, folder)
+            : null;
+        var rows = outcome.Results.Select((result, i) =>
         {
-            var shown = (full ? result.Path : Path.GetRelativePath(Directory, result.Path)) +
-                        (result.IsDirectory ? "/" : string.Empty);
+            var shown = names != null ? names[i]
+                : (full ? result.Path : Path.GetRelativePath(Directory, result.Path)) +
+                  (result.IsDirectory ? "/" : string.Empty);
             if (!full && result.Line < 0) shown += FavoriteMark(result.Path);
             return result.Line >= 0
                 ? (new Item(result.Path, result.IsDirectory, (result.Line + 1, 1), text),

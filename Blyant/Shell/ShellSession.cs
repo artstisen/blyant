@@ -367,7 +367,8 @@ internal sealed partial class ShellSession
 
     /// <summary>
     /// Files and directories as a list shows them: by name ("/" after a directory), with the folder they are in after
-    /// a name that two rows have ("README.md (novel)"), " *" after a favorite (of the open list, as the full screen
+    /// a name that two rows have ("README.md (novel)"; more folders when those are alike too: "storm.md
+    /// (part-1/drafts)"), " *" after a favorite (of the open list, as the full screen
     /// marks them; not "marked": the favorites themselves), and "(missing)" when one is not there. "full": the full
     /// paths, without a mark ("fav -l": for scripts). "info 3" tells the rest
     /// </summary>
@@ -379,19 +380,39 @@ internal sealed partial class ShellSession
         // "withFolder": the folder before the name ("Book/chapter-3.md"; "recent -f"); two rows alike then get the
         // folder above that after them ("Book/a.md (novel)")
         var names = entries.Select(entry => withFolder ? FolderAndName(entry.Path) : NameOf(entry.Path)).ToList();
-        // (names the file system tells apart are not alike: "Plot.md" and "plot.md" on Linux)
-        var twice = names.GroupBy(name => name, FileOperations.NameComparer).Where(group => group.Count() > 1)
-            .Select(group => group.Key).ToHashSet(FileOperations.NameComparer);
+        // The folders after a name that more rows have: as few as tell them apart (names the file system tells
+        // apart are not alike: "Plot.md" and "plot.md" on Linux)
+        var told = new string?[entries.Count];
+        foreach (var group in Enumerable.Range(0, entries.Count)
+                     .GroupBy(i => names[i], FileOperations.NameComparer).Where(group => group.Count() > 1))
+        {
+            // (the folders above the one shown: with "withFolder" the folder before the name is one of them)
+            var rows = group.ToList();
+            var skip = withFolder ? 1 : 0;
+            for (var depth = 1; ; depth++)
+            {
+                var folders = rows.Select(i => Folders(entries[i].Path, skip, depth)).ToList();
+                var distinct = folders.Distinct(FileOperations.NameComparer).Count() == rows.Count;
+                // (no more folders above: the folder they are in, whole)
+                var ended = rows.All(i => Folders(entries[i].Path, skip, depth + 1) == folders[rows.IndexOf(i)]);
+                if (distinct || ended)
+                {
+                    for (var k = 0; k < rows.Count; k++)
+                    {
+                        told[rows[k]] = distinct ? folders[k]
+                            : Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(entries[rows[k]].Path));
+                    }
+
+                    break;
+                }
+            }
+        }
+
         return entries.Select((entry, i) =>
         {
             var there = entry.IsDirectory ? System.IO.Directory.Exists(entry.Path) : FileOperations.IsFileThere(entry.Path);
             var shown = names[i] + (entry.IsDirectory ? "/" : string.Empty);
-            var parent = Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(entry.Path));
-            if (twice.Contains(names[i]) && parent != null)
-            {
-                var told = withFolder ? Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(parent)) ?? parent : parent;
-                shown += " (" + NameOf(told) + ")";
-            }
+            if (told[i] is { Length: > 0 } folders) shown += " (" + folders + ")";
             if (marked) shown += FavoriteMark(entry.Path);
             return shown + (there ? string.Empty : " " + DialogText.FavoriteMissing);
         }).ToList();
@@ -402,6 +423,21 @@ internal sealed partial class ShellSession
             var trimmed = Path.TrimEndingDirectorySeparator(path);
             var name = Path.GetFileName(trimmed);
             return name.Length > 0 ? name : trimmed;
+        }
+
+        // The names of the folders above a path, "depth" of them after leaving out "skip" of the nearest, from the
+        // outer one in, with "/" between ("part-1/drafts"); fewer at the root (whose name is its path)
+        static string Folders(string path, int skip, int depth)
+        {
+            var parts = new List<string>();
+            var folder = Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(path));
+            for (var i = 0; folder != null && parts.Count < depth; i++)
+            {
+                if (i >= skip) parts.Insert(0, NameOf(folder));
+                folder = Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(folder));
+            }
+
+            return string.Join("/", parts);
         }
 
         // "Book/chapter-3.md" (with "/" on all systems); a file at the root of a drive: its path ("C:\notes.md")

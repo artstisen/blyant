@@ -116,6 +116,14 @@ blyant ~/novel> find *.md -t attic
   2  chapters/01-attic.md:4  Anna climbed to the attic.
 ```
 
+In a directory with many folders the paths get long: `find -b storm` shows the names only, and `find -f storm` the folder and the name. `info 2` then shows the full path of row 2.
+
+```
+blyant ~/novel> find -b storm
+  1  storm.md (part-1/drafts)
+  2  storm.md (scenes/drafts)
+```
+
 The results are a list like any other: `peek 2` shows the lines around the line found (marked with `>`), and `open 2` opens the file at that line. In one file, `peek plot.md /storm` goes to the first line with "storm", and `/` to the next.
 
 ## Editing a file
