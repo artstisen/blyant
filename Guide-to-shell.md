@@ -438,6 +438,8 @@ blyant ~/notes> lines todo.md 3 unstart "- [ ] "
 - The lines changed are shown, and the file is then the last list, at the first of them (`open 1`). When no line changes, nothing is written, and the shell says so. As for `insert`, the file keeps its line endings and byte order mark, only a file in UTF-8 is changed and not the files Blyant uses, and `undo` puts it back; nothing is asked, as no line is lost
 
 ## Words in a line
+![The words of a todo line numbered, and word 10 replaced by its number](docs/screenshots/shell-words.svg)
+
 `words` shows the words of one line, numbered, and `word` changes a word, or several, by number, without opening the file and without typing the line again:
 
 ```

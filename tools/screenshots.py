@@ -590,6 +590,11 @@ SCENES = [
      ['--shell', PROJECT], ['<wait>', 'calc 22 * 3500<Enter>', 'insert outline.md bottom Target: $calc words<Enter>',
                             'calc $calc / 70<Enter>', 'insert todo.md +8 - [ ] Write $calc words a day<Enter>',
                             'peek todo.md 3-9<Enter>'], True),
+    # words and word: the words of a line numbered, one replaced by its number, without typing the line again
+    ('shell-words', 'Blyant: the shell, words of a line numbered, and one changed by its number',
+     {},
+     ['--shell', PROJECT], ['<wait>', 'words todo.md 5<Enter>', 'word todo.md 5 10 replace almanac<Enter>',
+                            'peek todo.md 3-7<Enter>'], True),
 ]
 
 
@@ -600,13 +605,14 @@ def main():
     options = parser.parse_args()
     if not os.path.exists(options.exe):
         sys.exit('Blyant is not there: ' + options.exe + ' (run publish.ps1 win-x64, or give --exe)')
-    make_demo()
     os.makedirs(OUT, exist_ok=True)
     work = os.path.join(tempfile.gettempdir(), 'blyant-screenshots')
     os.makedirs(work, exist_ok=True)
     for name, title, settings, args, steps, show_cursor in SCENES:
         if options.scenes and name not in options.scenes:
             continue
+        # (the demo made again for each scene: a scene that changes a file does not change the next one)
+        make_demo()
         make_data(work, settings)
         screen = run(options.exe, work, args, steps)
         with open(os.path.join(OUT, name + '.svg'), 'w', encoding='utf-8', newline='\n') as f:
