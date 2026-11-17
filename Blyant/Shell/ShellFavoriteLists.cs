@@ -64,6 +64,13 @@ internal sealed partial class ShellSession
         }
     }
 
+    // True for what follows "fav" that shows a list (and so can go to a register: "fav > $files"): nothing, "-l", a
+    // list ("fav work", "fav use work", "fav main") or a filter; not "add", "move", "lists" ... which change or show
+    // something else
+    private static bool ListsFavorites(string argument) =>
+        argument.TrimStart().Split(' ', 2)[0].ToLowerInvariant() is not
+            ("add" or "remove" or "folder" or "subfolder" or "move" or "undo" or "lists" or "new" or "rename" or "delete");
+
     // "filter text" after "fav", "hot" or "again" (with "-l" before it: the full paths, for "fav"; "hist" reads its
     // options itself): the text (without the quotes it can be written in), or null when it is not a filter
     private static (string Text, bool Full)? FilterOf(string argument)
@@ -126,6 +133,7 @@ internal sealed partial class ShellSession
             }
 
             Line(new string(' ', 2 * favorite.Level) + (row + 1).ToString().PadLeft(width + 2) + "  " + names[row]);
+            RowShown(rows[row].Item);
             found++;
         }
 

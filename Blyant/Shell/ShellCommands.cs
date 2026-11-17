@@ -34,6 +34,7 @@ internal sealed partial class ShellSession
         ("/text", Lang.T("Search the file peeked last (as peek /text)")),
         ("find [-l|-f|-b] [name] [-t text]", Lang.T("Find files here and below, by name (*.md) and by text")),
         ("find -f, find -b", Lang.T("Show the folder and name, or the name only")),
+        ("find|recent|hist|fav ... > $name", Lang.T("Keep the paths of the rows shown in a register")),
         ("new name", Lang.T("Make a new, empty file here (.md if no extension)")),
         ("mkdir name", Lang.T("Make a new directory here")),
         ("rename file|n name", Lang.T("Give a file or directory a new name")),
@@ -68,6 +69,7 @@ internal sealed partial class ShellSession
         ("reg -d name|all", Lang.T("Take away one register, or all")),
         ("echo text", Lang.T("Write a text, with $names put in (echo $file)")),
         ("calc expression", Lang.T("Calculate: + - * / % ^ ( ), the result kept in $calc")),
+        ("calc expression > $name", Lang.T("Also keep the result in a register (>>: add it)")),
         ("file [file|n]", Lang.T("Set $file to a file or row (file 3), or show $file")),
         ("file file|n > $name", Lang.T("Keep the full path of a file in a register")),
         ("favorites [-l] [list]", Lang.T("List the favorites (fav), or another list")),
@@ -103,6 +105,7 @@ internal sealed partial class ShellSession
         ("about [license]", Lang.T("Show the version and most used commands, or the license")),
         ("again [n]", Lang.T("List the commands typed, or run one again (!n, !!)")),
         ("again filter text", Lang.T("Show the commands typed with a text in them")),
+        ("again n|n-m > $name", Lang.T("Keep commands typed in a register, for run (>>: add)")),
         ("undo [n]", Lang.T("Undo the last change of a file (insert, change ...)")),
         ("redo [n]", Lang.T("Undo the last undo")),
         ("changes", Lang.T("List the changes undo goes back through")),
@@ -171,8 +174,9 @@ internal sealed partial class ShellSession
         var help = name is "help" or "h";
         // ("lines a.md 4-6 > $notes": the register the lines go to, not its value: kept as the name)
         if (name == "lines") argument = ProtectRegisterTarget(argument);
-        // ("file plot.md > $other": the register the path goes to, kept as the name)
-        if (name == "file") argument = ProtectFileTarget(argument);
+        // ("file plot.md > $other", "calc 2 * 3 > $x", "again 3 > $tidy", "find -t TODO >> $open": the register the
+        // result goes to, kept as the name)
+        if (TakesTarget.Contains(name)) argument = ProtectTargetAtEnd(argument);
         // ("calc $calc ^ 2": each value one number, in parentheses)
         if (name == "calc") argument = ShellRegisters.Parenthesized(argument);
         // (in a run, "screen" would leave the run for the full screen, and leave the shell at the next exit)
@@ -239,8 +243,8 @@ internal sealed partial class ShellSession
 
         if (!CommandLine.Name(line).Equals("again", StringComparison.OrdinalIgnoreCase)) return null;
         var argument = CommandLine.Argument(line);
-        // ("again filter lines": a list, as "again" alone)
-        if (argument.Length == 0 || FilterOf(argument) != null) return null;
+        // ("again filter lines": a list, as "again" alone; "again 3-5 > $tidy": kept, not run)
+        if (argument.Length == 0 || FilterOf(argument) != null || TargetAtEnd(argument) != null) return null;
         return argument.All(char.IsAsciiDigit) && int.TryParse(argument, out var number) ? number : 0;
     }
 
@@ -250,6 +254,12 @@ internal sealed partial class ShellSession
     // runs the one numbered 7
     private void ListAgain(string argument)
     {
+        if (TargetAtEnd(argument) is { } target)
+        {
+            AgainInto(target.Before, target.Name, target.Adds);
+            return;
+        }
+
         string? filter = null;
         if (FilterOf(argument) is { } asked)
         {
@@ -338,16 +348,96 @@ internal sealed partial class ShellSession
     // What followed the command, as typed: before the $names were put in
     private string? _typedArgument;
 
+    // The commands that put their result in a register named at the end ("> $name", ">> $name": added to it)
+    private static readonly HashSet<string> TakesTarget =
+        new() { "file", "calc", "again", "find", "recent", "history", "hist", "favorites", "fav", "favs" };
+
     /// <summary>
-    /// The words after "file" with the "$" of the register after a ">" made "$$", so that it stays the name
-    /// ("file plot.md > $other") and is not put in as its value
+    /// The words after a command with the "$" of the register after a ">" or ">>" at the end made "$$", so that it
+    /// stays the name ("calc 2 * 3 > $price") and is not put in as its value
     /// </summary>
-    internal static string ProtectFileTarget(string argument)
+    internal static string ProtectTargetAtEnd(string argument)
     {
-        var match = System.Text.RegularExpressions.Regex.Match(argument, @"(^|\s)>\s+\$(?=[A-Za-z])");
+        var match = System.Text.RegularExpressions.Regex.Match(argument,
+            @"(^|\s)>>?\s+\$(?=[A-Za-z][A-Za-z0-9_]*\s*$)");
         return match.Success
             ? argument[..(match.Index + match.Length - 1)] + "$" + argument[(match.Index + match.Length - 1)..]
             : argument;
+    }
+
+    /// <summary>
+    /// A register named at the end of what follows a command: "> $name" (set) or ">> $name" (added to it as lines).
+    /// What comes before it, the name (lowercase), and if it is added to; null when there is none
+    /// </summary>
+    internal static (string Before, string Name, bool Adds)? TargetAtEnd(string argument)
+    {
+        var match = System.Text.RegularExpressions.Regex.Match(argument,
+            @"(^|\s)(>>?)\s+\$\$?([A-Za-z][A-Za-z0-9_]*)\s*$");
+        if (!match.Success) return null;
+        return (argument[..match.Index].Trim(), match.Groups[3].Value.ToLowerInvariant(), match.Groups[2].Value == ">>");
+    }
+
+    // A value kept in a register named after ">" or ">>" (added to it as lines), saved, and shown as "reg" shows it.
+    // The log has the name only
+    private void KeepInRegister(string name, string value, bool adds)
+    {
+        if (adds) ShellRegisters.Add(name, value);
+        else ShellRegisters.Set(name, value);
+        // English: the log (the name only, never the value)
+        EventLog.Add(DialogText.LogShell + (adds ? ": register added to: " : ": register set: ") + name);
+        SaveRegisters("  $" + name + " = " + RegisterShown(ShellRegisters.Get(name) ?? string.Empty));
+    }
+
+    // A name set by Blyant after ">" is not a register to keep a result in: told (true)
+    private bool TargetRefused(string name)
+    {
+        if (!ShellRegisters.IsReserved(name)) return false;
+        Error(ReservedRefused(name));
+        return true;
+    }
+
+    // The paths of the rows a list shows while a list goes to a register ("find -t TODO > $open"); null: none is
+    private List<string>? _shownPaths;
+
+    // A row shown by a list: its full path kept when the list goes to a register
+    private void RowShown(Item item)
+    {
+        if (_shownPaths != null && item.Path.Length > 0) _shownPaths.Add(Path.GetFullPath(item.Path));
+    }
+
+    // "find -t TODO > $open", "recent >> $files", "fav filter draft > $drafts": the list shown as always, and the full
+    // paths of its rows (only those shown, after a filter) kept in the register, one on each line, whatever the
+    // options show (-b, -f). An empty list, or one that fails, leaves the register as it was
+    private void ListInto(string argument, Action<string> list)
+    {
+        if (TargetAtEnd(argument) is not { } target)
+        {
+            list(argument);
+            return;
+        }
+
+        if (TargetRefused(target.Name)) return;
+        var failed = Failures;
+        _shownPaths = new List<string>();
+        List<string> paths;
+        try
+        {
+            list(target.Before);
+        }
+        finally
+        {
+            paths = _shownPaths;
+            _shownPaths = null;
+        }
+
+        if (Failures > failed) return;
+        if (paths.Count == 0)
+        {
+            Line(Lang.F("${0} is not changed: the list is empty", target.Name));
+            return;
+        }
+
+        KeepInRegister(target.Name, string.Join("\n", paths), target.Adds);
     }
 
     // "file 3", "file plot.md": the file of a row of the last list, or one named, made $file, without peeking or
@@ -359,6 +449,12 @@ internal sealed partial class ShellSession
         if (words.Count == 3 && words[1] == ">")
         {
             FileToRegister(words[0], words[2]);
+            return;
+        }
+
+        if (words.Count == 3 && words[1] == ">>")
+        {
+            Error(Lang.T("file keeps one path: file plot.md > $other (lines ... >> $name adds lines)"));
             return;
         }
 
@@ -396,6 +492,19 @@ internal sealed partial class ShellSession
     // $calc / 12"); "calc" alone shows it. A calculation that fails leaves $calc as it was. See Calculator
     private void Calc(string expression)
     {
+        // "calc 22 * 3500 > $words": also kept in a register ($calc too); ">> $results" adds it as a line
+        var target = TargetAtEnd(expression);
+        if (target is { } given)
+        {
+            if (TargetRefused(given.Name)) return;
+            expression = given.Before;
+            if (expression.Length == 0)
+            {
+                Error(Lang.T("Give a calculation: calc 2 + 3 * 4"));
+                return;
+            }
+        }
+
         if (expression.Trim().Length == 0)
         {
             if (ShellRegisters.Calc is { } last) Line(Lang.F("$calc: {0}", last));
@@ -411,7 +520,9 @@ internal sealed partial class ShellSession
         }
 
         ShellRegisters.Calc = result;
-        Line(result);
+        // (with "> $name" the result is in the line of the register; ">>" shows the register as a whole)
+        if (target is not { Adds: false }) Line(result);
+        if (target is { } keep) KeepInRegister(keep.Name, result, keep.Adds);
     }
 
     // "file plot.md > $other", "file 3 > $other", "file $file > $other": the full path of a file kept in a register,
@@ -444,6 +555,36 @@ internal sealed partial class ShellSession
         // English: the log (the name only, never the value)
         EventLog.Add(DialogText.LogShell + ": register set: " + name);
         SaveRegisters("  $" + name + " = " + path);
+    }
+
+    // "again 3 > $tidy", "again 3-5 > $tidy", "again 6 >> $tidy": commands typed (numbered as "again" lists them,
+    // the newest first) kept in a register as they were typed, the oldest first, one on each line, so "run $tidy"
+    // runs them in the order they were typed; a $name in them is put in when the register runs
+    private void AgainInto(string numbers, string name, bool adds)
+    {
+        if (TargetRefused(name)) return;
+        var parts = numbers.Split('-');
+        if (parts.Length is < 1 or > 2 || parts.Any(part => part.Length == 0 || !part.All(char.IsAsciiDigit)) ||
+            !int.TryParse(parts[0], out var first) || !int.TryParse(parts[^1], out var last))
+        {
+            Error(Lang.T("Give the numbers of the commands: again 3 > $tidy, again 3-5 > $tidy"));
+            return;
+        }
+
+        var kept = CommandHistory.Of(CommandContext.Shell);
+        var (low, high) = (Math.Min(first, last), Math.Max(first, last));
+        if (low < 1 || high > kept.Count)
+        {
+            var number = low < 1 ? low : high;
+            Error(kept.Count == 1
+                ? Lang.F("No command {0}: 1 is kept (again lists it)", number)
+                : Lang.F("No command {0}: {1} are kept (again lists them)", number, kept.Count));
+            return;
+        }
+
+        // (the oldest first: the numbers count from the newest)
+        var commands = Enumerable.Range(low, high - low + 1).Reverse().Select(n => kept[n - 1]);
+        KeepInRegister(name, string.Join("\n", commands), adds);
     }
 
     // "echo $file", "echo Tidied on $date": the text written as typed, with the $names put in ("$$": a "$"), a value
@@ -501,15 +642,22 @@ internal sealed partial class ShellSession
             case "fav":
             case "favs":
                 // "fav add 3", "fav remove 3", the lists ("fav lists", "fav new", "fav rename", "fav delete"), else the
-                // list ("fav work", "fav use work": another list; "fav main": the main list)
-                Favorites(argument);
+                // list ("fav work", "fav use work": another list; "fav main": the main list). "fav > $files": the
+                // paths of the list in a register
+                if (TargetAtEnd(argument) is { } favTarget && !ListsFavorites(favTarget.Before))
+                {
+                    Error(Lang.T("Only a list of favorites goes to a register: fav > $name, fav filter draft > $name"));
+                    break;
+                }
+
+                ListInto(argument, Favorites);
                 break;
             case "history":
             case "hist":
-                ListHistory(int.MaxValue, argument);
+                ListInto(argument, rest => ListHistory(int.MaxValue, rest));
                 break;
             case "recent":
-                ListHistory(RecentBox.MaxFiles, argument);
+                ListInto(argument, rest => ListHistory(RecentBox.MaxFiles, rest));
                 break;
             case "hotlist":
             case "hot":
@@ -555,7 +703,7 @@ internal sealed partial class ShellSession
                 else PeekAgain();
                 break;
             case "find":
-                Find(argument);
+                ListInto(argument, Find);
                 break;
             case "new":
                 NewFile(argument);
@@ -910,7 +1058,11 @@ internal sealed partial class ShellSession
             if (headings.TryGetValue(i, out var before)) foreach (var heading in before) Line(heading);
             // (in as far as its folder: a favorite of a folder after one of its subfolders is not taken for one of the
             // subfolder's)
-            if (i < rows.Count) Line(new string(' ', 2 * levels[i]) + (i + 1).ToString().PadLeft(width + 2) + "  " + rows[i].Item2);
+            if (i < rows.Count)
+            {
+                Line(new string(' ', 2 * levels[i]) + (i + 1).ToString().PadLeft(width + 2) + "  " + rows[i].Item2);
+                RowShown(rows[i].Item1);
+            }
         }
     }
 
@@ -984,6 +1136,7 @@ internal sealed partial class ShellSession
         {
             if (!fits(i)) continue;
             Line((i + 1).ToString().PadLeft(width + 2) + "  " + rows[i].Text);
+            RowShown(rows[i].Item);
             found++;
         }
 

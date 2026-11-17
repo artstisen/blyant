@@ -528,6 +528,7 @@ insert done.md bottom - [x] Tidied on $date
 - Each command is written out before it runs, and `run` stops at the first one that fails
 - `run weekly.txt` runs the commands of a file in the same way: one per line, and a line starting with `#` is a comment
 - `!!` after `run $tidy` runs the whole script again
+- Commands you have just typed become a script with `again`: it lists them, the newest first, and `again 2-3 > $tidy` keeps numbers 2 and 3 in `$tidy`, the oldest first, as they were typed
 
 ## Full screen and shell side by side
 What you do on the full screen, and the command for it in the shell:

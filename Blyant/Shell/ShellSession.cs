@@ -362,6 +362,7 @@ internal sealed partial class ShellSession
         for (var i = 0; i < rows.Count; i++)
         {
             Line((i + 1).ToString().PadLeft(width + 2) + "  " + rows[i].Text);
+            RowShown(rows[i].Item);
         }
     }
 

@@ -92,6 +92,7 @@ To get all output at once (with a screen reader, say), turn the pages off: `set 
 | `peek` (or `.`) | Show the last peek again: the same lines of the same file, as it is now (after `insert`, `change`, `lines` or the editor). See [Peeking into a file](#peeking-into-a-file) |
 | `peek [file\|n] +\|++\|-\|--` | Move the window of the last peek: `+` 1 line further down, `++` 5, `-` and `--` up again (the settings `shellpeekstep` and `shellpeekbigstep`: `set shellpeekstep 2`; 1 to 1000, and `reset` puts back 1 and 5), as many lines as before (`peek plot.md +`, then `peek +`: the file peeked last; `+`, `++`, `-` or `--` alone on the line do the same, also after other commands; a number after them is a count of steps: `+ 20`). The lines shown are `$peek`. A file other than the one peeked last starts from the top (`peek other.md +`: from line 2); at the end the last lines are shown |
 | `find [-l\|-f\|-b] [name] [-t text]` | Find files here and in the directories below, by name and by text they contain (see [Files](#files)). The rows show the path from here; `find -l` gives the full paths, `find -f` the folder and the name, and `find -b` the name only |
+| `find\|recent\|hist\|fav ... > $name` | Show the list, and keep the full paths of the rows shown in a register, one per line (`find -t TODO > $open`); `>> $name` adds them. See [Results in a register](#results-in-a-register) |
 | `new name` | Make a new, empty file here (`new ideas` makes `ideas.md`: without an extension, the kind of new files is used). It is added to the latest files at once, as an opened file is: `recent` lists it, and `Tab` with nothing typed offers it first |
 | `mkdir name` | Make a new directory here |
 | `rename file\|n name` | Give a file or directory a new name. A renamed file is added to the latest files, as with `new`. `Tab` after the file gives the name it has now, to change: `rename chapter-1.md ` and `Tab` gives `rename chapter-1.md chapter-1.md` |
@@ -120,6 +121,7 @@ To get all output at once (with a screen reader, say), turn the pages off: `set 
 | `reg -d name\|all` | Take away one register, or all |
 | `echo text` | Write a text with the `$names` put in: `echo $file`, `echo $pwd $date`, `echo $peek` (all the lines). Use it to see a value, or what a command will get (`echo insert $file bottom $date Done`; a command that takes paths gets a value with blanks in quotes). See [Registers](#registers) |
 | `calc expression` | Calculate, and keep the result in `$calc`: `calc 1250 * 1.25 + 80` writes `1642.5`, and `insert budget.md bottom Total: $calc` puts it in a file. See [Calculating](#calculating) |
+| `calc expression > $name` | Also keep the result in a register (`calc 22 * 3500 > $words`); `>> $name` adds it as a line. See [Results in a register](#results-in-a-register) |
 | `file [file\|n]` | Make a file from a list `$file` without opening or peeking it: `recent`, then `file 2`; or name the file (`file plot.md`). The last list stays, so `file 3` or `open 4` still use it. `file` alone shows `$file`. `file plot.md > $other` keeps the full path in a register instead, and leaves `$file` as it is. See [Registers](#registers) |
 | `clip [path\|name] file\|dir\|n\|.` | Copy the full path of a file or directory (`clip 3`: row 3 of the last list; `clip .`: the directory you are in), or its name, to the clipboard (see [Clipboard](#clipboard)) |
 | `clip text file\|n` | Copy the text of a file to the clipboard |
@@ -160,6 +162,7 @@ To get all output at once (with a screen reader, say), turn the pages off: `set 
 | `changes` | List the changes `undo` goes back through, the newest first, and those `redo` does again |
 | `again filter text` | Show the commands you typed with a text in them (`again filter lines`), or that match a pattern (`again filter peek*`), with their numbers: `!7` runs the one numbered 7 |
 | `again [n]` | List the commands you typed, the newest first, or run one again by its number (`again 3`; also `!3`, and `!!` for the last). See [Typing a command](#typing-a-command) |
+| `again n\|n-m > $name` | Keep commands you typed in a register, as typed and the oldest first, for `run` (`again 3-5 > $tidy`); `>> $name` adds them. See [Running commands](#running-commands) |
 | `run $name\|file` | Run the commands of a register or of a file, one per line, each written out first; it stops at the first that fails. See [Running commands](#running-commands) |
 | `help [command]` (`h`) | List the commands, or explain one |
 | `exit` (`quit`, `q`) | Leave Blyant |
@@ -693,6 +696,22 @@ lines plot.md 3-5 > $notes          ">": the register is those lines alone
 - `Tab` completes the names of the registers after a `$` (and the names set by Blyant that have a value: `$clip` once something is copied, `$file` once a file is worked on), and after `reg`
 - The registers are kept in the data directory (`registers.txt`), so they are there the next time. The file can be edited in another program: a line is the name, a tab, and the value. If the file changed since the shell read it, it is read again before the next command, and `reg` points out lines that are not registers (no tab, or a name a register cannot have): they are kept in the file, at its end, so you can put them right. The editor has separate registers. `reset` does not take them away (they are not settings), and the log has the names of registers, never the values
 
+### Results in a register
+Some commands put what they find in a register named after `>` at the end, as `lines` does: `>` sets the register, and `>>` adds to the end of it, as lines.
+
+```
+lines notes.md 4-6 > $notes         the lines
+file chapter-3.md > $other          the full path of a file
+calc 22 * 3500 > $words             a result (in $calc too)
+again 3-5 > $tidy                   commands you typed, for run
+find -t TODO > $open                the full paths of the rows of a list
+insert todo.md bottom $open         ... put in a file, one per line
+```
+
+- The lists are `find`, `recent`, `hist` and `fav` (also `hist filter draft > $h`): the list is shown as always, and the register gets the full path of each row shown, whatever the list shows (`-b`, `-f`). An empty list leaves the register as it was. `fav add`, `fav move` and the other commands that change favorites refuse a register
+- A name set by Blyant (`$calc`, `$file` ...) cannot be the register: it is refused, and nothing is kept
+- The `$` after `>` stays the name: `calc 2 * 3 > $price` keeps 6 in `$price`, whatever `$price` held
+
 ## Calculating
 ![A word target worked out with calc, put in the outline, and a task made from $calc](docs/screenshots/shell-calc.svg)
 
@@ -710,6 +729,7 @@ blyant ~/novel> calc $calc / 12
 - A number takes `.` or `,` as the decimal point (`1.5` or `1,5`; there are no thousands separators). The result is written with `.`, the same on every computer, and with at most 10 decimals: `10 / 3` is `3.3333333333`, `10 / 4` is `2.5`
 - The calculation is exact for decimals: `0.1 + 0.2` is `0.3`. Only a power whose exponent is not a whole number, such as `2 ^ 0.5` (or a whole number above a billion), is as near as it comes
 - `$calc` and the registers can be used in a calculation: `calc $calc * 2`, `calc $price * 3`. Each value counts as one number, as if in parentheses: with `$calc` at `-3`, `calc $calc ^ 2` is `9`, and a register holding `1 + 2` counts as `3`
+- `calc 22 * 3500 > $words` keeps the result in `$words` too, so several results can be kept (`calc $words / 70 > $perday`), and `>> $results` adds it as a line
 - `calc` alone shows `$calc`. It is kept while Blyant runs, as `$clip`, and is not a register: `reg` lists it with the names set by Blyant, but cannot set it or take it away
 - At most 200 parentheses or signs can be inside each other (`((1))`, `--1`)
 - When something cannot be calculated, `calc` says what and where (the place is counted after the `$names` are put in): `Not understood: 12x (position 3)`, `Division by zero`, `A ) is missing`. `$calc` then stays as it was
@@ -792,6 +812,8 @@ reg tidy += insert log.md bottom $$date Tidied
 run $tidy                                       runs the three, in order
 run weekly.txt                                  the commands of a file
 ```
+
+Commands you have typed can go in a register as they are: `again` lists them, the newest first, and `again 3-5 > $tidy` keeps numbers 3 to 5, the oldest first, so `run $tidy` runs them in the order you typed them. A `$date` in them is kept as typed, and put in when the register runs. `again 6 >> $tidy` adds one more at the end. This is the quickest way to make a script: do it once by hand, then keep it.
 
 - Each command is written out before it runs, as `again` does, so you see what is done. `run` stops at the first command that fails, and tells at which line: the commands after it are not run
 - Questions are asked as for any command: `delete` and `change` without a text ask first (from a file or `--run`, the answer is no unless `--yes` is given)

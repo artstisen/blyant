@@ -5186,4 +5186,108 @@ public class ShellTests : IDisposable
         Assert.Contains("  1  storm.md (scenes/drafts)", output);
         Assert.Contains("  2  storm.md (part-1/drafts)", output);
     }
+
+    // ---- > $name after calc, again and the lists
+
+    [Fact]
+    public void Calc_ToARegister_KeepsTheResultThereAndInCalc_AndAddsWithTwoArrows()
+    {
+        var (output, errors, _, _) = Run("calc 22 * 3500 > $words\ncalc $words / 70 > $perday\ncalc 1 + 1 >> $words\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("77000\n2", ShellRegisters.Get("words"));
+        Assert.Equal("1100", ShellRegisters.Get("perday"));
+        Assert.Equal("2", ShellRegisters.Calc);
+        Assert.Contains("  $words = 77000\n", output);
+        // (>>: the result shown too, as the register shows only its first line)
+        Assert.Contains("\n2\n", output);
+        var (_, wrong, _, _) = Run("calc 1 > $file\ncalc > $x\ncalc 1 / 0 > $x\n");
+        Assert.Contains(Lang.F("${0} is set by Blyant: it is not a register to set or take away", "file"), wrong);
+        Assert.Contains(Lang.T("Give a calculation: calc 2 + 3 * 4"), wrong);
+        Assert.Contains(Lang.T("Division by zero"), wrong);
+        Assert.Null(ShellRegisters.Get("x"));
+    }
+
+    [Fact]
+    public void Again_ToARegister_KeepsTheCommandsAsTyped_TheOldestFirst_ForRun()
+    {
+        CommandHistory.Clear();
+        try
+        {
+            File.WriteAllText(In("work", "log.md"), "# Log\n");
+            var errors = new StringWriter();
+            var output = new StringWriter();
+            var session = new ShellSession(new StringReader(string.Empty), output, errors, In("work"), false);
+            // (as typed at the prompt: newest first in "again", 1 the last)
+            foreach (var typed in new[] { "pwd", "insert log.md bottom First $date", "insert log.md bottom Second" })
+            {
+                CommandHistory.Add(CommandContext.Shell, typed);
+            }
+
+            session.Execute("again 1-2 > $tidy");
+            Assert.Equal("insert log.md bottom First $date\ninsert log.md bottom Second", ShellRegisters.Get("tidy"));
+            // The other way round is the same, and >> adds
+            session.Execute("again 2-1 > $same");
+            Assert.Equal(ShellRegisters.Get("tidy"), ShellRegisters.Get("same"));
+            session.Execute("again 3 >> $tidy");
+            Assert.EndsWith("\npwd", ShellRegisters.Get("tidy"));
+            Assert.Equal(string.Empty, errors.ToString());
+            // Run: the $date is put in when it runs
+            ShellRegisters.Set("tidy", "insert log.md bottom First $date\ninsert log.md bottom Second");
+            session.Execute("run $tidy");
+            Assert.Equal("# Log\nFirst " + DateTime.Now.ToString("yyyy-MM-dd") + "\nSecond\n", File.ReadAllText(In("work", "log.md")));
+            session.Execute("again 9 > $x");
+            session.Execute("again 2-x > $x");
+            Assert.Contains(Lang.F("No command {0}: {1} are kept (again lists them)", 9, 3), errors.ToString());
+            Assert.Contains(Lang.T("Give the numbers of the commands: again 3 > $tidy, again 3-5 > $tidy"), errors.ToString());
+            Assert.Null(ShellRegisters.Get("x"));
+            // Not run as "again 1"
+            Assert.Null(ShellSession.AgainNumber("again 1 > $x"));
+        }
+        finally
+        {
+            CommandHistory.Clear();
+        }
+    }
+
+    [Fact]
+    public void Lists_ToARegister_KeepTheFullPathsOfTheRowsShown()
+    {
+        StormTree();
+        var (output, errors, _, _) = Run("find -b storm > $storms\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal(In("work", "novel", "part-1", "drafts", "storm.md") + "\n" +
+                     In("work", "novel", "part-2", "scenes", "drafts", "storm.md"), ShellRegisters.Get("storms"));
+        // The list is shown too
+        Assert.Contains("  1  storm.md (part-1/drafts)", output);
+        // History: only the rows a filter shows, and >> adds
+        FileHistory.Add(In("work", "novel", "notes.md"), new DateTime(2026, 11, 13, 9, 0, 0));
+        FileHistory.Add(In("work", "novel", "part-1", "drafts", "storm.md"), new DateTime(2026, 11, 13, 10, 0, 0));
+        FileHistory.Save();
+        Run("hist filter notes > $h\nrecent >> $h\n");
+        Assert.Equal(In("work", "novel", "notes.md") + "\n" + In("work", "novel", "part-1", "drafts", "storm.md") + "\n" +
+                     In("work", "novel", "notes.md"), ShellRegisters.Get("h"));
+        // Favorites, with folders
+        Run("fav add novel/notes.md\nfav folder F\nfav move 1 [F]\nfav > $favs\n");
+        Assert.Equal(In("work", "novel", "notes.md"), ShellRegisters.Get("favs"));
+        // An empty list leaves the register
+        (output, _, _, _) = Run("find nothing-at-all > $storms\n");
+        Assert.Contains(Lang.F("${0} is not changed: the list is empty", "storms"), output);
+        Assert.Contains("part-1", ShellRegisters.Get("storms"));
+        var (_, wrong, _, _) = Run("fav add novel/notes.md > $y\nfind storm > $calc\nfile novel/notes.md >> $y\n");
+        Assert.Contains(Lang.T("Only a list of favorites goes to a register: fav > $name, fav filter draft > $name"), wrong);
+        Assert.Contains(Lang.F("${0} is set by Blyant: it is not a register to set or take away", "calc"), wrong);
+        Assert.Contains(Lang.T("file keeps one path: file plot.md > $other (lines ... >> $name adds lines)"), wrong);
+        Assert.Null(ShellRegisters.Get("y"));
+    }
+
+    [Fact]
+    public void Target_IsOnlyARegisterAtTheEnd()
+    {
+        Assert.Equal(("2 * 3", "x", false), ShellSession.TargetAtEnd("2 * 3 > $x"));
+        Assert.Equal(("3-5", "tidy", true), ShellSession.TargetAtEnd("3-5 >> $Tidy"));
+        Assert.Null(ShellSession.TargetAtEnd("-t a > b"));
+        Assert.Null(ShellSession.TargetAtEnd("-t > $x and more"));
+        Assert.Equal("a >> $$x", ShellSession.ProtectTargetAtEnd("a >> $x"));
+        Assert.Equal("a > $x b", ShellSession.ProtectTargetAtEnd("a > $x b"));
+    }
 }
