@@ -120,7 +120,7 @@ To get all output at once (with a screen reader, say), turn the pages off: `set 
 | `reg -d name\|all` | Take away one register, or all |
 | `echo text` | Write a text with the `$names` put in: `echo $file`, `echo $pwd $date`, `echo $peek` (all the lines). Use it to see a value, or what a command will get (`echo insert $file bottom $date Done`; a command that takes paths gets a value with blanks in quotes). See [Registers](#registers) |
 | `calc expression` | Calculate, and keep the result in `$calc`: `calc 1250 * 1.25 + 80` writes `1642.5`, and `insert budget.md bottom Total: $calc` puts it in a file. See [Calculating](#calculating) |
-| `file [file\|n]` | Make a file from a list `$file` without opening or peeking it: `recent`, then `file 2`; or name the file (`file plot.md`). The last list stays, so `file 3` or `open 4` still use it. `file` alone shows `$file`. See [Registers](#registers) |
+| `file [file\|n]` | Make a file from a list `$file` without opening or peeking it: `recent`, then `file 2`; or name the file (`file plot.md`). The last list stays, so `file 3` or `open 4` still use it. `file` alone shows `$file`. `file plot.md > $other` keeps the full path in a register instead, and leaves `$file` as it is. See [Registers](#registers) |
 | `clip [path\|name] file\|dir\|n\|.` | Copy the full path of a file or directory (`clip 3`: row 3 of the last list; `clip .`: the directory you are in), or its name, to the clipboard (see [Clipboard](#clipboard)) |
 | `clip text file\|n` | Copy the text of a file to the clipboard |
 | `clip lines file\|n lines` | Copy lines of a file to the clipboard, given as for `lines` (`40`, `4-6`, `4,7,9-10`, `+100 30`, a text in the line). See [Line numbers](#line-numbers) |
@@ -615,6 +615,7 @@ A register keeps a text or a path under a name, and `$name` puts it in any comma
 reg docs ~/projects/novel/docs      a path (or a text: all after the name, as typed)
 reg here .                          the directory you are in
 reg plot #3                         the full path of row 3 of the last list (fav, hist, find, ls ...)
+file plot.md > $plot                the full path of a file you name
 reg note Buy more ink
 copy plot.md $docs                  $docs is ~/projects/novel/docs
 cd $here
@@ -624,14 +625,16 @@ insert todo.md bottom $note
 `$file` follows the file the last command worked on, so it changes as you work. To keep a second file at hand while you work on another, put it in a register: the register keeps the path until you change it, whatever the commands do, and also after a restart:
 
 ```
-peek chapter-3.md                   $file is chapter-3.md
-reg other $file                     keep it as $other
-peek notes.md                       $file is notes.md now, $other is still chapter-3.md
+peek notes.md                       $file is notes.md
+file chapter-3.md > $other          chapter 3 kept as $other, $file is still notes.md
 lines notes.md 2 > $other bottom    line 2 of the notes put at the end of chapter 3
 insert $other bottom The end.       and a line of your own
 ```
 
-`reg other #3` keeps row 3 of the last list without peeking it, and `reg -d other` takes the register away when you are done. Any name works: keep as many files as you need (`$draft`, `$outline`).
+- `file chapter-3.md > $other` keeps the full path, so `$other` works from any directory. The file must be there: a name typed wrong gets a message, and nothing is kept
+- `file 3 > $other` keeps row 3 of the last list, and `reg other $file` the file you are working on
+- A file name after `reg` is kept as the text you typed (`reg other chapter-3.md` keeps `chapter-3.md`, which works only in that directory): use `file ... > $other` for a file
+- `reg -d other` takes the register away when you are done. Any name works: keep as many files as you need (`$draft`, `$outline`)
 
 A register can also hold lines, collected from several places of a file, or from several files:
 

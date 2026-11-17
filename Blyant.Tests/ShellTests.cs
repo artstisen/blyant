@@ -4913,7 +4913,7 @@ public class ShellTests : IDisposable
     public void Tab_AfterAFile_OfChangeDeleteAndTheOthers_OffersNoName_OnlyRenameDoes()
     {
         File.WriteAllText(In("work", "t.md"), "x\n");
-        foreach (var command in new[] { "change", "delete", "info", "path", "name", "file", "format", "trim", "trim!", "del" })
+        foreach (var command in new[] { "change", "delete", "info", "path", "name", "format", "trim", "trim!", "del" })
         {
             Assert.Equal(command + " t.md ", Tab(Completion(), command + " t.md "));
         }
@@ -5055,5 +5055,59 @@ public class ShellTests : IDisposable
         FileHistory.Save();
         var (output, _, _, _) = Run("recent -s\n");
         Assert.Contains(FileSizeFormatter.FormatSize(3000), output);
+    }
+
+    // ---- file ... > $name
+
+    [Fact]
+    public void FileToARegister_KeepsTheFullPath_AndLeavesFileAndTheLastListAsTheyWere()
+    {
+        Directory.CreateDirectory(In("work", "book"));
+        File.WriteAllText(In("work", "book", "chapter-3.md"), "x\n");
+        File.WriteAllText(In("work", "notes.md"), "y\n");
+        var errors = new StringWriter();
+        var output = new StringWriter();
+        var session = new ShellSession(new StringReader(string.Empty), output, errors, In("work"), false);
+        session.Execute("peek notes.md");
+        // (a register of that name already: its value is not put in, the name is the target)
+        session.Execute("reg other something");
+        session.Execute("file book/chapter-3.md > $other");
+        Assert.Equal(In("work", "book", "chapter-3.md"), ShellRegisters.Get("other"));
+        Assert.Contains("  $other = " + In("work", "book", "chapter-3.md"), output.ToString());
+        Assert.Equal(In("work", "notes.md"), session.WorkedFile);
+        Assert.Equal(In("work", "notes.md"), session.LastList.Single().Path);
+        // A row of the last list, and $file
+        session.Execute("ls book");
+        session.Execute("file 1 > $first");
+        Assert.Equal(In("work", "book", "chapter-3.md"), ShellRegisters.Get("first"));
+        session.Execute("file $file > $current");
+        Assert.Equal(In("work", "notes.md"), ShellRegisters.Get("current"));
+        // From another directory it is the same file
+        session.Execute("cd book");
+        session.Execute("peek $current");
+        Assert.Equal(string.Empty, errors.ToString());
+    }
+
+    [Fact]
+    public void FileToARegister_IsRefused_ForAFileNotThere_ADirectory_AndANameSetByBlyant()
+    {
+        Directory.CreateDirectory(In("work", "book"));
+        File.WriteAllText(In("work", "a.md"), "x\n");
+        var (_, errors, _, _) = Run("file nothing.md > $x\nfile book > $x\nfile a.md > $calc\nfile a.md > other\n" +
+                                    "file a.md b.md > $x\nfile a.md > $1x\n");
+        Assert.Contains(Lang.F("Not found: {0}", In("work", "nothing.md")), errors);
+        Assert.Contains(Lang.F("Not a file: {0} (reg name . keeps the directory you are in)", In("work", "book")), errors);
+        Assert.Contains(Lang.F("${0} is set by Blyant: it is not a register to set or take away", "calc"), errors);
+        Assert.Equal(3, errors.Split(Lang.T("Give a file and a register: file plot.md > $other")).Length - 1);
+        Assert.Null(ShellRegisters.Get("x"));
+    }
+
+    [Fact]
+    public void Tab_AfterFileAndAFile_OffersTheArrow()
+    {
+        File.WriteAllText(In("work", "a.md"), "x\n");
+        Assert.Equal("file a.md >", Tab(Completion(), "file a.md "));
+        Assert.Equal("file a.md", Tab(Completion(), "file a."));
+        Assert.Contains("file file|n > $name", Run("help file\n").Output);
     }
 }

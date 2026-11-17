@@ -68,6 +68,7 @@ internal sealed partial class ShellSession
         ("echo text", Lang.T("Write a text, with $names put in (echo $file)")),
         ("calc expression", Lang.T("Calculate: + - * / % ^ ( ), the result kept in $calc")),
         ("file [file|n]", Lang.T("Set $file to a file or row (file 3), or show $file")),
+        ("file file|n > $name", Lang.T("Keep the full path of a file in a register")),
         ("favorites [-l] [list]", Lang.T("List the favorites (fav), or another list")),
         ("favorites -l", Lang.T("Lists with full paths (also hist, recent, book)")),
         ("favorites lists", Lang.T("List the lists of favorites (*: the open one)")),
@@ -169,6 +170,8 @@ internal sealed partial class ShellSession
         var help = name is "help" or "h";
         // ("lines a.md 4-6 > $notes": the register the lines go to, not its value: kept as the name)
         if (name == "lines") argument = ProtectRegisterTarget(argument);
+        // ("file plot.md > $other": the register the path goes to, kept as the name)
+        if (name == "file") argument = ProtectFileTarget(argument);
         // ("calc $calc ^ 2": each value one number, in parentheses)
         if (name == "calc") argument = ShellRegisters.Parenthesized(argument);
         // (in a run, "screen" would leave the run for the full screen, and leave the shell at the next exit)
@@ -334,11 +337,36 @@ internal sealed partial class ShellSession
     // What followed the command, as typed: before the $names were put in
     private string? _typedArgument;
 
+    /// <summary>
+    /// The words after "file" with the "$" of the register after a ">" made "$$", so that it stays the name
+    /// ("file plot.md > $other") and is not put in as its value
+    /// </summary>
+    internal static string ProtectFileTarget(string argument)
+    {
+        var match = System.Text.RegularExpressions.Regex.Match(argument, @"(^|\s)>\s+\$(?=[A-Za-z])");
+        return match.Success
+            ? argument[..(match.Index + match.Length - 1)] + "$" + argument[(match.Index + match.Length - 1)..]
+            : argument;
+    }
+
     // "file 3", "file plot.md": the file of a row of the last list, or one named, made $file, without peeking or
-    // opening it; the last list stays as it was ("file 4", "open 3" go on in it). "file" alone: $file shown
+    // opening it; the last list stays as it was ("file 4", "open 3" go on in it). "file" alone: $file shown.
+    // "file plot.md > $other": the full path kept in a register instead (see FileToRegister)
     private void FileCommand(string argument)
     {
         var words = Words(argument);
+        if (words.Count == 3 && words[1] == ">")
+        {
+            FileToRegister(words[0], words[2]);
+            return;
+        }
+
+        if (words.Contains(">"))
+        {
+            Error(Lang.T("Give a file and a register: file plot.md > $other"));
+            return;
+        }
+
         if (words.Count == 0)
         {
             if (_file == null) Error(Lang.T("No file yet: open, peek, insert, new ... give $file"));
@@ -383,6 +411,38 @@ internal sealed partial class ShellSession
 
         ShellRegisters.Calc = result;
         Line(result);
+    }
+
+    // "file plot.md > $other", "file 3 > $other", "file $file > $other": the full path of a file kept in a register,
+    // so it works from any directory and after a restart; the file must be there. $file and the last list stay as
+    // they were. A directory is refused, as "file" refuses it ("reg name ." keeps the directory the shell is in)
+    private void FileToRegister(string word, string target)
+    {
+        if (target is not ['$', .. var name] || !ShellRegisters.IsName(name))
+        {
+            Error(Lang.T("Give a file and a register: file plot.md > $other"));
+            return;
+        }
+
+        if (ShellRegisters.IsReserved(name))
+        {
+            Error(ReservedRefused(name));
+            return;
+        }
+
+        if (Existing(word) is not { } item) return;
+        if (item.IsDirectory)
+        {
+            Error(Lang.F("Not a file: {0} (reg name . keeps the directory you are in)", item.Path));
+            return;
+        }
+
+        var path = Path.GetFullPath(item.Path);
+        name = name.ToLowerInvariant();
+        ShellRegisters.Set(name, path);
+        // English: the log (the name only, never the value)
+        EventLog.Add(DialogText.LogShell + ": register set: " + name);
+        SaveRegisters("  $" + name + " = " + path);
     }
 
     // "echo $file", "echo Tidied on $date": the text written as typed, with the $names put in ("$$": a "$"), a value

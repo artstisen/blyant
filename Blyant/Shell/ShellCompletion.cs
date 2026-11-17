@@ -159,9 +159,12 @@ internal sealed class ShellCompletion
                     1 => (Kind.Words, PeekPlaces),
                     _ => (Kind.None, none)
                 };
+            case "file":
+                // ("file plot.md > $other": ">" after the file; $ and Tab the registers)
+                if (position == 1) return (Kind.Words, new[] { ">" });
+                return (position == 0 ? Kind.Path : Kind.None, none);
             case "path":
             case "name":
-            case "file":
             case "info":
             case "delete":
             case "del":

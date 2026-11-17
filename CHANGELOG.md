@@ -1,6 +1,7 @@
 # Changes
 
 ## v1.5.6
+- **`file name > $register` in the shell**: keeps the full path of a file in a register, so it works from any directory and after a restart, and leaves `$file` and the last list as they are: `file chapter-3.md > $other`, `file 3 > $other` (a row), `file $file > $other`. The file must be there, and `Tab` offers the `>` after the file. Before, `reg other chapter-3.md` kept only the text typed. See [Registers](Guide-to-shell.md#registers).
 - **Keep a second file in a register**: the guide to the shell and the tutorial show how a register keeps another file at hand while `$file` moves with the commands: `reg other $file` (or `reg other #3`), then `lines notes.md 2 > $other bottom` and `insert $other bottom ...`. See [Registers](Guide-to-shell.md#registers).
 
 ## v1.5.5 (2026-11-16)
