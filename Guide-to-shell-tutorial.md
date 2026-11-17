@@ -24,7 +24,7 @@ blyant --shell ~/novel
 ```
 
 ```
-Blyant v1.5.5: help lists the commands, exit leaves
+Blyant v1.5.6: help lists the commands, exit leaves
 blyant ~/novel>
 ```
 
@@ -331,6 +331,24 @@ blyant ~/novel> insert todo.md +5 - [ ] $note
 blyant ~/novel> cd $chap
 blyant ~/novel/chapters>
 ```
+
+A register is also the way to keep a second file at hand. `$file` follows the file the last command worked on, so it moves as you work, but a register stays as you set it:
+
+```
+blyant ~/novel> peek chapter-3.md 2-3
+  2  The ferry came late.
+  3  Maren waited.
+blyant ~/novel> reg other $file
+  $other = /home/anna/novel/chapter-3.md
+blyant ~/novel> peek notes.md
+  1  # Notes
+  2  The lighthouse keeper hums.
+blyant ~/novel> lines notes.md 2 > $other bottom
+  4  The lighthouse keeper hums.
+/home/anna/novel/chapter-3.md: line 4 put in
+```
+
+Line 2 of the notes is now at the end of chapter 3, and `$other` still points to chapter 3 for the next command.
 
 - `reg -d note` removes a register, and `reg -d all` removes every register
 - Put a path with blanks in quotes: `reg docs "~/my docs"`

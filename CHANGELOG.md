@@ -1,5 +1,8 @@
 # Changes
 
+## v1.5.6
+- **Keep a second file in a register**: the guide to the shell and the tutorial show how a register keeps another file at hand while `$file` moves with the commands: `reg other $file` (or `reg other #3`), then `lines notes.md 2 > $other bottom` and `insert $other bottom ...`. See [Registers](Guide-to-shell.md#registers).
+
 ## v1.5.5 (2026-11-16)
 - **`resume` in the shell**: opens `$file` in the editor again, where you worked last: at the line the last command worked on in it (after `insert`, `lines`, `change` or a search with `peek`), else where the cursor of the editor was; `resume +120` at line 120. `$file` is kept when you leave the shell, so `resume` goes on after a restart. See [Commands](Guide-to-shell.md#commands).
 - **`calc` in the shell**: simple calculations, with the result kept in `$calc` to put in a file: `calc 1250 * 1.25 + 80` writes `1642.5`, and `insert budget.md bottom Total: $calc` puts it in. `+ - * / % ^` and parentheses, `.` or `,` as the decimal point, exact for decimals (`0.1 + 0.2` is `0.3`), at most 10 decimals in the result, written with `.`. `calc $calc / 12` goes on from the last result, and an error tells what and where (`Not understood: 12x (position 3)`). See [Calculating](Guide-to-shell.md#calculating), with a screenshot (`docs/screenshots/shell-calc.svg`). A register named `calc` from before is not a register any more: `$calc` is set by Blyant, and `reg` says so: give the register another name in `registers.txt`.
