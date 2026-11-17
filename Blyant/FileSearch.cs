@@ -200,6 +200,16 @@ internal static class FileSearch
         return outcome;
     }
 
+    /// <summary>
+    /// The first line of a text file with a text, as find -t finds it (from 0, and the line as shown), for "recent -t"
+    /// and the other lists of the shell; null when no line has it, or the file is not a text file that can be read
+    /// </summary>
+    internal static (int Line, string Text)? FirstLineWith(string path, Regex pattern)
+    {
+        var result = new Result { Path = path };
+        return FindText(path, pattern, result) ? (result.Line, result.LineText) : null;
+    }
+
     // Find the first line of a text file with a match. False if there is none, or the file is not a text file
     // that can be opened (too large, not text)
     private static bool FindText(string path, Regex pattern, Result result)

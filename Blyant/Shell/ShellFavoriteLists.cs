@@ -11,10 +11,22 @@ internal sealed partial class ShellSession
     // "fav ...": the favorites of the open list, "add" and "remove", or the lists
     private void Favorites(string argument)
     {
+        // "fav -t storm", "fav work -t storm", "fav filter draft -t storm": the favorites with a text in a line
+        string? search = null;
+        if (ListsFavorites(argument))
+        {
+            (argument, search) = TextOption(argument);
+            if (search == string.Empty)
+            {
+                Error(Lang.T("Give a text after -t: fav -t storm, fav -t *"));
+                return;
+            }
+        }
+
         // "fav filter draft", "fav -l filter draft"
         if (FilterOf(argument) is { } filter)
         {
-            FilterFavorites(filter.Text, filter.Full);
+            FilterFavorites(filter.Text, filter.Full, search);
             return;
         }
 
@@ -56,10 +68,10 @@ internal sealed partial class ShellSession
                 break;
             case "use":
                 // (as it is: "fav use -l" opens a list named "-l")
-                ListFavorites(Rest(argument), false);
+                ListFavorites(Rest(argument), false, search);
                 break;
             default:
-                ListFavorites(argument);
+                ListFavorites(argument, true, search);
                 break;
         }
     }
@@ -90,9 +102,11 @@ internal sealed partial class ShellSession
     // The favorites of the open list that a text is in (in the name or the path, letter case alike), or that a
     // pattern fits ("*.typ", "chapter-?.md": the name, as find takes it). Shown with the folders they are in, and
     // numbered as in the whole list, which is the last list: "open 7" and "fav move 7 top" are the row 7 of "fav"
-    private void FilterFavorites(string text, bool full)
+    // "search" ("fav -t storm"): only the favorites with that text in a line, with the line found (as find -t); a
+    // filter text can be left out then (null)
+    private void FilterFavorites(string? text, bool full, string? search = null)
     {
-        if (text.Length == 0)
+        if (text is { Length: 0 })
         {
             Error(Lang.T("Give a text: fav filter draft (or *.md)"));
             return;
@@ -110,6 +124,16 @@ internal sealed partial class ShellSession
             rows.Add((i, new Item(items[i].Path, System.IO.Directory.Exists(items[i].Path), at)));
         }
 
+        // (with a search: the line found, and the row opens at it)
+        var pattern = search == null ? null : FileSearch.WildcardText(search);
+        var lines = rows.Select(row => pattern == null || row.Item.IsDirectory
+            ? null
+            : FileSearch.FirstLineWith(row.Item.Path, pattern)).ToList();
+        for (var row = 0; row < rows.Count; row++)
+        {
+            if (lines[row] is { } line) rows[row] = (rows[row].Index, rows[row].Item with { At = (line.Line + 1, 1), Found = search });
+        }
+
         ShowRows(rows.Select(row => row.Item).ToList());
         var names = Names(rows.Select(row => (row.Item.Path, row.Item.IsDirectory)).ToList(), full, false);
         var width = rows.Count.ToString().Length;
@@ -118,7 +142,8 @@ internal sealed partial class ShellSession
         for (var row = 0; row < rows.Count; row++)
         {
             var favorite = items[rows[row].Index];
-            if (!Fits(text, favorite.Path, null)) continue;
+            if (text != null && !Fits(text, favorite.Path, null)) continue;
+            if (pattern != null && lines[row] == null) continue;
 
             // (the folder and subfolder it is in, above it, once)
             var folders = new List<int>();
@@ -132,12 +157,18 @@ internal sealed partial class ShellSession
                 Line(new string(' ', 2 * items[folder].Level) + "[" + items[folder].Name + "]");
             }
 
-            Line(new string(' ', 2 * favorite.Level) + (row + 1).ToString().PadLeft(width + 2) + "  " + names[row]);
+            Line(new string(' ', 2 * favorite.Level) + (row + 1).ToString().PadLeft(width + 2) + "  " + names[row] +
+                 (lines[row] is { } found1 ? ":" + (found1.Line + 1) + "  " + found1.Text : string.Empty));
             RowShown(rows[row].Item);
             found++;
         }
 
-        if (found == 0) Line(Lang.F("No favorites with {0} in them", text));
+        if (found == 0)
+        {
+            Line(search != null
+                ? Lang.F("No favorite has {0} in a line", search)
+                : Lang.F("No favorites with {0} in them", text ?? string.Empty));
+        }
     }
 
     // The name of a list as the shell shows and takes it ("main" for the main list: a word of the commands)

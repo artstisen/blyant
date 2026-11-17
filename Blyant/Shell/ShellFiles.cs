@@ -839,6 +839,8 @@ internal sealed partial class ShellSession
         if (at >= 0 && (at == 0 || char.IsWhiteSpace(argument[at - 1])))
         {
             text = argument.Length > at + 3 ? argument[(at + 3)..].Trim() : string.Empty;
+            // (in quotes: without them, "find -t "# *"", as the lists take -t)
+            if (text.Length >= 2 && text[0] == '"' && text[^1] == '"' && text.Count(c => c == '"') == 2) text = text[1..^1];
             argument = argument[..at];
         }
 

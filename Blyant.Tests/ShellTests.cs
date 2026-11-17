@@ -5425,4 +5425,93 @@ public class ShellTests : IDisposable
             CommandHistory.Clear();
         }
     }
+
+    // ---- -t text in recent, hist and fav
+
+    // Three files opened, newest first: c.md (a heading, then storm), b.md (no storm), a.md (storm on line 1)
+    private void ThreeWithText()
+    {
+        File.WriteAllText(In("work", "a.md"), "storm at sea\n");
+        File.WriteAllText(In("work", "b.md"), "calm\n");
+        File.WriteAllText(In("work", "c.md"), "# Chapter 3\n\nThe storm came.\n");
+        FileHistory.Add(In("work", "a.md"), new DateTime(2026, 11, 13, 9, 0, 0));
+        FileHistory.Add(In("work", "b.md"), new DateTime(2026, 11, 13, 10, 0, 0));
+        FileHistory.Add(In("work", "c.md"), new DateTime(2026, 11, 13, 11, 0, 0));
+        FileHistory.Save();
+    }
+
+    [Fact]
+    public void RecentWithText_ShowsTheFilesWithIt_AndTheLine_NumberedAsTheWholeList()
+    {
+        ThreeWithText();
+        var (output, errors, _, session) = Run("recent -t STORM\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains("  1  c.md:3  The storm came.\n", output);
+        Assert.Contains("  3  a.md:1  storm at sea\n", output);
+        Assert.DoesNotContain("b.md", output);
+        // Row 1 opens at the line found
+        Assert.Equal((3, 1), session.LastList[0].At);
+        Assert.Equal(In("work", "b.md"), session.LastList[1].Path);
+        // -t *: the first line of each; a pattern: the first heading
+        (output, _, _, _) = Run("recent -t *\n");
+        Assert.Contains("  2  b.md:1  calm\n", output);
+        (output, _, _, _) = Run("recent -t \"# *\"\n");
+        Assert.Contains("  1  c.md:1  # Chapter 3\n", output);
+        Assert.DoesNotContain("a.md", output);
+        // None
+        (output, _, _, _) = Run("recent -t nothing-at-all\n");
+        Assert.Contains(Lang.F("No file has {0} in a line", "nothing-at-all"), output);
+    }
+
+    [Fact]
+    public void HistWithText_TakesTheOtherOptions_AFilter_AndARegister()
+    {
+        ThreeWithText();
+        var (output, errors, _, _) = Run("hist -n -t storm\nhist filter c.md -t storm\nhist -t storm > $stormy\n");
+        Assert.Equal(string.Empty, errors);
+        // -n: sorted by name, a.md first
+        Assert.Contains("  1  a.md:1  storm at sea\n  3  c.md:3  The storm came.\n", output);
+        Assert.Equal(3, output.Split("c.md:3  The storm came.").Length - 1);
+        Assert.Equal(In("work", "c.md") + "\n" + In("work", "a.md"), ShellRegisters.Get("stormy"));
+        var (_, wrong, _, _) = Run("recent -t\n");
+        Assert.Contains(Lang.T("Give a text after -t: recent -t storm, recent -t *"), wrong);
+    }
+
+    [Fact]
+    public void FavWithText_LeavesOutDirectoriesAndFilesWithoutIt()
+    {
+        ThreeWithText();
+        Directory.CreateDirectory(In("work", "dir"));
+        var (output, errors, _, session) = Run("fav add a.md bottom\nfav add b.md bottom\nfav add dir bottom\n" +
+                                                "fav -t *\n");
+        Assert.Equal(string.Empty, errors);
+        var shown = output[output.LastIndexOf(Lang.F("List: {0}", "main"), StringComparison.Ordinal)..];
+        Assert.Contains("  1  a.md:1  storm at sea\n  2  b.md:1  calm\n", shown);
+        Assert.DoesNotContain("dir", shown);
+        Assert.Equal((1, 1), session.LastList[0].At);
+        (output, _, _, _) = Run("fav -t storm\nfav filter b.md -t storm\n");
+        Assert.Contains("  1  a.md:1  storm at sea\n", output);
+        Assert.Contains(Lang.F("No favorite has {0} in a line", "storm"), output);
+        var (_, wrong, _, _) = Run("fav -t\n");
+        Assert.Contains(Lang.T("Give a text after -t: fav -t storm, fav -t *"), wrong);
+    }
+
+    [Fact]
+    public void FindWithText_InQuotes_IsTheTextWithoutThem()
+    {
+        File.WriteAllText(In("work", "h.md"), "# Title\n");
+        var (output, errors, _, _) = Run("find -t \"# T*\"\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains("h.md:1  # Title", output);
+    }
+
+    [Fact]
+    public void TextOption_IsTheLastPart_AfterMinusT()
+    {
+        Assert.Equal(("-n", "storm"), ShellSession.TextOption("-n -t storm"));
+        Assert.Equal(("", "# *"), ShellSession.TextOption("-t \"# *\""));
+        Assert.Equal(("filter draft", "a b"), ShellSession.TextOption("filter draft -t a b"));
+        Assert.Equal(("-l", ""), ShellSession.TextOption("-l -t"));
+        Assert.Equal(("-l filter x-t", (string?)null), ShellSession.TextOption("-l filter x-t"));
+    }
 }

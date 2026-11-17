@@ -461,6 +461,23 @@ internal sealed partial class ShellSession
     private static string Padded(string text, int width) =>
         text + new string(' ', Math.Max(0, width - TextMetrics.WidthOf(text)));
 
+    /// <summary>
+    /// "-t text" at the end of what follows a list command ("recent -n -t storm", "fav -t # *"): what comes before it,
+    /// and the text (in quotes: without them; "" when -t has none). Null text when there is no -t
+    /// </summary>
+    internal static (string Before, string? Text) TextOption(string argument)
+    {
+        var trimmed = argument.TrimEnd();
+        var at = trimmed == "-t" || trimmed.StartsWith("-t ", StringComparison.Ordinal) ? 0
+            : trimmed.IndexOf(" -t ", StringComparison.Ordinal) is var inside and >= 0 ? inside + 1
+            : trimmed.EndsWith(" -t", StringComparison.Ordinal) ? trimmed.Length - 2
+            : -1;
+        if (at < 0) return (argument, null);
+        var text = trimmed.Length > at + 3 ? trimmed[(at + 3)..].Trim() : string.Empty;
+        if (text.Length >= 2 && text[0] == '"' && text[^1] == '"' && text.Count(c => c == '"') == 2) text = text[1..^1];
+        return (trimmed[..at].TrimEnd(), text);
+    }
+
     // "book": only "-l" can follow (true: given). Null (and told) for another word
     private bool? OnlyLong(string argument)
     {

@@ -95,6 +95,7 @@ internal sealed partial class ShellSession
         ("history [-l] [-s] [-f] [-n]", Lang.T("List the files opened (hist), options as for recent")),
         ("history filter text", Lang.T("Show the files opened with a text in them (or *.md)")),
         ("recent [-l] [-s] [-f] [-n]", Lang.T("List the latest files (-s sizes, -f folder/name, -n by name)")),
+        ("recent|hist|fav ... -t text", Lang.T("Only the files with a text in a line, and the line (-t *: line 1)")),
         ("hotlist", Lang.T("List the directory hotlist (hot)")),
         ("hotlist filter text", Lang.T("Show the directories with a text in them")),
         ("hotlist add|remove [dir|n]", Lang.T("Add a directory to the hotlist (this one), or take it off")),
@@ -1044,7 +1045,7 @@ internal sealed partial class ShellSession
 
     // "fav", "fav work": the favorites of the open list, or of another. "fav -l", "fav -l work": the full paths.
     // "options": false for "fav use -l" (a list named "-l")
-    private void ListFavorites(string argument, bool options = true)
+    private void ListFavorites(string argument, bool options = true, string? search = null)
     {
         var full = false;
         if (options) (full, argument) = LongList(argument);
@@ -1057,6 +1058,13 @@ internal sealed partial class ShellSession
             FileFavorites.UseList(list);
             // (kept, as ":list" keeps it: the full screen shows the same list)
             FileIo.SaveSettings();
+        }
+
+        // "fav -t storm": the favorites with the text in a line, as a filter shows them
+        if (search != null)
+        {
+            FilterFavorites(null, full, search);
+            return;
         }
 
         Line(Lang.F("List: {0}", ListWord(FileFavorites.CurrentList)));
@@ -1111,6 +1119,15 @@ internal sealed partial class ShellSession
     // by name (the rows are numbered as shown, so "open 3" is row 3 of the sorted list)
     private void ListHistory(int most, string argument)
     {
+        // "recent -t storm": the files with the text in a line, with the line found (as find -t)
+        var (before, search) = TextOption(argument);
+        if (search == string.Empty)
+        {
+            Error(Lang.T("Give a text after -t: recent -t storm, recent -t *"));
+            return;
+        }
+
+        argument = before;
         var (options, rest) = LeadingOptions(argument);
         // "hist filter draft" ("hist -l -s filter draft": with options)
         string? filter = null;
@@ -1156,6 +1173,21 @@ internal sealed partial class ShellSession
         var rows = entries.Select((entry, i) => (new Item(entry.Path, false),
             Padded(names[i], width) + "  " + entry.Opened.ToString("yyyy-MM-dd HH:mm") +
             (sizeTexts == null ? string.Empty : "  " + sizeTexts[i].PadLeft(sizeWidth)))).ToList();
+        if (search != null)
+        {
+            // The rows with the text: the line found instead of the date ("02-storm.md:3  The storm came"), numbered
+            // as in the whole list, so "open 4" opens row 4 at that line
+            var pattern = FileSearch.WildcardText(search);
+            var found = entries.Select(entry => FileSearch.FirstLineWith(entry.Path, pattern)).ToList();
+            rows = entries.Select((entry, i) => found[i] is { } line
+                ? (new Item(entry.Path, false, (line.Line + 1, 1), search),
+                    names[i] + ":" + (line.Line + 1) + "  " + line.Text)
+                : rows[i]).ToList();
+            Filtered(rows, i => found[i] != null && (filter == null || Fits(filter, entries[i].Path, null)),
+                Lang.F("No file has {0} in a line", search));
+            return;
+        }
+
         if (filter != null)
         {
             Filtered(rows, i => Fits(filter, entries[i].Path, null), Lang.F("No files with {0} in them", filter));
