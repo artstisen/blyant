@@ -292,7 +292,7 @@ internal sealed class ShellCompletion
             {
                 // The options not given yet, before the name ("find -f -t storm"); after -t the text
                 if (after.Take(position).Any(word => !word.StartsWith('-') || word == "-t")) return (Kind.None, none);
-                return (Kind.Words, new[] { "-l", "-f", "-b", "-t" }.Except(after.Take(position)));
+                return (Kind.Words, new[] { "-l", "-f", "-b", "-r", "-t" }.Except(after.Take(position)));
             }
             case "run":
                 // (a file of commands; $ and Tab the registers)

@@ -758,31 +758,79 @@ internal sealed partial class ShellSession
                first > 0 && last >= first;
     }
 
+    // The last search of this Blyant ("find" alone shows it again, "find -r" makes it again): where, what was looked
+    // for, when, and what was found. Kept while Blyant runs, as $peek is
+    private sealed record FindSearch(string Directory, FileSearch.Options Options, DateTime When, FileSearch.Outcome Outcome);
+
+    private static FindSearch? _lastFind;
+
+    /// <summary>
+    /// Forget the last search (a new Blyant, or a test)
+    /// </summary>
+    internal static void ForgetFind() => _lastFind = null;
+
     // "find plot", "find *.md", "find -t storm", "find *.md -t the storm": files in the directory you are in and the
     // directories in it, by name (a part of it, or with * and ?), and by a text in them (after -t). As the search of
     // the file browser: hidden files are left out, and only text files are searched for text. The rows show the path
-    // from the directory you are in; options before the name, in any order: "-l" the full paths (without the mark of
+    // from the directory searched; options before the name, in any order: "-l" the full paths (without the mark of
     // a favorite, for scripts), "-f" the folder and the name ("drafts/storm.md"), "-b" the name only ("storm.md"),
-    // with the folder after a name two rows have. The rows are the same in each: "open 3", "info 3" take row 3
+    // with the folder after a name two rows have. The rows are the same in each: "open 3", "info 3" take row 3.
+    // "find" alone (or with -l, -f, -b only) shows the last search again, as it was found, from wherever you are;
+    // "find -r" searches again for the same in the directory of the last search
     private void Find(string argument)
     {
-        var (full, folder, bare) = (false, false, false);
+        var (full, folder, bare, repeat) = (false, false, false, false);
         argument = argument.TrimStart();
         while (argument.StartsWith('-'))
         {
             var word = argument.Split((char[]?)null, 2)[0];
             // ("-t": the text, read below)
             if (word == "-t") break;
-            if (word is not ("-l" or "-f" or "-b"))
+            if (word is not ("-l" or "-f" or "-b" or "-r"))
             {
-                Error(Lang.F("Not taken: {0} (-l full paths, -f folder/name, -b names only, -t text)", word));
+                Error(Lang.F("Not taken: {0} (-l full paths, -f folder/name, -b names only, -r again, -t text)", word));
                 return;
             }
 
             if (word == "-l") full = true;
             else if (word == "-f") folder = true;
-            else bare = true;
+            else if (word == "-b") bare = true;
+            else repeat = true;
             argument = argument[word.Length..].TrimStart();
+        }
+
+        // "find", "find -b": the last search shown again; "find -r": made again where it was made
+        if (argument.Trim().Length == 0 && (_lastFind != null || repeat))
+        {
+            if (_lastFind is not { } last)
+            {
+                Error(Lang.T("No search yet: find plot, find -t storm"));
+                return;
+            }
+
+            if (repeat)
+            {
+                if (!System.IO.Directory.Exists(last.Directory))
+                {
+                    Error(Lang.F("{0} is not there any more: the search is not made again", last.Directory));
+                    return;
+                }
+
+                Line(Lang.F("Search again: {0} in {1}", Searched(last.Options), last.Directory));
+                MakeSearch(last.Directory, last.Options, full, folder, bare);
+                return;
+            }
+
+            Line(Lang.F("Last search: {0} in {1} ({2})", Searched(last.Options), last.Directory,
+                last.When.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture)));
+            ShowSearch(last, full, folder, bare);
+            return;
+        }
+
+        if (repeat)
+        {
+            Error(Lang.T("find -r makes the last search again: give no name or text after it"));
+            return;
         }
 
         var text = string.Empty;
@@ -806,8 +854,30 @@ internal sealed partial class ShellSession
             return;
         }
 
-        FileExplorer.LogFileOperation("Search", Directory + " (with subfolders)", DialogText.Success);
-        var outcome = FileSearch.Search(Directory, options);
+        MakeSearch(Directory, options, full, folder, bare);
+    }
+
+    // What a search looked for, as typed: "storm", "-t storm", "*.md -t attic"
+    private static string Searched(FileSearch.Options options) =>
+        options.Text.Length == 0 ? options.Name
+        : options.Name.Length == 0 ? "-t " + options.Text
+        : options.Name + " -t " + options.Text;
+
+    // A search made in a directory and its directories, kept as the last search, and shown
+    private void MakeSearch(string directory, FileSearch.Options options, bool full, bool folder, bool bare)
+    {
+        FileExplorer.LogFileOperation("Search", directory + " (with subfolders)", DialogText.Success);
+        var search = new FindSearch(directory, options, DateTime.Now, FileSearch.Search(directory, options));
+        _lastFind = search;
+        ShowSearch(search, full, folder, bare);
+    }
+
+    // The rows of a search, numbered, as the last list: the path from the directory searched (or as the options
+    // say), the line found after a search by text, and "(missing)" after a file gone since
+    private void ShowSearch(FindSearch search, bool full, bool folder, bool bare)
+    {
+        var outcome = search.Outcome;
+        var text = search.Options.Text;
         // (a favorite marked " *" after its name, as in the search results of the full screen; not a line found in a
         // file, which is not the file)
         FileFavorites.Load();
@@ -818,8 +888,9 @@ internal sealed partial class ShellSession
         var rows = outcome.Results.Select((result, i) =>
         {
             var shown = names != null ? names[i]
-                : (full ? result.Path : Path.GetRelativePath(Directory, result.Path)) +
-                  (result.IsDirectory ? "/" : string.Empty);
+                : (full ? result.Path : Path.GetRelativePath(search.Directory, result.Path)) +
+                  (result.IsDirectory ? "/" : string.Empty) +
+                  (Gone(result) ? " " + DialogText.FavoriteMissing : string.Empty);
             if (!full && result.Line < 0) shown += FavoriteMark(result.Path);
             return result.Line >= 0
                 ? (new Item(result.Path, result.IsDirectory, (result.Line + 1, 1), text),
@@ -829,6 +900,9 @@ internal sealed partial class ShellSession
         List(rows, Lang.T("Nothing found"));
         if (outcome.Capped) Line(Lang.F("(the first {0}: the search stopped there)", FileSearch.MaxResults));
         if (outcome.Unreadable > 0) Line(Lang.F("(directories that could not be read: {0})", outcome.Unreadable));
+
+        static bool Gone(FileSearch.Result result) =>
+            result.IsDirectory ? !System.IO.Directory.Exists(result.Path) : !FileOperations.IsFileThere(result.Path);
     }
 
     // "fav add 3", "fav remove notes.md": a file or directory added to the favorites in use, or taken off them. A

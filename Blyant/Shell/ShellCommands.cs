@@ -34,6 +34,8 @@ internal sealed partial class ShellSession
         ("/text", Lang.T("Search the file peeked last (as peek /text)")),
         ("find [-l|-f|-b] [name] [-t text]", Lang.T("Find files here and below, by name (*.md) and by text")),
         ("find -f, find -b", Lang.T("Show the folder and name, or the name only")),
+        ("find [-l|-f|-b]", Lang.T("Show the last search again, as it was found")),
+        ("find -r", Lang.T("Search again for the same, where it was searched")),
         ("find|recent|hist|fav ... > $name", Lang.T("Keep the paths of the rows shown in a register")),
         ("new name", Lang.T("Make a new, empty file here (.md if no extension)")),
         ("mkdir name", Lang.T("Make a new directory here")),

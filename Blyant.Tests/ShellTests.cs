@@ -31,6 +31,7 @@ public class ShellTests : IDisposable
         ShellRegisters.Clip = null;
         ShellRegisters.Peek = null;
         ShellRegisters.Calc = null;
+        ShellSession.ForgetFind();
         FileFavorites.Parse(string.Empty);
         FileHistory.Parse(string.Empty);
         DirectoryHotlist.Parse(string.Empty);
@@ -53,6 +54,7 @@ public class ShellTests : IDisposable
         ShellRegisters.Clip = null;
         ShellRegisters.Peek = null;
         ShellRegisters.Calc = null;
+        ShellSession.ForgetFind();
         SystemClipboard.WriteOverride = null;
         Tools.ClearLineMemory();
         FileFavorites.Parse(string.Empty);
@@ -359,6 +361,8 @@ public class ShellTests : IDisposable
         Assert.Contains("Draft" + Path.DirectorySeparatorChar + "storm.md:2  The storm came", output);
         // The last list: the file found by its text, at the line
         Assert.Equal((2, 1), session.LastList.Single().At);
+        // (after a search, "find" alone shows it again: without one it asks for a name)
+        ShellSession.ForgetFind();
         var (_, nothing, _, _) = Run("find\n");
         Assert.NotEqual(string.Empty, nothing);
     }
@@ -5156,8 +5160,8 @@ public class ShellTests : IDisposable
         (output, _, _, _) = Run("find -f -l -b *.md -t storm\n");
         Assert.Contains(In("work", "novel", "part-1", "drafts", "storm.md") + ":2", output);
         var (_, wrong, _, _) = Run("find -x storm\nfind -b -q\n");
-        Assert.Contains(Lang.F("Not taken: {0} (-l full paths, -f folder/name, -b names only, -t text)", "-x"), wrong);
-        Assert.Contains(Lang.F("Not taken: {0} (-l full paths, -f folder/name, -b names only, -t text)", "-q"), wrong);
+        Assert.Contains(Lang.F("Not taken: {0} (-l full paths, -f folder/name, -b names only, -r again, -t text)", "-x"), wrong);
+        Assert.Contains(Lang.F("Not taken: {0} (-l full paths, -f folder/name, -b names only, -r again, -t text)", "-q"), wrong);
         // A name that starts with "-", in quotes
         File.WriteAllText(In("work", "-draft.md"), "x\n");
         (output, errors, _, _) = Run("find \"-draft\"\n");
@@ -5289,5 +5293,73 @@ public class ShellTests : IDisposable
         Assert.Null(ShellSession.TargetAtEnd("-t > $x and more"));
         Assert.Equal("a >> $$x", ShellSession.ProtectTargetAtEnd("a >> $x"));
         Assert.Equal("a > $x b", ShellSession.ProtectTargetAtEnd("a > $x b"));
+    }
+
+    // ---- find alone, find -r
+
+    [Fact]
+    public void Find_Alone_ShowsTheLastSearchAgain_FromAnotherDirectory_AsItWasFound()
+    {
+        StormTree();
+        var errors = new StringWriter();
+        var output = new StringWriter();
+        var session = new ShellSession(new StringReader(string.Empty), output, errors, In("work"), false);
+        session.Execute("find -t storm");
+        session.Execute("cd novel/part-1");
+        output.GetStringBuilder().Clear();
+        session.Execute("find");
+        var shown = output.ToString();
+        Assert.StartsWith(Lang.F("Last search: {0} in {1} ({2})", "-t storm", In("work"), DateTime.Now.ToString("HH:mm")),
+            shown.Replace(DateTime.Now.AddMinutes(-1).ToString("HH:mm"), DateTime.Now.ToString("HH:mm")));
+        // The rows as found: the path from the directory searched, and the line
+        Assert.Contains("  1  " + Path.Combine("novel", "part-1", "drafts", "storm.md") + ":2  storm later", shown);
+        Assert.Equal(In("work", "novel", "part-1", "drafts", "storm.md"), session.LastList[0].Path);
+        Assert.Equal((2, 1), session.LastList[0].At);
+        // Shown another way, without a new search
+        output.GetStringBuilder().Clear();
+        session.Execute("find -b");
+        Assert.Contains("  1  storm.md (part-1/drafts):2  storm later", output.ToString());
+        // A file gone since: marked
+        File.Delete(In("work", "novel", "part-2", "scenes", "drafts", "storm.md"));
+        output.GetStringBuilder().Clear();
+        session.Execute("find");
+        Assert.Contains("storm.md " + DialogText.FavoriteMissing + ":1  The storm broke.", output.ToString());
+        Assert.Equal(string.Empty, errors.ToString());
+    }
+
+    [Fact]
+    public void FindR_SearchesAgain_WhereTheLastSearchWasMade()
+    {
+        StormTree();
+        var errors = new StringWriter();
+        var output = new StringWriter();
+        var session = new ShellSession(new StringReader(string.Empty), output, errors, In("work"), false);
+        session.Execute("find storm");
+        session.Execute("cd novel/part-1");
+        File.WriteAllText(In("work", "novel", "storm-notes.md"), "x\n");
+        output.GetStringBuilder().Clear();
+        session.Execute("find -r -b");
+        var shown = output.ToString();
+        Assert.StartsWith(Lang.F("Search again: {0} in {1}", "storm", In("work")), shown);
+        Assert.Contains("storm-notes.md", shown);
+        Assert.Equal(3, session.LastList.Count);
+        // It is the last search now
+        output.GetStringBuilder().Clear();
+        session.Execute("find");
+        Assert.Contains("storm-notes.md", output.ToString());
+        Assert.Equal(string.Empty, errors.ToString());
+    }
+
+    [Fact]
+    public void Find_WithoutASearchYet_AndFindRWithAName_AreTold()
+    {
+        var (_, errors, _, _) = Run("find\nfind -r\n");
+        Assert.Contains(Lang.T("Write a name or a text to search for") + " (find plot, find *.md, find -t storm)", errors);
+        Assert.Contains(Lang.T("No search yet: find plot, find -t storm"), errors);
+        StormTree();
+        (_, errors, _, _) = Run("find storm\nfind -r storm\n");
+        Assert.Contains(Lang.T("find -r makes the last search again: give no name or text after it"), errors);
+        Assert.Equal("find -r", Tab(Completion(), "find -r"));
+        Assert.Contains("find -r", Run("help find\n").Output);
     }
 }

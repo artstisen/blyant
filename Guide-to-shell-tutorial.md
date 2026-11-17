@@ -124,7 +124,9 @@ blyant ~/novel> find -b storm
   2  storm.md (scenes/drafts)
 ```
 
-The results are a list like any other: `peek 2` shows the lines around the line found (marked with `>`), and `open 2` opens the file at that line. In one file, `peek plot.md /storm` goes to the first line with "storm", and `/` to the next.
+The results are a list like any other: `peek 2` shows the lines around the line found (marked with `>`), and `open 2` opens the file at that line.
+
+After working on other things, `find` alone shows the last search again, from wherever you are, with the same row numbers. `find -r` searches again for the same, in the same directory, to see what is there now. In one file, `peek plot.md /storm` goes to the first line with "storm", and `/` to the next.
 
 ## Editing a file
 `open` edits a file in the editor of the full screen, with all the keys and commands of the editor:
