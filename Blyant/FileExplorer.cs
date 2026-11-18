@@ -1380,7 +1380,7 @@ internal static partial class FileExplorer
     }
 
     // Where the cursor was in a file when it was closed: kept in the favorites first, then in the history
-    private static (int Line, int Column, string Split)? CaretOfFile(string path)
+    internal static (int Line, int Column, string Split)? CaretOfFile(string path)
     {
         FileFavorites.Load();
         FileHistory.Load();

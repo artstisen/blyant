@@ -273,6 +273,8 @@ internal sealed partial class ShellSession
         NewPage();
         // (the files the command changes: one step for undo, named by the line as typed)
         var outer = StartStep();
+        // (where $file and $line were: undo puts them back there, redo where the command left them)
+        var was = (_file, _line);
         var outerChanged = _changedFiles;
         _changedFiles = new List<string>();
         bool going;
@@ -282,7 +284,7 @@ internal sealed partial class ShellSession
         }
         finally
         {
-            EndStep(line, outer);
+            EndStep(line, outer, was);
             LatestChanged();
             _changedFiles = outerChanged;
         }
@@ -406,7 +408,7 @@ internal sealed partial class ShellSession
             return Lang.T("No file yet: open, peek, insert, new ... give $file");
         }
 
-        return FileLine == null && ShellRegisters.Mentions(argument, "line")
+        return ShellRegisters.Mentions(argument, "line") && FileLine == null
             ? Lang.T("No line yet: words, peek, insert ... give $line")
             : null;
 
@@ -582,6 +584,19 @@ internal sealed partial class ShellSession
         if (at != null) Line(Lang.F("$line: {0}", at));
     }
 
+    // How many lines a file has now; null, and why, when it cannot be read or is not a text Blyant opens
+    private static (int? Count, string Problem) LineCount(string path)
+    {
+        try
+        {
+            return (LinesOfText(TextFile.Load(path).Text).Count, string.Empty);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidDataException)
+        {
+            return (null, e.Message);
+        }
+    }
+
     // "line 3", "line +3", "line top", "line bottom": $line, the line of $file "@" stands for ("insert @ text" puts
     // the text after it), without peeking the file. "line" alone: $line shown. Nothing is written, and the last list
     // stays as it was
@@ -616,14 +631,10 @@ internal sealed partial class ShellSession
     // first line, as after "new"). Null (and told) when it is not a line, or the file has fewer lines or cannot be read
     private int? LineIn(string path, string word)
     {
-        int count;
-        try
+        var (lines, problem) = LineCount(path);
+        if (lines is not { } count)
         {
-            count = LinesOfText(TextFile.Load(path).Text).Count;
-        }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidDataException)
-        {
-            Error(Lang.F("{0} cannot be read: {1}", path, e.Message));
+            Error(Lang.F("{0} cannot be read: {1}", path, problem));
             return null;
         }
 
@@ -1668,6 +1679,8 @@ internal sealed partial class ShellSession
         // (the file opened: $file; a directory went to it above)
         _file = Path.GetFullPath(result.Path);
         var stayed = EditOnScreen(result.Path, at);
+        // (@ is then where the cursor was when the editor was left: kept with the file, see FileLine)
+        _line = null;
         EditorClosed();
         if (stayed) Line(Lang.F("Back from the editor: {0}", result.Path));
         else Line(Lang.F("Back from the editor: {0} (the place jumped to is not shown here)", result.Path));

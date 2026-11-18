@@ -42,7 +42,7 @@ internal sealed partial class ShellSession
         {
             if (SectionHeading(words[1], headings, lines, item.Path) is not { } found) return;
             heading = found;
-            moved = SectionLines(lines.Count, headings, found);
+            moved = SectionLines(lines, headings, found);
         }
         else if (PickedLines(words[1], null, lines, item.Path) is { } picked) moved = picked;
         else return;
@@ -53,7 +53,7 @@ internal sealed partial class ShellSession
         {
             if (heading is { } of)
             {
-                if (SectionStep(lines.Count, headings, of, step.Up, step.Count) is not { } over)
+                if (SectionStep(lines, headings, of, step.Up, step.Count) is not { } over)
                 {
                     Line(step.Up
                         ? Lang.F("Nothing moved: no section above {0} at its level", of.Name)
@@ -69,12 +69,14 @@ internal sealed partial class ShellSession
         else return;
 
         var (text, first, ticked) = Shifted(file.Text, moved, position, tick);
-        if (heading != null) (text, first) = SpacedSection(file.Text, text, moved, first);
+        // (before the spacing of a section: blank lines put in where nothing moved are no move)
         if (text == TextBuffer.Normalize(file.Text))
         {
             Line(Lang.T("Nothing moved: the lines are there already"));
             return;
         }
+
+        if (heading != null) (text, first) = SpacedSection(file.Text, text, moved, first);
 
         var result = SaveEdit(file, text);
         // (the path and the lines, never the text)
@@ -127,8 +129,9 @@ internal sealed partial class ShellSession
         return (way == "up", count);
     }
 
-    // The heading of "shift -s": by its line ("12", "+12", as "@" gives it) or by its name, as a place is found
-    // (whole, a pattern, the start). Null (and told) if it is not there, or several fit
+    // The heading of "shift -s": by a line in the section ("12", "+12", as "@" gives it: the heading above it, or on
+    // it) or by its name, as a place is found (whole, a pattern, the start). Null (and told) if it is not there, or
+    // several fit
     private (int Line, int Level, string Name)? SectionHeading(string word, List<(int Line, int Level, string Name)> headings,
         List<string> lines, string path)
     {
@@ -136,10 +139,10 @@ internal sealed partial class ShellSession
         if (number.Length > 0 && number.All(char.IsAsciiDigit))
         {
             var line = int.TryParse(number, out var given) ? given : int.MaxValue;
-            if (headings.FirstOrDefault(h => h.Line == line) is { Name: not null } at) return at;
+            if (line <= lines.Count && headings.LastOrDefault(h => h.Line <= line) is { Name: not null } at) return at;
             Error(line > lines.Count
                 ? Lang.F("{0} has {1} lines", path, lines.Count)
-                : Lang.F("Line {0} is not a heading: give a heading (shift -s notes.md Ideas up)", line));
+                : Lang.F("Line {0} is above the first heading: give a heading (shift -s notes.md Ideas up)", line));
             return null;
         }
 
@@ -157,13 +160,19 @@ internal sealed partial class ShellSession
 
     /// <summary>
     /// The lines of the section of a heading (from 1): the heading and what is under it, up to the next heading of
-    /// the same level or above (or the end of the file), its blank lines at the end too
+    /// the same level or above, its blank lines at the end too. The last section of the file ends at its last line
+    /// that is not blank: the blank lines at the end of the file stay there
     /// </summary>
-    internal static List<int> SectionLines(int count, List<(int Line, int Level, string Name)> headings,
+    internal static List<int> SectionLines(List<string> lines, List<(int Line, int Level, string Name)> headings,
         (int Line, int Level, string Name) heading)
     {
         var next = headings.FirstOrDefault(h => h.Line > heading.Line && h.Level <= heading.Level).Line;
-        var end = next > 0 ? next - 1 : count;
+        var end = next > 0 ? next - 1 : lines.Count;
+        if (next == 0)
+        {
+            while (end > heading.Line && lines[end - 1].Trim().Length == 0) end--;
+        }
+
         return Enumerable.Range(heading.Line, end - heading.Line + 1).ToList();
     }
 
@@ -172,7 +181,7 @@ internal sealed partial class ShellSession
     /// Only the sections of the same level under the same heading count; it stops at the first or last of them. Null
     /// when there is none to pass
     /// </summary>
-    internal static int? SectionStep(int count, List<(int Line, int Level, string Name)> headings,
+    internal static int? SectionStep(List<string> lines, List<(int Line, int Level, string Name)> headings,
         (int Line, int Level, string Name) heading, bool up, int steps)
     {
         int? position = null;
@@ -189,11 +198,11 @@ internal sealed partial class ShellSession
             }
             else
             {
-                var lines = SectionLines(count, headings, at);
-                var after = headings.FirstOrDefault(h => h.Line == lines[^1] + 1);
+                var section = SectionLines(lines, headings, at);
+                var after = headings.FirstOrDefault(h => h.Line == section[^1] + 1);
                 if (after.Name == null || after.Level != heading.Level) break;
                 at = after;
-                position = SectionLines(count, headings, after)[^1];
+                position = SectionLines(lines, headings, after)[^1];
             }
         }
 
@@ -201,19 +210,29 @@ internal sealed partial class ShellSession
     }
 
     /// <summary>
-    /// A section moved keeps the file spaced as it was: when a blank line was above the heading, or the section ended
-    /// with one (the first section of the file), there is one above it and above the heading after it at the new place, and the file ends with as many blank lines as before. The
-    /// text, and the line the heading is at now
+    /// A section moved keeps the file spaced as it was: when a blank line was above the heading or at the end of the
+    /// section, there is one blank line above the section at the new place and one after it (not two: blank lines it
+    /// brings and blank lines that were there are not added up), and the file ends as before (with as many blank
+    /// lines, and with a line break or not). The text, and the line the heading is at now
     /// </summary>
     internal static (string Text, int At) SpacedSection(string before, string text, List<int> moved, int at)
     {
         var was = LinesOfText(TextBuffer.Normalize(before));
         var spaced = (moved[0] >= 2 && was[moved[0] - 2].Trim().Length == 0) || was[moved[^1] - 1].Trim().Length == 0;
         if (!spaced) return (text, at);
-        var endsWithBreak = text.EndsWith('\n');
+        var endsWithBreak = TextBuffer.Normalize(before).EndsWith('\n');
         var lines = LinesOfText(text);
         var end = at - 1 + moved.Count; // (from 0: the line after the section)
-        if (end < lines.Count && lines[end - 1].Trim().Length > 0) lines.Insert(end, string.Empty);
+        // (the section ends with a blank line, and one was there already: only the section's)
+        while (end < lines.Count && lines[end - 1].Trim().Length == 0 && lines[end].Trim().Length == 0)
+        {
+            lines.RemoveAt(end);
+        }
+
+        if (end < lines.Count && lines[end - 1].Trim().Length > 0 && lines[end].Trim().Length > 0)
+        {
+            lines.Insert(end, string.Empty);
+        }
         if (at > 1 && lines[at - 2].Trim().Length > 0)
         {
             lines.Insert(at - 1, string.Empty);
@@ -228,11 +247,19 @@ internal sealed partial class ShellSession
             lines.RemoveAt(lines.Count - 1);
         }
 
-        return (string.Join("\n", lines) + (endsWithBreak ? "\n" : string.Empty), at);
+        return (Joined(lines, endsWithBreak), at);
     }
 
-    // The commands that take "@" as the file and the line: in the place of the file (after "-p" or "-s")
-    private static readonly HashSet<string> TakesAt = new()
+    // Lines as a text, with a line break at the end when the file had one. A blank line last (moved there from
+    // inside a file without a line break at the end) gets a line break too: else it would be lost
+    private static string Joined(List<string> lines, bool endsWithBreak) =>
+        string.Join("\n", lines) + (endsWithBreak || lines is [.., { Length: 0 }] ? "\n" : string.Empty);
+
+    /// <summary>
+    /// The commands that take "@" as the file and the line: in the place of the file (after "-p" or "-s"). Tab
+    /// completion counts "@" as two words for them
+    /// </summary>
+    internal static readonly HashSet<string> TakesAt = new()
     {
         "words", "word", "change", "insert", "peek", "shift", "shift!", "lines", "open", "edit"
     };
@@ -260,10 +287,31 @@ internal sealed partial class ShellSession
             return null;
         }
 
-        // (a new file: @ is at its top, before the first line, which only insert can take)
+        // (a path with a quote in it, as Linux and macOS allow, would be split when it is put in)
+        if (_file.Contains('"'))
+        {
+            Error(Lang.F("A path with a quote in it cannot be put in for @: {0}", _file));
+            return null;
+        }
+
+        // The line checked against the file as it is now (changed since, by another program or the editor): a line
+        // past the end is refused, not taken as the end. An empty file is at its top. (A file that cannot be read is
+        // told by the command)
+        if (LineCount(_file).Count is { } count)
+        {
+            if (count == 0) line = 0;
+            else if (line > count)
+            {
+                Error(Lang.F("@ is line {0}, and {1} has {2} lines: line bottom sets the last", line,
+                    Path.GetFileName(_file), count));
+                return null;
+            }
+        }
+
+        // (the top of a file, before line 1, as after "new": only insert can take it)
         if (line == 0 && name != "insert")
         {
-            Error(Lang.F("@ is at the top of the new file {0}: insert @ text writes its first line",
+            Error(Lang.F("@ is at the top of {0}, before line 1: insert @ text puts a line there",
                 Path.GetFileName(_file)));
             return null;
         }
@@ -512,7 +560,7 @@ internal sealed partial class ShellSession
         var index = position - moved.Count(n => n - 1 < position);
         var rest = lines.Where((_, i) => !moved.Contains(i + 1)).ToList();
         rest.InsertRange(index, taken);
-        return (string.Join("\n", rest) + (endsWithBreak ? "\n" : string.Empty), index + 1, ticked);
+        return (Joined(rest, endsWithBreak), index + 1, ticked);
     }
 
     /// <summary>

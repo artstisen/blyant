@@ -19,7 +19,9 @@ internal sealed partial class ShellSession
     internal const long UndoMaxBytes = 32 * 1024 * 1024;
 
     // A change: the command, and the files it changed, each with its content before and after
-    private sealed record UndoStep(string Command, List<(string Path, byte[] Before, byte[] After)> Files)
+    // (and where $file and $line were before the command and after it: undo and redo put "@" back there)
+    private sealed record UndoStep(string Command, List<(string Path, byte[] Before, byte[] After)> Files,
+        (string? File, int? Line) Was, (string? File, int? Line) Now)
     {
         internal long Bytes => Files.Sum(file => (long)file.Before.Length + file.After.Length);
     }
@@ -76,7 +78,7 @@ internal sealed partial class ShellSession
         if (_changedFiles.Count == 0) return;
         var files = _changedFiles.Distinct(FileOperations.NameComparer)
             .OrderBy(path => _file != null && FileOperations.NameComparer.Equals(path, _file)).ToList();
-        foreach (var path in files) FileExplorer.AddToHistory(path);
+        FileExplorer.AddToHistory(files);
     }
 
     // A command starts: the files it changes are one step (the step of a command it runs in, "run", is kept aside)
@@ -90,7 +92,8 @@ internal sealed partial class ShellSession
 
     // A command has run: what it changed is the newest step, and the steps undone can no longer be redone (also after
     // a change that cannot be undone). The step of a command it ran in goes on
-    private void EndStep(string command, (List<(string Path, byte[] Before, byte[] After)>? Files, bool Lost) outer)
+    private void EndStep(string command, (List<(string Path, byte[] Before, byte[] After)>? Files, bool Lost) outer,
+        (string? File, int? Line) was)
     {
         if (_changingLost)
         {
@@ -99,7 +102,7 @@ internal sealed partial class ShellSession
         }
         else if (_changing is { Count: > 0 } files)
         {
-            _undo.Add(new UndoStep(command, files));
+            _undo.Add(new UndoStep(command, files, was, (_file, _line)));
             _redo.Clear();
             LetGo();
         }
@@ -146,6 +149,7 @@ internal sealed partial class ShellSession
         }
 
         var changed = new List<Item>();
+        UndoStep? done = null;
         for (var i = 0; i < steps && from.Count > 0; i++)
         {
             var step = from[^1];
@@ -195,7 +199,8 @@ internal sealed partial class ShellSession
             }
 
             changed.AddRange(written.Select(file => new Item(file.Path, false)));
-            _changedFiles.AddRange(written.Select(file => file.Path));
+            _changedFiles.AddRange(written.Select(file => Path.GetFullPath(file.Path)));
+            done = step;
             from.RemoveAt(from.Count - 1);
             (redo ? _undo : _redo).Add(step);
             // English: the log (the command by name only)
@@ -205,10 +210,14 @@ internal sealed partial class ShellSession
 
         Done(changed);
 
-        // The files written are the last list ("open 1"), the first of them $file
+        // The files written are the last list ("open 1"), the first of them $file. $file and $line ("@") go back
+        // where they were before the step undone last, or where the step redone last left them
         void Done(List<Item> files)
         {
             if (files.Count > 0) LastList = files.DistinctBy(item => item.Path).ToList();
+            if (done?.Was is not { } was || (redo ? done.Now : was) is not { File: { } file } place) return;
+            _file = file;
+            _line = place.Line;
         }
     }
 

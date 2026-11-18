@@ -78,15 +78,14 @@ internal sealed partial class ShellSession
     private int? _line;
 
     // The line of $file for $line and "@": the line the last command worked on, else where the cursor was in the
-    // editor when the file was closed last (the history keeps it: "file 2" of "recent"), else none
+    // editor when the file was closed last (the favorites and the history keep it, as the editor and "resume" take
+    // it: "file 2" of "recent"), else none
     private int? FileLine
     {
         get
         {
             if (_file == null) return null;
-            if (_line != null) return _line;
-            FileHistory.Load();
-            return FileHistory.CaretOf(_file)?.Line;
+            return _line ?? FileExplorer.CaretOfFile(_file)?.Line;
         }
     }
 

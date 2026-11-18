@@ -448,10 +448,13 @@ internal static partial class FileExplorer
     }
 
     // Add a file opened in the editor to the history (and one made by "new" in the shell)
-    internal static void AddToHistory(string path)
+    internal static void AddToHistory(string path) => AddToHistory(new[] { path });
+
+    // Several files, the last the newest: the history read and written once (the files a command of the shell changed)
+    internal static void AddToHistory(IReadOnlyList<string> paths)
     {
         FileHistory.Load();
-        FileHistory.Add(path, DateTime.Now);
+        foreach (var path in paths) FileHistory.Add(path, DateTime.Now);
         var result = FileHistory.Save();
         if (result != DialogText.Success) EventLog.Add(DialogText.LogFile + "History: " + result);
     }

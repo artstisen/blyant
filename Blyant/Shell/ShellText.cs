@@ -106,6 +106,8 @@ internal sealed partial class ShellSession
         }
 
         LastList = new List<Item> { new(item.Path, false, (number, 1)) };
+        // ("open 1" at the first line put in; @ at the last, so the next "insert @" goes after them)
+        _line = number + Math.Max(count, 1) - 1;
         Line(count == 1
             ? Lang.F("{0}: line {1} put in", item.Path, number)
             : Lang.F("{0}: lines {1}-{2} put in", item.Path, number, number + count - 1));
