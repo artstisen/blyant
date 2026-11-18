@@ -561,6 +561,8 @@ shift @ up                                   ... and up again
 - `@` counts only alone in the place of the file. In a text it stays as it is (`insert @ Ask @anna`), and a file named _@_ is written in quotes (`peek "@"`)
 
 ### With insert, lines and shift
+![A task put in after the line found with peek, given a text at the end, moved up and then ticked under Done, all with @](docs/screenshots/shell-at.svg)
+
 A todo list, worked on line by line. The search finds the line once, and `@` follows it from command to command:
 
 ```

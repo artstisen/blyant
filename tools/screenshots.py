@@ -595,6 +595,12 @@ SCENES = [
      {},
      ['--shell', PROJECT], ['<wait>', 'words todo.md 5<Enter>', 'word todo.md 5 10 replace almanac<Enter>',
                             'peek todo.md 3-7<Enter>'], True),
+    # @: a line found once, then insert, lines and shift go on with it without the file and the line typed again
+    ('shell-at', 'Blyant: the shell, @ is the file and the line worked on last',
+     {},
+     ['--shell', PROJECT], ['<wait>', 'peek todo.md /ferryman<Enter>', 'insert @ - [ ] Ask the harbour master<Enter>',
+                            'lines @ end (chapter 4)<Enter>', 'shift @ up<Enter>', 'echo $file $line<Enter>',
+                            'shift! @ Done<Enter>'], True),
 ]
 
 
