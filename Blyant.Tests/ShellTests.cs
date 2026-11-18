@@ -4091,8 +4091,9 @@ public class ShellTests : IDisposable
         Assert.Equal(20, Shell.ParseUndoSteps("20"));
         Assert.Equal(200, Shell.ParseUndoSteps(" 200 "));
         Assert.Equal(50, Shell.ParseUndoSteps("201"));
-        Assert.Equal(50, Shell.ParseUndoSteps("9"));
-        Assert.Equal(50, Shell.ParseUndoSteps("1"));
+        // 1 to 9, which 1.5.7 took: the fewest there are now
+        Assert.Equal(10, Shell.ParseUndoSteps("9"));
+        Assert.Equal(10, Shell.ParseUndoSteps("1"));
         Assert.Equal(50, Shell.ParseUndoSteps("0"));
         Assert.Equal(50, Shell.ParseUndoSteps("-20"));
         Assert.Equal(50, Shell.ParseUndoSteps("x"));
@@ -6675,7 +6676,9 @@ public class ShellTests : IDisposable
             var (output, errors, _, _) = Run("set shellmarkers false\npeek long.md\nwords long.md 2\n");
             Assert.Equal(string.Empty, errors);
             Assert.False(Shell.Markers);
-            foreach (var marker in new[] { "->", "-^", "<-", "-v" }) Assert.DoesNotContain(marker, output);
+            // (no line starts with a marker)
+            Assert.DoesNotContain(output.Split('\n'), line => line.StartsWith("->") || line.StartsWith("-^") ||
+                                                              line.StartsWith("<-") || line.StartsWith("-v"));
             Assert.Contains("  15  Line 15\n" + Lang.F("(lines {0}-{1} of {2})", 1, 15, 60) + "\n", output);
             Assert.Contains(Lang.F("{0}, line {1}: {2} words", In("work", "long.md"), 2, 2), output);
             Run("set shellmarkers true\n");
@@ -6809,12 +6812,99 @@ public class ShellTests : IDisposable
     public void Ls_TabCompletesTheOptions_AndTheDirectories()
     {
         Assert.Equal("ls -a", Tab(Completion(), "ls -"));
-        Assert.Equal("ls -d", Tab(Completion(), "ls -d"));
+        // As typed: "-D" is not an option, so nothing more is offered after it
+        Assert.Equal("ls -D ", Tab(Completion(), "ls -D "));
         // The options not given yet
         Assert.Equal("ls -d -a", Tab(Completion(), "ls -d -"));
         Assert.Equal("ls -d -s", Tab(Completion(), "ls -d -", true, true, true));
         // Directories as before, also after the options
         Assert.Equal("ls Draft/", Tab(Completion(), "ls Dr"));
         Assert.Equal("ls -s -d Draft/", Tab(Completion(), "ls -s -d Dr"));
+    }
+
+    // ---- Review of 1.5.8
+
+    [Fact]
+    public void Ls_OptionsNotKnown_AndOptionsAfterTheDirectory_AreTold()
+    {
+        foreach (var word in new[] { "-ab", "-", "--" })
+        {
+            var (_, errors, _, _) = Run("ls " + word + "\n");
+            Assert.Contains(Lang.F("Not taken: {0} (-a hidden ones too, -l full paths, -d dates, -s sizes)", word), errors);
+        }
+
+        var (_, after, _, _) = Run("ls Draft -d\n");
+        Assert.Contains(Lang.T("Give the options before the directory: ls -d notes"), after);
+        // A directory named as an option: "ls ./-d" (ls -d is the option)
+        Directory.CreateDirectory(In("work", "-d"));
+        File.WriteAllText(In("work", "-d", "inside.md"), "x\n");
+        var (output, errors2, _, _) = Run("ls -d\nls ./-d\n");
+        Assert.Equal(string.Empty, errors2);
+        Assert.Contains("inside.md", output);
+        Assert.Contains("  1  -d/\n", output);
+    }
+
+    [Fact]
+    public void Ls_TabOffersTheOptions_ThenADirectoryWhoseNameStartsWithADash()
+    {
+        Directory.CreateDirectory(In("work", "-x"));
+        Assert.Equal("ls -x/", Tab(Completion(), "ls -", true, true, true, true, true));
+    }
+
+    [Fact]
+    public void LsD_DoesNotReadTheSizes_AndFindD_LinesUpTheFilesOnly()
+    {
+        File.SetLastWriteTime(In("work", "plot.md"), new DateTime(2026, 11, 18, 14, 2, 0));
+        File.WriteAllText(In("work", "notes", "plot-b.md"), "x\n");
+        File.SetLastWriteTime(In("work", "notes", "plot-b.md"), new DateTime(2026, 11, 17, 8, 5, 0));
+        Directory.CreateDirectory(In("work", "plots"));
+        var (output, errors, _, _) = Run("find -d plot\nls -d\n");
+        Assert.Equal(string.Empty, errors);
+        // The folder without a date and not padded; the files lined up after the longest name of a file
+        var folder = Path.Combine("plots") + "/";
+        Assert.Contains("  " + folder + "\n", output);
+        var longest = Path.Combine("notes", "plot-b.md");
+        Assert.Contains(longest + "  2026-11-17 08:05\n", output);
+        Assert.Contains("plot.md" + new string(' ', longest.Length - "plot.md".Length) + "  2026-11-18 14:02\n", output);
+        // ls -d: the date, and no size after it
+        Assert.Contains("plot.md    2026-11-18 14:02\n", output);
+    }
+
+    [Fact]
+    public void Peek_OfAnEmptyFile_ShowsNoMarkers_AndTheHelpSaysTheFirstLine()
+    {
+        try
+        {
+            MarkersAsSet();
+            File.WriteAllText(In("work", "empty.md"), string.Empty);
+            var (output, _, _, _) = Run("peek empty.md\n");
+            Assert.Contains(Lang.F("{0} has {1} lines", In("work", "empty.md"), 0), output);
+            Assert.DoesNotContain(ShellSession.TopMarker, output);
+            Assert.DoesNotContain(ShellSession.EndMarker, output);
+            Shell.PeekLines = 1;
+            Assert.Contains("the first line,", Run("help peek\n").Output);
+        }
+        finally
+        {
+            MarkersAsSet();
+        }
+    }
+
+    [UnixFact]
+    public void OnLinuxAndMacOS_LsDAndFindD_TakeTheDateOfTheFileALinkPointsTo()
+    {
+        File.SetLastWriteTime(In("work", "plot.md"), new DateTime(2026, 11, 18, 14, 2, 0));
+        File.CreateSymbolicLink(In("work", "alias.md"), In("work", "plot.md"));
+        File.WriteAllText(In("work", "gone.md"), "x\n");
+        File.CreateSymbolicLink(In("work", "broken.md"), In("work", "gone.md"));
+        File.Delete(In("work", "gone.md"));
+        var (output, errors, _, _) = Run("ls -d -s\nfind -d alias\nfind -d broken\n");
+        Assert.Equal(string.Empty, errors);
+        var size = FileSizeFormatter.FormatSize(new FileInfo(In("work", "plot.md")).Length);
+        // The link: the date and the size of plot.md; the broken link: neither
+        Assert.Matches(@"alias\.md +2026-11-18 14:02 +" + System.Text.RegularExpressions.Regex.Escape(size) + "\n", output);
+        Assert.Matches(@"broken\.md +- +-\n", output);
+        Assert.Contains("alias.md  2026-11-18 14:02\n", output);
+        Assert.DoesNotMatch(@"broken\.md[^\n]*\d{4}-\d\d-\d\d", output);
     }
 }

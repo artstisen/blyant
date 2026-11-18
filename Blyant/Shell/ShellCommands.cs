@@ -22,7 +22,9 @@ internal sealed partial class ShellSession
         ("data", Lang.T("Go to Blyant's data directory (settings, lists, log)")),
         ("open file|n [+line] (edit)", Lang.T("Edit a file on the full screen (closing it returns here)")),
         ("resume [+line]", Lang.T("Edit $file again, where you worked last")),
-        ("peek file|n [lines]", Lang.F("Show the lines of a file (the first {0}, 40, 100-120, or +100 30)", Shell.PeekLines)),
+        ("peek file|n [lines]", Shell.PeekLines == 1
+            ? Lang.T("Show the lines of a file (the first line, 40, 100-120, or +100 30)")
+            : Lang.F("Show the lines of a file (the first {0}, 40, 100-120, or +100 30)", Shell.PeekLines)),
         ("peek [file|n] +|++|-|--", Shell.PeekStep == 1
             ? Lang.F("Show 1 line further down (++: {0}), or up (-, --)", Shell.PeekBigStep)
             : Lang.F("Show {0} lines further down (++: {1}), or up (-, --)", Shell.PeekStep, Shell.PeekBigStep)),
@@ -1194,24 +1196,33 @@ internal sealed partial class ShellSession
     {
         // "-a": hidden ones too; "-l": the full paths, without the mark of a favorite (for scripts); "-d": when each
         // file was last changed, "-s": its size (after the name, as find -d and recent -s show them); before the
-        // directory, in any order ("ls -a -l notes"). A word of "-" and a letter that is none of them, and not a
-        // directory here, is told
+        // directory, in any order ("ls -a -l notes"). Another word that starts with "-" ("-x", "-ab", "--") is told,
+        // unless a directory here has that name ("ls -x"); a directory named as an option is "ls ./-d"
         var (all, full, dates, sizes) = (false, false, false, false);
-        while (argument.TrimStart() is ['-', var letter, ..] trimmed &&
-               (trimmed.Length == 2 || char.IsWhiteSpace(trimmed[2])))
+        while (argument.TrimStart() is ['-', ..] trimmed)
         {
-            if (letter is not ('a' or 'l' or 'd' or 's'))
+            var word = trimmed.Split((char[]?)null, 2)[0];
+            if (word is not ("-a" or "-l" or "-d" or "-s"))
             {
-                if (System.IO.Directory.Exists(PathOf(trimmed[..2]))) break;
-                Error(Lang.F("Not taken: {0} (-a hidden ones too, -l full paths, -d dates, -s sizes)", trimmed[..2]));
+                if (System.IO.Directory.Exists(PathOf(word))) break;
+                Error(Lang.F("Not taken: {0} (-a hidden ones too, -l full paths, -d dates, -s sizes)", word));
                 return;
             }
 
-            if (letter == 'a') all = true;
-            else if (letter == 'l') full = true;
-            else if (letter == 'd') dates = true;
+            if (word == "-a") all = true;
+            else if (word == "-l") full = true;
+            else if (word == "-d") dates = true;
             else sizes = true;
-            argument = trimmed[2..];
+            argument = trimmed[word.Length..];
+        }
+
+        // "ls notes -d": the options go before the directory (a directory whose name has " -d" in it is listed)
+        var rest = argument.Trim();
+        if (rest.Length > 0 && rest[0] != '"' && !System.IO.Directory.Exists(PathOf(rest)) &&
+            Words(rest).Skip(1).Any(word => word is "-a" or "-l" or "-d" or "-s"))
+        {
+            Error(Lang.T("Give the options before the directory: ls -d notes"));
+            return;
         }
 
         var item = Resolve(argument, true);
@@ -1253,13 +1264,13 @@ internal sealed partial class ShellSession
     {
         var files = rows.Where(row => !row.Item.IsDirectory).ToList();
         var width = full || files.Count == 0 ? 0 : files.Max(row => TextMetrics.WidthOf(row.Text));
-        var sizeTexts = files.ToDictionary(row => row.Item.Path, row => SizeOf(row.Item.Path));
-        var sizeWidth = sizes && sizeTexts.Count > 0 ? sizeTexts.Values.Max(TextMetrics.WidthOf) : 0;
+        var sizeTexts = sizes ? files.ToDictionary(row => row.Item.Path, row => SizeOf(row.Item.Path)) : null;
+        var sizeWidth = sizeTexts is { Count: > 0 } ? sizeTexts.Values.Max(TextMetrics.WidthOf) : 0;
         return rows.Select(row => row.Item.IsDirectory
             ? row
             : (row.Item, Padded(row.Text, width) +
                          (dates ? "  " + (ChangedOf(row.Item.Path) ?? "-") : string.Empty) +
-                         (sizes ? "  " + sizeTexts[row.Item.Path].PadLeft(sizeWidth) : string.Empty))).ToList();
+                         (sizeTexts != null ? "  " + sizeTexts[row.Item.Path].PadLeft(sizeWidth) : string.Empty))).ToList();
     }
 
     #endregion

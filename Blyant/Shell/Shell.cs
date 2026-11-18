@@ -88,13 +88,14 @@ internal static class Shell
     internal const int MaxUndoSteps = 200;
 
     /// <summary>
-    /// The steps of undo from the settings file: a whole number from 10 to 200, else the default
+    /// The steps of undo from the settings file: a whole number from 10 to 200, else the default. 1 to 9, which 1.5.7
+    /// took (1 to 50), are 10: the fewest steps there are now, not the default
     /// </summary>
     internal static int ParseUndoSteps(string? value) =>
-        int.TryParse(value?.Trim(), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture,
-            out var steps) && steps is >= MinUndoSteps and <= MaxUndoSteps
-            ? steps
-            : DefaultUndoSteps;
+        !int.TryParse(value?.Trim(), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture,
+            out var steps) || steps is < 1 or > MaxUndoSteps
+            ? DefaultUndoSteps
+            : Math.Max(steps, MinUndoSteps);
 
     /// <summary>
     /// Blyant starts as the shell (setting "startshell", Configuration: General), as "blyant --shell" does, unless a

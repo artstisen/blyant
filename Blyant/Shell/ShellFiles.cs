@@ -483,14 +483,17 @@ internal sealed partial class ShellSession
     }
 
     // When a file was last changed ("2026-11-18 14:02", local time, as recent shows when it was opened), for find -d
-    // and ls -d; null for a file that is gone or cannot be read
+    // and ls -d; null for a file that is gone or cannot be read. A link: the file it points to, as for its size
+    // (FileOperations.FileLength), so a link is the same on all systems and a broken link has no date (on Linux and
+    // macOS FileInfo of a broken link is there, with the date of the link)
     private static string? ChangedOf(string path)
     {
         try
         {
             var info = new FileInfo(path);
-            return info.Exists
-                ? info.LastWriteTime.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture)
+            var file = info.LinkTarget != null ? info.ResolveLinkTarget(true) as FileInfo : info;
+            return file is { Exists: true }
+                ? file.LastWriteTime.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture)
                 : null;
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException or
@@ -826,7 +829,7 @@ internal sealed partial class ShellSession
     // a favorite, for scripts), "-f" the folder and the name ("drafts/storm.md"), "-b" the name only ("storm.md"),
     // with the folder after a name two rows have, "-d" when each file was last changed (after the name). The rows are
     // the same in each: "open 3", "info 3" take row 3.
-    // "find" alone (or with -l, -f, -b only) shows the last search again, as it was found, from wherever you are;
+    // "find" alone (or with -l, -f, -b, -d only) shows the last search again, as it was found, from wherever you are;
     // "find -r" searches again for the same in the directory of the last search
     private void Find(string argument)
     {
@@ -976,7 +979,6 @@ internal sealed partial class ShellSession
 
         static bool Gone(FileSearch.Result result) =>
             result.IsDirectory ? !System.IO.Directory.Exists(result.Path) : !FileOperations.IsFileThere(result.Path);
-
     }
 
     // "fav add 3", "fav remove notes.md": a file or directory added to the favorites in use, or taken off them. A

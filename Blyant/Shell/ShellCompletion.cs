@@ -156,9 +156,10 @@ internal sealed class ShellCompletion
             case "cd":
                 return (position == 0 ? Kind.Directory : Kind.None, none);
             case "ls":
-                // ("ls -a -l notes": the directory after the options; "ls -" and Tab: the options not given yet)
-                return after.All(word => word is "-a" or "-l" or "-d" or "-s")
-                    ? (Kind.DirectoryOrOptions, new[] { "-a", "-l", "-d", "-s" }.Except(after))
+                // ("ls -a -l notes": the directory after the options; "ls -" and Tab: the options not given yet. The
+                // words as typed: "-D" is not an option, as ls takes them)
+                return _words.All(word => word is "-a" or "-l" or "-d" or "-s")
+                    ? (Kind.DirectoryOrOptions, new[] { "-a", "-l", "-d", "-s" }.Except(_words))
                     : (Kind.None, none);
             case "open":
             case "edit":
