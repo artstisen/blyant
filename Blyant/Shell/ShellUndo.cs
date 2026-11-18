@@ -215,9 +215,14 @@ internal sealed partial class ShellSession
         void Done(List<Item> files)
         {
             if (files.Count > 0) LastList = files.DistinctBy(item => item.Path).ToList();
-            if (done?.Was is not { } was || (redo ? done.Now : was) is not { File: { } file } place) return;
-            _file = file;
-            _line = place.Line;
+            if (done == null) return;
+            // (no $file before the command: the line it left is no line of the file as it is now)
+            if ((redo ? done.Now : done.Was) is { File: { } file } place)
+            {
+                _file = file;
+                _line = place.Line;
+            }
+            else _line = null;
         }
     }
 

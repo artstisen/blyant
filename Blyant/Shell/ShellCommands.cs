@@ -58,7 +58,7 @@ internal sealed partial class ShellSession
         ("lines file|n lines sort [-a|-d]", Lang.T("Sort lines: -a A to Z, capitals first (default), -d Z to A")),
         ("lines file|n lines upper|lower|title", Lang.T("Make lines UPPERCASE, lowercase or Title Case")),
         ("words [-p] file|n line", Lang.T("Show the words of a line, numbered, for word")),
-        ("words -p, word -p", Lang.T("A word is all between blanks: text, and **bold** whole")),
+        ("words -p, word -p", Lang.T("A word is all between blanks: give -p to both")),
         ("word file|n line n|n-m action [text]", Lang.T("Change words by number: replace, before, after, delete")),
         ("word ... upper|lower|title", Lang.T("Make words UPPERCASE, lowercase or Title Case")),
         ("word @ n action", Lang.T("@ is the file and line worked on last")),
@@ -285,6 +285,13 @@ internal sealed partial class ShellSession
         finally
         {
             EndStep(line, outer, was);
+            // (the line "words" numbered can have moved: insert, shift, change, undo ...)
+            if (name is not ("word" or "words") && _wordsShown is { } shown &&
+                _changedFiles.Any(path => FileOperations.NameComparer.Equals(path, shown.Path)))
+            {
+                _wordsShown = null;
+            }
+
             LatestChanged();
             _changedFiles = outerChanged;
         }

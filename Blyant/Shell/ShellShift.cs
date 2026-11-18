@@ -65,7 +65,15 @@ internal sealed partial class ShellSession
             }
             else position = step.Up ? Math.Max(0, moved[0] - 1 - step.Count) : (int)Math.Min(lines.Count, (long)moved[^1] + step.Count);
         }
-        else if (PlaceIn(place, lines, file.Text, item.Path, moved) is { } at) position = at;
+        else if (PlaceIn(place, lines, file.Text, item.Path, moved) is { } at)
+        {
+            position = at;
+            // (a section at the bottom goes before the blank lines at the end of the file, which stay last)
+            if (heading != null && at == lines.Count)
+            {
+                while (position > 0 && lines[position - 1].Trim().Length == 0 && !moved.Contains(position)) position--;
+            }
+        }
         else return;
 
         var (text, first, ticked) = Shifted(file.Text, moved, position, tick);
@@ -135,6 +143,12 @@ internal sealed partial class ShellSession
     private (int Line, int Level, string Name)? SectionHeading(string word, List<(int Line, int Level, string Name)> headings,
         List<string> lines, string path)
     {
+        if (headings.Count == 0)
+        {
+            Error(Lang.F("{0} has no headings: shift -s moves a section under a heading", Path.GetFileName(path)));
+            return null;
+        }
+
         var number = word.StartsWith('+') ? word[1..] : word;
         if (number.Length > 0 && number.All(char.IsAsciiDigit))
         {
@@ -239,13 +253,11 @@ internal sealed partial class ShellSession
             at++;
         }
 
-        // (blank lines at the end of the file: as many as before)
+        // (blank lines at the end of the file: as many as before, taken away or put back)
         var blankEnd = was.AsEnumerable().Reverse().TakeWhile(line => line.Trim().Length == 0).Count();
-        while (lines.Count > at && lines.Count > 0 && lines[^1].Trim().Length == 0 &&
-               lines.AsEnumerable().Reverse().TakeWhile(line => line.Trim().Length == 0).Count() > blankEnd)
-        {
-            lines.RemoveAt(lines.Count - 1);
-        }
+        var blank = lines.AsEnumerable().Reverse().TakeWhile(line => line.Trim().Length == 0).Count();
+        for (; blank > blankEnd && lines.Count > at; blank--) lines.RemoveAt(lines.Count - 1);
+        for (; blank < blankEnd; blank++) lines.Add(string.Empty);
 
         return (Joined(lines, endsWithBreak), at);
     }
@@ -266,7 +278,8 @@ internal sealed partial class ShellSession
 
     // "word @ 9 replace wish": "@" in the place of the file is $file at $line, the file and the line the last command
     // worked on ("$file +12"; for insert the line after it, "+13", so the text goes after the line), or where the
-    // cursor was in the editor (see FileLine). After "new" it is the top of the empty file (line 0), for insert only. Another word, or
+    // cursor was in the editor (see FileLine). In an empty file (after "new") it is the top, line 0: insert puts the
+    // first line there, open, edit and peek take the file from line 1, and the others are refused. Another word, or
     // "@" in a text ("insert @ Ask @anna"), is as it is. Null (and told) when there is no line to take
     internal string? WithAt(string name, string argument)
     {
@@ -308,7 +321,9 @@ internal sealed partial class ShellSession
             }
         }
 
-        // (the top of a file, before line 1, as after "new": only insert can take it)
+        // (the top of a file, before line 1, as in an empty file: open, edit and peek take the file from line 1, and
+        // only insert can put a line there; the others have no line to work on)
+        if (line == 0 && name is "open" or "edit" or "peek") line = 1;
         if (line == 0 && name != "insert")
         {
             Error(Lang.F("@ is at the top of {0}, before line 1: insert @ text puts a line there",

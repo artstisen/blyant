@@ -407,7 +407,7 @@ shift -s notes.md +40 up                     the section of the heading on line 
 
 - `up` and `down` pass whole sections of the same level under the same heading: a `##` section passes the `##` sections, never into the middle of one, and a `###` section stays under the `##` heading above it. At the first or the last section of that level, nothing is moved, and the shell says so
 - The heading is named as a place is (the whole name, the start, or a pattern; `Tab` completes it), or given by a line in the section: `+40` takes the section line 40 is in, so `shift -s @ up` moves the section of the line you work on
-- Blank lines stay as they were: when the sections have a blank line between them, they have one after the move too
+- Blank lines stay as they were: when the sections have a blank line between them, they have one after the move too, and the blank lines at the end of the file stay at the end (`bottom` puts the section before them)
 - A place (`top`, `bottom`, `+12`, a heading) takes the section there, as lines go; it cannot be in the section itself
 - The heading is shown at its new place, with how many lines the section has. `shift! -s` ticks any task boxes in the section, and `undo` takes a move back
 
@@ -535,7 +535,7 @@ blyant ~/novel> word -p @ 6 upper
 ```
 
 - Where the numbers are the same words both ways (`Well` is word 1 either way), `word` does what it is told, with `-p` or without
-- `word` on a line that `words` has not numbered is not checked: run `words` (or `words -p`) first to see the numbers
+- Only the line numbered last is checked: the line of the last `words`, or of the last change by `word`, also in a `run`. Another line, or the line after another command has changed the file (`insert`, `shift`, `undo` ...: the line can have moved), is not checked, so run `words` (or `words -p`) again to see the numbers
 
 ## Working on one line
 `@` stands for the file and the line the last command worked on, so the next command takes them without typing them again:
@@ -556,7 +556,7 @@ shift @ up                                   ... and up again
 - `$file` and `$line` are the two parts: `echo $file $line` shows where `@` is
 - With `line 3` you set the line: `file test1.html`, `line 3`, then `insert @ <p>&nbsp;</p>` puts the text in after line 3. `line top` and `line bottom` are the first and the last line, and `file test1.html 3` sets both at once. `line` alone shows the line. Nothing is written, and a line that is not in the file is refused
 - A file you pick before any command has worked on a line in that file (`recent`, then `file 2`; `file plot.md`) has the line where the cursor was when you closed it in the editor last, as `resume` takes it: `file 2`, then `insert @ <p>&nbsp;</p>` puts the line in after it. A file never opened in the editor has no line until a command works on one, and `@` says so (`peek` it, or give the line)
-- After `new`, `@` is the top of the empty file (`$line` is 0), as in any empty file: `new scene` and `insert @ The ferry was late.` writes the first line, and each `insert @` after it adds a line below the last. Until then only `insert` takes `@`
+- After `new`, `@` is the top of the empty file (`$line` is 0), as in any empty file: `new scene` and `insert @ The ferry was late.` writes the first line, and each `insert @` after it adds a line below the last. Until then `insert` puts a line there, and `open`, `edit` and `peek` take the file from line 1; `word` and the other commands have no line to work on
 - `Tab` after `@` goes on as after a file and a line: `word @ 2 re` and `Tab` gives `replace`, and `lines @ st` gives `start`
 - `@` counts only alone in the place of the file. In a text it stays as it is (`insert @ Ask @anna`), and a file named _@_ is written in quotes (`peek "@"`)
 

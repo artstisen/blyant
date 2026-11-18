@@ -6482,4 +6482,71 @@ public class ShellTests : IDisposable
         Assert.Equal(string.Empty, errors);
         Assert.Equal("WELL - she said: try a/B first.\nANOTHER line\n", File.ReadAllText(In("work", "n.md")));
     }
+
+    // ---- Second review of 1.5.7
+
+    [Fact]
+    public void ShiftSection_DownAndBottom_KeepTheBlankLinesAtTheEnd()
+    {
+        const string text = "# A\na\n\n# B\nb\n\n\n";
+        File.WriteAllText(In("work", "f.md"), text);
+        Run("shift -s f.md A down\n");
+        Assert.Equal("# B\nb\n\n# A\na\n\n\n", File.ReadAllText(In("work", "f.md")));
+        File.WriteAllText(In("work", "f.md"), text);
+        Run("shift -s f.md A bottom\n");
+        Assert.Equal("# B\nb\n\n# A\na\n\n\n", File.ReadAllText(In("work", "f.md")));
+        // (the last section to the bottom: there already)
+        var (output, _, _, _) = Run("shift -s f.md A bottom\n");
+        Assert.Contains(Lang.T("Nothing moved: the lines are there already"), output);
+    }
+
+    [Fact]
+    public void Undo_WithNoFileBefore_LeavesNoLine_NotTheLineOfTheChange()
+    {
+        File.WriteAllText(In("work", "t.md"), Ten);
+        var (_, errors, _, _) = Run("shift t.md 1 bottom\nundo\nword @ 1 upper\n");
+        Assert.Contains(Lang.F("@ has no line in {0} yet: peek it, or give the line (insert {0} +5 ...)", "t.md"), errors);
+        Assert.Equal(Ten, File.ReadAllText(In("work", "t.md")));
+    }
+
+    [Fact]
+    public void WordGuard_ComesBeforeTheCount_AndEndsWhenTheFileChanges()
+    {
+        File.WriteAllText(In("work", "t.md"), "- [ ] Buy milk\n");
+        // (word 5 is "milk" with -p; without -p the line has 2 words)
+        var (_, errors, _, _) = Run("words -p t.md 1\nword t.md 1 5 upper\n");
+        Assert.Contains(Lang.F("words -p numbered line {0}, and without -p the numbers differ: give -p to word too", 1),
+            errors);
+        // A number words did not show is told by the count
+        (_, errors, _, _) = Run("words -p t.md 1\nword t.md 1 9 upper\n");
+        Assert.Contains(Lang.F("Line {0} has {1} words: {2} is not one", 1, 2, 9), errors);
+        // Another command changed the file: the line can have moved, and is not checked
+        File.WriteAllText(In("work", "n.md"), "first\nWell - she said: try a/b first.\n");
+        (_, errors, _, _) = Run("words -p n.md 2\ninsert n.md +1 Title\nword n.md 2 1 upper\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("Title\nFIRST\nWell - she said: try a/b first.\n", File.ReadAllText(In("work", "n.md")));
+    }
+
+    [Fact]
+    public void At_InAnEmptyFile_PeekTakesTheFile_WordHasNoLine()
+    {
+        File.WriteAllText(In("work", "e.md"), string.Empty);
+        var (output, errors, _, _) = Run("peek e.md\npeek @\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains(Lang.F("{0} has {1} lines", In("work", "e.md"), 0), output);
+        // (open, edit and peek take the file from line 1: "open @" is "open $file +1")
+        Assert.Equal("$file +1", Run("peek e.md\n").Session.WithAt("peek", "@"));
+        Assert.Equal("$file +1", Run("peek e.md\n").Session.WithAt("open", "@"));
+        Assert.Null(Run("peek e.md\n").Session.WithAt("word", "@ 1 upper"));
+    }
+
+    [Fact]
+    public void ShiftSection_AFileWithoutHeadings_IsTold()
+    {
+        File.WriteAllText(In("work", "p.md"), "a\nb\nc\n");
+        var (_, errors, _, _) = Run("shift -s p.md 2 up\nshift -s p.md Ideas up\n");
+        Assert.Equal(2, errors.Split(Lang.F("{0} has no headings: shift -s moves a section under a heading", "p.md")).Length - 1);
+        Assert.Contains("give -p to both", Lang.T("A word is all between blanks: give -p to both"));
+        Assert.Contains("words -p, word -p", Run("help words\n").Output);
+    }
 }

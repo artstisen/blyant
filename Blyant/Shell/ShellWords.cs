@@ -13,7 +13,8 @@ internal sealed partial class ShellSession
     private static readonly string[] WordActions = { "replace", "before", "after", "delete", "upper", "lower", "title" };
 
     // The line "words" (or a change by "word") numbered last, and how: between blanks ("-p") or not. "word" on that
-    // line counted the other way is refused when the numbers point at other words (see LineWords.SameWords)
+    // line counted the other way is refused when the numbers point at other words (see LineWords.SameWords).
+    // Forgotten when another command changes the file (the line can have moved; see Execute)
     private (string Path, int Line, bool Blanks)? _wordsShown;
 
     // The width the numbered words are shown in (79 columns when it is not known, as to a file)
@@ -136,6 +137,19 @@ internal sealed partial class ShellSession
 
         if (LineOf(words[0], words[1], usage) is not { } at) return;
         var line = at.Lines[at.Line - 1];
+        // ("words -p", then "word" without -p, or the other way: the numbers seen are of the other count. Refused
+        // when they point at other words: "a/b" is word 6 between blanks, "b" without. First, so a number seen that
+        // the other count does not have is told this way too; a number not seen is told by the counts below)
+        if (_wordsShown is { } shown && shown.Blanks != blanks && shown.Line == at.Line &&
+            FileOperations.NameComparer.Equals(shown.Path, Path.GetFullPath(at.Item.Path)) &&
+            last <= LineWords.Find(line, shown.Blanks).Count && !LineWords.SameWords(line, first, last))
+        {
+            Error(shown.Blanks
+                ? Lang.F("words -p numbered line {0}, and without -p the numbers differ: give -p to word too", at.Line)
+                : Lang.F("words numbered line {0} without -p, and with -p the numbers differ: leave out -p", at.Line));
+            return;
+        }
+
         var count = LineWords.Find(line, blanks).Count;
         if (count == 0)
         {
@@ -148,18 +162,6 @@ internal sealed partial class ShellSession
             Error(count == 1
                 ? Lang.F("Line {0} has 1 word: {1} is not one", at.Line, last)
                 : Lang.F("Line {0} has {1} words: {2} is not one", at.Line, count, last));
-            return;
-        }
-
-        // ("words -p", then "word" without -p, or the other way: the numbers seen are of the other count. Refused
-        // when they point at other words: "a/b" is word 6 between blanks, "b" without)
-        if (_wordsShown is { } shown && shown.Blanks != blanks && shown.Line == at.Line &&
-            FileOperations.NameComparer.Equals(shown.Path, Path.GetFullPath(at.Item.Path)) &&
-            !LineWords.SameWords(line, first, last))
-        {
-            Error(shown.Blanks
-                ? Lang.F("words -p numbered line {0}, and without -p the numbers differ: give -p to word too", at.Line)
-                : Lang.F("words numbered line {0} without -p, and with -p the numbers differ: leave out -p", at.Line));
             return;
         }
 
