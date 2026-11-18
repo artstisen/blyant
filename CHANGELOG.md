@@ -1,5 +1,7 @@
 # Changes
 
+## v1.5.7
+
 ## v1.5.6 (2026-11-17)
 - **`reg -t` in the shell**: finds the registers with a text in the name or the value, when there are many (`reg -t storm`, `reg -t chap*`), as `find -t` takes a text. A text in a later line of a register is shown under the row, and the names set by Blyant are searched too. See [Registers](Guide-to-shell.md#registers).
 - **Scripts with words, and short names, in the shell**: `run $check $file 12` puts the words in where the commands of the script have `$1`, `$2` ... (`$*`: all the words), so one script works on any file (`reg check = words $1 $2`). A script of one command without `$1` gets the words added at the end (`reg test open`, then `run $test $file`), and a file of commands takes words too. A register of one line that starts with a command is also the start of a command: after `reg w words`, `$w $file 12` runs `words`. A script whose commands take `$1` is refused without words, and the words are put in once (a `$` in them stays). See [Script with words](Guide-to-shell.md#script-with-words).
