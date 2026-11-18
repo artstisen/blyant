@@ -260,11 +260,14 @@ def make_demo():
     with open(MARKER, 'w', encoding='utf-8') as f:
         f.write('Made by tools/screenshots.py of Blyant. It is made again each time the script runs.\n')
     hide(MARKER)
-    for name, text in FILES.items():
+    for i, (name, text) in enumerate(FILES.items()):
         path = os.path.join(PROJECT, name)
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, 'w', encoding='utf-8', newline='\n') as f:
             f.write(text)
+        # (when each file was last changed: the same each time, a few hours apart, as ls -d and find -d show it)
+        when = time.mktime((2026, 11, 18, 21, 0, 0, 0, 0, -1)) - i * (7 * 3600 + 23 * 60)
+        os.utime(path, (when, when))
     for path, text in OTHER_PROJECTS.items():
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, 'w', encoding='utf-8', newline='\n') as f:
@@ -595,6 +598,10 @@ SCENES = [
      {},
      ['--shell', PROJECT], ['<wait>', 'words todo.md 5<Enter>', 'word todo.md 5 10 replace almanac<Enter>',
                             'peek todo.md 3-7<Enter>'], True),
+    # ls -d -s and find -d: when each file was last changed (and its size), lined up after the names
+    ('shell-dates', 'Blyant: the shell, ls and find with the date each file was last changed',
+     {},
+     ['--shell', PROJECT], ['<wait>', 'ls -d -s<Enter>', 'find -d chapter*<Enter>'], True),
     # @: a line found once, then insert, lines and shift go on with it without the file and the line typed again
     ('shell-at', 'Blyant: the shell, @ is the file and the line worked on last',
      {},
