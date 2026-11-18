@@ -6061,6 +6061,37 @@ public class ShellTests : IDisposable
         Assert.Contains("line [n|top|bottom]", Run("help line\n").Output);
     }
 
+    [Theory]
+    [InlineData("word @ 2 re", "word @ 2 replace")]
+    [InlineData("word @ 2-3 up", "word @ 2-3 upper")]
+    [InlineData("word -p @ 2 de", "word -p @ 2 delete")]
+    [InlineData("lines @ st", "lines @ start")]
+    [InlineData("lines @ 3 so", "lines @ 3 sort")]
+    [InlineData("lines @ sort -", "lines @ sort -a")]
+    [InlineData("shift @ do", "shift @ down")]
+    [InlineData("shift -s @ u", "shift -s @ up")]
+    public void Tab_AtCountsAsTheFileAndTheLine(string typed, string completed)
+    {
+        Assert.Equal(completed, Tab(Completion(), typed));
+    }
+
+    [Theory]
+    [InlineData("insert @ t")]
+    [InlineData("peek @ t")]
+    [InlineData("word @ 2 replace a")]
+    public void Tab_AfterAt_OffersNothingWhereATextOrNothingGoes(string typed)
+    {
+        Assert.Equal(typed, Tab(Completion(), typed));
+    }
+
+    [Fact]
+    public void Tab_TheFileAfterTheArrowOfLinesAt_AndTheWordsOfAFileWrittenOut_StayAsTheyWere()
+    {
+        Assert.Equal("lines @ > plot.md", Tab(Completion(), "lines @ > plo"));
+        Assert.Equal("word plot.md 1 2 replace", Tab(Completion(), "word plot.md 1 2 rep"));
+        Assert.Equal("insert plot.md top", Tab(Completion(), "insert plot.md t"));
+    }
+
     [Fact]
     public void Line_WithoutALine_IsTold_NotWrittenAsItIs()
     {

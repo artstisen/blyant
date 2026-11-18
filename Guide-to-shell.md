@@ -528,6 +528,7 @@ shift @ up                                   ... and up again
 - `line 3` sets the line yourself: `file test1.html`, `line 3`, then `insert @ <p>&nbsp;</p>` puts the text in after line 3. `line top` and `line bottom` are the first and the last line, and `file test1.html 3` sets both at once. `line` alone shows the line. Nothing is written, and a line that is not in the file is refused
 - A file you pick without working on a line of it (`recent`, then `file 2`; `file plot.md`) has the line where the cursor was when you closed it in the editor last, as `resume` takes it: `file 2`, then `insert @ <p>&nbsp;</p>` puts the line in after it. A file never opened in the editor has no line until a command works on one, and `@` says so (`peek` it, or give the line)
 - After `new`, `@` is the top of the empty file (`$line` is 0): `new scene` and `insert @ The ferry was late.` writes the first line, and each `insert @` after it adds a line below the last. Until then only `insert` takes `@`
+- `Tab` after `@` goes on as after a file and a line: `word @ 2 re` and `Tab` gives `replace`, and `lines @ st` gives `start`
 - `@` counts only alone in the place of the file. In a text it stays as it is (`insert @ Ask @anna`), and a file named _@_ is written in quotes (`peek "@"`)
 
 ## Undo

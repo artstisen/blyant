@@ -117,6 +117,13 @@ internal sealed class ShellCompletion
         var command = words[0].ToLowerInvariant();
         // (the words as typed: the file of shift is read by its name, in its letter case)
         _words = words.Skip(1).ToList();
+        // ("word @ 2 " and Tab: "@" is the file and the line, so it counts as two words, as "word notes.md +12 2 ")
+        if (TakesAt.Contains(command))
+        {
+            var file = _words.FindIndex(w => w is not ("-p" or "-s"));
+            if (file >= 0 && _words[file] == "@") _words.Insert(file + 1, "+0");
+        }
+
         var (kind, choices) = After(command, _words.Select(w => w.ToLowerInvariant()).ToList());
         _matches = kind switch
         {
@@ -202,13 +209,12 @@ internal sealed class ShellCompletion
             case "shift!":
             {
                 // ("-s" first: a section) The file, the lines (typed) or the heading of the section, and the place:
-                // a heading of the file, top, bottom, up or down. "@" is the file and the line: the place after it
+                // a heading of the file, top, bottom, up or down
                 var section = position > 0 && after[0] == "-s" ? 1 : 0;
                 if (position == 0) return (Kind.PathOrWords, new[] { "-s" });
-                var at = position > section && after[section] == "@" ? 1 : 0;
-                if (section == 1 && at == 0 && position == 2) return (Kind.Names, HeadingsOf(_words[1]));
+                if (section == 1 && position == 2) return (Kind.Names, HeadingsOf(_words[1]));
                 if (position == section) return (Kind.Path, none);
-                return position - section + at == 2
+                return position - section == 2
                     ? (Kind.Names, HeadingsOf(_words[section]).Concat(new[] { "top", "bottom", "up", "down" }))
                     : (Kind.None, none);
             }
@@ -369,6 +375,12 @@ internal sealed class ShellCompletion
             return Enumerable.Empty<string>();
         }
     }
+
+    // The commands that take "@" in the place of the file and the line (as ShellSession.WithAt)
+    private static readonly HashSet<string> TakesAt = new()
+    {
+        "words", "word", "change", "insert", "peek", "shift", "shift!", "lines", "open", "edit"
+    };
 
     // The names of the headings of a file (for "shift"); none if it cannot be read
     private IEnumerable<string> HeadingsOf(string typed)
