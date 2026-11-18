@@ -42,14 +42,14 @@ internal sealed partial class ShellSession
     }
 
     // The words of a line, numbered, a row at a time ("blanks": all between blanks, "-p"). With the setting
-    // shellmarkers, between "-> notes.md, line 12" and "<- 9 words"
+    // shellmarkers, between "-> notes.md, line 12" and "<- 9 words" (the whole line: the markers of the top and the end)
     private void ShowWords(string path, int number, string line, bool blanks)
     {
-        if (Shell.Markers) Line(Lang.F("-> {0}, line {1}", Path.GetFileName(path), number));
+        if (Shell.Markers) Line(TopMarker + Lang.F("{0}, line {1}", Path.GetFileName(path), number));
         foreach (var row in LineWords.Numbered(line, WordsWidth(), blanks)) Line("  " + row);
         if (!Shell.Markers) return;
         var count = LineWords.Find(line, blanks).Count;
-        Line(count == 1 ? Lang.T("<- 1 word") : Lang.F("<- {0} words", count));
+        Line(EndMarker + (count == 1 ? Lang.T("1 word") : Lang.F("{0} words", count)));
     }
 
     // "-p" first ("words -p notes.md 12", "word -p ..."): a word is all between blanks, with the punctuation and the

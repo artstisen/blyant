@@ -449,13 +449,12 @@ internal sealed partial class ShellSession
         }
 
         var width = last.ToString().Length;
-        // (the setting shellmarkers: "->" and the name of the file above the lines, "<-" and where they are below them,
-        // so a peek is told apart from the lines around it. Lines of the file always start with a blank)
+        // (the setting shellmarkers: the name of the file above the lines, and where they are below them, so a peek is
+        // told apart from the lines around it. Lines of the file always start with a blank)
         if (Shell.Markers)
         {
-            Line(auto
-                ? Lang.F("-> {0} (peek again)", Path.GetFileName(item.Path))
-                : Lang.F("-> {0}", Path.GetFileName(item.Path)));
+            Line((first > 1 ? AboveMarker : TopMarker) +
+                 (auto ? Lang.F("{0} (peek again)", Path.GetFileName(item.Path)) : Path.GetFileName(item.Path)));
         }
 
         // (the line found marked with ">" in the margin)
@@ -469,9 +468,9 @@ internal sealed partial class ShellSession
         // (where the window is: also at the end, when it was put or moved there; with the markers always)
         if (Shell.Markers)
         {
-            Line(match is { } found
-                ? Lang.F("<- match {0} of {1}, lines {2}-{3} of {4}", found.Number, found.Count, first, last, lines.Count)
-                : Lang.F("<- lines {0}-{1} of {2}", first, last, lines.Count));
+            Line((last < lines.Count ? BelowMarker : EndMarker) + (match is { } found
+                ? Lang.F("match {0} of {1}, lines {2}-{3} of {4}", found.Number, found.Count, first, last, lines.Count)
+                : Lang.F("lines {0}-{1} of {2}", first, last, lines.Count)));
         }
         else if (match is { } told)
         {
@@ -482,6 +481,14 @@ internal sealed partial class ShellSession
             Line(Lang.F("(lines {0}-{1} of {2})", first, last, lines.Count));
         }
     }
+
+    // The markers of peek and words (the setting shellmarkers), the same in all languages: above the lines, the top of
+    // the file shown ("->"), or lines of the file above them ("-^"); below them, the end of the file shown ("<-"), or
+    // lines of the file below them ("-v")
+    internal const string TopMarker = "-> ";
+    internal const string AboveMarker = "-^ ";
+    internal const string EndMarker = "<- ";
+    internal const string BelowMarker = "-v ";
 
     // Where a window of peek is put: a step from the last window, the top, the middle, the bottom, or a part of the
     // file

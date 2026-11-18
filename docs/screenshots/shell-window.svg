@@ -9,7 +9,7 @@
 <circle cx="60" cy="17" r="6" fill="#28C840"/>
 <text x="434.0" y="22" fill="#A0A0A0" text-anchor="middle">Blyant: the shell, a window into a chapter: search, change, the window again, undo</text>
 <text x="14.0" y="60.8" fill="#CCCCCC" textLength="579.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">blyant C:\Writing\Harbour Lights&gt; peek chapter-01.md /wound the clock</text>
-<text x="14.0" y="77.8" fill="#CCCCCC" textLength="134.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">-&gt; chapter-01.md</text>
+<text x="14.0" y="77.8" fill="#CCCCCC" textLength="134.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">-^ chapter-01.md</text>
 <text x="14.0" y="94.8" fill="#CCCCCC" textLength="680.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  17  The key was where the letter said it would be: under the third stone of the</text>
 <text x="14.0" y="111.8" fill="#CCCCCC" textLength="604.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  18  wall, wrapped in oilcloth, with a label in his square handwriting.</text>
 <text x="14.0" y="128.8" fill="#CCCCCC" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  19</text>
@@ -19,7 +19,7 @@
 <text x="14.0" y="196.8" fill="#CCCCCC" textLength="285.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&lt;- match 1 of 1, lines 17-22 of 22</text>
 <text x="14.0" y="213.8" fill="#CCCCCC" textLength="789.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">blyant C:\Writing\Harbour Lights&gt; change chapter-01.md +22 She wound the clock, then the lamp.</text>
 <text x="14.0" y="230.8" fill="#CCCCCC" textLength="470.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">C:\Writing\Harbour Lights\chapter-01.md: line 22 changed</text>
-<text x="14.0" y="247.8" fill="#CCCCCC" textLength="243.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">-&gt; chapter-01.md (peek again)</text>
+<text x="14.0" y="247.8" fill="#CCCCCC" textLength="243.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">-^ chapter-01.md (peek again)</text>
 <text x="14.0" y="264.8" fill="#CCCCCC" textLength="680.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  17  The key was where the letter said it would be: under the third stone of the</text>
 <text x="14.0" y="281.8" fill="#CCCCCC" textLength="604.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  18  wall, wrapped in oilcloth, with a label in his square handwriting.</text>
 <text x="14.0" y="298.8" fill="#CCCCCC" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  19</text>
@@ -29,7 +29,7 @@
 <text x="14.0" y="366.8" fill="#CCCCCC" textLength="168.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&lt;- lines 17-22 of 22</text>
 <text x="14.0" y="383.8" fill="#CCCCCC" textLength="319.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">blyant C:\Writing\Harbour Lights&gt; undo</text>
 <text x="14.0" y="400.8" fill="#CCCCCC" textLength="571.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Undone: change chapter-01.md +22 She wound the clock, then the lamp.</text>
-<text x="14.0" y="417.8" fill="#CCCCCC" textLength="243.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">-&gt; chapter-01.md (peek again)</text>
+<text x="14.0" y="417.8" fill="#CCCCCC" textLength="243.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">-^ chapter-01.md (peek again)</text>
 <text x="14.0" y="434.8" fill="#CCCCCC" textLength="680.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  17  The key was where the letter said it would be: under the third stone of the</text>
 <text x="14.0" y="451.8" fill="#CCCCCC" textLength="604.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  18  wall, wrapped in oilcloth, with a label in his square handwriting.</text>
 <text x="14.0" y="468.8" fill="#CCCCCC" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  19</text>

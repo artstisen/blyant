@@ -18,7 +18,7 @@
 <text x="14.0" y="179.8" fill="#CCCCCC" textLength="680.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">blyant C:\Writing\Harbour Lights&gt; insert todo.md +8 - [ ] Write $calc words a day</text>
 <text x="14.0" y="196.8" fill="#CCCCCC" textLength="403.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">C:\Writing\Harbour Lights\todo.md: line 8 put in</text>
 <text x="14.0" y="213.8" fill="#CCCCCC" textLength="420.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">blyant C:\Writing\Harbour Lights&gt; peek todo.md 3-9</text>
-<text x="14.0" y="230.8" fill="#CCCCCC" textLength="84.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">-&gt; todo.md</text>
+<text x="14.0" y="230.8" fill="#CCCCCC" textLength="84.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">-^ todo.md</text>
 <text x="14.0" y="247.8" fill="#CCCCCC" textLength="92.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  3  ## Now</text>
 <text x="14.0" y="264.8" fill="#CCCCCC" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  4</text>
 <text x="14.0" y="281.8" fill="#CCCCCC" textLength="529.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  5  - [ ] Check the tide times in chapter 2 against the tables</text>
@@ -26,7 +26,7 @@
 <text x="14.0" y="315.8" fill="#CCCCCC" textLength="260.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  7  - [ ] Read chapter 3 aloud</text>
 <text x="14.0" y="332.8" fill="#CCCCCC" textLength="277.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  8  - [ ] Write 1100 words a day</text>
 <text x="14.0" y="349.8" fill="#CCCCCC" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  9</text>
-<text x="14.0" y="366.8" fill="#CCCCCC" textLength="151.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&lt;- lines 3-9 of 12</text>
+<text x="14.0" y="366.8" fill="#CCCCCC" textLength="151.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">-v lines 3-9 of 12</text>
 <rect x="299.6" y="371" width="8.4" height="17" fill="#CCCCCC"/>
 <text x="14.0" y="383.8" fill="#CCCCCC" textLength="277.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">blyant C:\Writing\Harbour Lights&gt;</text>
 </svg>

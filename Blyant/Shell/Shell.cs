@@ -39,8 +39,9 @@ internal static class Shell
     internal static bool AutoPeek { get; set; }
 
     /// <summary>
-    /// peek and words show the lines of a file between two markers: "-> notes.md" above them, and "<- lines 1-15 of
-    /// 60" below them (setting "shellmarkers", on unless turned off). Only in the settings file, or with "set"
+    /// peek and words show the lines of a file between two markers: "-> notes.md" above them ("-^": more lines above),
+    /// and "<- lines 46-60 of 60" below them ("-v": more lines below) (setting "shellmarkers", on unless turned off).
+    /// Only in the settings file, or with "set"
     /// </summary>
     internal static bool Markers { get; set; } = DefaultMarkers;
 

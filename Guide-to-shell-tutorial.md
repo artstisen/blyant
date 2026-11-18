@@ -88,7 +88,7 @@ blyant ~/novel> peek 3
 <- lines 1-4 of 4
 ```
 
-- The lines come between two markers: `->` and the name of the file above them, and `<-` and where the lines are in the file below them, so you can tell where a peek starts and ends (`set shellmarkers false` leaves them out)
+- The lines come between two markers: the name of the file above them, and where the lines are in the file below them, so you can tell where a peek starts and ends. `->` and `<-` show that the top and the end of the file are shown; `-^` and `-v` show that the file has more lines above or below (`set shellmarkers false` leaves the markers out)
 - `peek plot.md 40` shows the first 40 lines (15 when no number is given: `set shellpeeklines 25` changes it), and `peek plot.md 100-120` lines 100 to 120
 - `peek +` moves the last peek 1 line further down, and `peek ++` 5 lines (`set shellpeekstep 2` and `set shellpeekbigstep 10` change the steps); `peek -` and `peek --` go back up. Each one moves from the last window, so `peek +`, `peek +` goes on down the file. Shorter still: `+`, `++`, `-` and `--` alone on the line, even after an `insert` in between
 - `+ 20` moves the window 20 lines, and `peek bottom`, `peek top`, `peek middle` or `peek 75%` move the window to that place in the file peeked last
@@ -98,7 +98,7 @@ blyant ~/novel> peek 3
 
 ```
 blyant ~/novel> peek chapters/02-storm.md +3 2
--> 02-storm.md
+-^ 02-storm.md
   3  The storm came at night.
   4  The lights went out.
 <- lines 3-4 of 4

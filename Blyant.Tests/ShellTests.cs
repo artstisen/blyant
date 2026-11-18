@@ -6594,8 +6594,9 @@ public class ShellTests : IDisposable
         var (output, errors, _, _) = Run("peek long.md\n");
         Assert.Equal(string.Empty, errors);
         Assert.Equal(15, PeekLines(output));
-        Assert.Contains(Lang.F("-> {0}", "long.md") + "\n   1  Line 1\n", output);
-        Assert.Contains("  15  Line 15\n" + Lang.F("<- lines {0}-{1} of {2}", 1, 15, 60) + "\n", output);
+        Assert.Contains(ShellSession.TopMarker + "long.md\n   1  Line 1\n", output);
+        // (lines below the window: -v)
+        Assert.Contains("  15  Line 15\n" + ShellSession.BelowMarker + Lang.F("lines {0}-{1} of {2}", 1, 15, 60) + "\n", output);
         Assert.DoesNotContain(Lang.F("(lines {0}-{1} of {2})", 1, 15, 60), output);
         // $peek: the lines alone, without the markers
         Assert.Equal(string.Join("\n", Enumerable.Range(1, 15).Select(i => "Line " + i)), ShellRegisters.Peek);
@@ -6608,14 +6609,21 @@ public class ShellTests : IDisposable
         SixtyLines();
         // A whole file: the end marker tells it too (without the markers nothing is told under it)
         var (output, _, _, _) = Run("peek plot.md\npeek long.md +\npeek long.md /Line 30\n");
-        Assert.Contains(Lang.F("-> {0}", "plot.md") + "\n  1  Plot\n" + Lang.F("<- lines {0}-{1} of {2}", 1, 1, 1) + "\n", output);
-        Assert.Contains("  16  Line 16\n" + Lang.F("<- lines {0}-{1} of {2}", 2, 16, 60) + "\n", output);
+        Assert.Contains(ShellSession.TopMarker + "plot.md\n  1  Plot\n" + ShellSession.EndMarker + Lang.F("lines {0}-{1} of {2}", 1, 1, 1) + "\n", output);
+        // A window in the middle: lines above it (-^) and below it (-v)
+        Assert.Contains(ShellSession.AboveMarker + "long.md\n   2  Line 2\n", output);
+        Assert.Contains("  16  Line 16\n" + ShellSession.BelowMarker + Lang.F("lines {0}-{1} of {2}", 2, 16, 60) + "\n", output);
         Assert.Contains("> 30  Line 30\n", output);
-        Assert.Contains(Lang.F("<- match {0} of {1}, lines {2}-{3} of {4}", 1, 1, 28, 42, 60) + "\n", output);
+        Assert.Contains(ShellSession.AboveMarker + "long.md\n  28  Line 28\n", output);
+        Assert.Contains(ShellSession.BelowMarker + Lang.F("match {0} of {1}, lines {2}-{3} of {4}", 1, 1, 28, 42, 60) + "\n", output);
         // A window past the end shows no lines, and no markers
         (output, _, _, _) = Run("peek plot.md +5\n");
         Assert.Contains(Lang.F("{0} has {1} lines", In("work", "plot.md"), 1), output);
-        Assert.DoesNotContain(Lang.F("-> {0}", "plot.md"), output);
+        Assert.DoesNotContain(ShellSession.TopMarker + "plot.md", output);
+        // At the end: lines above it, and the end of the file
+        (output, _, _, _) = Run("peek long.md bottom\n");
+        Assert.Contains(ShellSession.AboveMarker + "long.md\n  46  Line 46\n", output);
+        Assert.Contains("  60  Line 60\n" + ShellSession.EndMarker + Lang.F("lines {0}-{1} of {2}", 46, 60, 60) + "\n", output);
     }
 
     [Fact]
@@ -6628,8 +6636,8 @@ public class ShellTests : IDisposable
             File.WriteAllText(In("work", "a.md"), "one\ntwo\nthree\n");
             var (output, errors, _, _) = Run("peek a.md 1-2\nchange a.md +1 ONE\n");
             Assert.Equal(string.Empty, errors);
-            Assert.Contains(Lang.F("-> {0} (peek again)", "a.md") + "\n  1  ONE\n  2  two\n" +
-                            Lang.F("<- lines {0}-{1} of {2}", 1, 2, 3) + "\n", output);
+            Assert.Contains(ShellSession.TopMarker + Lang.F("{0} (peek again)", "a.md") + "\n  1  ONE\n  2  two\n" +
+                            ShellSession.BelowMarker + Lang.F("lines {0}-{1} of {2}", 1, 2, 3) + "\n", output);
             Assert.DoesNotContain(Lang.F("(peek again: {0})", "a.md"), output);
         }
         finally
@@ -6645,14 +6653,14 @@ public class ShellTests : IDisposable
         File.WriteAllText(In("work", "w.md"), "one two three\nfour\n");
         var (output, errors, _, _) = Run("words w.md 1\nwords w.md 2\nword w.md 1 2 delete\n");
         Assert.Equal(string.Empty, errors);
-        Assert.Contains(Lang.F("-> {0}, line {1}", "w.md", 1) + "\n  1 one  2 two  3 three\n" +
-                        Lang.F("<- {0} words", 3) + "\n", output);
-        Assert.Contains(Lang.F("-> {0}, line {1}", "w.md", 2) + "\n  1 four\n" + Lang.T("<- 1 word") + "\n", output);
+        Assert.Contains(ShellSession.TopMarker + Lang.F("{0}, line {1}", "w.md", 1) + "\n  1 one  2 two  3 three\n" +
+                        ShellSession.EndMarker + Lang.F("{0} words", 3) + "\n", output);
+        Assert.Contains(ShellSession.TopMarker + Lang.F("{0}, line {1}", "w.md", 2) + "\n  1 four\n" + ShellSession.EndMarker + Lang.T("1 word") + "\n", output);
         // (the markers tell what the line under the words told)
         Assert.DoesNotContain(Lang.F("{0}, line {1}: {2} words", In("work", "w.md"), 1, 3), output);
         // A change: the words numbered again, between the markers
         Assert.Contains(Lang.F("{0}: line {1} changed", In("work", "w.md"), 1) + "\n" +
-                        Lang.F("-> {0}, line {1}", "w.md", 1) + "\n  1 one  2 three\n" + Lang.F("<- {0} words", 2) + "\n",
+                        ShellSession.TopMarker + Lang.F("{0}, line {1}", "w.md", 1) + "\n  1 one  2 three\n" + ShellSession.EndMarker + Lang.F("{0} words", 2) + "\n",
             output);
     }
 
@@ -6667,8 +6675,7 @@ public class ShellTests : IDisposable
             var (output, errors, _, _) = Run("set shellmarkers false\npeek long.md\nwords long.md 2\n");
             Assert.Equal(string.Empty, errors);
             Assert.False(Shell.Markers);
-            Assert.DoesNotContain("->", output);
-            Assert.DoesNotContain("<-", output);
+            foreach (var marker in new[] { "->", "-^", "<-", "-v" }) Assert.DoesNotContain(marker, output);
             Assert.Contains("  15  Line 15\n" + Lang.F("(lines {0}-{1} of {2})", 1, 15, 60) + "\n", output);
             Assert.Contains(Lang.F("{0}, line {1}: {2} words", In("work", "long.md"), 2, 2), output);
             Run("set shellmarkers true\n");
@@ -6690,11 +6697,11 @@ public class ShellTests : IDisposable
             FileIo.SaveSettings();
             var (output, _, _, _) = Run("set shellpeeklines 30\npeek long.md\nhelp peek\npeek long.md +40\n");
             Assert.Equal(30, Shell.PeekLines);
-            Assert.Contains(Lang.F("<- lines {0}-{1} of {2}", 1, 30, 60), output);
+            Assert.Contains(ShellSession.BelowMarker + Lang.F("lines {0}-{1} of {2}", 1, 30, 60), output);
             // (the help row can be wrapped)
             Assert.Contains("the first 30,", output);
             // "+40": as many lines as set, from line 40
-            Assert.Contains(Lang.F("<- lines {0}-{1} of {2}", 40, 60, 60), output);
+            Assert.Contains(ShellSession.EndMarker + Lang.F("lines {0}-{1} of {2}", 40, 60, 60), output);
             (output, _, _, _) = Run("set shellpeeklines 0\n");
             Assert.Equal(30, Shell.PeekLines);
             Assert.Equal(15, Shell.ParsePeekStep("1001", Shell.DefaultPeekLines));

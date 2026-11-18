@@ -267,21 +267,28 @@ peek chapter-3.md /storm                     at the first line with "storm" in i
 /                                            the next line with it (? before)
 ```
 
-The lines come between two markers, so a peek stands out from the commands and the other output around it: `->` and the name of the file above them, and `<-` and where the lines are in the file below them:
+The lines come between two markers, so a peek stands out from the commands and the other output around it: the name of the file above them, and where the lines are in the file below them. The marker also shows whether the file goes on past the lines:
+
+| Marker | Where | What it tells |
+|---|---|---|
+| `->` | above the lines | the first line of the file is shown |
+| `-^` | above the lines | the file has more lines above them |
+| `<-` | below the lines | the last line of the file is shown |
+| `-v` | below the lines | the file has more lines below them |
 
 ```
 blyant ~/novel> peek chapter-3.md 10-12
--> chapter-3.md
+-^ chapter-3.md
   10  The storm came in from the west.
   11  Anna closed the shutters.
   12  Then the lights went out.
-<- lines 10-12 of 30
+-v lines 10-12 of 30
 blyant ~/novel> +
--> chapter-3.md
+-^ chapter-3.md
   11  Anna closed the shutters.
   12  Then the lights went out.
   13  Nobody spoke.
-<- lines 11-13 of 30
+-v lines 11-13 of 30
 blyant ~/novel> open 1
 ```
 
@@ -289,19 +296,19 @@ Use it as a window into the part of the file you are working on: peek, change, a
 
 ```
 blyant ~/novel> peek chapter-3.md 10-12
--> chapter-3.md
+-^ chapter-3.md
   10  The storm came in from the west.
   11  Anna closed the shutters.
   12  Then the lights went out.
-<- lines 10-12 of 30
+-v lines 10-12 of 30
 blyant ~/novel> change chapter-3.md +11 Anna closed the shutters, one by one.
 /home/anna/novel/chapter-3.md: line 11 changed
 blyant ~/novel> .
--> chapter-3.md
+-^ chapter-3.md
   10  The storm came in from the west.
   11  Anna closed the shutters, one by one.
   12  Then the lights went out.
-<- lines 10-12 of 30
+-v lines 10-12 of 30
 ```
 
 - `set shellmarkers false` leaves the markers out, and shows the lines alone. Where they are in the file is then written below them as `(lines 10-12 of 30)`, and left out when the lines reach the end of the file, except after `bottom`, a step, or a window moved to the end
@@ -316,21 +323,21 @@ To find a place, search: the window goes to the first line with the text, with t
 blyant ~/novel> peek chapter-3.md 1-5
 ...
 blyant ~/novel> peek chapter-3.md /storm
--> chapter-3.md
+-^ chapter-3.md
    8  The ferry was late.
    9  Maren stood at the rail.
 > 10  The storm came in from the west.
   11  Anna closed the shutters.
   12  Then the lights went out.
-<- match 1 of 3, lines 8-12 of 30
+-v match 1 of 3, lines 8-12 of 30
 blyant ~/novel> /
--> chapter-3.md
+-^ chapter-3.md
   18  The rain stopped at midnight.
   19  The harbour was quiet.
 > 20  Only the storm lantern still burned.
   21  Maren went down.
   22  The door was open.
-<- match 2 of 3, lines 18-22 of 30
+-v match 2 of 3, lines 18-22 of 30
 ```
 
 - The text is part of a line, ignoring letter case, as for `find -t`: `*` and `?` work as there (`peek chapter-3.md /storm*night`), and the text is everything after the `/` (`peek notes.md /the storm came`). Without a file, `peek /storm` searches the file peeked last
@@ -656,13 +663,13 @@ A peek is a window into the part of a file you are working on: find the place, c
 blyant ~/novel> peek chapter-3.md 1-5
 ...
 blyant ~/novel> peek chapter-3.md /storm came
--> chapter-3.md
+-^ chapter-3.md
    8  ## The storm
    9
 > 10  The storm came in from the west.
   11  Anna closed the shutters.
   12  Then the lights went out.
-<- match 1 of 1, lines 8-12 of 14
+-v match 1 of 1, lines 8-12 of 14
 ```
 
 **Change the lines, and look again.** `change`, `insert`, `shift` and `lines` change the file; `.` shows the same window again, as the file is now:
@@ -671,23 +678,23 @@ blyant ~/novel> peek chapter-3.md /storm came
 blyant ~/novel> change chapter-3.md +10 The storm came in from the west.
 /home/anna/novel/chapter-3.md: line 10 changed
 blyant ~/novel> .
--> chapter-3.md
+-^ chapter-3.md
    8  ## The storm
    9
   10  The storm came in from the west.
   11  Anna closed the shutters.
   12  Then the lights went out.
-<- lines 8-12 of 14
+-v lines 8-12 of 14
 blyant ~/novel> insert chapter-3.md +11 The first drops hit the glass.
 /home/anna/novel/chapter-3.md: line 11 put in
 blyant ~/novel> .
--> chapter-3.md
+-^ chapter-3.md
    8  ## The storm
    9
   10  The storm came in from the west.
   11  The first drops hit the glass.
   12  Anna closed the shutters.
-<- lines 8-12 of 15
+-v lines 8-12 of 15
 ```
 
 **Take a change back.** `undo` puts the file back as it was before the last change, and `redo` does the change again:
@@ -696,13 +703,13 @@ blyant ~/novel> .
 blyant ~/novel> undo
 Undone: insert chapter-3.md +11 The first drops hit the glass.
 blyant ~/novel> .
--> chapter-3.md
+-^ chapter-3.md
    8  ## The storm
    9
   10  The storm came in from the west.
   11  Anna closed the shutters.
   12  Then the lights went out.
-<- lines 8-12 of 14
+-v lines 8-12 of 14
 blyant ~/novel> redo
 Redone: insert chapter-3.md +11 The first drops hit the glass.
 ```
@@ -714,23 +721,23 @@ blyant ~/novel> set shellautopeek true
   shellautopeek = true
 blyant ~/novel> change chapter-3.md +12 Anna closed the shutters, one by one.
 /home/anna/novel/chapter-3.md: line 12 changed
--> chapter-3.md (peek again)
+-^ chapter-3.md (peek again)
    8  ## The storm
    9
   10  The storm came in from the west.
   11  The first drops hit the glass.
   12  Anna closed the shutters, one by one.
-<- lines 8-12 of 15
+-v lines 8-12 of 15
 blyant ~/novel> shift chapter-3.md 14 +12
   12  Somewhere a door banged.
 /home/anna/novel/chapter-3.md: line moved to line 12
--> chapter-3.md (peek again)
+-^ chapter-3.md (peek again)
    8  ## The storm
    9
   10  The storm came in from the west.
   11  The first drops hit the glass.
   12  Somewhere a door banged.
-<- lines 8-12 of 15
+-v lines 8-12 of 15
 ```
 
 **See what can be taken back.** `changes` lists the changes, the newest first, and `undo 2` takes back the two newest:
@@ -744,13 +751,13 @@ blyant ~/novel> changes
 blyant ~/novel> undo 2
 Undone: shift chapter-3.md 14 +12
 Undone: change chapter-3.md +12 Anna closed the shutters, one by one.
--> chapter-3.md (peek again)
+-^ chapter-3.md (peek again)
    8  ## The storm
    9
   10  The storm came in from the west.
   11  The first drops hit the glass.
   12  Anna closed the shutters.
-<- lines 8-12 of 15
+-v lines 8-12 of 15
 ```
 
 - The window keeps its place and size: a line put in above it moves the lines in it down, as you see. `+`, `-`, `top`, `bottom` and a new search move it (see [Peeking into a file](#peeking-into-a-file))
