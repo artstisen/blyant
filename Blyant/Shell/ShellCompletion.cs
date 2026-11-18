@@ -160,9 +160,12 @@ internal sealed class ShellCompletion
                     _ => (Kind.None, none)
                 };
             case "file":
-                // ("file plot.md > $other": ">" after the file; $ and Tab the registers)
-                if (position == 1) return (Kind.Words, new[] { ">" });
+                // ("file plot.md > $other": ">" after the file; $ and Tab the registers; "file plot.md bottom": at
+                // the last line)
+                if (position == 1) return (Kind.Words, new[] { ">", "top", "bottom" });
                 return (position == 0 ? Kind.Path : Kind.None, none);
+            case "line":
+                return (position == 0 ? Kind.Words : Kind.None, new[] { "top", "bottom" });
             case "path":
             case "name":
             case "info":

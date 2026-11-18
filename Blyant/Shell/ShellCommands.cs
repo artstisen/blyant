@@ -81,7 +81,8 @@ internal sealed partial class ShellSession
         ("echo text", Lang.T("Write a text, with $names put in (echo $file)")),
         ("calc expression", Lang.T("Calculate: + - * / % ^ ( ), the result kept in $calc")),
         ("calc expression > $name", Lang.T("Also keep the result in a register (>>: add it)")),
-        ("file [file|n]", Lang.T("Set $file to a file or row (file 3), or show $file")),
+        ("file [file|n [line]]", Lang.T("Set $file to a file or row (file 3), or show $file")),
+        ("line [n|top|bottom]", Lang.T("Set $line, the line of $file for @ (line 3), or show it")),
         ("file file|n > $name", Lang.T("Keep the full path of a file in a register")),
         ("favorites [-l] [list]", Lang.T("List the favorites (fav), or another list")),
         ("favorites -l", Lang.T("Lists with full paths (also hist, recent, book)")),
@@ -520,7 +521,8 @@ internal sealed partial class ShellSession
     }
 
     // "file 3", "file plot.md": the file of a row of the last list, or one named, made $file, without peeking or
-    // opening it; the last list stays as it was ("file 4", "open 3" go on in it). "file" alone: $file shown.
+    // opening it; the last list stays as it was ("file 4", "open 3" go on in it). "file plot.md 12": at line 12 too,
+    // for "@" (see LineCommand). "file" alone: $file shown.
     // "file plot.md > $other": the full path kept in a register instead (see FileToRegister)
     private void FileCommand(string argument)
     {
@@ -550,9 +552,9 @@ internal sealed partial class ShellSession
             return;
         }
 
-        if (words.Count > 1)
+        if (words.Count > 2)
         {
-            Error(Lang.T("Give one file: file 3, file plot.md"));
+            Error(Lang.T("Give a file and any line: file 3, file plot.md 12"));
             return;
         }
 
@@ -563,11 +565,85 @@ internal sealed partial class ShellSession
             return;
         }
 
-        // (another file: no line yet; the same file keeps it)
         var path = Path.GetFullPath(item.Path);
+        // ("file plot.md 12": the line checked first, so a line that is not there changes nothing)
+        int? at = null;
+        if (words.Count == 2)
+        {
+            if (LineIn(path, words[1]) is not { } given) return;
+            at = given;
+        }
+
+        // (another file: no line yet; the same file keeps it)
         if (_file == null || !FileOperations.NameComparer.Equals(_file, path)) _line = null;
         _file = path;
+        if (at != null) _line = at;
         Line(Lang.F("$file: {0}", _file));
+        if (at != null) Line(Lang.F("$line: {0}", at));
+    }
+
+    // "line 3", "line +3", "line top", "line bottom": $line, the line of $file "@" stands for ("insert @ text" puts
+    // the text after it), without peeking the file. "line" alone: $line shown. Nothing is written, and the last list
+    // stays as it was
+    private void LineCommand(string argument)
+    {
+        var words = Words(argument);
+        if (words.Count > 1)
+        {
+            Error(Lang.T("Give one line: line 3, line top, line bottom"));
+            return;
+        }
+
+        if (_file == null)
+        {
+            Error(Lang.T("No file yet: open, peek, insert, new ... give $file"));
+            return;
+        }
+
+        if (words.Count == 0)
+        {
+            if (FileLine is { } shown) Line(Lang.F("$line: {0} ({1})", shown, Path.GetFileName(_file)));
+            else Error(Lang.F("{0} has no line yet: line 3 sets one", Path.GetFileName(_file)));
+            return;
+        }
+
+        if (LineIn(_file, words[0]) is not { } line) return;
+        _line = line;
+        Line(Lang.F("$line: {0} ({1})", line, Path.GetFileName(_file)));
+    }
+
+    // The line of a file a word gives ("3", "+3", "top", "bottom"; top and bottom of an empty file: 0, before its
+    // first line, as after "new"). Null (and told) when it is not a line, or the file has fewer lines or cannot be read
+    private int? LineIn(string path, string word)
+    {
+        int count;
+        try
+        {
+            count = LinesOfText(TextFile.Load(path).Text).Count;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidDataException)
+        {
+            Error(Lang.F("{0} cannot be read: {1}", path, e.Message));
+            return null;
+        }
+
+        var lower = word.ToLowerInvariant();
+        if (lower == "top") return Math.Min(1, count);
+        if (lower == "bottom") return count;
+        var number = word.StartsWith('+') ? word[1..] : word;
+        if (number.Length == 0 || !number.All(char.IsAsciiDigit) || !int.TryParse(number, out var line) || line < 1)
+        {
+            Error(Lang.F("Not a line: {0} (line 3, line top, line bottom)", word));
+            return null;
+        }
+
+        if (line > count)
+        {
+            Error(Lang.F("{0} has {1} lines", path, count));
+            return null;
+        }
+
+        return line;
     }
 
     // "calc 1250 * 1.25 + 80": the result written, and kept in $calc ("insert budget.md bottom Total: $calc", "calc
@@ -893,6 +969,9 @@ internal sealed partial class ShellSession
                 break;
             case "file":
                 FileCommand(argument);
+                break;
+            case "line":
+                LineCommand(argument);
                 break;
             // As :path and :name in the editor: of $file, or of a file or row given
             case "path":

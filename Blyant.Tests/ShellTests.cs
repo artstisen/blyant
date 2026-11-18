@@ -4533,13 +4533,13 @@ public class ShellTests : IDisposable
     public void File_ADirectory_TwoWords_AndAFileGone_AreTold()
     {
         Directory.CreateDirectory(In("work", "d"));
-        var (_, errors, _, session) = Run("file d\nfile a b\nfile gone.md\n");
+        var (_, errors, _, session) = Run("file d\nfile a b c\nfile gone.md\n");
         Assert.Contains(Lang.F("Not a file: {0} (cd goes to a directory)", In("work", "d")), errors);
-        Assert.Contains(Lang.T("Give one file: file 3, file plot.md"), errors);
+        Assert.Contains(Lang.T("Give a file and any line: file 3, file plot.md 12"), errors);
         Assert.Contains(Lang.F("Not found: {0}", In("work", "gone.md")), errors);
         Assert.Null(session.WorkedFile);
         Assert.Equal("file plot.md", Tab(Completion(), "file plo"));
-        Assert.Contains("file [file|n]", Run("help file\n").Output);
+        Assert.Contains("file [file|n [line]]", Run("help file\n").Output);
     }
 
     // ---- Favorites added at the top
@@ -6009,6 +6009,56 @@ public class ShellTests : IDisposable
         Assert.Contains("\n2\n", output);
         // (the line inserted: the line worked on now, not the cursor of the editor)
         Assert.EndsWith("\n3\n", output);
+    }
+
+    [Fact]
+    public void LineCommand_SetsTheLineOfFile_ForAt()
+    {
+        File.WriteAllText(In("work", "l.md"), "one\ntwo\nthree\n");
+        var (output, errors, _, _) = Run("file l.md\nline 2\necho $line\ninsert @ after two\nline\nline bottom\n" +
+                                         "insert @ last\nline top\nline +2\necho $line\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("one\ntwo\nafter two\nthree\nlast\n", File.ReadAllText(In("work", "l.md")));
+        Assert.Contains(Lang.F("$line: {0} ({1})", 2, "l.md"), output);
+        // (line alone: the line insert put in)
+        Assert.Contains(Lang.F("$line: {0} ({1})", 3, "l.md"), output);
+        Assert.Contains(Lang.F("$line: {0} ({1})", 4, "l.md"), output);
+        Assert.Contains(Lang.F("$line: {0} ({1})", 1, "l.md"), output);
+        Assert.EndsWith("\n2\n", output);
+    }
+
+    [Fact]
+    public void LineCommand_TellsWhatItCannotDo_AndKeepsTheLine()
+    {
+        File.WriteAllText(In("work", "l.md"), "one\ntwo\n");
+        var (_, errors, _, _) = Run("line 1\n");
+        Assert.Contains(Lang.T("No file yet: open, peek, insert, new ... give $file"), errors);
+        var (output, more, _, _) = Run("file l.md\nline\nline 2\nline 9\nline x\nline 0\nline 1 2\necho $line\n");
+        Assert.Contains(Lang.F("{0} has no line yet: line 3 sets one", "l.md"), more);
+        Assert.Contains(Lang.F("{0} has {1} lines", In("work", "l.md"), 2), more);
+        Assert.Contains(Lang.F("Not a line: {0} (line 3, line top, line bottom)", "x"), more);
+        Assert.Contains(Lang.F("Not a line: {0} (line 3, line top, line bottom)", "0"), more);
+        Assert.Contains(Lang.T("Give one line: line 3, line top, line bottom"), more);
+        Assert.EndsWith("\n2\n", output);
+        // An empty file: top and bottom are its top, for insert, as after new
+        File.WriteAllText(In("work", "e.md"), string.Empty);
+        (_, errors, _, _) = Run("file e.md bottom\ninsert @ first\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("first", File.ReadAllText(In("work", "e.md")).TrimEnd('\r', '\n'));
+    }
+
+    [Fact]
+    public void FileWithALine_SetsBoth_AndALineNotThereChangesNothing()
+    {
+        File.WriteAllText(In("work", "l.md"), "one\ntwo\nthree\n");
+        var (output, errors, _, _) = Run("ls\nfile l.md 3\nword @ 1 upper\nfile plot.md 9\necho $file $line\n");
+        Assert.Contains(Lang.F("$line: {0}", 3), output);
+        Assert.Equal("one\ntwo\nTHREE\n", File.ReadAllText(In("work", "l.md")));
+        Assert.Contains(Lang.F("{0} has {1} lines", In("work", "plot.md"), 1), errors);
+        Assert.Contains(In("work", "l.md") + " 3\n", output);
+        Assert.Equal("file l.md top", Tab(Completion(), "file l.md t"));
+        Assert.Equal("line bottom", Tab(Completion(), "line b"));
+        Assert.Contains("line [n|top|bottom]", Run("help line\n").Output);
     }
 
     [Fact]
