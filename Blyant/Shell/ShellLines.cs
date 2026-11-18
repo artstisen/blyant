@@ -273,6 +273,8 @@ internal sealed partial class ShellSession
         }
 
         LastList = new List<Item> { new(target.Item.Path, false, (at, 1)) };
+        // ("open 1" at the first line put in; @ at the last, so "insert @" goes after them, as after insert)
+        _line = at + taken.Count - 1;
         var now = LinesOfText(text);
         var width = (at + taken.Count - 1).ToString().Length;
         for (var i = at; i < at + taken.Count; i++) Line(i.ToString().PadLeft(width + 2) + "  " + now[i - 1]);

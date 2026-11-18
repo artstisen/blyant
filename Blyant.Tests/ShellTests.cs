@@ -6227,6 +6227,11 @@ public class ShellTests : IDisposable
                                     "insert @ more\n");
         Assert.Equal(string.Empty, errors);
         Assert.Equal("a\n1\n2\n3\nmore\nb\n", File.ReadAllText(In("work", "f.md")));
+        // Lines copied to another file: @ is that file, at the last line put in
+        File.WriteAllText(In("work", "p.md"), "# Plan\nend\n");
+        (_, errors, _, _) = Run("lines f.md 2-4 > p.md +2\ninsert @ after\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("# Plan\n1\n2\n3\nafter\nend\n", File.ReadAllText(In("work", "p.md")));
     }
 
     [Fact]

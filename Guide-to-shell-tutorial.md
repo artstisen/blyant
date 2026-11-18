@@ -317,6 +317,41 @@ blyant ~/novel> lines todo.md 9-11 > done.md bottom cut
 - Without `cut` the lines are copied, and stay where they were
 - The places are the same as for `shift` (`top`, `bottom`, `+12`, a heading or `Heading+`), but in the other file. So are the lines, including `+9 3` (3 lines from line 9)
 
+You don't have to type the file and the line each time. `@` stands for the file and the line the last command worked on, so you can find a line once and go on with it:
+
+```
+blyant ~/novel> peek todo.md /Rewrite
+  1  # Week 46
+  2
+  3  ## Todo
+  4
+> 5  - [ ] Rewrite chapter two
+  6
+  7  ## Done
+  8
+(match 1 of 1, lines 1-8 of 8)
+blyant ~/novel> insert @ - [ ] Check the map
+/home/anna/novel/todo.md: line 6 put in
+blyant ~/novel> lines @ end (chapter 4)
+  6  - [ ] Check the map (chapter 4)
+/home/anna/novel/todo.md: line 6 changed
+blyant ~/novel> shift @ up
+  5  - [ ] Check the map (chapter 4)
+/home/anna/novel/todo.md: line moved to line 5
+blyant ~/novel> echo $file $line
+/home/anna/novel/todo.md 5
+blyant ~/novel> shift! @ Done
+  9  - [x] Check the map (chapter 4)
+/home/anna/novel/todo.md: line moved to line 9
+Task boxes ticked or unticked: 1
+```
+
+- The search makes line 5 `@`. `insert @` puts the new task after it, and `@` goes on to the line put in
+- `lines @ end` adds a text to that line, and `shift @ up` moves it one line up: `@` goes with it, to line 5
+- `$file` and `$line` are the two parts of `@`, so `echo $file $line` shows where it is
+- `shift! @ Done` ticks the task and moves it under _Done_
+- `@` also works with `words` and `word` (see [Adding and changing lines](#adding-and-changing-lines)), `change` and `peek`. `line 3` points it at line 3 of `$file`, and after `new` it is the top of the new file, so `insert @` writes the first line. More examples are in the guide to the shell: [Working on one line](Guide-to-shell.md#working-on-one-line)
+
 ## Registers
 A register keeps a path or a text under a name, and `$name` puts it in any command. Registers are kept until you remove them, even when Blyant is started again.
 
@@ -781,7 +816,7 @@ Undone: insert file1.md bottom File 3
   3  File 2, changed
 (lines 1-3 of 3)
 blyant ~/practice> redo
-Done again: insert file1.md bottom File 3
+Redone: insert file1.md bottom File 3
 (peek again: file1.md)
   1  A second line
   2  File 1

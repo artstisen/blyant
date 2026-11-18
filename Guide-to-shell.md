@@ -106,7 +106,7 @@ To get all output at once (with a screen reader, say), turn the pages off: `set 
 | `shift file\|n lines place` | Move lines in a file without opening it: under a heading (`shift todo.md 4-6 Done`), at the end of its section (`Done+`), before a line (`+12`), to the `top` or the `bottom`. See [Moving lines](#moving-lines) |
 | `shift! file\|n lines place` | Move lines as `shift` does, and tick any task boxes (`- [ ]` to `- [x]`), or untick any that are ticked |
 | `shift file\|n lines up\|down [n]` | Move lines up or down, by a line or by n lines: `shift notes.md 12 up`, `shift notes.md 12-15 down 3`. See [Moving lines](#moving-lines) |
-| `shift -s file\|n heading place` | Move a section (a heading and what is under it) up or down past the sections of its level, or to a place: `shift -s notes.md Ideas up`. See [Moving a section](#moving-a-section) |
+| `shift -s file\|n heading place` | Move a section (a heading and what is under it) up or down past the sections of the same level, or to a place: `shift -s notes.md Ideas up`. See [Moving a section](#moving-a-section) |
 | `lines file\|n lines > file\|n place [copy\|cut]` | Copy lines to another file without opening the files (`lines notes.md 4-6 > plan.md bottom`), or with `cut` move them there. See [Moving lines](#moving-lines) |
 | `lines file\|n lines >\|>> $name [copy\|cut]` | Keep lines in a register (`lines notes.md 4-6 > $notes`), or add them at the end with `>>`; with `cut`, also take them out of the file. A register that holds a path is not written over: give the place in that file (`> $plan bottom`). See [Registers](#registers) |
 | `lines file\|n lines start\|end text` | Put a text at the start or the end of lines, keeping the rest (`lines todo.md 4 start Remember this:`). See [Text in lines](#text-in-lines) |
@@ -255,16 +255,16 @@ peek chapter-3.md +                          the window 1 line further down
 +                                            the same, in the file peeked last
 ++                                           5 lines further down
 -                                            1 line up (-- 5 lines up)
-+ 20                                         20 lines down (- 20 up; ++ 3: 3 big steps)
++ 20                                         20 lines down (- 20 up; ++ 3: 3 steps)
 peek top                                     the window at the top of the file
 peek middle                                  around the middle
 peek bottom                                  at the end: the last lines
 peek 75%                                     from three quarters into the file
 peek +120                                    from line 120, in the file peeked last
 peek chapter-3.md bottom                     the last 20 lines of a file
-.                                            the same window again, as the file is now
+.                                            the same window again, the file as now
 peek chapter-3.md /storm                     at the first line with "storm" in it
-/                                            the next line with it (? the one before)
+/                                            the next line with it (? before)
 ```
 
 Below the lines, `peek` tells where they are in the file. It leaves this out when the lines reach the end of the file, except after `bottom`, a step, or a window moved to the end:
@@ -383,8 +383,8 @@ shift! todo.md "Get pencils and paper" Done  moved, and its task box ticked
 `lines` copies lines to another file, or moves them there with `cut` last:
 
 ```
-lines notes.md 4-6 > plan.md bottom          lines 4 to 6 copied to the end of plan.md
-lines notes.md +10 5 > plan.md top           5 lines from line 10 (as peek takes them)
+lines notes.md 4-6 > plan.md bottom          lines 4 to 6 copied to the end
+lines notes.md +10 5 > plan.md top           5 lines from line 10, as peek
 lines todo.md "Get pencils and paper" > done.md Done+ cut
                                              that line moved to the end of Done
 ```
@@ -401,11 +401,11 @@ lines todo.md "Get pencils and paper" > done.md Done+ cut
 ```
 shift -s notes.md Ideas up                   above the section before it
 shift -s notes.md Ideas down 2               below the two sections after it
-shift -s notes.md Ideas top                  to the top (or bottom, +12, under a heading)
+shift -s notes.md Ideas top                  to the top (or bottom, +12, a heading)
 shift -s notes.md +40 up                     the section of the heading on line 40
 ```
 
-- `up` and `down` pass whole sections of the same level under the same heading: a `##` section passes the `##` sections, never into the middle of one, and a `###` section stays under its `##` heading. At the first or the last of them nothing is moved, and the shell says so
+- `up` and `down` pass whole sections of the same level under the same heading: a `##` section passes the `##` sections, never into the middle of one, and a `###` section stays under the `##` heading above it. At the first or the last section of that level, nothing is moved, and the shell says so
 - The heading is named as a place is (the whole name, the start, or a pattern; `Tab` completes it), or given by a line in the section: `+40` takes the section line 40 is in, so `shift -s @ up` moves the section of the line you work on
 - Blank lines stay as they were: when the sections have a blank line between them, they have one after the move too
 - A place (`top`, `bottom`, `+12`, a heading) takes the section there, as lines go; it cannot be in the section itself
@@ -418,7 +418,7 @@ shift -s notes.md +40 up                     the section of the heading on line 
 lines todo.md 4 start Remember this:         "Remember this: This is some task"
 lines todo.md 4 end (by Friday)              "This is some task (by Friday)"
 lines todo.md 5-9 start "- [ ] "             lines 5 to 9 made task items
-lines code.md 12 end ";"                     a ";" at the end, with no blank before it
+lines code.md 12 end ";"                     a ";" at the end, no blank before it
 lines todo.md 4 unstart Remember this:       taken off again
 lines todo.md 5-9 unstart "- [ ] "           the task boxes taken off
 lines notes.md 5-9 replace draft final       "draft" in lines 5 to 9 made "final"
@@ -522,7 +522,7 @@ shift @ up                                   ... and up again
 ```
 
 - `@` goes in the place of the file and the line: in `words`, `word`, `change`, `peek`, `shift` (the lines, or with `-s` the heading), `lines` (the lines), and `open` and `edit` (the cursor at the line). With `insert` the text goes after the line
-- It follows the line: after `shift @ up` it is the line at its new place, and after `insert` the last line put in (with several lines, as from `$clip`, the next `insert @` goes after them all). A section moved with `shift -s` is followed by its heading
+- It follows the line: after `shift @ up` it is the line at the new place, and after `insert` the last line put in (with several lines, as from `$clip`, the next `insert @` goes after them all). After `lines ... > plan.md` it is the other file, at the last line put in. A section moved with `shift -s` is followed by its heading
 - The line is that of the last command that worked on a line: `words`, `word`, `insert`, `change`, `shift` and `lines` (the other file, at the lines put in). A peek of the same file is a look, and leaves it; a search with peek (`peek notes.md /storm`) makes the line found `@`, and a peek of another file the first line shown (a peek past the end of a file sets no line). `format` and `trim` keep it, and `undo` and `redo` put `@` back where it was before the change, or after it. After the editor (`open`, `edit`, `resume`), `@` is where the cursor was when you left it
 - `@` is checked against the file as it is now: a line past the end (the file got shorter in the editor or in another program) is refused, not taken as the end
 - `$file` and `$line` are the two parts: `echo $file $line` shows where `@` is
@@ -531,6 +531,42 @@ shift @ up                                   ... and up again
 - After `new`, `@` is the top of the empty file (`$line` is 0), as in any empty file: `new scene` and `insert @ The ferry was late.` writes the first line, and each `insert @` after it adds a line below the last. Until then only `insert` takes `@`
 - `Tab` after `@` goes on as after a file and a line: `word @ 2 re` and `Tab` gives `replace`, and `lines @ st` gives `start`
 - `@` counts only alone in the place of the file. In a text it stays as it is (`insert @ Ask @anna`), and a file named _@_ is written in quotes (`peek "@"`)
+
+### With insert, lines and shift
+A todo list, worked on line by line. The search finds the line once, and `@` follows it from command to command:
+
+```
+peek todo.md /dates                  the line with "dates": @ is line 6
+insert @ - [ ] Check the map         a task after it, as line 7: @ is line 7
+lines @ end (chapter 4)              a text at the end of line 7
+shift @ up                           one line up, above "dates": @ is line 6
+echo $file $line                     /home/anna/novel/todo.md 6
+shift! @ Done                        the task ticked, and moved under Done
+```
+
+`$file` and `$line` are the two parts of `@`. Write them out where `@` does not fit: a place before the line, or more lines than one:
+
+```
+insert $file +$line - [ ] First       before the line (insert @: after it)
+lines $file $line-7 > plan.md bottom  from the line to line 7, to plan.md
+shift $file $line Done+               the same as shift @ Done+
+```
+
+After `lines ... > plan.md`, `@` is `plan.md`, at the last line put in, so `insert @` goes on there. A new file starts at the top:
+
+```
+new scene                            an empty file: @ is the top (line 0)
+insert @ The ferry was late.         line 1
+insert @ Nobody waited on the quay.  line 2, after it
+shift @ up                           line 2 to the top
+```
+
+And a whole section, from any line in it:
+
+```
+peek chapter-3.md /Rain              a line in the section "The storm"
+shift -s @ up                        the section above "The quay"
+```
 
 ## Undo
 The commands that change the text of a file (`insert`, `change`, `shift`, `lines`, `format` and `trim`) keep what the file was before, so `undo` puts it back:
@@ -541,7 +577,7 @@ blyant ~/notes> change todo.md +3 Get pencils and paper
 blyant ~/notes> undo
 Undone: change todo.md +3 Get pencils and paper
 blyant ~/notes> redo
-Done again: change todo.md +3 Get pencils and paper
+Redone: change todo.md +3 Get pencils and paper
 blyant ~/notes> changes
   1  change todo.md +3 Get pencils and paper
   2  insert todo.md bottom Call Anna
@@ -580,12 +616,12 @@ blyant ~/novel> peek chapter-3.md /storm came
 **Change the lines, and look again.** `change`, `insert`, `shift` and `lines` change the file; `.` shows the same window again, as the file is now:
 
 ```
-blyant ~/novel> change chapter-3.md +10 The storm came in from the west, fast and grey.
+blyant ~/novel> change chapter-3.md +10 The storm came in from the west.
 /home/anna/novel/chapter-3.md: line 10 changed
 blyant ~/novel> .
    8  ## The storm
    9
-  10  The storm came in from the west, fast and grey.
+  10  The storm came in from the west.
   11  Anna closed the shutters.
   12  Then the lights went out.
 (lines 8-12 of 14)
@@ -594,7 +630,7 @@ blyant ~/novel> insert chapter-3.md +11 The first drops hit the glass.
 blyant ~/novel> .
    8  ## The storm
    9
-  10  The storm came in from the west, fast and grey.
+  10  The storm came in from the west.
   11  The first drops hit the glass.
   12  Anna closed the shutters.
 (lines 8-12 of 15)
@@ -608,12 +644,12 @@ Undone: insert chapter-3.md +11 The first drops hit the glass.
 blyant ~/novel> .
    8  ## The storm
    9
-  10  The storm came in from the west, fast and grey.
+  10  The storm came in from the west.
   11  Anna closed the shutters.
   12  Then the lights went out.
 (lines 8-12 of 14)
 blyant ~/novel> redo
-Done again: insert chapter-3.md +11 The first drops hit the glass.
+Redone: insert chapter-3.md +11 The first drops hit the glass.
 ```
 
 **Let the window follow by itself.** With the setting `shellautopeek` on, the window is shown again after each command that changed the file, `undo` and `redo` too, so `.` is not needed:
@@ -626,7 +662,7 @@ blyant ~/novel> change chapter-3.md +12 Anna closed the shutters, one by one.
 (peek again: chapter-3.md)
    8  ## The storm
    9
-  10  The storm came in from the west, fast and grey.
+  10  The storm came in from the west.
   11  The first drops hit the glass.
   12  Anna closed the shutters, one by one.
 (lines 8-12 of 15)
@@ -636,7 +672,7 @@ blyant ~/novel> shift chapter-3.md 14 +12
 (peek again: chapter-3.md)
    8  ## The storm
    9
-  10  The storm came in from the west, fast and grey.
+  10  The storm came in from the west.
   11  The first drops hit the glass.
   12  Somewhere a door banged.
 (lines 8-12 of 15)
@@ -649,14 +685,14 @@ blyant ~/novel> changes
   1  shift chapter-3.md 14 +12
   2  change chapter-3.md +12 Anna closed the shutters, one by one.
   3  insert chapter-3.md +11 The first drops hit the glass.
-  4  change chapter-3.md +10 The storm came in from the west, fast and grey.
+  4  change chapter-3.md +10 The storm came in from the west.
 blyant ~/novel> undo 2
 Undone: shift chapter-3.md 14 +12
 Undone: change chapter-3.md +12 Anna closed the shutters, one by one.
 (peek again: chapter-3.md)
    8  ## The storm
    9
-  10  The storm came in from the west, fast and grey.
+  10  The storm came in from the west.
   11  The first drops hit the glass.
   12  Anna closed the shutters.
 (lines 8-12 of 15)
@@ -722,9 +758,9 @@ fav filter chapter                   only the rows with "chapter" in them
 A register keeps a text or a path under a name, and `$name` puts it in any command:
 
 ```
-reg docs ~/projects/novel/docs      a path (or a text: all after the name, as typed)
+reg docs ~/projects/novel/docs      a path (or a text: all after the name)
 reg here .                          the directory you are in
-reg plot #3                         the full path of row 3 of the last list (fav, hist, find, ls ...)
+reg plot #3                         the full path of row 3 of the last list
 file plot.md > $plot                the full path of a file you name
 reg note Buy more ink
 copy plot.md $docs                  $docs is ~/projects/novel/docs
@@ -736,7 +772,7 @@ insert todo.md bottom $note
 
 ```
 peek notes.md                       $file is notes.md
-file chapter-3.md > $other          chapter 3 kept as $other, $file is still notes.md
+file chapter-3.md > $other          chapter 3 in $other, $file still notes.md
 lines notes.md 2 > $other bottom    line 2 of the notes put at the end of chapter 3
 insert $other bottom The end.       and a line of your own
 ```
@@ -858,9 +894,9 @@ clip 3                      the full path of row 3 (also: clip path 3)
 clip name 3                 its name only (plot.md)
 clip .                      the directory you are in
 clip text todo.md           the whole text of a file
-clip lines notes.md +40 10  10 lines from line 40 (as lines takes them: 40, 4-6, 4,7, +40 10)
+clip lines notes.md +40 10  10 lines from line 40 (also 40, 4-6, 4,7)
 clip $note                  the value of a register, as it is
-path                        the full path of the file you worked on last ($file), as :path in the editor
+path                        the full path of $file, as :path in the editor
 name                        its name, as :name
 ```
 
