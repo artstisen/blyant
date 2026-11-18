@@ -238,8 +238,8 @@ internal sealed partial class ShellSession
     };
 
     // "word @ 9 replace wish": "@" in the place of the file is $file at $line, the file and the line the last command
-    // worked on ("$file +12"; for insert the line after it, "+13", so the text goes after the line). After "new" it is
-    // the top of the empty file (line 0), for insert only. Another word, or
+    // worked on ("$file +12"; for insert the line after it, "+13", so the text goes after the line), or where the
+    // cursor was in the editor (see FileLine). After "new" it is the top of the empty file (line 0), for insert only. Another word, or
     // "@" in a text ("insert @ Ask @anna"), is as it is. Null (and told) when there is no line to take
     internal string? WithAt(string name, string argument)
     {
@@ -251,11 +251,12 @@ internal sealed partial class ShellSession
         var from = AfterWords(argument, at);
         // (a file named "@" is written in quotes)
         if (!from.TrimStart().StartsWith('@')) return argument;
-        if (_file == null || _line is not { } line)
+        if (_file == null || FileLine is not { } line)
         {
             Error(_file == null
                 ? Lang.T("@ is the file and the line of the last command: none yet (words notes.md 12)")
-                : Lang.F("@ has no line: the last command worked on no line of {0}", Path.GetFileName(_file)));
+                : Lang.F("@ has no line in {0} yet: peek it, or give the line (insert {0} +5 ...)",
+                    Path.GetFileName(_file)));
             return null;
         }
 

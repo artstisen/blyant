@@ -365,7 +365,7 @@ internal sealed partial class ShellSession
 
     // Why the $names of a command line cannot be put in (null: they can): $clip or $peek that is not there yet, or
     // empty where change would delete the lines; a value of more than one line where one line is taken; $file before
-    // a command has worked on a file. ("clip $note" alone copies a value as it is)
+    // a command has worked on a file, and $line before there is a line of it. ("clip $note" alone copies a value as it is)
     private string? ExpansionProblem(string name, string line, string argument)
     {
         var oneLine = !TakesLines.Contains(name) && !IsClipOfRegister(line);
@@ -400,8 +400,13 @@ internal sealed partial class ShellSession
             return Lang.T("Nothing calculated yet: calc 2 + 3 gives $calc");
         }
 
-        return _file == null && ShellRegisters.Mentions(argument, "file")
-            ? Lang.T("No file yet: open, peek, insert, new ... give $file")
+        if (_file == null && ShellRegisters.Mentions(argument, "file"))
+        {
+            return Lang.T("No file yet: open, peek, insert, new ... give $file");
+        }
+
+        return FileLine == null && ShellRegisters.Mentions(argument, "line")
+            ? Lang.T("No line yet: words, peek, insert ... give $line")
             : null;
 
         static string MoreThanOneLine(string name) =>

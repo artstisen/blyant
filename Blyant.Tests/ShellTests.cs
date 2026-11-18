@@ -5990,9 +5990,38 @@ public class ShellTests : IDisposable
         Assert.Contains(Lang.T("@ is the file and the line of the last command: none yet (words notes.md 12)"), errors);
         (_, errors, _, _) = Run("file l.md\nwords @\nwords l.md 1\nfile l.md\nwords @\nfile plot.md\nwords @\n");
         // (file l.md: no line yet; words l.md 1, then file l.md again: the line kept; another file: none)
-        Assert.Contains(Lang.F("@ has no line: the last command worked on no line of {0}", "l.md"), errors);
-        Assert.Contains(Lang.F("@ has no line: the last command worked on no line of {0}", "plot.md"), errors);
+        Assert.Contains(Lang.F("@ has no line in {0} yet: peek it, or give the line (insert {0} +5 ...)", "l.md"), errors);
+        Assert.Contains(Lang.F("@ has no line in {0} yet: peek it, or give the line (insert {0} +5 ...)", "plot.md"),
+            errors);
         Assert.Equal(2, errors.TrimEnd('\n').Split('\n').Length);
+    }
+
+    [Fact]
+    public void At_OfAFileWithoutALineWorkedOn_IsWhereTheCursorWasInTheEditor()
+    {
+        File.WriteAllText(In("work", "l.md"), "one\ntwo\nthree\n");
+        FileHistory.Add(In("work", "l.md"), new DateTime(2026, 11, 18, 9, 26, 0));
+        FileHistory.SetCaret(In("work", "l.md"), 2, 4);
+        Assert.Equal(DialogText.Success, FileHistory.Save());
+        var (output, errors, _, _) = Run("recent\nfile 1\necho $line\ninsert @ after two\necho $line\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("one\ntwo\nafter two\nthree\n", File.ReadAllText(In("work", "l.md")));
+        Assert.Contains("\n2\n", output);
+        // (the line inserted: the line worked on now, not the cursor of the editor)
+        Assert.EndsWith("\n3\n", output);
+    }
+
+    [Fact]
+    public void Line_WithoutALine_IsTold_NotWrittenAsItIs()
+    {
+        File.WriteAllText(In("work", "l.md"), "one\n");
+        var (output, errors, _, _) = Run("echo $line\nfile l.md\necho [$line]\n");
+        Assert.Contains(Lang.T("No line yet: words, peek, insert ... give $line"), errors);
+        Assert.Equal(2, errors.TrimEnd('\n').Split('\n').Length);
+        Assert.DoesNotContain("$line", output);
+        // ($$line is the text)
+        (output, _, _, _) = Run("echo $$line\n");
+        Assert.Contains("$line", output);
     }
 
     [Fact]
@@ -6027,8 +6056,8 @@ public class ShellTests : IDisposable
         Assert.True(ShellRegisters.IsReserved("line"));
         var (output, _, _, _) = Run("words l.md 2\nreg\n");
         Assert.Matches(@"\n  \$line +2\n", output);
-        (output, _, _, _) = Run("echo [$line]\n");
-        Assert.DoesNotContain("[2]", output);
+        (_, var errors, _, _) = Run("echo [$line]\n");
+        Assert.Contains(Lang.T("No line yet: words, peek, insert ... give $line"), errors);
     }
 
     [Fact]

@@ -73,9 +73,22 @@ internal sealed partial class ShellSession
     // $file: the file the last command worked on (null: none yet)
     private string? _file;
 
-    // $line: the line of $file the last command worked on (null: none, as after "file plot.md" or "new"). With $file
-    // it is "@": "word @ 9 replace wish"
+    // $line: the line of $file the last command worked on (null: none, as after "file plot.md"; 0: the top of a file
+    // made with "new"). With $file it is "@": "word @ 9 replace wish"
     private int? _line;
+
+    // The line of $file for $line and "@": the line the last command worked on, else where the cursor was in the
+    // editor when the file was closed last (the history keeps it: "file 2" of "recent"), else none
+    private int? FileLine
+    {
+        get
+        {
+            if (_file == null) return null;
+            if (_line != null) return _line;
+            FileHistory.Load();
+            return FileHistory.CaretOf(_file)?.Line;
+        }
+    }
 
     // The files the command running now has changed, for the history (see LatestChanged)
     private List<string> _changedFiles = new();
@@ -150,7 +163,7 @@ internal sealed partial class ShellSession
         // $pwd and $file: of this shell
         ShellRegisters.DirectorySource = () => Directory;
         ShellRegisters.FileSource = () => _file;
-        ShellRegisters.LineSource = () => _file != null ? _line : null;
+        ShellRegisters.LineSource = () => FileLine;
         Terminal = terminal;
         _yes = yes;
         // $file of the shell left last, while the file is there (typed in at a terminal: not for commands from a file,

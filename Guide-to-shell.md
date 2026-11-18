@@ -523,7 +523,8 @@ shift @ up                                   ... and up again
 - `@` goes in the place of the file and the line: in `words`, `word`, `change`, `peek`, `shift` (the lines, or with `-s` the heading), `lines` (the lines), and `open` and `edit` (the cursor at the line). With `insert` the text goes after the line
 - It follows the line: after `shift @ up` it is the line at its new place, and after `insert` the line put in. A section moved with `shift -s` is followed by its heading
 - The line is that of the last command that worked on a line: `words`, `word`, `insert`, `change`, `shift` and `lines` (the other file, at the lines put in). A peek of the same file is a look, and leaves it; a search with peek (`peek notes.md /storm`) makes the line found `@`, and a peek of another file the first line shown. `format`, `trim` and `undo` keep it
-- `$file` and `$line` are the two parts: `echo $file $line` shows where `@` is. `file plot.md` sets `$file` without a line (`@` then says so), until a command works on a line of it
+- `$file` and `$line` are the two parts: `echo $file $line` shows where `@` is
+- A file you pick without working on a line of it (`recent`, then `file 2`; `file plot.md`) has the line where the cursor was when you closed it in the editor last, as `resume` takes it: `file 2`, then `insert @ <p>&nbsp;</p>` puts the line in after it. A file never opened in the editor has no line until a command works on one, and `@` says so (`peek` it, or give the line)
 - After `new`, `@` is the top of the empty file (`$line` is 0): `new scene` and `insert @ The ferry was late.` writes the first line, and each `insert @` after it adds a line below the last. Until then only `insert` takes `@`
 - `@` counts only alone in the place of the file. In a text it stays as it is (`insert @ Ask @anna`), and a file named _@_ is written in quotes (`peek "@"`)
 
@@ -779,7 +780,7 @@ lines plot.md 3-5 > $notes          ">": the register is those lines alone
   |---|---|
   | `$pwd` | the directory you are in (`copy 3 $pwd`) |
   | `$file` | the file the last command worked on: opened, peeked, put lines in, made with `new` ... (`peek plot.md`, then `insert $file bottom Done`). It is kept when you leave the shell, and is `$file` again the next time you start it, while the file is there (setting `shelllastfile`; not for commands from a file, a pipe or `--run`). A list shown (`ls`, `fav`) does not change it. `file 3` makes row 3 of a list `$file` without peeking it, and `resume` opens it in the editor |
-  | `$line` | the line of `$file` the last command worked on (`words notes.md 12` makes it 12): with `$file` it is `@` (see [Working on one line](#working-on-one-line)). Empty until a command works on a line |
+  | `$line` | the line of `$file` the last command worked on (`words notes.md 12` makes it 12), else the line where the cursor was in the editor: with `$file` it is `@` (see [Working on one line](#working-on-one-line)). Used before there is a line, it gets the message that there is no line yet |
   | `$date` | today, as `2026-11-15` |
   | `$time` | the time now, as `14:05` |
   | `$now` | the date and the time, as `2026-11-15 14:05:33` (as `:ts` in the editor) |
