@@ -806,27 +806,30 @@ internal sealed partial class ShellSession
     // the file browser: hidden files are left out, and only text files are searched for text. The rows show the path
     // from the directory searched; options before the name, in any order: "-l" the full paths (without the mark of
     // a favorite, for scripts), "-f" the folder and the name ("drafts/storm.md"), "-b" the name only ("storm.md"),
-    // with the folder after a name two rows have. The rows are the same in each: "open 3", "info 3" take row 3.
+    // with the folder after a name two rows have, "-d" when each file was last changed (after the name). The rows are
+    // the same in each: "open 3", "info 3" take row 3.
     // "find" alone (or with -l, -f, -b only) shows the last search again, as it was found, from wherever you are;
     // "find -r" searches again for the same in the directory of the last search
     private void Find(string argument)
     {
-        var (full, folder, bare, repeat) = (false, false, false, false);
+        var (full, folder, bare, dates, repeat) = (false, false, false, false, false);
         argument = argument.TrimStart();
         while (argument.StartsWith('-'))
         {
             var word = argument.Split((char[]?)null, 2)[0];
             // ("-t": the text, read below)
             if (word == "-t") break;
-            if (word is not ("-l" or "-f" or "-b" or "-r"))
+            if (word is not ("-l" or "-f" or "-b" or "-d" or "-r"))
             {
-                Error(Lang.F("Not taken: {0} (-l full paths, -f folder/name, -b names only, -r again, -t text)", word));
+                Error(Lang.F("Not taken: {0} (-l full paths, -f folder/name, -b names only, -d dates, -r again, -t text)",
+                    word));
                 return;
             }
 
             if (word == "-l") full = true;
             else if (word == "-f") folder = true;
             else if (word == "-b") bare = true;
+            else if (word == "-d") dates = true;
             else repeat = true;
             argument = argument[word.Length..].TrimStart();
         }
@@ -849,13 +852,13 @@ internal sealed partial class ShellSession
                 }
 
                 Line(Lang.F("Search again: {0} in {1}", Searched(last.Options), last.Directory));
-                MakeSearch(last.Directory, last.Options, full, folder, bare);
+                MakeSearch(last.Directory, last.Options, full, folder, bare, dates);
                 return;
             }
 
             Line(Lang.F("Last search: {0} in {1} ({2})", Searched(last.Options), last.Directory,
                 last.When.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture)));
-            ShowSearch(last, full, folder, bare);
+            ShowSearch(last, full, folder, bare, dates);
             return;
         }
 
@@ -888,7 +891,7 @@ internal sealed partial class ShellSession
             return;
         }
 
-        MakeSearch(Directory, options, full, folder, bare);
+        MakeSearch(Directory, options, full, folder, bare, dates);
     }
 
     // What a search looked for, as typed: "storm", "-t storm", "*.md -t attic"
@@ -898,17 +901,19 @@ internal sealed partial class ShellSession
         : options.Name + " -t " + options.Text;
 
     // A search made in a directory and its directories, kept as the last search, and shown
-    private void MakeSearch(string directory, FileSearch.Options options, bool full, bool folder, bool bare)
+    private void MakeSearch(string directory, FileSearch.Options options, bool full, bool folder, bool bare, bool dates)
     {
         FileExplorer.LogFileOperation("Search", directory + " (with subfolders)", DialogText.Success);
         var search = new FindSearch(directory, options, DateTime.Now, FileSearch.Search(directory, options));
         _lastFind = search;
-        ShowSearch(search, full, folder, bare);
+        ShowSearch(search, full, folder, bare, dates);
     }
 
     // The rows of a search, numbered, as the last list: the path from the directory searched (or as the options
-    // say), the line found after a search by text, and "(missing)" after a file gone since
-    private void ShowSearch(FindSearch search, bool full, bool folder, bool bare)
+    // say), the line found after a search by text, and "(missing)" after a file gone since. "dates": when each file
+    // was last changed, read now (a directory has none: its date changes with the files in it), lined up after the
+    // names (not after full paths: the rows would be wider than the window), and before the line found
+    private void ShowSearch(FindSearch search, bool full, bool folder, bool bare, bool dates)
     {
         var outcome = search.Outcome;
         var text = search.Options.Text;
@@ -920,7 +925,7 @@ internal sealed partial class ShellSession
             ? Names(outcome.Results.Select(result => (result.Path, result.IsDirectory)).ToList(), false, false, folder)
             : null;
         var missing = " " + DialogText.FavoriteMissing;
-        var rows = outcome.Results.Select((result, i) =>
+        var shownNames = outcome.Results.Select((result, i) =>
         {
             // The name or path, then the mark of a favorite (not after a line found), then "(missing)" (not with -l:
             // the full paths for scripts), as recent and fav show them
@@ -928,12 +933,22 @@ internal sealed partial class ShellSession
                 ? names[i].EndsWith(missing, StringComparison.Ordinal) ? names[i][..^missing.Length] : names[i]
                 : (full ? result.Path : Path.GetRelativePath(search.Directory, result.Path)) +
                   (result.IsDirectory ? "/" : string.Empty);
-            var shown = name + (!full && result.Line < 0 ? FavoriteMark(result.Path) : string.Empty) +
-                        (!full && Gone(result) ? missing : string.Empty);
+            return name + (!full && result.Line < 0 ? FavoriteMark(result.Path) : string.Empty) +
+                   (!full && Gone(result) ? missing : string.Empty);
+        }).ToList();
+        var changed = dates ? outcome.Results.Select(result => ChangedOf(result)).ToList() : null;
+        var width = changed == null || full
+            ? 0
+            : outcome.Results.Select((result, i) => result.Line < 0 && changed[i] != null ? TextMetrics.WidthOf(shownNames[i]) : 0)
+                .DefaultIfEmpty(0).Max();
+        var rows = outcome.Results.Select((result, i) =>
+        {
+            var shown = shownNames[i];
+            var date = changed?[i] is { } when ? "  " + when : string.Empty;
             return result.Line >= 0
                 ? (new Item(result.Path, result.IsDirectory, (result.Line + 1, 1), text),
-                    shown + ":" + (result.Line + 1) + "  " + result.LineText.Trim())
-                : (new Item(result.Path, result.IsDirectory), shown);
+                    shown + ":" + (result.Line + 1) + date + "  " + result.LineText.Trim())
+                : (new Item(result.Path, result.IsDirectory), date.Length > 0 ? Padded(shown, width) + date : shown);
         }).ToList();
         List(rows, Lang.T("Nothing found"));
         if (outcome.Capped) Line(Lang.F("(the first {0}: the search stopped there)", FileSearch.MaxResults));
@@ -941,6 +956,25 @@ internal sealed partial class ShellSession
 
         static bool Gone(FileSearch.Result result) =>
             result.IsDirectory ? !System.IO.Directory.Exists(result.Path) : !FileOperations.IsFileThere(result.Path);
+
+        // When a file was last changed ("2026-11-18 14:02", local time, as recent shows when it was opened); null for
+        // a directory, and for a file that is gone or cannot be read
+        static string? ChangedOf(FileSearch.Result result)
+        {
+            if (result.IsDirectory) return null;
+            try
+            {
+                var info = new FileInfo(result.Path);
+                return info.Exists
+                    ? info.LastWriteTime.ToString("yyyy-MM-dd HH:mm", System.Globalization.CultureInfo.InvariantCulture)
+                    : null;
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException or
+                                           NotSupportedException)
+            {
+                return null;
+            }
+        }
     }
 
     // "fav add 3", "fav remove notes.md": a file or directory added to the favorites in use, or taken off them. A

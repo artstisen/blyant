@@ -5183,8 +5183,8 @@ public class ShellTests : IDisposable
         (output, _, _, _) = Run("find -f -l -b *.md -t storm\n");
         Assert.Contains(In("work", "novel", "part-1", "drafts", "storm.md") + ":2", output);
         var (_, wrong, _, _) = Run("find -x storm\nfind -b -q\n");
-        Assert.Contains(Lang.F("Not taken: {0} (-l full paths, -f folder/name, -b names only, -r again, -t text)", "-x"), wrong);
-        Assert.Contains(Lang.F("Not taken: {0} (-l full paths, -f folder/name, -b names only, -r again, -t text)", "-q"), wrong);
+        Assert.Contains(Lang.F("Not taken: {0} (-l full paths, -f folder/name, -b names only, -d dates, -r again, -t text)", "-x"), wrong);
+        Assert.Contains(Lang.F("Not taken: {0} (-l full paths, -f folder/name, -b names only, -d dates, -r again, -t text)", "-q"), wrong);
         // A name that starts with "-", in quotes
         File.WriteAllText(In("work", "-draft.md"), "x\n");
         (output, errors, _, _) = Run("find \"-draft\"\n");
@@ -6739,5 +6739,37 @@ public class ShellTests : IDisposable
         {
             MarkersAsSet();
         }
+    }
+
+    [Fact]
+    public void FindD_ShowsWhenEachFileWasChanged_LinedUpAfterTheNames()
+    {
+        File.SetLastWriteTime(In("work", "plot.md"), new DateTime(2026, 11, 18, 14, 2, 0));
+        File.SetLastWriteTime(In("work", "Ending.md"), new DateTime(2026, 1, 5, 9, 40, 0));
+        var (output, errors, _, _) = Run("find -d *.md\n");
+        Assert.Equal(string.Empty, errors);
+        // (the names lined up: "Ending.md" is the longest)
+        Assert.Contains("Ending.md  2026-01-05 09:40\n", output);
+        Assert.Contains("plot.md    2026-11-18 14:02\n", output);
+        // A directory has no date; with -b and -f the names are as without -d
+        (output, _, _, _) = Run("find -d Draft\nfind -b -d plot\n");
+        Assert.Contains("  1  Draft/\n", output);
+        Assert.Contains("  1  plot.md  2026-11-18 14:02\n", output);
+        // With -t: the date between the line number and the line found
+        (output, _, _, _) = Run("find -d -t Plot\n");
+        Assert.Contains("plot.md:1  2026-11-18 14:02  Plot\n", output);
+        // The last search again, with the dates as they are now
+        (output, _, _, _) = Run("find plot\nfind -d\n");
+        Assert.Single(output.Split('\n'), line => line.EndsWith("plot.md  2026-11-18 14:02"));
+        File.SetLastWriteTime(In("work", "plot.md"), new DateTime(2026, 11, 19, 8, 0, 0));
+        (output, _, _, _) = Run("find -d\n");
+        Assert.Contains("plot.md  2026-11-19 08:00\n", output);
+        // Without -d: no dates
+        (output, _, _, _) = Run("find *.md\n");
+        Assert.DoesNotContain("2026-", output);
+        (_, errors, _, _) = Run("find -x plot\n");
+        Assert.Contains(Lang.F("Not taken: {0} (-l full paths, -f folder/name, -b names only, -d dates, -r again, -t text)", "-x"),
+            errors);
+        Assert.Contains("find -d", Run("help find\n").Output);
     }
 }
