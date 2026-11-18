@@ -618,7 +618,7 @@ blyant ~/notes> changes
 - `changes` lists the steps, numbered as `undo 3` counts them, and below them the steps undone, which `redo` does again
 - A file is put back exactly as it was: line endings and byte order mark too. The files written are the last list (`open 1`)
 - A step is only undone while its files are as the step left them. If a file was changed since (in the editor, by another program), the shell says so and writes none of the step: your change is never written over. The editor has a separate undo (`u`)
-- The last 10 steps are kept (the setting `shellundosteps`, 1 to 50: `set shellundosteps 20`), while Blyant runs: they are never written to a file, so no copy of your text stays on the disk.
+- The last 50 steps are kept (the setting `shellundosteps`, 10 to 200: `set shellundosteps 100`), while Blyant runs: they are never written to a file, so no copy of your text stays on the disk.
 - A command that works on a file larger than 2 MB (or on a file that could not be read first) cannot be undone: the shell says so, and what was undone before it can no longer be redone. A change that leaves a file as it was is not a step. All steps together keep at most 32 MB: beyond that, the oldest are dropped
 - When the files of a step are no longer there (renamed, moved, deleted), the shell says so. When a file cannot be written, the files of the step written already are put back, so the step stays whole
 - `lines a.md 4-6 > $notes cut` is undone in `a.md`; the register keeps the lines (`reg -d notes` takes it away)
@@ -730,7 +730,7 @@ Undone: change chapter-3.md +12 Anna closed the shutters, one by one.
 
 - The window keeps its place and size: a line put in above it moves the lines in it down, as you see. `+`, `-`, `top`, `bottom` and a new search move it (see [Peeking into a file](#peeking-into-a-file))
 - `shellautopeek` stays on until you turn it off (`set shellautopeek false`), also the next time Blyant starts: it is kept in the settings file (see [Settings file](Guide-to-settings-file.md))
-- `undo` keeps the last 10 changes while Blyant runs (the setting `shellundosteps`, 1 to 50), and never writes over a change made since in the editor or by another program (see [Undo](#undo))
+- `undo` keeps the last 50 changes while Blyant runs (the setting `shellundosteps`, 10 to 200), and never writes over a change made since in the editor or by another program (see [Undo](#undo))
 - `open 1` opens the file in the editor at the window, for a change that is more than a few lines
 
 ## Folders of favorites

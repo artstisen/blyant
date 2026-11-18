@@ -444,8 +444,8 @@ backup=
         // peek + moves 1 line, and ++ 5, unless set otherwise
         Assert.Equal("1", settings["shellpeekstep"]);
         Assert.Equal("5", settings["shellpeekbigstep"]);
-        // undo in the shell goes back through 10 changes unless set otherwise
-        Assert.Equal("10", settings["shellundosteps"]);
+        // undo in the shell goes back through 50 changes unless set otherwise
+        Assert.Equal("50", settings["shellundosteps"]);
         // Blyant starts on the full screen unless the shell is set
         Assert.Equal("false", settings["startshell"]);
         // The shell starts in the directory Blyant is started in, unless another is set

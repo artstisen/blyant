@@ -4080,14 +4080,33 @@ public class ShellTests : IDisposable
     }
 
     [Fact]
-    public void UndoSteps_FromTheSettingsFile_1To50_ElseTen()
+    public void UndoSteps_FromTheSettingsFile_10To200_Else50()
     {
-        Assert.Equal(1, Shell.ParseUndoSteps("1"));
-        Assert.Equal(50, Shell.ParseUndoSteps(" 50 "));
-        Assert.Equal(10, Shell.ParseUndoSteps("51"));
-        Assert.Equal(10, Shell.ParseUndoSteps("0"));
-        Assert.Equal(10, Shell.ParseUndoSteps("x"));
-        Assert.Equal(10, Shell.ParseUndoSteps(null));
+        Assert.Equal(50, Shell.DefaultUndoSteps);
+        Assert.Equal(10, Shell.ParseUndoSteps("10"));
+        Assert.Equal(20, Shell.ParseUndoSteps("20"));
+        Assert.Equal(200, Shell.ParseUndoSteps(" 200 "));
+        Assert.Equal(50, Shell.ParseUndoSteps("201"));
+        Assert.Equal(50, Shell.ParseUndoSteps("9"));
+        Assert.Equal(50, Shell.ParseUndoSteps("1"));
+        Assert.Equal(50, Shell.ParseUndoSteps("0"));
+        Assert.Equal(50, Shell.ParseUndoSteps("-20"));
+        Assert.Equal(50, Shell.ParseUndoSteps("x"));
+        Assert.Equal(50, Shell.ParseUndoSteps(null));
+    }
+
+    [Fact]
+    public void Undo_KeepsFiftyStepsByDefault()
+    {
+        Shell.UndoSteps = Shell.DefaultUndoSteps;
+        File.WriteAllText(In("work", "f.md"), "a\n");
+        var commands = string.Concat(Enumerable.Range(1, 55).Select(i => "insert f.md bottom " + i + "\n"));
+        var (output, errors, _, _) = Run(commands + "changes\nundo 60\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains(" 50  insert f.md bottom 6\n", output);
+        Assert.DoesNotContain("insert f.md bottom 5\n", output);
+        // The 50 newest undone: the first 5 lines added stay
+        Assert.Equal("a\n1\n2\n3\n4\n5\n", Text("f.md"));
     }
 
     [Fact]

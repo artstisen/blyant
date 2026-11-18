@@ -4,7 +4,7 @@
 /// Undo and redo of the changes the commands of the shell make to the text of files ("insert", "change", "shift",
 /// "lines", "format", "trim"): before a command writes a file, its content is kept, and after it the content written.
 /// "undo" puts the content back, "redo" the change again, and "changes" lists them. One command is one step ("lines ...
-/// cut" changes two files: undone together), the last 10 steps are kept (setting shellundosteps, 1 to 50; at most
+/// cut" changes two files: undone together), the last 50 steps are kept (setting shellundosteps, 10 to 200; at most
 /// UndoMaxBytes in all), while Blyant runs only (never in a file: no copy of the text stays on the disk). A step is
 /// undone only while its files are as it left them: a change made since (in the editor, by another program) is never
 /// written over. A command whose files cannot all be kept (one larger than UndoMaxSize, or not read) is no step: it

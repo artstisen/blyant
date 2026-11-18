@@ -59,19 +59,23 @@ internal static class Shell
         int.TryParse(value?.Trim(), out var lines) && lines is >= 1 and <= 1000 ? lines : fallback;
 
     /// <summary>
-    /// How many changes of files "undo" can go back through (setting "shellundosteps", 1 to 50; only in the settings
+    /// How many changes of files "undo" can go back through (setting "shellundosteps", 10 to 200; only in the settings
     /// file, or with "set")
     /// </summary>
     internal static int UndoSteps { get; set; } = DefaultUndoSteps;
 
-    internal const int DefaultUndoSteps = 10;
+    internal const int DefaultUndoSteps = 50;
+
+    // The fewest and the most steps the setting takes (all steps together keep at most ShellSession.UndoMaxBytes)
+    internal const int MinUndoSteps = 10;
+    internal const int MaxUndoSteps = 200;
 
     /// <summary>
-    /// The steps of undo from the settings file: a whole number from 1 to 50, else the default
+    /// The steps of undo from the settings file: a whole number from 10 to 200, else the default
     /// </summary>
     internal static int ParseUndoSteps(string? value) =>
         int.TryParse(value?.Trim(), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture,
-            out var steps) && steps is >= 1 and <= 50
+            out var steps) && steps is >= MinUndoSteps and <= MaxUndoSteps
             ? steps
             : DefaultUndoSteps;
 
