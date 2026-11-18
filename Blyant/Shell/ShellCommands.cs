@@ -15,7 +15,7 @@ internal sealed partial class ShellSession
     {
         ("pwd", Lang.T("Show the directory you are in")),
         ("ls [-a] [-l] [-d] [-s] [dir|n]", Lang.T("List a directory (-a: hidden ones too, -l: full paths)")),
-        ("ls -d, ls -s", Lang.T("Show when each file was last changed, and its size")),
+        ("ls -d, ls -s", Lang.T("Show when each file was last changed, and the size")),
         ("cd [dir|file|n]", Lang.T("Go to a directory, or that of a file (alone: home)")),
         ("up", Lang.T("Go to the directory above")),
         ("home", Lang.T("Go to your home directory")),

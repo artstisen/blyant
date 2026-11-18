@@ -1840,7 +1840,7 @@ en: "Lines {0} of {1}"
 # Shell/ShellCommands.cs
 en: "Show the directory you are in"
 en: "List a directory (-a: hidden ones too, -l: full paths)"
-en: "Show when each file was last changed, and its size"
+en: "Show when each file was last changed, and the size"
 en: "Go to a directory, or that of a file (alone: home)"
 en: "Go to your home directory"
 en: "Go to Blyant's data directory (settings, lists, log)"
