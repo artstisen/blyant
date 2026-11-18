@@ -8,7 +8,7 @@
 <circle cx="40" cy="17" r="6" fill="#FEBC2E"/>
 <circle cx="60" cy="17" r="6" fill="#28C840"/>
 <text x="434.0" y="22" fill="#A0A0A0" text-anchor="middle">Blyant: the shell, a todo list kept with insert and shift!</text>
-<text x="14.0" y="60.8" fill="#CCCCCC" textLength="428.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Blyant v1.5.7: help lists the commands, exit leaves</text>
+<text x="14.0" y="60.8" fill="#CCCCCC" textLength="428.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Blyant v1.5.8: help lists the commands, exit leaves</text>
 <text x="14.0" y="77.8" fill="#CCCCCC" textLength="672.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">blyant C:\Writing\Harbour Lights&gt; insert todo.md +8 - [ ] Ask the harbour master</text>
 <text x="14.0" y="94.8" fill="#CCCCCC" textLength="403.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">C:\Writing\Harbour Lights\todo.md: line 8 put in</text>
 <text x="14.0" y="111.8" fill="#CCCCCC" textLength="554.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">blyant C:\Writing\Harbour Lights&gt; shift! todo.md &quot;tide times&quot; Done</text>
