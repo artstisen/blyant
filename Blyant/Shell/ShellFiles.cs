@@ -265,7 +265,8 @@ internal sealed partial class ShellSession
     }
 
     // "peek 3", "peek notes.md 40", "peek notes.md 100-120", "peek notes.md +100", "peek notes.md +100 30": the lines of
-    // a text file, numbered (the first 20 if no lines are given; from a line: 20, or as many as given). The file is
+    // a text file, numbered (the first 15 if no lines are given, setting shellpeeklines; from a line: as many, or as
+    // many as given), between the markers "->" and "<-" (setting shellmarkers). The file is
     // then the last list, at the first line shown: "open 1" opens it there. Only read, never written. A place after
     // the file (or alone: the file peeked last) puts a window as large as the last one there: "+", "++", "-", "--"
     // (steps from it; "+ 20": steps, given as "count"), "top", "middle", "bottom", "50%"; "peek +120" alone is the
@@ -365,12 +366,12 @@ internal sealed partial class ShellSession
             return;
         }
 
-        // The window it is moved from: the last peek of this file, as large; for another file the first 20 lines
+        // The window it is moved from: the last peek of this file, as large; for another file the first lines (15)
         // (a step from its top: "peek other.md +" from line 2)
         var path = Path.GetFullPath(item.Path);
         var same = _lastPeek is { } last1 && FileOperations.SamePath(last1.Path, path);
-        var size = same ? _lastPeek!.Value.Count : PeekLines;
-        var (first, last) = (1, PeekLines);
+        var size = same ? _lastPeek!.Value.Count : Shell.PeekLines;
+        var (first, last) = (1, Shell.PeekLines);
         if (place is { Place: PeekPlace.Step } step)
         {
             var from = (same ? _lastPeek!.Value.First : 1) + (long)step.Value * count;
@@ -448,6 +449,15 @@ internal sealed partial class ShellSession
         }
 
         var width = last.ToString().Length;
+        // (the setting shellmarkers: "->" and the name of the file above the lines, "<-" and where they are below them,
+        // so a peek is told apart from the lines around it. Lines of the file always start with a blank)
+        if (Shell.Markers)
+        {
+            Line(auto
+                ? Lang.F("-> {0} (peek again)", Path.GetFileName(item.Path))
+                : Lang.F("-> {0}", Path.GetFileName(item.Path)));
+        }
+
         // (the line found marked with ">" in the margin)
         for (var i = first; i <= last; i++)
         {
@@ -456,8 +466,14 @@ internal sealed partial class ShellSession
         }
         // $peek: the lines shown, as they are now (to put them in another file: insert plan.md bottom $peek)
         if (!auto) ShellRegisters.Peek = string.Join("\n", lines.GetRange(first - 1, last - first + 1));
-        // (where the window is: also at the end, when it was put or moved there)
-        if (match is { } told)
+        // (where the window is: also at the end, when it was put or moved there; with the markers always)
+        if (Shell.Markers)
+        {
+            Line(match is { } found
+                ? Lang.F("<- match {0} of {1}, lines {2}-{3} of {4}", found.Number, found.Count, first, last, lines.Count)
+                : Lang.F("<- lines {0}-{1} of {2}", first, last, lines.Count));
+        }
+        else if (match is { } told)
         {
             Line(Lang.F("(match {0} of {1}, lines {2}-{3} of {4})", told.Number, told.Count, first, last, lines.Count));
         }
@@ -544,10 +560,10 @@ internal sealed partial class ShellSession
     }
 
     // The window of a peek around a line (two lines of it above; the line at the top of a window of 1 or 2 lines),
-    // as large as the last window of the file (20 lines for another), the line marked
+    // as large as the last window of the file (15 lines for another, setting shellpeeklines), the line marked
     private void PeekAtLine(string path, int line, bool mark, (int Number, int Count)? match, string text)
     {
-        var size = _lastPeek is { } before && FileOperations.SamePath(before.Path, path) ? before.Count : PeekLines;
+        var size = _lastPeek is { } before && FileOperations.SamePath(before.Path, path) ? before.Count : Shell.PeekLines;
         var first = size < 3 ? line : Math.Max(1, line - 2);
         PeekWindow(new List<string>
         {
@@ -710,7 +726,8 @@ internal sealed partial class ShellSession
             }
         }
 
-        Line(Lang.F("(peek again: {0})", Path.GetFileName(previous.Path)));
+        // (with the markers, the first of them names the file)
+        if (!Shell.Markers) Line(Lang.F("(peek again: {0})", Path.GetFileName(previous.Path)));
         PeekAgain(true);
     }
 
@@ -740,17 +757,15 @@ internal sealed partial class ShellSession
         _ => 0
     };
 
-    // The lines peek shows when none are given
-    private const int PeekLines = 20;
-
-    // "40": the first 40 lines; "100-120": those lines; "+100": 20 lines from line 100, and "+100" "30": 30 of them
+    // "40": the first 40 lines; "100-120": those lines; "+100": 15 lines from line 100 (setting shellpeeklines), and
+    // "+100" "30": 30 of them
     internal static bool LinesOf(string text, string? count, out int first, out int last)
     {
         first = 1;
         last = 0;
         if (text.StartsWith('+'))
         {
-            var many = PeekLines;
+            var many = Shell.PeekLines;
             if (!int.TryParse(text[1..], out first) || first < 1 ||
                 (count != null && (!int.TryParse(count, out many) || many < 1)))
             {

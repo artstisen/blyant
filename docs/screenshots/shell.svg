@@ -21,17 +21,18 @@
 <text x="14.0" y="230.8" fill="#CCCCCC" textLength="142.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  8  outline.md *</text>
 <text x="14.0" y="247.8" fill="#CCCCCC" textLength="117.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  9  todo.md *</text>
 <text x="14.0" y="264.8" fill="#CCCCCC" textLength="378.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">blyant C:\Writing\Harbour Lights&gt; peek 3 +3 4</text>
-<text x="14.0" y="281.8" fill="#CCCCCC" textLength="680.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  3  The ferry was late, as it always was in October, and Maren Holt stood at the</text>
-<text x="14.0" y="298.8" fill="#CCCCCC" textLength="613.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  4  rail with her collar up and watched the island come out of the rain.</text>
-<text x="14.0" y="315.8" fill="#CCCCCC" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  5</text>
-<text x="14.0" y="332.8" fill="#CCCCCC" textLength="655.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  6  It was smaller than she remembered. The lighthouse sat on its rock like a</text>
-<text x="14.0" y="349.8" fill="#CCCCCC" textLength="142.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">(lines 3-6 of 22)</text>
-<text x="14.0" y="366.8" fill="#CCCCCC" textLength="403.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">blyant C:\Writing\Harbour Lights&gt; find -t keeper</text>
-<text x="14.0" y="383.8" fill="#CCCCCC" textLength="814.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  1  chapter-01.md:7  pencil someone had forgotten on a table, and the keeper&#x27;s cottage beside it</text>
-<text x="14.0" y="400.8" fill="#CCCCCC" textLength="756.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  2  characters.md:3  **Maren Holt**: thirty-four, a surveyor, the keeper&#x27;s granddaughter.</text>
-<text x="14.0" y="417.8" fill="#CCCCCC" textLength="798.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  3  research\lighthouse-history.md:4  Keepers lived on the rock until the light was automated.</text>
-<text x="14.0" y="434.8" fill="#CCCCCC" textLength="352.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">blyant C:\Writing\Harbour Lights&gt; reg ch .</text>
-<text x="14.0" y="451.8" fill="#CCCCCC" textLength="277.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  $ch = C:\Writing\Harbour Lights</text>
-<rect x="299.6" y="456" width="8.4" height="17" fill="#CCCCCC"/>
-<text x="14.0" y="468.8" fill="#CCCCCC" textLength="277.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">blyant C:\Writing\Harbour Lights&gt;</text>
+<text x="14.0" y="281.8" fill="#CCCCCC" textLength="134.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">-&gt; chapter-01.md</text>
+<text x="14.0" y="298.8" fill="#CCCCCC" textLength="680.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  3  The ferry was late, as it always was in October, and Maren Holt stood at the</text>
+<text x="14.0" y="315.8" fill="#CCCCCC" textLength="613.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  4  rail with her collar up and watched the island come out of the rain.</text>
+<text x="14.0" y="332.8" fill="#CCCCCC" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  5</text>
+<text x="14.0" y="349.8" fill="#CCCCCC" textLength="655.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  6  It was smaller than she remembered. The lighthouse sat on its rock like a</text>
+<text x="14.0" y="366.8" fill="#CCCCCC" textLength="151.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&lt;- lines 3-6 of 22</text>
+<text x="14.0" y="383.8" fill="#CCCCCC" textLength="403.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">blyant C:\Writing\Harbour Lights&gt; find -t keeper</text>
+<text x="14.0" y="400.8" fill="#CCCCCC" textLength="814.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  1  chapter-01.md:7  pencil someone had forgotten on a table, and the keeper&#x27;s cottage beside it</text>
+<text x="14.0" y="417.8" fill="#CCCCCC" textLength="756.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  2  characters.md:3  **Maren Holt**: thirty-four, a surveyor, the keeper&#x27;s granddaughter.</text>
+<text x="14.0" y="434.8" fill="#CCCCCC" textLength="798.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  3  research\lighthouse-history.md:4  Keepers lived on the rock until the light was automated.</text>
+<text x="14.0" y="451.8" fill="#CCCCCC" textLength="352.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">blyant C:\Writing\Harbour Lights&gt; reg ch .</text>
+<text x="14.0" y="468.8" fill="#CCCCCC" textLength="277.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  $ch = C:\Writing\Harbour Lights</text>
+<rect x="299.6" y="473" width="8.4" height="17" fill="#CCCCCC"/>
+<text x="14.0" y="485.8" fill="#CCCCCC" textLength="277.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">blyant C:\Writing\Harbour Lights&gt;</text>
 </svg>

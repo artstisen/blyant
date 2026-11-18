@@ -41,10 +41,15 @@ internal sealed partial class ShellSession
         return (editable.Item, editable.File, lines, line);
     }
 
-    // The words of a line, numbered, a row at a time ("blanks": all between blanks, "-p")
-    private void ShowWords(string line, bool blanks)
+    // The words of a line, numbered, a row at a time ("blanks": all between blanks, "-p"). With the setting
+    // shellmarkers, between "-> notes.md, line 12" and "<- 9 words"
+    private void ShowWords(string path, int number, string line, bool blanks)
     {
+        if (Shell.Markers) Line(Lang.F("-> {0}, line {1}", Path.GetFileName(path), number));
         foreach (var row in LineWords.Numbered(line, WordsWidth(), blanks)) Line("  " + row);
+        if (!Shell.Markers) return;
+        var count = LineWords.Find(line, blanks).Count;
+        Line(count == 1 ? Lang.T("<- 1 word") : Lang.F("<- {0} words", count));
     }
 
     // "-p" first ("words -p notes.md 12", "word -p ..."): a word is all between blanks, with the punctuation and the
@@ -85,7 +90,9 @@ internal sealed partial class ShellSession
             return;
         }
 
-        ShowWords(text, blanks);
+        ShowWords(at.Item.Path, at.Line, text, blanks);
+        // (the markers tell the file, the line and the words)
+        if (Shell.Markers) return;
         Line(count == 1
             ? Lang.F("{0}, line {1}: 1 word", at.Item.Path, at.Line)
             : Lang.F("{0}, line {1}: {2} words", at.Item.Path, at.Line, count));
@@ -188,6 +195,6 @@ internal sealed partial class ShellSession
         _wordsShown = (Path.GetFullPath(at.Item.Path), at.Line, blanks);
         Line(at.Line.ToString().PadLeft(4) + "  " + changed);
         Line(Lang.F("{0}: line {1} changed", at.Item.Path, at.Line));
-        if (LineWords.Find(changed, blanks).Count > 0) ShowWords(changed, blanks);
+        if (LineWords.Find(changed, blanks).Count > 0) ShowWords(at.Item.Path, at.Line, changed, blanks);
     }
 }

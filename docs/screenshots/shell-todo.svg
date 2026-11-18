@@ -16,18 +16,20 @@
 <text x="14.0" y="145.8" fill="#CCCCCC" textLength="470.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">C:\Writing\Harbour Lights\todo.md: line moved to line 11</text>
 <text x="14.0" y="162.8" fill="#CCCCCC" textLength="268.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Task boxes ticked or unticked: 1</text>
 <text x="14.0" y="179.8" fill="#CCCCCC" textLength="386.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">blyant C:\Writing\Harbour Lights&gt; peek todo.md</text>
-<text x="14.0" y="196.8" fill="#CCCCCC" textLength="109.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">   1  # To do</text>
-<text x="14.0" y="213.8" fill="#CCCCCC" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">   2</text>
-<text x="14.0" y="230.8" fill="#CCCCCC" textLength="100.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">   3  ## Now</text>
-<text x="14.0" y="247.8" fill="#CCCCCC" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">   4</text>
-<text x="14.0" y="264.8" fill="#CCCCCC" textLength="504.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">   5  - [ ] Give the ferryman a reason to stay on the island</text>
-<text x="14.0" y="281.8" fill="#CCCCCC" textLength="268.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">   6  - [ ] Read chapter 3 aloud</text>
-<text x="14.0" y="298.8" fill="#CCCCCC" textLength="285.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">   7  - [ ] Ask the harbour master</text>
-<text x="14.0" y="315.8" fill="#CCCCCC" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">   8</text>
-<text x="14.0" y="332.8" fill="#CCCCCC" textLength="109.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">   9  ## Done</text>
-<text x="14.0" y="349.8" fill="#CCCCCC" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  10</text>
-<text x="14.0" y="366.8" fill="#CCCCCC" textLength="537.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  11  - [x] Check the tide times in chapter 2 against the tables</text>
-<text x="14.0" y="383.8" fill="#CCCCCC" textLength="394.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  12  - [x] Move the logbook scene to chapter 3</text>
-<rect x="299.6" y="388" width="8.4" height="17" fill="#CCCCCC"/>
-<text x="14.0" y="400.8" fill="#CCCCCC" textLength="277.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">blyant C:\Writing\Harbour Lights&gt;</text>
+<text x="14.0" y="196.8" fill="#CCCCCC" textLength="84.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">-&gt; todo.md</text>
+<text x="14.0" y="213.8" fill="#CCCCCC" textLength="109.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">   1  # To do</text>
+<text x="14.0" y="230.8" fill="#CCCCCC" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">   2</text>
+<text x="14.0" y="247.8" fill="#CCCCCC" textLength="100.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">   3  ## Now</text>
+<text x="14.0" y="264.8" fill="#CCCCCC" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">   4</text>
+<text x="14.0" y="281.8" fill="#CCCCCC" textLength="504.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">   5  - [ ] Give the ferryman a reason to stay on the island</text>
+<text x="14.0" y="298.8" fill="#CCCCCC" textLength="268.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">   6  - [ ] Read chapter 3 aloud</text>
+<text x="14.0" y="315.8" fill="#CCCCCC" textLength="285.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">   7  - [ ] Ask the harbour master</text>
+<text x="14.0" y="332.8" fill="#CCCCCC" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">   8</text>
+<text x="14.0" y="349.8" fill="#CCCCCC" textLength="109.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">   9  ## Done</text>
+<text x="14.0" y="366.8" fill="#CCCCCC" textLength="33.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  10</text>
+<text x="14.0" y="383.8" fill="#CCCCCC" textLength="537.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  11  - [x] Check the tide times in chapter 2 against the tables</text>
+<text x="14.0" y="400.8" fill="#CCCCCC" textLength="394.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  12  - [x] Move the logbook scene to chapter 3</text>
+<text x="14.0" y="417.8" fill="#CCCCCC" textLength="159.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&lt;- lines 1-12 of 12</text>
+<rect x="299.6" y="422" width="8.4" height="17" fill="#CCCCCC"/>
+<text x="14.0" y="434.8" fill="#CCCCCC" textLength="277.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">blyant C:\Writing\Harbour Lights&gt;</text>
 </svg>

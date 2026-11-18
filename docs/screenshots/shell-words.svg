@@ -10,19 +10,23 @@
 <text x="434.0" y="22" fill="#A0A0A0" text-anchor="middle">Blyant: the shell, words of a line numbered, and one changed by its number</text>
 <text x="14.0" y="60.8" fill="#CCCCCC" textLength="428.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Blyant v1.5.8: help lists the commands, exit leaves</text>
 <text x="14.0" y="77.8" fill="#CCCCCC" textLength="411.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">blyant C:\Writing\Harbour Lights&gt; words todo.md 5</text>
-<text x="14.0" y="94.8" fill="#CCCCCC" textLength="705.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  1 Check  2 the  3 tide  4 times  5 in  6 chapter  7 2  8 against  9 the  10 tables</text>
-<text x="14.0" y="111.8" fill="#CCCCCC" textLength="428.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">C:\Writing\Harbour Lights\todo.md, line 5: 10 words</text>
-<text x="14.0" y="128.8" fill="#CCCCCC" textLength="562.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">blyant C:\Writing\Harbour Lights&gt; word todo.md 5 10 replace almanac</text>
-<text x="14.0" y="145.8" fill="#CCCCCC" textLength="546.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">   5  - [ ] Check the tide times in chapter 2 against the almanac</text>
-<text x="14.0" y="162.8" fill="#CCCCCC" textLength="411.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">C:\Writing\Harbour Lights\todo.md: line 5 changed</text>
-<text x="14.0" y="179.8" fill="#CCCCCC" textLength="714.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  1 Check  2 the  3 tide  4 times  5 in  6 chapter  7 2  8 against  9 the  10 almanac</text>
-<text x="14.0" y="196.8" fill="#CCCCCC" textLength="420.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">blyant C:\Writing\Harbour Lights&gt; peek todo.md 3-7</text>
-<text x="14.0" y="213.8" fill="#CCCCCC" textLength="92.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  3  ## Now</text>
-<text x="14.0" y="230.8" fill="#CCCCCC" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  4</text>
-<text x="14.0" y="247.8" fill="#CCCCCC" textLength="537.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  5  - [ ] Check the tide times in chapter 2 against the almanac</text>
-<text x="14.0" y="264.8" fill="#CCCCCC" textLength="495.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  6  - [ ] Give the ferryman a reason to stay on the island</text>
-<text x="14.0" y="281.8" fill="#CCCCCC" textLength="260.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  7  - [ ] Read chapter 3 aloud</text>
-<text x="14.0" y="298.8" fill="#CCCCCC" textLength="142.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">(lines 3-7 of 11)</text>
-<rect x="299.6" y="303" width="8.4" height="17" fill="#CCCCCC"/>
-<text x="14.0" y="315.8" fill="#CCCCCC" textLength="277.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">blyant C:\Writing\Harbour Lights&gt;</text>
+<text x="14.0" y="94.8" fill="#CCCCCC" textLength="151.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">-&gt; todo.md, line 5</text>
+<text x="14.0" y="111.8" fill="#CCCCCC" textLength="705.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  1 Check  2 the  3 tide  4 times  5 in  6 chapter  7 2  8 against  9 the  10 tables</text>
+<text x="14.0" y="128.8" fill="#CCCCCC" textLength="92.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&lt;- 10 words</text>
+<text x="14.0" y="145.8" fill="#CCCCCC" textLength="562.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">blyant C:\Writing\Harbour Lights&gt; word todo.md 5 10 replace almanac</text>
+<text x="14.0" y="162.8" fill="#CCCCCC" textLength="546.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">   5  - [ ] Check the tide times in chapter 2 against the almanac</text>
+<text x="14.0" y="179.8" fill="#CCCCCC" textLength="411.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">C:\Writing\Harbour Lights\todo.md: line 5 changed</text>
+<text x="14.0" y="196.8" fill="#CCCCCC" textLength="151.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">-&gt; todo.md, line 5</text>
+<text x="14.0" y="213.8" fill="#CCCCCC" textLength="714.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  1 Check  2 the  3 tide  4 times  5 in  6 chapter  7 2  8 against  9 the  10 almanac</text>
+<text x="14.0" y="230.8" fill="#CCCCCC" textLength="92.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&lt;- 10 words</text>
+<text x="14.0" y="247.8" fill="#CCCCCC" textLength="420.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">blyant C:\Writing\Harbour Lights&gt; peek todo.md 3-7</text>
+<text x="14.0" y="264.8" fill="#CCCCCC" textLength="84.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve">-&gt; todo.md</text>
+<text x="14.0" y="281.8" fill="#CCCCCC" textLength="92.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  3  ## Now</text>
+<text x="14.0" y="298.8" fill="#CCCCCC" textLength="25.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  4</text>
+<text x="14.0" y="315.8" fill="#CCCCCC" textLength="537.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  5  - [ ] Check the tide times in chapter 2 against the almanac</text>
+<text x="14.0" y="332.8" fill="#CCCCCC" textLength="495.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  6  - [ ] Give the ferryman a reason to stay on the island</text>
+<text x="14.0" y="349.8" fill="#CCCCCC" textLength="260.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  7  - [ ] Read chapter 3 aloud</text>
+<text x="14.0" y="366.8" fill="#CCCCCC" textLength="151.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">&lt;- lines 3-7 of 11</text>
+<rect x="299.6" y="371" width="8.4" height="17" fill="#CCCCCC"/>
+<text x="14.0" y="383.8" fill="#CCCCCC" textLength="277.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">blyant C:\Writing\Harbour Lights&gt;</text>
 </svg>

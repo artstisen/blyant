@@ -21,7 +21,7 @@ internal sealed partial class ShellSession
         ("data", Lang.T("Go to Blyant's data directory (settings, lists, log)")),
         ("open file|n [+line] (edit)", Lang.T("Edit a file on the full screen (closing it returns here)")),
         ("resume [+line]", Lang.T("Edit $file again, where you worked last")),
-        ("peek file|n [lines]", Lang.T("Show the lines of a file (the first 20, 40, 100-120, or +100 30)")),
+        ("peek file|n [lines]", Lang.F("Show the lines of a file (the first {0}, 40, 100-120, or +100 30)", Shell.PeekLines)),
         ("peek [file|n] +|++|-|--", Shell.PeekStep == 1
             ? Lang.F("Show 1 line further down (++: {0}), or up (-, --)", Shell.PeekBigStep)
             : Lang.F("Show {0} lines further down (++: {1}), or up (-, --)", Shell.PeekStep, Shell.PeekBigStep)),

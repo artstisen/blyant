@@ -553,6 +553,10 @@ internal static class FileIo
         settings += "shellrecentfirst=" + (Shell.RecentFirst ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // The window of the last peek shown again after a change of its file
         settings += "shellautopeek=" + (Shell.AutoPeek ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        // The shell: peek and words show the lines between "->" and "<-" (off: the lines alone)
+        settings += "shellmarkers=" + (Shell.Markers ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        // The shell: how many lines peek shows when none are given
+        settings += "shellpeeklines=" + Shell.PeekLines + '\n';
         // The shell: how many lines "peek +" and "peek ++" move the window (and "-", "--" back)
         settings += "shellpeekstep=" + Shell.PeekStep + '\n';
         settings += "shellpeekbigstep=" + Shell.PeekBigStep + '\n';
@@ -777,6 +781,9 @@ internal static class FileIo
         Shell.RecentFirst = Tools.TrimToLower(Get("shellrecentfirst")) != DialogText.BFalse;
         // Off unless turned on
         Shell.AutoPeek = Tools.TrimToLower(Get("shellautopeek")) == DialogText.BTrue;
+        // On unless turned off
+        Shell.Markers = Tools.TrimToLower(Get("shellmarkers")) != DialogText.BFalse;
+        Shell.PeekLines = Shell.ParsePeekStep(Get("shellpeeklines"), Shell.DefaultPeekLines);
         Shell.PeekStep = Shell.ParsePeekStep(Get("shellpeekstep"), Shell.DefaultPeekStep);
         Shell.PeekBigStep = Shell.ParsePeekStep(Get("shellpeekbigstep"), Shell.DefaultPeekBigStep);
         Shell.UndoSteps = Shell.ParseUndoSteps(Get("shellundosteps"));

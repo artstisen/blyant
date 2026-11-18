@@ -84,7 +84,7 @@ To get all output at once (with a screen reader, say), turn the pages off: `set 
 | `data` | Go to Blyant's [data directory](Guide-to-installation.md#good-to-know), with the settings, lists and log. `cd data` still goes to a directory named _data_ |
 | `open file\|n [+line]` (`edit`) | Edit a file in the full-screen editor, at a line if one is given (`open plot.md +12`). On a directory, go to it. `edit` does the same |
 | `resume [+line]` | Edit `$file` again, where you worked last: at the line the last command worked on in it (after `insert`, `lines`, `change` or a search with `peek`), else where the cursor of the editor was. `$file` is kept when you leave the shell, so `resume` goes on after a restart. `resume +120` opens it at line 120 |
-| `peek file\|n [lines]` | Show the lines of a text file, numbered: the first 20, `peek plot.md 40` the first 40, `peek plot.md 100-120` lines 100 to 120, `peek plot.md +100` 20 lines from line 100, and `peek plot.md +100 30` 30 lines from line 100. Read-only. After a peek from a line, `open 1` opens the file at that line. See [Peeking into a file](#peeking-into-a-file) |
+| `peek file\|n [lines]` | Show the lines of a text file, numbered: the first 15, `peek plot.md 40` the first 40, `peek plot.md 100-120` lines 100 to 120, `peek plot.md +100` 15 lines from line 100, and `peek plot.md +100 30` 30 lines from line 100. Read-only. After a peek from a line, `open 1` opens the file at that line. See [Peeking into a file](#peeking-into-a-file) |
 | `peek [file\|n] top\|middle\|bottom\|50%` | Put the window of the last peek (same number of lines) at the top, in the middle, at the end, or at a point in the file (`peek 50%`: from halfway). Without a file: the file peeked last. See [Peeking into a file](#peeking-into-a-file) |
 | `peek +120` | The file peeked last, from line 120, with the same window size (a file named _+120_ is peeked instead, if there is one) |
 | `+ 20`, `- 20`, `++ 3`, `-- 3` | Move the window of the last peek by that many steps: `+ 20` 20 lines down (with `shellpeekstep` 1), `++ 3` 3 big steps |
@@ -245,10 +245,10 @@ blyant ~/notes> open 1
 `peek` shows the lines of a text file, numbered, without opening it. It only reads: nothing is changed, and the file is not put in the latest files.
 
 ```
-peek chapter-3.md                            the first 20 lines
+peek chapter-3.md                            the first 15 lines
 peek chapter-3.md 40                         the first 40 lines
 peek chapter-3.md 10-12                      lines 10 to 12
-peek chapter-3.md +20                        20 lines from line 20
+peek chapter-3.md +20                        15 lines from line 20
 peek chapter-3.md +20 3                      3 lines from line 20
 peek 2                                       row 2 of the last list (ls, fav ...)
 peek chapter-3.md +                          the window 1 line further down
@@ -261,25 +261,27 @@ peek middle                                  around the middle
 peek bottom                                  at the end: the last lines
 peek 75%                                     from three quarters into the file
 peek +120                                    from line 120, in the file peeked last
-peek chapter-3.md bottom                     the last 20 lines of a file
+peek chapter-3.md bottom                     the last 15 lines of a file
 .                                            the same window again, the file as now
 peek chapter-3.md /storm                     at the first line with "storm" in it
 /                                            the next line with it (? before)
 ```
 
-Below the lines, `peek` tells where they are in the file. It leaves this out when the lines reach the end of the file, except after `bottom`, a step, or a window moved to the end:
+The lines come between two markers, so a peek stands out from the commands and the other output around it: `->` and the name of the file above them, and `<-` and where the lines are in the file below them:
 
 ```
 blyant ~/novel> peek chapter-3.md 10-12
+-> chapter-3.md
   10  The storm came in from the west.
   11  Anna closed the shutters.
   12  Then the lights went out.
-(lines 10-12 of 30)
+<- lines 10-12 of 30
 blyant ~/novel> +
+-> chapter-3.md
   11  Anna closed the shutters.
   12  Then the lights went out.
   13  Nobody spoke.
-(lines 11-13 of 30)
+<- lines 11-13 of 30
 blyant ~/novel> open 1
 ```
 
@@ -287,22 +289,26 @@ Use it as a window into the part of the file you are working on: peek, change, a
 
 ```
 blyant ~/novel> peek chapter-3.md 10-12
+-> chapter-3.md
   10  The storm came in from the west.
   11  Anna closed the shutters.
   12  Then the lights went out.
-(lines 10-12 of 30)
+<- lines 10-12 of 30
 blyant ~/novel> change chapter-3.md +11 Anna closed the shutters, one by one.
 /home/anna/novel/chapter-3.md: line 11 changed
 blyant ~/novel> .
+-> chapter-3.md
   10  The storm came in from the west.
   11  Anna closed the shutters, one by one.
   12  Then the lights went out.
-(lines 10-12 of 30)
+<- lines 10-12 of 30
 ```
 
+- `set shellmarkers false` leaves the markers out, and shows the lines alone. Where they are in the file is then written below them as `(lines 10-12 of 30)`, and left out when the lines reach the end of the file, except after `bottom`, a step, or a window moved to the end
+- Without lines, `peek` shows 15: `set shellpeeklines 25` makes it 25 (1 to 1000). A window from a line (`peek chapter-3.md +20`) has as many lines
 - A plain number is how many lines to show, from the top (`peek chapter-3.md 40`), since `peek` only shows lines. With a `+` it is the line to start at (see [Line numbers](#line-numbers))
 - `+`, `++`, `-` and `--` move the window of the last peek, as many lines as before: 1 or 5 lines (the settings `shellpeekstep` and `shellpeekbigstep`), or as many steps as the number after them (`+ 20`). They stop at the ends: at the top line 1 is shown, and at the end the last lines. Alone on the line they go on in the file peeked last, also after other commands, so you can read, edit and read on. A file other than the one peeked last starts from the top (`peek other.md +` shows it from line 2)
-- `top`, `middle`, `bottom` and a percentage (`50%`, `0%` to `100%`) put the window of the last peek there, with the same number of lines (3 after `peek chapter-3.md 10-12`). After a file (`peek chapter-3.md bottom`) they put a window there in that file: the size of the last peek if it was of that file, otherwise 20 lines. `peek +120` alone goes to line 120 in the file peeked last; `+ 20` and `- 20` move the window 20 steps from where it is, and `++ 3` and `-- 3` 3 big steps. At the ends the window stops, as it does for `+` and `-`. `Tab` after `peek` completes `top`, `middle` and `bottom`
+- `top`, `middle`, `bottom` and a percentage (`50%`, `0%` to `100%`) put the window of the last peek there, with the same number of lines (3 after `peek chapter-3.md 10-12`). After a file (`peek chapter-3.md bottom`) they put a window there in that file: the size of the last peek if it was of that file, otherwise 15 lines (the setting `shellpeeklines`). `peek +120` alone goes to line 120 in the file peeked last; `+ 20` and `- 20` move the window 20 steps from where it is, and `++ 3` and `-- 3` 3 big steps. At the ends the window stops, as it does for `+` and `-`. `Tab` after `peek` completes `top`, `middle` and `bottom`
 
 To find a place, search: the window goes to the first line with the text, with two lines above it, and the line found is marked with `>`. `/` goes on to the next match, and `?` back:
 
@@ -310,29 +316,31 @@ To find a place, search: the window goes to the first line with the text, with t
 blyant ~/novel> peek chapter-3.md 1-5
 ...
 blyant ~/novel> peek chapter-3.md /storm
+-> chapter-3.md
    8  The ferry was late.
    9  Maren stood at the rail.
 > 10  The storm came in from the west.
   11  Anna closed the shutters.
   12  Then the lights went out.
-(match 1 of 3, lines 8-12 of 30)
+<- match 1 of 3, lines 8-12 of 30
 blyant ~/novel> /
+-> chapter-3.md
   18  The rain stopped at midnight.
   19  The harbour was quiet.
 > 20  Only the storm lantern still burned.
   21  Maren went down.
   22  The door was open.
-(match 2 of 3, lines 18-22 of 30)
+<- match 2 of 3, lines 18-22 of 30
 ```
 
 - The text is part of a line, ignoring letter case, as for `find -t`: `*` and `?` work as there (`peek chapter-3.md /storm*night`), and the text is everything after the `/` (`peek notes.md /the storm came`). Without a file, `peek /storm` searches the file peeked last
 - `/` and `?` alone go to the next and the previous line with the last text searched, in the file peeked last. At the end they wrap around and say so: `(from the top again)`, `(from the end again)`
-- The window has the size of the last one in that file (20 lines for another file; a window of 1 or 2 lines starts at the line found). `open 1` opens the file at the line found, and `.`, `+` and `-` go on from the window. `/storm` alone, typed as a command, searches the file peeked last too
+- The window has the size of the last one in that file (15 lines for another file; a window of 1 or 2 lines starts at the line found). `open 1` opens the file at the line found, and `.`, `+` and `-` go on from the window. `/storm` alone, typed as a command, searches the file peeked last too
 - A word starting with `/` that is a file or directory, or that has another `/` in it, is a path: `peek /home/anna/notes.md /storm` searches that file, and a mistyped path is reported as not found instead of being searched. A file other than the one searched last is searched from the top
 - A row of `find -t` (a line found in a file) is peeked at that line: `find -t storm`, then `peek 2` shows the window around the line found, marked, as `open 2` opens it there. When the file was changed since, the line with the text nearest to it is marked
 
 - `.` and `peek` alone show the window of the last peek again: the same file, the same first line and as many lines, read again. It is the window you peeked, whatever the commands after it worked on (`$file` can be another file by then). A line put in above the window moves the lines in it down, as you see. Before the first peek, the shell says there is nothing to show
-- With the setting `shellautopeek` on (`set shellautopeek true`; off from the start), the window is shown again automatically after each command that changed the file: `insert`, `change`, `lines`, `shift`, `format`, `trim`, or the editor opened with `open`. `(peek again: chapter-3.md)` is written above it. A command that changed another file, or nothing, shows nothing more
+- With the setting `shellautopeek` on (`set shellautopeek true`; off from the start), the window is shown again automatically after each command that changed the file: `insert`, `change`, `lines`, `shift`, `format`, `trim`, or the editor opened with `open`. The first marker says so: `-> chapter-3.md (peek again)` (without the markers, `(peek again: chapter-3.md)` is written above the lines). A command that changed another file, or nothing, shows nothing more
 - After a peek, `open 1` opens the file at the first line shown, and `$file` is the file. The lines shown are `$peek`: `insert plan.md bottom $peek` puts them in another file (see [Registers](#registers))
 - Control characters of a file are shown as `?`, and a file that is not text (an image, a program) is not shown
 
@@ -429,11 +437,13 @@ Here a todo list is made into task items, given a date, changed and tidied again
 
 ```
 blyant ~/notes> peek todo.md
+-> todo.md
   1  # Todo
   2
   3  Get pencils and paper
   4  Call Anna
   5  Write chapter 3 (draft)
+<- lines 1-5 of 5
 blyant ~/notes> lines todo.md 3-4 start "- [ ] "
   3  - [ ] Get pencils and paper
   4  - [ ] Call Anna
@@ -467,14 +477,17 @@ blyant ~/notes> lines todo.md 3 unstart "- [ ] "
 
 ```
 blyant ~/novel> words notes.md 12
+-> notes.md, line 12
   1 This  2 is  3 a  4 line  5 of  6 text  7 that  8 I  9 want  10 to
   11 change  12 with  13 a  14 few  15 commands
-/home/anna/novel/notes.md, line 12: 15 words
+<- 15 words
 blyant ~/novel> word notes.md 12 9 replace wish
   12  This is a line of text, that I wish to change, with a few commands...
 /home/anna/novel/notes.md: line 12 changed
+-> notes.md, line 12
   1 This  2 is  3 a  4 line  5 of  6 text  7 that  8 I  9 wish  10 to
   11 change  12 with  13 a  14 few  15 commands
+<- 15 words
 ```
 
 | Command | What it does |
@@ -490,6 +503,7 @@ blyant ~/novel> word notes.md 12 9 replace wish
 - A word is letters and digits with any accents or marks that go with them, also when an accent is a separate character, as in files from macOS
 - Several words are given as `5-7`: `replace` puts the text in place of all those words, and `before` and `after` go in front of the first and after the last
 - The line is given as `12` or `+12`, and the file as a name, a row of the last list or `$file`. After `words`, `@` is the file and the line, so the next command can be `word @ 9 ...` (see [Working on one line](#working-on-one-line))
+- The words come between two markers: `-> notes.md, line 12` above them, and `<- 15 words` below them (as for `peek`, `set shellmarkers false` leaves them out)
 - After a change the line is shown, with the words numbered again, as the numbers after a word put in or taken out move
 - The text is all that follows `replace`, `before` or `after`, as typed; in quotes it is put in exactly as written. `$name` puts in a value
 - `undo` takes a change back. A file Blyant uses, or one that is not UTF-8, is not changed, and the line endings and byte order mark of the file are kept, as with `lines`
@@ -499,8 +513,10 @@ With `-p` before the file, a word is all between blanks, with the punctuation an
 
 ```
 blyant ~/novel> words -p notes.md 12
+-> notes.md, line 12
   1 This  2 is  3 a  4 line  5 of  6 text,  7 that  8 I  9 want  10 to
   11 change,  12 with  13 a  14 few  15 commands...
+<- 15 words
 blyant ~/novel> word -p notes.md 12 6 replace note:
 blyant ~/novel> word -p notes.md 12 15 replace commands.
 ```
@@ -513,25 +529,30 @@ blyant ~/novel> word -p notes.md 12 15 replace commands.
 
 ```
 blyant ~/novel> words -p notes.md 4
+-> notes.md, line 4
   1 Well  2 -  3 she  4 said:  5 try  6 a/b  7 first.
-/home/anna/novel/notes.md, line 4: 7 words
+<- 7 words
 blyant ~/novel> words notes.md 4
+-> notes.md, line 4
   1 Well  2 she  3 said  4 try  5 a  6 b  7 first
-/home/anna/novel/notes.md, line 4: 7 words
+<- 7 words
 ```
 
 Word 6 is `a/b` with `-p`, and only `b` without it. So `word @ 6 upper` after `words -p` would change another word than the one you saw. The shell catches this: when `word` counts a line another way than the last `words` of that line, and the numbers you give point at other words, nothing is changed:
 
 ```
 blyant ~/novel> words -p notes.md 4
+-> notes.md, line 4
   1 Well  2 -  3 she  4 said:  5 try  6 a/b  7 first.
-/home/anna/novel/notes.md, line 4: 7 words
+<- 7 words
 blyant ~/novel> word @ 6 upper
 words -p numbered line 4, and without -p the numbers differ: give -p to word too
 blyant ~/novel> word -p @ 6 upper
    4  Well - she said: try A/B first.
 /home/anna/novel/notes.md: line 4 changed
+-> notes.md, line 4
   1 Well  2 -  3 she  4 said:  5 try  6 A/B  7 first.
+<- 7 words
 ```
 
 - Where the numbers are the same words both ways (`Well` is word 1 either way), `word` does what it is told, with `-p` or without
@@ -635,12 +656,13 @@ A peek is a window into the part of a file you are working on: find the place, c
 blyant ~/novel> peek chapter-3.md 1-5
 ...
 blyant ~/novel> peek chapter-3.md /storm came
+-> chapter-3.md
    8  ## The storm
    9
 > 10  The storm came in from the west.
   11  Anna closed the shutters.
   12  Then the lights went out.
-(match 1 of 1, lines 8-12 of 14)
+<- match 1 of 1, lines 8-12 of 14
 ```
 
 **Change the lines, and look again.** `change`, `insert`, `shift` and `lines` change the file; `.` shows the same window again, as the file is now:
@@ -649,21 +671,23 @@ blyant ~/novel> peek chapter-3.md /storm came
 blyant ~/novel> change chapter-3.md +10 The storm came in from the west.
 /home/anna/novel/chapter-3.md: line 10 changed
 blyant ~/novel> .
+-> chapter-3.md
    8  ## The storm
    9
   10  The storm came in from the west.
   11  Anna closed the shutters.
   12  Then the lights went out.
-(lines 8-12 of 14)
+<- lines 8-12 of 14
 blyant ~/novel> insert chapter-3.md +11 The first drops hit the glass.
 /home/anna/novel/chapter-3.md: line 11 put in
 blyant ~/novel> .
+-> chapter-3.md
    8  ## The storm
    9
   10  The storm came in from the west.
   11  The first drops hit the glass.
   12  Anna closed the shutters.
-(lines 8-12 of 15)
+<- lines 8-12 of 15
 ```
 
 **Take a change back.** `undo` puts the file back as it was before the last change, and `redo` does the change again:
@@ -672,12 +696,13 @@ blyant ~/novel> .
 blyant ~/novel> undo
 Undone: insert chapter-3.md +11 The first drops hit the glass.
 blyant ~/novel> .
+-> chapter-3.md
    8  ## The storm
    9
   10  The storm came in from the west.
   11  Anna closed the shutters.
   12  Then the lights went out.
-(lines 8-12 of 14)
+<- lines 8-12 of 14
 blyant ~/novel> redo
 Redone: insert chapter-3.md +11 The first drops hit the glass.
 ```
@@ -689,23 +714,23 @@ blyant ~/novel> set shellautopeek true
   shellautopeek = true
 blyant ~/novel> change chapter-3.md +12 Anna closed the shutters, one by one.
 /home/anna/novel/chapter-3.md: line 12 changed
-(peek again: chapter-3.md)
+-> chapter-3.md (peek again)
    8  ## The storm
    9
   10  The storm came in from the west.
   11  The first drops hit the glass.
   12  Anna closed the shutters, one by one.
-(lines 8-12 of 15)
+<- lines 8-12 of 15
 blyant ~/novel> shift chapter-3.md 14 +12
   12  Somewhere a door banged.
 /home/anna/novel/chapter-3.md: line moved to line 12
-(peek again: chapter-3.md)
+-> chapter-3.md (peek again)
    8  ## The storm
    9
   10  The storm came in from the west.
   11  The first drops hit the glass.
   12  Somewhere a door banged.
-(lines 8-12 of 15)
+<- lines 8-12 of 15
 ```
 
 **See what can be taken back.** `changes` lists the changes, the newest first, and `undo 2` takes back the two newest:
@@ -719,13 +744,13 @@ blyant ~/novel> changes
 blyant ~/novel> undo 2
 Undone: shift chapter-3.md 14 +12
 Undone: change chapter-3.md +12 Anna closed the shutters, one by one.
-(peek again: chapter-3.md)
+-> chapter-3.md (peek again)
    8  ## The storm
    9
   10  The storm came in from the west.
   11  The first drops hit the glass.
   12  Anna closed the shutters.
-(lines 8-12 of 15)
+<- lines 8-12 of 15
 ```
 
 - The window keeps its place and size: a line put in above it moves the lines in it down, as you see. `+`, `-`, `top`, `bottom` and a new search move it (see [Peeking into a file](#peeking-into-a-file))

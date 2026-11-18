@@ -80,13 +80,16 @@ A list longer than the window comes in pages: `Enter` or `Space` gives the next 
 
 ```
 blyant ~/novel> peek 3
+-> plot.md
   1  # Plot
   2  
   3  Anna finds a letter in the attic.
   4  The storm comes that night.
+<- lines 1-4 of 4
 ```
 
-- `peek plot.md 40` shows the first 40 lines (20 when no number is given), and `peek plot.md 100-120` lines 100 to 120
+- The lines come between two markers: `->` and the name of the file above them, and `<-` and where the lines are in the file below them, so you can tell where a peek starts and ends (`set shellmarkers false` leaves them out)
+- `peek plot.md 40` shows the first 40 lines (15 when no number is given: `set shellpeeklines 25` changes it), and `peek plot.md 100-120` lines 100 to 120
 - `peek +` moves the last peek 1 line further down, and `peek ++` 5 lines (`set shellpeekstep 2` and `set shellpeekbigstep 10` change the steps); `peek -` and `peek --` go back up. Each one moves from the last window, so `peek +`, `peek +` goes on down the file. Shorter still: `+`, `++`, `-` and `--` alone on the line, even after an `insert` in between
 - `+ 20` moves the window 20 lines, and `peek bottom`, `peek top`, `peek middle` or `peek 75%` move the window to that place in the file peeked last
 - `.` (or `peek` alone) shows the last peek again, as the file is now: a window into the lines you are changing. `set shellautopeek true` shows it automatically after each change to that file
@@ -95,8 +98,10 @@ blyant ~/novel> peek 3
 
 ```
 blyant ~/novel> peek chapters/02-storm.md +3 2
+-> 02-storm.md
   3  The storm came at night.
   4  The lights went out.
+<- lines 3-4 of 4
 blyant ~/novel> open 1
 ```
 
@@ -189,12 +194,14 @@ blyant ~/novel> insert plot.md bottom Then the phone rings.
 blyant ~/novel> insert plot.md +4 The letter is from her sister.
 /home/anna/novel/plot.md: line 4 put in
 blyant ~/novel> peek plot.md
+-> plot.md
   1  # Plot
   2  
   3  Anna finds a letter in the attic.
   4  The letter is from her sister.
   5  The storm comes that night.
   6  Then the phone rings.
+<- lines 1-6 of 6
 ```
 
 `change` replaces a line (`+4`) or several lines (`4-6`, which become one line) with a text. Without a text, the lines are shown, and deleted when you answer yes:
@@ -228,12 +235,15 @@ To change one word, without typing the line again, see the words of the line num
 
 ```
 blyant ~/novel> words plot.md 4
+-> plot.md, line 4
   1 The  2 letter  3 is  4 from  5 her  6 mother
-/home/anna/novel/plot.md, line 4: 6 words
+<- 6 words
 blyant ~/novel> word @ 6 replace aunt
    4  The letter is from her aunt.
 /home/anna/novel/plot.md: line 4 changed
+-> plot.md, line 4
   1 The  2 letter  3 is  4 from  5 her  6 aunt
+<- 6 words
 ```
 
 - `@` is the file and the line of the last command: after `words plot.md 4`, `word @ 6 replace aunt` is `word plot.md 4 6 replace aunt`
@@ -251,6 +261,7 @@ blyant ~/novel> word @ 6 replace aunt
 
 ```
 blyant ~/novel> peek todo.md
+-> todo.md
    1  # Week 46
    2  
    3  ## Todo
@@ -262,6 +273,7 @@ blyant ~/novel> peek todo.md
    9  ## Done
   10  
   11  - [x] Outline
+<- lines 1-11 of 11
 ```
 
 `shift` moves lines to another place in the same file, such as under a heading. `shift!` also ticks any task boxes on the lines it moves. Once the dates are checked:
@@ -281,6 +293,7 @@ blyant ~/novel> shift! todo.md "Call the editor" Done
 /home/anna/novel/todo.md: line moved to line 9
 Task boxes ticked or unticked: 1
 blyant ~/novel> peek todo.md
+-> todo.md
    1  # Week 46
    2  
    3  ## Todo
@@ -292,6 +305,7 @@ blyant ~/novel> peek todo.md
    9  - [x] Call the editor
   10  - [x] Check the dates
   11  - [x] Outline
+<- lines 1-11 of 11
 ```
 
 - The lines go right under the heading, so the newest come first. `Done+` puts them at the end of the section instead: `shift! todo.md Rewrite Done+`
@@ -321,6 +335,7 @@ You don't have to type the file and the line each time. `@` stands for the file 
 
 ```
 blyant ~/novel> peek todo.md /Rewrite
+-> todo.md
   1  # Week 46
   2
   3  ## Todo
@@ -329,7 +344,7 @@ blyant ~/novel> peek todo.md /Rewrite
   6
   7  ## Done
   8
-(match 1 of 1, lines 1-8 of 8)
+<- match 1 of 1, lines 1-8 of 8
 blyant ~/novel> insert @ - [ ] Check the map
 /home/anna/novel/todo.md: line 6 put in
 blyant ~/novel> lines @ end (chapter 4)
@@ -399,8 +414,10 @@ A register is also the way to keep a second file at hand. `$file` follows the fi
 
 ```
 blyant ~/novel> peek notes.md
+-> notes.md
   1  # Notes
   2  The lighthouse keeper hums.
+<- lines 1-2 of 2
 blyant ~/novel> file chapter-3.md > $other
   $other = /home/anna/novel/chapter-3.md
 blyant ~/novel> lines notes.md 2 > $other bottom
@@ -700,7 +717,9 @@ blyant ~/practice> insert file1.md top File 1
 
 ```
 blyant ~/practice> peek file1.md
+-> file1.md
   1  File 1
+<- lines 1-1 of 1
 ```
 
 **4. Insert another line below the first.** `bottom` puts it after the last line:
@@ -709,8 +728,10 @@ blyant ~/practice> peek file1.md
 blyant ~/practice> insert file1.md bottom A second line
 /home/anna/practice/file1.md: line 2 put in
 blyant ~/practice> peek file1.md
+-> file1.md
   1  File 1
   2  A second line
+<- lines 1-2 of 2
 ```
 
 **5. Move the first line below the second.** `shift` moves lines within a file, here line 1 to the `bottom`. The line is shown in its new place:
@@ -742,7 +763,9 @@ blyant ~/practice> lines file1.md 2 > file2.md top
 blyant ~/practice> change file2.md +1 File 2
 /home/anna/practice/file2.md: line 1 changed
 blyant ~/practice> peek file2.md
+-> file2.md
   1  File 2
+<- lines 1-1 of 1
 ```
 
 **9. Copy the whole text of file2.** `clip text` copies it to the clipboard, and keeps it as `$clip`:
@@ -759,9 +782,11 @@ Copied to the clipboard and the string memory
 blyant ~/practice> insert file1.md bottom $clip
 /home/anna/practice/file1.md: line 3 put in
 blyant ~/practice> peek file1.md
+-> file1.md
   1  A second line
   2  File 1
   3  File 2
+<- lines 1-3 of 3
 ```
 
 That is the whole round: making files, adding, moving, copying and changing lines, without opening an editor. `open file1.md` shows the result in the editor of the full screen.
@@ -772,10 +797,11 @@ The last four steps use a peek as a window into the file while you change it, an
 
 ```
 blyant ~/practice> peek file1.md /file 2
+-> file1.md
   1  A second line
   2  File 1
 > 3  File 2
-(match 1 of 1, lines 1-3 of 3)
+<- match 1 of 1, lines 1-3 of 3
 ```
 
 **12. Change it, and look again.** `.` shows the same window again, as the file is now:
@@ -784,10 +810,11 @@ blyant ~/practice> peek file1.md /file 2
 blyant ~/practice> change file1.md +3 File 2, changed
 /home/anna/practice/file1.md: line 3 changed
 blyant ~/practice> .
+-> file1.md
   1  A second line
   2  File 1
   3  File 2, changed
-(lines 1-3 of 3)
+<- lines 1-3 of 3
 ```
 
 **13. Let the window follow.** With `shellautopeek` on, the window is shown again after each change to the file, without `.`:
@@ -797,12 +824,12 @@ blyant ~/practice> set shellautopeek true
   shellautopeek = true
 blyant ~/practice> insert file1.md bottom File 3
 /home/anna/practice/file1.md: line 4 put in
-(peek again: file1.md)
+-> file1.md (peek again)
   1  A second line
   2  File 1
   3  File 2, changed
   4  File 3
-(lines 1-4 of 4)
+<- lines 1-4 of 4
 ```
 
 **14. Take it back, and do it again.** `undo` puts the file back as it was before the last change, `redo` does the change again, and `changes` lists what `undo` can take back:
@@ -810,19 +837,19 @@ blyant ~/practice> insert file1.md bottom File 3
 ```
 blyant ~/practice> undo
 Undone: insert file1.md bottom File 3
-(peek again: file1.md)
+-> file1.md (peek again)
   1  A second line
   2  File 1
   3  File 2, changed
-(lines 1-3 of 3)
+<- lines 1-3 of 3
 blyant ~/practice> redo
 Redone: insert file1.md bottom File 3
-(peek again: file1.md)
+-> file1.md (peek again)
   1  A second line
   2  File 1
   3  File 2, changed
   4  File 3
-(lines 1-4 of 4)
+<- lines 1-4 of 4
 blyant ~/practice> changes
   1  insert file1.md bottom File 3
   2  change file1.md +3 File 2, changed

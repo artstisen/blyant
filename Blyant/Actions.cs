@@ -226,6 +226,8 @@ internal static class Actions
         Shell.Completion = true;
         Shell.RecentFirst = true;
         Shell.AutoPeek = false;
+        Shell.Markers = Shell.DefaultMarkers;
+        Shell.PeekLines = Shell.DefaultPeekLines;
         Shell.PeekStep = Shell.DefaultPeekStep;
         Shell.PeekBigStep = Shell.DefaultPeekBigStep;
         Shell.UndoSteps = Shell.DefaultUndoSteps;

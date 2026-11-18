@@ -39,6 +39,22 @@ internal static class Shell
     internal static bool AutoPeek { get; set; }
 
     /// <summary>
+    /// peek and words show the lines of a file between two markers: "-> notes.md" above them, and "<- lines 1-15 of
+    /// 60" below them (setting "shellmarkers", on unless turned off). Only in the settings file, or with "set"
+    /// </summary>
+    internal static bool Markers { get; set; } = DefaultMarkers;
+
+    internal const bool DefaultMarkers = true;
+
+    /// <summary>
+    /// How many lines peek shows when none are given (setting "shellpeeklines", 1 to 1000; only in the settings file,
+    /// or with "set")
+    /// </summary>
+    internal static int PeekLines { get; set; } = DefaultPeekLines;
+
+    internal const int DefaultPeekLines = 15;
+
+    /// <summary>
     /// How many lines "peek +" and "peek -" move the window of the last peek (setting "shellpeekstep", 1 to 1000;
     /// only in the settings file, or with "set")
     /// </summary>
@@ -53,7 +69,7 @@ internal static class Shell
     internal const int DefaultPeekBigStep = 5;
 
     /// <summary>
-    /// A step of peek from the settings file: a whole number from 1 to 1000, else the default
+    /// A step of peek, or the lines it shows, from the settings file: a whole number from 1 to 1000, else the default
     /// </summary>
     internal static int ParsePeekStep(string? value, int fallback) =>
         int.TryParse(value?.Trim(), out var lines) && lines is >= 1 and <= 1000 ? lines : fallback;

@@ -1,6 +1,8 @@
 # Changes
 
 ## v1.5.8
+- **Markers around peek and words in the shell**: the lines of a file come between two markers, so a peek stands out from the commands and other output around it: `-> notes.md` above the lines, and `<- lines 1-15 of 60` below them (`<- match 2 of 5, lines 8-22 of 60` after a search). The words of `words` and `word` come between `-> notes.md, line 12` and `<- 15 words`, and the window shown again by `shellautopeek` starts with `-> notes.md (peek again)`. The markers are only on the screen: `$peek` holds the lines alone. `set shellmarkers false` leaves them out, and the output is as before. See [Peeking into a file](Guide-to-shell.md#peeking-into-a-file).
+- **Peek shows 15 lines, and the setting shellpeeklines**: without lines, `peek` shows the first 15 lines, not 20, so the command typed, the lines and the markers fit in a window of 24 rows. `set shellpeeklines 25` changes it (1 to 1000), and so does a window from a line (`peek notes.md +100`) and a search in a file not peeked before. See [Peeking into a file](Guide-to-shell.md#peeking-into-a-file).
 - **More undo steps in the shell**: `undo` keeps the last 50 changes, not 10, and the setting `shellundosteps` takes 10 to 200 (it took 1 to 50). All steps together still keep at most 32 MB, so a larger number does not use more memory than that. A settings file written by an earlier version keeps the number it has: `set shellundosteps 50` changes it. See [Undo](Guide-to-shell.md#undo).
 
 ## v1.5.7 (2026-11-18)

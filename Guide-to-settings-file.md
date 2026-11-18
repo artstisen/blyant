@@ -128,6 +128,8 @@ Changed with `set` in the shell, or in the file: they are not on the pages of Co
 | `shellcompletion` | **true**, false | `Tab` and the editing keys of the line; off: the terminal reads the line itself (for screen readers) |
 | `shellrecentfirst` | **true**, false | `Tab` with nothing typed offers the files opened last first |
 | `shellautopeek` | **false**, true | After a command that changed the file of the last peek (`insert`, `change`, `undo` ...), the peek window is shown again, as `.` shows it (see [Editing in a window](Guide-to-shell.md#editing-in-a-window)) |
+| `shellmarkers` | **true**, false | `peek` and `words` show the lines of a file between two markers: `-> notes.md` above them, and `<- lines 1-15 of 60` below them (see [Peeking into a file](Guide-to-shell.md#peeking-into-a-file)) |
+| `shellpeeklines` | **15**, 1 to 1000 | Lines that `peek` shows when no lines are given |
 | `shellpeekstep` | **1**, 1 to 1000 | Lines that `+` and `-` move the window of the last peek |
 | `shellpeekbigstep` | **5**, 1 to 1000 | Lines that `++` and `--` move it |
 | `shellundosteps` | **50**, 10 to 200 | How many file changes (`insert`, `change`, `lines` ...) `undo` can go back through while Blyant runs (see [Undo](Guide-to-shell.md#undo)) |

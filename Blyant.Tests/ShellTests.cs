@@ -32,6 +32,10 @@ public class ShellTests : IDisposable
         ShellRegisters.Peek = null;
         ShellRegisters.Calc = null;
         ShellSession.ForgetFind();
+        // (the tests written before the markers and the setting shellpeeklines see the output as it was then: the
+        // tests of them turn them on)
+        Shell.Markers = false;
+        Shell.PeekLines = 20;
         FileFavorites.Parse(string.Empty);
         FileHistory.Parse(string.Empty);
         DirectoryHotlist.Parse(string.Empty);
@@ -6567,5 +6571,142 @@ public class ShellTests : IDisposable
         Assert.Equal(2, errors.Split(Lang.F("{0} has no headings: shift -s moves a section under a heading", "p.md")).Length - 1);
         Assert.Contains("give -p to both", Lang.T("A word is all between blanks: give -p to both"));
         Assert.Contains("words -p, word -p", Run("help words\n").Output);
+    }
+
+    // ---- 1.5.8: markers around peek and words, the setting shellpeeklines
+
+    // The markers on and the window of 15 lines, as in a new Blyant (the constructor turns them off for the tests
+    // written before them)
+    private static void MarkersAsSet()
+    {
+        Shell.Markers = Shell.DefaultMarkers;
+        Shell.PeekLines = Shell.DefaultPeekLines;
+    }
+
+    private void SixtyLines() =>
+        File.WriteAllText(In("work", "long.md"), string.Concat(Enumerable.Range(1, 60).Select(i => "Line " + i + "\n")));
+
+    [Fact]
+    public void Peek_ShowsFifteenLines_BetweenMarkers()
+    {
+        MarkersAsSet();
+        SixtyLines();
+        var (output, errors, _, _) = Run("peek long.md\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal(15, PeekLines(output));
+        Assert.Contains(Lang.F("-> {0}", "long.md") + "\n   1  Line 1\n", output);
+        Assert.Contains("  15  Line 15\n" + Lang.F("<- lines {0}-{1} of {2}", 1, 15, 60) + "\n", output);
+        Assert.DoesNotContain(Lang.F("(lines {0}-{1} of {2})", 1, 15, 60), output);
+        // $peek: the lines alone, without the markers
+        Assert.Equal(string.Join("\n", Enumerable.Range(1, 15).Select(i => "Line " + i)), ShellRegisters.Peek);
+    }
+
+    [Fact]
+    public void Peek_WithMarkers_TellsWhereTheLinesAre_AlsoForAWholeFile()
+    {
+        MarkersAsSet();
+        SixtyLines();
+        // A whole file: the end marker tells it too (without the markers nothing is told under it)
+        var (output, _, _, _) = Run("peek plot.md\npeek long.md +\npeek long.md /Line 30\n");
+        Assert.Contains(Lang.F("-> {0}", "plot.md") + "\n  1  Plot\n" + Lang.F("<- lines {0}-{1} of {2}", 1, 1, 1) + "\n", output);
+        Assert.Contains("  16  Line 16\n" + Lang.F("<- lines {0}-{1} of {2}", 2, 16, 60) + "\n", output);
+        Assert.Contains("> 30  Line 30\n", output);
+        Assert.Contains(Lang.F("<- match {0} of {1}, lines {2}-{3} of {4}", 1, 1, 28, 42, 60) + "\n", output);
+        // A window past the end shows no lines, and no markers
+        (output, _, _, _) = Run("peek plot.md +5\n");
+        Assert.Contains(Lang.F("{0} has {1} lines", In("work", "plot.md"), 1), output);
+        Assert.DoesNotContain(Lang.F("-> {0}", "plot.md"), output);
+    }
+
+    [Fact]
+    public void AutoPeek_WithMarkers_NamesTheFileInTheFirstMarker()
+    {
+        try
+        {
+            MarkersAsSet();
+            Shell.AutoPeek = true;
+            File.WriteAllText(In("work", "a.md"), "one\ntwo\nthree\n");
+            var (output, errors, _, _) = Run("peek a.md 1-2\nchange a.md +1 ONE\n");
+            Assert.Equal(string.Empty, errors);
+            Assert.Contains(Lang.F("-> {0} (peek again)", "a.md") + "\n  1  ONE\n  2  two\n" +
+                            Lang.F("<- lines {0}-{1} of {2}", 1, 2, 3) + "\n", output);
+            Assert.DoesNotContain(Lang.F("(peek again: {0})", "a.md"), output);
+        }
+        finally
+        {
+            Shell.AutoPeek = false;
+        }
+    }
+
+    [Fact]
+    public void Words_WithMarkers_ShowTheFileTheLineAndTheCount()
+    {
+        MarkersAsSet();
+        File.WriteAllText(In("work", "w.md"), "one two three\nfour\n");
+        var (output, errors, _, _) = Run("words w.md 1\nwords w.md 2\nword w.md 1 2 delete\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains(Lang.F("-> {0}, line {1}", "w.md", 1) + "\n  1 one  2 two  3 three\n" +
+                        Lang.F("<- {0} words", 3) + "\n", output);
+        Assert.Contains(Lang.F("-> {0}, line {1}", "w.md", 2) + "\n  1 four\n" + Lang.T("<- 1 word") + "\n", output);
+        // (the markers tell what the line under the words told)
+        Assert.DoesNotContain(Lang.F("{0}, line {1}: {2} words", In("work", "w.md"), 1, 3), output);
+        // A change: the words numbered again, between the markers
+        Assert.Contains(Lang.F("{0}: line {1} changed", In("work", "w.md"), 1) + "\n" +
+                        Lang.F("-> {0}, line {1}", "w.md", 1) + "\n  1 one  2 three\n" + Lang.F("<- {0} words", 2) + "\n",
+            output);
+    }
+
+    [Fact]
+    public void Markers_Off_ShowTheLinesAsBefore()
+    {
+        try
+        {
+            MarkersAsSet();
+            SixtyLines();
+            FileIo.SaveSettings();
+            var (output, errors, _, _) = Run("set shellmarkers false\npeek long.md\nwords long.md 2\n");
+            Assert.Equal(string.Empty, errors);
+            Assert.False(Shell.Markers);
+            Assert.DoesNotContain("->", output);
+            Assert.DoesNotContain("<-", output);
+            Assert.Contains("  15  Line 15\n" + Lang.F("(lines {0}-{1} of {2})", 1, 15, 60) + "\n", output);
+            Assert.Contains(Lang.F("{0}, line {1}: {2} words", In("work", "long.md"), 2, 2), output);
+            Run("set shellmarkers true\n");
+            Assert.True(Shell.Markers);
+        }
+        finally
+        {
+            MarkersAsSet();
+        }
+    }
+
+    [Fact]
+    public void PeekLines_IsSet_From1To1000()
+    {
+        try
+        {
+            MarkersAsSet();
+            SixtyLines();
+            FileIo.SaveSettings();
+            var (output, _, _, _) = Run("set shellpeeklines 30\npeek long.md\nhelp peek\npeek long.md +40\n");
+            Assert.Equal(30, Shell.PeekLines);
+            Assert.Contains(Lang.F("<- lines {0}-{1} of {2}", 1, 30, 60), output);
+            // (the help row can be wrapped)
+            Assert.Contains("the first 30,", output);
+            // "+40": as many lines as set, from line 40
+            Assert.Contains(Lang.F("<- lines {0}-{1} of {2}", 40, 60, 60), output);
+            (output, _, _, _) = Run("set shellpeeklines 0\n");
+            Assert.Equal(30, Shell.PeekLines);
+            Assert.Equal(15, Shell.ParsePeekStep("1001", Shell.DefaultPeekLines));
+            Assert.Equal(1000, Shell.ParsePeekStep("1000", Shell.DefaultPeekLines));
+            // reset: 15 lines, and the markers on again
+            Run("set shellmarkers false\nreset\n", yes: true);
+            Assert.Equal(15, Shell.PeekLines);
+            Assert.True(Shell.Markers);
+        }
+        finally
+        {
+            MarkersAsSet();
+        }
     }
 }
