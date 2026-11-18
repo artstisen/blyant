@@ -506,8 +506,36 @@ blyant ~/novel> word -p notes.md 12 15 replace commands.
 ```
 
 - `text,` becomes `note:` and `commands...` becomes `commands.`; without `-p` the comma and the dots stay
-- The words can be numbered another way with `-p`: `a/b` is one word, not two. Use `words -p` to see the numbers, and give `-p` to `word` too
 - `title` makes the first letter capital, after any marks: `**bold**` becomes `**Bold**`, and `"why?"` becomes `"Why?"`
+
+### Use -p on both, or on neither
+`words -p` and `words` can number the words of a line differently, so give `word` the same `-p` as `words`. A mark alone between blanks (`-`, `...`) is a word with `-p` only, and `a/b` is one word with `-p` but two without:
+
+```
+blyant ~/novel> words -p notes.md 4
+  1 Well  2 -  3 she  4 said:  5 try  6 a/b  7 first.
+/home/anna/novel/notes.md, line 4: 7 words
+blyant ~/novel> words notes.md 4
+  1 Well  2 she  3 said  4 try  5 a  6 b  7 first
+/home/anna/novel/notes.md, line 4: 7 words
+```
+
+Word 6 is `a/b` with `-p`, and only `b` without it. So `word @ 6 upper` after `words -p` would change another word than the one you saw. The shell catches this: when `word` counts a line another way than the last `words` of that line, and the numbers you give point at other words, nothing is changed:
+
+```
+blyant ~/novel> words -p notes.md 4
+  1 Well  2 -  3 she  4 said:  5 try  6 a/b  7 first.
+/home/anna/novel/notes.md, line 4: 7 words
+blyant ~/novel> word @ 6 upper
+words -p numbered line 4, and without -p the numbers differ: give -p to word too
+blyant ~/novel> word -p @ 6 upper
+   4  Well - she said: try A/B first.
+/home/anna/novel/notes.md: line 4 changed
+  1 Well  2 -  3 she  4 said:  5 try  6 A/B  7 first.
+```
+
+- Where the numbers are the same words both ways (`Well` is word 1 either way), `word` does what it is told, with `-p` or without
+- `word` on a line that `words` has not numbered is not checked: run `words` (or `words -p`) first to see the numbers
 
 ## Working on one line
 `@` stands for the file and the line the last command worked on, so the next command takes them without typing them again:

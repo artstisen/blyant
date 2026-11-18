@@ -240,7 +240,7 @@ blyant ~/novel> word @ 6 replace aunt
 - `word @ 5 before rich` puts a word in front of word 5, `after` after it, and `delete` takes it out
 - `word @ 1-2 upper` makes words 1 and 2 UPPERCASE (`lower`, `title` too)
 - `shift @ up` moves the line one line up, and `@` goes with it: `shift @ up` again moves it further. `shift -s plot.md Ideas down` moves a whole section, with the heading
-- The full stop after `mother` stays where it is: punctuation is not part of a word. With `-p` a word is all between blanks, so `word -p @ 6 replace aunt!` takes the full stop too, and the line ends with `her aunt!` (`words -p` shows the numbers)
+- The full stop after `mother` stays where it is: punctuation is not part of a word. With `-p` a word is all between blanks, so `word -p @ 6 replace aunt!` takes the full stop too, and the line ends with `her aunt!`. Use `-p` on both or on neither: `words -p` can number the words differently (a `-` alone is a word with `-p` only), and the shell refuses `word` without `-p` after `words -p` when the numbers differ
 
 `undo` takes back the last change made by `insert`, `change`, `lines` (also a sort), `word` or `shift` while Blyant is running (`redo` makes it again, and `changes` lists the changes). Still, `peek` first to be sure of the line numbers. A file keeps its line endings and byte order mark, and these commands leave the files Blyant uses alone.
 

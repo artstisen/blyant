@@ -6441,4 +6441,45 @@ public class ShellTests : IDisposable
         Assert.Equal("shift -S n.md bottom", Tab(Completion(), "shift -S n.md bo"));
         Assert.Equal("word -P", Tab(Completion(), "word -P"));
     }
+
+    // ---- words -p and word: counted the same way
+
+    [Theory]
+    [InlineData("Well - she said: try a/b first.", 1, 1, true)]
+    [InlineData("Well - she said: try a/b first.", 2, 2, false)]
+    [InlineData("Well - she said: try a/b first.", 6, 6, false)]
+    [InlineData("text, more text.", 1, 3, true)]
+    [InlineData("**bold** and (this)", 1, 3, true)]
+    [InlineData("one two", 3, 3, false)]
+    public void SameWords_TellsWhetherANumberIsTheSameWordCountedBothWays(string line, int first, int last, bool same)
+    {
+        Assert.Equal(same, LineWords.SameWords(line, first, last));
+    }
+
+    [Fact]
+    public void Word_CountedTheOtherWayThanWords_IsRefused_WhenTheNumbersDiffer()
+    {
+        File.WriteAllText(In("work", "n.md"), "Well - she said: try a/b first.\n");
+        var (_, errors, _, _) = Run("words -p n.md 1\nword @ 6 upper\nwords n.md 1\nword -p @ 6 upper\n");
+        Assert.Contains(Lang.F("words -p numbered line {0}, and without -p the numbers differ: give -p to word too", 1),
+            errors);
+        Assert.Contains(Lang.F("words numbered line {0} without -p, and with -p the numbers differ: leave out -p", 1),
+            errors);
+        Assert.Equal("Well - she said: try a/b first.\n", File.ReadAllText(In("work", "n.md")));
+        // The same way: as asked
+        (_, errors, _, _) = Run("words -p n.md 1\nword -p @ 6 upper\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("Well - she said: try A/B first.\n", File.ReadAllText(In("work", "n.md")));
+    }
+
+    [Fact]
+    public void Word_CountedTheOtherWay_IsTaken_WhereTheNumbersAreTheSameWords()
+    {
+        File.WriteAllText(In("work", "n.md"), "Well - she said: try a/b first.\nanother line\n");
+        // (word 1 is "Well" both ways; another line has nothing shown to go by; words again counts it as word does)
+        var (_, errors, _, _) = Run("words -p n.md 1\nword @ 1 upper\nword n.md 2 1 upper\nwords -p n.md 1\nwords n.md 1\n" +
+                                    "word n.md 1 6 upper\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("WELL - she said: try a/B first.\nANOTHER line\n", File.ReadAllText(In("work", "n.md")));
+    }
 }

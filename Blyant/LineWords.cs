@@ -28,6 +28,27 @@ internal static partial class LineWords
         line[i] is '‌' or '‍';
 
     /// <summary>
+    /// The words first to last (from 1) are the same words counted both ways, between blanks ("-p") and not: the word
+    /// of each number is the only word inside the word between blanks of that number ("text" in "text,"). False when
+    /// a number points at another word, or at a part of one ("a/b" is one word between blanks and two without, and a
+    /// "-" alone counts only between blanks), or at none
+    /// </summary>
+    internal static bool SameWords(string line, int first, int last)
+    {
+        var between = Find(line, true);
+        var words = Find(line);
+        for (var i = first; i <= last; i++)
+        {
+            if (i < 1 || i > between.Count || i > words.Count) return false;
+            var b = between[i - 1];
+            var inside = words.Where(w => w.Start >= b.Start && w.Start + w.Length <= b.Start + b.Length).ToList();
+            if (inside is not [var only] || only != words[i - 1]) return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
     /// The words of a line, in order: where each starts, and how long it is ("blanks": all between blanks)
     /// </summary>
     internal static List<(int Start, int Length)> Find(string line, bool blanks = false)

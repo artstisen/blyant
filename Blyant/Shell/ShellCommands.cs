@@ -792,6 +792,7 @@ internal sealed partial class ShellSession
         ShellRegisters.Calc = null;
         ForgetFind();
         _lastPeek = null;
+        _wordsShown = null;
         _lastSearch = null;
         _undo.Clear();
         _redo.Clear();

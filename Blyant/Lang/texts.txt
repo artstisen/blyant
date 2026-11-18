@@ -2285,6 +2285,8 @@ en: "Nothing goes after {0}: word notes.md 12 9 {0}"
 en: "Line {0} has no words"
 en: "Line {0} has 1 word: {1} is not one"
 en: "Line {0} has {1} words: {2} is not one"
+en: "words -p numbered line {0}, and without -p the numbers differ: give -p to word too"
+en: "words numbered line {0} without -p, and with -p the numbers differ: leave out -p"
 en: "Nothing changed: the words are so already"
 
 # Lang.cs (names made while running)

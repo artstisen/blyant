@@ -12,6 +12,10 @@ internal sealed partial class ShellSession
     // What "word" does to the words: the first three take a text after them
     private static readonly string[] WordActions = { "replace", "before", "after", "delete", "upper", "lower", "title" };
 
+    // The line "words" (or a change by "word") numbered last, and how: between blanks ("-p") or not. "word" on that
+    // line counted the other way is refused when the numbers point at other words (see LineWords.SameWords)
+    private (string Path, int Line, bool Blanks)? _wordsShown;
+
     // The width the numbered words are shown in (79 columns when it is not known, as to a file)
     private int WordsWidth() => Terminal && WindowSize?.Invoke() is { Width: > 20 } size ? size.Width - 3 : 77;
 
@@ -72,6 +76,7 @@ internal sealed partial class ShellSession
         if (LineOf(words[0], words[1], usage) is not { } at) return;
         var text = at.Lines[at.Line - 1];
         LastList = new List<Item> { new(at.Item.Path, false, (at.Line, 1)) };
+        _wordsShown = (Path.GetFullPath(at.Item.Path), at.Line, blanks);
         var count = LineWords.Find(text, blanks).Count;
         if (count == 0)
         {
@@ -146,6 +151,18 @@ internal sealed partial class ShellSession
             return;
         }
 
+        // ("words -p", then "word" without -p, or the other way: the numbers seen are of the other count. Refused
+        // when they point at other words: "a/b" is word 6 between blanks, "b" without)
+        if (_wordsShown is { } shown && shown.Blanks != blanks && shown.Line == at.Line &&
+            FileOperations.NameComparer.Equals(shown.Path, Path.GetFullPath(at.Item.Path)) &&
+            !LineWords.SameWords(line, first, last))
+        {
+            Error(shown.Blanks
+                ? Lang.F("words -p numbered line {0}, and without -p the numbers differ: give -p to word too", at.Line)
+                : Lang.F("words numbered line {0} without -p, and with -p the numbers differ: leave out -p", at.Line));
+            return;
+        }
+
         var changed = LineWords.Change(line, first, last, action, text, blanks);
         if (changed == line)
         {
@@ -165,6 +182,8 @@ internal sealed partial class ShellSession
         }
 
         LastList = new List<Item> { new(at.Item.Path, false, (at.Line, 1)) };
+        // (the words are shown numbered again, this way)
+        _wordsShown = (Path.GetFullPath(at.Item.Path), at.Line, blanks);
         Line(at.Line.ToString().PadLeft(4) + "  " + changed);
         Line(Lang.F("{0}: line {1} changed", at.Item.Path, at.Line));
         if (LineWords.Find(changed, blanks).Count > 0) ShowWords(changed, blanks);
