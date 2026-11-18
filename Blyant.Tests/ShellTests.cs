@@ -6772,4 +6772,49 @@ public class ShellTests : IDisposable
             errors);
         Assert.Contains("find -d", Run("help find\n").Output);
     }
+
+    [Fact]
+    public void LsD_AndLsS_ShowTheDatesAndSizesOfTheFiles_LinedUp()
+    {
+        File.WriteAllText(In("work", "plot.md"), new string('x', 2048));
+        File.SetLastWriteTime(In("work", "plot.md"), new DateTime(2026, 11, 18, 14, 2, 0));
+        File.SetLastWriteTime(In("work", "Ending.md"), new DateTime(2026, 1, 5, 9, 40, 0));
+        var size = FileSizeFormatter.FormatSize(2048);
+        var small = FileSizeFormatter.FormatSize(new FileInfo(In("work", "Ending.md")).Length);
+        var width = Math.Max(size.Length, small.Length);
+        var (output, errors, _, _) = Run("ls -d -s\n");
+        Assert.Equal(string.Empty, errors);
+        // A folder has neither; the files lined up ("Ending.md" is the longest name)
+        Assert.Contains("  1  Draft/\n", output);
+        Assert.Contains("Ending.md  2026-01-05 09:40  " + small.PadLeft(width) + "\n", output);
+        Assert.Contains("plot.md    2026-11-18 14:02  " + size.PadLeft(width) + "\n", output);
+        // One of them, in any order with the others; a directory after them
+        (output, _, _, _) = Run("ls -s\nls -a -d .\n");
+        Assert.Contains("plot.md    " + size.PadLeft(width) + "\n", output);
+        Assert.Contains("plot.md    2026-11-18 14:02\n", output);
+        // Without them: the names alone
+        (output, _, _, _) = Run("ls\n");
+        Assert.DoesNotContain("2026-", output);
+        // An option not known is told; a directory with such a name is listed
+        (_, errors, _, _) = Run("ls -x\n");
+        Assert.Contains(Lang.F("Not taken: {0} (-a hidden ones too, -l full paths, -d dates, -s sizes)", "-x"), errors);
+        Directory.CreateDirectory(In("work", "-x"));
+        (output, errors, _, _) = Run("ls -x\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains(In("work", "-x"), output);
+        Assert.Contains("ls -d, ls -s", Run("help ls\n").Output);
+    }
+
+    [Fact]
+    public void Ls_TabCompletesTheOptions_AndTheDirectories()
+    {
+        Assert.Equal("ls -a", Tab(Completion(), "ls -"));
+        Assert.Equal("ls -d", Tab(Completion(), "ls -d"));
+        // The options not given yet
+        Assert.Equal("ls -d -a", Tab(Completion(), "ls -d -"));
+        Assert.Equal("ls -d -s", Tab(Completion(), "ls -d -", true, true, true));
+        // Directories as before, also after the options
+        Assert.Equal("ls Draft/", Tab(Completion(), "ls Dr"));
+        Assert.Equal("ls -s -d Draft/", Tab(Completion(), "ls -s -d Dr"));
+    }
 }

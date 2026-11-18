@@ -14,7 +14,8 @@ internal sealed partial class ShellSession
     private static IEnumerable<(string Command, string Text)> HelpRows() => new[]
     {
         ("pwd", Lang.T("Show the directory you are in")),
-        ("ls [-a] [-l] [dir|n]", Lang.T("List a directory (-a: hidden ones too, -l: full paths)")),
+        ("ls [-a] [-l] [-d] [-s] [dir|n]", Lang.T("List a directory (-a: hidden ones too, -l: full paths)")),
+        ("ls -d, ls -s", Lang.T("Show when each file was last changed, and its size")),
         ("cd [dir|file|n]", Lang.T("Go to a directory, or that of a file (alone: home)")),
         ("up", Lang.T("Go to the directory above")),
         ("home", Lang.T("Go to your home directory")),
@@ -1191,14 +1192,25 @@ internal sealed partial class ShellSession
     // system ones left out: on Linux and macOS the names that start with "."); "ls -a": those too
     private void ListDirectory(string argument)
     {
-        // "-a": hidden ones too; "-l": the full paths, without the mark of a favorite (for scripts); before the
-        // directory, in any order ("ls -a -l notes")
-        var (all, full) = (false, false);
-        while (argument.TrimStart() is ['-', 'a' or 'l', ..] trimmed &&
+        // "-a": hidden ones too; "-l": the full paths, without the mark of a favorite (for scripts); "-d": when each
+        // file was last changed, "-s": its size (after the name, as find -d and recent -s show them); before the
+        // directory, in any order ("ls -a -l notes"). A word of "-" and a letter that is none of them, and not a
+        // directory here, is told
+        var (all, full, dates, sizes) = (false, false, false, false);
+        while (argument.TrimStart() is ['-', var letter, ..] trimmed &&
                (trimmed.Length == 2 || char.IsWhiteSpace(trimmed[2])))
         {
-            if (trimmed[1] == 'a') all = true;
-            else full = true;
+            if (letter is not ('a' or 'l' or 'd' or 's'))
+            {
+                if (System.IO.Directory.Exists(PathOf(trimmed[..2]))) break;
+                Error(Lang.F("Not taken: {0} (-a hidden ones too, -l full paths, -d dates, -s sizes)", trimmed[..2]));
+                return;
+            }
+
+            if (letter == 'a') all = true;
+            else if (letter == 'l') full = true;
+            else if (letter == 'd') dates = true;
+            else sizes = true;
             argument = trimmed[2..];
         }
 
@@ -1222,6 +1234,7 @@ internal sealed partial class ShellSession
                 .Concat(info.EnumerateFiles().Where(Listed).OrderBy(f => f.Name, StringComparer.OrdinalIgnoreCase)
                     .Select(f => (new Item(f.FullName, false), full ? f.FullName : f.Name + FavoriteMark(f.FullName))))
                 .ToList();
+            if (dates || sizes) rows = WithDatesAndSizes(rows, dates, sizes, full);
             Line(item.Path);
             List(rows, Lang.T("(empty)"));
         }
@@ -1231,6 +1244,22 @@ internal sealed partial class ShellSession
         }
 
         bool Listed(FileSystemInfo entry) => all || (entry.Attributes & (FileAttributes.Hidden | FileAttributes.System)) == 0;
+    }
+
+    // The rows of ls with when each file was last changed and its size after the name, lined up (not after full
+    // paths: the rows would be wider than the window). A directory has neither: its date changes with the files in it
+    private static List<(Item Item, string Text)> WithDatesAndSizes(List<(Item Item, string Text)> rows, bool dates,
+        bool sizes, bool full)
+    {
+        var files = rows.Where(row => !row.Item.IsDirectory).ToList();
+        var width = full || files.Count == 0 ? 0 : files.Max(row => TextMetrics.WidthOf(row.Text));
+        var sizeTexts = files.ToDictionary(row => row.Item.Path, row => SizeOf(row.Item.Path));
+        var sizeWidth = sizes && sizeTexts.Count > 0 ? sizeTexts.Values.Max(TextMetrics.WidthOf) : 0;
+        return rows.Select(row => row.Item.IsDirectory
+            ? row
+            : (row.Item, Padded(row.Text, width) +
+                         (dates ? "  " + (ChangedOf(row.Item.Path) ?? "-") : string.Empty) +
+                         (sizes ? "  " + sizeTexts[row.Item.Path].PadLeft(sizeWidth) : string.Empty))).ToList();
     }
 
     #endregion

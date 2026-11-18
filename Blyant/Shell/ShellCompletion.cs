@@ -45,6 +45,7 @@ internal sealed class ShellCompletion
         PathOrWords,
         PathThenWords,
         QuotedWords,
+        DirectoryOrOptions, // A directory; a word that starts with "-": the options, then the directories that fit
         Names // Words, or those a pattern fits ("chapter-*" to "chapter-1.md"), in quotes with a blank in them
     }
 
@@ -129,6 +130,9 @@ internal sealed class ShellCompletion
         {
             Kind.Path => PathsFitting(word, false),
             Kind.Directory => PathsFitting(word, true),
+            Kind.DirectoryOrOptions => word.StartsWith('-')
+                ? Fitting(choices, word).Concat(PathsFitting(word, true)).ToList()
+                : PathsFitting(word, true),
             Kind.Words => Fitting(choices, word),
             Kind.PathOrWords => Fitting(choices, word).Concat(PathsFitting(word, false)).ToList(),
             Kind.PathThenWords => PathsFitting(word, false).Concat(Fitting(choices, word)).ToList(),
@@ -152,8 +156,10 @@ internal sealed class ShellCompletion
             case "cd":
                 return (position == 0 ? Kind.Directory : Kind.None, none);
             case "ls":
-                // ("ls -a -l notes": the directory after -a and -l)
-                return (after.All(word => word is "-a" or "-l") ? Kind.Directory : Kind.None, none);
+                // ("ls -a -l notes": the directory after the options; "ls -" and Tab: the options not given yet)
+                return after.All(word => word is "-a" or "-l" or "-d" or "-s")
+                    ? (Kind.DirectoryOrOptions, new[] { "-a", "-l", "-d", "-s" }.Except(after))
+                    : (Kind.None, none);
             case "open":
             case "edit":
                 return (position == 0 ? Kind.Path : Kind.None, none);

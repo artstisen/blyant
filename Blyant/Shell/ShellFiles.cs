@@ -482,6 +482,24 @@ internal sealed partial class ShellSession
         }
     }
 
+    // When a file was last changed ("2026-11-18 14:02", local time, as recent shows when it was opened), for find -d
+    // and ls -d; null for a file that is gone or cannot be read
+    private static string? ChangedOf(string path)
+    {
+        try
+        {
+            var info = new FileInfo(path);
+            return info.Exists
+                ? info.LastWriteTime.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture)
+                : null;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException or
+                                       NotSupportedException)
+        {
+            return null;
+        }
+    }
+
     // The markers of peek and words (the setting shellmarkers), the same in all languages: above the lines, the top of
     // the file shown ("->"), or lines of the file above them ("-^"); below them, the end of the file shown ("<-"), or
     // lines of the file below them ("-v")
@@ -936,7 +954,9 @@ internal sealed partial class ShellSession
             return name + (!full && result.Line < 0 ? FavoriteMark(result.Path) : string.Empty) +
                    (!full && Gone(result) ? missing : string.Empty);
         }).ToList();
-        var changed = dates ? outcome.Results.Select(result => ChangedOf(result)).ToList() : null;
+        var changed = dates
+            ? outcome.Results.Select(result => result.IsDirectory ? null : ChangedOf(result.Path)).ToList()
+            : null;
         var width = changed == null || full
             ? 0
             : outcome.Results.Select((result, i) => result.Line < 0 && changed[i] != null ? TextMetrics.WidthOf(shownNames[i]) : 0)
@@ -957,24 +977,6 @@ internal sealed partial class ShellSession
         static bool Gone(FileSearch.Result result) =>
             result.IsDirectory ? !System.IO.Directory.Exists(result.Path) : !FileOperations.IsFileThere(result.Path);
 
-        // When a file was last changed ("2026-11-18 14:02", local time, as recent shows when it was opened); null for
-        // a directory, and for a file that is gone or cannot be read
-        static string? ChangedOf(FileSearch.Result result)
-        {
-            if (result.IsDirectory) return null;
-            try
-            {
-                var info = new FileInfo(result.Path);
-                return info.Exists
-                    ? info.LastWriteTime.ToString("yyyy-MM-dd HH:mm", System.Globalization.CultureInfo.InvariantCulture)
-                    : null;
-            }
-            catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException or
-                                           NotSupportedException)
-            {
-                return null;
-            }
-        }
     }
 
     // "fav add 3", "fav remove notes.md": a file or directory added to the favorites in use, or taken off them. A
