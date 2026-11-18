@@ -149,9 +149,12 @@ internal sealed partial class ShellSession
         var delete = text.Length == 0;
         if (delete)
         {
-            // The lines that would go, and the question (they are back only with undo, while Blyant runs)
+            // The lines that would go, and the question (they are back only with undo, while Blyant runs). Between the
+            // markers of peek (the setting shellmarkers)
             var width = last.ToString().Length;
+            if (Shell.Markers) Line((first > 1 ? AboveMarker : TopMarker) + Path.GetFileName(item.Path));
             for (var i = first; i <= last; i++) Line(i.ToString().PadLeft(width + 2) + "  " + lines[i - 1]);
+            if (Shell.Markers) Line((last < count ? BelowMarker : EndMarker) + Lang.F("lines {0}-{1} of {2}", first, last, count));
             var question = first == last
                 ? Lang.F("Delete line {0} of {1}?", first, Path.GetFileName(item.Path))
                 : Lang.F("Delete lines {0}-{1} of {2}?", first, last, Path.GetFileName(item.Path));

@@ -6716,4 +6716,28 @@ public class ShellTests : IDisposable
             MarkersAsSet();
         }
     }
+
+    [Fact]
+    public void Change_WithoutAText_ShowsTheLinesBetweenTheMarkers()
+    {
+        try
+        {
+            MarkersAsSet();
+            File.WriteAllText(In("work", "list.md"), "One\nTwo\nThree\nFour\n");
+            var (shown, _, _, _) = Run("change list.md 2-3\nchange list.md 1-4\n");
+            // Lines above and below them, then the whole file
+            Assert.Contains(ShellSession.AboveMarker + "list.md\n  2  Two\n  3  Three\n" + ShellSession.BelowMarker +
+                            Lang.F("lines {0}-{1} of {2}", 2, 3, 4) + "\n", shown);
+            Assert.Contains(ShellSession.TopMarker + "list.md\n  1  One\n", shown);
+            Assert.Contains("  4  Four\n" + ShellSession.EndMarker + Lang.F("lines {0}-{1} of {2}", 1, 4, 4) + "\n", shown);
+            // Off: the lines alone
+            Shell.Markers = false;
+            (shown, _, _, _) = Run("change list.md 2-3\n");
+            Assert.Contains("  2  Two\n  3  Three\n" + Lang.T("Nothing was deleted"), shown);
+        }
+        finally
+        {
+            MarkersAsSet();
+        }
+    }
 }

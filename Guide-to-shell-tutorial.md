@@ -210,7 +210,9 @@ blyant ~/novel> peek plot.md
 blyant ~/novel> change plot.md +4 The letter is from her mother.
 /home/anna/novel/plot.md: line 4 changed
 blyant ~/novel> change plot.md 6
+-^ plot.md
   6  Then the phone rings.
+<- lines 6-6 of 6
 Delete lines: Delete line 6 of plot.md?
   Y Yes  N No*: y
 /home/anna/novel/plot.md: line 6 deleted
