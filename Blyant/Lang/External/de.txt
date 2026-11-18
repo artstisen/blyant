@@ -4245,6 +4245,8 @@ en: "@ is the file and the line of the last command: none yet (words notes.md 12
 de: "@ ist Datei und Zeile des letzten Befehls: noch keine (words notes.md 12)"
 en: "@ has no line: the last command worked on no line of {0}"
 de: "@ hat keine Zeile: der letzte Befehl nutzte keine Zeile von {0}"
+en: "@ is at the top of the new file {0}: insert @ text writes its first line"
+de: "@ steht am Anfang der neuen Datei {0}: insert @ Text schreibt die erste Zeile"
 en: "Not lines: {0} (as 4, 4-6, 4,7,9-10, or +100 20)"
 de: "Keine Zeilen: {0} (wie 4, 4-6, 4,7,9-10 oder +100 20)"
 en: "No line has {0} in it (or give the lines: 4, 4-6, 4,7,9-10)"

@@ -238,7 +238,8 @@ internal sealed partial class ShellSession
     };
 
     // "word @ 9 replace wish": "@" in the place of the file is $file at $line, the file and the line the last command
-    // worked on ("$file +12"; for insert the line after it, "+13", so the text goes after the line). Another word, or
+    // worked on ("$file +12"; for insert the line after it, "+13", so the text goes after the line). After "new" it is
+    // the top of the empty file (line 0), for insert only. Another word, or
     // "@" in a text ("insert @ Ask @anna"), is as it is. Null (and told) when there is no line to take
     internal string? WithAt(string name, string argument)
     {
@@ -255,6 +256,14 @@ internal sealed partial class ShellSession
             Error(_file == null
                 ? Lang.T("@ is the file and the line of the last command: none yet (words notes.md 12)")
                 : Lang.F("@ has no line: the last command worked on no line of {0}", Path.GetFileName(_file)));
+            return null;
+        }
+
+        // (a new file: @ is at its top, before the first line, which only insert can take)
+        if (line == 0 && name != "insert")
+        {
+            Error(Lang.F("@ is at the top of the new file {0}: insert @ text writes its first line",
+                Path.GetFileName(_file)));
             return null;
         }
 

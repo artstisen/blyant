@@ -5996,6 +5996,20 @@ public class ShellTests : IDisposable
     }
 
     [Fact]
+    public void At_AfterNew_IsTheTopOfTheFile_ForInsert()
+    {
+        var (output, errors, _, _) = Run("peek plot.md\nnew fresh\necho $file $line\ninsert @ First line\n" +
+                                         "insert @ Second line\nword @ 1 upper\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains(In("work", "fresh.md") + " 0\n", output);
+        // (an empty file gets the line endings of the system)
+        Assert.Equal("First line\nSECOND line\n", File.ReadAllText(In("work", "fresh.md")).Replace("\r\n", "\n"));
+        (_, errors, _, _) = Run("new other\nwords @\n");
+        Assert.Contains(Lang.F("@ is at the top of the new file {0}: insert @ text writes its first line", "other.md"),
+            errors);
+    }
+
+    [Fact]
     public void At_APeek_KeepsTheLine_ASearchSetsIt_AnotherFileStartsAtTheFirstLineShown()
     {
         File.WriteAllText(In("work", "l.md"), "one\ntwo\nstorm\nfour\n");

@@ -524,6 +524,7 @@ shift @ up                                   ... and up again
 - It follows the line: after `shift @ up` it is the line at its new place, and after `insert` the line put in. A section moved with `shift -s` is followed by its heading
 - The line is that of the last command that worked on a line: `words`, `word`, `insert`, `change`, `shift` and `lines` (the other file, at the lines put in). A peek of the same file is a look, and leaves it; a search with peek (`peek notes.md /storm`) makes the line found `@`, and a peek of another file the first line shown. `format`, `trim` and `undo` keep it
 - `$file` and `$line` are the two parts: `echo $file $line` shows where `@` is. `file plot.md` sets `$file` without a line (`@` then says so), until a command works on a line of it
+- After `new`, `@` is the top of the empty file (`$line` is 0): `new scene` and `insert @ The ferry was late.` writes the first line, and each `insert @` after it adds a line below the last. Until then only `insert` takes `@`
 - `@` counts only alone in the place of the file. In a text it stays as it is (`insert @ Ask @anna`), and a file named _@_ is written in quotes (`peek "@"`)
 
 ## Undo

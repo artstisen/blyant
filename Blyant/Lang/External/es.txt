@@ -4245,6 +4245,8 @@ en: "@ is the file and the line of the last command: none yet (words notes.md 12
 es: "@ es el archivo y la línea del último comando: aún nada (words notes.md 12)"
 en: "@ has no line: the last command worked on no line of {0}"
 es: "@ no tiene línea: el último comando no usó ninguna línea de {0}"
+en: "@ is at the top of the new file {0}: insert @ text writes its first line"
+es: "@ está al inicio del archivo nuevo {0}: insert @ texto escribe la 1.ª línea"
 en: "Not lines: {0} (as 4, 4-6, 4,7,9-10, or +100 20)"
 es: "No son líneas: {0} (como 4, 4-6, 4,7,9-10 o +100 20)"
 en: "No line has {0} in it (or give the lines: 4, 4-6, 4,7,9-10)"

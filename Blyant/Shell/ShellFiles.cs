@@ -115,6 +115,8 @@ internal sealed partial class ShellSession
         // (in the latest files at once, as one opened: "recent" and Tab with nothing typed offer it)
         if (result == DialogText.Success) FileExplorer.AddToHistory(path);
         Done(result, Lang.F("Made: {0}", path), path);
+        // (@ at the top of the empty file: "insert @ text" writes its first line, and @ goes on from there)
+        if (result == DialogText.Success) _line = 0;
     }
 
     // "mkdir drafts": a new directory in the directory you are in
