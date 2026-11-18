@@ -428,7 +428,11 @@ internal sealed partial class ShellSession
         if (!auto)
         {
             var opened = mark > 0 ? mark : first;
+            // (@ is the line worked on: a window of the same file is a look and keeps it, a line found is the line,
+            // and another file is at the first line shown)
+            var kept = _file != null && FileOperations.NameComparer.Equals(_file, Path.GetFullPath(item.Path)) ? _line : null;
             LastList = new List<Item> { opened > 1 ? item with { At = (opened, 1) } : item };
+            _line = mark == 0 && kept != null ? kept : opened;
         }
         last = Math.Min(last, lines.Count);
         if (first > last)

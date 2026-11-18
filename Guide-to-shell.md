@@ -105,6 +105,8 @@ To get all output at once (with a screen reader, say), turn the pages off: `set 
 | `change file\|n +line\|from-to [text]` | Replace a line (`+12`) or lines (`12-15`) of a file with a text, or delete them when no text is given (asks first). See [Text and settings](#text-and-settings) |
 | `shift file\|n lines place` | Move lines in a file without opening it: under a heading (`shift todo.md 4-6 Done`), at the end of its section (`Done+`), before a line (`+12`), to the `top` or the `bottom`. See [Moving lines](#moving-lines) |
 | `shift! file\|n lines place` | Move lines as `shift` does, and tick any task boxes (`- [ ]` to `- [x]`), or untick any that are ticked |
+| `shift file\|n lines up\|down [n]` | Move lines up or down, by a line or by n lines: `shift notes.md 12 up`, `shift notes.md 12-15 down 3`. See [Moving lines](#moving-lines) |
+| `shift -s file\|n heading place` | Move a section (a heading and what is under it) up or down past the sections of its level, or to a place: `shift -s notes.md Ideas up`. See [Moving a section](#moving-a-section) |
 | `lines file\|n lines > file\|n place [copy\|cut]` | Copy lines to another file without opening the files (`lines notes.md 4-6 > plan.md bottom`), or with `cut` move them there. See [Moving lines](#moving-lines) |
 | `lines file\|n lines >\|>> $name [copy\|cut]` | Keep lines in a register (`lines notes.md 4-6 > $notes`), or add them at the end with `>>`; with `cut`, also take them out of the file. A register that holds a path is not written over: give the place in that file (`> $plan bottom`). See [Registers](#registers) |
 | `lines file\|n lines start\|end text` | Put a text at the start or the end of lines, keeping the rest (`lines todo.md 4 start Remember this:`). See [Text in lines](#text-in-lines) |
@@ -114,6 +116,7 @@ To get all output at once (with a screen reader, say), turn the pages off: `set 
 | `lines file\|n lines upper\|lower\|title` | Make lines UPPERCASE, lowercase or Title Case (each word with a capital first letter), as `gU` and `gu` in the editor: `lines notes.md 1 upper` |
 | `words [-p] file\|n line` | Show the words of a line, numbered, for `word`: `words notes.md 12`; with `-p` a word is all between blanks, punctuation too. See [Words in a line](#words-in-a-line) |
 | `word file\|n line n\|n-m action [text]` | Change words of a line by number: `replace`, `before`, `after` and `delete` (`word notes.md 12 9 replace wish`), or `upper`, `lower` and `title`. See [Words in a line](#words-in-a-line) |
+| `@` | The file and the line the last command worked on, in place of the file and the line: `words notes.md 12`, then `word @ 9 replace wish`. See [Working on one line](#working-on-one-line) |
 | `format file\|n` | Format an HTML, CSS or XML file, as `:format` in the editor does (see [Text and settings](#text-and-settings)) |
 | `trim file\|n` | Remove blank space at the end of lines, as `:trim` in the editor does; `trim!` also removes Markdown line breaks |
 | `set [name [value]]` | Show the settings (`set`), one setting (`set indent`), or change one (`set indent 2`, also `set indent=2` as in the settings file) |
@@ -146,7 +149,7 @@ To get all output at once (with a screen reader, say), turn the pages off: `set 
 | `favorites move rows\|name\|[folder] where` | Move favorites or a folder: `top`, `bottom`, `up`, `down`, `out`, to the place of a row (`5`), or into a `[folder]`. Name a favorite by row or name (`fav move plot.md top`), and several by a pattern (`fav move chapter-*.md [Drafts]`) |
 | `favorites filter text` | Show the favorites with a text in their name or path, or whose name fits a pattern (`fav filter draft`, `fav filter *.typ`), numbered as in the whole list. See [Folders of favorites](#folders-of-favorites) |
 | `favorites undo` | Put back what `fav remove` removed last |
-| `history [-l] [-s] [-f] [-n]` (`hist`) | List the files opened, by name, newest first, with when they were opened. The options are those of `recent` |
+| `history [-l] [-s] [-f] [-n]` (`hist`) | List the files opened in the editor or changed by a command of the shell, by name, newest first, with when that was. The options are those of `recent` |
 | `history [-l] filter text` | Show the files opened with a text in their path (`hist filter chapter`), or whose name fits a pattern (`hist filter *.typ`), numbered as in the whole history, so `open 7` is row 7 of `hist`. The options of `recent` go before `filter` (`hist -n -f filter chapter`) |
 | `recent [-l] [-s] [-f] [-n]` | List the latest files (the first nine of the history), by name. `-l` shows the full paths, `-s` the size of each file (`-` for a file that is gone), `-f` the folder and the name (`Book/chapter-3.md`; two rows alike get the folder above it: `Book/a.md (novel)`), and `-n` sorts the rows by name, A to Z, numbered as shown, so `open 3` opens row 3. The options go in any order: `recent -n -f -s` |
 | `recent\|hist\|fav ... -t text` | Only the files of the list with the text in a line, and the first line with it, instead of the date: `recent -t storm` shows `02-storm.md:3  The storm came at night.` The text is taken as `find -t` takes it (letter case alike, `*` and `?`), and goes last, after the other options and a filter (`hist -n -t storm`, `fav filter draft -t storm`). The rows are numbered as in the whole list, and `open 4` opens row 4 at the line found. Directories and files that are not text are left out. `recent -t *` shows the first line of each file, and `recent -t "# *"` the first heading |
@@ -361,6 +364,8 @@ shift todo.md "Get pencils and paper" Done   the line with that text in it
 shift todo.md 5 Done+                        at the end of the section of Done
 shift todo.md 12 +3                          before line 3
 shift todo.md 12 top                         to the top (or bottom)
+shift todo.md 12 up                          one line up
+shift todo.md 12-14 down 3                   lines 12 to 14, three lines down
 shift! todo.md "Get pencils and paper" Done  moved, and its task box ticked
 ```
 
@@ -371,6 +376,7 @@ shift! todo.md "Get pencils and paper" Done  moved, and its task box ticked
 - A text in place of the lines finds the one line that has it (ignoring letter case). When several lines have it, or none does, they are shown with their numbers and nothing is moved; the same goes when no heading has the name, or two do (then the headings are shown)
 - `shift!` also ticks any task boxes in the lines moved (`- [ ] Milk` to `- [x] Milk`, also in a numbered list), and unticks any that are ticked: `shift! todo.md Milk Done` when it is done, `shift! todo.md Milk Todo` to move it back. A line without a box is moved as it is
 - The place cannot be in the lines moved (the heading moved, or `+5` with line 5 moved). Lines already at the place are left there
+- `up` and `down` move the lines by one line, or by as many as given (`down 3`), and stop at the top and the bottom of the file. Lines given apart (`5,8`) are put together. A heading named _Up_ or _Down_ is written in quotes (`"Up"`)
 - The lines moved are shown at their new place, and the file is then the last list there (`open 1`). As for `insert`, the file keeps its line endings and byte order mark, only a file in UTF-8 is changed and not the files Blyant uses, and `undo` puts it back; a move loses nothing, so there is no question first
 
 `lines` copies lines to another file, or moves them there with `cut` last:
@@ -387,6 +393,22 @@ lines todo.md "Get pencils and paper" > done.md Done+ cut
 - The lines put in are shown, and the other file is then the last list there (`open 1`). Both files keep their line endings and byte order mark, only files in UTF-8 are changed and not the files Blyant uses, and nothing is asked: no line is lost. To move lines within one file, use `shift`
 - `Tab` completes the other file after the `>`, then the headings of that file (also from a pattern, and of a row or `$file`), then `copy` and `cut`. A heading is found by the whole text, the start or a pattern, as for `shift`
 - From the command line of your system, give the command in quotes: `blyant --run "lines notes.md 4-6 > plan.md bottom"`. Without them, bash, PowerShell and cmd take the `>` as a redirection to a file
+
+### Moving a section
+`shift -s` moves a whole section: a heading, with the text and the headings under it, up to the next heading of the same level or above. Chapters and scenes change places without counting lines:
+
+```
+shift -s notes.md Ideas up                   above the section before it
+shift -s notes.md Ideas down 2               below the two sections after it
+shift -s notes.md Ideas top                  to the top (or bottom, +12, under a heading)
+shift -s notes.md +40 up                     the section of the heading on line 40
+```
+
+- `up` and `down` pass whole sections of the same level under the same heading: a `##` section passes the `##` sections, never into the middle of one, and a `###` section stays under its `##` heading. At the first or the last of them nothing is moved, and the shell says so
+- The heading is named as a place is (the whole name, the start, or a pattern; `Tab` completes it), or given by its line (`+40`, as `@` gives it)
+- Blank lines stay as they were: when the sections have a blank line between them, they have one after the move too
+- A place (`top`, `bottom`, `+12`, a heading) takes the section there, as lines go; it cannot be in the section itself
+- The heading is shown at its new place, with how many lines the section has. `shift! -s` ticks any task boxes in the section, and `undo` takes a move back
 
 ## Text in lines
 `lines` also changes the text in lines, keeping what is there: it puts a text at the start or end, takes it off again, or replaces a text. The word after the lines says which:
@@ -466,7 +488,7 @@ blyant ~/novel> word notes.md 12 9 replace wish
 - `delete` takes the word out with the marks around it that open and close each other (`**bold**`, `(see)` and `"why"` go whole). A mark that opens or closes something else stays (`(see chapter 3)` without `see` is `(chapter 3)`), and so does punctuation after the word (`the end.` without `end` is `the.`). One of the blanks around the word goes with it, and none is left at the start or the end of the line
 - A word is letters and digits with any accents or marks that go with them, also when an accent is a separate character, as in files from macOS
 - Several words are given as `5-7`: `replace` puts the text in place of all those words, and `before` and `after` go in front of the first and after the last
-- The line is given as `12` or `+12`, and the file as a name, a row of the last list or `$file`: `words` makes the file `$file`, so the next command can be `word $file 12 9 ...`
+- The line is given as `12` or `+12`, and the file as a name, a row of the last list or `$file`. After `words`, `@` is the file and the line, so the next command can be `word @ 9 ...` (see [Working on one line](#working-on-one-line))
 - After a change the line is shown, with the words numbered again, as the numbers after a word put in or taken out move
 - The text is all that follows `replace`, `before` or `after`, as typed; in quotes it is put in exactly as written. `$name` puts in a value
 - `undo` takes a change back. A file Blyant uses, or one that is not UTF-8, is not changed, and the line endings and byte order mark of the file are kept, as with `lines`
@@ -485,6 +507,24 @@ blyant ~/novel> word -p notes.md 12 15 replace commands.
 - `text,` becomes `note:` and `commands...` becomes `commands.`; without `-p` the comma and the dots stay
 - The words can be numbered another way with `-p`: `a/b` is one word, not two. Use `words -p` to see the numbers, and give `-p` to `word` too
 - `title` makes the first letter capital, after any marks: `**bold**` becomes `**Bold**`, and `"why?"` becomes `"Why?"`
+
+## Working on one line
+`@` stands for the file and the line the last command worked on, so the next command takes them without typing them again:
+
+```
+words notes.md 12                            the words of line 12
+word @ 9 replace wish                        = word notes.md 12 9 replace wish
+word @ 3 upper
+insert @ A new line after it                 after line 12: @ is then line 13
+shift @ up                                   line 13 one line up, and @ with it
+shift @ up                                   ... and up again
+```
+
+- `@` goes in the place of the file and the line: in `words`, `word`, `change`, `peek`, `shift` (the lines, or with `-s` the heading), `lines` (the lines), and `open` and `edit` (the cursor at the line). With `insert` the text goes after the line
+- It follows the line: after `shift @ up` it is the line at its new place, and after `insert` the line put in. A section moved with `shift -s` is followed by its heading
+- The line is that of the last command that worked on a line: `words`, `word`, `insert`, `change`, `shift` and `lines` (the other file, at the lines put in). A peek of the same file is a look, and leaves it; a search with peek (`peek notes.md /storm`) makes the line found `@`, and a peek of another file the first line shown. `format`, `trim` and `undo` keep it
+- `$file` and `$line` are the two parts: `echo $file $line` shows where `@` is. `file plot.md` sets `$file` without a line (`@` then says so), until a command works on a line of it
+- `@` counts only alone in the place of the file. In a text it stays as it is (`insert @ Ask @anna`), and a file named _@_ is written in quotes (`peek "@"`)
 
 ## Undo
 The commands that change the text of a file (`insert`, `change`, `shift`, `lines`, `format` and `trim`) keep what the file was before, so `undo` puts it back:
@@ -738,6 +778,7 @@ lines plot.md 3-5 > $notes          ">": the register is those lines alone
   |---|---|
   | `$pwd` | the directory you are in (`copy 3 $pwd`) |
   | `$file` | the file the last command worked on: opened, peeked, put lines in, made with `new` ... (`peek plot.md`, then `insert $file bottom Done`). It is kept when you leave the shell, and is `$file` again the next time you start it, while the file is there (setting `shelllastfile`; not for commands from a file, a pipe or `--run`). A list shown (`ls`, `fav`) does not change it. `file 3` makes row 3 of a list `$file` without peeking it, and `resume` opens it in the editor |
+  | `$line` | the line of `$file` the last command worked on (`words notes.md 12` makes it 12): with `$file` it is `@` (see [Working on one line](#working-on-one-line)). Empty until a command works on a line |
   | `$date` | today, as `2026-11-15` |
   | `$time` | the time now, as `14:05` |
   | `$now` | the date and the time, as `2026-11-15 14:05:33` (as `:ts` in the editor) |
@@ -748,7 +789,7 @@ lines plot.md 3-5 > $notes          ">": the register is those lines alone
   `insert log.md bottom $date Finished chapter 3` puts in a line with the date. The date and the time are written the same in every language. These names are not registers: `reg pwd x` and `reg -d date` are refused, and a line for one of them in `registers.txt` stays there, unused, as a line that is not a register. `reg` lists them after the registers, under _Set by Blyant_, with their values now, and `reg pwd` shows one. `$file` used before any command has worked on a file gets the message that there is no file yet, and `$$date` is the text `$date`
 - Where they can be used: every register and name set by Blyant is put in before the command runs, so all commands take them. Only a value of more than one line (`$clip` or `$peek` of lines) is limited: `insert` and `change` put in its lines, `reg` keeps them, `run` runs them and `echo` writes them, and other commands refuse it (nothing is changed):
 
-  | | One line (`$pwd`, `$file`, `$date`, `$time`, `$now`, `$calc`, a register, and `$clip` or `$peek` of one line) | More lines (`$clip`, `$peek`) |
+  | | One line (`$pwd`, `$file`, `$line`, `$date`, `$time`, `$now`, `$calc`, a register, and `$clip` or `$peek` of one line) | More lines (`$clip`, `$peek`) |
   |---|---|---|
   | `insert file top\|bottom\|+N $peek` | yes | yes, as lines |
   | `change file 3-5 $peek` | yes | yes: lines 3 to 5 become those lines |

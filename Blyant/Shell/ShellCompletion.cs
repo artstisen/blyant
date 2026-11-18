@@ -197,13 +197,18 @@ internal sealed class ShellCompletion
                 };
             case "shift":
             case "shift!":
-                // The file, the lines (typed), and the place: top, bottom or a heading of the file
-                return position switch
-                {
-                    0 => (Kind.Path, none),
-                    2 => (Kind.Names, new[] { "top", "bottom" }.Concat(HeadingsOf(_words[0]))),
-                    _ => (Kind.None, none)
-                };
+            {
+                // ("-s" first: a section) The file, the lines (typed) or the heading of the section, and the place:
+                // a heading of the file, top, bottom, up or down. "@" is the file and the line: the place after it
+                var section = position > 0 && after[0] == "-s" ? 1 : 0;
+                if (position == 0) return (Kind.PathOrWords, new[] { "-s" });
+                var at = position > section && after[section] == "@" ? 1 : 0;
+                if (section == 1 && at == 0 && position == 2) return (Kind.Names, HeadingsOf(_words[1]));
+                if (position == section) return (Kind.Path, none);
+                return position - section + at == 2
+                    ? (Kind.Names, HeadingsOf(_words[section]).Concat(new[] { "top", "bottom", "up", "down" }))
+                    : (Kind.None, none);
+            }
             case "lines":
             {
                 // The file, the lines (typed), ">" (typed), the other file, the place in it, and copy or cut

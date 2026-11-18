@@ -481,7 +481,7 @@ The main list is `favorites.txt`, and the others are files of the same kind in t
 ### File history
 The list has three columns, as the favorites: _Name_, _Path_ (the directory the file is in) and _Opened_ (when it was opened last, or _(missing)_ for a file that is gone).
 
-The file history lists the files you have opened in the editor from the file browser (also from the favorites, the search and the history itself), the last opened first, with the time each was opened. A file opened again moves to the top. It is useful when you work on many files over several days. `O` in the file browser shows it, and `:history` (or `:hist`) on every command line shows it alone: closing it then shows the start page.
+The file history lists the files you have opened in the editor from the file browser (also from the favorites, the search and the history itself), and the files a command of the shell has changed, the last first, with the time each was opened or changed. A file opened again moves to the top. It is useful when you work on many files over several days. `O` in the file browser shows it, and `:history` (or `:hist`) on every command line shows it alone: closing it then shows the start page.
 
 - `O` or `:history` (in the file browser) Show the file history
 - `j` `k` Select, `gg` `G` First/Last, `PgUp` `PgDn` One page up/down

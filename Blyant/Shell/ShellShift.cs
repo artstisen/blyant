@@ -1,8 +1,9 @@
 ﻿namespace Blyant;
 
 /// <summary>
-/// "shift": lines of a file moved to another place in it (under a heading, before a line, to the top or the bottom),
-/// without opening it, as items of a list are moved from "Todo" to "Done". "shift!" also ticks the task boxes of the
+/// "shift": lines of a file moved to another place in it (under a heading, before a line, to the top or the bottom,
+/// up or down by lines), without opening it, as items of a list are moved from "Todo" to "Done"; with "-s" a whole
+/// section (a heading and what is under it), also up or down past the sections at its level. "shift!" also ticks the task boxes of the
 /// lines moved ("- [ ]" to "- [x]"), or unticks those that are ticked. The lines a command takes (PickedLines) and
 /// the place in a file (PlaceIn) serve "lines" too, and tell what is wrong; the rest (the line sets, the headings, the
 /// move) does not touch the console, so it can be tested
@@ -11,27 +12,64 @@ internal sealed partial class ShellSession
 {
     // "shift todo.md 4-6 Done": the lines (by number: "4", "4-6", "4,7,9-10"; or the one line that has a text in it:
     // "Buy milk") to the place: under the heading "Done" (after a blank line under it), "Done+" at the end of its
-    // section, "+12" before line 12, "top" or "bottom". The numbers are those of the file as it is. As insert and
-    // change: its line endings and byte order mark kept, only a file in UTF-8 and not one Blyant uses, and the file is
-    // then the last list, at the lines moved. Lines are not lost by it, so it is not asked
+    // section, "+12" before line 12, "top" or "bottom", or "up" and "down" by a line or more ("down 3"). The numbers
+    // are those of the file as it is. "shift -s notes.md Ideas up": the section of a heading instead of lines. As
+    // insert and change: its line endings and byte order mark kept, only a file in UTF-8 and not one Blyant uses, and
+    // the file is then the last list, at the lines moved. Lines are not lost by it, so it is not asked
     private void Shift(string argument, bool tick)
     {
         var command = tick ? "shift!" : "shift";
+        var section = Words(argument) is ["-s", ..];
+        if (section) argument = AfterWords(argument, 1);
         var words = Words(argument);
-        var place = AfterWords(argument, 2).Trim().Trim('"').Trim();
+        var typedPlace = AfterWords(argument, 2).Trim();
+        var place = typedPlace.Trim('"').Trim();
         if (words.Count < 3 || place.Length == 0 || words[1].Trim().Length == 0)
         {
-            Error(Lang.F("Give a file, the lines and the place: {0} todo.md 4-6 Done", command));
+            Error(section
+                ? Lang.F("Give a file, a heading and the place: {0} -s notes.md Ideas up", command)
+                : Lang.F("Give a file, the lines and the place: {0} todo.md 4-6 Done", command));
             return;
         }
 
         if (EditableFile(words[0]) is not { } editable) return;
         var (item, file) = editable;
         var lines = LinesOfText(file.Text);
-        if (PickedLines(words[1], null, lines, item.Path) is not { } moved) return;
-        if (PlaceIn(place, lines, file.Text, item.Path, moved) is not { } position) return;
+        var headings = Headings(file.Text, IsTypst(item.Path));
+        (int Line, int Level, string Name)? heading = null;
+        List<int> moved;
+        if (section)
+        {
+            if (SectionHeading(words[1], headings, lines, item.Path) is not { } found) return;
+            heading = found;
+            moved = SectionLines(lines.Count, headings, found);
+        }
+        else if (PickedLines(words[1], null, lines, item.Path) is { } picked) moved = picked;
+        else return;
 
-        var (text, at, ticked) = Shifted(file.Text, moved, position, tick);
+        // "up", "down 3" (not in quotes: "Up" in quotes is a heading)
+        int position;
+        if (!typedPlace.StartsWith('"') && Step(place) is { } step)
+        {
+            if (heading is { } of)
+            {
+                if (SectionStep(lines.Count, headings, of, step.Up, step.Count) is not { } over)
+                {
+                    Line(step.Up
+                        ? Lang.F("Nothing moved: no section above {0} at its level", of.Name)
+                        : Lang.F("Nothing moved: no section below {0} at its level", of.Name));
+                    return;
+                }
+
+                position = over;
+            }
+            else position = step.Up ? Math.Max(0, moved[0] - 1 - step.Count) : (int)Math.Min(lines.Count, (long)moved[^1] + step.Count);
+        }
+        else if (PlaceIn(place, lines, file.Text, item.Path, moved) is { } at) position = at;
+        else return;
+
+        var (text, first, ticked) = Shifted(file.Text, moved, position, tick);
+        if (heading != null) (text, first) = SpacedSection(file.Text, text, moved, first);
         if (text == TextBuffer.Normalize(file.Text))
         {
             Line(Lang.T("Nothing moved: the lines are there already"));
@@ -40,21 +78,190 @@ internal sealed partial class ShellSession
 
         var result = SaveEdit(file, text);
         // (the path and the lines, never the text)
-        FileExplorer.LogFileOperation("Shift lines", item.Path + ":" + Numbers(moved) + " to " + at, result);
+        FileExplorer.LogFileOperation(heading != null ? "Shift section" : "Shift lines",
+            item.Path + ":" + Numbers(moved) + " to " + first, result);
         if (result != DialogText.Success)
         {
             Error(result);
             return;
         }
 
-        LastList = new List<Item> { new(item.Path, false, (at, 1)) };
+        LastList = new List<Item> { new(item.Path, false, (first, 1)) };
         var now = LinesOfText(text);
-        var width = (at + moved.Count - 1).ToString().Length;
-        for (var i = at; i < at + moved.Count; i++) Line(i.ToString().PadLeft(width + 2) + "  " + now[i - 1]);
-        Line(moved.Count == 1
-            ? Lang.F("{0}: line moved to line {1}", item.Path, at)
-            : Lang.F("{0}: {1} lines moved to line {2}", item.Path, moved.Count, at));
+        if (heading is { } moving)
+        {
+            // (a section can be long: its heading, and how many lines)
+            Line(first.ToString().PadLeft(first.ToString().Length + 2) + "  " + now[first - 1]);
+            Line(Lang.F("{0}: section {1} ({2} lines) moved to line {3}", item.Path, moving.Name, moved.Count, first));
+        }
+        else
+        {
+            var width = (first + moved.Count - 1).ToString().Length;
+            for (var i = first; i < first + moved.Count; i++) Line(i.ToString().PadLeft(width + 2) + "  " + now[i - 1]);
+            Line(moved.Count == 1
+                ? Lang.F("{0}: line moved to line {1}", item.Path, first)
+                : Lang.F("{0}: {1} lines moved to line {2}", item.Path, moved.Count, first));
+        }
+
         if (tick) Line(Lang.F("Task boxes ticked or unticked: {0}", ticked));
+    }
+
+    /// <summary>
+    /// "up", "down", "up 3", "down 2" (letter case alike): the way and how many lines (or sections). Null for another
+    /// place. A count larger than the file stops at its top or bottom
+    /// </summary>
+    internal static (bool Up, int Count)? Step(string place)
+    {
+        var parts = place.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length is < 1 or > 2) return null;
+        var way = parts[0].ToLowerInvariant();
+        if (way is not ("up" or "down")) return null;
+        var count = 1;
+        if (parts.Length == 2)
+        {
+            if (parts[1].Length == 0 || !parts[1].All(char.IsAsciiDigit)) return null;
+            count = int.TryParse(parts[1], out var given) ? given : int.MaxValue;
+            if (count < 1) return null;
+        }
+
+        return (way == "up", count);
+    }
+
+    // The heading of "shift -s": by its line ("12", "+12", as "@" gives it) or by its name, as a place is found
+    // (whole, a pattern, the start). Null (and told) if it is not there, or several fit
+    private (int Line, int Level, string Name)? SectionHeading(string word, List<(int Line, int Level, string Name)> headings,
+        List<string> lines, string path)
+    {
+        var number = word.StartsWith('+') ? word[1..] : word;
+        if (number.Length > 0 && number.All(char.IsAsciiDigit))
+        {
+            var line = int.TryParse(number, out var given) ? given : int.MaxValue;
+            if (headings.FirstOrDefault(h => h.Line == line) is { Name: not null } at) return at;
+            Error(line > lines.Count
+                ? Lang.F("{0} has {1} lines", path, lines.Count)
+                : Lang.F("Line {0} is not a heading: give a heading (shift -s notes.md Ideas up)", line));
+            return null;
+        }
+
+        var name = HeadingName(word);
+        var (found, fitted) = FindHeadings(name, headings);
+        if (found.Count == 1) return found[0];
+        foreach (var h in found.Count > 1 ? found : headings) Line("  " + h.Line + "  " + lines[h.Line - 1]);
+        Error(found.Count == 0
+            ? Lang.F("No heading {0} in {1}", name, Path.GetFileName(path))
+            : fitted
+                ? Lang.F("{0} headings fit {1}: give more of the name, or the line (+12)", found.Count, name)
+                : Lang.F("{0} headings are named {1}: give the line (+12)", found.Count, name));
+        return null;
+    }
+
+    /// <summary>
+    /// The lines of the section of a heading (from 1): the heading and what is under it, up to the next heading of
+    /// the same level or above (or the end of the file), its blank lines at the end too
+    /// </summary>
+    internal static List<int> SectionLines(int count, List<(int Line, int Level, string Name)> headings,
+        (int Line, int Level, string Name) heading)
+    {
+        var next = headings.FirstOrDefault(h => h.Line > heading.Line && h.Level <= heading.Level).Line;
+        var end = next > 0 ? next - 1 : count;
+        return Enumerable.Range(heading.Line, end - heading.Line + 1).ToList();
+    }
+
+    /// <summary>
+    /// Where a section goes ("up" or "down", past "count" sections): before the line (from 0) of the file as it is.
+    /// Only the sections of the same level under the same heading count; it stops at the first or last of them. Null
+    /// when there is none to pass
+    /// </summary>
+    internal static int? SectionStep(int count, List<(int Line, int Level, string Name)> headings,
+        (int Line, int Level, string Name) heading, bool up, int steps)
+    {
+        int? position = null;
+        var at = heading;
+        for (var i = 0; i < steps; i++)
+        {
+            if (up)
+            {
+                // The heading before it at its level or above: one of its level is the section above
+                var before = headings.LastOrDefault(h => h.Line < at.Line && h.Level <= heading.Level);
+                if (before.Name == null || before.Level != heading.Level) break;
+                at = before;
+                position = before.Line - 1;
+            }
+            else
+            {
+                var lines = SectionLines(count, headings, at);
+                var after = headings.FirstOrDefault(h => h.Line == lines[^1] + 1);
+                if (after.Name == null || after.Level != heading.Level) break;
+                at = after;
+                position = SectionLines(count, headings, after)[^1];
+            }
+        }
+
+        return position;
+    }
+
+    /// <summary>
+    /// A section moved keeps the file spaced as it was: when a blank line was above the heading, or the section ended
+    /// with one (the first section of the file), there is one above it and above the heading after it at the new place, and the file ends with as many blank lines as before. The
+    /// text, and the line the heading is at now
+    /// </summary>
+    internal static (string Text, int At) SpacedSection(string before, string text, List<int> moved, int at)
+    {
+        var was = LinesOfText(TextBuffer.Normalize(before));
+        var spaced = (moved[0] >= 2 && was[moved[0] - 2].Trim().Length == 0) || was[moved[^1] - 1].Trim().Length == 0;
+        if (!spaced) return (text, at);
+        var endsWithBreak = text.EndsWith('\n');
+        var lines = LinesOfText(text);
+        var end = at - 1 + moved.Count; // (from 0: the line after the section)
+        if (end < lines.Count && lines[end - 1].Trim().Length > 0) lines.Insert(end, string.Empty);
+        if (at > 1 && lines[at - 2].Trim().Length > 0)
+        {
+            lines.Insert(at - 1, string.Empty);
+            at++;
+        }
+
+        // (blank lines at the end of the file: as many as before)
+        var blankEnd = was.AsEnumerable().Reverse().TakeWhile(line => line.Trim().Length == 0).Count();
+        while (lines.Count > at && lines.Count > 0 && lines[^1].Trim().Length == 0 &&
+               lines.AsEnumerable().Reverse().TakeWhile(line => line.Trim().Length == 0).Count() > blankEnd)
+        {
+            lines.RemoveAt(lines.Count - 1);
+        }
+
+        return (string.Join("\n", lines) + (endsWithBreak ? "\n" : string.Empty), at);
+    }
+
+    // The commands that take "@" as the file and the line: in the place of the file (after "-p" or "-s")
+    private static readonly HashSet<string> TakesAt = new()
+    {
+        "words", "word", "change", "insert", "peek", "shift", "shift!", "lines", "open", "edit"
+    };
+
+    // "word @ 9 replace wish": "@" in the place of the file is $file at $line, the file and the line the last command
+    // worked on ("$file +12"; for insert the line after it, "+13", so the text goes after the line). Another word, or
+    // "@" in a text ("insert @ Ask @anna"), is as it is. Null (and told) when there is no line to take
+    internal string? WithAt(string name, string argument)
+    {
+        if (!TakesAt.Contains(name)) return argument;
+        var words = Words(argument);
+        var at = 0;
+        while (at < words.Count && words[at] is "-p" or "-s") at++;
+        if (at >= words.Count || words[at] != "@") return argument;
+        var from = AfterWords(argument, at);
+        // (a file named "@" is written in quotes)
+        if (!from.TrimStart().StartsWith('@')) return argument;
+        if (_file == null || _line is not { } line)
+        {
+            Error(_file == null
+                ? Lang.T("@ is the file and the line of the last command: none yet (words notes.md 12)")
+                : Lang.F("@ has no line: the last command worked on no line of {0}", Path.GetFileName(_file)));
+            return null;
+        }
+
+        var head = argument[..(argument.Length - from.Length)];
+        var rest = AfterWords(argument, at + 1);
+        var put = "$file +" + (name == "insert" ? line + 1 : line);
+        return head + put + (rest.Length > 0 ? " " + rest : string.Empty);
     }
 
     // The lines of a file a command takes (from 1, in order): by number ("4", "4-6", "4,7,9-10"), the one line with a
@@ -136,20 +343,7 @@ internal sealed partial class ShellSession
             name = HeadingName(place);
         }
 
-        var found = headings.Where(h => string.Equals(h.Name, name, StringComparison.OrdinalIgnoreCase)).ToList();
-        // (no heading of that whole name: the one a pattern fits, or the start of one; a heading with "*" or "?" in it
-        // is found whole first, and a start with "?" in it ("Why?") as it is when no pattern fits)
-        var fitted = found.Count == 0 && name.Length > 0;
-        if (fitted && ShellCompletion.IsPattern(name))
-        {
-            found = headings.Where(h => ShellCompletion.PatternFits(name, h.Name)).ToList();
-        }
-
-        if (fitted && found.Count == 0)
-        {
-            found = headings.Where(h => h.Name.StartsWith(name, StringComparison.OrdinalIgnoreCase)).ToList();
-        }
-
+        var (found, fitted) = FindHeadings(name, headings);
         if (found.Count != 1)
         {
             foreach (var h in found.Count > 1 ? found : headings) Line("  " + h.Line + "  " + lines[h.Line - 1]);
@@ -168,6 +362,27 @@ internal sealed partial class ShellSession
         }
 
         return atEnd ? EndOfSection(lines, headings, found[0]) : UnderHeading(lines, found[0].Line);
+    }
+
+    // The headings a name stands for: those of that whole name (letter case alike); when none, the ones a pattern
+    // fits, or the ones that start with it ("fitted": not by the whole name). A heading with "*" or "?" in it is found
+    // whole first, and a start with "?" in it ("Why?") as it is when no pattern fits
+    private static (List<(int Line, int Level, string Name)> Found, bool Fitted) FindHeadings(string name,
+        List<(int Line, int Level, string Name)> headings)
+    {
+        var found = headings.Where(h => string.Equals(h.Name, name, StringComparison.OrdinalIgnoreCase)).ToList();
+        var fitted = found.Count == 0 && name.Length > 0;
+        if (fitted && ShellCompletion.IsPattern(name))
+        {
+            found = headings.Where(h => ShellCompletion.PatternFits(name, h.Name)).ToList();
+        }
+
+        if (fitted && found.Count == 0)
+        {
+            found = headings.Where(h => h.Name.StartsWith(name, StringComparison.OrdinalIgnoreCase)).ToList();
+        }
+
+        return (found, fitted);
     }
 
     /// <summary>

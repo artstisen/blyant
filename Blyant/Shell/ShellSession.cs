@@ -50,8 +50,16 @@ internal sealed partial class ShellSession
             // (a line found is a row of find -t only: a command that works on the file makes it a file again)
             _lastList = value.Select(item => item.Found == null ? item : item with { Found = null }).ToList();
             _listShown = true;
-            // One file: one a command worked on (peek, insert, new ...): $file
-            if (value is [{ IsDirectory: false } one]) _file = Path.GetFullPath(one.Path);
+            // One file: one a command worked on (peek, insert, new ...): $file, and $line the line it worked on. A
+            // command on the same file without a line (format, trim, undo) keeps the line; another file without one
+            // (made, copied) has none
+            if (value is [{ IsDirectory: false } one])
+            {
+                var path = Path.GetFullPath(one.Path);
+                if (one.At is { } at) _line = at.Line;
+                else if (_file == null || !FileOperations.NameComparer.Equals(_file, path)) _line = null;
+                _file = path;
+            }
         }
     }
 
@@ -64,6 +72,13 @@ internal sealed partial class ShellSession
 
     // $file: the file the last command worked on (null: none yet)
     private string? _file;
+
+    // $line: the line of $file the last command worked on (null: none, as after "file plot.md" or "new"). With $file
+    // it is "@": "word @ 9 replace wish"
+    private int? _line;
+
+    // The files the command running now has changed, for the history (see LatestChanged)
+    private List<string> _changedFiles = new();
 
     /// <summary>
     /// $file: the file the last command worked on (null: none yet), kept when the shell is left (shelllastfile)
@@ -135,6 +150,7 @@ internal sealed partial class ShellSession
         // $pwd and $file: of this shell
         ShellRegisters.DirectorySource = () => Directory;
         ShellRegisters.FileSource = () => _file;
+        ShellRegisters.LineSource = () => _file != null ? _line : null;
         Terminal = terminal;
         _yes = yes;
         // $file of the shell left last, while the file is there (typed in at a terminal: not for commands from a file,

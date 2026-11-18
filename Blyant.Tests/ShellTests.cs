@@ -5846,4 +5846,216 @@ public class ShellTests : IDisposable
         Assert.Contains(Lang.F("${0} does not start with a command: put it in one (open ${0})", "r"), errors);
         Assert.DoesNotContain("match", output);
     }
+
+    // ---- 1.5.7: shift up and down, sections, @ and $line, changed files in the history
+
+    private const string Book = "# Book\n\n## A\n\naaa\n\n## B\n\nbbb\n\n## C\n\nccc\n";
+
+    [Theory]
+    [InlineData("up", true, 1)]
+    [InlineData("Down", false, 1)]
+    [InlineData("down 3", false, 3)]
+    [InlineData("UP  2", true, 2)]
+    [InlineData("up 99999999999", true, int.MaxValue)]
+    public void Step_TakesUpAndDownWithACount(string place, bool up, int count)
+    {
+        Assert.Equal((up, count), ShellSession.Step(place));
+    }
+
+    [Theory]
+    [InlineData("upper")]
+    [InlineData("up 0")]
+    [InlineData("up x")]
+    [InlineData("down 2 3")]
+    [InlineData("Done")]
+    public void Step_IsNullForAnotherPlace(string place)
+    {
+        Assert.Null(ShellSession.Step(place));
+    }
+
+    [Fact]
+    public void Shift_UpAndDown_MovesLinesByLines_AndStopsAtTheTopAndBottom()
+    {
+        File.WriteAllText(In("work", "l.md"), "one\ntwo\nthree\nfour\n");
+        var (output, errors, _, _) = Run("shift l.md 3 up\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("one\nthree\ntwo\nfour\n", File.ReadAllText(In("work", "l.md")));
+        Assert.Contains(Lang.F("{0}: line moved to line {1}", In("work", "l.md"), 2), output);
+        Run("shift l.md 1-2 down 9\n");
+        Assert.Equal("two\nfour\none\nthree\n", File.ReadAllText(In("work", "l.md")));
+        Run("shift l.md 4 up 2\n");
+        Assert.Equal("two\nthree\nfour\none\n", File.ReadAllText(In("work", "l.md")));
+        (output, _, _, _) = Run("shift l.md 1 up\n");
+        Assert.Contains(Lang.T("Nothing moved: the lines are there already"), output);
+        // ("Up" in quotes: a heading of that name)
+        File.WriteAllText(In("work", "h.md"), "x\n## Up\ny\n");
+        Run("shift h.md 3 \"Up\"\n");
+        Assert.Equal("x\n## Up\ny\n", File.ReadAllText(In("work", "h.md")));
+        Run("shift h.md 1 \"Up\"\n");
+        Assert.Equal("## Up\nx\ny\n", File.ReadAllText(In("work", "h.md")));
+    }
+
+    [Fact]
+    public void ShiftSection_UpAndDown_PassesTheSectionsOfItsLevel_AndKeepsTheBlankLines()
+    {
+        File.WriteAllText(In("work", "n.md"), Book);
+        var (output, errors, _, _) = Run("shift -s n.md C up\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("# Book\n\n## A\n\naaa\n\n## C\n\nccc\n\n## B\n\nbbb\n", File.ReadAllText(In("work", "n.md")));
+        Assert.Contains(Lang.F("{0}: section {1} ({2} lines) moved to line {3}", In("work", "n.md"), "C", 3, 7), output);
+        Run("shift -s n.md A down 5\n");
+        Assert.Equal("# Book\n\n## C\n\nccc\n\n## B\n\nbbb\n\n## A\n\naaa\n", File.ReadAllText(In("work", "n.md")));
+        // The first of its level under # Book: nothing above it at its level
+        (output, _, _, _) = Run("shift -s n.md C up\n");
+        Assert.Contains(Lang.F("Nothing moved: no section above {0} at its level", "C"), output);
+        (output, _, _, _) = Run("shift -s n.md A down\n");
+        Assert.Contains(Lang.F("Nothing moved: no section below {0} at its level", "A"), output);
+        Assert.Equal("# Book\n\n## C\n\nccc\n\n## B\n\nbbb\n\n## A\n\naaa\n", File.ReadAllText(In("work", "n.md")));
+    }
+
+    [Fact]
+    public void ShiftSection_TakesItsSubsections_AFileWithoutBlankLines_AndAPlace()
+    {
+        File.WriteAllText(In("work", "s.md"), "## A\na\n### A1\na1\n## B\nb\n");
+        Run("shift -s s.md A down\n");
+        Assert.Equal("## B\nb\n## A\na\n### A1\na1\n", File.ReadAllText(In("work", "s.md")));
+        // A subsection passes the subsections of its heading only
+        var (output, _, _, _) = Run("shift -s s.md A1 up\n");
+        Assert.Contains(Lang.F("Nothing moved: no section above {0} at its level", "A1"), output);
+        // By the line of the heading ("+3", as @ gives it), and to a place
+        Run("shift -s s.md +3 top\n");
+        Assert.Equal("## A\na\n### A1\na1\n## B\nb\n", File.ReadAllText(In("work", "s.md")));
+        Run("shift -s s.md B +1\n");
+        Assert.Equal("## B\nb\n## A\na\n### A1\na1\n", File.ReadAllText(In("work", "s.md")));
+    }
+
+    [Fact]
+    public void ShiftSection_TellsWhatItCannotDo_AndChangesNothing()
+    {
+        File.WriteAllText(In("work", "n.md"), Book);
+        var (_, errors, _, _) = Run("shift -s n.md 5 up\nshift -s n.md 99 up\nshift -s n.md Nothing up\n" +
+                                    "shift -s n.md B\nshift -s n.md B bbb\nshift -s n.md B +9\n");
+        Assert.Contains(Lang.F("Line {0} is not a heading: give a heading (shift -s notes.md Ideas up)", 5), errors);
+        Assert.Contains(Lang.F("{0} has {1} lines", In("work", "n.md"), 13), errors);
+        Assert.Contains(Lang.F("No heading {0} in {1}", "Nothing", "n.md"), errors);
+        Assert.Contains(Lang.F("Give a file, a heading and the place: {0} -s notes.md Ideas up", "shift"), errors);
+        Assert.Contains(Lang.F("No heading {0} in {1} (or +12, top, bottom)", "bbb", "n.md"), errors);
+        // (into itself)
+        Assert.Contains(Lang.F("Target {0} is among the lines moved", "+9"), errors);
+        Assert.Equal(Book, File.ReadAllText(In("work", "n.md")));
+    }
+
+    [Fact]
+    public void ShiftBang_WithASection_TicksItsBoxes()
+    {
+        File.WriteAllText(In("work", "t.md"), "## Now\n- [ ] a\n## Later\n- [ ] b\n");
+        var (output, _, _, _) = Run("shift! -s t.md Later up\n");
+        Assert.Equal("## Later\n- [x] b\n## Now\n- [ ] a\n", File.ReadAllText(In("work", "t.md")));
+        Assert.Contains(Lang.F("Task boxes ticked or unticked: {0}", 1), output);
+    }
+
+    [Fact]
+    public void At_IsTheFileAndTheLineWorkedOnLast_AndFollowsTheLine()
+    {
+        File.WriteAllText(In("work", "l.md"), "one\ntwo\nthree\n");
+        var (output, errors, _, _) = Run("words l.md 2\nword @ 1 replace TWO\ninsert @ new line\nchange @ changed\n" +
+                                         "echo $line\nshift @ up\nshift @ up\necho $line\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("changed\none\nTWO\nthree\n", File.ReadAllText(In("work", "l.md")));
+        Assert.Contains("\n3\n", output);
+        Assert.EndsWith("\n1\n", output);
+        // A section by @: the heading moved, @ on it at its new place
+        File.WriteAllText(In("work", "n.md"), Book);
+        (_, errors, _, _) = Run("shift -s n.md C up\nshift -s @ up\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("# Book\n\n## C\n\nccc\n\n## A\n\naaa\n\n## B\n\nbbb\n", File.ReadAllText(In("work", "n.md")));
+    }
+
+    [Fact]
+    public void At_InAText_AndInQuotes_IsAsItIs()
+    {
+        File.WriteAllText(In("work", "l.md"), "one\ntwo\n");
+        File.WriteAllText(In("work", "@"), "at\n");
+        var (output, errors, _, _) = Run("words l.md 1\ninsert @ Ask @anna\npeek \"@\"\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("one\nAsk @anna\ntwo\n", File.ReadAllText(In("work", "l.md")));
+        Assert.Contains("1  at", output);
+    }
+
+    [Fact]
+    public void At_WithoutALine_IsRefused_AndTold()
+    {
+        File.WriteAllText(In("work", "l.md"), "one\n");
+        var (_, errors, _, _) = Run("word @ 1 upper\n");
+        Assert.Contains(Lang.T("@ is the file and the line of the last command: none yet (words notes.md 12)"), errors);
+        (_, errors, _, _) = Run("file l.md\nwords @\nwords l.md 1\nfile l.md\nwords @\nfile plot.md\nwords @\n");
+        // (file l.md: no line yet; words l.md 1, then file l.md again: the line kept; another file: none)
+        Assert.Contains(Lang.F("@ has no line: the last command worked on no line of {0}", "l.md"), errors);
+        Assert.Contains(Lang.F("@ has no line: the last command worked on no line of {0}", "plot.md"), errors);
+        Assert.Equal(2, errors.TrimEnd('\n').Split('\n').Length);
+    }
+
+    [Fact]
+    public void At_APeek_KeepsTheLine_ASearchSetsIt_AnotherFileStartsAtTheFirstLineShown()
+    {
+        File.WriteAllText(In("work", "l.md"), "one\ntwo\nstorm\nfour\n");
+        var (output, errors, _, _) = Run("words l.md 2\npeek l.md\necho $line\npeek l.md /storm\necho $line\n" +
+                                         "peek plot.md\necho $line\n");
+        Assert.Equal(string.Empty, errors);
+        var numbers = output.Split('\n').Where(line => line.Length == 1 && char.IsAsciiDigit(line[0])).ToList();
+        Assert.Equal(new[] { "2", "3", "1" }, numbers);
+    }
+
+    [Fact]
+    public void Line_IsSetByBlyant_WithFile()
+    {
+        File.WriteAllText(In("work", "l.md"), "one\ntwo\n");
+        Assert.True(ShellRegisters.IsReserved("line"));
+        var (output, _, _, _) = Run("words l.md 2\nreg\n");
+        Assert.Matches(@"\n  \$line +2\n", output);
+        (output, _, _, _) = Run("echo [$line]\n");
+        Assert.DoesNotContain("[2]", output);
+    }
+
+    [Fact]
+    public void ChangedFiles_AreTheNewestOfTheHistory_ALookIsNot()
+    {
+        File.WriteAllText(In("work", "l.md"), "one\ntwo\n");
+        File.WriteAllText(In("work", "o.md"), "x\n");
+        Run("insert l.md bottom three\n");
+        FileHistory.Load();
+        Assert.Equal(In("work", "l.md"), FileHistory.Items[0].Path);
+        Run("peek plot.md\nwords Ending.md 1\n");
+        FileHistory.Load();
+        Assert.Equal(In("work", "l.md"), FileHistory.Items[0].Path);
+        // Two files changed: $file (the other file) the newest
+        Run("lines l.md 1 > o.md bottom cut\n");
+        FileHistory.Load();
+        Assert.Equal(In("work", "o.md"), FileHistory.Items[0].Path);
+        Assert.Equal(In("work", "l.md"), FileHistory.Items[1].Path);
+        // undo writes the files back: changed too
+        var (_, errors, _, _) = Run("shift l.md 1 down\nword l.md 1 1 upper\nundo\n");
+        Assert.Equal(string.Empty, errors);
+        FileHistory.Load();
+        Assert.Equal(In("work", "l.md"), FileHistory.Items[0].Path);
+    }
+
+    [Fact]
+    public void Tab_ShiftTakesDashSUpDown_AndTheHeadingsOfASection()
+    {
+        File.WriteAllText(In("work", "n.md"), Book);
+        Assert.Equal("shift -s", Tab(Completion(), "shift -"));
+        Assert.Equal("shift n.md 2 up", Tab(Completion(), "shift n.md 2 u"));
+        Assert.Equal("shift n.md 2 down", Tab(Completion(), "shift n.md 2 do"));
+        Assert.Equal("shift -s n.md Book", Tab(Completion(), "shift -s n.md Bo"));
+        Assert.Equal("shift -s n.md B down", Tab(Completion(), "shift -s n.md B do"));
+        var session = Run("words n.md 7\n").Session;
+        var completion = new ShellCompletion(() => In("work"), typed => Path.GetFullPath(typed, In("work")))
+        {
+            FileOf = session.CompletionFile
+        };
+        Assert.Equal("shift @ Book", Tab(completion, "shift @ Bo"));
+        Assert.Contains("shift -s file|n heading place", Run("help shift\n").Output);
+        Assert.Contains("word @ n action", Run("help word\n").Output);
+    }
 }

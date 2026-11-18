@@ -48,6 +48,8 @@ internal sealed partial class ShellSession
         ("change file|n +line|from-to [text]", Lang.T("Replace lines of a file with text, or delete them")),
         ("shift file|n lines place", Lang.T("Move lines in a file: under a heading, +line, top or bottom")),
         ("shift! file|n lines place", Lang.T("Move lines, and tick or untick any task boxes")),
+        ("shift file|n lines up|down [n]", Lang.T("Move lines up or down: by a line, or by n lines")),
+        ("shift -s file|n heading place", Lang.T("Move a section: the heading and what is under it")),
         ("lines file|n lines > file|n place", Lang.T("Copy lines to another file (cut last: move them)")),
         ("lines file|n lines >|>> $name", Lang.T("Keep lines in a register (>>: add them to it)")),
         ("lines file|n lines start|end text", Lang.T("Put a text at the start or the end of lines")),
@@ -59,6 +61,7 @@ internal sealed partial class ShellSession
         ("words -p, word -p", Lang.T("A word is all between blanks: text, and **bold** whole")),
         ("word file|n line n|n-m action [text]", Lang.T("Change words by number: replace, before, after, delete")),
         ("word ... upper|lower|title", Lang.T("Make words UPPERCASE, lowercase or Title Case")),
+        ("word @ n action", Lang.T("@ is the file and line worked on last")),
         ("format file|n", Lang.T("Format an HTML, CSS or XML file, as :format does")),
         ("trim file|n", Lang.T("Remove blank space at line ends, as :trim does (trim!)")),
         ("set [name [value]]", Lang.T("Show the settings, or change one")),
@@ -212,6 +215,14 @@ internal sealed partial class ShellSession
         // run take, as it is. ("help $clip" tells of it: nothing is put in after help)
         var name = CommandLine.Name(line).ToLowerInvariant();
         var argument = CommandLine.Argument(line);
+        // ("word @ 9 replace wish": @ is $file at $line)
+        if (WithAt(name, argument) is not { } atPutIn)
+        {
+            NewPage();
+            return true;
+        }
+
+        argument = atPutIn;
         // (what was typed, before the $names are put in: "run $tidy" is a register, "run $pwd/t.txt" a file; "reg
         // notes += $peek" of an empty $peek is not "reg notes +=" with nothing)
         _typedArgument = argument;
@@ -261,6 +272,8 @@ internal sealed partial class ShellSession
         NewPage();
         // (the files the command changes: one step for undo, named by the line as typed)
         var outer = StartStep();
+        var outerChanged = _changedFiles;
+        _changedFiles = new List<string>();
         bool going;
         try
         {
@@ -269,6 +282,8 @@ internal sealed partial class ShellSession
         finally
         {
             EndStep(line, outer);
+            LatestChanged();
+            _changedFiles = outerChanged;
         }
 
         // (setting shellautopeek: the window of the last peek again, when the command changed its file)
@@ -543,7 +558,10 @@ internal sealed partial class ShellSession
             return;
         }
 
-        _file = Path.GetFullPath(item.Path);
+        // (another file: no line yet; the same file keeps it)
+        var path = Path.GetFullPath(item.Path);
+        if (_file == null || !FileOperations.NameComparer.Equals(_file, path)) _line = null;
+        _file = path;
         Line(Lang.F("$file: {0}", _file));
     }
 
@@ -1010,6 +1028,8 @@ internal sealed partial class ShellSession
     /// </summary>
     internal string CompletionFile(string typed)
     {
+        // ("shift @ " and Tab: the headings of $file)
+        if (typed == "@" && _file != null) return _file;
         var word = ShellRegisters.Expand(typed, int.MaxValue).Trim().Trim('"');
         return RowOf(word)?.Path ?? PathOf(word);
     }

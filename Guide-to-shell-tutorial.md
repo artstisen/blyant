@@ -230,17 +230,19 @@ To change one word, without typing the line again, see the words of the line num
 blyant ~/novel> words plot.md 4
   1 The  2 letter  3 is  4 from  5 her  6 mother
 /home/anna/novel/plot.md, line 4: 6 words
-blyant ~/novel> word plot.md 4 6 replace aunt
+blyant ~/novel> word @ 6 replace aunt
    4  The letter is from her aunt.
 /home/anna/novel/plot.md: line 4 changed
   1 The  2 letter  3 is  4 from  5 her  6 aunt
 ```
 
-- `word plot.md 4 5 before rich` puts a word in front of word 5, `after` after it, and `delete` takes it out
-- `word plot.md 4 1-2 upper` makes words 1 and 2 UPPERCASE (`lower`, `title` too)
-- The full stop after `mother` stays where it is: punctuation is not part of a word. With `-p` a word is all between blanks, so `word -p plot.md 4 6 replace aunt!` takes the full stop too, and the line ends with `her aunt!` (`words -p` shows the numbers)
+- `@` is the file and the line of the last command: after `words plot.md 4`, `word @ 6 replace aunt` is `word plot.md 4 6 replace aunt`
+- `word @ 5 before rich` puts a word in front of word 5, `after` after it, and `delete` takes it out
+- `word @ 1-2 upper` makes words 1 and 2 UPPERCASE (`lower`, `title` too)
+- `shift @ up` moves the line one line up, and `@` goes with it: `shift @ up` again moves it further. `shift -s plot.md Ideas down` moves a whole section, with the heading
+- The full stop after `mother` stays where it is: punctuation is not part of a word. With `-p` a word is all between blanks, so `word -p @ 6 replace aunt!` takes the full stop too, and the line ends with `her aunt!` (`words -p` shows the numbers)
 
-`undo` takes back the last change made by `insert`, `change`, `lines` (also a sort) or `word` while Blyant is running (`redo` makes it again, and `changes` lists the changes). Still, `peek` first to be sure of the line numbers. A file keeps its line endings and byte order mark, and these commands leave the files Blyant uses alone.
+`undo` takes back the last change made by `insert`, `change`, `lines` (also a sort), `word` or `shift` while Blyant is running (`redo` makes it again, and `changes` lists the changes). Still, `peek` first to be sure of the line numbers. A file keeps its line endings and byte order mark, and these commands leave the files Blyant uses alone.
 
 ## Todo list
 ![A task added with insert, and ticked and moved under Done with shift!](docs/screenshots/shell-todo.svg)

@@ -52,6 +52,7 @@ internal sealed partial class ShellSession
 
         var result = file.Save(text);
         if (result != DialogText.Success) return result;
+        _changedFiles.Add(Path.GetFullPath(file.Path));
         var after = file.GetBytes(text);
         if (before == null || after.Length > UndoMaxSize)
         {
@@ -66,6 +67,16 @@ internal sealed partial class ShellSession
         if (before.AsSpan().SequenceEqual(after)) return result;
         (_changing ??= new()).Add((Path.GetFullPath(file.Path), before, after));
         return result;
+    }
+
+    // The files a command has changed are the newest of the latest files ("recent", "hist"), as files opened in the
+    // editor: to find them again. $file last, so it is the newest ("lines ... cut" changes two files)
+    private void LatestChanged()
+    {
+        if (_changedFiles.Count == 0) return;
+        var files = _changedFiles.Distinct(FileOperations.NameComparer)
+            .OrderBy(path => _file != null && FileOperations.NameComparer.Equals(path, _file)).ToList();
+        foreach (var path in files) FileExplorer.AddToHistory(path);
     }
 
     // A command starts: the files it changes are one step (the step of a command it runs in, "run", is kept aside)
@@ -184,6 +195,7 @@ internal sealed partial class ShellSession
             }
 
             changed.AddRange(written.Select(file => new Item(file.Path, false)));
+            _changedFiles.AddRange(written.Select(file => file.Path));
             from.RemoveAt(from.Count - 1);
             (redo ? _undo : _redo).Add(step);
             // English: the log (the command by name only)
