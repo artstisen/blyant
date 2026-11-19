@@ -526,6 +526,9 @@ internal sealed partial class ShellSession
     private static (PeekPlace Place, int Value)? PlaceOf(string word)
     {
         if (PeekStep(word) is var step && step != 0) return (PeekPlace.Step, step);
+        // ("gg" and "G": the top and the bottom, as the keys of Vim; case-exact)
+        if (word == "gg") return (PeekPlace.Top, 0);
+        if (word == "G") return (PeekPlace.Bottom, 0);
         switch (word.ToLowerInvariant())
         {
             case "top":
@@ -775,13 +778,13 @@ internal sealed partial class ShellSession
     }
 
     // How far "+", "++", "-" and "--" move the window of peek (settings shellpeekstep and shellpeekbigstep; 0:
-    // another word)
+    // another word). "j", "jj", "k" and "kk" are the same, as the keys of Vim (case-exact)
     private static int PeekStep(string word) => word switch
     {
-        "+" => Shell.PeekStep,
-        "++" => Shell.PeekBigStep,
-        "-" => -Shell.PeekStep,
-        "--" => -Shell.PeekBigStep,
+        "+" or "j" => Shell.PeekStep,
+        "++" or "jj" => Shell.PeekBigStep,
+        "-" or "k" => -Shell.PeekStep,
+        "--" or "kk" => -Shell.PeekBigStep,
         _ => 0
     };
 

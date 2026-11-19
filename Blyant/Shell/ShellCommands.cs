@@ -31,6 +31,7 @@ internal sealed partial class ShellSession
         ("peek [f] top|middle|bottom|n%", Lang.T("Show the top, middle, end, or from n% down")),
         ("peek +line", Lang.T("Peek the last file again from a line (peek +120)")),
         ("+ n, - n, ++ n, -- n", Lang.T("Move the window n steps (+ 20)")),
+        ("j, jj, k, kk, gg, G", Lang.T("As +, ++, -, --, peek top and peek bottom")),
         ("peek (or .)", Lang.T("Show the last peek again, as the file is now")),
         ("peek [file|n] /text", Lang.T("Show the first line with the text")),
         ("/, ?", Lang.T("Next match (/), or the one before (?)")),
@@ -218,7 +219,10 @@ internal sealed partial class ShellSession
         // $name: the value of the register, or of a name set by Blyant ($clip, $peek, $pwd, $file, $date ...): in the
         // paths a value with blanks is one word; the text of insert, change, reg and set, and what find, project and
         // run take, as it is. ("help $clip" tells of it: nothing is put in after help)
-        var name = CommandLine.Name(line).ToLowerInvariant();
+        // (the keys of Vim that move a peek are case-exact: "G" is the bottom, and "J" or "GG" is no command)
+        var typed = CommandLine.Name(line);
+        var name = typed == "G" ? typed : typed.ToLowerInvariant();
+        if (name is "j" or "jj" or "k" or "kk" or "gg" && typed != name) name = typed;
         var argument = CommandLine.Argument(line);
         // ("word @ 9 replace wish": @ is $file at $line)
         if (WithAt(name, argument) is not { } atPutIn)
@@ -892,11 +896,16 @@ internal sealed partial class ShellSession
                 Peek(argument);
                 break;
             // "+", "++", "-", "--" alone: "peek +" ... (the window of the last peek moved; nothing else they could be).
-            // With a number, as many steps: "+ 20" 20 lines (as set), "++ 3" 3 big steps
+            // With a number, as many steps: "+ 20" 20 lines (as set), "++ 3" 3 big steps. "j", "jj", "k" and "kk" are
+            // the same, as the keys of Vim ("j 20")
             case "+":
             case "++":
             case "-":
             case "--":
+            case "j":
+            case "jj":
+            case "k":
+            case "kk":
             {
                 var steps = 1;
                 if (argument.Trim().Length > 0 && !(int.TryParse(argument.Trim(), NumberStyles.None,
@@ -906,11 +915,18 @@ internal sealed partial class ShellSession
                 }
                 else
                 {
-                    Peek(name, steps);
+                    // (as "+" ...: a file named "j" here is not taken for it)
+                    Peek(name switch { "j" => "+", "jj" => "++", "k" => "-", "kk" => "--", _ => name }, steps);
                 }
 
                 break;
             }
+            // "gg" and "G": the window of the last peek at the top and at the end of the file, as "peek top" and
+            // "peek bottom" ("G notes.md": that file)
+            case "gg":
+            case "G":
+                Peek((argument.Trim() + (name == "gg" ? " top" : " bottom")).Trim());
+                break;
             // "/" and "?" alone: the next line with the text peek searched last, or the one before
             case "/":
             case "?":
@@ -1632,6 +1648,8 @@ internal sealed partial class ShellSession
                 "name" => "path",
                 "edit" => "open",
                 "+" or "++" or "-" or "--" or "." or "/" or "?" or "$peek" => "peek",
+                // ("help G": the keys of Vim that move a peek, in any letter case here)
+                "j" or "jj" or "k" or "kk" or "gg" or "g" => "peek",
                 _ when name.Length > 1 && name[0] == '/' => "peek",
                 "$clip" => "clip",
                 "$calc" => "calc",
@@ -1642,7 +1660,7 @@ internal sealed partial class ShellSession
             // ("trim!", "shift!": with the command)
             // (the steps "+ n" ... with peek)
             var found = rows.Where(r => r.Command.Split(' ')[0].TrimEnd('!') == full.TrimEnd('!') ||
-                                        (full == "peek" && r.Command[0] is '+' or '/')).ToList();
+                                        (full == "peek" && (r.Command[0] is '+' or '/' || r.Command.StartsWith("j, ")))).ToList();
             if (found.Count == 0)
             {
                 Error(Lang.F("Unknown command: {0} (help lists the commands)", name));

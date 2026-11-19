@@ -6999,4 +6999,49 @@ public class ShellTests : IDisposable
             Logo.Current = logo;
         }
     }
+
+    // ---- 1.5.9: j, jj, k, kk, gg and G move a peek
+
+    // The windows a run of commands showed, as "(lines a-b of n)" tells them (markers off, as in these tests)
+    private static List<string> Windows(string output) =>
+        output.Split('\n').Where(line => line.StartsWith("(lines ")).ToList();
+
+    [Fact]
+    public void VimKeys_MoveThePeek_AsPlusAndMinus_TopAndBottom()
+    {
+        File.WriteAllText(In("work", "long.md"), string.Concat(Enumerable.Range(1, 60).Select(n => "line " + n + "\n")));
+        var (output, errors, _, _) = Run("peek long.md +10 5\nj\njj\nk\nkk\nj 3\njj 2\nG\ngg\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal(new[] { (10, 14), (11, 15), (16, 20), (15, 19), (10, 14), (13, 17), (23, 27), (56, 60), (1, 5) }
+            .Select(w => Lang.F("(lines {0}-{1} of {2})", w.Item1, w.Item2, 60)), Windows(output));
+        // After a file, as + and bottom are
+        (output, _, _, _) = Run("peek long.md +1 5\npeek long.md jj\npeek long.md G\n");
+        Assert.Equal(new[] { (1, 5), (6, 10), (56, 60) }.Select(w => Lang.F("(lines {0}-{1} of {2})", w.Item1, w.Item2, 60)),
+            Windows(output));
+        // "G notes.md": that file, at the bottom
+        (output, _, _, _) = Run("G long.md\n");
+        Assert.Contains(Lang.F("(lines {0}-{1} of {2})", 41, 60, 60), output);
+    }
+
+    [Fact]
+    public void VimKeys_AreCaseExact_AndAFileNamedJIsNotTakenForJ()
+    {
+        File.WriteAllText(In("work", "long.md"), string.Concat(Enumerable.Range(1, 60).Select(n => "line " + n + "\n")));
+        foreach (var key in new[] { "J", "JJ", "K", "GG", "Gg", "g" })
+        {
+            var (_, errors, _, _) = Run("peek long.md +10 5\n" + key + "\n");
+            Assert.Contains(Lang.F("Unknown command: {0} (help lists the commands)", key), errors);
+        }
+
+        File.WriteAllText(In("work", "j"), "not this\n");
+        var (output, _, _, _) = Run("peek long.md +10 5\nj\n");
+        Assert.Contains(Lang.F("(lines {0}-{1} of {2})", 11, 15, 60), output);
+        Assert.DoesNotContain("not this", output);
+        var (_, wrong, _, _) = Run("peek long.md\nj x\n");
+        Assert.Contains(Lang.F("{0} takes a number of steps, or nothing: {0} 20", "j"), wrong);
+        Assert.Equal("G", EventLog.CommandName("G"));
+        Assert.Equal("jj ...", EventLog.CommandName("jj 3"));
+        Assert.Contains("j, jj, k, kk, gg, G", Run("help peek\n").Output);
+        Assert.Contains("j, jj, k, kk, gg, G", Run("help G\n").Output);
+    }
 }

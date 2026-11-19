@@ -222,9 +222,10 @@ public class CommandTests
     [Fact]
     public void TheTables_HaveTheCommandsOfTheShell()
     {
-        // ("+", "++", "-", "--" and "." are not names of letters: not found in the code by Compared)
+        // ("+", "++", "-", "--" and "." are not names of letters, and "G" is a capital: not found in the code by
+        // Compared)
         AssertSame(CommandContext.Shell, Compared(Method("Shell/ShellCommands.cs", "RunCommand")), "+", "++", "-", "--",
-            ".", "/", "?");
+            ".", "/", "?", "G");
     }
 
     [Fact]
