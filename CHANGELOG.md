@@ -1,5 +1,7 @@
 # Changes
 
+## v1.5.9
+
 ## v1.5.8 (2026-11-18)
 - **`ls -d` and `ls -s` in the shell, and `Tab` for the options of `ls`**: `ls -d` shows when each file was last changed, and `ls -s` the size of each file, lined up after the names (`plot.md  2026-11-18 20:31  12.4 kB`), as `find -d` and `recent -s` show them; a folder has neither. They go with `-a` and `-l`, in any order. `ls -` and `Tab` offers the options not given yet, and a word that does not start with `-` still completes to the directories. An option `ls` does not know is told (`ls -x`, `ls -ab`), unless a directory has that name, and so is an option after the directory (`ls notes -d`). A directory named as an option is listed with `ls ./-d`. A link shows the date and the size of the file it points to, with `ls -d` and `find -d` alike. See [Commands](Guide-to-shell.md#commands).
 - **`find -d` in the shell**: shows when each file was last changed, after the name: `find -d *.md` gives `chapters/02-storm.md  2026-11-18 20:31`. The dates are lined up after the names, as in `recent`, and a folder has none. It goes with `-f`, `-b` and `-l`, and after a search by text (`find -d -t storm`) the date comes after the line number, before the text of the line. `find -d` alone shows the last search again with the dates as they are now, and `Tab` after `find` offers `-d`. See [Files](Guide-to-shell.md#files), with a screenshot (`docs/screenshots/shell-dates.svg`).

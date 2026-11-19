@@ -8,7 +8,7 @@
 <circle cx="40" cy="17" r="6" fill="#FEBC2E"/>
 <circle cx="60" cy="17" r="6" fill="#28C840"/>
 <text x="434.0" y="22" fill="#A0A0A0" text-anchor="middle">Blyant: the shell, words of a line numbered, and one changed by its number</text>
-<text x="14.0" y="60.8" fill="#CCCCCC" textLength="428.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Blyant v1.5.8: help lists the commands, exit leaves</text>
+<text x="14.0" y="60.8" fill="#CCCCCC" textLength="428.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Blyant v1.5.9: help lists the commands, exit leaves</text>
 <text x="14.0" y="77.8" fill="#CCCCCC" textLength="411.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">blyant C:\Writing\Harbour Lights&gt; words todo.md 5</text>
 <text x="14.0" y="94.8" fill="#CCCCCC" textLength="151.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">-&gt; todo.md, line 5</text>
 <text x="14.0" y="111.8" fill="#CCCCCC" textLength="705.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  1 Check  2 the  3 tide  4 times  5 in  6 chapter  7 2  8 against  9 the  10 tables</text>
