@@ -596,7 +596,7 @@ SCENES = [
     # words and word: the words of a line numbered, one replaced by its number, without typing the line again
     ('shell-words', 'Blyant: the shell, words of a line numbered, and one changed by its number',
      {},
-     ['--shell', PROJECT], ['<wait>', 'words todo.md 5<Enter>', 'word todo.md 5 10 replace almanac<Enter>',
+     ['--shell', PROJECT], ['<wait>', 'words todo.md 5<Enter>', 'word todo.md 5 #10 replace almanac<Enter>',
                             'peek todo.md 3-7<Enter>'], True),
     # ls -d -s and find -d: when each file was last changed (and its size), lined up after the names
     ('shell-dates', 'Blyant: the shell, ls and find with the date each file was last changed',

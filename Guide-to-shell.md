@@ -499,15 +499,15 @@ blyant ~/notes> lines todo.md 3 unstart "- [ ] "
 ```
 blyant ~/novel> words notes.md 12
 -> notes.md, line 12
-  1 This  2 is  3 a  4 line  5 of  6 text  7 that  8 I  9 want  10 to
-  11 change  12 with  13 a  14 few  15 commands
+  #1 This  #2 is  #3 a  #4 line  #5 of  #6 text  #7 that  #8 I  #9 want  #10 to
+  #11 change  #12 with  #13 a  #14 few  #15 commands
 <- 15 words
 blyant ~/novel> word notes.md 12 9 replace wish
   12  This is a line of text, that I wish to change, with a few commands...
 /home/anna/novel/notes.md: line 12 changed
 -> notes.md, line 12
-  1 This  2 is  3 a  4 line  5 of  6 text  7 that  8 I  9 wish  10 to
-  11 change  12 with  13 a  14 few  15 commands
+  #1 This  #2 is  #3 a  #4 line  #5 of  #6 text  #7 that  #8 I  #9 wish  #10 to
+  #11 change  #12 with  #13 a  #14 few  #15 commands
 <- 15 words
 ```
 
@@ -525,6 +525,7 @@ blyant ~/novel> word notes.md 12 9 replace wish
 - Several words are given as `5-7`: `replace` puts the text in place of all those words, and `before` and `after` go in front of the first and after the last
 - The line is given as `12` or `+12`, and the file as a name, a row of the last list or `$file`. After `words`, `@` is the file and the line, so the next command can be `word @ 9 ...` (see [Working on one line](#working-on-one-line))
 - The words come between two markers: `-> notes.md, line 12` above them, and `<- 15 words` below them (as for `peek`, `set shellmarkers false` leaves them out)
+- The numbers have `#` before them (`#9 want`), so a word that is a number (`2`, `v1`) is not taken for the number of a word. `word` takes the numbers with `#` or without it: `word @ #9 replace wish`, `word @ #5-#7 delete` and `word @ 5-7 delete` are the same
 - After a change the line is shown, with the words numbered again, as the numbers after a word put in or taken out move
 - The text is all that follows `replace`, `before` or `after`, as typed; in quotes it is put in exactly as written. `$name` puts in a value
 - `undo` takes a change back. A file Blyant uses, or one that is not UTF-8, is not changed, and the line endings and byte order mark of the file are kept, as with `lines`
@@ -535,8 +536,8 @@ With `-p` before the file, a word is all between blanks, with the punctuation an
 ```
 blyant ~/novel> words -p notes.md 12
 -> notes.md, line 12
-  1 This  2 is  3 a  4 line  5 of  6 text,  7 that  8 I  9 want  10 to
-  11 change,  12 with  13 a  14 few  15 commands...
+  #1 This  #2 is  #3 a  #4 line  #5 of  #6 text,  #7 that  #8 I  #9 want  #10 to
+  #11 change,  #12 with  #13 a  #14 few  #15 commands...
 <- 15 words
 blyant ~/novel> word -p notes.md 12 6 replace note:
 blyant ~/novel> word -p notes.md 12 15 replace commands.
@@ -551,11 +552,11 @@ blyant ~/novel> word -p notes.md 12 15 replace commands.
 ```
 blyant ~/novel> words -p notes.md 4
 -> notes.md, line 4
-  1 Well  2 -  3 she  4 said:  5 try  6 a/b  7 first.
+  #1 Well  #2 -  #3 she  #4 said:  #5 try  #6 a/b  #7 first.
 <- 7 words
 blyant ~/novel> words notes.md 4
 -> notes.md, line 4
-  1 Well  2 she  3 said  4 try  5 a  6 b  7 first
+  #1 Well  #2 she  #3 said  #4 try  #5 a  #6 b  #7 first
 <- 7 words
 ```
 
@@ -564,7 +565,7 @@ Word 6 is `a/b` with `-p`, and only `b` without it. So `word @ 6 upper` after `w
 ```
 blyant ~/novel> words -p notes.md 4
 -> notes.md, line 4
-  1 Well  2 -  3 she  4 said:  5 try  6 a/b  7 first.
+  #1 Well  #2 -  #3 she  #4 said:  #5 try  #6 a/b  #7 first.
 <- 7 words
 blyant ~/novel> word @ 6 upper
 words -p numbered line 4, and without -p the numbers differ: give -p to word too
@@ -572,7 +573,7 @@ blyant ~/novel> word -p @ 6 upper
    4  Well - she said: try A/B first.
 /home/anna/novel/notes.md: line 4 changed
 -> notes.md, line 4
-  1 Well  2 -  3 she  4 said:  5 try  6 A/B  7 first.
+  #1 Well  #2 -  #3 she  #4 said:  #5 try  #6 A/B  #7 first.
 <- 7 words
 ```
 

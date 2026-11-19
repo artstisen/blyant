@@ -64,9 +64,9 @@ public class LineWordsTests
     {
         Assert.Equal("# My Notes On The Storm", LineWords.TitleLine("# my notes on the storm"));
         var rows = LineWords.Numbered("This is a line of text, that I want to change", 30);
-        Assert.Equal("1 This  2 is  3 a  4 line", rows[0]);
+        Assert.Equal("#1 This  #2 is  #3 a  #4 line", rows[0]);
         Assert.All(rows, row => Assert.True(row.Length <= 30, row));
-        Assert.Equal("1 This  2 is  3 a  4 line  5 of  6 text  7 that  8 I  9 want  10 to  11 change",
+        Assert.Equal("#1 This  #2 is  #3 a  #4 line  #5 of  #6 text  #7 that  #8 I  #9 want  #10 to  #11 change",
             string.Join("  ", rows));
         Assert.Empty(LineWords.Numbered("-- **", 30));
     }

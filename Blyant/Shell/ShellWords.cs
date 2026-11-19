@@ -52,6 +52,10 @@ internal sealed partial class ShellSession
         Line(EndMarker + (count == 1 ? Lang.T("1 word") : Lang.F("{0} words", count)));
     }
 
+    // The numbers of words as words shows them, "#5-#7", as typed without "#": "5-7" (one "#" before each number)
+    internal static string WithoutHashes(string numbers) =>
+        string.Join('-', numbers.Split('-').Select(part => part.StartsWith('#') ? part[1..] : part));
+
     // "-p" first ("words -p notes.md 12", "word -p ..."): a word is all between blanks, with the punctuation and the
     // marks around it. Taken off the words; null (and told) for another option
     private bool? BlanksOption(List<string> words)
@@ -120,7 +124,8 @@ internal sealed partial class ShellSession
             return;
         }
 
-        if (!LinesToChange(words[2], out var first, out var last))
+        // ("#9", "#5-#7", "#5-7": the numbers as words shows them)
+        if (!LinesToChange(WithoutHashes(words[2]), out var first, out var last))
         {
             Error(Lang.F("Not words: {0} (as 9, or 5-7)", words[2]));
             return;

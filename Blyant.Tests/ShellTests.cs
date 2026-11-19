@@ -5549,12 +5549,12 @@ public class ShellTests : IDisposable
         File.WriteAllText(In("work", "n.md"), "# Notes\n" + WordLine + "\n");
         var (output, errors, _, session) = Run("words n.md 2\n");
         Assert.Equal(string.Empty, errors);
-        Assert.Contains("  1 This  2 is  3 a  4 line  5 of  6 text  7 that", output);
+        Assert.Contains("  #1 This  #2 is  #3 a  #4 line  #5 of  #6 text  #7 that", output);
         Assert.Contains(Lang.F("{0}, line {1}: {2} words", In("work", "n.md"), 2, 15), output);
         Assert.Equal(In("work", "n.md"), session.WorkedFile);
         Assert.Equal((2, 1), session.LastList[0].At);
         (output, _, _, _) = Run("words n.md +1\n");
-        Assert.Contains("  1 Notes\n", output);
+        Assert.Contains("  #1 Notes\n", output);
     }
 
     [Fact]
@@ -5576,7 +5576,7 @@ public class ShellTests : IDisposable
             System.Text.Encoding.UTF8.GetString(bytes, 3, bytes.Length - 3));
         Assert.Contains(Lang.F("{0}: line {1} changed", In("work", "n.md"), 2), output.ToString());
         // The words numbered again after a change
-        Assert.Contains("14 handful  15 of  16 few", output.ToString());
+        Assert.Contains("#14 handful  #15 of  #16 few", output.ToString());
         session.Execute("undo");
         session.Execute("undo");
         session.Execute("undo");
@@ -5626,15 +5626,15 @@ public class ShellTests : IDisposable
         var (output, errors, _, _) = Run("words -p n.md 2\nword -p n.md 2 6 replace note:\n" +
                                          "word -p n.md 2 15 replace commands.\nword -p n.md 3 2 title\n");
         Assert.Equal(string.Empty, errors);
-        Assert.Contains("  1 This  2 is  3 a  4 line  5 of  6 text,  7 that", output);
+        Assert.Contains("  #1 This  #2 is  #3 a  #4 line  #5 of  #6 text,  #7 that", output);
         Assert.Contains("15 commands...", output);
         Assert.Equal("# Notes\nThis is a line of note: that I want to change, with a few commands.\n" +
                      "Keep **Bold** and a/b here.\n", File.ReadAllText(In("work", "n.md")));
         // Numbered again in the same way after the change
-        Assert.Contains("  1 Keep  2 **Bold**  3 and  4 a/b  5 here.", output);
+        Assert.Contains("  #1 Keep  #2 **Bold**  #3 and  #4 a/b  #5 here.", output);
         // Without -p, a/b is two words
         (output, _, _, _) = Run("words n.md 3\n");
-        Assert.Contains("4 a  5 b  6 here", output);
+        Assert.Contains("#4 a  #5 b  #6 here", output);
         var (_, wrong, _, _) = Run("words -x n.md 3\nword -q n.md 3 1 upper\n");
         Assert.Contains(Lang.F("Not taken: {0} (-p: words between blanks, with punctuation)", "-x"), wrong);
         Assert.Contains(Lang.F("Not taken: {0} (-p: words between blanks, with punctuation)", "-q"), wrong);
@@ -5692,7 +5692,7 @@ public class ShellTests : IDisposable
         File.WriteAllText(In("work", "n.md"), "# Notes\nThe letter.\n");
         var (output, errors, _, _) = Run("reg w words\n$w n.md 2\nreg up word $$file 2 1 upper\npeek n.md\n$up\n");
         Assert.Equal(string.Empty, errors);
-        Assert.Contains("  1 The  2 letter\n", output);
+        Assert.Contains("  #1 The  #2 letter\n", output);
         Assert.Equal("# Notes\nTHE letter.\n", File.ReadAllText(In("work", "n.md")));
         var (_, wrong, _, _) = Run("reg two = pwd\nreg two += pwd\n$two\n$nothere x\n$file x\n");
         Assert.Contains(Lang.F("${0} has more than one line: run ${0} runs it", "two"), wrong);
@@ -6654,14 +6654,14 @@ public class ShellTests : IDisposable
         File.WriteAllText(In("work", "w.md"), "one two three\nfour\n");
         var (output, errors, _, _) = Run("words w.md 1\nwords w.md 2\nword w.md 1 2 delete\n");
         Assert.Equal(string.Empty, errors);
-        Assert.Contains(ShellSession.TopMarker + Lang.F("{0}, line {1}", "w.md", 1) + "\n  1 one  2 two  3 three\n" +
+        Assert.Contains(ShellSession.TopMarker + Lang.F("{0}, line {1}", "w.md", 1) + "\n  #1 one  #2 two  #3 three\n" +
                         ShellSession.EndMarker + Lang.F("{0} words", 3) + "\n", output);
-        Assert.Contains(ShellSession.TopMarker + Lang.F("{0}, line {1}", "w.md", 2) + "\n  1 four\n" + ShellSession.EndMarker + Lang.T("1 word") + "\n", output);
+        Assert.Contains(ShellSession.TopMarker + Lang.F("{0}, line {1}", "w.md", 2) + "\n  #1 four\n" + ShellSession.EndMarker + Lang.T("1 word") + "\n", output);
         // (the markers tell what the line under the words told)
         Assert.DoesNotContain(Lang.F("{0}, line {1}: {2} words", In("work", "w.md"), 1, 3), output);
         // A change: the words numbered again, between the markers
         Assert.Contains(Lang.F("{0}: line {1} changed", In("work", "w.md"), 1) + "\n" +
-                        ShellSession.TopMarker + Lang.F("{0}, line {1}", "w.md", 1) + "\n  1 one  2 three\n" + ShellSession.EndMarker + Lang.F("{0} words", 2) + "\n",
+                        ShellSession.TopMarker + Lang.F("{0}, line {1}", "w.md", 1) + "\n  #1 one  #2 three\n" + ShellSession.EndMarker + Lang.F("{0} words", 2) + "\n",
             output);
     }
 
@@ -6906,5 +6906,29 @@ public class ShellTests : IDisposable
         Assert.Matches(@"broken\.md +- +-\n", output);
         Assert.Contains("alias.md  2026-11-18 14:02\n", output);
         Assert.DoesNotMatch(@"broken\.md[^\n]*\d{4}-\d\d-\d\d", output);
+    }
+
+    // ---- 1.5.9: "#" before the numbers of words
+
+    [Fact]
+    public void Words_AreNumberedWithAHash_AndWordTakesTheNumbersAsShown()
+    {
+        File.WriteAllText(In("work", "v.md"), "Blyant v1 5 8 Shell\n");
+        var (output, errors, _, _) = Run("words v.md 1\n");
+        Assert.Equal(string.Empty, errors);
+        // A word that is a number is told apart from the number of the word
+        Assert.Contains("  #1 Blyant  #2 v1  #3 5  #4 8  #5 Shell\n", output);
+        // "#4", "#2-#3" and "#2-3", as typed without "#"
+        (_, errors, _, _) = Run("word v.md 1 #4 replace 9\nword v.md 1 #1-2 upper\nword v.md 1 #2-#3 delete\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("BLYANT 9 Shell\n", Text("v.md"));
+        (_, errors, _, _) = Run("word v.md 1 ## delete\nword v.md 1 #x delete\n");
+        Assert.Contains(Lang.F("Not words: {0} (as 9, or 5-7)", "##"), errors);
+        Assert.Contains(Lang.F("Not words: {0} (as 9, or 5-7)", "#x"), errors);
+        Assert.Equal("5-7", ShellSession.WithoutHashes("#5-#7"));
+        Assert.Equal("5-7", ShellSession.WithoutHashes("#5-7"));
+        Assert.Equal("9", ShellSession.WithoutHashes("9"));
+        // Tab goes on after a number with "#" as after one without
+        Assert.Equal("word v.md 1 #2 replace", Tab(Completion(), "word v.md 1 #2 re"));
     }
 }

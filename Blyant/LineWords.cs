@@ -105,7 +105,8 @@ internal static partial class LineWords
         var words = Find(line, blanks);
         for (var n = 0; n < words.Count; n++)
         {
-            var part = (n + 1) + " " + line.Substring(words[n].Start, words[n].Length);
+            // ("#" before the number: told apart from a word that is a number, "#3 5"; word takes "#3" too)
+            var part = "#" + (n + 1) + " " + line.Substring(words[n].Start, words[n].Length);
             if (row.Length > 0 && TextMetrics.WidthOf(row) + 2 + TextMetrics.WidthOf(part) > width)
             {
                 rows.Add(row);

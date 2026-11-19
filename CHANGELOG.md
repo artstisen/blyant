@@ -1,6 +1,7 @@
 # Changes
 
 ## v1.5.9
+- **`#` before the numbers of words in the shell**: `words` shows `#1 Blyant  #2 v1  #3 5  #4 8`, so a word that is a number is not taken for the number of a word. `word` takes the numbers as shown, with `#` or without it: `word @ #4 replace 9`, `word @ #2-#3 delete` and `word @ 2-3 delete` are the same. See [Words in a line](Guide-to-shell.md#words-in-a-line), with the screenshot (`docs/screenshots/shell-words.svg`).
 
 ## v1.5.8 (2026-11-18)
 - **`ls -d` and `ls -s` in the shell, and `Tab` for the options of `ls`**: `ls -d` shows when each file was last changed, and `ls -s` the size of each file, lined up after the names (`plot.md  2026-11-18 20:31  12.4 kB`), as `find -d` and `recent -s` show them; a folder has neither. They go with `-a` and `-l`, in any order. `ls -` and `Tab` offers the options not given yet, and a word that does not start with `-` still completes to the directories. An option `ls` does not know is told (`ls -x`, `ls -ab`), unless a directory has that name, and so is an option after the directory (`ls notes -d`). A directory named as an option is listed with `ls ./-d`. A link shows the date and the size of the file it points to, with `ls -d` and `find -d` alike. See [Commands](Guide-to-shell.md#commands).
