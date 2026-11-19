@@ -24,9 +24,16 @@ blyant --shell ~/novel
 ```
 
 ```
+- Shell mode -
+"""""MM_ MMM      MMM  MMM """""MM_ M_   MMM """MMM"""
+MMM _MM" M%M      "MM__MM" MMM _M%M MMM_ M%M    M%M
+M%M" M%M M%M  ___   M%M    M%M" M%M M%M"_M%M    M%M
+MMM__MM" "MM__MMM   MMM    MMM  MMM MMM  "MM    MMM
 Blyant v1.5.9: help lists the commands, exit leaves
 blyant ~/novel>
 ```
+
+The logo above the first line shows that Blyant was started as the shell. `set shelllogo false` leaves it out (with a screen reader, say).
 
 The prompt shows where you are: `~` is your home directory. `about` shows the commands used the most, `help` lists them all, `help shift` explains one command, and `exit` (or `Ctrl+D`) leaves Blyant. `set language de` switches Blyant to German (`en`, `da`, `nb`, `sv`, `es`, `fr`, `it`, `pl`, `nl` and `fi` are also available); the commands stay the same.
 

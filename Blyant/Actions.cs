@@ -227,6 +227,7 @@ internal static class Actions
         Shell.RecentFirst = true;
         Shell.AutoPeek = false;
         Shell.Markers = Shell.DefaultMarkers;
+        Shell.Logo = Shell.DefaultLogo;
         Shell.PeekLines = Shell.DefaultPeekLines;
         Shell.PeekStep = Shell.DefaultPeekStep;
         Shell.PeekBigStep = Shell.DefaultPeekBigStep;

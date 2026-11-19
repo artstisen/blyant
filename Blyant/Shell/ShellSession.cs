@@ -174,6 +174,23 @@ internal sealed partial class ShellSession
         }
     }
 
+    // The logo of the start page (the setting logo), without colors, under "- Shell mode -", when the shell starts at
+    // a terminal (the setting shelllogo). As plain lines: the blank rows above and below it, and the blanks it starts
+    // with, left out. Not in a window narrower than the logo: its rows are not broken
+    private void ShowLogo()
+    {
+        var rows = global::Blyant.Logo.Current.AllRows.Select(row => row.TrimEnd()).ToList();
+        while (rows.Count > 0 && rows[0].Length == 0) rows.RemoveAt(0);
+        while (rows.Count > 0 && rows[^1].Length == 0) rows.RemoveAt(rows.Count - 1);
+        if (rows.Count == 0) return;
+        var indent = rows.Where(row => row.Length > 0).Min(row => row.Length - row.TrimStart(' ').Length);
+        rows = rows.Select(row => row.Length >= indent ? row[indent..] : row).ToList();
+        // (the last column of the window is not used)
+        if (WindowSize?.Invoke() is { } size && size.Width - 1 < rows.Max(TextMetrics.WidthOf)) return;
+        Line(Lang.T("- Shell mode -"));
+        foreach (var row in rows) Line(row);
+    }
+
     /// <summary>
     /// Read and run the commands until "exit", or the end of the input
     /// </summary>
@@ -184,6 +201,7 @@ internal sealed partial class ShellSession
         ShellRegisters.Load();
         if (Terminal)
         {
+            if (Shell.Logo) ShowLogo();
             Line(Lang.F("{0} {1}: help lists the commands, exit leaves", DialogText.ApplicationName,
                 DialogText.ApplicationVersion));
         }

@@ -4229,6 +4229,8 @@ en: "The script takes at least {0} words ($1 to ${0}): {1} given"
 pl: "Skrypt bierze co najmniej {0} słów ($1 do ${0}): podano {1}"
 
 # Shell/ShellSession.cs
+en: "- Shell mode -"
+pl: "- Tryb powłoki -"
 en: "{0} {1}: help lists the commands, exit leaves"
 pl: "{0} {1}: help wypisuje polecenia, exit kończy"
 en: "The command failed: {0}"

@@ -2178,6 +2178,7 @@ en: "The script has no $1: write $1, $2 ... where the words go (reg tidy = trim 
 en: "The script takes at least {0} words ($1 to ${0}): {1} given"
 
 # Shell/ShellSession.cs
+en: "- Shell mode -"
 en: "{0} {1}: help lists the commands, exit leaves"
 en: "The command failed: {0}"
 en: "-- More: Enter or Space next page, q stop --"

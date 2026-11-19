@@ -36,6 +36,8 @@ public class ShellTests : IDisposable
         // tests of them turn them on)
         Shell.Markers = false;
         Shell.PeekLines = 20;
+        // (and the logo left out: the tests of it turn it on)
+        Shell.Logo = false;
         FileFavorites.Parse(string.Empty);
         FileHistory.Parse(string.Empty);
         DirectoryHotlist.Parse(string.Empty);
@@ -6930,5 +6932,71 @@ public class ShellTests : IDisposable
         Assert.Equal("9", ShellSession.WithoutHashes("9"));
         // Tab goes on after a number with "#" as after one without
         Assert.Equal("word v.md 1 #2 replace", Tab(Completion(), "word v.md 1 #2 re"));
+    }
+
+    // ---- 1.5.9: the logo when the shell starts
+
+    // The shell started at a terminal of a width (null: not known), with "exit": what it wrote
+    private string StartedAt((int Width, int Height)? size)
+    {
+        var output = new StringWriter();
+        var session = new ShellSession(new StringReader("exit\n"), output, new StringWriter(), In("work"), true, false)
+        {
+            WindowSize = () => size
+        };
+        Shell.Run(session);
+        return output.ToString().Replace("\r\n", "\n");
+    }
+
+    [Fact]
+    public void Shell_StartsWithTheLogo_AtATerminal_WithoutColorsAndBlanksBefore()
+    {
+        var logo = Logo.Current;
+        try
+        {
+            Shell.Logo = true;
+            Logo.Current = LogoArt.BuiltIn;
+            var output = StartedAt((80, 24));
+            // "- Shell mode -", the rows of the logo without the blanks they start with, then the first line
+            var rows = LogoArt.BuiltIn.AllRows.Select(row => row.TrimEnd()[4..]).ToList();
+            Assert.StartsWith(Lang.T("- Shell mode -") + "\n" + string.Join("\n", rows) + "\n" +
+                              Lang.F("{0} {1}: help lists the commands, exit leaves", DialogText.ApplicationName,
+                                  DialogText.ApplicationVersion) + "\n", output);
+            Assert.StartsWith("\"\"\"\"\"MM_ MMM", rows[0]);
+            // A window of an unknown width: shown too
+            Assert.StartsWith(Lang.T("- Shell mode -"), StartedAt(null));
+        }
+        finally
+        {
+            Logo.Current = logo;
+        }
+    }
+
+    [Fact]
+    public void Shell_LeavesOutTheLogo_FromAFile_WhenTurnedOff_AndInANarrowWindow()
+    {
+        var logo = Logo.Current;
+        try
+        {
+            Shell.Logo = true;
+            Logo.Current = LogoArt.BuiltIn;
+            // Commands from a file or a pipe (not a terminal)
+            Assert.DoesNotContain(Lang.T("- Shell mode -"), Run("pwd\n").Output);
+            // Narrower than the logo (54 columns, the last column of the window not used)
+            Assert.DoesNotContain(Lang.T("- Shell mode -"), StartedAt((54, 24)));
+            Assert.Contains(Lang.T("- Shell mode -"), StartedAt((55, 24)));
+            // Turned off: the first line alone
+            Shell.Logo = false;
+            Assert.StartsWith(Lang.F("{0} {1}: help lists the commands, exit leaves", DialogText.ApplicationName,
+                DialogText.ApplicationVersion), StartedAt((80, 24)));
+            // A logo of its own: the blank rows around it and the blanks the rows start with left out
+            Shell.Logo = true;
+            Logo.Current = new LogoArt("Mine", new[] { "", "  AB", "   C", "" });
+            Assert.StartsWith(Lang.T("- Shell mode -") + "\nAB\n C\n", StartedAt((80, 24)));
+        }
+        finally
+        {
+            Logo.Current = logo;
+        }
     }
 }

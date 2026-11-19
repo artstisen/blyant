@@ -4229,6 +4229,8 @@ en: "The script takes at least {0} words ($1 to ${0}): {1} given"
 de: "Das Skript braucht mindestens {0} Wörter ($1 bis ${0}): {1} gegeben"
 
 # Shell/ShellSession.cs
+en: "- Shell mode -"
+de: "- Shell-Modus -"
 en: "{0} {1}: help lists the commands, exit leaves"
 de: "{0} {1}: help listet die Befehle, exit beendet"
 en: "The command failed: {0}"

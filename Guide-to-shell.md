@@ -15,6 +15,23 @@ blyant --shell ~/projects      The shell, in that directory
 New to the shell? The [shell tutorial](Guide-to-shell-tutorial.md) goes through a day of work with it, task by task: getting around, looking into files, copying and moving, adding lines, a todo list, registers and the clipboard. This guide describes every command.
 
 ## Starting in the shell
+When the shell starts in a terminal, it shows the logo of the start page, without colors, under `- Shell mode -`, and then the first line:
+
+![The shell started: the logo under - Shell mode -, the first line, and a directory listed](docs/screenshots/shell-start.svg)
+
+```
+- Shell mode -
+"""""MM_ MMM      MMM  MMM """""MM_ M_   MMM """MMM"""
+MMM _MM" M%M      "MM__MM" MMM _M%M MMM_ M%M    M%M
+M%M" M%M M%M  ___   M%M    M%M" M%M M%M"_M%M    M%M
+MMM__MM" "MM__MMM   MMM    MMM  MMM MMM  "MM    MMM
+Blyant v1.5.9: help lists the commands, exit leaves
+```
+
+- The logo is the one chosen for the start page (the setting `logo`; the logo editor makes your own), so the shell shows the same
+- `set shelllogo false` leaves it out, and the shell starts with the first line alone. With a screen reader, which reads the logo character by character, turn it off
+- Commands from a file, a pipe or `--run` never show the logo, and nor does a window narrower than the logo: its rows are not broken
+
 To have Blyant always start as the shell, turn on _Start in the shell_ on the General page of Configuration (or `set startshell true` in the shell). Then `blyant` alone starts as `blyant --shell` does. A file or directory given (`blyant notes.md`, `blyant +12 page.html`) is still opened on the full screen, so programs that open a file in Blyant (as Blyant Validator does) get the editor. `blyant --screen` starts on the full screen this once, and `screen` in the shell switches to it too.
 
 ## Start directory
@@ -191,7 +208,7 @@ In a terminal the line of the shell is read key by key:
 - `Left`, `Right`, `Home` and `End` move on the line, `Backspace` and `Delete` delete, `Ctrl+U` deletes the line before the cursor, `Ctrl+W` the word before it, and `Esc` the whole line. A line wider than the window is scrolled sideways on its row
 - `Ctrl+C` drops what you have typed, and `Ctrl+D` (or `Ctrl+Z` on Windows) on an empty line leaves, as `exit` does
 
-With a screen reader the line may work best when the terminal reads it: turn the setting `shellcompletion` off (`set shellcompletion false` takes effect at once, or `shellcompletion=false` in the settings file; not on the pages of Configuration). The line is then read whole after `Enter`, without `Tab` and with the history your terminal gives. Commands from a file, a pipe or `--run` are always read that way.
+With a screen reader, turn the logo off (`set shelllogo false`), and the line may work best when the terminal reads it: turn the setting `shellcompletion` off (`set shellcompletion false` takes effect at once, or `shellcompletion=false` in the settings file; not on the pages of Configuration). The line is then read whole after `Enter`, without `Tab` and with the history your terminal gives. Commands from a file, a pipe or `--run` are always read that way.
 
 ## Line numbers
 The commands that work on the lines of a file take line numbers in a few ways. A plain number is a line to work on; a `+` before it is a place in the file, or the first line of a range counted from there:

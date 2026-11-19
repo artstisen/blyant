@@ -422,7 +422,7 @@ backup=
         Assert.False(settings.ContainsKey("stayloggedin"));
         Assert.False(settings.ContainsKey("projectsdir"));
         Assert.False(settings.ContainsKey("projectsask"));
-        Assert.Equal(74, settings.Count);
+        Assert.Equal(75, settings.Count);
         Assert.Equal("true", settings["modulejump"]);
         // The modules are on unless turned off
         Assert.Equal("true", settings["moduleprojects"]);
@@ -444,6 +444,8 @@ backup=
         // peek and words show the lines between markers unless that is turned off, and peek shows 15 lines
         Assert.Equal("true", settings["shellmarkers"]);
         Assert.Equal("15", settings["shellpeeklines"]);
+        // The shell starts with the logo unless that is turned off
+        Assert.Equal("true", settings["shelllogo"]);
         // peek + moves 1 line, and ++ 5, unless set otherwise
         Assert.Equal("1", settings["shellpeekstep"]);
         Assert.Equal("5", settings["shellpeekbigstep"]);

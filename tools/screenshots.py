@@ -296,7 +296,7 @@ SETTINGS = {
     'bookmarknumbers': 'true', 'filenumbers': 'true', 'historynumbers': 'false', 'hotlistnumbers': 'false',
     'searchnumbers': 'false', 'commandlist': 'true', 'hints': 'true', 'hintindex': '1', 'osc52': 'true',
     'pastebin': 'false', 'clipboardyank': 'all', 'pastebinappend': 'false', 'pastebinfile': 'paste-bin.txt',
-    'snipsort': 'file', 'asciistyle': '0', 'logoanim': 'off', 'logo': 'Blyant', 'colorscheme': 'Default',
+    'snipsort': 'file', 'asciistyle': '0', 'logoanim': 'off', 'logo': 'Blyant', 'shelllogo': 'false', 'colorscheme': 'Default',
     'monochrome': 'false', 'browsedir1': PROJECT, 'browsedir2': p('research'),
     'browsesel1': 'chapter-03.md', 'browsesel2': 'tides.md', 'browsepane': '1', 'pickdir': '',
     'browsedual': 'true', 'recovery': 'true', 'autocomplete': 'false', 'language': 'en', 'syntaxcolors': 'true',
@@ -574,6 +574,11 @@ SCENES = [
     ('projects', 'Blyant: the projects, with the corkboard of the selected one, its cards and badges', {},
      [], [':projects<Enter>', 'j'], False),
     # The shell (blyant --shell): commands typed at a prompt, lists numbered, in the colors of the terminal
+    # The start of the shell: the logo under "- Shell mode -" (shelllogo; left out of the others, which show more
+    # commands than the window would hold with it)
+    ('shell-start', 'Blyant: the shell started, with the logo of the start page',
+     {'shelllogo': 'true'},
+     ['--shell', PROJECT], ['<wait>', 'ls<Enter>'], True),
     ('shell', 'Blyant: the shell, a project with typed commands and numbered lists', {},
      ['--shell', PROJECT], ['<wait>', 'ls<Enter>', 'peek 3 +3 4<Enter>', 'find -t keeper<Enter>', 'reg ch .<Enter>'],
      True),

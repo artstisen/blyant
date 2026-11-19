@@ -4229,6 +4229,8 @@ en: "The script takes at least {0} words ($1 to ${0}): {1} given"
 fi: "Skripti ottaa vähintään {0} sanaa ($1–${0}): annettu {1}"
 
 # Shell/ShellSession.cs
+en: "- Shell mode -"
+fi: "- Shell-tila -"
 en: "{0} {1}: help lists the commands, exit leaves"
 fi: "{0} {1}: help luettelee komennot, exit poistuu"
 en: "The command failed: {0}"

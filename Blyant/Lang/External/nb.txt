@@ -4229,6 +4229,8 @@ en: "The script takes at least {0} words ($1 to ${0}): {1} given"
 nb: "Skriptet tar minst {0} ord ($1 til ${0}): {1} gitt"
 
 # Shell/ShellSession.cs
+en: "- Shell mode -"
+nb: "- Shell-modus -"
 en: "{0} {1}: help lists the commands, exit leaves"
 nb: "{0} {1}: help viser kommandoene, exit avslutter"
 en: "The command failed: {0}"

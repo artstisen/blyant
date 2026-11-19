@@ -4229,6 +4229,8 @@ en: "The script takes at least {0} words ($1 to ${0}): {1} given"
 da: "Scriptet tager mindst {0} ord ($1 til ${0}): {1} givet"
 
 # Shell/ShellSession.cs
+en: "- Shell mode -"
+da: "- Shell-tilstand -"
 en: "{0} {1}: help lists the commands, exit leaves"
 da: "{0} {1}: help viser kommandoerne, exit afslutter"
 en: "The command failed: {0}"

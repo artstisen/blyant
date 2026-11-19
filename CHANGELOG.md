@@ -1,6 +1,7 @@
 # Changes
 
 ## v1.5.9
+- **The logo when the shell starts**: in a terminal, the shell starts with the logo of the start page, without colors, under `- Shell mode -`, so you see at once that Blyant was started as the shell. It is the logo chosen for the start page (the setting `logo`). `set shelllogo false` leaves it out (with a screen reader, which reads it character by character), and commands from a file, a pipe or `--run`, and a window narrower than the logo, never show it. See [Starting in the shell](Guide-to-shell.md#starting-in-the-shell), with a screenshot (`docs/screenshots/shell-start.svg`).
 - **`#` before the numbers of words in the shell**: `words` shows `#1 Blyant  #2 v1  #3 5  #4 8`, so a word that is a number is not taken for the number of a word. `word` takes the numbers as shown, with `#` or without it: `word @ #4 replace 9`, `word @ #2-#3 delete` and `word @ 2-3 delete` are the same. See [Words in a line](Guide-to-shell.md#words-in-a-line), with the screenshot (`docs/screenshots/shell-words.svg`).
 
 ## v1.5.8 (2026-11-18)

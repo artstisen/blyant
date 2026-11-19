@@ -555,6 +555,8 @@ internal static class FileIo
         settings += "shellautopeek=" + (Shell.AutoPeek ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // The shell: peek and words show the lines between "->" and "<-" (off: the lines alone)
         settings += "shellmarkers=" + (Shell.Markers ? DialogText.BTrue : DialogText.BFalse) + '\n';
+        // The shell: the logo when it starts at a terminal (off: the first line alone, as for a screen reader)
+        settings += "shelllogo=" + (Shell.Logo ? DialogText.BTrue : DialogText.BFalse) + '\n';
         // The shell: how many lines peek shows when none are given
         settings += "shellpeeklines=" + Shell.PeekLines + '\n';
         // The shell: how many lines "peek +" and "peek ++" move the window (and "-", "--" back)
@@ -783,6 +785,7 @@ internal static class FileIo
         Shell.AutoPeek = Tools.TrimToLower(Get("shellautopeek")) == DialogText.BTrue;
         // On unless turned off
         Shell.Markers = Tools.TrimToLower(Get("shellmarkers")) != DialogText.BFalse;
+        Shell.Logo = Tools.TrimToLower(Get("shelllogo")) != DialogText.BFalse;
         Shell.PeekLines = Shell.ParsePeekStep(Get("shellpeeklines"), Shell.DefaultPeekLines);
         Shell.PeekStep = Shell.ParsePeekStep(Get("shellpeekstep"), Shell.DefaultPeekStep);
         Shell.PeekBigStep = Shell.ParsePeekStep(Get("shellpeekbigstep"), Shell.DefaultPeekBigStep);

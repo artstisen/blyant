@@ -48,6 +48,14 @@ internal static class Shell
     internal const bool DefaultMarkers = true;
 
     /// <summary>
+    /// The shell starts with the logo of the start page, without colors, under "- Shell mode -" (setting "shelllogo",
+    /// on unless turned off; typed in at a terminal only). Only in the settings file, or with "set"
+    /// </summary>
+    internal static bool Logo { get; set; } = DefaultLogo;
+
+    internal const bool DefaultLogo = true;
+
+    /// <summary>
     /// How many lines peek shows when none are given (setting "shellpeeklines", 1 to 1000; only in the settings file,
     /// or with "set")
     /// </summary>
