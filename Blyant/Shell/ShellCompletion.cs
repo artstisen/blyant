@@ -296,6 +296,19 @@ internal sealed class ShellCompletion
                 var options = new[] { "-l", "-s", "-f", "-n" }.Except(after.Take(position));
                 return (Kind.Words, command == "recent" ? options : options.Append("filter"));
             }
+            case "tag":
+            {
+                // "tag " and Tab: what tag does, then the tags; after add and remove a file, then the tags; after
+                // rename and clear the tags
+                FileTags.Load();
+                var tags = FileTags.All().Select(pair => pair.Tag);
+                if (position == 0) return (Kind.Words, new[] { "add", "remove", "rename", "clear" }.Concat(tags));
+                var action = after[0];
+                if (action is "add" or "remove") return position == 1 ? (Kind.Path, none) : position == 2 ? (Kind.Words, tags) : (Kind.None, none);
+                return action is "rename" or "clear" && position == 1 ? (Kind.Words, tags) : (Kind.None, none);
+            }
+            case "tags":
+                return (position == 0 ? Kind.Words : Kind.None, new[] { "-f", "clear" });
             case "bookmarks":
             case "book":
                 return (position == 0 ? Kind.Words : Kind.None, new[] { "-l" });

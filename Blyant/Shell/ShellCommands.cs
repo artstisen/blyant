@@ -110,6 +110,12 @@ internal sealed partial class ShellSession
         ("history filter text", Lang.T("Show the files opened with a text in them (or *.md)")),
         ("recent [-l] [-s] [-f] [-n]", Lang.T("List the latest files (-s sizes, -f folder/name, -n by name)")),
         ("recent|hist|fav ... -t text", Lang.T("Only the files with a text in a line, and the line (-t *: line 1)")),
+        ("tag name", Lang.T("List the files with a tag (tag alone: those of $tag)")),
+        ("tag add file|n|2,4|2-5 name", Lang.T("Give files a tag (@: the file worked on)")),
+        ("tag remove file|n [name]", Lang.T("Take a tag off files (no name: all tags)")),
+        ("tag rename|clear name", Lang.T("Rename a tag, or take it off all files")),
+        ("tags [-f]", Lang.T("List the tags, or the files with tags (-f)")),
+        ("tags clear", Lang.T("Take all tags off all files")),
         ("hotlist", Lang.T("List the directory hotlist (hot)")),
         ("hotlist filter text", Lang.T("Show the directories with a text in them")),
         ("hotlist add|remove [dir|n]", Lang.T("Add a directory to the hotlist (this one), or take it off")),
@@ -293,6 +299,8 @@ internal sealed partial class ShellSession
         finally
         {
             EndStep(line, outer, was);
+            // ($tag follows the file worked on, when it has tags)
+            TagFollowsFile(was.Item1, name);
             // (the line "words" numbered can have moved: insert, shift, change, undo ...)
             if (name is not ("word" or "words") && _wordsShown is { } shown &&
                 _changedFiles.Any(path => FileOperations.NameComparer.Equals(path, shown.Path)))
@@ -865,6 +873,12 @@ internal sealed partial class ShellSession
                 break;
             case "resume":
                 if (ResumeTarget(argument) is { } target) OpenFile(new Item(target.Path, false), target.Line);
+                break;
+            case "tag":
+                TagCommand(argument);
+                break;
+            case "tags":
+                TagsCommand(argument);
                 break;
             case "favorites":
             case "fav":

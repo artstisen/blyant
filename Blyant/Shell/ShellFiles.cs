@@ -176,6 +176,8 @@ internal sealed partial class ShellSession
             : FileOperations.Copy(item.Path, target.Path, out path);
         FileExplorer.LogFileOperation(move ? "Move" : "Copy", item.Path + " -> " + target.Path, result);
         if (move && result == DialogText.Success) Moved(item, path);
+        // (a copy has the tags of what was copied)
+        if (!move && result == DialogText.Success) FileTags.FollowCopy(item.Path, path);
         if (result == DialogText.Success) LatestFile(item, path);
         Done(result, move ? Lang.F("Moved to {0}", path) : Lang.F("Copied to {0}", path),
             result == DialogText.Success ? path : null);

@@ -253,7 +253,7 @@ internal static partial class FileExplorer
     }
 
     // True for a file or directory that Blyant uses: the data directory and the directories it is in, the settings,
-    // the favorites and the history
+    // the favorites, the history and the tags
     private static bool UsedByBlyant(Item item)
     {
         var dataDirectory = System.IO.Path.GetFullPath(FileIo.GetDataDirectoryName());
@@ -266,7 +266,8 @@ internal static partial class FileExplorer
 
         return FileOperations.SamePath(item.Path, System.IO.Path.Combine(dataDirectory, FileIo.SettingsFileName)) ||
                FileOperations.SamePath(item.Path, FileFavorites.FilePath) ||
-               FileOperations.SamePath(item.Path, FileHistory.FilePath);
+               FileOperations.SamePath(item.Path, FileHistory.FilePath) ||
+               FileOperations.SamePath(item.Path, FileTags.FilePath);
     }
 
     private static bool IsProtected(Item item)
@@ -418,6 +419,9 @@ internal static partial class FileExplorer
             // A directory moved: the hotlist follows it (and the bookmarks follow what is moved)
             if (isMove && item.IsDirectory) HotlistPathChanged(item.Path, path);
             if (isMove) Bookmarks.Follow(item.Path, path);
+            // (the tags of the shell follow what is moved, and go with a copy)
+            if (isMove) FileTags.Follow(item.Path, path);
+            else FileTags.FollowCopy(item.Path, path);
             // The file history and the jumps follow it too (as when it is renamed)
             if (isMove) HistoryFollows(item.Path, path);
         }
@@ -539,6 +543,7 @@ internal static partial class FileExplorer
             HistoryFollows(item.Path, path);
             if (item.IsDirectory) HotlistPathChanged(item.Path, path);
             Bookmarks.Follow(item.Path, path);
+            FileTags.Follow(item.Path, path);
         }
     }
 
@@ -580,6 +585,7 @@ internal static partial class FileExplorer
         HistoryFollows(oldPath, newPath);
         if (isDirectory) HotlistPathChanged(oldPath, newPath);
         Bookmarks.Follow(oldPath, newPath);
+        FileTags.Follow(oldPath, newPath);
     }
 
     /// <summary>
@@ -589,6 +595,7 @@ internal static partial class FileExplorer
     {
         FileFavorites.Load();
         if (FileFavorites.PathsDeleted(new[] { path })) FileFavorites.Save();
+        FileTags.FollowDelete(new[] { path });
     }
 
     #endregion
@@ -1183,6 +1190,7 @@ internal static partial class FileExplorer
 
             done++;
             ActivePane.Marks.Remove(item.Path);
+            FileTags.FollowCopy(item.Path, path);
             select = path;
         }
 
@@ -1237,6 +1245,7 @@ internal static partial class FileExplorer
 
         Finish(failed ?? DialogText.Success, failedItem?.Path, message);
         if (FileFavorites.PathsDeleted(deleted)) SaveFavorites();
+        FileTags.FollowDelete(deleted);
     }
 
     // Delete one file or directory: to the trash, or for good. One that cannot be moved to the trash is only

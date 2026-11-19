@@ -32,6 +32,9 @@ public class ShellTests : IDisposable
         ShellRegisters.Peek = null;
         ShellRegisters.Calc = null;
         ShellSession.ForgetFind();
+        FileTags.FilePathOverride = Path.Combine(_data, FileTags.FileName);
+        FileTags.Clear();
+        ShellSession.ForgetTag();
         // (the tests written before the markers and the setting shellpeeklines see the output as it was then: the
         // tests of them turn them on)
         Shell.Markers = false;
@@ -61,6 +64,9 @@ public class ShellTests : IDisposable
         ShellRegisters.Peek = null;
         ShellRegisters.Calc = null;
         ShellSession.ForgetFind();
+        FileTags.FilePathOverride = null;
+        FileTags.Clear();
+        ShellSession.ForgetTag();
         SystemClipboard.WriteOverride = null;
         Tools.ClearLineMemory();
         FileFavorites.Parse(string.Empty);
@@ -7043,5 +7049,136 @@ public class ShellTests : IDisposable
         Assert.Equal("jj ...", EventLog.CommandName("jj 3"));
         Assert.Contains("j, jj, k, kk, gg, G", Run("help peek\n").Output);
         Assert.Contains("j, jj, k, kk, gg, G", Run("help G\n").Output);
+    }
+
+    // ---- 1.5.9: tags
+
+    [Fact]
+    public void Tag_GivesFilesATag_AndTheTagListsThem_AsTheLastList()
+    {
+        var (output, errors, _, session) = Run("ls\ntag add 3,4 draft\ntag add plot.md ferry\ntag draft\necho $tag\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains(Lang.F("Tagged {0}: {1} files", "draft", 2), output);
+        Assert.Contains(Lang.F("Tagged {0}: {1}", "ferry", In("work", "plot.md")), output);
+        // The rows of the tag, numbered: the last list
+        Assert.Contains("  1  Ending.md\n  2  plot.md\n", output);
+        Assert.Equal(new[] { In("work", "Ending.md"), In("work", "plot.md") }, session.LastList.Select(item => item.Path));
+        Assert.EndsWith("draft\n", output);
+        Assert.Equal(new[] { "draft", "ferry" }, FileTags.TagsOf(In("work", "plot.md")));
+        // Kept in tags.txt
+        Assert.Contains(In("work", "plot.md") + "\tdraft ferry", File.ReadAllText(FileTags.FilePath));
+        // "tag" alone: those of $tag; "tag -l": the full paths
+        (output, _, _, _) = Run("tag\ntag -l ferry\n");
+        Assert.Contains("  2  plot.md\n", output);
+        Assert.Contains("  1  " + In("work", "plot.md") + "\n", output);
+    }
+
+    [Fact]
+    public void Tags_ListsTheTags_AndTheFilesWithTags()
+    {
+        var (output, errors, _, _) = Run("tags\ntag add plot.md draft\ntag add plot.md ferry\ntag add Ending.md draft\ntags\ntags -f\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains(Lang.T("No tags yet: tag add notes.md draft"), output);
+        Assert.Contains("  draft  " + Lang.F("{0} files", 2) + "\n  ferry  " + Lang.T("1 file") + "\n", output);
+        Assert.Contains("  1  plot.md    draft, ferry\n  2  Ending.md  draft\n", output);
+    }
+
+    [Fact]
+    public void TagRemove_Rename_AndClear_ChangeTheTags_ClearAsksFirst()
+    {
+        Run("tag add plot.md draft\ntag add plot.md ferry\ntag add Ending.md draft\n");
+        var (output, errors, _, _) = Run("tag remove plot.md ferry\ntag remove plot.md ferry\ntag rename draft final\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains(Lang.F("Tag {0} taken off: {1}", "ferry", In("work", "plot.md")), output);
+        Assert.Contains(Lang.F("Nothing taken off: no tag {0} there", "ferry"), output);
+        Assert.Contains(Lang.F("Tag {0} is now {1}", "draft", "final"), output);
+        Assert.Equal(new[] { "final" }, FileTags.TagsOf(In("work", "Ending.md")));
+        // From a file the question is not asked: nothing is changed; with --yes it is
+        (output, _, _, _) = Run("tag clear final\n");
+        Assert.Contains(Lang.T("Nothing was changed"), output);
+        Assert.Equal(2, FileTags.FilesWith("final").Count);
+        (output, _, _, _) = Run("tag clear final\n", yes: true);
+        Assert.Contains(Lang.F("Tag {0} taken off all files", "final"), output);
+        Assert.Empty(FileTags.All());
+        Run("tag add plot.md a\ntag add Ending.md b\n");
+        (output, _, _, _) = Run("tag remove plot.md\ntags clear\n", yes: true);
+        Assert.Contains(Lang.F("Tags taken off: {0}", In("work", "plot.md")), output);
+        Assert.Contains(Lang.T("All tags taken off"), output);
+        Assert.Empty(FileTags.Tagged());
+    }
+
+    [Fact]
+    public void Tag_TellsWhatItCannotTake()
+    {
+        var (_, errors, _, _) = Run("tag\ntag draft\ntag add plot.md two words\ntag add plot.md a/b\ntag add plot.md add\n" +
+                                    "tag add Draft x\ntag add missing.md x\nls\ntag add 2-9 x\ntag add @ x\n");
+        Assert.Contains(Lang.T("No tag yet: tag add notes.md draft, then tag draft"), errors);
+        Assert.Contains(Lang.F("No file has the tag {0} (tags lists them)", "draft"), errors);
+        Assert.Contains(Lang.T("Give the files and the tag: tag add notes.md draft (or rows: 2,4 or 2-5)"), errors);
+        Assert.Contains(Lang.F("Not a name for a tag: {0} (letters, digits, - and _)", "a/b"), errors);
+        Assert.Contains(Lang.F("Not a name for a tag: {0} (letters, digits, - and _)", "add"), errors);
+        Assert.Contains(Lang.F("Not a file: {0}", In("work", "Draft")), errors);
+        Assert.Contains(Lang.F("Not rows: {0} (as 2,4,7 or 2-5)", "2-9"), errors);
+        Assert.Contains(Lang.T("@ is the file and the line of the last command: none yet (words notes.md 12)"), errors);
+        Assert.Empty(FileTags.All());
+        Assert.Contains(Lang.T("tags lists the tags, tags -f the files with tags, and tags clear takes them all off"),
+            Run("tags x\n").Errors);
+    }
+
+    [Fact]
+    public void DollarTag_FollowsTheFileWorkedOn_WhenItHasTagsButNotDollarTag()
+    {
+        File.WriteAllText(In("work", "c.md"), "c\n");
+        Run("tag add plot.md draft\ntag add plot.md ferry\ntag add Ending.md research\ntag add c.md ferry\n");
+        // $tag is ferry (given last); plot.md has it: it stays
+        var (output, _, _, _) = Run("tag ferry\npeek plot.md\necho $tag\n");
+        Assert.DoesNotContain("$tag =", output);
+        Assert.EndsWith("ferry\n", output);
+        // Ending.md has research only: $tag follows, and says so
+        (output, _, _, _) = Run("peek Ending.md\necho $tag\ntag\n");
+        Assert.Contains("  $tag = research\n", output);
+        Assert.Contains("research\n  1  Ending.md\n", output);
+        // A file without tags leaves it
+        File.WriteAllText(In("work", "none.md"), "n\n");
+        (output, _, _, _) = Run("peek none.md\necho $tag\n");
+        Assert.EndsWith("research\n", output);
+        // tag add sets it
+        (output, _, _, _) = Run("tag add none.md later\necho $tag\n");
+        Assert.EndsWith("later\n", output);
+    }
+
+    [Fact]
+    public void Tags_FollowAFileCopiedRenamedMovedAndDeleted_AndTagsTxtIsProtected()
+    {
+        Run("tag add plot.md draft\n");
+        var (_, errors, _, _) = Run("copy plot.md Draft\nrename plot.md story.md\nmove Ending.md notes\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal(new[] { "draft" }, FileTags.TagsOf(In("work", "Draft", "plot.md")));
+        Assert.Equal(new[] { "draft" }, FileTags.TagsOf(In("work", "story.md")));
+        Assert.Empty(FileTags.TagsOf(In("work", "plot.md")));
+        Run("tag add notes/Ending.md x\nrename notes papers\n");
+        Assert.Equal(new[] { "x" }, FileTags.TagsOf(In("work", "papers", "Ending.md")));
+        Run("delete story.md\n", yes: true);
+        Assert.Empty(FileTags.TagsOf(In("work", "story.md")));
+        Assert.Equal(new[] { "draft" }, FileTags.TagsOf(In("work", "Draft", "plot.md")));
+        // A file of Blyant: not deleted nor renamed from the shell
+        (_, errors, _, _) = Run("delete " + FileTags.FilePath + "\n", yes: true);
+        Assert.Contains(DialogText.FileUsedByBlyant, errors);
+        Assert.True(File.Exists(FileTags.FilePath));
+    }
+
+    [Fact]
+    public void Tag_TabCompletesWhatItDoes_TheFiles_AndTheTags()
+    {
+        Run("tag add plot.md draft\n");
+        Assert.Equal("tag add", Tab(Completion(), "tag a"));
+        Assert.Equal("tag draft", Tab(Completion(), "tag dr"));
+        Assert.Equal("tag add plot.md", Tab(Completion(), "tag add pl"));
+        Assert.Equal("tag add plot.md draft", Tab(Completion(), "tag add plot.md d"));
+        Assert.Equal("tag rename draft", Tab(Completion(), "tag rename d"));
+        Assert.Equal("tags -f", Tab(Completion(), "tags -"));
+        Assert.Contains("tag add file|n|2,4|2-5 name", Run("help tag\n").Output);
+        Assert.Contains("tags clear", Run("help tags\n").Output);
+        Assert.Equal("tag ...", EventLog.CommandName("tag add plot.md draft"));
     }
 }

@@ -163,6 +163,7 @@ internal sealed partial class ShellSession
         ShellRegisters.DirectorySource = () => Directory;
         ShellRegisters.FileSource = () => _file;
         ShellRegisters.LineSource = () => FileLine;
+        ShellRegisters.TagSource = () => _tag;
         Terminal = terminal;
         _yes = yes;
         // $file of the shell left last, while the file is there (typed in at a terminal: not for commands from a file,

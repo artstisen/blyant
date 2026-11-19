@@ -76,6 +76,7 @@ See the [guide to the corkboard](Guide-to-corkboard.md).
   - Sort lines and change the letter case without opening an editor (`lines notes.md 3-20 sort`, `upper`, `lower`), do simple calculations with `calc` and put the result in a file (`insert budget.md bottom Total: $calc`), and see the latest files with sizes and folders (`recent -s -f`) ([calculating](Guide-to-shell.md#calculating))
   - Change a word without typing the line again: `words notes.md 12` numbers the words of a line (`#9 want`), and `word notes.md 12 9 replace wish` changes word 9 (also `before`, `after`, `delete`, `upper`, `lower`, `title`). After a command, `@` is the file and the line it worked on: `word @ 9 replace wish`, `shift @ up`
   - Keep results in registers with `>`: a file (`file plot.md > $other`), a calculation (`calc 22 * 3500 > $words`), the files of a search (`find -t TODO > $open`), or commands you just typed as a script (`again 3-5 > $tidy`), and give a script words (`run $check $file 12`) ([registers](Guide-to-shell.md#registers))
+  - Give files tags and find them again, wherever they are: `tag add chapter-3.md draft`, then `tag draft` lists the files with the tag, numbered (`open 2`). `$tag` is the tag you work with ([tags](Guide-to-shell.md#tags))
   - Find files in a large tree with short rows (`find -b storm`: the names only), see when each file was last changed (`find -d`, and `ls -d -s` with the sizes), see the last search again with `find`, and search the latest files, the history and the favorites for a text (`recent -t storm`)
 
 ## Blyant Validator

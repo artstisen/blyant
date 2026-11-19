@@ -546,6 +546,25 @@ List: main
 - `fav add notes [Story]` adds a favorite right into a folder (or `top`), and `fav filter plot` shows only the rows with _plot_ in them, numbered as in the whole list
 - `fav subfolder [Story] Ideas` makes a subfolder, `fav rename [Story] Novel` renames a folder, and `fav remove [Story]` removes it after asking. `fav undo` puts it back
 
+## Tags
+Give files a tag to find them again, wherever they are: `tag add` and the tag, then `tag` and the tag lists them, numbered:
+
+```
+blyant ~/novel> tag add plot.md draft
+Tagged draft: /home/anna/novel/plot.md
+blyant ~/novel> tag add chapters/02-storm.md draft
+Tagged draft: /home/anna/novel/chapters/02-storm.md
+blyant ~/novel> tag draft
+  1  plot.md
+  2  02-storm.md
+blyant ~/novel> open 2
+```
+
+- A file can have several tags: `tag add plot.md ferry`. `tags` lists the tags, and `tags -f` the files with their tags
+- `tag add 2,4 draft` gives rows 2 and 4 of the last list the tag, and `tag add @ draft` the file you work on
+- `$tag` is the tag you work with, and `tag` alone lists its files. It changes when you work on a file that has other tags (the shell says so: `$tag = ferry`), so look at it with `echo $tag` before you use it
+- `tag remove plot.md draft` takes the tag off, and `tag rename draft final` renames it on all files. Files keep their tags when you rename or move them, and a copy gets them too
+
 ## Tidying files
 `format` and `trim` are the commands `:format` and `:trim` of the editor, run on a file without opening it:
 

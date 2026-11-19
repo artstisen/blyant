@@ -607,6 +607,12 @@ SCENES = [
     ('shell-dates', 'Blyant: the shell, ls and find with the date each file was last changed',
      {},
      ['--shell', PROJECT], ['<wait>', 'ls -d -s<Enter>', 'find -d chapter*<Enter>'], True),
+    # Tags: files given a tag, listed by it, and $tag following a file with another tag
+    ('shell-tags', 'Blyant: the shell, files given tags and listed by a tag',
+     {},
+     ['--shell', PROJECT], ['<wait>', 'tag add chapter-02.md draft<Enter>', 'tag add chapter-04.md draft<Enter>',
+                            'tag add research/tides.md research<Enter>', 'tag draft<Enter>',
+                            'peek research/tides.md 1-2<Enter>', 'tags -f<Enter>'], True),
     # @: a line found once, then insert, lines and shift go on with it without the file and the line typed again
     ('shell-at', 'Blyant: the shell, @ is the file and the line worked on last',
      {},

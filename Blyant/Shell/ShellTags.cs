@@ -1,0 +1,381 @@
+﻿namespace Blyant;
+
+/// <summary>
+/// "tag" and "tags": files given tags, to find them again by the tag ("tag add notes.md draft", then "tag draft": the
+/// files with it, as a numbered list). The tags are kept in tags.txt (FileTags). $tag is the tag worked with: set by
+/// "tag add" and "tag draft", and by the file worked on when that file has tags but not $tag (the tag given to it last)
+/// </summary>
+internal sealed partial class ShellSession
+{
+    // The tag worked with ($tag; null: none yet). Kept while Blyant runs, also when the shell is left for the full screen
+    private static string? _tag;
+
+    /// <summary>
+    /// No tag worked with (a new Blyant, or a test)
+    /// </summary>
+    internal static void ForgetTag() => _tag = null;
+
+    // The words after "tag" that are not tags
+    private static readonly HashSet<string> TagActions = new(StringComparer.OrdinalIgnoreCase) { "add", "remove", "rename", "clear" };
+
+    // "tag draft": the files with the tag (it is then $tag); "tag" alone: those of $tag; "tag -l draft": the full paths.
+    // "tag add", "tag remove", "tag rename" and "tag clear" change the tags
+    private void TagCommand(string argument)
+    {
+        var words = Words(argument);
+        var full = words.RemoveAll(word => word == "-l") > 0;
+        if (words.Count == 0)
+        {
+            if (_tag == null) Error(Lang.T("No tag yet: tag add notes.md draft, then tag draft"));
+            else ListTag(_tag, full);
+            return;
+        }
+
+        switch (words[0].ToLowerInvariant())
+        {
+            case "add":
+                TagAdd(words);
+                return;
+            case "remove":
+                TagRemove(words);
+                return;
+            case "rename":
+                TagRename(words);
+                return;
+            case "clear":
+                TagClear(words);
+                return;
+        }
+
+        if (words.Count > 1)
+        {
+            Error(Lang.T("Give one tag: tag draft (tag add notes.md draft gives a file a tag)"));
+            return;
+        }
+
+        if (!FileTags.IsName(words[0]))
+        {
+            Error(Lang.F("Not a name for a tag: {0} (letters, digits, - and _)", words[0]));
+            return;
+        }
+
+        ListTag(words[0].ToLowerInvariant(), full);
+    }
+
+    // The files with a tag, numbered (the last list: "open 2"); the tag is then $tag
+    private void ListTag(string tag, bool full)
+    {
+        FileTags.Load();
+        var files = FileTags.FilesWith(tag);
+        if (files.Count == 0)
+        {
+            Error(Lang.F("No file has the tag {0} (tags lists them)", tag));
+            return;
+        }
+
+        _tag = tag;
+        var names = Names(files.Select(path => (path, false)).ToList(), full);
+        List(files.Select((path, i) => (new Item(path, false), names[i])).ToList(), string.Empty);
+    }
+
+    // "tag add notes.md draft", "tag add 2,4,7 draft", "tag add 2-5 draft", "tag add @ draft": the files get the tag,
+    // and it is $tag. The last list stays, so more rows of it can be given the tag
+    private void TagAdd(List<string> words)
+    {
+        if (words.Count != 3)
+        {
+            Error(Lang.T("Give the files and the tag: tag add notes.md draft (or rows: 2,4 or 2-5)"));
+            return;
+        }
+
+        if (TagName(words[2]) is not { } tag || FilesOf(words[1], true) is not { } files) return;
+        FileTags.Load();
+        foreach (var file in files) FileTags.Add(file.Path, tag);
+        var result = FileTags.Save();
+        if (result != DialogText.Success)
+        {
+            Error(result);
+            return;
+        }
+
+        // (the paths, never the tag: a name the user gave)
+        foreach (var file in files) EventLog.Add(DialogText.LogFile + "Tag add: " + file.Path);
+        _tag = tag;
+        Line(files.Count == 1 ? Lang.F("Tagged {0}: {1}", tag, files[0].Path) : Lang.F("Tagged {0}: {1} files", tag, files.Count));
+    }
+
+    // "tag remove notes.md draft": the tag taken off the files; "tag remove notes.md": all tags of the files. A file
+    // that is not there any more can be given
+    private void TagRemove(List<string> words)
+    {
+        if (words.Count is < 2 or > 3)
+        {
+            Error(Lang.T("Give the files, and the tag if only that one goes: tag remove notes.md draft"));
+            return;
+        }
+
+        string? tag = null;
+        if (words.Count == 3 && TagName(words[2]) == null) return;
+        if (words.Count == 3) tag = words[2].ToLowerInvariant();
+        if (FilesOf(words[1], false) is not { } files) return;
+        FileTags.Load();
+        var removed = files.Where(file => FileTags.Remove(file.Path, tag)).ToList();
+        if (removed.Count == 0)
+        {
+            Line(tag == null ? Lang.T("Nothing taken off: no tags there") : Lang.F("Nothing taken off: no tag {0} there", tag));
+            return;
+        }
+
+        var result = FileTags.Save();
+        if (result != DialogText.Success)
+        {
+            Error(result);
+            return;
+        }
+
+        foreach (var file in removed) EventLog.Add(DialogText.LogFile + "Tag remove: " + file.Path);
+        if (removed.Count == 1)
+        {
+            Line(tag == null
+                ? Lang.F("Tags taken off: {0}", removed[0].Path)
+                : Lang.F("Tag {0} taken off: {1}", tag, removed[0].Path));
+        }
+        else
+        {
+            Line(tag == null
+                ? Lang.F("Tags taken off {0} files", removed.Count)
+                : Lang.F("Tag {0} taken off {1} files", tag, removed.Count));
+        }
+    }
+
+    // "tag rename draft final": the files with draft have final instead
+    private void TagRename(List<string> words)
+    {
+        if (words.Count != 3)
+        {
+            Error(Lang.T("Give the tag and the new name: tag rename draft final"));
+            return;
+        }
+
+        if (TagName(words[1]) is not { } tag || TagName(words[2]) is not { } name) return;
+        FileTags.Load();
+        if (FileTags.Rename(tag, name) == 0)
+        {
+            Error(Lang.F("No file has the tag {0} (tags lists them)", tag));
+            return;
+        }
+
+        var result = FileTags.Save();
+        if (result != DialogText.Success)
+        {
+            Error(result);
+            return;
+        }
+
+        EventLog.Add(DialogText.LogFile + "Tag rename");
+        if (_tag == tag) _tag = name;
+        Line(Lang.F("Tag {0} is now {1}", tag, name));
+    }
+
+    // "tag clear draft": the tag taken off all files, asked first (it cannot be undone)
+    private void TagClear(List<string> words)
+    {
+        if (words.Count != 2)
+        {
+            Error(Lang.T("Give the tag: tag clear draft"));
+            return;
+        }
+
+        if (TagName(words[1]) is not { } tag) return;
+        FileTags.Load();
+        var count = FileTags.FilesWith(tag).Count;
+        if (count == 0)
+        {
+            Error(Lang.F("No file has the tag {0} (tags lists them)", tag));
+            return;
+        }
+
+        if (!ChoiceBox.ConfirmGuarded(Lang.T("Clear tag"), Lang.F("Take the tag {0} off all files that have it ({1})?", tag, count),
+                Lang.T("The files stay as they are.")))
+        {
+            Line(Lang.T("Nothing was changed"));
+            return;
+        }
+
+        FileTags.ClearTag(tag);
+        var result = FileTags.Save();
+        if (result != DialogText.Success)
+        {
+            Error(result);
+            return;
+        }
+
+        EventLog.Add(DialogText.LogFile + "Tag clear");
+        if (_tag == tag) _tag = null;
+        Line(Lang.F("Tag {0} taken off all files", tag));
+    }
+
+    // "tags": the tags, and how many files have each; "tags -f": the files with tags, and their tags (numbered: "open
+    // 2"); "tags clear": all tags taken off all files, asked first
+    private void TagsCommand(string argument)
+    {
+        var words = Words(argument);
+        FileTags.Load();
+        if (words.Count == 1 && words[0].Equals("clear", StringComparison.OrdinalIgnoreCase))
+        {
+            ClearAllTags();
+            return;
+        }
+
+        if (words.Count > 1 || (words.Count == 1 && words[0] != "-f"))
+        {
+            Error(Lang.T("tags lists the tags, tags -f the files with tags, and tags clear takes them all off"));
+            return;
+        }
+
+        if (words.Count == 1)
+        {
+            var tagged = FileTags.Tagged();
+            var names = Names(tagged.Select(entry => (entry.Path, false)).ToList(), false);
+            var width = names.Count == 0 ? 0 : names.Max(TextMetrics.WidthOf);
+            List(tagged.Select((entry, i) => (new Item(entry.Path, false),
+                Padded(names[i], width) + "  " + string.Join(", ", entry.Tags))).ToList(),
+                Lang.T("No tags yet: tag add notes.md draft"));
+            return;
+        }
+
+        var all = FileTags.All();
+        if (all.Count == 0)
+        {
+            Line(Lang.T("No tags yet: tag add notes.md draft"));
+            return;
+        }
+
+        var tagWidth = all.Max(pair => TextMetrics.WidthOf(pair.Tag));
+        foreach (var (tag, count) in all)
+        {
+            Line("  " + Padded(tag, tagWidth) + "  " + (count == 1 ? Lang.T("1 file") : Lang.F("{0} files", count)));
+        }
+    }
+
+    // "tags clear": all tags taken off all files, asked first
+    private void ClearAllTags()
+    {
+        var count = FileTags.Tagged().Count;
+        if (count == 0)
+        {
+            Line(Lang.T("No tags yet: tag add notes.md draft"));
+            return;
+        }
+
+        if (!ChoiceBox.ConfirmGuarded(Lang.T("Clear tags"), Lang.F("Take all tags off all files ({0})?", count),
+                Lang.T("The files stay as they are.")))
+        {
+            Line(Lang.T("Nothing was changed"));
+            return;
+        }
+
+        FileTags.ClearTag(null);
+        var result = FileTags.Save();
+        if (result != DialogText.Success)
+        {
+            Error(result);
+            return;
+        }
+
+        EventLog.Add(DialogText.LogFile + "Tags clear");
+        _tag = null;
+        Line(Lang.T("All tags taken off"));
+    }
+
+    // A name for a tag, in small letters (null, and told: not one; "add" and the other words of tag are not names)
+    private string? TagName(string word)
+    {
+        if (FileTags.IsName(word) && !TagActions.Contains(word)) return word.ToLowerInvariant();
+        Error(Lang.F("Not a name for a tag: {0} (letters, digits, - and _)", word));
+        return null;
+    }
+
+    // The files a word gives: rows of the last list ("2,4,7", "2-5"), "@" (the file worked on), or a file (a name, a
+    // row, $file put in). "there": they must be there (tag add); tag remove takes one that is gone. Null, and told:
+    // not files
+    private List<Item>? FilesOf(string word, bool there)
+    {
+        if (word == "@")
+        {
+            if (_file == null)
+            {
+                Error(Lang.T("@ is the file and the line of the last command: none yet (words notes.md 12)"));
+                return null;
+            }
+
+            word = _file;
+        }
+
+        var words = new List<string> { word };
+        if (word.Length > 1 && word.All(c => char.IsAsciiDigit(c) || c is ',' or '-') && word.Any(char.IsAsciiDigit) &&
+            !File.Exists(PathOf(word)))
+        {
+            if (RowsOf(word) is not { } rows)
+            {
+                Error(Lang.F("Not rows: {0} (as 2,4,7 or 2-5)", word));
+                return null;
+            }
+
+            words = rows.Select(row => row.ToString(System.Globalization.CultureInfo.InvariantCulture)).ToList();
+        }
+
+        var files = new List<Item>();
+        foreach (var each in words)
+        {
+            if ((there ? Existing(each) : Resolve(each, false)) is not { } item) return null;
+            if (item.IsDirectory || System.IO.Directory.Exists(item.Path))
+            {
+                Error(Lang.F("Not a file: {0}", item.Path));
+                return null;
+            }
+
+            if (!files.Any(file => FileOperations.NameComparer.Equals(file.Path, item.Path))) files.Add(item);
+        }
+
+        return files;
+    }
+
+    // "2,4,7", "2-5", "2,5-7": the rows (null: not rows, or one the last list does not have)
+    private List<int>? RowsOf(string word)
+    {
+        var rows = new List<int>();
+        foreach (var part in word.Split(','))
+        {
+            var dash = part.IndexOf('-');
+            var (from, to) = dash < 0 ? (part, part) : (part[..dash], part[(dash + 1)..]);
+            if (!int.TryParse(from, out var first) || !int.TryParse(to, out var last) || first < 1 || last < first ||
+                last > LastList.Count)
+            {
+                return null;
+            }
+
+            for (var row = first; row <= last; row++) rows.Add(row);
+        }
+
+        return rows;
+    }
+
+    // $tag follows the file worked on: when the command made another file $file, and that file has tags but not $tag,
+    // the tag given to it last is $tag (told). A file with $tag, or without tags, leaves it. Not after "tag" and
+    // "tags", which set it themselves
+    private void TagFollowsFile(string? before, string command)
+    {
+        if (command is "tag" or "tags" || _file == null ||
+            (before != null && FileOperations.NameComparer.Equals(before, _file)))
+        {
+            return;
+        }
+
+        FileTags.Load();
+        var tags = FileTags.TagsOf(_file);
+        if (tags.Count == 0 || (_tag != null && tags.Contains(_tag))) return;
+        _tag = tags[^1];
+        Line("  $tag = " + _tag); // English: a name set, as reg shows a register
+    }
+}

@@ -172,6 +172,9 @@ To get all output at once (with a screen reader, say), turn the pages off: `set 
 | `history [-l] filter text` | Show the files opened with a text in their path (`hist filter chapter`), or whose name fits a pattern (`hist filter *.typ`), numbered as in the whole history, so `open 7` is row 7 of `hist`. The options of `recent` go before `filter` (`hist -n -f filter chapter`) |
 | `recent [-l] [-s] [-f] [-n]` | List the latest files (the first nine of the history), by name. `-l` shows the full paths, `-s` the size of each file (`-` for a file that is gone), `-f` the folder and the name (`Book/chapter-3.md`; two rows alike get the folder above it: `Book/a.md (novel)`), and `-n` sorts the rows by name, A to Z, numbered as shown, so `open 3` opens row 3. The options go in any order: `recent -n -f -s` |
 | `recent\|hist\|fav ... -t text` | Only the files of the list with the text in a line, and the first line with it, instead of the date: `recent -t storm` shows `02-storm.md:3  The storm came at night.` The text is taken as `find -t` takes it (letter case alike, `*` and `?`), and goes last, after the other options and a filter (`hist -n -t storm`, `fav filter draft -t storm`). The rows are numbered as in the whole list, and `open 4` opens row 4 at the line found. Directories and files that are not text are left out. `recent -t *` shows the first line of each file, and `recent -t "# *"` the first heading |
+| `tag name`, `tag` | List the files with a tag, or with `$tag` (see [Tags](#tags)) |
+| `tag add\|remove file\|n name` | Give files a tag (`tag add 2,4 draft`), or take it off |
+| `tags [-f]` | List the tags, or the files with tags (`-f`) |
 | `hotlist` (`hot`) | List the directory hotlist |
 | `hotlist filter text` | Show the directories of the hotlist with a text in their name or path (`hot filter novel`), or that match a pattern, numbered as in the whole hotlist |
 | `fav add file\|n [where]` | Add a file or directory to the favorites in use: at the top of the list (row 1, outside the folders), or at the place given: `top`, `bottom`, the place of a row (`5`) or into a `[folder]` (`fav add notes.md [Drafts]`) |
@@ -852,6 +855,74 @@ fav filter chapter                   only the rows with "chapter" in them
 - A list of favorites named like one of these words (`folder`, `subfolder`, `move`, `undo`, `filter` ...) is opened with `fav use folder`, as for `new` (see [Commands](#commands))
 - A file whose name starts with a bracket (`[2024].md`) is a file, not a folder, after `fav add` and `fav remove`: a folder is a name in brackets alone
 
+## Tags
+![Two chapters given the tag draft and a research note the tag research, the files of draft listed, $tag following the note when it is peeked, and the files with their tags](docs/screenshots/shell-tags.svg)
+
+A tag is a name you give files, to find them again: `tag add chapter-3.md draft`, and later `tag draft` lists the files with that tag, numbered, so `open 2` and `peek 2` take them at once. A file can have several tags, and a tag several files, in any folders:
+
+```
+blyant ~/novel> tag add chapter-3.md draft
+Tagged draft: /home/anna/novel/chapter-3.md
+blyant ~/novel> find chapter-*
+  1  chapter-1.md
+  2  chapter-2.md
+  3  chapter-3.md
+  4  chapter-4.md
+blyant ~/novel> tag add 1,4 draft
+Tagged draft: 2 files
+blyant ~/novel> tag add notes/ferry.md research
+Tagged research: /home/anna/novel/notes/ferry.md
+blyant ~/novel> tag draft
+  1  chapter-3.md
+  2  chapter-1.md
+  3  chapter-4.md
+blyant ~/novel> tags
+  draft     3 files
+  research  1 file
+```
+
+| Command | What it does |
+|---|---|
+| `tag add file\|n name` | Give a file the tag: a name, a row of the last list, `$file` or `@` (the file worked on). Several rows at once: `tag add 2,4,7 draft`, `tag add 2-5 draft` |
+| `tag name` | List the files with the tag, numbered, in the order they got it: the last list (`open 2`). The tag is then `$tag` |
+| `tag` | List the files of `$tag` (`tag -l`: with the full paths) |
+| `tag remove file\|n [name]` | Take the tag off the file, or all its tags without a name. A file that is not there any more can be given |
+| `tag rename old new` | Give the files of a tag another name (`tag rename draft final`) |
+| `tag clear name` | Take the tag off all files (asked first: it cannot be undone) |
+| `tags` | List the tags, and how many files have each |
+| `tags -f` | List the files with tags, and the tags of each, numbered (`open 2`) |
+| `tags clear` | Take all tags off all files (asked first) |
+
+- A tag is letters, digits, `-` and `_` (`draft`, `chapter-3`, `to_check`), without blanks, and the letter case does not matter: `Draft` is `draft`. `add`, `remove`, `rename` and `clear` are not tags
+- `tag add` leaves the last list as it was, so you can give more rows of it a tag (`tag add 2 draft`, then `tag add 5 draft`)
+- The files keep their tags when you rename or move them, in the shell or on the full screen, and a copy gets the tags of what was copied (a directory copied: the tags of the files in it). A file you delete loses its tags
+- The tags are kept in `tags.txt` in the data directory, a line for each file: the path, a tab, and the tags. You can edit it in Blyant, but the shell does not delete or rename it
+- `Tab` completes `add`, `remove`, `rename`, `clear` and the tags after `tag`, the file after `tag add` and `tag remove`, and the tags after it
+
+### $tag: the tag you work with
+`$tag` is the tag you work with, as `$file` is the file. `tag` alone lists its files, and `echo $tag` shows it. **It changes as you work, so check it before you use it**:
+
+- `tag add` and `tag draft` set it: that is how you set it yourself
+- When a command works on another file (`open`, `peek`, `file 2`, `rename` ...) and that file has tags, but not `$tag`, `$tag` becomes the tag the file got last, and the shell says so: `  $tag = research`
+- A file that has `$tag` among its tags leaves it, so `$tag` stays while you go through the files of a tag. A file without tags leaves it too
+
+```
+blyant ~/novel> tag draft
+  1  chapter-3.md
+  2  chapter-1.md
+  3  chapter-4.md
+blyant ~/novel> peek notes/ferry.md
+-> ferry.md
+  1  # The ferry
+  2  Jon Arvik runs it twice a day.
+<- lines 1-2 of 2
+  $tag = research
+blyant ~/novel> tag
+  1  ferry.md
+```
+
+`$tag` is kept while Blyant runs, also when you go to the full screen and back. A register you made before with the name `tag` is not a register any more: `$tag` is set by Blyant, and `reg` says so.
+
 ## Registers
 A register keeps a text or a path under a name, and `$name` puts it in any command:
 
@@ -919,6 +990,7 @@ lines plot.md 3-5 > $notes          ">": the register is those lines alone
   | `$pwd` | the directory you are in (`copy 3 $pwd`) |
   | `$file` | the file the last command worked on: opened, peeked, put lines in, made with `new` ... (`peek plot.md`, then `insert $file bottom Done`). It is kept when you leave the shell, and is `$file` again the next time you start it, while the file is there (setting `shelllastfile`; not for commands from a file, a pipe or `--run`). A list shown (`ls`, `fav`) does not change it. `file 3` makes row 3 of a list `$file` without peeking it, and `resume` opens it in the editor |
   | `$line` | the line of `$file` the last command worked on (`words notes.md 12` makes it 12), or set with `line 12`, else the line where the cursor was in the editor: with `$file` it is `@` (see [Working on one line](#working-on-one-line)). Used before there is a line, it gets the message that there is no line yet |
+  | `$tag` | the tag you work with: set by `tag add` and `tag draft`, and by a file with tags you work on (see [$tag: the tag you work with](#tag-the-tag-you-work-with)) |
   | `$date` | today, as `2026-11-15` |
   | `$time` | the time now, as `14:05` |
   | `$now` | the date and the time, as `2026-11-15 14:05:33` (as `:ts` in the editor) |
