@@ -49,7 +49,7 @@ internal static partial class ShellRegisters
     /// in), $file (the file the last command worked on), $line (the line of it), $calc (the result of the last calc), $date, $time and $now.
     /// They cannot be set or taken away, and a line of one of them in the file is kept as a line that is not a register
     /// </summary>
-    internal static readonly string[] Reserved = { ClipName, PeekName, "pwd", "file", "line", "tag", CalcName, "date", "time", "now" };
+    internal static readonly string[] Reserved = { ClipName, PeekName, "pwd", "prev", "file", "line", "tag", CalcName, "date", "time", "now" };
 
     /// <summary>
     /// The name of $calc: the result of the last "calc"
@@ -98,6 +98,11 @@ internal static partial class ShellRegisters
     internal static Func<string?>? TagSource { get; set; }
 
     /// <summary>
+    /// The directory the shell was in before the one it is in, for $prev (null: none yet; set by the shell that runs)
+    /// </summary>
+    internal static Func<string?>? PreviousSource { get; set; }
+
+    /// <summary>
     /// The time now, for $date, $time and $now (another for tests)
     /// </summary>
     internal static Func<DateTime> Clock { get; set; } = () => DateTime.Now;
@@ -111,6 +116,7 @@ internal static partial class ShellRegisters
         "file" => FileSource?.Invoke(),
         "line" => LineSource?.Invoke()?.ToString(System.Globalization.CultureInfo.InvariantCulture),
         "tag" => TagSource?.Invoke(),
+        "prev" => PreviousSource?.Invoke(),
         CalcName => Calc,
         // (as :ts in the editor: ISO, the same in every language)
         "date" => Clock().ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),

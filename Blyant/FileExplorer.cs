@@ -1367,6 +1367,7 @@ internal static partial class FileExplorer
         if (JumpHistory.PathChanged(oldPath, newPath)) JumpHistory.Save();
         Bookmarks.Follow(oldPath, newPath);
         FileTags.Follow(oldPath, newPath);
+        ShellSession.PreviousFollows(oldPath, newPath);
         Splits.Follow(oldPath, newPath);
         CorkboardFollows(oldPath, newPath);
     }

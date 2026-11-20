@@ -71,6 +71,7 @@ blyant ~/novel>
 
 - `cd 1` goes into row 1, `cd chapters` does the same by name, and `cd ../other` or `cd ~/letters` take a path
 - `up` goes to the directory above, `home` (or `cd` alone) to your home directory, and `pwd` shows where you are
+- `cd -` goes back to the directory you were in before, as in bash, and `cd -` again takes you back: handy after `hot 2` or `cd 3` on a file. That directory is `$prev` (`copy notes.md $prev`)
 - `ls -a` also lists hidden files (such as `.gitignore`), which `ls` leaves out, as the file browser does
 - `ls -d` shows when each file was last changed, and `ls -s` how large it is: `ls -d -s` shows both. `ls -` and `Tab` offers the options
 - `Tab` completes what you type: `cd ch` and `Tab` gives `cd chapters/`, and `Tab` again continues inside that directory. `Up` and `Down` bring back the commands you typed before

@@ -100,6 +100,7 @@ Some commands have a short form, which does the same: `fav` and `favs` (`favorit
 | `pwd` | Show the directory you are in |
 | `ls [-a] [-l] [-d] [-s] [dir\|n]` | List the folders, then the files, of a directory (by name; a favorite marked ` *`). Hidden files are left out, as in the file browser (on Linux and macOS the names that start with `.`); `ls -a` lists them too, and `ls -l` the full paths, without marks. `ls -d` shows when each file was last changed, and `ls -s` the size of each file, lined up after the names (a folder has neither; a link: the file it points to): `ls -d -s` shows both. The options go before the directory, and a directory named as an option is `ls ./-d` |
 | `cd [dir\|file\|n]` | Go to a directory; `cd` alone goes to your home directory, `cd ~/notes` to a directory in it. A file (a row of `fav`, `hist`, `find` ...) goes to the directory it is in, and the file is then the last list: `open 1` opens it |
+| `cd -` | Go back to the directory you were in before, and show it, as in bash; again, and you are back. Any command that took you to another directory counts (`cd`, `up`, `home`, `data`, `project`, a row of `hot` ...), not a directory renamed or moved while you are in it. The directory is `$prev`, and follows it when it is renamed or moved; when it is gone, the shell says so and stays. A directory named `-` is `cd ./-` |
 | `up` | Go to the directory above (`cd ..`) |
 | `home` | Go to your home directory (as `cd` alone) |
 | `data` | Go to Blyant's [data directory](Guide-to-installation.md#good-to-know), with the settings, lists and log. `cd data` still goes to a directory named _data_ |
@@ -1062,6 +1063,7 @@ lines plot.md 3-5 > $notes          ">": the register is those lines alone
   | Name | Value |
   |---|---|
   | `$pwd` | the directory you are in (`copy 3 $pwd`) |
+  | `$prev` | the directory you were in before, where `cd -` goes (`copy notes.md $prev`, `ls $prev`). Kept while Blyant runs |
   | `$file` | the file the last command worked on: opened, peeked, put lines in, made with `new` ... (`peek plot.md`, then `insert $file bottom Done`). It is kept when you leave the shell, and is `$file` again the next time you start it, while the file is there (setting `shelllastfile`; not for commands from a file, a pipe or `--run`). A list shown (`ls`, `fav`) does not change it. `file 3` makes row 3 of a list `$file` without peeking it, and `resume` opens it in the editor |
   | `$line` | the line of `$file` the last command worked on (`words notes.md 12` makes it 12), or set with `line 12`, else the line where the cursor was in the editor: with `$file` it is `@` (see [Working on one line](#working-on-one-line)). Used before there is a line, it gets the message that there is no line yet |
   | `$tag` | the tag you work with: set by `tag add` and `tag draft`, and by a file with tags you work on (see [$tag: the tag you work with](#tag-the-tag-you-work-with)) |

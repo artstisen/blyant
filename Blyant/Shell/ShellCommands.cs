@@ -17,6 +17,7 @@ internal sealed partial class ShellSession
         ("ls [-a] [-l] [-d] [-s] [dir|n]", Lang.T("List a directory (-a: hidden ones too, -l: full paths)")),
         ("ls -d, ls -s", Lang.T("Show when each file was last changed, and the size")),
         ("cd [dir|file|n]", Lang.T("Go to a directory, or that of a file (alone: home)")),
+        ("cd -", Lang.T("Go back to the directory before this one ($prev)")),
         ("up", Lang.T("Go to the directory above")),
         ("home", Lang.T("Go to your home directory")),
         ("data", Lang.T("Go to Blyant's data directory (settings, lists, log)")),
@@ -298,6 +299,9 @@ internal sealed partial class ShellSession
         var outer = StartStep();
         // (where $file and $line were: undo puts them back there, redo where the command left them)
         var was = (_file, _line);
+        // (the directory before the command: when the command goes to another, that is the one "cd -" goes back to)
+        var directoryBefore = Directory;
+        _directoryFollowed = false;
         var outerChanged = _changedFiles;
         _changedFiles = new List<string>();
         bool going;
@@ -310,6 +314,7 @@ internal sealed partial class ShellSession
             EndStep(line, outer, was);
             // ($tag follows the file worked on, when it has tags)
             TagFollowsFile(was.Item1, name);
+            if (!_directoryFollowed && !FileOperations.SamePath(directoryBefore, Directory)) _previousDirectory = directoryBefore;
             // (the line "words" numbered can have moved: insert, shift, change, undo ...)
             if (name is not ("word" or "words") && _wordsShown is { } shown &&
                 _changedFiles.Any(path => FileOperations.NameComparer.Equals(path, shown.Path)))
@@ -1224,6 +1229,26 @@ internal sealed partial class ShellSession
     // directory of the file, which is then the last list ("open 1"), and where it went is told
     private void ChangeDirectory(string argument)
     {
+        // "cd -": the directory the shell was in before ($prev), as in bash; again: back (a directory named "-" is "cd ./-")
+        if (argument.Trim() == "-")
+        {
+            if (_previousDirectory == null)
+            {
+                Error(Lang.T("No directory before this one yet: cd - goes back after cd, up, home, hot ..."));
+                return;
+            }
+
+            if (!System.IO.Directory.Exists(_previousDirectory))
+            {
+                Error(Lang.F("{0} is not there any more: the shell stays here", _previousDirectory));
+                return;
+            }
+
+            GoTo(_previousDirectory);
+            Line(Directory);
+            return;
+        }
+
         var item = argument.Trim().Length == 0 ? new Item(PathOf("~"), true) : Resolve(argument, true);
         if (item == null) return;
         if (!System.IO.Directory.Exists(item.Path) && File.Exists(item.Path) &&
@@ -1242,6 +1267,32 @@ internal sealed partial class ShellSession
         }
 
         GoTo(item.Path);
+    }
+
+    // The directory the shell was in before the one it is in ("cd -", $prev; null: none yet). Kept while Blyant runs,
+    // also when the shell is left for the full screen
+    private static string? _previousDirectory;
+
+    // The directory followed when the shell went with it (renamed, moved or deleted): the move is not one to go back
+    // from with "cd -"
+    private bool _directoryFollowed;
+
+    /// <summary>
+    /// No directory before this one (a new Blyant, or a test)
+    /// </summary>
+    internal static void ForgetPreviousDirectory() => _previousDirectory = null;
+
+    /// <summary>
+    /// A file or directory has a new path: the directory the shell was in before follows it, when it is the one, or in it
+    /// </summary>
+    internal static void PreviousFollows(string oldPath, string newPath)
+    {
+        if (_previousDirectory is not { } previous) return;
+        if (FileOperations.SamePath(previous, oldPath)) _previousDirectory = Path.GetFullPath(newPath);
+        else if (FileOperations.IsInside(previous, oldPath))
+        {
+            _previousDirectory = Path.GetFullPath(Path.Combine(newPath, Path.GetRelativePath(oldPath, previous)));
+        }
     }
 
     // The directory the shell is in from now on

@@ -420,6 +420,7 @@ internal static partial class FileExplorer
             if (isMove && item.IsDirectory) HotlistPathChanged(item.Path, path);
             if (isMove) Bookmarks.Follow(item.Path, path);
             // (the tags of the shell follow what is moved, and go with a copy)
+            if (isMove) ShellSession.PreviousFollows(item.Path, path);
             if (isMove) FileTags.Follow(item.Path, path);
             else FileTags.FollowCopy(item.Path, path);
             // The file history and the jumps follow it too (as when it is renamed)
@@ -544,6 +545,7 @@ internal static partial class FileExplorer
             if (item.IsDirectory) HotlistPathChanged(item.Path, path);
             Bookmarks.Follow(item.Path, path);
             FileTags.Follow(item.Path, path);
+            ShellSession.PreviousFollows(item.Path, path);
         }
     }
 
@@ -586,6 +588,7 @@ internal static partial class FileExplorer
         if (isDirectory) HotlistPathChanged(oldPath, newPath);
         Bookmarks.Follow(oldPath, newPath);
         FileTags.Follow(oldPath, newPath);
+        ShellSession.PreviousFollows(oldPath, newPath);
     }
 
     /// <summary>

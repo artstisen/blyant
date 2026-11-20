@@ -240,6 +240,7 @@ internal sealed partial class ShellSession
         if (item.IsDirectory && In(item.Path))
         {
             Directory = Path.GetFullPath(Path.Combine(path, Path.GetRelativePath(item.Path, Directory)));
+            _directoryFollowed = true;
         }
     }
 
@@ -263,6 +264,7 @@ internal sealed partial class ShellSession
         while (above != null && !System.IO.Directory.Exists(above)) above = Path.GetDirectoryName(above);
         if (above == null) return;
         Directory = above;
+        _directoryFollowed = true;
         Line(Lang.F("In {0}", Directory));
     }
 

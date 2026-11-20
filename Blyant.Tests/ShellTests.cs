@@ -35,6 +35,7 @@ public class ShellTests : IDisposable
         FileTags.FilePathOverride = Path.Combine(_data, FileTags.FileName);
         FileTags.Clear();
         ShellSession.ForgetTag();
+        ShellSession.ForgetPreviousDirectory();
         // (the tests written before the markers and the setting shellpeeklines see the output as it was then: the
         // tests of them turn them on)
         Shell.Markers = false;
@@ -7563,5 +7564,40 @@ public class ShellTests : IDisposable
         Assert.Contains(Lang.T("Give a text after -t: help -t start"), errors);
         Assert.Contains("help -t text", Run("help help\n").Output);
         Assert.Equal("help -t", Tab(Completion(), "help -"));
+    }
+
+    // ---- 1.6.0: cd - and $prev
+
+    [Fact]
+    public void CdDash_GoesBackAndForth_AfterAnyCommandThatChangedTheDirectory()
+    {
+        var (output, errors, _, session) = Run("cd -\ncd Draft\ncd -\necho $prev\ncd -\nup\ncd -\ncd ../plot.md\ncd -\n");
+        Assert.Contains(Lang.T("No directory before this one yet: cd - goes back after cd, up, home, hot ..."), errors);
+        var lines = output.Split('\n');
+        // cd Draft, cd -: back in work, and $prev is Draft; cd - again: Draft
+        Assert.Equal(In("work"), lines[0]);
+        Assert.Equal(In("work", "Draft"), lines[1]);
+        Assert.Equal(In("work", "Draft"), lines[2]);
+        // up (from Draft to work), cd -: Draft again
+        Assert.Equal(In("work", "Draft"), lines[3]);
+        // cd to a file: the directory of the file; cd -: back
+        Assert.Equal(In("work", "Draft"), session.Directory);
+    }
+
+    [Fact]
+    public void CdDash_TellsWhenThePreviousIsGone_AndFollowsARename()
+    {
+        Directory.CreateDirectory(In("work", "old"));
+        var (output, errors, _, _) = Run("cd old\nup\nrename old new\ncd -\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains(In("work", "new") + "\n", output);
+        // The directory renamed while the shell was in it: the shell goes with it, which is not a move to go back from
+        (_, _, _, var session) = Run("cd new\nrename . newer\ncd -\n");
+        Assert.Equal(In("work"), session.Directory);
+        // Gone
+        (_, errors, _, session) = Run("cd newer\nup\ndelete newer\ncd -\n", yes: true);
+        Assert.Contains(Lang.F("{0} is not there any more: the shell stays here", In("work", "newer")), errors);
+        Assert.Equal(In("work"), session.Directory);
+        Assert.Contains("cd -", Run("help cd\n").Output);
     }
 }
