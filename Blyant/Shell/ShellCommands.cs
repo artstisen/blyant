@@ -841,23 +841,71 @@ internal sealed partial class ShellSession
     // The file of "again edit" ($cmd)
     private static bool IsCommandsFile(string path) => FileOperations.SamePath(Path.GetFullPath(path), CommandsFile);
 
-    // The file "again edit" puts commands in, while Blyant runs: in the temporary folder of the system, as the shell
-    // does not change the files of Blyant's data directory. Deleted when the shell is left
-    private static string CommandsFile =>
-        Path.Combine(Path.GetTempPath(), "blyant-commands-" + Environment.ProcessId.ToString(CultureInfo.InvariantCulture) + ".txt");
+    // The file "again edit" puts commands in, while Blyant runs: in the folder "temp" of the data directory, with the
+    // number of the process in the name (two shells at a time have a file each). Kept as written (the data directory
+    // is chosen in the directory Blyant runs in), and deleted when the shell is left
+    private static string CommandsFile => _commandsFile ?? Path.Combine(CommandsDirectory, CommandsFilePrefix +
+        Environment.ProcessId.ToString(CultureInfo.InvariantCulture) + ".txt");
+
+    private static string? _commandsFile; // The file of "again edit" written, until the shell is left
+
+    private const string CommandsFilePrefix = "blyant-commands-";
+
+    // The folder of the file of "again edit": "temp" in the data directory
+    private static string CommandsDirectory => Path.Combine(Path.GetFullPath(FileIo.GetDataDirectoryName()), "temp");
 
     /// <summary>
-    /// The file of "again edit" deleted (the shell is left: exit, screen)
+    /// The file of "again edit" deleted (the shell is left: exit, screen), and those that a Blyant stopped before it
+    /// left the shell (the terminal closed) has left: a file whose process is not running
     /// </summary>
     internal static void DeleteCommandsFile()
     {
+        var own = CommandsFile;
+        _commandsFile = null;
+        var files = new List<string> { own };
         try
         {
-            FileIo.DeleteFile(CommandsFile);
+            if (System.IO.Directory.Exists(CommandsDirectory))
+            {
+                files.AddRange(System.IO.Directory.EnumerateFiles(CommandsDirectory, CommandsFilePrefix + "*.txt")
+                    .Where(path => !FileOperations.SamePath(path, own) && !Running(path)));
+            }
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
-            // (logged by FileIo; the system cleans its temporary folder)
+            // (only the file of this shell)
+        }
+
+        foreach (var path in files)
+        {
+            try
+            {
+                FileIo.DeleteFile(path);
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            {
+                // (logged by FileIo; tried again when a shell is left)
+            }
+        }
+    }
+
+    // The process of a file of "again edit" is running (a name without a number is not touched)
+    private static bool Running(string path)
+    {
+        var name = Path.GetFileNameWithoutExtension(path);
+        if (!int.TryParse(name[CommandsFilePrefix.Length..], NumberStyles.None, CultureInfo.InvariantCulture, out var id))
+        {
+            return true;
+        }
+
+        try
+        {
+            using var process = System.Diagnostics.Process.GetProcessById(id);
+            return !process.HasExited;
+        }
+        catch (Exception e) when (e is ArgumentException or InvalidOperationException)
+        {
+            return false;
         }
     }
 
@@ -882,8 +930,10 @@ internal sealed partial class ShellSession
         var path = CommandsFile;
         try
         {
+            FileIo.CreateDirectory(CommandsDirectory);
             if (!File.Exists(path)) FileIo.CreateNewFile(path);
             FileIo.WriteAllBytesSafe(path, new System.Text.UTF8Encoding(false).GetBytes(string.Join("\n", commands) + "\n"));
+            _commandsFile = path;
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {

@@ -1239,7 +1239,7 @@ blyant ~/novel> replace $cmd insrt insert
 -> blyant-commands-4711.txt
   1  insert notes.md bottom The ferry came late, as it alwyas did in Octobr
 <- 1 line of 1
-/tmp/blyant-commands-4711.txt: 1 replaced, in line 1
+/home/anna/blyant/data/temp/blyant-commands-4711.txt: 1 replaced, in line 1
 blyant ~/novel> replace $cmd alwyas always
 ...
 blyant ~/novel> replace $cmd Octobr October
@@ -1252,7 +1252,7 @@ insert notes.md bottom The ferry came late, as it always did in October
 - `again edit 3` takes command 3 of `again`, and `again edit 3-5` commands 3 to 5, the oldest first, a command on each line. `run $cmd` runs them one after the other, and stops at the first that fails
 - Everything that changes a file works on `$cmd`, with the line given: `replace $cmd old new`, `words $cmd 1` and `word $cmd 1 11 replace always`, `change $cmd +1 ...` (the whole line), `lines $cmd 2 ...`, `insert` and `shift`, and `undo`. `peek $cmd` shows the file again
 - What you do with `$cmd` leaves `$file`, `$line`, `@`, the last list and `$tag` as they were, and the file is not put in the latest files. The commands that `run $cmd` runs work as typed, and change `$file` as they would at the prompt
-- The file is in the temporary folder of the system (`blyant-commands-` and a number), not in the data directory, so the commands of the shell can change it. A new `again edit` writes over it, and it is deleted when you leave the shell (`exit`, `screen`): what you typed stays on the disk only while the shell runs. Before `again edit`, or after you leave the shell, `$cmd` is not there, and the shell says so
+- The file is in the folder `temp` in the data directory: `blyant-commands-` and the number of the running Blyant, so two shells at a time have a file each. A new `again edit` writes over it, and it is deleted when you leave the shell (`exit`, `screen`): what you typed stays on the disk only while the shell runs. A file left by a Blyant that was stopped before you left the shell (the terminal closed) is deleted the next time a shell is left. Before `again edit`, or after you leave the shell, `$cmd` is not there, and the shell says so
 - `again edit` is for the commands typed at the prompt: in a `run`, a file of commands or `--run` it is refused
 
 ### Script with words

@@ -7627,10 +7627,29 @@ public class ShellTests : IDisposable
                                          "replace $cmd alwyas always\nrun $cmd\n", terminal: true);
         Assert.Contains("  1  insrt e.md bottom it alwyas did\n", output);
         Assert.Equal("start\nit always did\n", File.ReadAllText(In("work", "e.md")));
-        // Deleted when the shell is left
-        Assert.Empty(System.IO.Directory.GetFiles(Path.GetTempPath(), "blyant-commands-" + Environment.ProcessId + ".txt"));
+        // In the folder "temp" of the data directory, and deleted when the shell is left
+        var temp = Path.Combine(Path.GetFullPath(FileIo.GetDataDirectoryName()), "temp");
+        Assert.True(System.IO.Directory.Exists(temp));
+        Assert.Contains(Path.Combine(temp, "blyant-commands-" + Environment.ProcessId + ".txt"), output);
+        Assert.Empty(System.IO.Directory.GetFiles(temp));
         // (the command typed wrong was told, and kept for again)
         Assert.Contains(Lang.F("Unknown command: {0} (help lists the commands)", "insrt"), errors);
+    }
+
+    [Fact]
+    public void AgainEdit_FilesOfAShellNotLeft_AreDeleted_WhenTheProcessIsNotRunning()
+    {
+        var temp = Path.Combine(Path.GetFullPath(FileIo.GetDataDirectoryName()), "temp");
+        System.IO.Directory.CreateDirectory(temp);
+        // A process that is not running (no process has the largest number), and files of other names
+        var stopped = Path.Combine(temp, "blyant-commands-" + int.MaxValue + ".txt");
+        File.WriteAllText(stopped, "pwd\n");
+        File.WriteAllText(Path.Combine(temp, "notes.txt"), "x\n");
+        File.WriteAllText(Path.Combine(temp, "blyant-commands-x.txt"), "x\n");
+        Run("pwd\n");
+        Assert.False(File.Exists(stopped));
+        Assert.True(File.Exists(Path.Combine(temp, "notes.txt")));
+        Assert.True(File.Exists(Path.Combine(temp, "blyant-commands-x.txt")));
     }
 
     [Fact]
