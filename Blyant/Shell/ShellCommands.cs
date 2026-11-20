@@ -136,7 +136,7 @@ internal sealed partial class ShellSession
         ("about [license]", Lang.T("Show the version and most used commands, or the license")),
         ("again [n]", Lang.T("List the commands typed, or run one again (!n, !!)")),
         ("again filter text", Lang.T("Show the commands typed with a text in them")),
-        ("again edit [n|n-m]", Lang.T("Put commands in a file to change, then run $file")),
+        ("again edit [n|n-m]", Lang.T("Put commands in a file to change, then run $cmd")),
         ("again n|n-m > $name", Lang.T("Keep commands typed in a register, for run (>>: add)")),
         ("undo [n]", Lang.T("Undo the last change of a file (insert, change ...)")),
         ("redo [n]", Lang.T("Undo the last undo")),
@@ -305,6 +305,9 @@ internal sealed partial class ShellSession
         _directoryFollowed = false;
         var outerChanged = _changedFiles;
         _changedFiles = new List<string>();
+        // (a command on the file of "again edit": $file and $line put back when it ends)
+        var outerTouched = _commandsTouched;
+        _commandsTouched = false;
         bool going;
         try
         {
@@ -312,6 +315,8 @@ internal sealed partial class ShellSession
         }
         finally
         {
+            if (_commandsTouched) (_file, _line) = was;
+            _commandsTouched = outerTouched;
             EndStep(line, outer, was);
             // ($tag follows the file worked on, when it has tags)
             TagFollowsFile(was.Item1, name);
@@ -456,6 +461,11 @@ internal sealed partial class ShellSession
         if (_file == null && ShellRegisters.Mentions(argument, "file"))
         {
             return Lang.T("No file yet: open, peek, insert, new ... give $file");
+        }
+
+        if (!File.Exists(CommandsFile) && ShellRegisters.Mentions(argument, "cmd"))
+        {
+            return Lang.T("No $cmd yet: again edit puts the commands typed in it");
         }
 
         return ShellRegisters.Mentions(argument, "line") && FileLine == null
@@ -825,6 +835,12 @@ internal sealed partial class ShellSession
         return Enumerable.Range(low, high - low + 1).Reverse().Select(n => kept[n - 1]).ToList();
     }
 
+    // A command worked on the file of "again edit" ($cmd): $file and $line are put back when it ends
+    private bool _commandsTouched;
+
+    // The file of "again edit" ($cmd)
+    private static bool IsCommandsFile(string path) => FileOperations.SamePath(Path.GetFullPath(path), CommandsFile);
+
     // The file "again edit" puts commands in, while Blyant runs: in the temporary folder of the system, as the shell
     // does not change the files of Blyant's data directory. Deleted when the shell is left
     private static string CommandsFile =>
@@ -846,8 +862,9 @@ internal sealed partial class ShellSession
     }
 
     // "again edit", "again edit 3", "again edit 3-5": the command typed last, or those with the numbers of again, put in
-    // a file, a command on each line, and shown; the file is then $file at line 1, to be changed with the commands of
-    // the shell (word @, replace @, change @ ...) and run with "run $file". A new "again edit" writes over it
+    // a file, a command on each line, and shown; the file is $cmd, to be changed with the commands of the shell
+    // ("replace $cmd old new", "word $cmd 1 9 ...") and run with "run $cmd". $file, $line, @ and the last list stay
+    // the file worked on: the commands on $cmd leave them. A new "again edit" writes over it
     private void AgainEdit(string numbers)
     {
         if (!Terminal || _runDepth > 0)
@@ -874,11 +891,15 @@ internal sealed partial class ShellSession
             return;
         }
 
-        // (in quotes: a path with blanks in it is one word)
-        Peek("\"" + path + "\"");
-        // (the file at line 1: word @ 9 ..., replace @ ..., run $file)
-        _file = path;
-        _line = 1;
+        // (shown as peek shows lines, but not as a peek: "." and $peek stay those of the file worked on)
+        var width = commands.Count.ToString(CultureInfo.InvariantCulture).Length;
+        if (Shell.Markers) Line(TopMarker + Path.GetFileName(path));
+        for (var i = 0; i < commands.Count; i++)
+        {
+            Line((i + 1).ToString(CultureInfo.InvariantCulture).PadLeft(width + 2) + "  " + commands[i]);
+        }
+
+        if (Shell.Markers) Line(EndMarker + Lang.F("lines {0}-{1} of {2}", 1, commands.Count, commands.Count));
     }
 
     // "forget": what the shell keeps only while Blyant runs, forgotten after asking (in a script or with --run, the

@@ -76,9 +76,10 @@ internal sealed partial class ShellSession
     private void LatestChanged()
     {
         if (_changedFiles.Count == 0) return;
-        var files = _changedFiles.Distinct(FileOperations.NameComparer)
+        // (not the file of "again edit": not a file worked on)
+        var files = _changedFiles.Where(path => !IsCommandsFile(path)).Distinct(FileOperations.NameComparer)
             .OrderBy(path => _file != null && FileOperations.NameComparer.Equals(path, _file)).ToList();
-        FileExplorer.AddToHistory(files);
+        if (files.Count > 0) FileExplorer.AddToHistory(files);
     }
 
     // A command starts: the files it changes are one step (the step of a command it runs in, "run", is kept aside)

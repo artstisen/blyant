@@ -7623,8 +7623,8 @@ public class ShellTests : IDisposable
     public void AgainEdit_PutsTheCommandInAFile_ToChangeAndRun_AndTheFileIsDeleted()
     {
         File.WriteAllText(In("work", "e.md"), "start\n");
-        var (output, errors, _, _) = Run("insrt e.md bottom it alwyas did\nagain edit\nreplace @ insrt insert\n" +
-                                         "replace @ alwyas always\nrun $file\n", terminal: true);
+        var (output, errors, _, _) = Run("insrt e.md bottom it alwyas did\nagain edit\nreplace $cmd insrt insert\n" +
+                                         "replace $cmd alwyas always\nrun $cmd\n", terminal: true);
         Assert.Contains("  1  insrt e.md bottom it alwyas did\n", output);
         Assert.Equal("start\nit always did\n", File.ReadAllText(In("work", "e.md")));
         // Deleted when the shell is left
@@ -7638,14 +7638,36 @@ public class ShellTests : IDisposable
     {
         File.WriteAllText(In("work", "e.md"), "x\n");
         var (output, _, _, session) = Run("insert e.md bottom a\ninsert e.md bottom b\nagain edit 2-1\n", terminal: true);
-        // The oldest first, a command on each line; the file is $file at line 1
+        // The oldest first, a command on each line; $file stays the file worked on
         Assert.Contains("  1  insert e.md bottom a\n  2  insert e.md bottom b\n", output);
-        Assert.Equal(1, session.LastList.Count);
+        Assert.Equal(In("work", "e.md"), session.WorkedFile);
         var (_, errors, _, _) = Run("again edit\n");
         Assert.Contains(Lang.T("again edit is for the commands typed at the prompt: not in a run, a file or --run"), errors);
         (_, errors, _, _) = Run("pwd\nagain edit x\nagain edit 9\n", terminal: true);
         Assert.Contains(Lang.T("Give the numbers of the commands: again edit, again edit 3, again edit 3-5"), errors);
         Assert.Contains("again edit [n|n-m]", Run("help again\n").Output);
         Assert.Equal("again edit", Tab(Completion(), "again e"));
+    }
+
+    [Fact]
+    public void Cmd_IsTheFileOfAgainEdit_AndCommandsOnItLeaveFileLineAndTheLastList()
+    {
+        File.WriteAllText(In("work", "e.md"), "one\ntwo\nthree\n");
+        FileHistory.Parse(string.Empty);
+        // Working on e.md at line 2; then a command typed wrong, fixed in $cmd
+        var (output, errors, _, session) = Run(
+            "peek e.md 2\nchnage e.md +2 TWO\nagain edit\necho $cmd\nreplace $cmd chnage change\nwords $cmd 1\n" +
+            "peek $cmd\necho $file $line\nundo\nreplace $cmd chnage change\nrun $cmd\necho $file $line\n", terminal: true);
+        Assert.Contains("blyant-commands-", output);
+        // While $cmd is changed: $file and $line are still e.md at line 2
+        Assert.Contains(In("work", "e.md") + " 2\n", output);
+        // run $cmd runs the command, and that command works on e.md as typed
+        Assert.Equal("one\nTWO\nthree\n", File.ReadAllText(In("work", "e.md")));
+        Assert.Equal(In("work", "e.md"), session.WorkedFile);
+        // Not in the latest files
+        FileHistory.Load();
+        Assert.DoesNotContain(FileHistory.Items, item => item.Path.Contains("blyant-commands-"));
+        // After the shell: no $cmd
+        Assert.Contains(Lang.T("No $cmd yet: again edit puts the commands typed in it"), Run("echo $cmd\n").Errors);
     }
 }

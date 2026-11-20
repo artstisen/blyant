@@ -47,6 +47,14 @@ internal sealed partial class ShellSession
         get => _lastList;
         private set
         {
+            // The file of "again edit" ($cmd): not a file worked on. The last list, $file and $line stay as they
+            // were (a $line set by the command is put back when it ends)
+            if (value is [{ IsDirectory: false } scratch] && IsCommandsFile(scratch.Path))
+            {
+                _commandsTouched = true;
+                return;
+            }
+
             // (a line found is a row of find -t only: a command that works on the file makes it a file again)
             _lastList = value.Select(item => item.Found == null ? item : item with { Found = null }).ToList();
             _listShown = true;
@@ -165,6 +173,7 @@ internal sealed partial class ShellSession
         ShellRegisters.LineSource = () => FileLine;
         ShellRegisters.TagSource = () => _tag;
         ShellRegisters.PreviousSource = () => _previousDirectory;
+        ShellRegisters.CommandsSource = () => File.Exists(CommandsFile) ? CommandsFile : null;
         Terminal = terminal;
         _yes = yes;
         // $file of the shell left last, while the file is there (typed in at a terminal: not for commands from a file,

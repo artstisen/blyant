@@ -201,7 +201,7 @@ Some commands have a short form, which does the same: `fav` and `favs` (`favorit
 | `changes` | List the changes `undo` goes back through, the newest first, and those `redo` does again |
 | `again filter text` | Show the commands you typed with a text in them (`again filter lines`), or that match a pattern (`again filter peek*`), with their numbers: `!7` runs the one numbered 7 |
 | `again [n]` | List the commands you typed, the newest first, or run one again by its number (`again 3`; also `!3`, and `!!` for the last). See [Typing a command](#typing-a-command) |
-| `again edit [n\|n-m]` | Put the command typed last, or those with the numbers, in a file to change with the commands of the shell, and run it with `run $file`. See [Fix a command and run it](#fix-a-command-and-run-it) |
+| `again edit [n\|n-m]` | Put the command typed last, or those with the numbers, in a file, `$cmd`, to change with the commands of the shell, and run it with `run $cmd`; `$file` stays the file you work on. See [Fix a command and run it](#fix-a-command-and-run-it) |
 | `again n\|n-m > $name` | Keep commands you typed in a register, as typed and the oldest first, for `run` (`again 3-5 > $tidy`); `>> $name` adds them. See [Running commands](#running-commands) |
 | `run $name\|file` | Run the commands of a register or of a file, one per line, each written out first; it stops at the first that fails. See [Running commands](#running-commands) |
 | `run $name\|file words` | Run it with the words put in where the commands have `$1`, `$2` ... (`$*`: all the words): `run $check $file 12`. A script of one command without `$1` gets the words added at the end. See [Script with words](#script-with-words) |
@@ -1065,6 +1065,7 @@ lines plot.md 3-5 > $notes          ">": the register is those lines alone
   |---|---|
   | `$pwd` | the directory you are in (`copy 3 $pwd`) |
   | `$prev` | the directory you were in before, where `cd -` goes (`copy notes.md $prev`, `ls $prev`). Kept while Blyant runs |
+  | `$cmd` | the file of `again edit`, with the commands to fix and run (`replace $cmd insrt insert`, `run $cmd`). There while the shell runs, after `again edit` |
   | `$file` | the file the last command worked on: opened, peeked, put lines in, made with `new` ... (`peek plot.md`, then `insert $file bottom Done`). It is kept when you leave the shell, and is `$file` again the next time you start it, while the file is there (setting `shelllastfile`; not for commands from a file, a pipe or `--run`). A list shown (`ls`, `fav`) does not change it. `file 3` makes row 3 of a list `$file` without peeking it, and `resume` opens it in the editor |
   | `$line` | the line of `$file` the last command worked on (`words notes.md 12` makes it 12), or set with `line 12`, else the line where the cursor was in the editor: with `$file` it is `@` (see [Working on one line](#working-on-one-line)). Used before there is a line, it gets the message that there is no line yet |
   | `$tag` | the tag you work with: set by `tag add` and `tag draft`, and by a file with tags you work on (see [$tag: the tag you work with](#tag-the-tag-you-work-with)) |
@@ -1225,7 +1226,7 @@ Commands you have typed can go in a register as they are: `again` lists them, th
 - `again` keeps `run $tidy`, not the commands it ran, so `!!` runs them all again. From the command line of your system: `blyant --run "run $tidy"` (in quotes, and in bash `\$tidy` or single quotes, as bash uses `$` itself)
 
 ### Fix a command and run it
-A long command with a mistake at the start is easier to fix as a line in a file than on the prompt. `again edit` puts the command you typed last in a file, shows it, and makes the file `$file` at line 1, so the commands that change lines and words work on it with `@`. `run $file` then runs it:
+A long command with a mistake at the start is easier to fix as a line in a file than on the prompt. `again edit` puts the command you typed last in a file, `$cmd`, and shows it. Fix it with the commands that change lines and words, and run it with `run $cmd`. `$file`, `$line`, `@` and the last list stay the file you work on, so you can go on with it after the command has run:
 
 ```
 blyant ~/novel> insrt notes.md bottom The ferry came late, as it alwyas did in Octobr
@@ -1233,24 +1234,25 @@ Unknown command: insrt (help lists the commands)
 blyant ~/novel> again edit
 -> blyant-commands-4711.txt
   1  insrt notes.md bottom The ferry came late, as it alwyas did in Octobr
-<- 1 line of 1
-blyant ~/novel> replace @ insrt insert
+<- lines 1-1 of 1
+blyant ~/novel> replace $cmd insrt insert
 -> blyant-commands-4711.txt
   1  insert notes.md bottom The ferry came late, as it alwyas did in Octobr
 <- 1 line of 1
 /tmp/blyant-commands-4711.txt: 1 replaced, in line 1
-blyant ~/novel> replace @ alwyas always
+blyant ~/novel> replace $cmd alwyas always
 ...
-blyant ~/novel> replace @ Octobr October
+blyant ~/novel> replace $cmd Octobr October
 ...
-blyant ~/novel> run $file
+blyant ~/novel> run $cmd
 insert notes.md bottom The ferry came late, as it always did in October
 /home/anna/novel/notes.md: line 12 put in
 ```
 
-- `again edit 3` takes command 3 of `again`, and `again edit 3-5` commands 3 to 5, the oldest first, a command on each line. `run $file` runs them one after the other, and stops at the first that fails
-- Everything that changes a file works: `words @` and `word @`, `replace @`, `change @` (the whole line), `lines @`, `insert` and `shift` with several lines, and `undo`. `peek @` shows the file again
-- The file is in the temporary folder of the system (`blyant-commands-` and a number), not in the data directory, so the commands of the shell can change it. A new `again edit` writes over it, and it is deleted when you leave the shell (`exit`, `screen`): what you typed stays on the disk only while the shell runs
+- `again edit 3` takes command 3 of `again`, and `again edit 3-5` commands 3 to 5, the oldest first, a command on each line. `run $cmd` runs them one after the other, and stops at the first that fails
+- Everything that changes a file works on `$cmd`, with the line given: `replace $cmd old new`, `words $cmd 1` and `word $cmd 1 11 replace always`, `change $cmd +1 ...` (the whole line), `lines $cmd 2 ...`, `insert` and `shift`, and `undo`. `peek $cmd` shows the file again
+- What you do with `$cmd` leaves `$file`, `$line`, `@`, the last list and `$tag` as they were, and the file is not put in the latest files. The commands that `run $cmd` runs work as typed, and change `$file` as they would at the prompt
+- The file is in the temporary folder of the system (`blyant-commands-` and a number), not in the data directory, so the commands of the shell can change it. A new `again edit` writes over it, and it is deleted when you leave the shell (`exit`, `screen`): what you typed stays on the disk only while the shell runs. Before `again edit`, or after you leave the shell, `$cmd` is not there, and the shell says so
 - `again edit` is for the commands typed at the prompt: in a `run`, a file of commands or `--run` it is refused
 
 ### Script with words
