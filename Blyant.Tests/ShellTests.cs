@@ -1820,6 +1820,9 @@ public class ShellTests : IDisposable
             output);
         Assert.Contains("  help [command]  ", output);
         Assert.Contains("  set language de  ", output);
+        Assert.Contains("  resume  ", output);
+        Assert.Contains("  /text  ", output);
+        Assert.Contains("  /, ?  ", output);
         // (the about page of the full screen tells of its keys: not shown here)
         Assert.DoesNotContain(TextBuffer.Normalize(DialogText.About).Split('\n')[0], output);
         // The screen is 79 columns

@@ -189,7 +189,7 @@ To get all output at once (with a screen reader, say), turn the pages off: `set 
 | `clear` (`cls`) | Clear the screen: the prompt is at the top again |
 | `screen` | Switch to the full screen, opening the file browser in the directory you are in (see [Between the full screen and the shell](#between-the-full-screen-and-the-shell)) |
 | `version` | Show the version of Blyant |
-| `about [license]` | Show the version of Blyant and the commands used the most (`help`, `ls`, `open`, `peek`, `set language de` ...), and `about license` shows the license, as on the second page of [About](Guide-to-start-page.md#help) |
+| `about [license]` | Show the version of Blyant and the commands used the most (`help`, `ls`, `open`, `resume`, `peek`, `/text`, `set language de` ...), and `about license` shows the license, as on the second page of [About](Guide-to-start-page.md#help) |
 | `undo [n]` | Put back the last change a command made to a file (`insert`, `change`, `shift`, `lines`, `format`, `trim`), or the last `n`. See [Undo](#undo) |
 | `redo [n]` | Do again what `undo` put back |
 | `changes` | List the changes `undo` goes back through, the newest first, and those `redo` does again |

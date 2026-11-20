@@ -1612,7 +1612,11 @@ internal sealed partial class ShellSession
             ("help [command]", Lang.T("List the commands, or tell what one does")),
             ("ls, cd 2, up", Lang.T("List a directory, go into row 2, or up")),
             ("open 3", Lang.T("Edit a file on the full screen (closing it returns here)")),
+            ("resume", Lang.T("Edit $file again, where you worked last")),
             ("peek 3, find plot", Lang.T("Show lines of a file; find files by name (-t: by text)")),
+            // (the texts of the rows of help)
+            ("/text", Lang.T("Search the file peeked last (as peek /text)")),
+            ("/, ?", Lang.T("Next match (/), or the one before (?)")),
             ("recent, fav, hot", Lang.T("The latest files, the favorites, the directory hotlist")),
             ("set language de", Lang.T("Language: en, de, da, nb, sv, es, fr, it, pl, nl or fi")),
             ("screen", Lang.T("Go to the file browser here, on the full screen")),
