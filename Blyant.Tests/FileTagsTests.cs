@@ -26,6 +26,10 @@ public class FileTagsTests : IDisposable
         Assert.False(FileTags.IsName("a/b"));
         Assert.False(FileTags.IsName("$tag"));
         Assert.False(FileTags.IsName(new string('a', FileTags.MaxNameLength + 1)));
+        // (a word that starts with "-" is an option)
+        Assert.False(FileTags.IsName("-f"));
+        Assert.False(FileTags.IsName("_x"));
+        Assert.True(FileTags.IsName("3rd"));
     }
 
     [Fact]
@@ -111,5 +115,63 @@ public class FileTagsTests : IDisposable
         Assert.Empty(FileTags.TagsOf(At("backup", "book", "part", "ch2.md")));
         Assert.Equal(new[] { "draft" }, FileTags.TagsOf(At("copy", "b.md")));
         Assert.False(FileTags.PathsDeleted(new[] { At("gone.md") }));
+    }
+
+    [Fact]
+    public void RenameToTheSameName_KeepsTheTag()
+    {
+        FileTags.Add(At("a.md"), "draft");
+        Assert.Equal(1, FileTags.Rename("draft", "Draft"));
+        Assert.Equal(new[] { "draft" }, FileTags.TagsOf(At("a.md")));
+    }
+
+    [Fact]
+    public void APath_IsKeptAsItIs_AndOneWithATabOrALineBreak_IsNotWritten()
+    {
+        // (on Linux and macOS a name can end in a blank)
+        var blank = At("draft.md ");
+        FileTags.Add(blank, "draft");
+        FileTags.Parse(FileTags.Serialize());
+        Assert.Equal(new[] { blank }, FileTags.FilesWith("draft"));
+        Assert.True(FileTags.CanHaveTags(At("a.md")));
+        Assert.False(FileTags.CanHaveTags(At("a\tb.md")));
+        Assert.False(FileTags.CanHaveTags(At("a\nb.md")));
+        // A file renamed to such a name: its line is left out, as it would be broken
+        FileTags.PathChanged(blank, At("a\tb.md"));
+        Assert.Equal(string.Empty, FileTags.Serialize());
+    }
+
+    [Fact]
+    public void NamesThatDifferOnlyInLetterCase_AreOneFile_WhereTheFileSystemTakesThemAsOne()
+    {
+        FileTags.Add(At("Plot.md"), "a");
+        FileTags.Add(At("plot.md"), "b");
+        if (FileOperations.NamesIgnoreCase)
+        {
+            Assert.Single(FileTags.Tagged());
+            Assert.Equal(new[] { "a", "b" }, FileTags.TagsOf(At("PLOT.md")));
+        }
+        else
+        {
+            Assert.Equal(2, FileTags.Tagged().Count);
+            Assert.True(FileTags.PathsDeleted(new[] { At("Plot.md") }));
+            Assert.Equal(new[] { "b" }, FileTags.TagsOf(At("plot.md")));
+        }
+
+        // Read again: the same
+        var text = FileTags.Serialize();
+        FileTags.Parse(text);
+        Assert.Equal(text, FileTags.Serialize());
+    }
+
+    [Fact]
+    public void ALongList_IsReadQuickly()
+    {
+        var text = string.Concat(Enumerable.Range(0, 20000).Select(i => At("f" + i + ".md") + "\tdraft\n"));
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        FileTags.Parse(text);
+        watch.Stop();
+        Assert.Equal(20000, FileTags.FilesWith("draft").Count);
+        Assert.True(watch.ElapsedMilliseconds < 5000, watch.ElapsedMilliseconds + " ms");
     }
 }

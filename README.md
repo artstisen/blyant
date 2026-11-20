@@ -3,13 +3,11 @@ A free, open-source, cross-platform, Vim-style modal text editor for writing in 
 
 **Website: [blyant-editor.com](https://blyant-editor.com)** – docs, downloads, screenshots, etc.
 
-This project began in 2022, with the application architecture and codebase written by hand. In later versions, I’ve used agentic tools to refine, rewrite, test, and conduct code reviews. Blyant is derived from my encryption editor [Marbles](https://github.com/artstisen/marbles), but there are many differences, as Blyant is designed for writing, programming, organizing files, planning projects, etc.
-
-Blyant has several features inspired by popular Neovim plugins for text navigation, commands, and much more. I use Blyant in my professional work, writing software and API documentation in Markdown and HTML, developing CSS and JavaScript widgets as well as .NET productivity and conversion tools, and editing JSON and XML.
+This project began in 2022, with the application architecture and codebase written by hand. In later versions, I’ve used agentic tools to refine, rewrite, test, and conduct code reviews. Blyant is derived from my encryption editor [Marbles](https://github.com/artstisen/marbles), but there are many differences, as Blyant is designed for writing, programming, organizing files, planning projects, etc. Blyant has several features inspired by popular Neovim plugins for text navigation, commands, and much more. 
 
 **My favorite feature? – Using bookmarks to create custom jump points and open them from anywhere via the command line.**
 
-I also like to use Blyant in Shell mode, with no TUI at all, as a purely command driven tool in the CLI (see [shell tutorial](Guide-to-shell-tutorial.md)).
+I also like to use Blyant in Shell mode, with no TUI at all, as a purely command driven tool in the CLI, for managing and editing files (see [shell tutorial](Guide-to-shell-tutorial.md)).
 
 ![The editor in split view, with command suggestions](docs/screenshots/split-view.svg)
 
@@ -74,7 +72,7 @@ See the [guide to the corkboard](Guide-to-corkboard.md).
   - Work with a file from a list: `file 2` makes row 2 of `recent` or `fav` the file you work on (`$file`), `echo $file` shows which file it is, and `path` and `name` copy the path or name of the file, as `:path` and `:name` do in the editor
   - Go back to the text you worked on last with `resume`, also the next day: it opens `$file` in the editor where you left off
   - Sort lines and change the letter case without opening an editor (`lines notes.md 3-20 sort`, `upper`, `lower`), do simple calculations with `calc` and put the result in a file (`insert budget.md bottom Total: $calc`), and see the latest files with sizes and folders (`recent -s -f`) ([calculating](Guide-to-shell.md#calculating))
-  - Replace a text everywhere in a file, and see first what would change: `replace -n chapter-3.md Maren Marit` shows the lines, and asks whether to replace them (`-i`: any letter case; `undo` takes it back)
+  - Replace a text everywhere in a file, and see first what would change: `replace -n chapter-3.md Maren Marit`, then `replace chapter-3.md Maren Marit` (`-i`: any letter case; `undo` takes it back)
   - Change a word without typing the line again: `words notes.md 12` numbers the words of a line (`#9 want`), and `word notes.md 12 9 replace wish` changes word 9 (also `before`, `after`, `delete`, `upper`, `lower`, `title`). After a command, `@` is the file and the line it worked on: `word @ 9 replace wish`, `shift @ up`
   - Keep results in registers with `>`: a file (`file plot.md > $other`), a calculation (`calc 22 * 3500 > $words`), the files of a search (`find -t TODO > $open`), or commands you just typed as a script (`again 3-5 > $tidy`), and give a script words (`run $check $file 12`) ([registers](Guide-to-shell.md#registers))
   - Give files tags and find them again, wherever they are: `tag add chapter-3.md draft`, then `tag draft` lists the files with the tag, numbered (`open 2`). `$tag` is the tag you work with ([tags](Guide-to-shell.md#tags))

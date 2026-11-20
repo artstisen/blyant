@@ -63,7 +63,8 @@ internal sealed partial class ShellSession
         ("lines file|n lines sort [-a|-d]", Lang.T("Sort lines: -a A to Z, capitals first (default), -d Z to A")),
         ("lines file|n lines upper|lower|title", Lang.T("Make lines UPPERCASE, lowercase or Title Case")),
         ("replace [-n] [-i] file|n old new", Lang.T("Replace a text everywhere in a file (undo takes it back)")),
-        ("replace -n, replace -i", Lang.T("Show what would change, then ask; any letter case")),
+        ("replace -n", Lang.T("Show what would change, and ask at a terminal")),
+        ("replace -i", Lang.T("Replace in any letter case")),
         ("words [-p] file|n line", Lang.T("Show the words of a line, numbered, for word")),
         ("words -p, word -p", Lang.T("A word is all between blanks: give -p to both")),
         ("word file|n line n|n-m action [text]", Lang.T("Change words by number: replace, before, after, delete")),
@@ -112,7 +113,8 @@ internal sealed partial class ShellSession
         ("history filter text", Lang.T("Show the files opened with a text in them (or *.md)")),
         ("recent [-l] [-s] [-f] [-n]", Lang.T("List the latest files (-s sizes, -f folder/name, -n by name)")),
         ("recent|hist|fav ... -t text", Lang.T("Only the files with a text in a line, and the line (-t *: line 1)")),
-        ("tag name", Lang.T("List the files with a tag (tag alone: those of $tag)")),
+        ("tag name", Lang.T("List the files with a tag (tag alone: the files of $tag)")),
+        ("tag -l [name]", Lang.T("The files of a tag with the full paths")),
         ("tag add file|n|2,4|2-5 name", Lang.T("Give files a tag (@: the file worked on)")),
         ("tag remove file|n [name]", Lang.T("Take a tag off files (no name: all tags)")),
         ("tag rename|clear name", Lang.T("Rename a tag, or take it off all files")),
@@ -806,7 +808,7 @@ internal sealed partial class ShellSession
         // (this command is the newest of the commands typed: not counted)
         var commands = Math.Max(0, CommandHistory.Of(CommandContext.Shell).Count - (_typed ? 1 : 0));
         var note = Lang.F("Commands typed: {0}. Undo steps: {1}. And $clip, $peek, $calc and the last search. " +
-                          "Registers, settings and $file stay.", commands, _undo.Count + _redo.Count);
+                          "Registers, settings, $file and $tag stay.", commands, _undo.Count + _redo.Count);
         if (!ChoiceBox.Confirm(Lang.T("Shell memory"), Lang.T("Forget what the shell keeps while Blyant runs?"), note, true))
         {
             Line(Lang.T("Nothing forgotten"));
@@ -946,8 +948,25 @@ internal sealed partial class ShellSession
             // "peek bottom" ("G notes.md": that file)
             case "gg":
             case "G":
-                Peek((argument.Trim() + (name == "gg" ? " top" : " bottom")).Trim());
+            {
+                var place = name == "gg" ? (PeekPlace.Top, 0) : (PeekPlace.Bottom, 0);
+                if (argument.Trim().Length > 0)
+                {
+                    Peek(argument.Trim() + (name == "gg" ? " top" : " bottom"));
+                }
+                else if (_lastPeek is not { } last)
+                {
+                    Error(Lang.T("No file peeked yet: peek a file first (peek plot.md)"));
+                }
+                else
+                {
+                    // (the file peeked last, given by its path, and the place: a file here named as the place is not
+                    // taken)
+                    PeekWindow(new List<string> { last.Path }, place, 1, false, false);
+                }
+
                 break;
+            }
             // "/" and "?" alone: the next line with the text peek searched last, or the one before
             case "/":
             case "?":

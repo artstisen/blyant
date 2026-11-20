@@ -3,9 +3,9 @@
 /// <summary>
 /// "replace": a text replaced everywhere in a file ("replace chapter-3.md Maren Marit"), with the letter case as typed,
 /// or any letter case ("-i"); "-n" shows what would change, and typed at a terminal asks then whether to replace (No
-/// first). From a file, a pipe or --run "-n" only shows, and never writes (not even with --yes). Within lines: a
-/// text with a line break cannot be
-/// typed. The lines changed are shown (at most as many as peek shows), and how many were replaced in how many lines.
+/// first). From a file, a pipe or --run "-n" only shows, and never writes (not even with --yes). Within lines: a text
+/// with a line break cannot be typed. The lines changed are shown (at most as many as peek shows), and how many were
+/// replaced in how many lines.
 /// As the other commands that change text: only a file in UTF-8 and not one Blyant uses, the line endings and byte
 /// order mark kept, one step for undo, and the paths logged, never the texts
 /// </summary>
@@ -19,7 +19,7 @@ internal sealed partial class ShellSession
     /// after them are put in as they are
     /// </summary>
     internal static int ReplaceWords(string argument) =>
-        Words(argument).TakeWhile(word => word.StartsWith('-')).Count() + 1;
+        Words(argument).TakeWhile(word => word.StartsWith('-') && word.Length > 1).Count() + 1;
 
     // "replace [-n] [-i] file|n old new"
     private void Replace(string argument)
@@ -73,7 +73,8 @@ internal sealed partial class ShellSession
             changed.Add(i + 1);
         }
 
-        if (count == 0)
+        // (nothing changed: the text is not there, or is as the new text already, "-i")
+        if (count == 0 && !lines.Any(line => line.Contains(text, comparison)))
         {
             Line(Lang.F("No {0} in {1}", text, Path.GetFileName(item.Path)));
             return;
@@ -81,15 +82,16 @@ internal sealed partial class ShellSession
 
         if (changed.Count == 0)
         {
-            Line(Lang.T("Nothing changed: the text is so already"));
+            Line(Lang.T("Nothing changed: the new text is the same as the old"));
             return;
         }
 
         var first = changed[0];
         if (!show && !SaveReplaced(item, file, lines, changed)) return;
 
-        // (the file at the first line changed: "open 1", "peek @")
-        LastList = new List<Item> { new(item.Path, false, (changed[0], 1)) };
+        // (written: the file at the first line changed, "open 1", "peek @"; only shown, or not written after the question:
+        // $file and $line stay where they were)
+        if (!show) LastList = new List<Item> { new(item.Path, false, (first, 1)) };
         ShowReplaced(item.Path, lines, changed);
         if (show && !Terminal)
         {
@@ -121,6 +123,7 @@ internal sealed partial class ShellSession
             }
 
             if (!SaveReplaced(item, file, lines, changed)) return;
+            LastList = new List<Item> { new(item.Path, false, (first, 1)) };
         }
 
         Line(count == 1 ? Lang.F("{0}: 1 replaced, in line {1}", item.Path, first)
@@ -157,8 +160,9 @@ internal sealed partial class ShellSession
     }
 
     /// <summary>
-    /// A line with a text replaced everywhere in it, from the left, and how many times (a text found is not searched
-    /// again in what replaced it)
+    /// A line with a text replaced everywhere in it, from the left, and how many times it changed (a text found is not
+    /// searched again in what replaced it; one found in any letter case that is as the new text already, "-i", is not
+    /// counted)
     /// </summary>
     internal static (string Line, int Count) ReplacedIn(string line, string text, string replacement,
         StringComparison comparison)
@@ -172,8 +176,8 @@ internal sealed partial class ShellSession
         while (at >= 0)
         {
             result.Append(line, from, at - from).Append(replacement);
+            if (!string.Equals(line.Substring(at, text.Length), replacement, StringComparison.Ordinal)) count++;
             from = at + text.Length;
-            count++;
             at = line.IndexOf(text, from, comparison);
         }
 

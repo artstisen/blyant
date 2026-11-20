@@ -306,7 +306,9 @@ internal sealed class ShellCompletion
                 // rename and clear the tags
                 FileTags.Load();
                 var tags = FileTags.All().Select(pair => pair.Tag);
-                if (position == 0) return (Kind.Words, new[] { "add", "remove", "rename", "clear" }.Concat(tags));
+                if (position == 0) return (Kind.Words, new[] { "add", "remove", "rename", "clear", "-l" }.Concat(tags));
+                // ("tag -l " and Tab: the tags)
+                if (after[0] == "-l") return (position == 1 ? Kind.Words : Kind.None, tags);
                 var action = after[0];
                 if (action is "add" or "remove") return position == 1 ? (Kind.Path, none) : position == 2 ? (Kind.Words, tags) : (Kind.None, none);
                 return action is "rename" or "clear" && position == 1 ? (Kind.Words, tags) : (Kind.None, none);

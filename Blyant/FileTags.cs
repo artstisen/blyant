@@ -31,10 +31,18 @@ internal static class FileTags
         FilePathOverride ?? Path.Combine(FileIo.GetDataDirectoryName(), FileName);
 
     /// <summary>
-    /// A name a tag can have: letters, digits, "-" and "_", at most 40 of them
+    /// A name a tag can have: letters, digits, "-" and "_", at most 40 of them, starting with a letter or a digit (a
+    /// word that starts with "-" is an option: "tag -l")
     /// </summary>
     internal static bool IsName(string name) =>
-        name.Length is > 0 and <= MaxNameLength && name.All(c => char.IsLetterOrDigit(c) || c is '-' or '_');
+        name.Length is > 0 and <= MaxNameLength && char.IsLetterOrDigit(name[0]) &&
+        name.All(c => char.IsLetterOrDigit(c) || c is '-' or '_');
+
+    /// <summary>
+    /// A file that can have tags: a path without a tab or a line break, which would break the line of tags.txt (on Linux
+    /// and macOS a name can have them)
+    /// </summary>
+    internal static bool CanHaveTags(string path) => path.IndexOfAny(['\t', '\n', '\r']) < 0;
 
     /// <summary>
     /// Read the tags from the file
@@ -54,20 +62,32 @@ internal static class FileTags
     }
 
     /// <summary>
-    /// The tags from the text of the file (a line that is not a path and tags is left out)
+    /// The tags from the text of the file (a line that is not a path and tags is left out). The path as it is: on Linux
+    /// and macOS a name can end in a blank. A file found by its path in a dictionary, so a long list is read quickly
     /// </summary>
     internal static void Parse(string text)
     {
         Entries.Clear();
+        var index = new Dictionary<string, int>(FileOperations.NameComparer);
         foreach (var line in text.Replace("\r\n", "\n").Split('\n'))
         {
             var tab = line.IndexOf('\t');
             if (tab <= 0) continue;
-            var path = line[..tab].Trim();
+            var path = line[..tab];
             if (!Path.IsPathFullyQualified(path)) continue;
-            foreach (var tag in line[(tab + 1)..].Split(' ', StringSplitOptions.RemoveEmptyEntries))
+            foreach (var word in line[(tab + 1)..].Split(' ', StringSplitOptions.RemoveEmptyEntries))
             {
-                if (IsName(tag)) Add(path, tag);
+                if (!IsName(word)) continue;
+                if (!index.TryGetValue(path, out var at))
+                {
+                    at = Entries.Count;
+                    index[path] = at;
+                    Entries.Add((path, new List<string>()));
+                }
+
+                var tag = word.ToLowerInvariant();
+                Entries[at].Tags.Remove(tag);
+                Entries[at].Tags.Add(tag);
             }
         }
     }
@@ -76,7 +96,8 @@ internal static class FileTags
     /// The text of the file
     /// </summary>
     internal static string Serialize() =>
-        string.Concat(Entries.Where(entry => entry.Tags.Count > 0)
+        // (a path with a tab or a line break: not written, as the line would be broken)
+        string.Concat(Entries.Where(entry => entry.Tags.Count > 0 && CanHaveTags(entry.Path))
             .Select(entry => entry.Path + "\t" + string.Join(' ', entry.Tags) + "\n"));
 
     /// <summary>
@@ -185,6 +206,8 @@ internal static class FileTags
     {
         tag = tag.ToLowerInvariant();
         name = name.ToLowerInvariant();
+        // (the same name: nothing to change; the files keep the tag)
+        if (tag == name) return FilesWith(tag).Count;
         var count = 0;
         foreach (var (_, tags) in Entries)
         {
@@ -271,7 +294,7 @@ internal static class FileTags
     internal static void Follow(string oldPath, string newPath)
     {
         Load();
-        if (PathChanged(oldPath, newPath)) Save();
+        if (PathChanged(oldPath, newPath)) Saved();
     }
 
     /// <summary>
@@ -280,7 +303,7 @@ internal static class FileTags
     internal static void FollowCopy(string fromPath, string toPath)
     {
         Load();
-        if (Copied(fromPath, toPath)) Save();
+        if (Copied(fromPath, toPath)) Saved();
     }
 
     /// <summary>
@@ -289,6 +312,14 @@ internal static class FileTags
     internal static void FollowDelete(IEnumerable<string> paths)
     {
         Load();
-        if (PathsDeleted(paths)) Save();
+        if (PathsDeleted(paths)) Saved();
+    }
+
+    // The tags saved after a file operation (which tells nothing of the tags): when they cannot be (tags.txt could not
+    // be read, or written), the log says so, as the tags then do not follow the file
+    private static void Saved()
+    {
+        var result = Save();
+        if (result != DialogText.Success) EventLog.Add(DialogText.LogFile + "Tags not saved: " + FilePath + ": " + result);
     }
 }

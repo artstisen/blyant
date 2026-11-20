@@ -23,7 +23,9 @@ internal sealed partial class ShellSession
     private void TagCommand(string argument)
     {
         var words = Words(argument);
-        var full = words.RemoveAll(word => word == "-l") > 0;
+        // ("tag -l draft": the full paths; only first, so a file named "-l" can be given after add)
+        var full = words.Count > 0 && words[0] == "-l";
+        if (full) words.RemoveAt(0);
         if (words.Count == 0)
         {
             if (_tag == null) Error(Lang.T("No tag yet: tag add notes.md draft, then tag draft"));
@@ -89,6 +91,13 @@ internal sealed partial class ShellSession
         }
 
         if (TagName(words[2]) is not { } tag || FilesOf(words[1], true) is not { } files) return;
+        // (a tab or a line break in the name would break the line of tags.txt)
+        if (files.FirstOrDefault(file => !FileTags.CanHaveTags(file.Path)) is { } odd)
+        {
+            Error(Lang.F("{0} has a tab or a line break in its name: it cannot have tags", odd.Path));
+            return;
+        }
+
         FileTags.Load();
         foreach (var file in files) FileTags.Add(file.Path, tag);
         var result = FileTags.Save();
@@ -110,7 +119,7 @@ internal sealed partial class ShellSession
     {
         if (words.Count is < 2 or > 3)
         {
-            Error(Lang.T("Give the files, and the tag if only that one goes: tag remove notes.md draft"));
+            Error(Lang.T("Give the files, and a tag to take off only that one: tag remove notes.md draft"));
             return;
         }
 
@@ -158,6 +167,13 @@ internal sealed partial class ShellSession
         }
 
         if (TagName(words[1]) is not { } tag || TagName(words[2]) is not { } name) return;
+        // (the same name: renamed, the files would lose it)
+        if (tag == name)
+        {
+            Error(Lang.F("The tag is called {0} already", tag));
+            return;
+        }
+
         FileTags.Load();
         if (FileTags.Rename(tag, name) == 0)
         {

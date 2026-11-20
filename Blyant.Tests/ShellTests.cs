@@ -6949,7 +6949,7 @@ public class ShellTests : IDisposable
     private string StartedAt((int Width, int Height)? size)
     {
         var output = new StringWriter();
-        var session = new ShellSession(new StringReader("exit\n"), output, new StringWriter(), In("work"), true, false)
+        var session = new ShellSession(new StringReader("exit\n"), output, new StringWriter(), In("work"), true)
         {
             WindowSize = () => size
         };
@@ -7273,7 +7273,7 @@ public class ShellTests : IDisposable
         Assert.Contains(Lang.T("Give the file, the text and what replaces it: replace notes.md draft final"), errors);
         Assert.Contains(Lang.F("Not taken: {0} (-n: only show what would change, -i: any letter case)", "-x"), errors);
         Assert.Contains(Lang.F("No {0} in {1}", "secret", "r.md"), output);
-        Assert.Contains(Lang.T("Nothing changed: the text is so already"), output);
+        Assert.Contains(Lang.T("Nothing changed: the new text is the same as the old"), output);
         Assert.Contains(Lang.T("@ is the file and the line of the last command: none yet (words notes.md 12)"), errors);
         Assert.Contains(Lang.F("Not a file: {0}", In("work", "Draft")), errors);
         Run("replace r.md same Hidden\n");
@@ -7347,9 +7347,95 @@ public class ShellTests : IDisposable
         // (the answer is the second line read: the file is changed just before it)
         var input = new ReaderWithStep("replace -n r.md draft final\ny\n", 2,
             () => File.WriteAllText(In("work", "r.md"), "draft, changed\n"));
-        Shell.Run(new ShellSession(input, output, errors, In("work"), true, false));
+        Shell.Run(new ShellSession(input, output, errors, In("work"), true));
         Assert.Equal("draft, changed\n", File.ReadAllText(In("work", "r.md")));
         Assert.Contains(Lang.F("{0} was changed meanwhile: nothing written (run replace again)", In("work", "r.md")),
             errors.ToString().Replace("\r\n", "\n"));
+    }
+
+    // ---- Review of 1.5.9
+
+    [Fact]
+    public void TagRename_ToTheSameName_IsRefused_AndTheFilesKeepTheTag()
+    {
+        Run("tag add plot.md draft\n");
+        var (_, errors, _, _) = Run("tag rename draft Draft\n");
+        Assert.Contains(Lang.F("The tag is called {0} already", "draft"), errors);
+        Assert.Equal(new[] { "draft" }, FileTags.TagsOf(In("work", "plot.md")));
+    }
+
+    [Fact]
+    public void Tag_TakesNoNameThatStartsWithADash_AndDashLOnlyFirst()
+    {
+        var (_, errors, _, _) = Run("tag add plot.md -x\n");
+        Assert.Contains(Lang.F("Not a name for a tag: {0} (letters, digits, - and _)", "-x"), errors);
+        // A file named -l can be given a tag; -l after the tag is not taken for the option
+        File.WriteAllText(In("work", "-l"), "x\n");
+        (_, errors, _, _) = Run("tag add -l draft\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal(new[] { "draft" }, FileTags.TagsOf(In("work", "-l")));
+        Assert.Contains(Lang.T("Give one tag: tag draft (tag add notes.md draft gives a file a tag)"), Run("tag draft -l\n").Errors);
+        Assert.Equal("tag -l", Tab(Completion(), "tag -"));
+        Assert.Equal("tag -l draft", Tab(Completion(), "tag -l d"));
+        Assert.Contains("tag -l [name]", Run("help tag\n").Output);
+    }
+
+    [UnixFact]
+    public void OnLinuxAndMacOS_AFileWithATabInItsName_CannotHaveTags()
+    {
+        var odd = In("work", "a\tb.md");
+        File.WriteAllText(odd, "x\n");
+        var (_, errors, _, _) = Run("ls\ntag add 3 draft\n");
+        Assert.Contains(Lang.F("{0} has a tab or a line break in its name: it cannot have tags", odd), errors);
+        Assert.Empty(FileTags.All());
+    }
+
+    [Fact]
+    public void GAndGg_TakeTheFilePeekedLast_NotAFileNamedBottomOrTop()
+    {
+        File.WriteAllText(In("work", "long.md"), string.Concat(Enumerable.Range(1, 60).Select(n => "line " + n + "\n")));
+        File.WriteAllText(In("work", "bottom"), "not this\n");
+        File.WriteAllText(In("work", "top"), "nor this\n");
+        var (output, errors, _, _) = Run("G\npeek long.md +10 5\nG\ngg\n");
+        Assert.Contains(Lang.T("No file peeked yet: peek a file first (peek plot.md)"), errors);
+        Assert.Contains(Lang.F("(lines {0}-{1} of {2})", 56, 60, 60), output);
+        Assert.Contains(Lang.F("(lines {0}-{1} of {2})", 1, 5, 60), output);
+        Assert.DoesNotContain("not this", output);
+        Assert.DoesNotContain("nor this", output);
+    }
+
+    [Fact]
+    public void ReplaceI_CountsOnlyWhatChanges_AndTellsWhenNothingWould()
+    {
+        File.WriteAllText(In("work", "r.md"), "Draft draft\nDraft\n");
+        var (output, _, _, _) = Run("replace -i r.md draft Draft\n");
+        Assert.Contains(Lang.F("{0}: 1 replaced, in line {1}", In("work", "r.md"), 1), output);
+        Assert.Equal("Draft Draft\nDraft\n", File.ReadAllText(In("work", "r.md")));
+        (output, _, _, _) = Run("replace -i r.md draft Draft\n");
+        Assert.Contains(Lang.T("Nothing changed: the new text is the same as the old"), output);
+        Assert.Equal(("Draft x", 1), ShellSession.ReplacedIn("draft x", "DRAFT", "Draft", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal(("Draft x", 0), ShellSession.ReplacedIn("Draft x", "DRAFT", "Draft", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void ReplaceN_AnsweredNo_LeavesFileAndLine_AndALoneDashIsAFile()
+    {
+        File.WriteAllText(In("work", "r.md"), "draft\n");
+        var (_, _, _, session) = Run("peek plot.md\nreplace -n r.md draft final\nn\necho $file\n", terminal: true);
+        Assert.Equal(In("work", "plot.md"), session.WorkedFile);
+        (_, _, _, session) = Run("peek plot.md\nreplace -n r.md draft final\n");
+        Assert.Equal(In("work", "plot.md"), session.WorkedFile);
+        // (the options and the file take paths; a lone "-" is the file)
+        Assert.Equal(3, ShellSession.ReplaceWords("-n -i r.md a b"));
+        Assert.Equal(1, ShellSession.ReplaceWords("- a b"));
+    }
+
+    [Fact]
+    public void Forget_TellsThatDollarTagStays()
+    {
+        // (the question, and the note under it, at a terminal; Enter: No)
+        var (output, _, _, _) = Run("forget\n\n", terminal: true);
+        Assert.Contains("$file and $tag", output);
+        Assert.Contains(Lang.T("Nothing forgotten"), output);
     }
 }

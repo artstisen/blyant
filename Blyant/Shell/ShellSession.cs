@@ -181,7 +181,7 @@ internal sealed partial class ShellSession
     // logo: its rows are not broken
     private void ShowLogo()
     {
-        var rows = global::Blyant.Logo.Current.AllRows.Select(row => row.TrimEnd()).ToList();
+        var rows = Logo.Current.AllRows.Select(row => row.TrimEnd()).ToList();
         while (rows.Count > 0 && rows[0].Length == 0) rows.RemoveAt(0);
         while (rows.Count > 0 && rows[^1].Length == 0) rows.RemoveAt(rows.Count - 1);
         if (rows.Count == 0) return;

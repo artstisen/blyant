@@ -143,7 +143,7 @@ To get all output at once (with a screen reader, say), turn the pages off: `set 
 | `set [name [value]]` | Show the settings (`set`), one setting (`set indent`), or change one (`set indent 2`, also `set indent=2` as in the settings file) |
 | `reset` | Put all the settings back to their defaults, as _Reset all settings_ on the System page of Configuration (asks first) |
 | `reload` | Read the settings file and the registers again, after you have edited them in another program (see [Text and settings](#text-and-settings)) |
-| `forget` | Forget what the shell keeps only while Blyant runs: the commands typed (`again`, `Up`), `$clip`, `$peek`, `$calc`, the last search and the undo steps, after asking. The registers, the settings and `$file` stay |
+| `forget` | Forget what the shell keeps only while Blyant runs: the commands typed (`again`, `Up`), `$clip`, `$peek`, `$calc`, the last search and the undo steps, after asking. The registers, the settings, `$file` and `$tag` stay |
 | `reg [name [text\|.\|#n]]` | Keep a text or a path in a register, show one, or list them (see [Registers](#registers)) |
 | `reg -t text` | Find the registers with a text in the name or in the value (`reg -t storm`, `reg -t chap*`), the names set by Blyant too |
 | `reg name = text`, `reg name += text` | Keep a text in a register (as `reg name text`), or add it at the end, as lines (`reg notes += $peek`) |
@@ -176,7 +176,8 @@ To get all output at once (with a screen reader, say), turn the pages off: `set 
 | `recent [-l] [-s] [-f] [-n]` | List the latest files (the first nine of the history), by name. `-l` shows the full paths, `-s` the size of each file (`-` for a file that is gone), `-f` the folder and the name (`Book/chapter-3.md`; two rows alike get the folder above it: `Book/a.md (novel)`), and `-n` sorts the rows by name, A to Z, numbered as shown, so `open 3` opens row 3. The options go in any order: `recent -n -f -s` |
 | `recent\|hist\|fav ... -t text` | Only the files of the list with the text in a line, and the first line with it, instead of the date: `recent -t storm` shows `02-storm.md:3  The storm came at night.` The text is taken as `find -t` takes it (letter case alike, `*` and `?`), and goes last, after the other options and a filter (`hist -n -t storm`, `fav filter draft -t storm`). The rows are numbered as in the whole list, and `open 4` opens row 4 at the line found. Directories and files that are not text are left out. `recent -t *` shows the first line of each file, and `recent -t "# *"` the first heading |
 | `tag name`, `tag` | List the files with a tag, or with `$tag` (see [Tags](#tags)) |
-| `tag add\|remove file\|n name` | Give files a tag (`tag add 2,4 draft`), or take it off |
+| `tag add file\|n name` | Give files a tag (`tag add 2,4 draft`) |
+| `tag remove file\|n [name]` | Take a tag off files, or all their tags without a name |
 | `tags [-f]` | List the tags, or the files with tags (`-f`) |
 | `hotlist` (`hot`) | List the directory hotlist |
 | `hotlist filter text` | Show the directories of the hotlist with a text in their name or path (`hot filter novel`), or that match a pattern, numbered as in the whole hotlist |
@@ -243,8 +244,8 @@ The shell works on files with the rules of the file browser:
 - `fav remove` and `hot remove` also remove a file or directory that no longer exists
 - `copy` and `move` never overwrite a file or directory of the same name: the shell says so and does nothing. A copy made in the same directory gets a new name (`plot-copy.md`)
 - `delete` asks first, telling what would be deleted with a directory, and you type the answer in full (`Yes`) to go ahead. It goes to the trash, which you open from the file browser with `:trash`, unless _Delete to trash_ is turned off on the General page of Configuration. Something that cannot be moved to the trash is deleted for good only if you say so
-- The files and directories Blyant uses (its data directory, the settings, the favorites, the history) cannot be renamed, moved or deleted from the shell
-- The favorites, the history, the hotlist, the projects and the bookmarks follow what is renamed or moved, as in the file browser, and what is deleted is removed from the favorites
+- The files and directories Blyant uses (its data directory, the settings, the favorites, the history, the tags) cannot be renamed, moved or deleted from the shell
+- The favorites, the history, the hotlist, the projects, the bookmarks and the tags follow what is renamed or moved, as in the file browser, and what is deleted is removed from the favorites and the tags
 - `find` searches the directory you are in and the directories below it, as the search of the file browser does: hidden files are left out, and at most 5000 files are found. `find plot` finds the names with _plot_ in them, `find *.md` the names that match (`*` and `?`), `find -t storm` the text files with _storm_ in a line (with the line), and `find *.md -t storm` both. The text takes `*` and `?` too: `find -t storm*night` finds a line with _storm_ and then _night_ in it, `find -t st?rm` _storm_ and _starm_ (a `*` you mean literally, as in `**` for bold, is also taken as a wildcard, and finds more lines). `open` on a file found by its text opens it at that line, and `peek` shows the window around it
 - In a large tree the paths get long. `find -f storm` shows the folder and the name (`drafts/storm.md`), and `find -b storm` the name only (`storm.md`); a name that more rows have gets as many folders after it as tell the rows apart (`storm.md (part-1/drafts)`). The rows are the same with each option, so `open 2`, `info 2` (the full path, size and dates) and `path 2` (the full path copied) work on the same file. The options go before the name, in any order (`find -b -t storm`), and `-l` wins over the others. A name that starts with `-` is written in quotes (`find "-draft"`)
 ![ls with the date and the size of each file, and find with the date each chapter was last changed](docs/screenshots/shell-dates.svg)
@@ -541,7 +542,7 @@ Undone: replace chapter-3.md Maren Marit
 - The text is exact text, not a pattern, and a text with blanks is written in quotes: `replace notes.md "the storm" "the gale"`. `""` as the new text takes the old text out
 - The file is given as a name, a row of the last list, `$file` or `@` (the file worked on). It is then the last list, at the first line changed: `open 1` opens it there, and `peek @` shows it
 - The text is replaced in each line, from the left; what replaced it is not searched again. A text with a line break in it cannot be typed, so a text is never replaced across two lines
-- At most as many lines are shown as `peek` shows (15; the setting `shellpeeklines`), then `(and 12 more lines)`. Between the markers, `->` tells that line 1 of the file is among them, and `-v` that lines below the last one shown were not changed
+- At most as many lines are shown as `peek` shows (15; the setting `shellpeeklines`), then `(and 12 more lines)`. Above them, `->` tells that line 1 of the file was changed, and `-^` that it was not; below them, `<-` tells that the last line of the file was changed, and `-v` that it was not
 - When the text is not in the file, the shell says so (`No Maren in chapter-3.md`), and nothing is written. As with `change` and `lines`, only a file in UTF-8 is changed and not the files Blyant uses, the line endings and byte order mark are kept, and the log gets the path, never the texts
 - One `replace` is one step of `undo`, however many it replaced. Try a large replace with `-n` first: you see the lines, and `y` replaces them as shown. When the file was changed while the question waited (saved in the editor, or by another program), nothing is written, and the shell asks you to run `replace` again
 - `lines notes.md 5-9 replace old new` replaces in some lines only (see [Text in lines](#text-in-lines))
@@ -924,10 +925,11 @@ blyant ~/novel> tags
 | `tags -f` | List the files with tags, and the tags of each, numbered (`open 2`) |
 | `tags clear` | Take all tags off all files (asked first) |
 
-- A tag is letters, digits, `-` and `_` (`draft`, `chapter-3`, `to_check`), without blanks, and the letter case does not matter: `Draft` is `draft`. `add`, `remove`, `rename` and `clear` are not tags
+- A tag is letters, digits, `-` and `_` (`draft`, `chapter-3`, `to_check`), without blanks, and starts with a letter or a digit (a word starting with `-` is an option, as `-l`). The letter case does not matter: `Draft` is `draft`. `add`, `remove`, `rename` and `clear` are not tags, and `tag rename draft draft` is refused
+- On Linux and macOS a file name can have a tab or a line break in it: such a file cannot have tags, as it would break the line of `tags.txt`
 - `tag add` leaves the last list as it was, so you can give more rows of it a tag (`tag add 2 draft`, then `tag add 5 draft`)
 - The files keep their tags when you rename or move them, in the shell or on the full screen, and a copy gets the tags of what was copied (a directory copied: the tags of the files in it). A file you delete loses its tags
-- The tags are kept in `tags.txt` in the data directory, a line for each file: the path, a tab, and the tags. You can edit it in Blyant, but the shell does not delete or rename it
+- The tags are kept in `tags.txt` in the data directory, a line for each file: the path, a tab, and the tags. You can edit it in Blyant, but it cannot be renamed, moved or deleted, in the shell or in the file browser, as the other files Blyant uses
 - `Tab` completes `add`, `remove`, `rename`, `clear` and the tags after `tag`, the file after `tag add` and `tag remove`, and the tags after it
 
 ### $tag: the tag you work with
