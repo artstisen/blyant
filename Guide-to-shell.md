@@ -132,6 +132,7 @@ To get all output at once (with a screen reader, say), turn the pages off: `set 
 | `lines file\|n lines start\|end text` | Put a text at the start or the end of lines, keeping the rest (`lines todo.md 4 start Remember this:`). See [Text in lines](#text-in-lines) |
 | `lines file\|n lines unstart\|unend text` | Take a text off the start or the end of the lines that have it |
 | `lines file\|n lines replace old new` | Replace a text in lines, keeping the rest (`lines notes.md 5-9 replace draft final`) |
+| `replace [-n] [-i] file\|n old new` | Replace a text everywhere in a file (`replace chapter-3.md Maren Marit`); `-i` in any letter case, `-n` only shows what would change. `undo` takes it back. See [Replacing in a file](#replacing-in-a-file) |
 | `lines file\|n lines sort [-a\|-d]` | Sort lines A to Z (`-a`, the default) or Z to A (`-d`): `lines notes.md 3-20 sort`. The order is that of `:sort` in the editor, by the value of the characters, so capital letters come before small ones. Lines given apart (`1,5,9`) are sorted among those places |
 | `lines file\|n lines upper\|lower\|title` | Make lines UPPERCASE, lowercase or Title Case (each word with a capital first letter), as `gU` and `gu` in the editor: `lines notes.md 1 upper` |
 | `words [-p] file\|n line` | Show the words of a line, numbered, for `word`: `words notes.md 12`; with `-p` a word is all between blanks, punctuation too. See [Words in a line](#words-in-a-line) |
@@ -516,6 +517,34 @@ blyant ~/notes> lines todo.md 3 unstart "- [ ] "
 - After the lines, `Tab` completes `start`, `end`, `unstart`, `unend`, `replace`, `sort`, `upper`, `lower`, `title` and `>`, and after `sort` it completes `-a` and `-d`. A `>` or one of these words later on is part of the text: `lines notes.md 3 start ">"` makes line 3 a quote
 - `$name` and `$clip` put in their value: `lines todo.md 4 end $note`
 - The lines changed are shown, and the file is then the last list, at the first of them (`open 1`). When no line changes, nothing is written, and the shell says so. As for `insert`, the file keeps its line endings and byte order mark, only a file in UTF-8 is changed and not the files Blyant uses, and `undo` puts it back; nothing is asked, as no line is lost
+
+## Replacing in a file
+`replace` replaces a text everywhere in a file, without opening it: `replace chapter-3.md Maren Marit`. It shows the lines it changed, and how many it replaced in how many lines, and `undo` puts the file back as it was:
+
+```
+blyant ~/novel> replace chapter-3.md Maren Marit
+-> chapter-3.md
+   1  Marit stood at the rail.
+  12  "Anna!" Marit called. Marit, at last.
+-v 2 lines of 30
+/home/anna/novel/chapter-3.md: 3 replaced, in 2 lines
+blyant ~/novel> undo
+Undone: replace chapter-3.md Maren Marit
+```
+
+| Command | What it does |
+|---|---|
+| `replace file\|n old new` | Replace the text everywhere in the file, with the letter case as typed |
+| `replace -i file\|n old new` | The same in any letter case: `replace -i chapter-3.md maren Marit` replaces `Maren`, `MAREN` and `maren`. The new text is put in as typed |
+| `replace -n file\|n old new` | Show what would change, and write nothing: the lines as they would be, and how many would be replaced (`-n: nothing written`) |
+
+- The text is exact text, not a pattern, and a text with blanks is written in quotes: `replace notes.md "the storm" "the gale"`. `""` as the new text takes the old text out
+- The file is given as a name, a row of the last list, `$file` or `@` (the file worked on). It is then the last list, at the first line changed: `open 1` opens it there, and `peek @` shows it
+- The text is replaced in each line, from the left; what replaced it is not searched again. A text with a line break in it cannot be typed, so a text is never replaced across two lines
+- At most as many lines are shown as `peek` shows (15; the setting `shellpeeklines`), then `(and 12 more lines)`. Between the markers, `->` tells that line 1 of the file is among them, and `-v` that lines below the last one shown were not changed
+- When the text is not in the file, the shell says so (`No Maren in chapter-3.md`), and nothing is written. As with `change` and `lines`, only a file in UTF-8 is changed and not the files Blyant uses, the line endings and byte order mark are kept, and the log gets the path, never the texts
+- One `replace` is one step of `undo`, however many it replaced. Try a large replace with `-n` first
+- `lines notes.md 5-9 replace old new` replaces in some lines only (see [Text in lines](#text-in-lines))
 
 ## Words in a line
 ![The words of a todo line numbered, and word 10 replaced by its number](docs/screenshots/shell-words.svg)

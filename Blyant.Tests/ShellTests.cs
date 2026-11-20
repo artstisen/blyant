@@ -7185,4 +7185,112 @@ public class ShellTests : IDisposable
         Assert.Contains("tags clear", Run("help tags\n").Output);
         Assert.Equal("tag ...", EventLog.CommandName("tag add plot.md draft"));
     }
+
+    // ---- 1.5.9: replace
+
+    [Fact]
+    public void ReplacedIn_ReplacesFromTheLeft_AndCountsThem()
+    {
+        Assert.Equal(("a-b-c", 2), ShellSession.ReplacedIn("a b c", " ", "-", StringComparison.Ordinal));
+        // (what replaced a text is not searched again)
+        Assert.Equal(("aaaa", 2), ShellSession.ReplacedIn("aa", "a", "aa", StringComparison.Ordinal));
+        Assert.Equal(("x", 0), ShellSession.ReplacedIn("x", "", "y", StringComparison.Ordinal));
+        Assert.Equal(("Marit, Marit", 2), ShellSession.ReplacedIn("MAREN, maren", "Maren", "Marit", StringComparison.OrdinalIgnoreCase));
+        Assert.Equal(("MAREN, maren", 0), ShellSession.ReplacedIn("MAREN, maren", "Maren", "Marit", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Replace_ReplacesInTheWholeFile_ShowsTheLines_AndUndoTakesItBack()
+    {
+        var text = "Maren stood at the rail.\r\nNobody spoke.\r\n\"MAREN!\" Anna called. Maren, Maren.\r\nThe end.\r\n";
+        File.WriteAllText(In("work", "r.md"), text);
+        var (output, errors, _, session) = Run("replace r.md Maren Marit\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("Marit stood at the rail.\r\nNobody spoke.\r\n\"MAREN!\" Anna called. Marit, Marit.\r\nThe end.\r\n",
+            File.ReadAllText(In("work", "r.md")));
+        Assert.Contains("  1  Marit stood at the rail.\n  3  \"MAREN!\" Anna called. Marit, Marit.\n", output);
+        Assert.Contains(Lang.F("{0}: {1} replaced, in {2} lines", In("work", "r.md"), 3, 2), output);
+        // The file at the first line changed: open 1, peek @
+        Assert.Equal((1, 1), session.LastList.Single().At);
+        // undo, in the same shell: the file as it was (line endings too)
+        File.WriteAllText(In("work", "r.md"), text);
+        (output, _, _, _) = Run("replace r.md Maren Marit\nundo\n");
+        Assert.Contains(Lang.F("Undone: {0}", "replace r.md Maren Marit"), output);
+        Assert.Equal(text, File.ReadAllText(In("work", "r.md")));
+        // Any letter case; one line
+        (output, _, _, _) = Run("replace -i r.md maren Marit\n");
+        Assert.Contains(Lang.F("{0}: {1} replaced, in {2} lines", In("work", "r.md"), 4, 2), output);
+        Assert.DoesNotContain("MAREN", File.ReadAllText(In("work", "r.md")));
+        (output, _, _, _) = Run("replace r.md Nobody \"No one\"\nreplace r.md \"stood at\" \"\"\n");
+        Assert.Contains(Lang.F("{0}: 1 replaced, in line {1}", In("work", "r.md"), 2), output);
+        Assert.StartsWith("Marit  the rail.\r\nNo one spoke.", File.ReadAllText(In("work", "r.md")));
+    }
+
+    [Fact]
+    public void ReplaceN_OnlyShowsWhatWouldChange()
+    {
+        File.WriteAllText(In("work", "r.md"), "draft one\ndraft two\n");
+        var (output, errors, _, _) = Run("replace -n r.md draft final\nundo\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("draft one\ndraft two\n", File.ReadAllText(In("work", "r.md")));
+        Assert.Contains("  1  final one\n  2  final two\n", output);
+        Assert.Contains(Lang.F("{0}: {1} would be replaced, in {2} lines (-n: nothing written)", In("work", "r.md"), 2, 2), output);
+        // Nothing to undo in the same shell: nothing was written
+        Assert.Contains(Lang.T("Nothing to undo: no file has been changed in this shell"), output);
+        // "-i -n" in any order
+        (output, _, _, _) = Run("replace -i -n r.md DRAFT final\n");
+        Assert.Contains(Lang.F("{0}: {1} would be replaced, in {2} lines (-n: nothing written)", In("work", "r.md"), 2, 2), output);
+    }
+
+    [Fact]
+    public void Replace_ShowsAtMostAPeekOfLines_BetweenTheMarkers()
+    {
+        try
+        {
+            MarkersAsSet();
+            File.WriteAllText(In("work", "long.md"), string.Concat(Enumerable.Range(1, 40).Select(n => "line " + n + " x\n")));
+            var (output, _, _, _) = Run("replace long.md x y\n");
+            Assert.Contains(ShellSession.TopMarker + "long.md\n   1  line 1 y\n", output);
+            Assert.Contains("  15  line 15 y\n  " + Lang.F("(and {0} more lines)", 25) + "\n" + ShellSession.EndMarker +
+                            Lang.F("{0} lines of {1}", 40, 40) + "\n", output);
+            Assert.DoesNotContain("  16  line 16 y", output);
+            File.WriteAllText(In("work", "s.md"), "a\nb x\nc\n");
+            (output, _, _, _) = Run("replace s.md x y\n");
+            Assert.Contains(ShellSession.AboveMarker + "s.md\n  2  b y\n" + ShellSession.BelowMarker + Lang.F("1 line of {0}", 3), output);
+        }
+        finally
+        {
+            MarkersAsSet();
+        }
+    }
+
+    [Fact]
+    public void Replace_TellsWhatItCannotDo_AndNeverLogsTheTexts()
+    {
+        File.WriteAllText(In("work", "r.md"), "same\n");
+        var (output, errors, _, _) = Run("replace r.md\nreplace r.md \"\" x\nreplace -x r.md a b\nreplace r.md secret other\n" +
+                                         "replace r.md same same\nreplace @ a b\nreplace Draft a b\n");
+        Assert.Contains(Lang.T("Give the file, the text and what replaces it: replace notes.md draft final"), errors);
+        Assert.Contains(Lang.F("Not taken: {0} (-n: only show what would change, -i: any letter case)", "-x"), errors);
+        Assert.Contains(Lang.F("No {0} in {1}", "secret", "r.md"), output);
+        Assert.Contains(Lang.T("Nothing changed: the text is so already"), output);
+        Assert.Contains(Lang.T("@ is the file and the line of the last command: none yet (words notes.md 12)"), errors);
+        Assert.Contains(Lang.F("Not a file: {0}", In("work", "Draft")), errors);
+        Run("replace r.md same Hidden\n");
+        Assert.DoesNotContain("Hidden", string.Join("\n", EventLog.All));
+        Assert.DoesNotContain("same", string.Join("\n", EventLog.All.Where(entry => entry.Contains("Replace"))));
+        // @: the file worked on
+        (_, errors, _, _) = Run("peek r.md\nreplace @ Hidden Shown\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("Shown\n", File.ReadAllText(In("work", "r.md")));
+    }
+
+    [Fact]
+    public void Replace_TabCompletesTheOptionsAndTheFile()
+    {
+        Assert.Equal("replace -n", Tab(Completion(), "replace -"));
+        Assert.Equal("replace -n -i", Tab(Completion(), "replace -n -"));
+        Assert.Equal("replace -i plot.md", Tab(Completion(), "replace -i pl"));
+        Assert.Contains("replace [-n] [-i] file|n old new", Run("help replace\n").Output);
+    }
 }

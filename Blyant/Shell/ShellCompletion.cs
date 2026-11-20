@@ -46,6 +46,7 @@ internal sealed class ShellCompletion
         PathThenWords,
         QuotedWords,
         DirectoryOrOptions, // A directory; a word that starts with "-": the options, then the directories that fit
+        PathOrOptions, // A file or directory; a word that starts with "-": the options, then the names that fit
         Names // Words, or those a pattern fits ("chapter-*" to "chapter-1.md"), in quotes with a blank in them
     }
 
@@ -130,6 +131,9 @@ internal sealed class ShellCompletion
         {
             Kind.Path => PathsFitting(word, false),
             Kind.Directory => PathsFitting(word, true),
+            Kind.PathOrOptions => word.StartsWith('-')
+                ? Fitting(choices, word).Concat(PathsFitting(word, false)).ToList()
+                : PathsFitting(word, false),
             Kind.DirectoryOrOptions => word.StartsWith('-')
                 ? Fitting(choices, word).Concat(PathsFitting(word, true)).ToList()
                 : PathsFitting(word, true),
@@ -307,6 +311,11 @@ internal sealed class ShellCompletion
                 if (action is "add" or "remove") return position == 1 ? (Kind.Path, none) : position == 2 ? (Kind.Words, tags) : (Kind.None, none);
                 return action is "rename" or "clear" && position == 1 ? (Kind.Words, tags) : (Kind.None, none);
             }
+            case "replace":
+                // ("replace -n -i notes.md ...": the file after the options; "replace -" and Tab: the options)
+                return _words.All(word => word is "-n" or "-i")
+                    ? (Kind.PathOrOptions, new[] { "-n", "-i" }.Except(_words))
+                    : (Kind.None, none);
             case "tags":
                 return (position == 0 ? Kind.Words : Kind.None, new[] { "-f", "clear" });
             case "bookmarks":

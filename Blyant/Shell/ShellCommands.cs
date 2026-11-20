@@ -62,6 +62,8 @@ internal sealed partial class ShellSession
         ("lines file|n lines replace old new", Lang.T("Replace a text in lines, the rest kept")),
         ("lines file|n lines sort [-a|-d]", Lang.T("Sort lines: -a A to Z, capitals first (default), -d Z to A")),
         ("lines file|n lines upper|lower|title", Lang.T("Make lines UPPERCASE, lowercase or Title Case")),
+        ("replace [-n] [-i] file|n old new", Lang.T("Replace a text everywhere in a file (undo takes it back)")),
+        ("replace -n, replace -i", Lang.T("Only show what would change; any letter case")),
         ("words [-p] file|n line", Lang.T("Show the words of a line, numbered, for word")),
         ("words -p, word -p", Lang.T("A word is all between blanks: give -p to both")),
         ("word file|n line n|n-m action [text]", Lang.T("Change words by number: replace, before, after, delete")),
@@ -279,6 +281,8 @@ internal sealed partial class ShellSession
                 "find" or "project" or "run" or "echo" or "calc" => 0,
                 // (the text of "lines todo.md 4 start ..." as it is)
                 "lines" => LinesWords(argument),
+                // (the texts of "replace notes.md old new" as they are)
+                "replace" => ReplaceWords(argument),
                 _ => int.MaxValue
             });
         }
@@ -873,6 +877,9 @@ internal sealed partial class ShellSession
                 break;
             case "resume":
                 if (ResumeTarget(argument) is { } target) OpenFile(new Item(target.Path, false), target.Line);
+                break;
+            case "replace":
+                Replace(argument);
                 break;
             case "tag":
                 TagCommand(argument);
