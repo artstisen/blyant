@@ -181,6 +181,7 @@ Some commands have a short form, which does the same: `fav` and `favs` (`favorit
 | `tag add file\|n name` | Give files a tag (`tag add 2,4 draft`) |
 | `tag remove file\|n [name]` | Take a tag off files, or every tag without a name |
 | `tags [-f]` | List the tags, or the files with tags (`-f`) |
+| `tags filter\|-t text`, `tag [name] filter\|-t text` | Search the files with any tag, or with a tag: a text in the name (`filter`) or in a line (`-t`) |
 | `hotlist` (`hot`) | List the directory hotlist |
 | `hotlist filter text` | Show the directories of the hotlist with a text in their name or path (`hot filter novel`), or that match a pattern, numbered as in the whole hotlist |
 | `fav add file\|n [where]` | Add a file or directory to the favorites in use: at the top of the list (row 1, outside the folders), or at the place given: `top`, `bottom`, the place of a row (`5`) or into a `[folder]` (`fav add notes.md [Drafts]`) |
@@ -942,6 +943,27 @@ blyant ~/novel> tags
 | `tags` | List the tags, and how many files have each |
 | `tags -f` | List the files with tags, and the tags of each, numbered (`open 2`) |
 | `tags clear` | Take all tags off all files (asked first) |
+| `tags filter text` | The files with any tag that have the text in the path (`tags filter chapter`), or whose name fits a pattern (`tags filter ch*.md`) |
+| `tags -t text` | The files with any tag that have the text in a line, with the first line found (`tags -t storm`) |
+| `tag name filter text`, `tag name -t text` | The same, in the files of one tag (`tag draft -t storm`); without a name, in those of `$tag` (`tag -t storm`) |
+
+To find a file among the tagged ones, search them: by name with `filter`, by the text in them with `-t`, or both:
+
+```
+blyant ~/novel> tags filter chapter
+  1  chapter-3.md  draft
+  2  chapter-1.md  draft
+  3  chapter-4.md  draft
+blyant ~/novel> tags -t storm
+  1  chapter-3.md:10  The storm came in from the west.
+blyant ~/novel> tag research -t twice
+  1  ferry.md:2  Jon Arvik runs it twice a day.
+blyant ~/novel> open 1
+```
+
+- `filter` finds the text in the path of a file, in any letter case, or a pattern in its name (`*.md`), as `hist filter` does. `-t` finds the text in a line, in any letter case and with `*` and `?`, as `recent -t` does; only text files are read
+- The rows keep the numbers of the whole list, so `open 4` opens row 4, at the line found. `filter` and `-t` together find the files that have both: `tags filter chapter -t storm`
+- `tag draft filter ...` and `tag draft -t ...` make `draft` the `$tag`, as `tag draft` does; `tags ...` leaves `$tag` as it is
 
 - A tag is letters, digits, `-` and `_` (`draft`, `chapter-3`, `to_check`), without blanks, and starts with a letter or a digit (a word starting with `-` is an option, as `-l`). The letter case does not matter: `Draft` is `draft`. `add`, `remove`, `rename` and `clear` are not tags, and `tag rename draft draft` is refused
 - On Linux and macOS a file name can have a tab or a line break in it: such a file cannot have tags, as it would break the line of `tags.txt`

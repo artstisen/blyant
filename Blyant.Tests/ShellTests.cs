@@ -7468,4 +7468,76 @@ public class ShellTests : IDisposable
         Assert.DoesNotContain("rec", Commands.Names(CommandContext.Shell));
         Assert.Equal("rec ...", EventLog.CommandName("rec -s"));
     }
+
+    // ---- 1.6.0: searching the tagged files
+
+    // Three tagged files: two with draft, one with ferry
+    private void ThreeTaggedFiles()
+    {
+        File.WriteAllText(In("work", "chapter-a.md"), "The storm came.\nquiet\n");
+        File.WriteAllText(In("work", "chapter-b.md"), "calm\n");
+        File.WriteAllText(In("work", "notes-c.md"), "x\nA storm, later.\n");
+        Run("tag add chapter-a.md draft\ntag add chapter-b.md draft\ntag add notes-c.md ferry\n");
+    }
+
+    [Fact]
+    public void TagsFilterAndT_SearchTheNamesAndTheLinesOfAllTaggedFiles()
+    {
+        ThreeTaggedFiles();
+        var (output, errors, _, session) = Run("tags filter chapter\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains("  1  chapter-a.md  draft\n  2  chapter-b.md  draft\n", output);
+        Assert.DoesNotContain("notes-c.md", output);
+        // -t: the line found, numbered as in the whole list, and open 3 opens the file at that line
+        (output, errors, _, session) = Run("tags -t storm\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains("  1  chapter-a.md:1  The storm came.\n  3  notes-c.md:2    A storm, later.\n", output);
+        Assert.DoesNotContain("chapter-b.md", output);
+        Assert.Equal((2, 1), session.LastList[2].At);
+        // Both: the name and the line
+        (output, _, _, _) = Run("tags filter notes -t storm\n");
+        Assert.Contains("  3  notes-c.md:2  A storm, later.\n", output);
+        Assert.DoesNotContain("chapter-a.md", output);
+        (output, _, _, _) = Run("tags -t nowhere\ntags filter nothing\n");
+        Assert.Contains(Lang.F("No file has {0} in a line", "nowhere"), output);
+        Assert.Contains(Lang.F("No files with {0} in them", "nothing"), output);
+    }
+
+    [Fact]
+    public void TagFilterAndT_SearchTheFilesOfATag_AndTheTagIsThenDollarTag()
+    {
+        ThreeTaggedFiles();
+        ShellSession.ForgetTag();
+        var (output, errors, _, _) = Run("tag draft filter b\necho $tag\ntag draft -t storm\ntag -t calm\ntag filter a.md\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains("  2  chapter-b.md\n", output);
+        Assert.Contains("draft\n", output);
+        Assert.Contains("  1  chapter-a.md:1  The storm came.\n", output);
+        Assert.Contains("  2  chapter-b.md:1  calm\n", output);
+        Assert.Contains("  1  chapter-a.md\n", output);
+        // Not the files of another tag
+        Assert.DoesNotContain("notes-c.md", output);
+        // Full paths with -l
+        (output, _, _, _) = Run("tag -l draft -t calm\n");
+        Assert.Contains(In("work", "chapter-b.md") + ":1  calm", output);
+    }
+
+    [Fact]
+    public void TagSearch_TellsWhatItNeeds()
+    {
+        ThreeTaggedFiles();
+        var (_, errors, _, _) = Run("tags -t\ntag draft filter\ntag draft other\ntag bad/name -t x\n");
+        Assert.Contains(Lang.T("Give a text after -t: tags -t storm, tag draft -t storm"), errors);
+        Assert.Contains(Lang.T("Give a text: tags filter chapter, tag draft filter chapter (or *.md)"), errors);
+        Assert.Contains(Lang.T("Give one tag: tag draft (tag add notes.md draft gives a file a tag)"), errors);
+        Assert.Contains(Lang.F("Not a name for a tag: {0} (letters, digits, - and _)", "bad/name"), errors);
+        ShellSession.ForgetTag();
+        (_, errors, _, _) = Run("tag -t storm\n");
+        Assert.Contains(Lang.T("No tag yet: tag add notes.md draft, then tag draft"), errors);
+        Assert.Equal("tags filter", Tab(Completion(), "tags fi"));
+        Assert.Equal("tag draft filter", Tab(Completion(), "tag draft fi"));
+        Assert.Equal("tag draft -t", Tab(Completion(), "tag draft -"));
+        Assert.Contains("tags filter|-t text", Run("help tags\n").Output);
+        Assert.Contains("tag [name] filter|-t text", Run("help tag\n").Output);
+    }
 }

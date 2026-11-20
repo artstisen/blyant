@@ -1,6 +1,7 @@
 # Changes
 
 ## v1.6.0
+- **Searching the tagged files in the shell**: `tags filter chapter` lists the files with any tag that have _chapter_ in the path (or `tags filter ch*.md`: whose name fits), and `tags -t storm` those with _storm_ in a line, with the first line found. `tag draft filter ...` and `tag draft -t ...` search only the files of one tag, and `tag -t storm` those of `$tag`. `filter` and `-t` go together, and the rows keep the numbers of the whole list, so `open 3` opens the file at the line found, as with `recent -t`. `Tab` offers `filter` and `-t`. See [Tags](Guide-to-shell.md#tags).
 - **Short forms in the shell: `rec` and `res`, and a list in `help`**: `rec` is `recent`, and `res` is `resume`. `help` ends with all the short forms and the commands they stand for (`fav`, `favs`, `hist`, `rec`, `res`, `hot`, `book`, `proj`, `del`, `cls`, `h`, `q`, `quit`), as some were only in the texts of their commands, and some nowhere. `help rec` tells what `recent` does. As the other short forms, they are not offered by `Tab`. See [Commands](Guide-to-shell.md#commands).
 
 ## v1.5.9 (2026-11-20)

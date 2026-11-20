@@ -26,11 +26,22 @@ internal sealed partial class ShellSession
         // ("tag -l draft": the full paths; only first, so a file named "-l" can be given after add)
         var full = words.Count > 0 && words[0] == "-l";
         if (full) words.RemoveAt(0);
-        if (words.Count == 0)
+        // "tag draft filter chapter", "tag draft -t storm": the files of the tag with a text in the name, or in a line
+        // ("tag -t storm", "tag filter chapter": those of $tag)
+        if (words.Count == 0 || !TagActions.Contains(words[0]))
         {
-            if (_tag == null) Error(Lang.T("No tag yet: tag add notes.md draft, then tag draft"));
-            else ListTag(_tag, full);
-            return;
+            if (TagSearch(full ? AfterWords(argument, 1) : argument) is not { } search) return;
+            if (search.Tag == null && _tag == null)
+            {
+                Error(Lang.T("No tag yet: tag add notes.md draft, then tag draft"));
+                return;
+            }
+
+            if (search.Tag == null || search.Filter != null || search.Text != null)
+            {
+                ListTag(search.Tag ?? _tag!, full, search.Filter, search.Text);
+                return;
+            }
         }
 
         switch (words[0].ToLowerInvariant())
@@ -64,8 +75,9 @@ internal sealed partial class ShellSession
         ListTag(words[0].ToLowerInvariant(), full);
     }
 
-    // The files with a tag, numbered (the last list: "open 2"); the tag is then $tag
-    private void ListTag(string tag, bool full)
+    // The files with a tag, numbered (the last list: "open 2"); the tag is then $tag. "filter": only those with a text
+    // in the path, or whose name fits a pattern; "text": only those with it in a line, and the line found
+    private void ListTag(string tag, bool full, string? filter = null, string? text = null)
     {
         FileTags.Load();
         var files = FileTags.FilesWith(tag);
@@ -77,7 +89,76 @@ internal sealed partial class ShellSession
 
         _tag = tag;
         var names = Names(files.Select(path => (path, false)).ToList(), full);
-        List(files.Select((path, i) => (new Item(path, false), names[i])).ToList(), string.Empty);
+        var rows = files.Select((path, i) => (new Item(path, false), names[i])).ToList();
+        if (filter == null && text == null) List(rows, string.Empty);
+        else SearchTagged(files, rows, names, filter, text);
+    }
+
+    // What follows "tag" or "tags" when it is a search: a tag (null: none given), the text of "filter" (null: none),
+    // and the text after "-t" (null: none). Null, and told, when it is not one ("filter" or "-t" without a text)
+    private (string? Tag, string? Filter, string? Text)? TagSearch(string argument)
+    {
+        var (before, text) = TextOption(argument);
+        if (text == string.Empty)
+        {
+            Error(Lang.T("Give a text after -t: tags -t storm, tag draft -t storm"));
+            return null;
+        }
+
+        var words = Words(before);
+        string? tag = null;
+        if (words.Count > 0 && !words[0].Equals("filter", StringComparison.OrdinalIgnoreCase))
+        {
+            tag = words[0].ToLowerInvariant();
+            if (!FileTags.IsName(tag))
+            {
+                Error(Lang.F("Not a name for a tag: {0} (letters, digits, - and _)", words[0]));
+                return null;
+            }
+
+            words.RemoveAt(0);
+            before = AfterWords(before, 1);
+        }
+
+        if (words.Count == 0) return (tag, null, text);
+        if (!words[0].Equals("filter", StringComparison.OrdinalIgnoreCase))
+        {
+            Error(Lang.T("Give one tag: tag draft (tag add notes.md draft gives a file a tag)"));
+            return null;
+        }
+
+        var filter = Rest(before.Trim()).Trim().Trim('"');
+        if (filter.Length == 0)
+        {
+            Error(Lang.T("Give a text: tags filter chapter, tag draft filter chapter (or *.md)"));
+            return null;
+        }
+
+        return (tag, filter, text);
+    }
+
+    // The rows of tagged files that fit a filter (a text in the path, or a pattern for the name) and have a text in a
+    // line (the line found instead of the rest of the row, so "open 3" opens the file there), numbered as in the whole
+    // list, as recent -t and hist filter show them. Only text files are read, and only those the filter takes
+    private void SearchTagged(IReadOnlyList<string> paths, List<(Item Item, string Text)> rows, IReadOnlyList<string> names,
+        string? filter, string? text)
+    {
+        var fits = paths.Select(path => filter == null || Fits(filter, path, null)).ToList();
+        if (text == null)
+        {
+            Filtered(rows, i => fits[i], Lang.F("No files with {0} in them", filter!));
+            return;
+        }
+
+        var pattern = FileSearch.WildcardText(text);
+        var found = paths.Select((path, i) => fits[i] ? FileSearch.FirstLineWith(path, pattern) : null).ToList();
+        var width = found.Select((line, i) => line == null ? 0 : TextMetrics.WidthOf(names[i]) + 1 +
+                                                                 (line.Value.Line + 1).ToString().Length).DefaultIfEmpty(0).Max();
+        var shown = rows.Select((row, i) => found[i] is { } line
+            ? (new Item(paths[i], false, (line.Line + 1, 1), text),
+                Padded(names[i] + ":" + (line.Line + 1), width) + "  " + line.Text)
+            : row).ToList();
+        Filtered(shown, i => found[i] != null, Lang.F("No file has {0} in a line", text));
     }
 
     // "tag add notes.md draft", "tag add 2,4,7 draft", "tag add 2-5 draft", "tag add @ draft": the files get the tag,
@@ -237,6 +318,32 @@ internal sealed partial class ShellSession
     {
         var words = Words(argument);
         FileTags.Load();
+        // "tags filter chapter", "tags -t storm": the files with any tag, with a text in the name, or in a line
+        if (words.Count > 0 && (words[0].Equals("filter", StringComparison.OrdinalIgnoreCase) || words.Contains("-t")))
+        {
+            if (TagSearch(argument) is not { } search) return;
+            if (search.Tag != null)
+            {
+                Error(Lang.T("tags lists the tags, tags -f the files with tags, and tags clear takes them all off"));
+                return;
+            }
+
+            var tagged = FileTags.Tagged();
+            if (tagged.Count == 0)
+            {
+                Line(Lang.T("No tags yet: tag add notes.md draft"));
+                return;
+            }
+
+            var paths = tagged.Select(entry => entry.Path).ToList();
+            var names = Names(paths.Select(path => (path, false)).ToList(), false);
+            var width = names.Max(TextMetrics.WidthOf);
+            var rows = tagged.Select((entry, i) => (new Item(entry.Path, false),
+                Padded(names[i], width) + "  " + string.Join(", ", entry.Tags))).ToList();
+            SearchTagged(paths, rows, names, search.Filter, search.Text);
+            return;
+        }
+
         if (words.Count == 1 && words[0].Equals("clear", StringComparison.OrdinalIgnoreCase))
         {
             ClearAllTags();

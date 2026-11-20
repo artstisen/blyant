@@ -53,6 +53,9 @@ internal sealed class ShellCompletion
     // What "clip" copies
     private static readonly string[] ClipKinds = { "path", "name", "text", "lines" };
 
+    // What can follow a tag: a search in the names of its files, or in their lines
+    private static readonly string[] TagSearchWords = { "filter", "-t" };
+
     // Where "peek" puts its window
     private static readonly string[] PeekPlaces = { "top", "middle", "bottom" };
 
@@ -306,9 +309,20 @@ internal sealed class ShellCompletion
                 // rename and clear the tags
                 FileTags.Load();
                 var tags = FileTags.All().Select(pair => pair.Tag);
-                if (position == 0) return (Kind.Words, new[] { "add", "remove", "rename", "clear", "-l" }.Concat(tags));
-                // ("tag -l " and Tab: the tags)
-                if (after[0] == "-l") return (position == 1 ? Kind.Words : Kind.None, tags);
+                if (position == 0)
+                {
+                    return (Kind.Words, new[] { "add", "remove", "rename", "clear", "-l", "filter", "-t" }.Concat(tags));
+                }
+
+                // ("tag -l " and Tab: the tags; after a tag, "filter" and "-t")
+                var first = after[0] == "-l" ? 1 : 0;
+                if (position == first) return (Kind.Words, tags);
+                if (position == first + 1 && !TagSearchWords.Contains(after[first]) &&
+                    after[first] is not ("add" or "remove" or "rename" or "clear"))
+                {
+                    return (Kind.Words, TagSearchWords);
+                }
+
                 var action = after[0];
                 if (action is "add" or "remove") return position == 1 ? (Kind.Path, none) : position == 2 ? (Kind.Words, tags) : (Kind.None, none);
                 return action is "rename" or "clear" && position == 1 ? (Kind.Words, tags) : (Kind.None, none);
@@ -319,7 +333,7 @@ internal sealed class ShellCompletion
                     ? (Kind.PathOrOptions, new[] { "-n", "-i" }.Except(_words))
                     : (Kind.None, none);
             case "tags":
-                return (position == 0 ? Kind.Words : Kind.None, new[] { "-f", "clear" });
+                return (position == 0 ? Kind.Words : Kind.None, new[] { "-f", "clear", "filter", "-t" });
             case "bookmarks":
             case "book":
                 return (position == 0 ? Kind.Words : Kind.None, new[] { "-l" });
