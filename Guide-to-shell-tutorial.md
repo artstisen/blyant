@@ -153,7 +153,7 @@ blyant ~/novel> open 3 +12
 
 `+12` opens the file at line 12. When you close the editor (`:wq`, `:q`), you are back at the prompt, in the same directory. If the file does not exist, the shell asks whether to make it.
 
-`resume` opens the file you worked on last (`$file`) again, where you left off. The shell keeps `$file` when you leave it, so the next day `blyant --shell` and `resume` take you back into your text:
+`resume` (or `res`) opens the file you worked on last (`$file`) again, where you left off. The shell keeps `$file` when you leave it, so the next day `blyant --shell` and `resume` take you back into your text:
 
 ```
 blyant ~/novel> insert chapter-3.md bottom She opened the letter.
@@ -516,7 +516,7 @@ Added to the hotlist: /home/anna/novel
 ```
 
 - A favorite added goes to the top of the list, so the one added last is row 1
-- `fav` lists the favorites, `hist` the files you have opened (newest first), and `recent` the latest nine of them. `open 1`, `peek 1` and `cd 1` work in each list
+- `fav` lists the favorites, `hist` the files you have opened (newest first), and `recent` (or `rec`) the latest nine of them. `help` lists all the short forms at the end. `open 1`, `peek 1` and `cd 1` work in each list
 - `recent -t storm` shows only the latest files with _storm_ in a line, and the line, as `find -t` does; `recent -t *` shows the first line of each file, a quick look at what is in them. `hist` and `fav` take `-t` too
 - `recent -s` adds the size of each file, `recent -f` shows the folder before the name (`novel/plot.md`), and `recent -n` sorts the list by name. They work together (`recent -n -f -s`), and with `hist` too
 - A favorite is marked with ` *` after its name in the other lists: `ls` now shows `plot.md *` and `chapters/ *`

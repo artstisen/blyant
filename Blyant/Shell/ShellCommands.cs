@@ -878,6 +878,7 @@ internal sealed partial class ShellSession
                 Open(argument);
                 break;
             case "resume":
+            case "res":
                 if (ResumeTarget(argument) is { } target) OpenFile(new Item(target.Path, false), target.Line);
                 break;
             case "replace":
@@ -908,6 +909,7 @@ internal sealed partial class ShellSession
                 ListInto(argument, rest => ListHistory(int.MaxValue, rest));
                 break;
             case "recent":
+            case "rec":
                 ListInto(argument, rest => ListHistory(RecentBox.MaxFiles, rest));
                 break;
             case "hotlist":
@@ -1685,6 +1687,8 @@ internal sealed partial class ShellSession
                 "book" => "bookmarks",
                 "proj" => "projects",
                 "h" => "help",
+                "rec" => "recent",
+                "res" => "resume",
                 "q" or "quit" => "exit",
                 "del" => "delete",
                 "cls" => "clear",
@@ -1718,6 +1722,33 @@ internal sealed partial class ShellSession
         CommandRows(rows, "  ");
         Line();
         Line(Lang.T("A number is a row of the last list shown: open 3, cd 2"));
+        ShortForms();
+    }
+
+    // The short forms of the commands, and the commands they stand for (English: the same in all languages, as the
+    // commands are): after the commands of help, in rows as wide as the window (79 columns when it is not known)
+    private static readonly string[] ShortFormsShown =
+    {
+        "fav, favs (favorites)", "hist (history)", "rec (recent)", "res (resume)", "hot (hotlist)", "book (bookmarks)",
+        "proj (projects)", "del (delete)", "cls (clear)", "h (help)", "q, quit (exit)"
+    };
+
+    private void ShortForms()
+    {
+        var width = Terminal && WindowSize?.Invoke() is { Width: > 20 } size ? size.Width - 1 : 79;
+        var row = Lang.T("Short forms:");
+        foreach (var form in ShortFormsShown)
+        {
+            if (TextMetrics.WidthOf(row) + 2 + form.Length > width)
+            {
+                Line(row);
+                row = " ";
+            }
+
+            row += "  " + form;
+        }
+
+        Line(row);
     }
 
     #endregion

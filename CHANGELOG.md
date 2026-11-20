@@ -1,6 +1,7 @@
 # Changes
 
 ## v1.6.0
+- **Short forms in the shell: `rec` and `res`, and a list in `help`**: `rec` is `recent`, and `res` is `resume`. `help` ends with all the short forms and the commands they stand for (`fav`, `favs`, `hist`, `rec`, `res`, `hot`, `book`, `proj`, `del`, `cls`, `h`, `q`, `quit`), as some were only in the texts of their commands, and some nowhere. `help rec` tells what `recent` does. As the other short forms, they are not offered by `Tab`. See [Commands](Guide-to-shell.md#commands).
 
 ## v1.5.9 (2026-11-20)
 - **The formatters of Blyant Validator 0.6.2**: `:format` in the editor and `format` in the shell use the formatters of Blyant Validator 0.6.2, copied again. Files are formatted as before. The README and the installation guide tell what the validator does now: it checks links to files and to places in a page, and gives hints for accessible HTML. See [Blyant Validator](Guide-to-installation.md#blyant-validator).

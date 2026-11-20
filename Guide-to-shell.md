@@ -93,6 +93,8 @@ Commands read from a file or a pipe, and `--run`, are never paged, so `blyant --
 To get all output at once (with a screen reader, say), turn the pages off: `set shellpaging false` in the shell, or `shellpaging=false` in the settings file (`settings.ini` in the data directory). The setting is not on the pages of Configuration.
 
 ## Commands
+Some commands have a short form, which does the same: `fav` and `favs` (`favorites`), `hist` (`history`), `rec` (`recent`), `res` (`resume`), `hot` (`hotlist`), `book` (`bookmarks`), `proj` (`projects`), `del` (`delete`), `cls` (`clear`), `h` (`help`), and `q` and `quit` (`exit`). `help` lists them at the end, and `help rec` tells what `recent` does. `Tab` offers the full names only.
+
 | Command | What it does |
 |---|---|
 | `pwd` | Show the directory you are in |
@@ -102,7 +104,7 @@ To get all output at once (with a screen reader, say), turn the pages off: `set 
 | `home` | Go to your home directory (as `cd` alone) |
 | `data` | Go to Blyant's [data directory](Guide-to-installation.md#good-to-know), with the settings, lists and log. `cd data` still goes to a directory named _data_ |
 | `open file\|n [+line]` (`edit`) | Edit a file in the full-screen editor, at a line if one is given (`open plot.md +12`). On a directory, go to it. `edit` does the same |
-| `resume [+line]` | Edit `$file` again, where you worked last: at the line the last command worked on in it (after `insert`, `lines`, `change` or a search with `peek`), else where the cursor of the editor was. `$file` is kept when you leave the shell, so `resume` goes on after a restart. `resume +120` opens it at line 120 |
+| `resume [+line]` (`res`) | Edit `$file` again, where you worked last: at the line the last command worked on in it (after `insert`, `lines`, `change` or a search with `peek`), else where the cursor of the editor was. `$file` is kept when you leave the shell, so `resume` goes on after a restart. `resume +120` opens it at line 120 |
 | `peek file\|n [lines]` | Show the lines of a text file, numbered: the first 15, `peek plot.md 40` the first 40, `peek plot.md 100-120` lines 100 to 120, `peek plot.md +100` 15 lines from line 100, and `peek plot.md +100 30` 30 lines from line 100. Read-only. After a peek from a line, `open 1` opens the file at that line. See [Peeking into a file](#peeking-into-a-file) |
 | `peek [file\|n] top\|middle\|bottom\|50%` | Put the window of the last peek (same number of lines) at the top, in the middle, at the end, or at a point in the file (`peek 50%`: from halfway). Without a file: the file peeked last. See [Peeking into a file](#peeking-into-a-file) |
 | `peek +120` | The file peeked last, from line 120, with the same window size (a file named _+120_ is peeked instead, if there is one) |
@@ -173,7 +175,7 @@ To get all output at once (with a screen reader, say), turn the pages off: `set 
 | `favorites undo` | Put back what `fav remove` removed last |
 | `history [-l] [-s] [-f] [-n]` (`hist`) | List the files opened in the editor or changed by a command of the shell, by name, newest first, with the time each was opened or changed. The options are those of `recent` |
 | `history [-l] filter text` | Show the files opened with a text in their path (`hist filter chapter`), or whose name fits a pattern (`hist filter *.typ`), numbered as in the whole history, so `open 7` is row 7 of `hist`. The options of `recent` go before `filter` (`hist -n -f filter chapter`) |
-| `recent [-l] [-s] [-f] [-n]` | List the latest files (the first nine of the history), by name. `-l` shows the full paths, `-s` the size of each file (`-` for a file that is gone), `-f` the folder and the name (`Book/chapter-3.md`; two rows alike get the folder above it: `Book/a.md (novel)`), and `-n` sorts the rows by name, A to Z, numbered as shown, so `open 3` opens row 3. The options go in any order: `recent -n -f -s` |
+| `recent [-l] [-s] [-f] [-n]` (`rec`) | List the latest files (the first nine of the history), by name. `-l` shows the full paths, `-s` the size of each file (`-` for a file that is gone), `-f` the folder and the name (`Book/chapter-3.md`; two rows alike get the folder above it: `Book/a.md (novel)`), and `-n` sorts the rows by name, A to Z, numbered as shown, so `open 3` opens row 3. The options go in any order: `recent -n -f -s` |
 | `recent\|hist\|fav ... -t text` | Only the files of the list with the text in a line, and the first line with it, instead of the date: `recent -t storm` shows `02-storm.md:3  The storm came at night.` The text is taken as `find -t` takes it (letter case alike, `*` and `?`), and goes last, after the other options and a filter (`hist -n -t storm`, `fav filter draft -t storm`). The rows are numbered as in the whole list, and `open 4` opens row 4 at the line found. Directories and files that are not text are left out. `recent -t *` shows the first line of each file, and `recent -t "# *"` the first heading |
 | `tag name`, `tag` | List the files with a tag, or with `$tag` (see [Tags](#tags)) |
 | `tag add file\|n name` | Give files a tag (`tag add 2,4 draft`) |

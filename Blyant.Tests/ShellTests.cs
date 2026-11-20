@@ -7438,4 +7438,34 @@ public class ShellTests : IDisposable
         Assert.Contains("$file and $tag", output);
         Assert.Contains(Lang.T("Nothing forgotten"), output);
     }
+
+    // ---- 1.6.0: short forms in help, rec and res
+
+    [Fact]
+    public void Help_EndsWithTheShortForms_AndRecAndResAreRecentAndResume()
+    {
+        var output = Run("help\n").Output;
+        Assert.Contains(Lang.T("Short forms:"), output);
+        foreach (var form in new[] { "fav, favs (favorites)", "hist (history)", "rec (recent)", "res (resume)",
+                     "hot (hotlist)", "book (bookmarks)", "proj (projects)", "del (delete)", "cls (clear)", "h (help)",
+                     "q, quit (exit)" })
+        {
+            Assert.Contains(form, output);
+        }
+
+        // (no line wider than the screen)
+        Assert.All(output.TrimEnd('\n').Split('\n'), line => Assert.True(TextMetrics.WidthOf(line) <= 79, line));
+        // rec lists what recent lists, res does what resume does
+        FileHistory.Parse(string.Empty);
+        FileExplorer.AddToHistory(In("work", "plot.md"));
+        Assert.Equal(Run("recent\n").Output, Run("rec\n").Output);
+        var (_, resume, _, _) = Run("resume\n");
+        var (_, res, _, _) = Run("res\n");
+        Assert.Equal(resume, res);
+        Assert.Contains("recent [-l] [-s] [-f] [-n]", Run("help rec\n").Output);
+        Assert.Contains("resume [+line]", Run("help res\n").Output);
+        // Accepted, but not offered by Tab
+        Assert.DoesNotContain("rec", Commands.Names(CommandContext.Shell));
+        Assert.Equal("rec ...", EventLog.CommandName("rec -s"));
+    }
 }
