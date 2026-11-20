@@ -2,7 +2,9 @@
 
 /// <summary>
 /// "replace": a text replaced everywhere in a file ("replace chapter-3.md Maren Marit"), with the letter case as typed,
-/// or any letter case ("-i"); "-n" only shows what would change. Within lines: a text with a line break cannot be
+/// or any letter case ("-i"); "-n" shows what would change, and typed at a terminal asks then whether to replace (No
+/// first). From a file, a pipe or --run "-n" only shows, and never writes (not even with --yes). Within lines: a
+/// text with a line break cannot be
 /// typed. The lines changed are shown (at most as many as peek shows), and how many were replaced in how many lines.
 /// As the other commands that change text: only a file in UTF-8 and not one Blyant uses, the line endings and byte
 /// order mark kept, one step for undo, and the paths logged, never the texts
@@ -83,35 +85,59 @@ internal sealed partial class ShellSession
             return;
         }
 
-        if (!show)
-        {
-            var normalized = TextBuffer.Normalize(file.Text);
-            var result = SaveEdit(file, string.Join("\n", lines) + (normalized.EndsWith('\n') ? "\n" : string.Empty));
-            // (the path and the lines, never the texts)
-            FileExplorer.LogFileOperation("Replace", item.Path + ":" + Numbers(changed), result);
-            if (result != DialogText.Success)
-            {
-                Error(result);
-                return;
-            }
-        }
+        var first = changed[0];
+        if (!show && !SaveReplaced(item, file, lines, changed)) return;
 
         // (the file at the first line changed: "open 1", "peek @")
         LastList = new List<Item> { new(item.Path, false, (changed[0], 1)) };
         ShowReplaced(item.Path, lines, changed);
-        var first = changed[0];
-        if (show)
+        if (show && !Terminal)
         {
+            // (from a file, a pipe or --run: only shown, never asked)
             Line(count == 1 ? Lang.F("{0}: 1 would be replaced, in line {1} (-n: nothing written)", item.Path, first)
                 : changed.Count == 1 ? Lang.F("{0}: {1} would be replaced, in line {2} (-n: nothing written)", item.Path, count, first)
                 : Lang.F("{0}: {1} would be replaced, in {2} lines (-n: nothing written)", item.Path, count, changed.Count));
+            return;
         }
-        else
+
+        if (show)
         {
-            Line(count == 1 ? Lang.F("{0}: 1 replaced, in line {1}", item.Path, first)
-                : changed.Count == 1 ? Lang.F("{0}: {1} replaced, in line {2}", item.Path, count, first)
-                : Lang.F("{0}: {1} replaced, in {2} lines", item.Path, count, changed.Count));
+            // Typed at a terminal: asked, No first. What is written is what was shown: not when the file was changed
+            // meanwhile (in the editor, by another program)
+            Line(count == 1 ? Lang.F("{0}: 1 would be replaced, in line {1}", item.Path, first)
+                : changed.Count == 1 ? Lang.F("{0}: {1} would be replaced, in line {2}", item.Path, count, first)
+                : Lang.F("{0}: {1} would be replaced, in {2} lines", item.Path, count, changed.Count));
+            if (!ChoiceBox.Confirm(Lang.T("Replace"), Lang.F("Replace them in {0}?", Path.GetFileName(item.Path)),
+                    string.Empty, true))
+            {
+                Line(Lang.T("Nothing was changed"));
+                return;
+            }
+
+            if (Changed(item.Path, file))
+            {
+                Error(Lang.F("{0} was changed meanwhile: nothing written (run replace again)", item.Path));
+                return;
+            }
+
+            if (!SaveReplaced(item, file, lines, changed)) return;
         }
+
+        Line(count == 1 ? Lang.F("{0}: 1 replaced, in line {1}", item.Path, first)
+            : changed.Count == 1 ? Lang.F("{0}: {1} replaced, in line {2}", item.Path, count, first)
+            : Lang.F("{0}: {1} replaced, in {2} lines", item.Path, count, changed.Count));
+    }
+
+    // The lines with the text replaced written to the file (one step for undo); false, and told, when it could not be
+    private bool SaveReplaced(Item item, TextFile file, List<string> lines, List<int> changed)
+    {
+        var normalized = TextBuffer.Normalize(file.Text);
+        var result = SaveEdit(file, string.Join("\n", lines) + (normalized.EndsWith('\n') ? "\n" : string.Empty));
+        // (the path and the lines, never the texts)
+        FileExplorer.LogFileOperation("Replace", item.Path + ":" + Numbers(changed), result);
+        if (result == DialogText.Success) return true;
+        Error(result);
+        return false;
     }
 
     // The lines changed, numbered (as they are after the replace), at most as many as peek shows (the setting

@@ -7293,4 +7293,63 @@ public class ShellTests : IDisposable
         Assert.Equal("replace -i plot.md", Tab(Completion(), "replace -i pl"));
         Assert.Contains("replace [-n] [-i] file|n old new", Run("help replace\n").Output);
     }
+
+    // ---- replace -n asks at a terminal
+
+    // Lines read one at a time, and something done before a line is read (the file changed while a question waits)
+    private sealed class ReaderWithStep(string text, int before, Action step) : StringReader(text)
+    {
+        private int _read;
+
+        public override string? ReadLine()
+        {
+            if (++_read == before) step();
+            return base.ReadLine();
+        }
+    }
+
+    [Fact]
+    public void ReplaceN_AtATerminal_AsksAndReplacesOnYes_NoFirst()
+    {
+        File.WriteAllText(In("work", "r.md"), "draft one\ndraft two\n");
+        // Enter alone and n: nothing changed
+        var (output, _, _, _) = Run("replace -n r.md draft final\n\nreplace -n r.md draft final\nn\n", terminal: true);
+        Assert.Equal("draft one\ndraft two\n", File.ReadAllText(In("work", "r.md")));
+        Assert.Contains(Lang.F("{0}: {1} would be replaced, in {2} lines", In("work", "r.md"), 2, 2), output);
+        Assert.Contains(Lang.F("Replace them in {0}?", "r.md"), output);
+        Assert.Equal(2, output.Split(Lang.T("Nothing was changed")).Length - 1);
+        Assert.DoesNotContain("(-n:", output);
+        // y: replaced as shown, and undo takes it back
+        (output, _, _, _) = Run("replace -n r.md draft final\ny\n", terminal: true);
+        Assert.Equal("final one\nfinal two\n", File.ReadAllText(In("work", "r.md")));
+        Assert.Contains(Lang.F("{0}: {1} replaced, in {2} lines", In("work", "r.md"), 2, 2), output);
+        (output, _, _, _) = Run("replace -n r.md final draft\ny\nundo\n", terminal: true);
+        Assert.Equal("final one\nfinal two\n", File.ReadAllText(In("work", "r.md")));
+        Assert.Contains(Lang.F("Undone: {0}", "replace -n r.md final draft"), output);
+    }
+
+    [Fact]
+    public void ReplaceN_FromAFile_NeverAsksNorWrites_NotEvenWithYes()
+    {
+        File.WriteAllText(In("work", "r.md"), "draft\n");
+        var (output, _, _, _) = Run("replace -n r.md draft final\ny\n", yes: true);
+        Assert.Equal("draft\n", File.ReadAllText(In("work", "r.md")));
+        Assert.Contains(Lang.F("{0}: 1 would be replaced, in line {1} (-n: nothing written)", In("work", "r.md"), 1), output);
+        Assert.DoesNotContain(Lang.F("Replace them in {0}?", "r.md"), output);
+    }
+
+    [Fact]
+    public void ReplaceN_WritesNothing_WhenTheFileWasChangedWhileItAsked()
+    {
+        File.WriteAllText(In("work", "r.md"), "draft\n");
+        var output = new StringWriter();
+        var errors = new StringWriter();
+        // (the answer is the second line read: the file is changed just before it)
+        var input = new ReaderWithStep("replace -n r.md draft final\ny\n", 2,
+            () => File.WriteAllText(In("work", "r.md"), "draft, changed\n"));
+        Shell.Run(new ShellSession(input, output, errors, In("work"), true, false));
+        Assert.Equal("draft, changed\n", File.ReadAllText(In("work", "r.md")));
+        Assert.Contains(Lang.F("{0} was changed meanwhile: nothing written (run replace again)", In("work", "r.md")),
+            errors.ToString().Replace("\r\n", "\n"));
+    }
 }

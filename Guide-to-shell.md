@@ -536,14 +536,14 @@ Undone: replace chapter-3.md Maren Marit
 |---|---|
 | `replace file\|n old new` | Replace the text everywhere in the file, with the letter case as typed |
 | `replace -i file\|n old new` | The same in any letter case: `replace -i chapter-3.md maren Marit` replaces `Maren`, `MAREN` and `maren`. The new text is put in as typed |
-| `replace -n file\|n old new` | Show what would change, and write nothing: the lines as they would be, and how many would be replaced (`-n: nothing written`) |
+| `replace -n file\|n old new` | Show what would change (the lines as they would be, and how many would be replaced), then ask whether to replace them. No is first: `Enter` alone changes nothing. From a file of commands, a pipe or `--run` it only shows, and writes nothing, not even with `--yes` (`-n: nothing written`) |
 
 - The text is exact text, not a pattern, and a text with blanks is written in quotes: `replace notes.md "the storm" "the gale"`. `""` as the new text takes the old text out
 - The file is given as a name, a row of the last list, `$file` or `@` (the file worked on). It is then the last list, at the first line changed: `open 1` opens it there, and `peek @` shows it
 - The text is replaced in each line, from the left; what replaced it is not searched again. A text with a line break in it cannot be typed, so a text is never replaced across two lines
 - At most as many lines are shown as `peek` shows (15; the setting `shellpeeklines`), then `(and 12 more lines)`. Between the markers, `->` tells that line 1 of the file is among them, and `-v` that lines below the last one shown were not changed
 - When the text is not in the file, the shell says so (`No Maren in chapter-3.md`), and nothing is written. As with `change` and `lines`, only a file in UTF-8 is changed and not the files Blyant uses, the line endings and byte order mark are kept, and the log gets the path, never the texts
-- One `replace` is one step of `undo`, however many it replaced. Try a large replace with `-n` first
+- One `replace` is one step of `undo`, however many it replaced. Try a large replace with `-n` first: you see the lines, and `y` replaces them as shown. When the file was changed while the question waited (saved in the editor, or by another program), nothing is written, and the shell asks you to run `replace` again
 - `lines notes.md 5-9 replace old new` replaces in some lines only (see [Text in lines](#text-in-lines))
 
 ## Words in a line

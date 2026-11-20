@@ -63,7 +63,7 @@ internal sealed partial class ShellSession
         ("lines file|n lines sort [-a|-d]", Lang.T("Sort lines: -a A to Z, capitals first (default), -d Z to A")),
         ("lines file|n lines upper|lower|title", Lang.T("Make lines UPPERCASE, lowercase or Title Case")),
         ("replace [-n] [-i] file|n old new", Lang.T("Replace a text everywhere in a file (undo takes it back)")),
-        ("replace -n, replace -i", Lang.T("Only show what would change; any letter case")),
+        ("replace -n, replace -i", Lang.T("Show what would change, then ask; any letter case")),
         ("words [-p] file|n line", Lang.T("Show the words of a line, numbered, for word")),
         ("words -p, word -p", Lang.T("A word is all between blanks: give -p to both")),
         ("word file|n line n|n-m action [text]", Lang.T("Change words by number: replace, before, after, delete")),

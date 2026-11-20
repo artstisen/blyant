@@ -266,18 +266,20 @@ blyant ~/novel> word @ 6 replace aunt
 
 `undo` takes back the last change made by `insert`, `change`, `lines` (also a sort), `word` or `shift` while Blyant is running (`redo` makes it again, and `changes` lists the changes). Still, `peek` first to be sure of the line numbers. A file keeps its line endings and byte order mark, and these commands leave the files Blyant uses alone.
 
-To replace a name everywhere in a file, use `replace`. `-n` first shows what would change, without writing anything, and `undo` takes a replace back:
+To replace a name everywhere in a file, use `replace`. With `-n` it first shows what would change, and asks: `y` replaces, and `Enter` alone (No) leaves the file as it is. `undo` takes a replace back:
 
 ```
 blyant ~/novel> replace -n plot.md Anna Maren
 -^ plot.md
   3  Maren finds a letter in the attic.
 -v 1 line of 5
-/home/anna/novel/plot.md: 1 would be replaced, in line 3 (-n: nothing written)
-blyant ~/novel> replace plot.md Anna Maren
-...
+/home/anna/novel/plot.md: 1 would be replaced, in line 3
+Replace: Replace them in plot.md?
+  Y Yes  N No*: y
 /home/anna/novel/plot.md: 1 replaced, in line 3
 ```
+
+`replace plot.md Anna Maren` (without `-n`) replaces at once, without asking.
 
 `replace -i` replaces in any letter case (`anna`, `ANNA`).
 
