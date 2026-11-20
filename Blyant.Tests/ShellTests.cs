@@ -6963,9 +6963,10 @@ public class ShellTests : IDisposable
             Shell.Logo = true;
             Logo.Current = LogoArt.BuiltIn;
             var output = StartedAt((80, 24));
-            // "- Shell mode -", the rows of the logo without the blanks they start with, then the first line
+            // "- Shell mode -", the rows of the logo without the blanks they start with (a blank line above and below
+            // them), then the first line
             var rows = LogoArt.BuiltIn.AllRows.Select(row => row.TrimEnd()[4..]).ToList();
-            Assert.StartsWith(Lang.T("- Shell mode -") + "\n" + string.Join("\n", rows) + "\n" +
+            Assert.StartsWith(Lang.T("- Shell mode -") + "\n\n" + string.Join("\n", rows) + "\n\n" +
                               Lang.F("{0} {1}: help lists the commands, exit leaves", DialogText.ApplicationName,
                                   DialogText.ApplicationVersion) + "\n", output);
             Assert.StartsWith("\"\"\"\"\"MM_ MMM", rows[0]);
@@ -6998,7 +6999,7 @@ public class ShellTests : IDisposable
             // A logo of its own: the blank rows around it and the blanks the rows start with left out
             Shell.Logo = true;
             Logo.Current = new LogoArt("Mine", new[] { "", "  AB", "   C", "" });
-            Assert.StartsWith(Lang.T("- Shell mode -") + "\nAB\n C\n", StartedAt((80, 24)));
+            Assert.StartsWith(Lang.T("- Shell mode -") + "\n\nAB\n C\n\n", StartedAt((80, 24)));
         }
         finally
         {
