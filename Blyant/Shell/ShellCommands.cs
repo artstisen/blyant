@@ -30,6 +30,7 @@ internal sealed partial class ShellSession
             ? Lang.F("Show 1 line further down (++: {0}), or up (-, --)", Shell.PeekBigStep)
             : Lang.F("Show {0} lines further down (++: {1}), or up (-, --)", Shell.PeekStep, Shell.PeekBigStep)),
         ("peek [f] top|middle|bottom|n%", Lang.T("Show the top, middle, end, or from n% down")),
+        ("peek [file|n] all", Lang.T("Show the whole file; the window stays as it was")),
         ("peek +line", Lang.T("Peek the last file again from a line (peek +120)")),
         ("+ n, - n, ++ n, -- n", Lang.T("Move the window n steps (+ 20)")),
         ("j, jj, k, kk, gg, G", Lang.T("As +, ++, -, --, peek top and peek bottom")),

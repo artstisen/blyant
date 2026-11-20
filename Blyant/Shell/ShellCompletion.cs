@@ -57,7 +57,7 @@ internal sealed class ShellCompletion
     private static readonly string[] TagSearchWords = { "filter", "-t" };
 
     // Where "peek" puts its window
-    private static readonly string[] PeekPlaces = { "top", "middle", "bottom" };
+    private static readonly string[] PeekPlaces = { "top", "middle", "bottom", "all" };
 
     /// <summary>
     /// The line after Tab (forward) or Shift+Tab: the word at its end completed, or the line as it was

@@ -3705,6 +3705,47 @@ public class ShellTests : IDisposable
     }
 
     [Fact]
+    public void PeekAll_ShowsTheWholeFile_AndKeepsTheWindowAsItWas()
+    {
+        File.WriteAllText(In("work", "long.md"), string.Concat(Enumerable.Range(1, 100).Select(i => "line " + i + "\n")));
+        // A window of 3 lines at 40: all shows the whole file, then "." and "+" go on from the window at 40
+        var (output, errors, _, session) = Run("peek long.md 40-42\npeek all\n.\n+\npeek long.md all\njj\n");
+        Assert.Equal(string.Empty, errors);
+        var windows = output.Split('\n').Where(l => l.StartsWith('(')).ToList();
+        Assert.Equal(new[] { (40, 42), (1, 100), (40, 42), (41, 43), (1, 100), (46, 48) }
+            .Select(w => Lang.F("(lines {0}-{1} of {2})", w.Item1, w.Item2, 100)), windows);
+        Assert.Contains("    1  line 1\n", output);
+        Assert.Contains("  100  line 100\n", output);
+        // $peek: the whole file; the file at its top ("open 1")
+        (output, _, _, session) = Run("peek long.md 40-42\npeek all\necho $peek\n");
+        Assert.Contains("line 1\nline 2\n", output);
+        Assert.Null(session.LastList.Single().At);
+        // A file not peeked before: the window at its top, of shellpeeklines lines (+ goes on from line 1)
+        File.WriteAllText(In("work", "b.md"), string.Concat(Enumerable.Range(1, 50).Select(i => "b " + i + "\n")));
+        (output, _, _, _) = Run("peek long.md 10-14\npeek b.md all\n+\n");
+        Assert.Contains(Lang.F("(lines {0}-{1} of {2})", 2, 21, 50), output);
+        // With the markers: the top and the end of the file
+        Shell.Markers = true;
+        try
+        {
+            (output, _, _, _) = Run("peek b.md all\n");
+            Assert.Contains(ShellSession.TopMarker + "b.md\n", output);
+            Assert.Contains(ShellSession.EndMarker + Lang.F("lines {0}-{1} of {2}", 1, 50, 50), output);
+        }
+        finally
+        {
+            Shell.Markers = false;
+        }
+
+        // Alone before any peek: told; a file named "all" alone is that file
+        Assert.Contains(Lang.T("No file peeked yet: peek a file first (peek plot.md)"), Run("peek all\n").Errors);
+        File.WriteAllText(In("work", "all"), "the file\n");
+        Assert.Contains("  1  the file\n", Run("peek b.md\npeek all\n").Output);
+        Assert.Equal("peek plot.md all", Tab(Completion(), "peek plot.md al"));
+        Assert.Contains("peek [file|n] all", Run("help peek\n").Output);
+    }
+
+    [Fact]
     public void Peek_StepsWithANumber_MoveAsManySteps()
     {
         File.WriteAllText(In("work", "long.md"), string.Concat(Enumerable.Range(1, 100).Select(i => "line " + i + "\n")));

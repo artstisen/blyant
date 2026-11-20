@@ -277,7 +277,8 @@ internal sealed partial class ShellSession
     // many as given), between the markers "->" and "<-" (setting shellmarkers). The file is
     // then the last list, at the first line shown: "open 1" opens it there. Only read, never written. A place after
     // the file (or alone: the file peeked last) puts a window as large as the last one there: "+", "++", "-", "--"
-    // (steps from it; "+ 20": steps, given as "count"), "top", "middle", "bottom", "50%"; "peek +120" alone is the
+    // (steps from it; "+ 20": steps, given as "count"), "top", "middle", "bottom", "50%"; "all" shows the whole file
+    // and keeps the window as it was; "peek +120" alone is the
     // file peeked last from line 120. A word alone that is the name of a file here is that file
     private void Peek(string argument, int count = 1)
     {
@@ -408,8 +409,15 @@ internal sealed partial class ShellSession
         var lines = LinesOfText(text);
         // (a line no longer there is not marked)
         if (mark > lines.Count) mark = 0;
-        // The top, the middle, the bottom, or a part of the file ("50%": from halfway)
-        if (place is { Place: not PeekPlace.Step } at)
+        // The whole file ("all": the window is kept, below), the top, the middle, the bottom, or a part of the file
+        // ("50%": from halfway)
+        var all = place is { Place: PeekPlace.All };
+        if (all)
+        {
+            first = 1;
+            last = lines.Count;
+        }
+        else if (place is { Place: not PeekPlace.Step } at)
         {
             long start = at.Place switch
             {
@@ -434,7 +442,11 @@ internal sealed partial class ShellSession
 
         // (kept for "peek +" and ".": the file, the window asked for, and the file as it was, for the setting
         // shellautopeek; also when it shows no lines, so the next one goes on from it)
-        _lastPeek = (path, first, asked, StampOf(item.Path), text.GetHashCode());
+        // "all" keeps the window of the file as it was (where it was, as large), so "." and "+" go on from there; a
+        // file not peeked before has a window at its top, of as many lines as the setting shellpeeklines
+        _lastPeek = !all ? (path, first, asked, StampOf(item.Path), text.GetHashCode())
+            : same ? _lastPeek!.Value with { Stamp = StampOf(item.Path), Hash = text.GetHashCode() }
+            : (path, 1, size, StampOf(item.Path), text.GetHashCode());
         // (from a line: "open 1" opens the file there)
         if (!auto)
         {
@@ -527,7 +539,8 @@ internal sealed partial class ShellSession
         Top,
         Middle,
         Bottom,
-        Percent
+        Percent,
+        All
     }
 
     // The place a word after peek is ("+": a step of 1 line, as set; "50%": 50), or null
@@ -545,6 +558,8 @@ internal sealed partial class ShellSession
                 return (PeekPlace.Middle, 0);
             case "bottom":
                 return (PeekPlace.Bottom, 0);
+            case "all":
+                return (PeekPlace.All, 0);
         }
 
         return word.Length is > 1 and <= 4 && word[^1] == '%' &&
