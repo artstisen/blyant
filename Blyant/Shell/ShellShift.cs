@@ -86,13 +86,10 @@ internal sealed partial class ShellSession
 
         if (heading != null) (text, first) = SpacedSection(file.Text, text, moved, first);
 
-        var result = SaveEdit(file, text);
         // (the path and the lines, never the text)
-        FileExplorer.LogFileOperation(heading != null ? "Shift section" : "Shift lines",
-            item.Path + ":" + Numbers(moved) + " to " + first, result);
-        if (result != DialogText.Success)
+        if (!SavedEdit(file, text, heading != null ? "Shift section" : "Shift lines",
+                item.Path + ":" + Numbers(moved) + " to " + first))
         {
-            Error(result);
             return;
         }
 
@@ -107,7 +104,7 @@ internal sealed partial class ShellSession
         else
         {
             var width = (first + moved.Count - 1).ToString().Length;
-            for (var i = first; i < first + moved.Count; i++) Line(i.ToString().PadLeft(width + 2) + "  " + now[i - 1]);
+            for (var i = first; i < first + moved.Count; i++) Row(i, width, now[i - 1]);
             Line(moved.Count == 1
                 ? Lang.F("{0}: line moved to line {1}", item.Path, first)
                 : Lang.F("{0}: {1} lines moved to line {2}", item.Path, moved.Count, first));

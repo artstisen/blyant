@@ -132,23 +132,8 @@ internal sealed partial class ShellSession
             return true;
         }
 
-        if (item.IsDirectory)
-        {
-            Error(Lang.F("Not a file: {0}", item.Path));
-            return false;
-        }
-
-        string all;
-        try
-        {
-            all = TextBuffer.Normalize(TextFile.Load(item.Path).Text);
-        }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidDataException)
-        {
-            Error(Lang.F("{0} cannot be read: {1}", item.Path, e.Message));
-            return false;
-        }
-
+        if (ReadableFile(item) is not { } file) return false;
+        var all = TextBuffer.Normalize(file.Text);
         if (!lines)
         {
             text = all;

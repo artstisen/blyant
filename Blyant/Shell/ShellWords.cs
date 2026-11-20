@@ -185,15 +185,8 @@ internal sealed partial class ShellSession
         }
 
         at.Lines[at.Line - 1] = changed;
-        var normalized = TextBuffer.Normalize(at.File.Text);
-        var result = SaveEdit(at.File, string.Join("\n", at.Lines) + (normalized.EndsWith('\n') ? "\n" : string.Empty));
         // (the path, what was done and the line, never the text)
-        FileExplorer.LogFileOperation("Edit words (" + action + ")", at.Item.Path + ":" + at.Line, result);
-        if (result != DialogText.Success)
-        {
-            Error(result);
-            return;
-        }
+        if (!SavedEdit(at.File, JoinedAs(at.File, at.Lines), "Edit words (" + action + ")", at.Item.Path + ":" + at.Line)) return;
 
         LastList = new List<Item> { new(at.Item.Path, false, (at.Line, 1)) };
         // (the words are shown numbered again, this way)

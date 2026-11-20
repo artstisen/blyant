@@ -246,7 +246,7 @@ internal static class FileTags
         var changed = false;
         for (var i = 0; i < Entries.Count; i++)
         {
-            if (Moved(Entries[i].Path, oldPath, newPath) is not { } path) continue;
+            if (FileOperations.FollowedPath(Entries[i].Path, oldPath, newPath) is not { } path) continue;
             Entries[i] = (path, Entries[i].Tags);
             changed = true;
         }
@@ -259,7 +259,7 @@ internal static class FileTags
     /// </summary>
     internal static bool Copied(string fromPath, string toPath)
     {
-        var copies = Entries.Select(entry => (Copy: Moved(entry.Path, fromPath, toPath), entry.Tags))
+        var copies = Entries.Select(entry => (Copy: FileOperations.FollowedPath(entry.Path, fromPath, toPath), entry.Tags))
             .Where(copy => copy.Copy != null).ToList();
         foreach (var (copy, tags) in copies)
         {
@@ -277,15 +277,6 @@ internal static class FileTags
         var gone = paths.ToList();
         return Entries.RemoveAll(entry =>
             gone.Any(path => FileOperations.SamePath(entry.Path, path) || FileOperations.IsInside(entry.Path, path))) > 0;
-    }
-
-    // The path of a file after its path, or a directory it is in, was changed (null: neither)
-    private static string? Moved(string path, string oldPath, string newPath)
-    {
-        if (FileOperations.SamePath(path, oldPath)) return Path.GetFullPath(newPath);
-        return FileOperations.IsInside(path, oldPath)
-            ? Path.GetFullPath(Path.Combine(newPath, Path.GetRelativePath(oldPath, path)))
-            : null;
     }
 
     /// <summary>

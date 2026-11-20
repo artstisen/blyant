@@ -71,23 +71,8 @@ internal sealed partial class ShellSession
             // (one path: in quotes, or with blanks from a $name put in)
             var path = argument.Trim();
             if (path.Length >= 2 && path[0] == '"' && path[^1] == '"') path = path[1..^1];
-            if (Existing(path) is not { } item) return;
-            if (item.IsDirectory)
-            {
-                Error(Lang.F("Not a file: {0}", item.Path));
-                return;
-            }
-
-            try
-            {
-                text = TextFile.Load(item.Path).Text;
-            }
-            catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidDataException)
-            {
-                Error(Lang.F("{0} cannot be read: {1}", item.Path, e.Message));
-                return;
-            }
-
+            if (Existing(path) is not { } item || ReadableFile(item) is not { } file) return;
+            text = file.Text;
             what = item.Path;
         }
 

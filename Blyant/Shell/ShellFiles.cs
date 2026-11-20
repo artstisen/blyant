@@ -62,14 +62,18 @@ internal sealed partial class ShellSession
         return true;
     }
 
+    // A result that is not DialogText.Success: told, and true (the command stops there)
+    private bool Failed(string result)
+    {
+        if (result == DialogText.Success) return false;
+        Error(result);
+        return true;
+    }
+
     // What a file operation came to: shown when it was done (the new place as the last list: "open 1"), else told
     private void Done(string result, string message, string? path)
     {
-        if (result != DialogText.Success)
-        {
-            Error(result);
-            return;
-        }
+        if (Failed(result)) return;
 
         Line(message);
         if (path != null) LastList = new List<Item> { new(path, System.IO.Directory.Exists(path)) };
@@ -617,25 +621,8 @@ internal sealed partial class ShellSession
             return;
         }
 
-        if (Existing(fileWord) is not { } item) return;
-        if (item.IsDirectory)
-        {
-            Error(Lang.F("Not a file: {0}", item.Path));
-            return;
-        }
-
-        string content;
-        try
-        {
-            content = TextFile.Load(item.Path).Text;
-        }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidDataException)
-        {
-            Error(Lang.F("{0} cannot be read: {1}", item.Path, e.Message));
-            return;
-        }
-
-        var lines = LinesOfText(content);
+        if (Existing(fileWord) is not { } item || ReadableFile(item) is not { } file) return;
+        var lines = LinesOfText(file.Text);
         var pattern = FileSearch.WildcardText(text);
         var found = new List<int>();
         for (var i = 0; i < lines.Count; i++)
@@ -679,7 +666,7 @@ internal sealed partial class ShellSession
         }
 
         _lastSearch = (path, text, target);
-        PeekAtLine(path, target, true, (found.IndexOf(target) + 1, found.Count), content);
+        PeekAtLine(path, target, true, (found.IndexOf(target) + 1, found.Count), file.Text);
     }
 
     // "/" and "?" alone: the next line with the text searched last, or the one before, in the file peeked last
@@ -770,14 +757,9 @@ internal sealed partial class ShellSession
     // "+" go on in it
     private void PeekFollows(string from, string to)
     {
-        if (_lastPeek is not { } previous) return;
-        if (FileOperations.SamePath(previous.Path, from))
+        if (_lastPeek is { } previous && FileOperations.FollowedPath(previous.Path, from, to) is { } path)
         {
-            _lastPeek = previous with { Path = Path.GetFullPath(to) };
-        }
-        else if (FileOperations.IsInside(previous.Path, from))
-        {
-            _lastPeek = previous with { Path = Path.GetFullPath(Path.Combine(to, Path.GetRelativePath(from, previous.Path))) };
+            _lastPeek = previous with { Path = path };
         }
     }
 

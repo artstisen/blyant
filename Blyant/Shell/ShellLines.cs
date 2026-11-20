@@ -145,21 +145,14 @@ internal sealed partial class ShellSession
             return;
         }
 
-        var normalized = TextBuffer.Normalize(file.Text);
-        var result = SaveEdit(file, string.Join("\n", lines) + (normalized.EndsWith('\n') ? "\n" : string.Empty));
         // (the path, what was done and the lines, never the text)
-        FileExplorer.LogFileOperation("Edit lines (" + kind + ")", item.Path + ":" + Numbers(changed), result);
-        if (result != DialogText.Success)
-        {
-            Error(result);
-            return;
-        }
+        if (!SavedEdit(file, JoinedAs(file, lines), "Edit lines (" + kind + ")", item.Path + ":" + Numbers(changed))) return;
 
         LastList = new List<Item> { new(item.Path, false, (changed[0], 1)) };
         // (sorted: all the lines, in their new order)
         var shown = sorted != null ? picked.ToList() : changed;
         var width = shown[^1].ToString().Length;
-        foreach (var number in shown) Line(number.ToString().PadLeft(width + 2) + "  " + lines[number - 1]);
+        foreach (var number in shown) Row(number, width, lines[number - 1]);
         if (sorted != null) Line(Lang.F("{0}: {1} lines sorted", item.Path, picked.Count));
         else
         {
@@ -262,22 +255,16 @@ internal sealed partial class ShellSession
 
         var taken = picked.Select(n => lines[n - 1]).ToList();
         var (text, at) = WithLinesAt(target.File.Text, taken, position);
-        var result = SaveEdit(target.File, text);
         // (the paths and the lines, never the text)
         var what = source.Item.Path + ":" + Numbers(picked) + " to " + target.Item.Path + ":" + at;
-        FileExplorer.LogFileOperation(cut ? "Cut lines" : "Copy lines", what, result);
-        if (result != DialogText.Success)
-        {
-            Error(result);
-            return;
-        }
+        if (!SavedEdit(target.File, text, cut ? "Cut lines" : "Copy lines", what)) return;
 
         LastList = new List<Item> { new(target.Item.Path, false, (at, 1)) };
         // ("open 1" at the first line put in; @ at the last, so "insert @" goes after them, as after insert)
         _line = at + taken.Count - 1;
         var now = LinesOfText(text);
         var width = (at + taken.Count - 1).ToString().Length;
-        for (var i = at; i < at + taken.Count; i++) Line(i.ToString().PadLeft(width + 2) + "  " + now[i - 1]);
+        for (var i = at; i < at + taken.Count; i++) Row(i, width, now[i - 1]);
         Line(taken.Count == 1
             ? Lang.F("{0}: line {1} put in", target.Item.Path, at)
             : Lang.F("{0}: lines {1}-{2} put in", target.Item.Path, at, at + taken.Count - 1));

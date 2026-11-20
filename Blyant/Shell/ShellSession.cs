@@ -409,22 +409,12 @@ internal sealed partial class ShellSession
     /// <summary>
     /// Show a list: each row numbered from 1 (the numbers lined up), and kept as the last list
     /// </summary>
-    private void List(IReadOnlyList<(Item Item, string Text)> rows, string empty)
-    {
-        ShowRows(rows.Select(row => row.Item).ToList());
-        if (rows.Count == 0)
-        {
-            Line(empty);
-            return;
-        }
+    private void List(IReadOnlyList<(Item Item, string Text)> rows, string empty) => Filtered(rows, _ => true, empty);
 
-        var width = rows.Count.ToString().Length;
-        for (var i = 0; i < rows.Count; i++)
-        {
-            Line((i + 1).ToString().PadLeft(width + 2) + "  " + rows[i].Text);
-            RowShown(rows[i].Item);
-        }
-    }
+    // A numbered row: the number at the right of a column as wide as the largest number and two more, then the text
+    // (indented: a folder in a tree)
+    private void Row(int number, int width, string text, int indent = 0) =>
+        Line(new string(' ', indent) + number.ToString(System.Globalization.CultureInfo.InvariantCulture).PadLeft(width + 2) + "  " + text);
 
     /// <summary>
     /// Files and directories as a list shows them: by name ("/" after a directory), with the folder they are in after

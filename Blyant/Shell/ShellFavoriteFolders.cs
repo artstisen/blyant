@@ -66,11 +66,7 @@ internal sealed partial class ShellSession
         var result = FileFavorites.Save();
         // English: the log
         EventLog.Add(DialogText.LogFile + "Favorites: " + log);
-        if (result != DialogText.Success)
-        {
-            Error(result);
-            return;
-        }
+        if (Failed(result)) return;
 
         Line(done);
         ListFavorites(string.Empty);

@@ -48,13 +48,7 @@ internal sealed partial class ShellSession
             return;
         }
 
-        var result = SaveEdit(file, text);
-        FileExplorer.LogFileOperation(command == "format" ? "Format" : "Trim", item.Path, result);
-        if (result != DialogText.Success)
-        {
-            Error(result);
-            return;
-        }
+        if (!SavedEdit(file, text, command == "format" ? "Format" : "Trim", item.Path)) return;
 
         LastList = new List<Item> { item };
         Line(command == "format" ? Lang.F("{0}: Formatted", item.Path) : Lang.F("{0}: {1}", item.Path, editor.Message));
@@ -96,14 +90,8 @@ internal sealed partial class ShellSession
         var added = LinesPutIn(rest);
         var count = added.Count;
         var (text, number) = WithLinesAt(file.Text, added, at.Value - 1);
-        var result = SaveEdit(file, text);
         // (the path, never the text)
-        FileExplorer.LogFileOperation("Insert", item.Path + ":" + number, result);
-        if (result != DialogText.Success)
-        {
-            Error(result);
-            return;
-        }
+        if (!SavedEdit(file, text, "Insert", item.Path + ":" + number)) return;
 
         LastList = new List<Item> { new(item.Path, false, (number, 1)) };
         // ("open 1" at the first line put in; @ at the last, so the next "insert @" goes after them)
@@ -153,7 +141,7 @@ internal sealed partial class ShellSession
             // markers of peek (the setting shellmarkers)
             var width = last.ToString().Length;
             if (Shell.Markers) Line((first > 1 ? AboveMarker : TopMarker) + Path.GetFileName(item.Path));
-            for (var i = first; i <= last; i++) Line(i.ToString().PadLeft(width + 2) + "  " + lines[i - 1]);
+            for (var i = first; i <= last; i++) Row(i, width, lines[i - 1]);
             if (Shell.Markers) Line((last < count ? BelowMarker : EndMarker) + Lang.F("lines {0}-{1} of {2}", first, last, count));
             var question = first == last
                 ? Lang.F("Delete line {0} of {1}?", first, Path.GetFileName(item.Path))
@@ -173,14 +161,8 @@ internal sealed partial class ShellSession
         }
 
         var (changed, at) = WithLinesChanged(file.Text, first, last, delete ? null : text);
-        var result = SaveEdit(file, changed);
         // (the path and the lines, never the text)
-        FileExplorer.LogFileOperation(delete ? "Delete lines" : "Change lines", item.Path + ":" + first + "-" + last, result);
-        if (result != DialogText.Success)
-        {
-            Error(result);
-            return;
-        }
+        if (!SavedEdit(file, changed, delete ? "Delete lines" : "Change lines", item.Path + ":" + first + "-" + last)) return;
 
         LastList = new List<Item> { new(item.Path, false, (at, 1)) };
         if (delete)
@@ -197,29 +179,32 @@ internal sealed partial class ShellSession
         }
     }
 
-    // The text file of a word (a row of the last list, or a path) to change without opening it: there, in UTF-8 (the
-    // editor saves in UTF-8: it is opened there to be changed to it), with one kind of line endings, and not one
-    // Blyant uses. Null (and told) if not
-    private (Item Item, TextFile File)? EditableFile(string word)
+    // The text of a file found (not a directory), as it is on the disk: null, and told, when it cannot be read
+    private TextFile? ReadableFile(Item item)
     {
-        if (Existing(word) is not { } item || Protected(item)) return null;
         if (item.IsDirectory)
         {
             Error(Lang.F("Not a file: {0}", item.Path));
             return null;
         }
 
-        TextFile file;
         try
         {
-            file = TextFile.Load(item.Path);
+            return TextFile.Load(item.Path);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidDataException)
         {
             Error(Lang.F("{0} cannot be read: {1}", item.Path, e.Message));
             return null;
         }
+    }
 
+    // The text file of a word (a row of the last list, or a path) to change without opening it: there, in UTF-8 (the
+    // editor saves in UTF-8: it is opened there to be changed to it), with one kind of line endings, and not one
+    // Blyant uses. Null (and told) if not
+    private (Item Item, TextFile File)? EditableFile(string word)
+    {
+        if (Existing(word) is not { } item || Protected(item) || ReadableFile(item) is not { } file) return null;
         if (!file.IsUtf8)
         {
             Error(Lang.F("{0} is not in UTF-8 ({1}): the editor can open it and save in UTF-8", item.Path,
@@ -757,11 +742,7 @@ internal sealed partial class ShellSession
                 : line;
         });
         var result = FileIo.WriteSettingsFile(string.Join("\n", lines) + "\n");
-        if (result != DialogText.Success)
-        {
-            Error(result);
-            return;
-        }
+        if (Failed(result)) return;
 
         FileIo.LoadSettings();
         FileIo.SaveSettings();

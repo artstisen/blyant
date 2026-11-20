@@ -182,11 +182,7 @@ internal sealed partial class ShellSession
         FileTags.Load();
         foreach (var file in files) FileTags.Add(file.Path, tag);
         var result = FileTags.Save();
-        if (result != DialogText.Success)
-        {
-            Error(result);
-            return;
-        }
+        if (Failed(result)) return;
 
         // (the paths, never the tag: a name the user gave)
         foreach (var file in files) EventLog.Add(DialogText.LogFile + "Tag add: " + file.Path);
@@ -217,11 +213,7 @@ internal sealed partial class ShellSession
         }
 
         var result = FileTags.Save();
-        if (result != DialogText.Success)
-        {
-            Error(result);
-            return;
-        }
+        if (Failed(result)) return;
 
         foreach (var file in removed) EventLog.Add(DialogText.LogFile + "Tag remove: " + file.Path);
         if (removed.Count == 1)
@@ -263,11 +255,7 @@ internal sealed partial class ShellSession
         }
 
         var result = FileTags.Save();
-        if (result != DialogText.Success)
-        {
-            Error(result);
-            return;
-        }
+        if (Failed(result)) return;
 
         EventLog.Add(DialogText.LogFile + "Tag rename");
         if (_tag == tag) _tag = name;
@@ -301,11 +289,7 @@ internal sealed partial class ShellSession
 
         FileTags.ClearTag(tag);
         var result = FileTags.Save();
-        if (result != DialogText.Success)
-        {
-            Error(result);
-            return;
-        }
+        if (Failed(result)) return;
 
         EventLog.Add(DialogText.LogFile + "Tag clear");
         if (_tag == tag) _tag = null;
@@ -400,11 +384,7 @@ internal sealed partial class ShellSession
 
         FileTags.ClearTag(null);
         var result = FileTags.Save();
-        if (result != DialogText.Success)
-        {
-            Error(result);
-            return;
-        }
+        if (Failed(result)) return;
 
         EventLog.Add(DialogText.LogFile + "Tags clear");
         _tag = null;

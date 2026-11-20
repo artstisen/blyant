@@ -116,6 +116,17 @@ internal static class FileOperations
         return Trimmed(path).StartsWith(parent, PathComparison);
     }
 
+    /// <summary>
+    /// The path of a file or directory after its path, or the path of a directory it is in, was changed (null: neither)
+    /// </summary>
+    internal static string? FollowedPath(string path, string oldPath, string newPath)
+    {
+        if (SamePath(path, oldPath)) return Path.GetFullPath(newPath);
+        return IsInside(path, oldPath)
+            ? Path.GetFullPath(Path.Combine(newPath, Path.GetRelativePath(oldPath, path)))
+            : null;
+    }
+
     private static bool Exists(string path) => File.Exists(path) || Directory.Exists(path);
 
     /// <summary>

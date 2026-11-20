@@ -410,7 +410,7 @@ internal sealed partial class ShellSession
                 continue;
             }
 
-            Line((i + 1).ToString().PadLeft(width + 2) + "  " + kept[i]);
+            Row(i + 1, width, kept[i]);
             found++;
         }
 
@@ -896,7 +896,7 @@ internal sealed partial class ShellSession
         if (Shell.Markers) Line(TopMarker + Path.GetFileName(path));
         for (var i = 0; i < commands.Count; i++)
         {
-            Line((i + 1).ToString(CultureInfo.InvariantCulture).PadLeft(width + 2) + "  " + commands[i]);
+            Row(i + 1, width, commands[i]);
         }
 
         if (Shell.Markers) Line(EndMarker + Lang.F("lines {0}-{1} of {2}", 1, commands.Count, commands.Count));
@@ -1388,11 +1388,9 @@ internal sealed partial class ShellSession
     /// </summary>
     internal static void PreviousFollows(string oldPath, string newPath)
     {
-        if (_previousDirectory is not { } previous) return;
-        if (FileOperations.SamePath(previous, oldPath)) _previousDirectory = Path.GetFullPath(newPath);
-        else if (FileOperations.IsInside(previous, oldPath))
+        if (_previousDirectory is { } previous && FileOperations.FollowedPath(previous, oldPath, newPath) is { } path)
         {
-            _previousDirectory = Path.GetFullPath(Path.Combine(newPath, Path.GetRelativePath(oldPath, previous)));
+            _previousDirectory = path;
         }
     }
 
@@ -1555,7 +1553,7 @@ internal sealed partial class ShellSession
             // subfolder's)
             if (i < rows.Count)
             {
-                Line(new string(' ', 2 * levels[i]) + (i + 1).ToString().PadLeft(width + 2) + "  " + rows[i].Item2);
+                Row(i + 1, width, rows[i].Item2, 2 * levels[i]);
                 RowShown(rows[i].Item1);
             }
         }
@@ -1656,7 +1654,7 @@ internal sealed partial class ShellSession
         for (var i = 0; i < rows.Count; i++)
         {
             if (!fits(i)) continue;
-            Line((i + 1).ToString().PadLeft(width + 2) + "  " + rows[i].Text);
+            Row(i + 1, width, rows[i].Text);
             RowShown(rows[i].Item);
             found++;
         }

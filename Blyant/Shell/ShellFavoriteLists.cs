@@ -157,8 +157,8 @@ internal sealed partial class ShellSession
                 Line(new string(' ', 2 * items[folder].Level) + "[" + items[folder].Name + "]");
             }
 
-            Line(new string(' ', 2 * favorite.Level) + (row + 1).ToString().PadLeft(width + 2) + "  " + names[row] +
-                 (lines[row] is { } found1 ? ":" + (found1.Line + 1) + "  " + found1.Text : string.Empty));
+            Row(row + 1, width, names[row] +
+                (lines[row] is { } found1 ? ":" + (found1.Line + 1) + "  " + found1.Text : string.Empty), 2 * favorite.Level);
             RowShown(rows[row].Item);
             found++;
         }
@@ -195,11 +195,7 @@ internal sealed partial class ShellSession
         }
 
         var result = FileFavorites.NewList(name);
-        if (result != DialogText.Success)
-        {
-            Error(result);
-            return;
-        }
+        if (Failed(result)) return;
 
         FileFavorites.UseList(name);
         FileIo.SaveSettings();
@@ -224,11 +220,7 @@ internal sealed partial class ShellSession
         }
 
         var result = FileFavorites.RenameList(name, words[1]);
-        if (result != DialogText.Success)
-        {
-            Error(result);
-            return;
-        }
+        if (Failed(result)) return;
 
         FileIo.SaveSettings();
         Line(Lang.F("List {0} renamed to {1}", name, words[1].Trim()));
@@ -269,11 +261,7 @@ internal sealed partial class ShellSession
                 path + (trashedPath.Length > 0 ? " -> " + trashedPath : string.Empty), result);
         }
 
-        if (result != DialogText.Success)
-        {
-            Error(result);
-            return;
-        }
+        if (Failed(result)) return;
 
         if (wasOpen) FileIo.SaveSettings();
         Line(Lang.F("List deleted: {0}", name));

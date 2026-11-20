@@ -45,6 +45,17 @@ public class FileManagementTests : IDisposable
     }
 
     [Fact]
+    public void FollowedPath_IsTheNewPathOfTheFileOrOfTheDirectoryItIsIn()
+    {
+        Assert.Equal(In("b"), FileOperations.FollowedPath(In("a"), In("a"), In("b")));
+        Assert.Equal(In("b"), FileOperations.FollowedPath(In("a") + Path.DirectorySeparatorChar, In("a"), In("b")));
+        Assert.Equal(In("b", "c", "d.md"), FileOperations.FollowedPath(In("a", "c", "d.md"), In("a"), In("b")));
+        Assert.Equal(In("x", "c"), FileOperations.FollowedPath(In("a", "c"), In("a"), In("x", ".", "y", "..")));
+        Assert.Null(FileOperations.FollowedPath(In("ab", "c"), In("a"), In("b")));
+        Assert.Null(FileOperations.FollowedPath(In("a"), In("a", "c"), In("b")));
+    }
+
+    [Fact]
     public void CreateDirectory_RefusesBadAndUsedNames()
     {
         Assert.Equal(DialogText.Success, FileOperations.CreateDirectory(_root, " new ", out var path));

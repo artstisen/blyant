@@ -132,16 +132,9 @@ internal sealed partial class ShellSession
     }
 
     // The lines with the text replaced written to the file (one step for undo); false, and told, when it could not be
-    private bool SaveReplaced(Item item, TextFile file, List<string> lines, List<int> changed)
-    {
-        var normalized = TextBuffer.Normalize(file.Text);
-        var result = SaveEdit(file, string.Join("\n", lines) + (normalized.EndsWith('\n') ? "\n" : string.Empty));
-        // (the path and the lines, never the texts)
-        FileExplorer.LogFileOperation("Replace", item.Path + ":" + Numbers(changed), result);
-        if (result == DialogText.Success) return true;
-        Error(result);
-        return false;
-    }
+    // (the path and the lines, never the texts)
+    private bool SaveReplaced(Item item, TextFile file, List<string> lines, List<int> changed) =>
+        SavedEdit(file, JoinedAs(file, lines), "Replace", item.Path + ":" + Numbers(changed));
 
     // The lines changed, numbered (as they are after the replace), at most as many as peek shows (the setting
     // shellpeeklines), between the markers of peek: above, whether the first line of the file is among them; below,
@@ -151,7 +144,7 @@ internal sealed partial class ShellSession
         var shown = changed.Take(Shell.PeekLines).ToList();
         if (Shell.Markers) Line((changed[0] > 1 ? AboveMarker : TopMarker) + Path.GetFileName(path));
         var width = shown[^1].ToString().Length;
-        foreach (var number in shown) Line(number.ToString().PadLeft(width + 2) + "  " + lines[number - 1]);
+        foreach (var number in shown) Row(number, width, lines[number - 1]);
         if (changed.Count > shown.Count) Line("  " + Lang.F("(and {0} more lines)", changed.Count - shown.Count));
         if (!Shell.Markers) return;
         Line((changed[^1] < lines.Count ? BelowMarker : EndMarker) + (changed.Count == 1

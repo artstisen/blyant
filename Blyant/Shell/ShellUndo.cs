@@ -71,6 +71,19 @@ internal sealed partial class ShellSession
         return result;
     }
 
+    // A file of a command written with a text (one step for undo), and the operation logged with what it tells (the
+    // path and the lines, never the text): false, and told, when it could not be
+    private bool SavedEdit(TextFile file, string text, string operation, string logged)
+    {
+        var result = SaveEdit(file, text);
+        FileExplorer.LogFileOperation(operation, logged, result);
+        return !Failed(result);
+    }
+
+    // The lines of a file joined again as the file ends: with a line break at the end when it had one
+    private static string JoinedAs(TextFile file, IEnumerable<string> lines) =>
+        string.Join("\n", lines) + (TextBuffer.Normalize(file.Text).EndsWith('\n') ? "\n" : string.Empty);
+
     // The files a command has changed are the newest of the latest files ("recent", "hist"), as files opened in the
     // editor: to find them again. $file last, so it is the newest ("lines ... cut" changes two files)
     private void LatestChanged()
@@ -257,7 +270,7 @@ internal sealed partial class ShellSession
         var width = Math.Max(_undo.Count, 1).ToString().Length;
         for (var i = 0; i < _undo.Count; i++)
         {
-            Line((i + 1).ToString().PadLeft(width + 2) + "  " + _undo[^(i + 1)].Command);
+            Row(i + 1, width, _undo[^(i + 1)].Command);
         }
 
         if (_redo.Count == 0) return;
