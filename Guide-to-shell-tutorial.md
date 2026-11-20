@@ -581,7 +581,7 @@ blyant ~/novel> open 2
 
 - A file can have several tags: `tag add plot.md ferry`. `tags` lists the tags, and `tags -f` the files with their tags
 - `tag add 2,4 draft` gives rows 2 and 4 of the last list the tag, and `tag add @ draft` the file you work on
-- `$tag` is the tag you work with, and `tag` alone lists its files. It changes when you work on a file that has other tags (the shell says so: `$tag = ferry`), so look at it with `echo $tag` before you use it
+- `$tag` is the tag you work with, and `tag` alone lists the files of `$tag`. It changes when you work on a file that has other tags (the shell says so: `$tag = ferry`), so look at it with `echo $tag` before you use it
 - `tag remove plot.md draft` takes the tag off, and `tag rename draft final` renames it on all files. Files keep their tags when you rename or move them, and a copy gets them too
 
 ## Tidying files

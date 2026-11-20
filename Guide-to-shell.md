@@ -32,7 +32,7 @@ Blyant v1.5.9: help lists the commands, exit leaves
 
 - The logo is the one chosen for the start page (the setting `logo`; the logo editor makes your own), so the shell shows the same
 - `set shelllogo false` leaves it out, and the shell starts with the first line alone. With a screen reader, which reads the logo character by character, turn it off
-- Commands from a file, a pipe or `--run` never show the logo, and nor does a window narrower than the logo: its rows are not broken
+- Commands from a file, a pipe or `--run` never show the logo, and nor does a window narrower than the logo: the rows of the logo are not broken
 
 To have Blyant always start as the shell, turn on _Start in the shell_ on the General page of Configuration (or `set startshell true` in the shell). Then `blyant` alone starts as `blyant --shell` does. A file or directory given (`blyant notes.md`, `blyant +12 page.html`) is still opened on the full screen, so programs that open a file in Blyant (as Blyant Validator does) get the editor. `blyant --screen` starts on the full screen this once, and `screen` in the shell switches to it too.
 
@@ -177,7 +177,7 @@ To get all output at once (with a screen reader, say), turn the pages off: `set 
 | `recent\|hist\|fav ... -t text` | Only the files of the list with the text in a line, and the first line with it, instead of the date: `recent -t storm` shows `02-storm.md:3  The storm came at night.` The text is taken as `find -t` takes it (letter case alike, `*` and `?`), and goes last, after the other options and a filter (`hist -n -t storm`, `fav filter draft -t storm`). The rows are numbered as in the whole list, and `open 4` opens row 4 at the line found. Directories and files that are not text are left out. `recent -t *` shows the first line of each file, and `recent -t "# *"` the first heading |
 | `tag name`, `tag` | List the files with a tag, or with `$tag` (see [Tags](#tags)) |
 | `tag add file\|n name` | Give files a tag (`tag add 2,4 draft`) |
-| `tag remove file\|n [name]` | Take a tag off files, or all their tags without a name |
+| `tag remove file\|n [name]` | Take a tag off files, or every tag without a name |
 | `tags [-f]` | List the tags, or the files with tags (`-f`) |
 | `hotlist` (`hot`) | List the directory hotlist |
 | `hotlist filter text` | Show the directories of the hotlist with a text in their name or path (`hot filter novel`), or that match a pattern, numbered as in the whole hotlist |
@@ -295,7 +295,7 @@ peek chapter-3.md +                          the window 1 line further down
 -                                            1 line up (-- 5 lines up)
 + 20                                         20 lines down (- 20 up; ++ 3: 3 steps)
 j, jj, k, kk                                 the same as +, ++, - and -- (j 20 too)
-gg, G                                        the top and the end of the file peeked last
+gg, G                                        the top and the end of the file
 peek top                                     the window at the top of the file
 peek middle                                  around the middle
 peek bottom                                  at the end: the last lines
@@ -544,6 +544,20 @@ Undone: replace chapter-3.md Maren Marit
 - The text is replaced in each line, from the left; what replaced it is not searched again. A text with a line break in it cannot be typed, so a text is never replaced across two lines
 - At most as many lines are shown as `peek` shows (15; the setting `shellpeeklines`), then `(and 12 more lines)`. Above them, `->` tells that line 1 of the file was changed, and `-^` that it was not; below them, `<-` tells that the last line of the file was changed, and `-v` that it was not
 - When the text is not in the file, the shell says so (`No Maren in chapter-3.md`), and nothing is written. As with `change` and `lines`, only a file in UTF-8 is changed and not the files Blyant uses, the line endings and byte order mark are kept, and the log gets the path, never the texts
+- Typed at a terminal, `replace -n` shows the lines and then asks; `y` replaces them as shown, and `Enter` alone (No) leaves the file as it is:
+
+```
+blyant ~/novel> replace -n chapter-3.md Maren Marit
+-> chapter-3.md
+   1  Marit stood at the rail.
+  12  "Anna!" Marit called. Marit, at last.
+-v 2 lines of 30
+/home/anna/novel/chapter-3.md: 3 would be replaced, in 2 lines
+Replace: Replace them in chapter-3.md?
+  Y Yes  N No*: y
+/home/anna/novel/chapter-3.md: 3 replaced, in 2 lines
+```
+
 - One `replace` is one step of `undo`, however many it replaced. Try a large replace with `-n` first: you see the lines, and `y` replaces them as shown. When the file was changed while the question waited (saved in the editor, or by another program), nothing is written, and the shell asks you to run `replace` again
 - `lines notes.md 5-9 replace old new` replaces in some lines only (see [Text in lines](#text-in-lines))
 
@@ -918,7 +932,7 @@ blyant ~/novel> tags
 | `tag add file\|n name` | Give a file the tag: a name, a row of the last list, `$file` or `@` (the file worked on). Several rows at once: `tag add 2,4,7 draft`, `tag add 2-5 draft` |
 | `tag name` | List the files with the tag, numbered, in the order they got it: the last list (`open 2`). The tag is then `$tag` |
 | `tag` | List the files of `$tag` (`tag -l`: with the full paths) |
-| `tag remove file\|n [name]` | Take the tag off the file, or all its tags without a name. A file that is not there any more can be given |
+| `tag remove file\|n [name]` | Take the tag off the file, or every tag of the file without a name. A file that is not there any more can be given |
 | `tag rename old new` | Give the files of a tag another name (`tag rename draft final`) |
 | `tag clear name` | Take the tag off all files (asked first: it cannot be undone) |
 | `tags` | List the tags, and how many files have each |
@@ -927,17 +941,17 @@ blyant ~/novel> tags
 
 - A tag is letters, digits, `-` and `_` (`draft`, `chapter-3`, `to_check`), without blanks, and starts with a letter or a digit (a word starting with `-` is an option, as `-l`). The letter case does not matter: `Draft` is `draft`. `add`, `remove`, `rename` and `clear` are not tags, and `tag rename draft draft` is refused
 - On Linux and macOS a file name can have a tab or a line break in it: such a file cannot have tags, as it would break the line of `tags.txt`
-- `tag add` leaves the last list as it was, so you can give more rows of it a tag (`tag add 2 draft`, then `tag add 5 draft`)
-- The files keep their tags when you rename or move them, in the shell or on the full screen, and a copy gets the tags of what was copied (a directory copied: the tags of the files in it). A file you delete loses its tags
+- `tag add` leaves the last list as it was, so you can give more rows of the list a tag (`tag add 2 draft`, then `tag add 5 draft`)
+- The files keep their tags when you rename or move them, in the shell or on the full screen, and a copy gets the tags of what was copied (a directory copied: the tags of the files in it). A file you delete loses the tags
 - The tags are kept in `tags.txt` in the data directory, a line for each file: the path, a tab, and the tags. You can edit it in Blyant, but it cannot be renamed, moved or deleted, in the shell or in the file browser, as the other files Blyant uses
 - `Tab` completes `add`, `remove`, `rename`, `clear` and the tags after `tag`, the file after `tag add` and `tag remove`, and the tags after it
 
 ### $tag: the tag you work with
-`$tag` is the tag you work with, as `$file` is the file. `tag` alone lists its files, and `echo $tag` shows it. **It changes as you work, so check it before you use it**:
+`$tag` is the tag you work with, as `$file` is the file. `tag` alone lists the files of `$tag`, and `echo $tag` shows it. **It changes as you work, so check it before you use it**:
 
 - `tag add` and `tag draft` set it: that is how you set it yourself
 - When a command works on another file (`open`, `peek`, `file 2`, `rename` ...) and that file has tags, but not `$tag`, `$tag` becomes the tag the file got last, and the shell says so: `  $tag = research`
-- A file that has `$tag` among its tags leaves it, so `$tag` stays while you go through the files of a tag. A file without tags leaves it too
+- A file with `$tag` among the tags leaves `$tag` as it is, so `$tag` stays while you go through the files of a tag. A file without tags leaves it too
 
 ```
 blyant ~/novel> tag draft
