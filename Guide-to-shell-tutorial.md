@@ -37,7 +37,7 @@ blyant ~/novel>
 
 The logo above the first line shows that Blyant was started as the shell. `set shelllogo false` leaves it out (with a screen reader, say).
 
-The prompt shows where you are: `~` is your home directory. `about` shows the commands used the most, `help` lists them all, `help shift` explains one command, and `exit` (or `Ctrl+D`) leaves Blyant. `set language de` switches Blyant to German (`en`, `da`, `nb`, `sv`, `es`, `fr`, `it`, `pl`, `nl` and `fi` are also available); the commands stay the same.
+The prompt shows where you are: `~` is your home directory. `about` shows the commands used the most, `help` lists them all, `help shift` explains one command, `help -t start` finds the commands with _start_ in them, and `exit` (or `Ctrl+D`) leaves Blyant. `set language de` switches Blyant to German (`en`, `da`, `nb`, `sv`, `es`, `fr`, `it`, `pl`, `nl` and `fi` are also available); the commands stay the same.
 
 Other ways in:
 

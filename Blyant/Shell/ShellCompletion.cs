@@ -370,7 +370,8 @@ internal sealed class ShellCompletion
                 return (position == 0 ? Kind.Words : Kind.None, new[] { "license" });
             case "help":
             case "h":
-                return (position == 0 ? Kind.Words : Kind.None, Commands.Names(CommandContext.Shell));
+                // ("help -" and Tab: -t, to search the rows of help)
+                return (position == 0 ? Kind.Words : Kind.None, Commands.Names(CommandContext.Shell).Prepend("-t"));
             default:
                 return (Kind.None, none);
         }

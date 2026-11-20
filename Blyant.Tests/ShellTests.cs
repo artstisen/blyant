@@ -7540,4 +7540,28 @@ public class ShellTests : IDisposable
         Assert.Contains("tags filter|-t text", Run("help tags\n").Output);
         Assert.Contains("tag [name] filter|-t text", Run("help tag\n").Output);
     }
+
+    // ---- 1.6.0: help -t
+
+    [Fact]
+    public void HelpT_ShowsTheRowsWithTheText_InTheCommandOrWhatItDoes()
+    {
+        var (output, errors, _, _) = Run("help -t start\n");
+        Assert.Equal(string.Empty, errors);
+        // In the command, and in what it does
+        Assert.Contains("lines file|n lines start|end text", output);
+        Assert.Contains("lines file lines unstart|unend text", output);
+        Assert.DoesNotContain("  pwd  ", output);
+        Assert.DoesNotContain(Lang.T("Short forms:"), output);
+        // Letter case alike, and * as in the other searches; the short forms too
+        (output, _, _, _) = Run("help -t START\nhelp -t peek*top\nhelp -t favs\n");
+        Assert.Contains("lines file|n lines start|end text", output);
+        Assert.Contains("peek [f] top|middle|bottom|n%", output);
+        Assert.Contains(Lang.T("Short forms:") + "  fav, favs (favorites)", output);
+        (output, errors, _, _) = Run("help -t xyzzy\nhelp -t\n");
+        Assert.Contains(Lang.F("Nothing in help has {0}", "xyzzy"), output);
+        Assert.Contains(Lang.T("Give a text after -t: help -t start"), errors);
+        Assert.Contains("help -t text", Run("help help\n").Output);
+        Assert.Equal("help -t", Tab(Completion(), "help -"));
+    }
 }

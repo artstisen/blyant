@@ -143,6 +143,7 @@ internal sealed partial class ShellSession
         ("run $name|file words", Lang.T("Run it with words for $1, $2 ... ($*: all of them)")),
         ("$name words", Lang.T("A register of one line as the start of a command")),
         ("help [command]", Lang.T("List the commands, or tell what one does")),
+        ("help -t text", Lang.T("The rows of help with a text in them (help -t start)")),
         ("exit", Lang.T("Leave Blyant (also quit, q)"))
     };
 
@@ -1677,6 +1678,13 @@ internal sealed partial class ShellSession
     private void Help(string argument)
     {
         var rows = HelpRows().ToList();
+        // "help -t start": the rows with the text in the command or in what it does
+        if (TextOption(argument) is { Text: { } search } option)
+        {
+            HelpSearch(rows, option.Before, search);
+            return;
+        }
+
         var name = argument.Trim().ToLowerInvariant();
         if (name.Length > 0)
         {
@@ -1727,6 +1735,30 @@ internal sealed partial class ShellSession
         ShortForms();
     }
 
+    // "help -t text": the rows of help with the text in the command or in what it does (letter case alike, "*" and
+    // "?" as in the other searches), as help shows them, and the short forms with it
+    private void HelpSearch(List<(string Command, string Text)> rows, string before, string text)
+    {
+        if (text.Length == 0 || before.Trim().Length > 0)
+        {
+            Error(Lang.T("Give a text after -t: help -t start"));
+            return;
+        }
+
+        var pattern = FileSearch.WildcardText(text);
+        var found = rows.Where(row => FileSearch.Matches(pattern, row.Command) || FileSearch.Matches(pattern, row.Text))
+            .ToList();
+        var forms = ShortFormsShown.Where(form => FileSearch.Matches(pattern, form)).ToList();
+        if (found.Count == 0 && forms.Count == 0)
+        {
+            Line(Lang.F("Nothing in help has {0}", text));
+            return;
+        }
+
+        if (found.Count > 0) CommandRows(found, "  ");
+        if (forms.Count > 0) ShortForms(forms);
+    }
+
     // The short forms of the commands, and the commands they stand for (English: the same in all languages, as the
     // commands are): after the commands of help, in rows as wide as the window (79 columns when it is not known)
     private static readonly string[] ShortFormsShown =
@@ -1735,11 +1767,11 @@ internal sealed partial class ShellSession
         "proj (projects)", "del (delete)", "cls (clear)", "h (help)", "q, quit (exit)"
     };
 
-    private void ShortForms()
+    private void ShortForms(IReadOnlyList<string>? forms = null)
     {
         var width = Terminal && WindowSize?.Invoke() is { Width: > 20 } size ? size.Width - 1 : 79;
         var row = Lang.T("Short forms:");
-        foreach (var form in ShortFormsShown)
+        foreach (var form in forms ?? ShortFormsShown)
         {
             if (TextMetrics.WidthOf(row) + 2 + form.Length > width)
             {

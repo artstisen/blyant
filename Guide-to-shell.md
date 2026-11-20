@@ -205,6 +205,7 @@ Some commands have a short form, which does the same: `fav` and `favs` (`favorit
 | `run $name\|file words` | Run it with the words put in where the commands have `$1`, `$2` ... (`$*`: all the words): `run $check $file 12`. A script of one command without `$1` gets the words added at the end. See [Script with words](#script-with-words) |
 | `$name words` | A register of one line as the start of a command: after `reg w words`, `$w $file 12` runs `words` with the file and the line. See [Script with words](#script-with-words) |
 | `help [command]` (`h`) | List the commands, or explain one |
+| `help -t text` | Show the rows of `help` with the text in the command or in what it does, and the short forms with it: `help -t start` finds the commands that take `start`. Letter case does not matter, and `*` and `?` work as in the other searches (`help -t peek*top`); the descriptions are searched in the language Blyant uses |
 | `exit` (`quit`, `q`) | Leave Blyant |
 
 ### Typing a command
