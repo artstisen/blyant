@@ -1,5 +1,7 @@
 # Changes
 
+## v1.6.0
+
 ## v1.5.9 (2026-11-20)
 - **The formatters of Blyant Validator 0.6.2**: `:format` in the editor and `format` in the shell use the formatters of Blyant Validator 0.6.2, copied again. Files are formatted as before. The README and the installation guide tell what the validator does now: it checks links to files and to places in a page, and gives hints for accessible HTML. See [Blyant Validator](Guide-to-installation.md#blyant-validator).
 - **`replace` in the shell**: `replace chapter-3.md Maren Marit` replaces a text everywhere in a file, with the letter case as typed, and `replace -i` in any letter case. It shows the lines it changed, numbered, between the markers of `peek` (at most as many as `peek` shows), and how many it replaced in how many lines. `replace -n` shows what would change, and then asks whether to replace (No first); from a file of commands, a pipe or `--run` it only shows, and never writes, not even with `--yes`. When the file was changed while the question waited, nothing is written. One `replace` is one step of `undo`. The texts are exact text (in quotes with blanks; `""` takes the old text out), the file can be a row, `$file` or `@`, and the file is then the last list at the first line changed. See [Replacing in a file](Guide-to-shell.md#replacing-in-a-file), with a screenshot (`docs/screenshots/shell-replace.svg`).
