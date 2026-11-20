@@ -1,4 +1,4 @@
-﻿// Copied from Blyant Validator 0.6.1 (tests/Blyant.Validator.Tests/CssFormatterTests.cs) by tools/formatters.py: not changed by hand in Blyant.
+﻿// Copied from Blyant Validator 0.6.2 (tests/Blyant.Validator.Tests/CssFormatterTests.cs) by tools/formatters.py: not changed by hand in Blyant.
 // Change it in Blyant Validator, and copy it again. English: its messages are not translated
 using Blyant.Format.Core;
 using Blyant.Format.Css;

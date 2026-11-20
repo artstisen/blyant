@@ -520,6 +520,8 @@ blyant ~/notes> lines todo.md 3 unstart "- [ ] "
 - The lines changed are shown, and the file is then the last list, at the first of them (`open 1`). When no line changes, nothing is written, and the shell says so. As for `insert`, the file keeps its line endings and byte order mark, only a file in UTF-8 is changed and not the files Blyant uses, and `undo` puts it back; nothing is asked, as no line is lost
 
 ## Replacing in a file
+![replace -n showing the lines of a chapter it would change, the question answered with y, and undo taking it back](docs/screenshots/shell-replace.svg)
+
 `replace` replaces a text everywhere in a file, without opening it: `replace chapter-3.md Maren Marit`. It shows the lines it changed, and how many it replaced in how many lines, and `undo` puts the file back as it was:
 
 ```

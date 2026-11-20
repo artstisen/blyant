@@ -79,7 +79,7 @@ See the [guide to the corkboard](Guide-to-corkboard.md).
   - Find files in a large tree with short rows (`find -b storm`: the names only), see when each file was last changed (`find -d`, and `ls -d -s` with the sizes), see the last search again with `find`, and search the latest files, the history and the favorites for a text (`recent -t storm`)
 
 ## Blyant Validator
-**[Blyant Validator](https://github.com/artstisen/blyant-validator)** is a companion tool, which also works as a standalone program: validate HTML, CSS, XML, Markdown and Typst, and format HTML, CSS and XML, side by side with your editor, in any terminal. It checks a file again each time it is saved, and turns a Typst document into a PDF with `:typst`.
+**[Blyant Validator](https://github.com/artstisen/blyant-validator)** is a companion tool, which also works as a standalone program: validate HTML, CSS, XML, Markdown and Typst, and format HTML, CSS and XML, side by side with your editor, in any terminal. It checks a file again each time it is saved, checks links to files and to places in a page, gives hints for accessible HTML with `--accessibility`, and turns a Typst document into a PDF with `:typst`.
 
 The two work together. Set Blyant as the editor of Blyant Validator, and each problem the validator finds opens in Blyant at the line with the problem:
 

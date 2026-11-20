@@ -1,4 +1,4 @@
-﻿// Copied from Blyant Validator 0.6.1 (src/Blyant.Validator.Css/CssFormatter.cs) by tools/formatters.py: not changed by hand in Blyant.
+﻿// Copied from Blyant Validator 0.6.2 (src/Blyant.Validator.Css/CssFormatter.cs) by tools/formatters.py: not changed by hand in Blyant.
 // Change it in Blyant Validator, and copy it again. English: its messages are not translated
 using System.Text;
 using Blyant.Format.Core;
@@ -34,7 +34,7 @@ public sealed class CssFormatter : IFormatter
         {
             // The line break that ends it would become a space, and the string would then take in what follows
             throw new Core.FormatException(
-                $"A string is not closed before the end of its line (line {new LineMap(css)[badString.Start].Line}).");
+                $"A string is not closed before the end of the line (line {new LineMap(css)[badString.Start].Line}).");
         }
 
         if (sheet.HasStructuralErrors)

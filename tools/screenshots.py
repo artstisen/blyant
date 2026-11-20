@@ -613,6 +613,10 @@ SCENES = [
      ['--shell', PROJECT], ['<wait>', 'tag add chapter-02.md draft<Enter>', 'tag add chapter-04.md draft<Enter>',
                             'tag add research/tides.md research<Enter>', 'tag draft<Enter>',
                             'peek research/tides.md 1-2<Enter>', 'tags -f<Enter>'], True),
+    # replace -n: the lines a replace would change, the question, and the replace done
+    ('shell-replace', 'Blyant: the shell, replace -n shows what would change, and asks',
+     {},
+     ['--shell', PROJECT], ['<wait>', 'replace -n chapter-01.md Maren Marit<Enter>', 'y<Enter>', 'undo<Enter>'], True),
     # @: a line found once, then insert, lines and shift go on with it without the file and the line typed again
     ('shell-at', 'Blyant: the shell, @ is the file and the line worked on last',
      {},
