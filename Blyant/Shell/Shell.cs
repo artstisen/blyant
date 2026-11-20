@@ -335,6 +335,8 @@ internal static class Shell
         {
             Current = null;
             OnScreen = false;
+            // (the file of "again edit": its commands are not kept on the disk)
+            ShellSession.DeleteCommandsFile();
         }
     }
 }

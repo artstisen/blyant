@@ -136,6 +136,7 @@ internal sealed partial class ShellSession
         ("about [license]", Lang.T("Show the version and most used commands, or the license")),
         ("again [n]", Lang.T("List the commands typed, or run one again (!n, !!)")),
         ("again filter text", Lang.T("Show the commands typed with a text in them")),
+        ("again edit [n|n-m]", Lang.T("Put commands in a file to change, then run $file")),
         ("again n|n-m > $name", Lang.T("Keep commands typed in a register, for run (>>: add)")),
         ("undo [n]", Lang.T("Undo the last change of a file (insert, change ...)")),
         ("redo [n]", Lang.T("Undo the last undo")),
@@ -346,8 +347,14 @@ internal sealed partial class ShellSession
 
         if (!CommandLine.Name(line).Equals("again", StringComparison.OrdinalIgnoreCase)) return null;
         var argument = CommandLine.Argument(line);
-        // ("again filter lines": a list, as "again" alone; "again 3-5 > $tidy": kept, not run)
-        if (argument.Length == 0 || FilterOf(argument) != null || TargetAtEnd(argument) != null) return null;
+        // ("again filter lines": a list, as "again" alone; "again 3-5 > $tidy": kept, not run; "again edit 3": put in a
+        // file to edit)
+        if (argument.Length == 0 || FilterOf(argument) != null || TargetAtEnd(argument) != null ||
+            CommandLine.Name(argument).Equals("edit", StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
         return argument.All(char.IsAsciiDigit) && int.TryParse(argument, out var number) ? number : 0;
     }
 
@@ -357,6 +364,12 @@ internal sealed partial class ShellSession
     // runs the one numbered 7
     private void ListAgain(string argument)
     {
+        if (CommandLine.Name(argument).Equals("edit", StringComparison.OrdinalIgnoreCase))
+        {
+            AgainEdit(CommandLine.Argument(argument).Trim());
+            return;
+        }
+
         if (Target(argument) is { } target)
         {
             AgainInto(target.Before, target.Name, target.Adds);
@@ -769,12 +782,25 @@ internal sealed partial class ShellSession
     private void AgainInto(string numbers, string name, bool adds)
     {
         if (TargetRefused(name)) return;
+        if (CommandsKept(numbers, Lang.T("Give the numbers of the commands: again 3 > $tidy, again 3-5 > $tidy")) is not
+            { } commands)
+        {
+            return;
+        }
+
+        KeepInRegister(name, string.Join("\n", commands), adds);
+    }
+
+    // The commands typed with the numbers ("3", "3-5"; the numbers count from the newest), the oldest first. Null, and
+    // told: not numbers ("usage"), no commands kept, or a number that is not one
+    private List<string>? CommandsKept(string numbers, string usage)
+    {
         var parts = numbers.Split('-');
         if (parts.Length is < 1 or > 2 || parts.Any(part => part.Length == 0 || !part.All(char.IsAsciiDigit)) ||
             !int.TryParse(parts[0], out var first) || !int.TryParse(parts[^1], out var last))
         {
-            Error(Lang.T("Give the numbers of the commands: again 3 > $tidy, again 3-5 > $tidy"));
-            return;
+            Error(usage);
+            return null;
         }
 
         var kept = CommandHistory.Of(CommandContext.Shell);
@@ -783,7 +809,7 @@ internal sealed partial class ShellSession
             Error(Terminal
                 ? Lang.T("No commands typed yet (they are kept while Blyant runs)")
                 : Lang.T("No commands typed: from a file or a pipe they are not kept"));
-            return;
+            return null;
         }
 
         var (low, high) = (Math.Min(first, last), Math.Max(first, last));
@@ -793,12 +819,66 @@ internal sealed partial class ShellSession
             Error(kept.Count == 1
                 ? Lang.F("No command {0}: 1 is kept (again lists it)", number)
                 : Lang.F("No command {0}: {1} are kept (again lists them)", number, kept.Count));
+            return null;
+        }
+
+        return Enumerable.Range(low, high - low + 1).Reverse().Select(n => kept[n - 1]).ToList();
+    }
+
+    // The file "again edit" puts commands in, while Blyant runs: in the temporary folder of the system, as the shell
+    // does not change the files of Blyant's data directory. Deleted when the shell is left
+    private static string CommandsFile =>
+        Path.Combine(Path.GetTempPath(), "blyant-commands-" + Environment.ProcessId.ToString(CultureInfo.InvariantCulture) + ".txt");
+
+    /// <summary>
+    /// The file of "again edit" deleted (the shell is left: exit, screen)
+    /// </summary>
+    internal static void DeleteCommandsFile()
+    {
+        try
+        {
+            FileIo.DeleteFile(CommandsFile);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            // (logged by FileIo; the system cleans its temporary folder)
+        }
+    }
+
+    // "again edit", "again edit 3", "again edit 3-5": the command typed last, or those with the numbers of again, put in
+    // a file, a command on each line, and shown; the file is then $file at line 1, to be changed with the commands of
+    // the shell (word @, replace @, change @ ...) and run with "run $file". A new "again edit" writes over it
+    private void AgainEdit(string numbers)
+    {
+        if (!Terminal || _runDepth > 0)
+        {
+            Error(Lang.T("again edit is for the commands typed at the prompt: not in a run, a file or --run"));
             return;
         }
 
-        // (the oldest first: the numbers count from the newest)
-        var commands = Enumerable.Range(low, high - low + 1).Reverse().Select(n => kept[n - 1]);
-        KeepInRegister(name, string.Join("\n", commands), adds);
+        if (CommandsKept(numbers.Length == 0 ? "1" : numbers,
+                Lang.T("Give the numbers of the commands: again edit, again edit 3, again edit 3-5")) is not { } commands)
+        {
+            return;
+        }
+
+        var path = CommandsFile;
+        try
+        {
+            if (!File.Exists(path)) FileIo.CreateNewFile(path);
+            FileIo.WriteAllBytesSafe(path, new System.Text.UTF8Encoding(false).GetBytes(string.Join("\n", commands) + "\n"));
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            Error(Lang.F("{0} cannot be written: {1}", path, e.Message));
+            return;
+        }
+
+        // (in quotes: a path with blanks in it is one word)
+        Peek("\"" + path + "\"");
+        // (the file at line 1: word @ 9 ..., replace @ ..., run $file)
+        _file = path;
+        _line = 1;
     }
 
     // "forget": what the shell keeps only while Blyant runs, forgotten after asking (in a script or with --run, the

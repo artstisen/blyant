@@ -1127,7 +1127,11 @@ public class ShellTests : IDisposable
             ["C-c"] = new('\u0003', ConsoleKey.C, false, false, true),
             ["C-d"] = new('\u0004', ConsoleKey.D, false, false, true),
             ["C-u"] = new('\u0015', ConsoleKey.U, false, false, true),
-            ["C-w"] = new('\u0017', ConsoleKey.W, false, false, true)
+            ["C-w"] = new('\u0017', ConsoleKey.W, false, false, true),
+            ["C-a"] = new('\u0001', ConsoleKey.A, false, false, true),
+            ["C-e"] = new('\u0005', ConsoleKey.E, false, false, true),
+            ["C-Left"] = new('\0', ConsoleKey.LeftArrow, false, false, true),
+            ["C-Right"] = new('\0', ConsoleKey.RightArrow, false, false, true)
         };
         for (var i = 0; i < keys.Length; i++)
         {
@@ -7599,5 +7603,49 @@ public class ShellTests : IDisposable
         Assert.Contains(Lang.F("{0} is not there any more: the shell stays here", In("work", "newer")), errors);
         Assert.Equal(In("work"), session.Directory);
         Assert.Contains("cd -", Run("help cd\n").Output);
+    }
+
+    // ---- 1.6.0: the keys of the line, and again edit
+
+    [Fact]
+    public void TheLine_CtrlAAndCtrlE_GoToTheStartAndTheEnd_CtrlArrowsAWordAtATime()
+    {
+        // Ctrl+A, then a letter at the start; Ctrl+E, then one at the end
+        Assert.Equal("Xinsert a b Y", ReadLine("insert a b<C-a>X<C-e> Y<CR>").Line);
+        // Ctrl+Left twice: before "b"; Ctrl+Right: after "b"
+        Assert.Equal("one two_ three", ReadLine("one two three<C-Left><C-Left><C-Right>_<CR>").Line);
+        // Blanks before a word are skipped; at the ends nothing moves
+        Assert.Equal("[a  b", ReadLine("a  b<C-Left><C-Left><C-Left>[<CR>").Line);
+        Assert.Equal("a  b]", ReadLine("a  b<C-Right><C-Right>]<CR>").Line);
+    }
+
+    [Fact]
+    public void AgainEdit_PutsTheCommandInAFile_ToChangeAndRun_AndTheFileIsDeleted()
+    {
+        File.WriteAllText(In("work", "e.md"), "start\n");
+        var (output, errors, _, _) = Run("insrt e.md bottom it alwyas did\nagain edit\nreplace @ insrt insert\n" +
+                                         "replace @ alwyas always\nrun $file\n", terminal: true);
+        Assert.Contains("  1  insrt e.md bottom it alwyas did\n", output);
+        Assert.Equal("start\nit always did\n", File.ReadAllText(In("work", "e.md")));
+        // Deleted when the shell is left
+        Assert.Empty(System.IO.Directory.GetFiles(Path.GetTempPath(), "blyant-commands-" + Environment.ProcessId + ".txt"));
+        // (the command typed wrong was told, and kept for again)
+        Assert.Contains(Lang.F("Unknown command: {0} (help lists the commands)", "insrt"), errors);
+    }
+
+    [Fact]
+    public void AgainEdit_TakesSeveralCommands_AndIsRefusedInAFile()
+    {
+        File.WriteAllText(In("work", "e.md"), "x\n");
+        var (output, _, _, session) = Run("insert e.md bottom a\ninsert e.md bottom b\nagain edit 2-1\n", terminal: true);
+        // The oldest first, a command on each line; the file is $file at line 1
+        Assert.Contains("  1  insert e.md bottom a\n  2  insert e.md bottom b\n", output);
+        Assert.Equal(1, session.LastList.Count);
+        var (_, errors, _, _) = Run("again edit\n");
+        Assert.Contains(Lang.T("again edit is for the commands typed at the prompt: not in a run, a file or --run"), errors);
+        (_, errors, _, _) = Run("pwd\nagain edit x\nagain edit 9\n", terminal: true);
+        Assert.Contains(Lang.T("Give the numbers of the commands: again edit, again edit 3, again edit 3-5"), errors);
+        Assert.Contains("again edit [n|n-m]", Run("help again\n").Output);
+        Assert.Equal("again edit", Tab(Completion(), "again e"));
     }
 }

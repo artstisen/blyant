@@ -76,6 +76,7 @@ blyant ~/novel>
 - `ls -d` shows when each file was last changed, and `ls -s` how large it is: `ls -d -s` shows both. `ls -` and `Tab` offers the options
 - `Tab` completes what you type: `cd ch` and `Tab` gives `cd chapters/`, and `Tab` again continues inside that directory. `Up` and `Down` bring back the commands you typed before
 - `again` lists the commands you typed, numbered, and `again 3` (or `!3`) runs number 3 again; `!!` runs the last one. `!3` and `Tab` puts the command on the line, so you can change it first
+- `Ctrl+Left` and `Ctrl+Right` move a word at a time on the line, and `Ctrl+A` and `Ctrl+E` to the start and the end. A long command is easier to fix in a file: `again edit` puts the last command in one, `replace @ old new` and `word @ 3 replace ...` change it, and `run $file` runs it
 - `open ` and `Tab` with nothing typed gives the file you opened last in this directory, and `Tab` again the one before it: a quick way to switch between the files you are working on. `open chapters/*storm*` and `Tab` gives `open chapters/02-storm.md`: `*` stands for any characters, and `?` for one
 - `cd` on a file goes to the file's directory, and makes the file the last list, so `open 1` opens it:
 

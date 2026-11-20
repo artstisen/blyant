@@ -201,6 +201,7 @@ Some commands have a short form, which does the same: `fav` and `favs` (`favorit
 | `changes` | List the changes `undo` goes back through, the newest first, and those `redo` does again |
 | `again filter text` | Show the commands you typed with a text in them (`again filter lines`), or that match a pattern (`again filter peek*`), with their numbers: `!7` runs the one numbered 7 |
 | `again [n]` | List the commands you typed, the newest first, or run one again by its number (`again 3`; also `!3`, and `!!` for the last). See [Typing a command](#typing-a-command) |
+| `again edit [n\|n-m]` | Put the command typed last, or those with the numbers, in a file to change with the commands of the shell, and run it with `run $file`. See [Fix a command and run it](#fix-a-command-and-run-it) |
 | `again n\|n-m > $name` | Keep commands you typed in a register, as typed and the oldest first, for `run` (`again 3-5 > $tidy`); `>> $name` adds them. See [Running commands](#running-commands) |
 | `run $name\|file` | Run the commands of a register or of a file, one per line, each written out first; it stops at the first that fails. See [Running commands](#running-commands) |
 | `run $name\|file words` | Run it with the words put in where the commands have `$1`, `$2` ... (`$*`: all the words): `run $check $file 12`. A script of one command without `$1` gets the words added at the end. See [Script with words](#script-with-words) |
@@ -218,7 +219,7 @@ In a terminal the line of the shell is read key by key:
 - `Up` and `Down` bring back the commands you typed before, on Windows, Linux and macOS alike; they bring back only commands that start with what you have typed (`pe` and `Up`: the last `peek`)
 - `forget` clears what the shell keeps while Blyant runs, for a clean slate without leaving: the commands typed, `$clip`, `$peek` (and the window of the last peek), `$calc`, the last search of `find` and the undo and redo steps. It asks first, with how many commands and undo steps there are; from a script or `--run` the answer is no, unless `--yes` is given. What is saved stays: the registers, the settings, `$file`, the directory you are in and the last list. The commands typed on the full screen are kept apart, and stay
 - `again` lists the commands you typed, numbered, the newest first, and `again 3` (or `!3`) runs number 3 again, as it was typed: it is written out, then run. `!!` runs the last one. `!3` and `Tab` puts the command on the line instead, to be changed before `Enter` (another line number, another file). A command run again becomes the newest, number 1, and `again` itself is not kept. The last 50 are kept while Blyant runs, never in a file (a command can contain text from a file); commands from a file, a pipe or `--run` are not kept. When the list grows long, `again filter lines` shows only the commands with _lines_ in them (or `again filter peek*`, a pattern), with their numbers. The list of `again` does not replace the last list: `open 3` is still a row of the list shown before it
-- `Left`, `Right`, `Home` and `End` move on the line, `Backspace` and `Delete` delete, `Ctrl+U` deletes the line before the cursor, `Ctrl+W` the word before it, and `Esc` the whole line. A line wider than the window is scrolled sideways on its row
+- `Left`, `Right`, `Home` and `End` move on the line, `Ctrl+Left` and `Ctrl+Right` a word at a time, and `Ctrl+A` and `Ctrl+E` to the start and the end, as in bash. `Backspace` and `Delete` delete, `Ctrl+U` deletes the line before the cursor, `Ctrl+W` the word before it, and `Esc` the whole line. A line wider than the window is scrolled sideways on its row
 - `Ctrl+C` drops what you have typed, and `Ctrl+D` (or `Ctrl+Z` on Windows) on an empty line leaves, as `exit` does
 
 With a screen reader, turn the logo off (`set shelllogo false`), and the line may work best when the terminal reads it: turn the setting `shellcompletion` off (`set shellcompletion false` takes effect at once, or `shellcompletion=false` in the settings file; not on the pages of Configuration). The line is then read whole after `Enter`, without `Tab` and with the history your terminal gives. Commands from a file, a pipe or `--run` are always read that way.
@@ -1222,6 +1223,35 @@ Commands you have typed can go in a register as they are: `again` lists them, th
 - `run file` takes a path as other commands do: `run weekly.txt`, `run $pwd/weekly.txt`, `run $file` (the file the last command worked on) or a register that holds a path (`run $docs/weekly.txt`). `run $tidy` runs the lines of the register `tidy` itself
 - `exit` in a run ends the run, not Blyant, and `screen`, `again`, `!3` and `!!` are not run in a run (`!!` would run the run again): the shell says so, and the run stops there
 - `again` keeps `run $tidy`, not the commands it ran, so `!!` runs them all again. From the command line of your system: `blyant --run "run $tidy"` (in quotes, and in bash `\$tidy` or single quotes, as bash uses `$` itself)
+
+### Fix a command and run it
+A long command with a mistake at the start is easier to fix as a line in a file than on the prompt. `again edit` puts the command you typed last in a file, shows it, and makes the file `$file` at line 1, so the commands that change lines and words work on it with `@`. `run $file` then runs it:
+
+```
+blyant ~/novel> insrt notes.md bottom The ferry came late, as it alwyas did in Octobr
+Unknown command: insrt (help lists the commands)
+blyant ~/novel> again edit
+-> blyant-commands-4711.txt
+  1  insrt notes.md bottom The ferry came late, as it alwyas did in Octobr
+<- 1 line of 1
+blyant ~/novel> replace @ insrt insert
+-> blyant-commands-4711.txt
+  1  insert notes.md bottom The ferry came late, as it alwyas did in Octobr
+<- 1 line of 1
+/tmp/blyant-commands-4711.txt: 1 replaced, in line 1
+blyant ~/novel> replace @ alwyas always
+...
+blyant ~/novel> replace @ Octobr October
+...
+blyant ~/novel> run $file
+insert notes.md bottom The ferry came late, as it always did in October
+/home/anna/novel/notes.md: line 12 put in
+```
+
+- `again edit 3` takes command 3 of `again`, and `again edit 3-5` commands 3 to 5, the oldest first, a command on each line. `run $file` runs them one after the other, and stops at the first that fails
+- Everything that changes a file works: `words @` and `word @`, `replace @`, `change @` (the whole line), `lines @`, `insert` and `shift` with several lines, and `undo`. `peek @` shows the file again
+- The file is in the temporary folder of the system (`blyant-commands-` and a number), not in the data directory, so the commands of the shell can change it. A new `again edit` writes over it, and it is deleted when you leave the shell (`exit`, `screen`): what you typed stays on the disk only while the shell runs
+- `again edit` is for the commands typed at the prompt: in a `run`, a file of commands or `--run` it is refused
 
 ### Script with words
 A script can take words when it runs, as a command does: write `$1` where the first word goes, `$2` for the second, and `$*` for all the words, and give the words after the register or file:

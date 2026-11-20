@@ -95,16 +95,29 @@ internal sealed class ShellLineReader
                     _text = recalled;
                     _cursor = _text.Length;
                     break;
+                case ConsoleKey.LeftArrow when control:
+                    // A word to the left: to the start of the word before the cursor (blanks before it skipped)
+                    while (_cursor > 0 && char.IsWhiteSpace(_text[_cursor - 1])) _cursor--;
+                    while (_cursor > 0 && !char.IsWhiteSpace(_text[_cursor - 1])) _cursor--;
+                    break;
+                case ConsoleKey.RightArrow when control:
+                    // A word to the right: to the end of the word after the cursor (blanks before it skipped)
+                    while (_cursor < _text.Length && char.IsWhiteSpace(_text[_cursor])) _cursor++;
+                    while (_cursor < _text.Length && !char.IsWhiteSpace(_text[_cursor])) _cursor++;
+                    break;
                 case ConsoleKey.LeftArrow:
                     if (_cursor > 0) _cursor -= TextMetrics.PreviousElementLength(_text, _cursor);
                     break;
                 case ConsoleKey.RightArrow:
                     if (_cursor < _text.Length) _cursor += TextMetrics.ElementLength(_text, _cursor);
                     break;
+                // (Ctrl+A and Ctrl+E as in bash: the start and the end of the line)
                 case ConsoleKey.Home:
+                case ConsoleKey.A when control:
                     _cursor = 0;
                     break;
                 case ConsoleKey.End:
+                case ConsoleKey.E when control:
                     _cursor = _text.Length;
                     break;
                 case ConsoleKey.Escape:

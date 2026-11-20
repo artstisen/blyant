@@ -356,7 +356,7 @@ internal sealed class ShellCompletion
                 return (position == 1 && after[0] == "-d" ? Kind.Words : Kind.None,
                     new[] { "all" }.Concat(ShellRegisters.All.Keys));
             case "again":
-                return (position == 0 ? Kind.Words : Kind.None, new[] { "filter" });
+                return (position == 0 ? Kind.Words : Kind.None, new[] { "filter", "edit" });
             case "find":
             {
                 // The options not given yet, before the name ("find -f -t storm"); after -t the text
