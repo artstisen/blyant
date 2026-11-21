@@ -1261,6 +1261,8 @@ insert notes.md bottom The ferry came late, as it always did in October
 /home/anna/novel/notes.md: line 12 put in
 ```
 
+![A command typed wrong put in $cmd with again edit, fixed with replace, and run after the question](docs/screenshots/shell-again.svg)
+
 - `run $cmd` shows the commands and asks before it runs them. `Enter` (or `r`) runs them. `e` (Edit) runs nothing and keeps `$cmd`, so you can change it further and `run $cmd` again. `c` (Cancel) runs nothing and deletes `$cmd`. `Esc` runs nothing either, and keeps `$cmd`
 - `run -y $cmd` runs the commands at once, without the question. Other files and registers (`run tidy.txt`, `run $tidy`) are never asked about
 

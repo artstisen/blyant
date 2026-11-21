@@ -546,6 +546,10 @@ def logo_svg(screen):
 # ---------------------------------------------------------------------------------------------------------------
 # The scenes: a name, a title, the settings, the arguments of Blyant, the keys, and if the cursor is drawn
 
+# A setting of a scene that is not a setting of Blyant: the directory Blyant runs in, with its data directory (else
+# one in the temporary folder of the system)
+WORK_IN = '(work)'
+
 SCENES = [
     ('start-page', 'Blyant: start page', {}, [], ['<wait>'], False),
     ('file-browser', 'Blyant: file browser, two panes with line numbers', {}, [], ['f', '<wait>'], False),
@@ -623,6 +627,13 @@ SCENES = [
      ['--shell', PROJECT], ['<wait>', 'peek todo.md /ferryman<Enter>', 'insert @ - [ ] Ask the harbour master<Enter>',
                             'lines @ end (chapter 4)<Enter>', 'shift @ up<Enter>', 'echo $file $line<Enter>',
                             'shift! @ Done<Enter>'], True),
+    # again edit: a command typed wrong put in $cmd, fixed with replace, and run after the question. The data
+    # directory is in the demo (WORK_IN): the path of $cmd is shown, and must be a made-up one
+    ('shell-again', 'Blyant: the shell, a command typed wrong fixed in $cmd and run after a question',
+     {WORK_IN: os.path.join(WRITING, 'Blyant')},
+     ['--shell', PROJECT], ['<wait>', 'insrt todo.md +8 - [ ] Ask the harbur master about the tides<Enter>',
+                            'again edit<Enter>', 'replace $cmd insrt insert<Enter>',
+                            'replace $cmd harbur harbour<Enter>', 'run $cmd<Enter>', '<Enter>'], True),
 ]
 
 
@@ -641,8 +652,10 @@ def main():
             continue
         # (the demo made again for each scene: a scene that changes a file does not change the next one)
         make_demo()
-        make_data(work, settings)
-        screen = run(options.exe, work, args, steps)
+        settings = dict(settings)
+        here = settings.pop(WORK_IN, work)
+        make_data(here, settings)
+        screen = run(options.exe, here, args, steps)
         with open(os.path.join(OUT, name + '.svg'), 'w', encoding='utf-8', newline='\n') as f:
             f.write(svg(screen, title, show_cursor))
         print(name)
