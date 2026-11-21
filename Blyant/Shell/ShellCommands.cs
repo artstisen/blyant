@@ -1463,6 +1463,14 @@ internal sealed partial class ShellSession
     /// </summary>
     internal Item? Resolve(string argument, bool wantDirectory)
     {
+        // "%" alone in the place of a file is $file, as in Vim ("peek %", "copy % backup"; a file named "%" is "./%")
+        if (argument.Trim() == "%")
+        {
+            if (_file != null) return new Item(_file, false);
+            Error(Lang.T("% is $file, the file worked on last: none yet (peek notes.md)"));
+            return null;
+        }
+
         argument = argument.Trim().Trim('"');
         if (argument.Length > 0 && argument.All(char.IsAsciiDigit) && !Exists(PathOf(argument)))
         {
@@ -1488,8 +1496,8 @@ internal sealed partial class ShellSession
     /// </summary>
     internal string CompletionFile(string typed)
     {
-        // ("shift @ " and Tab: the headings of $file)
-        if (typed == "@" && _file != null) return _file;
+        // ("shift @ " and "shift % " and Tab: the headings of $file)
+        if (typed is "@" or "%" && _file != null) return _file;
         var word = ShellRegisters.Expand(typed, int.MaxValue).Trim().Trim('"');
         return RowOf(word)?.Path ?? PathOf(word);
     }
@@ -2105,7 +2113,9 @@ internal sealed partial class ShellSession
         ("$clip", Lang.T("The text clip copied last")),
         ("$peek", Lang.T("The lines peek showed last")),
         ("$calc", Lang.T("The result of the last calc")),
-        ("$cmd", Lang.T("The file of again edit, with the commands to fix and run"))
+        ("$cmd", Lang.T("The file of again edit, with the commands to fix and run")),
+        // (not a $name: a word alone in the place of a file)
+        ("%", Lang.T("$file, in the place of a file: peek %, copy % backup"))
     };
 
     // "help -t text": the rows of help with the text in the command or in what it does (letter case alike, "*" and

@@ -8899,7 +8899,9 @@ public class ShellTests : IDisposable
         Assert.Contains(Lang.T("Names set by Blyant, put in any command (reg lists them with their values):"), output);
         // Every name Blyant sets has a row
         Assert.All(ShellRegisters.Reserved, name => Assert.Contains("  $" + name + " ", output));
-        Assert.Equal(ShellRegisters.Reserved.Length, ShellSession.NameRows().Count);
+        // (and "%", which is $file in the place of a file)
+        Assert.Equal(ShellRegisters.Reserved.Length + 1, ShellSession.NameRows().Count);
+        Assert.Contains("  %  ", output);
         Assert.All(output.TrimEnd('\n').Split('\n'), line => Assert.True(TextMetrics.WidthOf(line) <= 79, line));
         (output, _, _, _) = Run("help $line\nhelp $CLIP\nhelp -t time\n");
         Assert.Contains("$line  " + Lang.T("The line of $file worked on last; with $file it is @"), output);
@@ -8942,5 +8944,24 @@ public class ShellTests : IDisposable
             Shell.LastFile = string.Empty;
             Shell.LastLine = null;
         }
+    }
+
+    // ---- 1.6.2: % is $file in the place of a file
+
+    [Fact]
+    public void Percent_IsFile_InThePlaceOfAFile_AndATextKeepsIt()
+    {
+        File.WriteAllText(In("work", "p.md"), "one\ntwo\n");
+        var (output, errors, _, _) = Run("peek %\n");
+        Assert.Contains(Lang.T("% is $file, the file worked on last: none yet (peek notes.md)"), errors);
+        (output, errors, _, _) = Run("peek p.md 1\npeek %\nlines % 1 dup\ninsert % bottom 100% done, %\ncopy % Draft\n");
+        Assert.Equal(string.Empty, errors);
+        // (a text keeps % as it is, also alone)
+        Assert.Equal("one\none\ntwo\n100% done, %\n", Text("p.md"));
+        Assert.True(File.Exists(In("work", "Draft", "p.md")));
+        // peek 50% is still a place in the file, and help % tells it
+        (output, errors, _, _) = Run("peek p.md 50%\nhelp %\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains("%  " + Lang.T("$file, in the place of a file: peek %, copy % backup"), output);
     }
 }
