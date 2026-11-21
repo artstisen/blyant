@@ -8400,7 +8400,7 @@ public class ShellTests : IDisposable
         Assert.Contains(Lang.T("Give one name, or none: peek save, peek save intro, peek save -d intro"), errors);
         Assert.Contains(Lang.F("No saved peek named {0} (peek saved lists them)", "none"), errors);
         Assert.Contains(Lang.T("No peeks saved yet: peek save keeps the window of the last peek"), errors);
-        Assert.Contains(Lang.T("peek saved takes nothing after it"), errors);
+        Assert.Contains(Lang.T("After peek saved: filter text, -t text, or both"), errors);
         // A file gone since: told
         (_, errors, _, _) = Run("peek long.md 3\npeek save gone\n");
         File.Delete(In("work", "long.md"));
@@ -8438,5 +8438,38 @@ public class ShellTests : IDisposable
         // forget: no last peek for the next shell
         Run("forget\n" + DialogText.ChoiceYes + "\n", terminal: true);
         Assert.Null(PeekMarks.Last);
+    }
+
+    [Fact]
+    public void PeekSaved_FilterAndT_SearchTheNamesPathsAndLines_AndKeepTheNumbers()
+    {
+        File.WriteAllText(In("work", "ch1.md"), "The storm\nat sea\nthe harbour lights\nfar away\n");
+        File.WriteAllText(In("work", "notes.md"), "harbour master\nlist\n");
+        var (_, errors, _, _) = Run("peek ch1.md 1-2\npeek save storm\npeek ch1.md 3-4\npeek save lights\n" +
+                                    "peek notes.md 2-2\npeek save list\n");
+        Assert.Equal(string.Empty, errors);
+        var (output, _, _, _) = Run("peek saved filter ch1\n");
+        Assert.Contains("1  storm   1-2  " + In("work", "ch1.md"), output);
+        Assert.Contains("2  lights  3-4  " + In("work", "ch1.md"), output);
+        Assert.DoesNotContain("notes.md", output);
+        // A pattern fits the name or the name of the file
+        (output, _, _, _) = Run("peek saved filter li*\n");
+        Assert.Contains("2  lights", output);
+        Assert.Contains("3  list", output);
+        Assert.DoesNotContain("storm", output);
+        Assert.Contains("peek saved filter|-t text", Run("help peek\n").Output);
+        // -t: only the lines of the window (notes.md has "harbour" in line 1, outside its window)
+        (output, _, _, _) = Run("peek saved -t harbour\n");
+        Assert.Contains("2  lights  ch1.md:3  the harbour lights", output);
+        Assert.DoesNotContain("list", output);
+        // Both, and nothing found
+        (output, _, _, _) = Run("peek saved filter notes -t harbour\npeek saved filter none\npeek saved -t none\n");
+        Assert.Contains(Lang.F("No saved peeks with {0} in their lines", "harbour"), output);
+        Assert.Contains(Lang.F("No saved peeks with {0} in them", "none"), output);
+        Assert.Contains(Lang.F("No saved peeks with {0} in their lines", "none"), output);
+        var (_, wrong, _, _) = Run("peek saved filter\npeek saved -t\npeek saved x\n");
+        Assert.Equal(2, wrong.Split(Lang.T("Give a text: peek saved filter storm, peek saved -t harbour")).Length - 1);
+        Assert.Contains(Lang.T("After peek saved: filter text, -t text, or both"), wrong);
+        Assert.Equal("peek saved filter", Tab(Completion(), "peek saved fi"));
     }
 }

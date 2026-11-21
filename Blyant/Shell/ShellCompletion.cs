@@ -183,6 +183,8 @@ internal sealed class ShellCompletion
 
                 if (position == 1 && after[0].Equals("save", StringComparison.OrdinalIgnoreCase))
                     return (Kind.Words, new[] { "-d" });
+                if (position == 1 && after[0].Equals("saved", StringComparison.OrdinalIgnoreCase))
+                    return (Kind.Words, new[] { "filter", "-t" });
                 return position switch
                 {
                     0 => (Kind.PathThenWords, PeekPlaces.Concat(ShellSession.PeekMarkWords)),

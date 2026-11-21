@@ -39,17 +39,16 @@ internal sealed partial class ShellSession
         }
     }
 
-    // "peek save", "peek save intro", "peek save -d intro", "peek back", "peek back intro", "peek back 2", "peek saved".
-    // False when the words are not these (a peek of a file)
-    private bool PeekMark(List<string> words)
+    // "peek save", "peek save intro", "peek save -d intro", "peek back", "peek back intro", "peek back 2", "peek saved"
+    // ("filter storm", "-t harbour"). False when the words are not these (a peek of a file)
+    private bool PeekMark(List<string> words, string argument)
     {
         var kind = words[0].ToLowerInvariant();
         if (!PeekMarkWords.Contains(kind)) return false;
         switch (kind)
         {
             case "saved":
-                if (words.Count > 1) Error(Lang.T("peek saved takes nothing after it"));
-                else ListSavedPeeks();
+                ListSavedPeeks(AfterWords(argument, 1));
                 return true;
             case "save":
                 SavePeek(words.Skip(1).ToList());
@@ -164,9 +163,32 @@ internal sealed partial class ShellSession
     }
 
     // "peek saved": the windows kept, numbered for "peek back 2": the name ("-" for the one without a name), the lines
-    // and the file, marked "(missing)" when it is not there
-    private void ListSavedPeeks()
+    // and the file, marked "(missing)" when it is not there. "filter storm": those with a text in the name or the path
+    // (or a pattern that fits the name or the name of the file: "ch*"); "-t harbour": those with a text in the lines
+    // of the window, as the file is now, with the first line found ("chapter-3.md:43  The harbour lights"). Both can
+    // be given; the rows keep the numbers of the whole list
+    private void ListSavedPeeks(string rest)
     {
+        var (before, search) = TextOption(rest);
+        before = before.Trim();
+        string? filter = null;
+        if (before.Length > 0)
+        {
+            if (!CommandLine.Name(before).Equals("filter", StringComparison.OrdinalIgnoreCase))
+            {
+                Error(Lang.T("After peek saved: filter text, -t text, or both"));
+                return;
+            }
+
+            filter = Rest(before).Trim().Trim('"');
+        }
+
+        if (filter is { Length: 0 } || search is { Length: 0 })
+        {
+            Error(Lang.T("Give a text: peek saved filter storm, peek saved -t harbour"));
+            return;
+        }
+
         PeekMarks.Load();
         var saved = PeekMarks.Saved;
         if (saved.Count == 0)
@@ -175,19 +197,74 @@ internal sealed partial class ShellSession
             return;
         }
 
-        var width = saved.Count.ToString(CultureInfo.InvariantCulture).Length;
-        var nameWidth = saved.Max(entry => Math.Max(entry.Name.Length, 1));
-        var lineWidth = saved.Max(entry => LinesText(entry.Window).Length);
+        var pattern = search != null ? FileSearch.WildcardText(search) : null;
+        var rows = new List<(int Number, string Name, PeekMarks.Window Window, (int Line, string Text)? Found)>();
         for (var i = 0; i < saved.Count; i++)
         {
             var (name, window) = saved[i];
-            var missing = File.Exists(window.Path) ? string.Empty : " " + Lang.T("(missing)");
-            Row(i + 1, width, (name.Length > 0 ? name : "-").PadRight(nameWidth) + "  " +
-                              LinesText(window).PadRight(lineWidth) + "  " + window.Path + missing);
+            if (filter != null && !Fits(filter, window.Path, name)) continue;
+            (int, string)? found = null;
+            if (pattern != null)
+            {
+                found = FirstLineInWindow(window, pattern);
+                if (found == null) continue;
+            }
+
+            rows.Add((i + 1, name, window, found));
         }
+
+        if (rows.Count == 0)
+        {
+            Line(search != null
+                ? Lang.F("No saved peeks with {0} in their lines", search)
+                : Lang.F("No saved peeks with {0} in them", filter!));
+            return;
+        }
+
+        var width = saved.Count.ToString(CultureInfo.InvariantCulture).Length;
+        var nameWidth = rows.Max(row => Math.Max(row.Name.Length, 1));
+        var placeWidth = rows.Max(row => Place(row.Window, row.Found).Length);
+        foreach (var (number, name, window, found) in rows)
+        {
+            var shown = found is { } line
+                ? Place(window, found).PadRight(placeWidth) + "  " + line.Text
+                : Place(window, null).PadRight(placeWidth) + "  " + window.Path +
+                  (File.Exists(window.Path) ? string.Empty : " " + Lang.T("(missing)"));
+            Row(number, width, (name.Length > 0 ? name : "-").PadRight(nameWidth) + "  " + shown);
+        }
+
+        // The lines of a window ("40-49"), or the file and the line found in it ("chapter-3.md:43")
+        static string Place(PeekMarks.Window window, (int Line, string Text)? found) =>
+            found is { } line
+                ? Path.GetFileName(window.Path) + ":" + line.Line.ToString(CultureInfo.InvariantCulture)
+                : LinesText(window);
 
         static string LinesText(PeekMarks.Window window) =>
             window.First.ToString(CultureInfo.InvariantCulture) + "-" +
             (window.First + window.Count - 1).ToString(CultureInfo.InvariantCulture);
+    }
+
+    // The first line of a window with a text, as the file is now: its number and its text (trimmed). Null when none
+    // has it, or the file is gone or cannot be read
+    private static (int Line, string Text)? FirstLineInWindow(PeekMarks.Window window, System.Text.RegularExpressions.Regex pattern)
+    {
+        List<string> lines;
+        try
+        {
+            if (!File.Exists(window.Path)) return null;
+            lines = LinesOfText(TextFile.Load(window.Path).Text);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidDataException)
+        {
+            return null;
+        }
+
+        var last = (int)Math.Min((long)window.First + window.Count - 1, lines.Count);
+        for (var number = window.First; number <= last; number++)
+        {
+            if (FileSearch.Matches(pattern, lines[number - 1])) return (number, lines[number - 1].Trim());
+        }
+
+        return null;
     }
 }

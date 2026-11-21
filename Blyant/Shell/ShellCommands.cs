@@ -34,6 +34,7 @@ internal sealed partial class ShellSession
         ("peek save [name]", Lang.T("Keep the window of the last peek, to come back to")),
         ("peek back [name|n]", Lang.T("Show a window kept again (peek saved lists them)")),
         ("peek save -d [name]", Lang.T("Delete a window kept")),
+        ("peek saved filter|-t text", Lang.T("List windows kept: a text in the name or path, or the lines")),
         ("peek +line", Lang.T("Peek the last file again from a line (peek +120)")),
         ("+ n, - n, ++ n, -- n", Lang.T("Move the window n steps (+ 20)")),
         ("j, jj, k, kk, gg, G", Lang.T("As +, ++, -, --, peek top and peek bottom")),

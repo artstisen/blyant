@@ -113,7 +113,7 @@ Some commands have a short form, which does the same: `fav` and `favs` (`favorit
 | `+ 20`, `- 20`, `++ 3`, `-- 3` | Move the window of the last peek by that many steps: `+ 20` 20 lines down (with `shellpeekstep` 1), `++ 3` 3 big steps |
 | `peek [file\|n] /text` | Move the window to the first line containing a text, marked with `>` (`peek notes.md /storm`; without a file: the file peeked last). `/` alone goes to the next line with the text, `?` to the previous one. See [Peeking into a file](#peeking-into-a-file) |
 | `peek` (or `.`) | Show the last peek again: the same lines of the same file, as it is now (after `insert`, `change`, `lines` or the editor). See [Peeking into a file](#peeking-into-a-file) |
-| `peek save [name]`, `peek back [name\|n]`, `peek saved` | Keep the window of the last peek, show it again later, and list the windows kept (`peek save -d name` deletes one). See [Come back to a peek](#come-back-to-a-peek) |
+| `peek save [name]`, `peek back [name\|n]`, `peek saved` | Keep the window of the last peek, show it again later, and list the windows kept (`peek save -d name` deletes one). `peek saved filter storm` lists those with a text in the name or the path, and `peek saved -t harbour` those with a text in their lines. See [Come back to a peek](#come-back-to-a-peek) |
 | `peek [file\|n] +\|++\|-\|--` | Move the window of the last peek: `+` 1 line further down, `++` 5, `-` and `--` up again (the settings `shellpeekstep` and `shellpeekbigstep`: `set shellpeekstep 2`; 1 to 1000, and `reset` puts back 1 and 5), as many lines as before (`peek plot.md +`, then `peek +`: the file peeked last; `+`, `++`, `-` or `--` alone on the line do the same, also after other commands; a number after them is a count of steps: `+ 20`). The lines shown are `$peek`. A file other than the one peeked last starts from the top (`peek other.md +`: from line 2); at the end the last lines are shown |
 | `j`, `jj`, `k`, `kk`, `gg`, `G` | The keys of Vim, as in the editor: `j` and `jj` are `+` and `++`, `k` and `kk` are `-` and `--` (`j 20` too), `gg` is `peek top` and `G` is `peek bottom` (`G notes.md`: the end of that file). Typed as they are: `J` and `GG` are not commands |
 | `find [-l\|-f\|-b\|-d] [name] [-t text]` | Find files here and in the directories below, by name and by text they contain (see [Files](#files)). The rows show the path from here; `find -l` gives the full paths, `find -f` the folder and the name, and `find -b` the name only. `find -d` shows when each file was last changed |
@@ -447,11 +447,14 @@ peek save storm                              keep a window under a name
 peek back storm                              show it again
 peek saved                                   the windows kept, numbered
 peek back 2                                  the window of row 2
+peek saved filter chapter-3                  those with a text in the name or the path
+peek saved -t harbour                        those with a text in their lines, and the line
 peek save -d storm                           delete it (peek save -d: the one without a name)
 ```
 
 - A window kept is the file, the first line and how many lines, never the text: `peek back` shows the lines as the file is now. Lines put in above the window move the text down, so `peek back` shows the same line numbers, not the same text
 - After `peek back` the window is the last peek, so `+`, `.` and `G` go on from it
+- `peek saved filter text` lists the windows kept with the text in the name or the path, letter case alike (`peek saved filter chapter-3`: those of that file); a pattern (`li*`, `ch?.md`) fits the name or the name of the file. `peek saved -t text` lists those with the text in the lines of the window, read from the file as it is now (not the rest of the file), with the first line found: `2  lights  chapter-3.md:43  the harbour lights`. `*` and `?` work as for `find -t`. Both can be given (`peek saved filter ch -t sea`), the rows keep the numbers of the whole list (`peek back 2`), and `Tab` after `peek saved` offers `filter` and `-t`
 - A name starts with a letter, followed by letters, digits, `-` and `_` (a number is a row of `peek saved`). Saving under a name that is kept already replaces it, and `peek save` without a name replaces the window without a name
 - The windows are kept in `peeks.txt` in the data directory, also when Blyant is closed, and they follow a file that is renamed or moved, in the shell or on the full screen. A file deleted since is marked `(missing)` in `peek saved`, and `peek back` says it is not found
 - `save`, `back` and `saved` are taken as these words right after `peek`: a file with one of these names is peeked as `peek ./save`. `Tab` completes them, and the names after `peek back`
