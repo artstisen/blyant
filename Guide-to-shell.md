@@ -1172,6 +1172,24 @@ lines plot.md 3-5 > $notes          ">": the register is those lines alone
 - `Tab` completes the names of the registers after a `$` (and the names set by Blyant that have a value: `$clip` once something is copied, `$file` once a file is worked on), and after `reg`
 - The registers are kept in the data directory (`registers.txt`), so they are there the next time. The file can be edited in another program: a line is the name, a tab, and the value. If the file changed since the shell read it, it is read again before the next command, and `reg` points out lines that are not registers (no tab, or a name a register cannot have): they are kept at the end of the file, so you can put them right. The editor has separate registers. `reset` does not take them away (they are not settings), and the log has the names of registers, never the values
 
+### A scratchpad for quick notes
+A register makes a handy scratchpad: jot down a thought without leaving what you are doing, and without a file to open. `+=` adds a line at the end of the register (it is made the first time), and the register is kept in `registers.txt` in the data directory, so the notes are still there tomorrow:
+
+```
+reg scratch += Ask Anna about ferries    the first note: $scratch is made
+reg scr                                  then Tab: reg scratch
+reg scratch += Check the tide table      a blank and += after the name
+reg scratch += $date: storm at night     $date and other $names put in
+reg scratch                              all the notes, a line each
+reg -t tide                              find a note, in any register
+insert todo.md bottom $scratch           the notes put in a file
+reg -d scratch                           done: the scratchpad taken away
+```
+
+- `Tab` after `reg` completes the name of a register: `reg scr` and `Tab` gives `reg scratch`, so a long name is quick to type. `Tab` leaves no blank after the name (`Tab` again gives the next register that fits): type the blank before `+=`
+- `reg` lists the scratchpad with the first note and the number of lines (`$scratch Ask Anna about ferries ...  (3 lines)`), and `reg scratch` shows all of them
+- The notes are kept in plain text in `registers.txt`, which you can also edit in another program: the first note is on the line with the name, and each note after it on a new line that starts with a tab. Any name works: keep several scratchpads (`$ideas`, `$todo`)
+
 ### Results in a register
 Some commands put what they find in a register named after `>` at the end, as `lines` does: `>` sets the register, and `>>` adds to the end of the register, as lines.
 
