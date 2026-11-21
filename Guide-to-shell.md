@@ -216,8 +216,8 @@ Some commands have a short form, which does the same: `fav` and `favs` (`favorit
 | `run [-y] $cmd` | Show the commands of `again edit` and ask first: run them, edit them more, or cancel (`$cmd` is deleted). `run -y $cmd` runs them at once. See [Fix a command and run it](#fix-a-command-and-run-it) |
 | `run $name\|file words` | Run it with the words put in where the commands have `$1`, `$2` ... (`$*`: all the words): `run $check $file 12`. A script of one command without `$1` gets the words added at the end. See [Script with words](#script-with-words) |
 | `$name words` | A register of one line as the start of a command: after `reg w words`, `$w $file 12` runs `words` with the file and the line. See [Script with words](#script-with-words) |
-| `help [command]` (`h`) | List the commands, or explain one |
-| `help -t text` | Show the rows of `help` with the text in the command or in what it does, and the short forms with it: `help -t start` finds the commands that take `start`. Letter case does not matter, and `*` and `?` work as in the other searches (`help -t peek*top`); the descriptions are searched in the language Blyant uses |
+| `help [command]` (`h`) | List the commands, and the names set by Blyant (`$file`, `$line`, `$date` ...), or explain one: `help peek`, `help $line` |
+| `help -t text` | Show the rows of `help` with the text in the command or in what it does (the names set by Blyant too: `help -t time`), and the short forms with it: `help -t start` finds the commands that take `start`. Letter case does not matter, and `*` and `?` work as in the other searches (`help -t peek*top`); the descriptions are searched in the language Blyant uses |
 | `exit` (`quit`, `q`) | Leave Blyant |
 
 ### Typing a command

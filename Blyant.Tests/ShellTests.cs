@@ -8889,4 +8889,23 @@ public class ShellTests : IDisposable
         Assert.Contains(Lang.T("The lines are in that file already: shift moves lines in a file"), errors);
         Assert.Equal("two\n# Notes\none\ntwo\n\n## Ideas\n\nlast\none\n", Text("c.md"));
     }
+
+    // ---- 1.6.2: the names set by Blyant in help
+
+    [Fact]
+    public void Help_ListsTheNamesSetByBlyant_AndTellsOne_AndFindsThem()
+    {
+        var (output, _, _, _) = Run("help\n");
+        Assert.Contains(Lang.T("Names set by Blyant, put in any command (reg lists them with their values):"), output);
+        // Every name Blyant sets has a row
+        Assert.All(ShellRegisters.Reserved, name => Assert.Contains("  $" + name + " ", output));
+        Assert.Equal(ShellRegisters.Reserved.Length, ShellSession.NameRows().Count);
+        Assert.All(output.TrimEnd('\n').Split('\n'), line => Assert.True(TextMetrics.WidthOf(line) <= 79, line));
+        (output, _, _, _) = Run("help $line\nhelp $CLIP\nhelp -t time\n");
+        Assert.Contains("$line  " + Lang.T("The line of $file worked on last; with $file it is @"), output);
+        // ($clip, $peek and $calc with their commands too)
+        Assert.Contains("clip words [-p] file|n line n|n-m", output);
+        Assert.Contains("$time  " + Lang.T("The time now, as 14:05"), output);
+        Assert.Contains("$now  ", output);
+    }
 }

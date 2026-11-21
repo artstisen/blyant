@@ -2030,14 +2030,21 @@ internal sealed partial class ShellSession
     private void Help(string argument)
     {
         var rows = HelpRows().ToList();
-        // "help -t start": the rows with the text in the command or in what it does
+        // "help -t start": the rows with the text in the command or in what it does (the names set by Blyant too)
         if (TextOption(argument) is { Text: { } search } option)
         {
-            HelpSearch(rows, option.Before, search);
+            HelpSearch(rows.Concat(NameRows()).ToList(), option.Before, search);
             return;
         }
 
         var name = argument.Trim().ToLowerInvariant();
+        // "help $line": the name set by Blyant; $clip, $peek and $calc also with their commands
+        if (NameRows().FirstOrDefault(row => row.Command == name) is { Command: not null } named)
+        {
+            CommandRows(new[] { named }, string.Empty);
+            if (name is not ("$clip" or "$peek" or "$calc")) return;
+        }
+
         if (name.Length > 0)
         {
             // The command, or the long name of a short one ("fav": favorites)
@@ -2074,9 +2081,32 @@ internal sealed partial class ShellSession
         Line(Lang.T("A line editor: @ is the file and line you are at; input types lines in after it"));
         CommandRows(rows, "  ");
         Line();
+        Line(Lang.T("Names set by Blyant, put in any command (reg lists them with their values):"));
+        CommandRows(NameRows(), "  ");
+        Line();
         Line(Lang.T("A number is a row of the last list shown: open 3, cd 2"));
         ShortForms();
     }
+
+    /// <summary>
+    /// The names Blyant sets, as help lists them: each of ShellRegisters.Reserved, and what it holds (looked up when
+    /// shown: the language can change)
+    /// </summary>
+    internal static List<(string Command, string Text)> NameRows() => new()
+    {
+        ("$pwd", Lang.T("The directory you are in")),
+        ("$prev", Lang.T("The directory you were in before (cd - goes there)")),
+        ("$file", Lang.T("The file worked on last (opened, peeked, changed)")),
+        ("$line", Lang.T("The line of $file worked on last; with $file it is @")),
+        ("$tag", Lang.T("The tag you work with (tag draft sets it)")),
+        ("$date", Lang.T("Today, as 2026-11-15")),
+        ("$time", Lang.T("The time now, as 14:05")),
+        ("$now", Lang.T("The date and the time now, as 2026-11-15 14:05:33")),
+        ("$clip", Lang.T("The text clip copied last")),
+        ("$peek", Lang.T("The lines peek showed last")),
+        ("$calc", Lang.T("The result of the last calc")),
+        ("$cmd", Lang.T("The file of again edit, with the commands to fix and run"))
+    };
 
     // "help -t text": the rows of help with the text in the command or in what it does (letter case alike, "*" and
     // "?" as in the other searches), as help shows them, and the short forms with it
