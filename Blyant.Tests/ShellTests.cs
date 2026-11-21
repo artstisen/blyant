@@ -8777,9 +8777,9 @@ public class ShellTests : IDisposable
         {
             File.WriteAllText(In("work", "in.md"), "one\ntwo\n");
             var (output, _, _, _) = Run("peek in.md 1\ninput\nsecret text\nmore\n.\n", terminal: true);
-            Assert.Contains("in.md:2> ", output);
-            Assert.Contains("in.md:3> ", output);
-            Assert.Contains("in.md:4> ", output);
+            Assert.Contains("$file:2> ", output);
+            Assert.Contains("$file:3> ", output);
+            Assert.Contains("$file:4> ", output);
             Assert.Contains("input", CommandHistory.Of(CommandContext.Shell));
             Assert.DoesNotContain(CommandHistory.Of(CommandContext.Shell), command => command.Contains("secret"));
             Assert.DoesNotContain("secret", File.ReadAllText(ShellHistory.FilePath));
@@ -8829,5 +8829,15 @@ public class ShellTests : IDisposable
         {
             CommandHistory.Clear();
         }
+    }
+
+    [Fact]
+    public void Input_MakesTheFileGivenFileDollar_FromTheStart()
+    {
+        File.WriteAllText(In("work", "a.md"), "a\n");
+        File.WriteAllText(In("work", "b.md"), "b\n");
+        // (the prompt names $file: a file given is $file at once, also when nothing is typed in)
+        var (output, _, _, _) = Run("peek a.md 1\ninput b.md bottom\n.\necho $file $line\n");
+        Assert.Contains(In("work", "b.md") + " 1\n", output);
     }
 }

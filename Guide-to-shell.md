@@ -745,7 +745,7 @@ blyant ~/novel> word -p @ 6 upper
 ## Typing lines in
 ![The outline peeked, two lines typed in at the end with input and a line with a dot, and the outline peeked again](docs/screenshots/shell-input.svg)
 
-`input` puts in the lines you type, one after another, as the `a` command of the line editor `ed` does. The prompt shows the file and the number the next line gets, and a line with only a `.` ends it:
+`input` puts in the lines you type, one after another, as the `a` command of the line editor `ed` does. The prompt shows `$file`, the file the lines go in, and the number the next line gets, and a line with only a `.` ends it:
 
 ```
 blyant ~/novel> peek notes.md +12 1
@@ -753,14 +753,15 @@ blyant ~/novel> peek notes.md +12 1
   12  The ferry was late.
 -v lines 12-12 of 40
 blyant ~/novel> input
-notes.md:13> Maren waited at the rail.
-notes.md:14> The island came out of the rain.
-notes.md:15>
-notes.md:16> .
+$file:13> Maren waited at the rail.
+$file:14> The island came out of the rain.
+$file:15>
+$file:16> .
 /home/anna/novel/notes.md: lines 13-15 put in
 ```
 
 - `input` alone puts the lines in after `$line`, as `insert @` puts a line (see [Working on one line](#working-on-one-line)); in an empty file (after `new`) at the top. A file and a place can be given, as `insert` takes them: `input notes.md bottom`, `input notes.md top`, `input notes.md +12`
+- The file is `$file` from the start, also a file given (`input other.md bottom`), so the prompt stays short whatever the name of the file: `echo $file` after `input` tells the path
 - Each line is written when you press `Enter`, so nothing is lost when the terminal is closed. All the lines of one `input` are one step of `undo`
 - The lines go in as you type them: blanks, quotes and `$5` stay as they are (no `$name` is put in), and an empty line is a blank line. They are not kept with the commands typed (`Up`, `again`, `shellhistory.txt`), nor written to the log
 - A line with only `.` ends `input`, and so does `Ctrl+D` (or `Ctrl+Z` on Windows) on an empty line. `Ctrl+C` drops the line you are typing, and you go on with the next one. As in `ed`, a line of only `.` cannot be put in this way: use `insert` for it

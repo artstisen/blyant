@@ -259,9 +259,9 @@ blyant ~/novel> peek plot.md +4 1
   4  The letter is from her aunt.
 -v lines 4-4 of 6
 blyant ~/novel> input
-plot.md:5> The ferryman knows.
-plot.md:6> He has always known.
-plot.md:7> .
+$file:5> The ferryman knows.
+$file:6> He has always known.
+$file:7> .
 /home/anna/novel/plot.md: lines 5-6 put in
 ```
 

@@ -110,7 +110,8 @@ internal sealed partial class ShellSession
     // "input", "input @", "input notes.md bottom", "input notes.md +12": the lines typed put in the file one after
     // another, as in the line editor ed: alone (or "@"), after $line, as insert @ puts a line; a line with only "." ends
     // it, and so does the end of the input (Ctrl+D). Each line is written when it is typed, so none is lost; all are one
-    // step of undo. The prompt is the file and the number the next line gets ("notes.md:14> "). The lines are put in as
+    // step of undo. The file is $file from the start, and the prompt is "$file" and the number the next line gets
+    // ("$file:14> ": short, whatever the name of the file; "echo $file" tells the path). The lines are put in as
     // typed: no $name, and kept nowhere else (not in the commands typed, nor in the log). In a run, the lines after
     // "input" in the script; from a file or a pipe, the lines after it. As insert: the line endings and byte order mark
     // of the file kept, only a file in UTF-8, and not one Blyant uses; the file is then the last list, at the first
@@ -128,11 +129,14 @@ internal sealed partial class ShellSession
 
         if (EditableFile(words[0]) is not { } editable) return;
         var (item, file) = editable;
-        var name = Path.GetFileName(item.Path);
         var next = (int)Math.Min(place.Value, LinesOfText(file.Text).Count + 1L);
+        // (the file the lines go in is $file, at the line before them, from the start: the prompt names $file)
+        _file = Path.GetFullPath(item.Path);
+        _line = next - 1;
         var first = next;
         var count = 0;
-        while (ReadText(name + ":" + next.ToString(System.Globalization.CultureInfo.InvariantCulture) + "> ") is { } typed)
+        // English: "$file" is the name of the shell, the same in all languages
+        while (ReadText("$file:" + next.ToString(System.Globalization.CultureInfo.InvariantCulture) + "> ") is { } typed)
         {
             if (typed.Trim() == ".") break;
             var (text, number) = WithLinesAt(file.Text, new List<string> { typed }, next - 1);
