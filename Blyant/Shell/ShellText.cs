@@ -70,13 +70,7 @@ internal sealed partial class ShellSession
         }
 
         var rest = AfterWords(argument, 2);
-        var where = words[1].ToLowerInvariant();
-        int? at = where switch
-        {
-            "top" => 1,
-            "bottom" => int.MaxValue,
-            _ => where.Length > 1 && where[0] == '+' && int.TryParse(where[1..], out var line) && line > 0 ? line : null
-        };
+        var at = InsertPlace(words[1]);
         if (at == null)
         {
             Error(Lang.F("Not a place in a file: {0} (top, bottom or +12)", words[1]));
@@ -99,6 +93,68 @@ internal sealed partial class ShellSession
         Line(count == 1
             ? Lang.F("{0}: line {1} put in", item.Path, number)
             : Lang.F("{0}: lines {1}-{2} put in", item.Path, number, number + count - 1));
+    }
+
+    // The place insert and input take: "top" (line 1), "bottom" (after the last), "+12" (as line 12); null for another
+    private static int? InsertPlace(string word)
+    {
+        var where = word.ToLowerInvariant();
+        return where switch
+        {
+            "top" => 1,
+            "bottom" => int.MaxValue,
+            _ => where.Length > 1 && where[0] == '+' && int.TryParse(where[1..], out var line) && line > 0 ? line : null
+        };
+    }
+
+    // "input", "input @", "input notes.md bottom", "input notes.md +12": the lines typed put in the file one after
+    // another, as in the line editor ed: alone (or "@"), after $line, as insert @ puts a line; a line with only "." ends
+    // it, and so does the end of the input (Ctrl+D). Each line is written when it is typed, so none is lost; all are one
+    // step of undo. The prompt is the file and the number the next line gets ("notes.md:14> "). The lines are put in as
+    // typed: no $name, and kept nowhere else (not in the commands typed, nor in the log). In a run, the lines after
+    // "input" in the script; from a file or a pipe, the lines after it. As insert: the line endings and byte order mark
+    // of the file kept, only a file in UTF-8, and not one Blyant uses; the file is then the last list, at the first
+    // line put in, and $line is the last
+    private void Input(string argument)
+    {
+        // ("input" alone and "input @" are $file after $line, put in before: see WithAt)
+        var words = Words(argument);
+        var place = words.Count == 2 ? InsertPlace(words[1]) : null;
+        if (place == null)
+        {
+            Error(Lang.T("Give a file and where, or nothing: input, input notes.md bottom, input notes.md +12"));
+            return;
+        }
+
+        if (EditableFile(words[0]) is not { } editable) return;
+        var (item, file) = editable;
+        var name = Path.GetFileName(item.Path);
+        var next = (int)Math.Min(place.Value, LinesOfText(file.Text).Count + 1L);
+        var first = next;
+        var count = 0;
+        while (ReadText(name + ":" + next.ToString(System.Globalization.CultureInfo.InvariantCulture) + "> ") is { } typed)
+        {
+            if (typed.Trim() == ".") break;
+            var (text, number) = WithLinesAt(file.Text, new List<string> { typed }, next - 1);
+            // (the path and the line, never the text)
+            if (!SavedEdit(file, text, "Input", item.Path + ":" + number)) break;
+            if (count == 0) first = number;
+            count++;
+            next = number + 1;
+        }
+
+        if (count == 0)
+        {
+            Line(Lang.T("Nothing put in"));
+            return;
+        }
+
+        LastList = new List<Item> { new(item.Path, false, (first, 1)) };
+        // (@ at the last line put in, so the next "input" goes on after it)
+        _line = first + count - 1;
+        Line(count == 1
+            ? Lang.F("{0}: line {1} put in", item.Path, first)
+            : Lang.F("{0}: lines {1}-{2} put in", item.Path, first, first + count - 1));
     }
 
     // "change notes.md +12 A new line", "change notes.md 12-15 One line instead": the lines become the text (one line;

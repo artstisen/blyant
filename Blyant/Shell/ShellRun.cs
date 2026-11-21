@@ -102,12 +102,16 @@ internal sealed partial class ShellSession
         // English: the log (the register or the file, never its commands: each is logged by its name as it runs)
         EventLog.Add(DialogText.LogShell + ": run " + (what.StartsWith('$') ? what : "file " + what));
         var typedBefore = _typed;
+        var nextBefore = _runNext;
         _runDepth++;
         // (the commands run are not kept for again: "run $tidy" is, so !! runs them all again)
         _typed = false;
         try
         {
-            for (var i = 0; i < lines.Count; i++)
+            var i = 0;
+            // (input in the script reads the lines after it, as they are, up to the ".")
+            _runNext = () => i + 1 < lines.Count ? lines[++i] : null;
+            for (; i < lines.Count; i++)
             {
                 var command = lines[i].Trim();
                 if (command.Length == 0 || command.StartsWith('#')) continue;
@@ -126,6 +130,7 @@ internal sealed partial class ShellSession
         {
             _runDepth--;
             _typed = typedBefore;
+            _runNext = nextBefore;
         }
     }
 

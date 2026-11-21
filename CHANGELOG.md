@@ -1,6 +1,8 @@
 # Changes
 
 ## v1.6.2
+- **`input` in the shell, as in the line editor `ed`**: `input` puts in the lines you type, one after another, after `$line` (as `insert @` puts a line), until a line with only `.`; `input notes.md bottom`, `top` and `+12` take a place as `insert` does. The prompt shows the file and the number the next line gets (`notes.md:14>`). Each line is written when it is typed, all of them are one step of `undo`, and they go in as typed (no `$name` put in). They are not kept with the commands typed, nor in the log. `Ctrl+D` ends too, `Ctrl+C` drops the line typed, and `Tab` and `Up` do nothing while lines are typed. In a script, `input` takes the lines after it, up to the `.`. See [Typing lines in](Guide-to-shell.md#typing-lines-in), with a screenshot (`docs/screenshots/shell-input.svg`).
+- **The shell as a line editor in the docs**: the README, the guide to the shell, the tutorial, the user manual (the chapter "Shell: a line editor") and the first line of `help` tell that the shell is a line editor, as `ed` is, with `@` the file and the line you are at.
 
 ## v1.6.1 (2026-11-21)
 - **Fixes from the review before the release**:

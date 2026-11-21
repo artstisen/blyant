@@ -642,6 +642,12 @@ SCENES = [
                             'peek chapter-02.md +6 2<Enter>', 'peek save causeway<Enter>',
                             'peek chapter-01.md +21 2<Enter>',
                             'peek back opening<Enter>', 'peek saved<Enter>'], True),
+    # input: lines typed into a file one after another, as in the line editor ed, ended by a line with a dot
+    ('shell-input', 'Blyant: the shell as a line editor, lines typed into the outline with input',
+     {},
+     ['--shell', PROJECT], ['<wait>', 'peek outline.md<Enter>', 'input outline.md bottom<Enter>',
+                            '6. The Crossing: Maren rows out to the Teeth<Enter>',
+                            '7. Low Light: the lamp lit again<Enter>', '.<Enter>', 'peek outline.md<Enter>'], True),
 ]
 
 

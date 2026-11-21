@@ -114,7 +114,7 @@ CHAPTERS = [
     ('Shell tutorial', [
         (TUTORIAL, 'Shell tutorial', 'body', None),
     ]),
-    ('Shell', [
+    ('Shell: a line editor', [
         (SHELL, 'Guide to the shell', 'body', None),
     ]),
     ('Appendix', [

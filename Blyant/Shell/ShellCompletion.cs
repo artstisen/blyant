@@ -281,6 +281,7 @@ internal sealed class ShellCompletion
                 return (position == arrow + 3 ? Kind.Words : Kind.None, new[] { "copy", "cut" });
             }
             case "insert":
+            case "input":
                 return position switch
                 {
                     0 => (Kind.Path, none),

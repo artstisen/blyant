@@ -56,6 +56,7 @@ internal sealed partial class ShellSession
         ("delete file|n", Lang.T("Delete a file or directory, to the trash (del)")),
         ("info [file|n]", Lang.T("Describe a file or directory (alone: this one)")),
         ("insert file|n top|bottom|+line text", Lang.T("Put a line of text in a file, without opening it")),
+        ("input [file|n top|bottom|+line]", Lang.T("Type lines into a file after $line; a line with . ends")),
         ("change file|n +line|from-to [text]", Lang.T("Replace lines of a file with text, or delete them")),
         ("shift file|n lines place", Lang.T("Move lines in a file: under a heading, +line, top or bottom")),
         ("shift! file|n lines place", Lang.T("Move lines, and tick or untick any task boxes")),
@@ -1302,6 +1303,9 @@ internal sealed partial class ShellSession
             case "insert":
                 Insert(argument);
                 break;
+            case "input":
+                Input(argument);
+                break;
             case "shift":
                 Shift(argument, false);
                 break;
@@ -2065,6 +2069,8 @@ internal sealed partial class ShellSession
             return;
         }
 
+        // (what the shell is: a line editor, as ed is)
+        Line(Lang.T("A line editor: @ is the file and line you are at; input types lines in after it"));
         CommandRows(rows, "  ");
         Line();
         Line(Lang.T("A number is a row of the last list shown: open 3, cd 2"));

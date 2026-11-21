@@ -284,6 +284,45 @@ internal sealed partial class ShellSession
     // The line run now was typed at the prompt (in a terminal): it is kept for Up and Down, and for "again"
     private bool _typed;
 
+    // In a run: the next line of the script, for input (null: the end of it)
+    private Func<string?>? _runNext;
+
+    // A line of text for input: from the script of a run, or read as a command is read, but without Tab and Up (it is
+    // text) and kept nowhere. Ctrl+C drops the line typed, and another is read. Null at the end of the input (Ctrl+D,
+    // the end of a file or a pipe, the end of the script)
+    private string? ReadText(string prompt)
+    {
+        if (_runNext != null) return _runNext()?.TrimEnd('\r');
+        while (true)
+        {
+            if (Terminal) Tools.TakeCancelKey();
+            if (_lineReader != null && Shell.Completion)
+            {
+                var text = _lineReader.Read(prompt, true);
+                if (_lineReader.Dropped) continue;
+                return text;
+            }
+
+            if (Terminal)
+            {
+                _output.Write(prompt);
+                _output.Flush();
+            }
+
+            var line = _input.ReadLine();
+            if (line != null) return line;
+            // (Ctrl+C can end the reading of a line before Blyant is told of it, as at the prompt)
+            if (Terminal && SpinWait.SpinUntil(Tools.TakeCancelKey, CancelKeyWait))
+            {
+                _output.WriteLine();
+                continue;
+            }
+
+            if (Terminal) _output.WriteLine();
+            return null;
+        }
+    }
+
     // The line run now was typed with a blank in front: not kept, neither for Up and "again" nor in the file
     private bool _notKept;
 

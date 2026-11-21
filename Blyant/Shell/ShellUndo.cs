@@ -65,9 +65,21 @@ internal sealed partial class ShellSession
             return result;
         }
 
+        // A file written again in the same step (input writes each line): one entry, as it was before the first
+        // write and after the last, so undo finds the file as the step left it
+        var path = Path.GetFullPath(file.Path);
+        var at = _changing?.FindIndex(entry => FileOperations.SamePath(entry.Path, path)) ?? -1;
+        if (at >= 0)
+        {
+            var first = _changing![at].Before;
+            if (first.AsSpan().SequenceEqual(after)) _changing.RemoveAt(at);
+            else _changing[at] = (path, first, after);
+            return result;
+        }
+
         // (written as it was: nothing to undo)
         if (before.AsSpan().SequenceEqual(after)) return result;
-        (_changing ??= new()).Add((Path.GetFullPath(file.Path), before, after));
+        (_changing ??= new()).Add((path, before, after));
         return result;
     }
 

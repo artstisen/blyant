@@ -3,6 +3,8 @@
 
 The shell is Blyant on lines: you type a command at a prompt, and Blyant writes the answer as plain lines of text, in the colors of your terminal. It works in any terminal, with a screen reader, and from a script. Files are edited in the full-screen editor, and closing the editor brings you back to the prompt.
 
+The shell is also a line editor, as `ed` is: Blyant keeps a file and a line you are at (`$file` and `$line`, together `@`), and commands work on lines and words by their numbers without opening the editor. They put lines in (`insert`, and `input` for as many lines as you type), change and move them (`change`, `lines`, `shift`), and change single words (`word`). See [Typing lines in](#typing-lines-in) and [Working on one line](#working-on-one-line).
+
 Start it with `--shell`, and leave it with `exit`:
 
 ```
@@ -126,6 +128,7 @@ Some commands have a short form, which does the same: `fav` and `favs` (`favorit
 | `move file\|n dir\|n` | Move a file or directory into a directory. A moved file is added to the latest files, as with `new` |
 | `delete file\|n` (`del`) | Delete a file or directory: to the trash, after asking |
 | `info [file\|n]` | Describe a file or directory (alone: the one you are in): kind, size, dates and path, and for a text file characters, words, lines, encoding and line endings. The last list stays as it was |
+| `input [file\|n top\|bottom\|+line]` | Type lines into a file, as in the line editor `ed`: alone, after `$line` (as `insert @` puts a line); each line you type goes in after the one before, and a line with only `.` ends. See [Typing lines in](#typing-lines-in) |
 | `insert file\|n top\|bottom\|+line text` | Put a line of text in a file without opening it: before the first line, after the last, or as line 12 (`+12`). See [Text and settings](#text-and-settings) |
 | `change file\|n +line\|from-to [text]` | Replace a line (`+12`) or lines (`12-15`) of a file with a text, or delete them when no text is given (asks first). See [Text and settings](#text-and-settings) |
 | `shift file\|n lines place` | Move lines in a file without opening it: under a heading (`shift todo.md 4-6 Done`), at the end of the section under the heading (`Done+`), before a line (`+12`), to the `top` or the `bottom`. See [Moving lines](#moving-lines) |
@@ -738,6 +741,33 @@ blyant ~/novel> word -p @ 6 upper
 
 - Where the numbers are the same words both ways (`Well` is word 1 either way), `word` does what it is told, with `-p` or without
 - Only the line numbered last is checked: the line of the last `words`, or of the last change by `word`, also in a `run`. Another line, or the line after another command has changed the file (`insert`, `shift`, `undo` ...: the line can have moved), is not checked, so run `words` (or `words -p`) again to see the numbers
+
+## Typing lines in
+![The outline peeked, two lines typed in at the end with input and a line with a dot, and the outline peeked again](docs/screenshots/shell-input.svg)
+
+`input` puts in the lines you type, one after another, as the `a` command of the line editor `ed` does. The prompt shows the file and the number the next line gets, and a line with only a `.` ends it:
+
+```
+blyant ~/novel> peek notes.md +12 1
+-^ notes.md
+  12  The ferry was late.
+-v lines 12-12 of 40
+blyant ~/novel> input
+notes.md:13> Maren waited at the rail.
+notes.md:14> The island came out of the rain.
+notes.md:15>
+notes.md:16> .
+/home/anna/novel/notes.md: lines 13-15 put in
+```
+
+- `input` alone puts the lines in after `$line`, as `insert @` puts a line (see [Working on one line](#working-on-one-line)); in an empty file (after `new`) at the top. A file and a place can be given, as `insert` takes them: `input notes.md bottom`, `input notes.md top`, `input notes.md +12`
+- Each line is written when you press `Enter`, so nothing is lost when the terminal is closed. All the lines of one `input` are one step of `undo`
+- The lines go in as you type them: blanks, quotes and `$5` stay as they are (no `$name` is put in), and an empty line is a blank line. They are not kept with the commands typed (`Up`, `again`, `shellhistory.txt`), nor written to the log
+- A line with only `.` ends `input`, and so does `Ctrl+D` (or `Ctrl+Z` on Windows) on an empty line. `Ctrl+C` drops the line you are typing, and you go on with the next one. As in `ed`, a line of only `.` cannot be put in this way: use `insert` for it
+- `Tab` and `Up` do nothing while you type lines in: it is text, not commands
+- After it, the shell tells how many lines were put in. `$line` is the last of them, so another `input` goes on after it, and the file is the last list at the first line put in (`open 1`)
+- In a script (`run`, a file of commands, a pipe or `--run`), `input` takes the lines after it, up to the line with `.`: a block of text put in a file in one go
+- As for `insert`, the file keeps its line endings and byte order mark, only a file in UTF-8 is changed, and the files Blyant uses are refused
 
 ## Working on one line
 `@` stands for the file and the line the last command worked on, so the next command takes them without typing them again:

@@ -8727,4 +8727,107 @@ public class ShellTests : IDisposable
         Assert.Contains("2  say \"hi\"", output);
         Assert.Contains("(match 1 of 1", output);
     }
+
+    // ---- 1.6.2: input, lines typed into a file as in ed
+
+    [Fact]
+    public void Input_PutsTheLinesInAfterLine_AsTyped_UntilALineWithADot()
+    {
+        File.WriteAllText(In("work", "in.md"), "one\ntwo\nthree\n");
+        var (output, errors, _, session) = Run("peek in.md 1\ninput\nThe ferry was late.\n\n  Indented $5 \"quoted\"\n.\n" +
+                                               "echo $line\ninput in.md bottom\nlast\n .\n");
+        Assert.Equal(string.Empty, errors);
+        // After line 1, each line after the one before; as typed: blanks, $5 and quotes kept, a blank line too
+        Assert.Equal("one\nThe ferry was late.\n\n  Indented $5 \"quoted\"\ntwo\nthree\nlast\n", Text("in.md"));
+        Assert.Contains(Lang.F("{0}: lines {1}-{2} put in", In("work", "in.md"), 2, 4), output);
+        Assert.Contains("\n4\n", output);
+        Assert.Contains(Lang.F("{0}: line {1} put in", In("work", "in.md"), 7), output);
+        // The file is the last list at the first line put in, and $line the last
+        Assert.Equal(7, session.LastList.Single().At?.Line);
+    }
+
+    [Fact]
+    public void Input_IsOneStepOfUndo_AndTellsWhatItCannotDo()
+    {
+        File.WriteAllText(In("work", "in.md"), "one\ntwo\n");
+        var (output, errors, _, _) = Run("input in.md top\na\nb\nc\n.\nundo\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains(Lang.F("Undone: {0}", "input in.md top"), output);
+        Assert.Equal("one\ntwo\n", Text("in.md"));
+        (output, errors, _, _) = Run("input\ninput in.md\ninput in.md middle\ninput in.md +2\n.\n");
+        Assert.Contains(Lang.T("@ is the file and the line of the last command: none yet (words notes.md 12)"), errors);
+        Assert.Equal(2, errors.Split(Lang.T("Give a file and where, or nothing: input, input notes.md bottom, input notes.md +12")).Length - 1);
+        Assert.Contains(Lang.T("Nothing put in"), output);
+        // The end of the input ends it too, with the lines kept
+        (output, errors, _, _) = Run("input in.md bottom\nend\n");
+        Assert.Equal("one\ntwo\nend\n", Text("in.md"));
+        // A new file: at the top
+        (_, errors, _, _) = Run("new fresh\ninput\nFirst line\n.\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("First line\n", File.ReadAllText(In("work", "fresh.md")).Replace("\r\n", "\n"));
+        Assert.Equal("input in.md top", Tab(Completion(), "input in.md t"));
+        Assert.Contains("input [file|n top|bottom|+line]", Run("help input\n").Output);
+    }
+
+    [Fact]
+    public void Input_ShowsTheFileAndTheLine_AndKeepsTheLinesOutOfTheCommandsTyped()
+    {
+        CommandHistory.Clear();
+        try
+        {
+            File.WriteAllText(In("work", "in.md"), "one\ntwo\n");
+            var (output, _, _, _) = Run("peek in.md 1\ninput\nsecret text\nmore\n.\n", terminal: true);
+            Assert.Contains("in.md:2> ", output);
+            Assert.Contains("in.md:3> ", output);
+            Assert.Contains("in.md:4> ", output);
+            Assert.Contains("input", CommandHistory.Of(CommandContext.Shell));
+            Assert.DoesNotContain(CommandHistory.Of(CommandContext.Shell), command => command.Contains("secret"));
+            Assert.DoesNotContain("secret", File.ReadAllText(ShellHistory.FilePath));
+        }
+        finally
+        {
+            CommandHistory.Clear();
+        }
+    }
+
+    [Fact]
+    public void Input_InARun_TakesTheLinesAfterIt_UpToTheDot()
+    {
+        File.WriteAllText(In("work", "in.md"), "one\n");
+        File.WriteAllText(In("work", "script.txt"), "input in.md bottom\nTwo\n  Three\n.\necho done\n");
+        var (output, errors, _, _) = Run("run script.txt\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("one\nTwo\n  Three\n", Text("in.md"));
+        Assert.Contains("\ndone\n", output);
+        // (the lines of the text are not run as commands)
+        Assert.DoesNotContain(Lang.F("Unknown command: {0} (help lists the commands)", "two"), output);
+    }
+
+    [Fact]
+    public void LineReader_ForText_HasNoTabNorUp_AndTellsCtrlCFromABlankLine()
+    {
+        CommandHistory.Clear();
+        try
+        {
+            CommandHistory.Add(CommandContext.Shell, "peek notes.md");
+            var queue = new Queue<ConsoleKeyInfo>(LineKeys("<Up>ab<Tab><CR>"));
+            var reader = new ShellLineReader(() => queue.Dequeue(), new StringWriter(), () => 80, (text, _) => text + "XX");
+            Assert.Equal("ab", reader.Read("> ", true));
+            Assert.False(reader.Dropped);
+            queue = new Queue<ConsoleKeyInfo>(LineKeys("abc<C-c>"));
+            reader = new ShellLineReader(() => queue.Dequeue(), new StringWriter(), () => 80, (text, _) => text);
+            Assert.Equal(string.Empty, reader.Read("> ", true));
+            Assert.True(reader.Dropped);
+            queue = new Queue<ConsoleKeyInfo>(LineKeys("<CR>"));
+            reader = new ShellLineReader(() => queue.Dequeue(), new StringWriter(), () => 80, (text, _) => text);
+            Assert.Equal(string.Empty, reader.Read("> ", true));
+            Assert.False(reader.Dropped);
+            // A command: Tab and Up as before
+            Assert.Equal("peek notes.md", ReadLine("<Up><CR>").Line);
+        }
+        finally
+        {
+            CommandHistory.Clear();
+        }
+    }
 }

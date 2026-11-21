@@ -1,6 +1,8 @@
 # Shell tutorial
 The shell is Blyant on lines of text: you type a command at a prompt, and Blyant writes the answer below it, as in a terminal. It does what the full screen does with files (finding them, looking into them, copying, moving, adding a line, ticking off a task) without leaving the line you type on. It works in any terminal, over SSH, with a screen reader, and from scripts.
 
+It is also a line editor, as `ed` is: Blyant keeps the file and the line you are at (`@`), and you change lines and words by their numbers, and type lines into a file with `input`, without opening the editor.
+
 This tutorial goes through a day of work on a small novel project, one task at a time. Each part shows what you type after the prompt, and what Blyant writes back. The last part, [Practice](#practice), has fourteen short steps to try on two new files, ending with editing in a window and `undo`. The [guide to the shell](Guide-to-shell.md) describes all the commands in detail.
 
 The project used in the examples is in `~/novel` (`/home/anna/novel`):
@@ -248,6 +250,23 @@ blyant ~/novel> lines plot.md 4 unstart Draft:
 - `lines plot.md 3-5 remove " (draft)"` takes a text out of lines 3 to 5, and `lines plot.md 4 at 5 "old "` puts a text in at column 5 of line 4 (`words` shows the column each word starts at). In quotes, `""` is a quote: `lines plot.md 4 remove """"` takes every `"` out of line 4
 - `lines plot.md 3-5 sort` sorts lines 3 to 5 A to Z (`sort -d`: Z to A), and `lines plot.md 1 upper` makes line 1 UPPERCASE (`lower`: lowercase)
 - A text in quotes is put in exactly as written, with no blank added: `lines todo.md 5-7 start "- [ ] "` makes lines 5 to 7 tasks
+
+To write several lines at once, `input` takes the lines you type and puts them in after the line you are at, until a line with only a `.`:
+
+```
+blyant ~/novel> peek plot.md +4 1
+-^ plot.md
+  4  The letter is from her aunt.
+-v lines 4-4 of 6
+blyant ~/novel> input
+plot.md:5> The ferryman knows.
+plot.md:6> He has always known.
+plot.md:7> .
+/home/anna/novel/plot.md: lines 5-6 put in
+```
+
+- Each line is written when you press `Enter`, and `undo` takes them all back in one step
+- `input plot.md bottom` puts the lines at the end of the file instead (`top` and `+12` work too)
 
 To change one word, without typing the line again, see the words of the line numbered, and change a word by number:
 

@@ -270,7 +270,7 @@ internal sealed partial class ShellSession
     /// </summary>
     internal static readonly HashSet<string> TakesAt = new()
     {
-        "words", "word", "change", "insert", "peek", "shift", "shift!", "lines", "open", "edit"
+        "words", "word", "change", "insert", "input", "peek", "shift", "shift!", "lines", "open", "edit"
     };
 
     // "word @ 9 replace wish": "@" in the place of the file is $file at $line, the file and the line the last command
@@ -280,6 +280,8 @@ internal sealed partial class ShellSession
     // "@" in a text ("insert @ Ask @anna"), is as it is. Null (and told) when there is no line to take
     internal string? WithAt(string name, string argument)
     {
+        // ("input" alone: after $line, as "input @")
+        if (name == "input" && argument.Trim().Length == 0) argument = "@";
         // ("clip words @ 6-9": after the kind, as word takes it)
         var clipWords = name == "clip" && CommandLine.Name(argument).Equals("words", StringComparison.OrdinalIgnoreCase);
         if (!TakesAt.Contains(name) && !clipWords) return argument;
@@ -316,7 +318,7 @@ internal sealed partial class ShellSession
         // (the top of a file, before line 1, as in an empty file: open, edit and peek take the file from line 1, and
         // only insert can put a line there; the others have no line to work on)
         if (line == 0 && name is "open" or "edit" or "peek") line = 1;
-        if (line == 0 && name != "insert")
+        if (line == 0 && name is not ("insert" or "input"))
         {
             Error(Lang.F("@ is at the top of {0}, before line 1: insert @ text puts a line there",
                 Path.GetFileName(_file)));
@@ -325,7 +327,7 @@ internal sealed partial class ShellSession
 
         var head = argument[..(argument.Length - from.Length)];
         var rest = AfterWords(argument, at + 1);
-        var put = "$file +" + (name == "insert" ? line + 1 : line);
+        var put = "$file +" + (name is "insert" or "input" ? line + 1 : line);
         return head + put + (rest.Length > 0 ? " " + rest : string.Empty);
     }
 

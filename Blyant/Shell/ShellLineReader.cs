@@ -35,11 +35,17 @@ internal sealed class ShellLineReader
     }
 
     /// <summary>
-    /// Read a line after a prompt
+    /// The last line read was dropped with Ctrl+C (an empty line is given for it)
+    /// </summary>
+    internal bool Dropped { get; private set; }
+
+    /// <summary>
+    /// Read a line after a prompt. "text": a line of text (input), not a command: Tab and Up and Down do nothing
     /// </summary>
     /// <returns>The line (empty after Ctrl+C), or null at the end of the input (Ctrl+D or Ctrl+Z on an empty line)</returns>
-    internal string? Read(string prompt)
+    internal string? Read(string prompt, bool text = false)
     {
+        Dropped = false;
         _text = string.Empty;
         _cursor = 0;
         _scroll = 0;
@@ -65,6 +71,7 @@ internal sealed class ShellLineReader
             {
                 // Ctrl+C: the line is dropped
                 _output.WriteLine();
+                Dropped = true;
                 return string.Empty;
             }
 
@@ -87,6 +94,9 @@ internal sealed class ShellLineReader
             };
             switch (pressed)
             {
+                case ConsoleKey.Tab or ConsoleKey.UpArrow or ConsoleKey.DownArrow when text:
+                    // (a line of text: no commands to complete or to bring back)
+                    break;
                 case ConsoleKey.Tab:
                     _text = _complete(_text, (key.Modifiers & ConsoleModifiers.Shift) == 0);
                     _cursor = _text.Length;
