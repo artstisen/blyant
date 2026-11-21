@@ -634,6 +634,14 @@ SCENES = [
      ['--shell', PROJECT], ['<wait>', 'insrt todo.md +8 - [ ] Ask the harbur master about the tides<Enter>',
                             'again edit<Enter>', 'replace $cmd insrt insert<Enter>',
                             'replace $cmd harbur harbour<Enter>', 'run $cmd<Enter>', '<Enter>'], True),
+    # Saved peeks: a window kept, the file read elsewhere, and the window shown again; then the windows kept, listed.
+    # (the data directory in the demo, as for shell-again: peeks.txt is written there)
+    ('shell-peeks', 'Blyant: the shell, a window of peek kept, and shown again after moving around the file',
+     {WORK_IN: os.path.join(WRITING, 'Blyant')},
+     ['--shell', PROJECT], ['<wait>', 'peek chapter-01.md +3 2<Enter>', 'peek save opening<Enter>',
+                            'peek chapter-02.md +6 2<Enter>', 'peek save causeway<Enter>',
+                            'peek chapter-01.md +21 2<Enter>',
+                            'peek back opening<Enter>', 'peek saved<Enter>'], True),
 ]
 
 

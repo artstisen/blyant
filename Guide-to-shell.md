@@ -439,6 +439,8 @@ blyant ~/novel> /
 - Control characters of a file are shown as `?`, and a file that is not text (an image, a program) is not shown
 
 ### Come back to a peek
+![A window of chapter 1 kept with peek save, a window of chapter 2 kept as causeway, the end of chapter 1 peeked, and peek back showing the first window again; peek saved lists both](docs/screenshots/shell-peeks.svg)
+
 While you move around a file with `+`, `-` and `G`, `peek save` keeps the window you are at, and `peek back` brings you back to it:
 
 ```
