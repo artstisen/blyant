@@ -133,7 +133,7 @@ Some commands have a short form, which does the same: `fav` and `favs` (`favorit
 | `shift -s file\|n heading place` | Move a section (a heading and what is under it) up or down past the sections of the same level, or to a place: `shift -s notes.md Ideas up`. See [Moving a section](#moving-a-section) |
 | `lines file\|n lines > file\|n place [copy\|cut]` | Copy lines to another file without opening the files (`lines notes.md 4-6 > plan.md bottom`), or with `cut` move them there. See [Moving lines](#moving-lines) |
 | `lines file\|n lines >\|>> $name [copy\|cut]` | Keep lines in a register (`lines notes.md 4-6 > $notes`), or add them at the end with `>>`; with `cut`, also take them out of the file. A register that holds a path is not written over: give the place in that file (`> $plan bottom`). See [Registers](#registers) |
-| `lines file\|n lines start\|end text` | Put a text at the start or the end of lines, keeping the rest (`lines todo.md 4 start Remember this:`). See [Text in lines](#text-in-lines) |
+| `lines file\|n lines start\|end text` | Put a text at the start or the end of lines, keeping the rest (`lines todo.md 4 start Remember this:`). **A blank is put between the text and the line**: in quotes the text is put as typed, with no blank (`lines notes.md 48 end ", and more"`). See [Text in lines](#text-in-lines) |
 | `lines file\|n lines unstart\|unend text` | Take a text off the start or the end of the lines that have it |
 | `lines file\|n lines replace old new` | Replace a text in lines, keeping the rest (`lines notes.md 5-9 replace draft final`) |
 | `replace [-n] [-i] file\|n old new` | Replace a text everywhere in a file (`replace chapter-3.md Maren Marit`); `-i` in any letter case, `-n` only shows what would change. `undo` takes it back. See [Replacing in a file](#replacing-in-a-file) |
@@ -486,11 +486,14 @@ lines todo.md 4 start Remember this:         "Remember this: This is some task"
 lines todo.md 4 end (by Friday)              "This is some task (by Friday)"
 lines todo.md 5-9 start "- [ ] "             lines 5 to 9 made task items
 lines code.md 12 end ";"                     a ";" at the end, no blank before it
+lines notes.md 48 end ", and more"           "Some text, and more": in quotes, no blank
 lines todo.md 4 unstart Remember this:       taken off again
 lines todo.md 5-9 unstart "- [ ] "           the task boxes taken off
 lines notes.md 5-9 replace draft final       "draft" in lines 5 to 9 made "final"
 lines notes.md 5-9 replace " (draft)" ""     " (draft)" taken out of them
 ```
+
+**`start` and `end` put a blank between the text and the line.** `lines notes.md 48 end , and more` gives _Some text , and more_. When the text must touch the line, as a comma or a full stop does, write it in quotes: `lines notes.md 48 end ", and more"` gives _Some text, and more_. The quotes also keep any blanks in them (`start "- [ ] "`).
 
 Here a todo list is made into task items, given a date, changed and tidied again, one step at a time. Each step shows the lines it changed:
 

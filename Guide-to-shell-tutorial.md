@@ -242,6 +242,7 @@ blyant ~/novel> lines plot.md 4 unstart Draft:
 /home/anna/novel/plot.md: line 4 changed
 ```
 
+- `start` and `end` put a blank between the text and the line. For a text that must touch the line, as a comma, write it in quotes: `lines plot.md 4 end ", she said"` (no blank)
 - `unstart` and `unend` take the text off again, and `lines plot.md 3-5 replace letter note` replaces a word in lines 3 to 5
 - `lines plot.md 3-5 sort` sorts lines 3 to 5 A to Z (`sort -d`: Z to A), and `lines plot.md 1 upper` makes line 1 UPPERCASE (`lower`: lowercase)
 - A text in quotes is put in exactly as written, with no blank added: `lines todo.md 5-7 start "- [ ] "` makes lines 5 to 7 tasks
