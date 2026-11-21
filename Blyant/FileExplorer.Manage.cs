@@ -268,7 +268,8 @@ internal static partial class FileExplorer
                FileOperations.SamePath(item.Path, FileFavorites.FilePath) ||
                FileOperations.SamePath(item.Path, FileHistory.FilePath) ||
                FileOperations.SamePath(item.Path, FileTags.FilePath) ||
-               FileOperations.SamePath(item.Path, ShellHistory.FilePath);
+               FileOperations.SamePath(item.Path, ShellHistory.FilePath) ||
+               FileOperations.SamePath(item.Path, PeekMarks.FilePath);
     }
 
     private static bool IsProtected(Item item)
@@ -423,7 +424,11 @@ internal static partial class FileExplorer
             // (the directory the shell was in before follows what is moved: cd - goes there)
             if (isMove) ShellSession.PreviousFollows(item.Path, path);
             // (the tags of the shell follow what is moved, and go with a copy)
-            if (isMove) FileTags.Follow(item.Path, path);
+            if (isMove)
+            {
+                FileTags.Follow(item.Path, path);
+                PeekMarks.Follow(item.Path, path);
+            }
             else FileTags.FollowCopy(item.Path, path);
             // The file history and the jumps follow it too (as when it is renamed)
             if (isMove) HistoryFollows(item.Path, path);
@@ -547,6 +552,7 @@ internal static partial class FileExplorer
             if (item.IsDirectory) HotlistPathChanged(item.Path, path);
             Bookmarks.Follow(item.Path, path);
             FileTags.Follow(item.Path, path);
+            PeekMarks.Follow(item.Path, path);
             ShellSession.PreviousFollows(item.Path, path);
         }
     }
@@ -591,6 +597,7 @@ internal static partial class FileExplorer
         if (isDirectory) HotlistPathChanged(oldPath, newPath);
         Bookmarks.Follow(oldPath, newPath);
         FileTags.Follow(oldPath, newPath);
+        PeekMarks.Follow(oldPath, newPath);
         ShellSession.PreviousFollows(oldPath, newPath);
     }
 

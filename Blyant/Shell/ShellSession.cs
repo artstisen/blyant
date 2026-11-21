@@ -183,6 +183,9 @@ internal sealed partial class ShellSession
         {
             _file = Path.GetFullPath(Shell.LastFile);
         }
+
+        // The window of the last peek of the shell left last, so "." and "+" go on from it
+        if (terminal) RestoreLastPeek();
     }
 
     // The logo of the start page (the setting logo), without colors, under "- Shell mode -", when the shell starts at

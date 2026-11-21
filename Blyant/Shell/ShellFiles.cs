@@ -325,6 +325,9 @@ internal sealed partial class ShellSession
             return;
         }
 
+        // "peek save", "peek back", "peek saved": windows kept to come back to
+        if (PeekMark(words)) return;
+
         // "peek notes.md /storm", "peek /storm" (the file peeked last): the window at the first line with the text.
         // A word that starts with "/" alone is a path when it is there, or has another "/" in it (a path mistyped is
         // told as not found, not searched)

@@ -36,6 +36,8 @@ public class ShellTests : IDisposable
         FileTags.Clear();
         ShellHistory.FilePathOverride = Path.Combine(_data, ShellHistory.FileName);
         ShellHistory.Reset();
+        PeekMarks.FilePathOverride = Path.Combine(_data, PeekMarks.FileName);
+        PeekMarks.Clear();
         ShellSession.ForgetTag();
         ShellSession.ForgetPreviousDirectory();
         // (the tests written before the markers and the setting shellpeeklines see the output as it was then: the
@@ -71,6 +73,8 @@ public class ShellTests : IDisposable
         FileTags.Clear();
         ShellHistory.FilePathOverride = null;
         ShellHistory.Reset();
+        PeekMarks.FilePathOverride = null;
+        PeekMarks.Clear();
         ShellSession.ForgetTag();
         SystemClipboard.WriteOverride = null;
         Tools.ClearLineMemory();
@@ -8339,5 +8343,100 @@ public class ShellTests : IDisposable
         Assert.Equal("word m.md 1 2 move", Tab(Completion(), "word m.md 1 2 mo"));
         Assert.Equal("word m.md 1 2 move before", Tab(Completion(), "word m.md 1 2 move be"));
         Assert.Contains("word ... move before|after n", Run("help word\n").Output);
+    }
+
+    // ---- 1.6.1: saved peeks, and the last peek kept for the next shell
+
+    private void FortyLines() =>
+        File.WriteAllText(In("work", "long.md"), string.Concat(Enumerable.Range(1, 40).Select(i => "line " + i + "\n")));
+
+    [Fact]
+    public void PeekMarks_Parse_ReadsTheWindows_AndLeavesOutLinesItCannotRead()
+    {
+        var path = In("work", "long.md");
+        PeekMarks.Parse("\t10\t5\t" + path + "\nintro\t1\t15\t" + path + "\n*\t20\t3\t" + path + "\nbad\tx\t5\t" + path +
+                        "\n2nd\t1\t1\t" + path + "\nrel\t1\t1\tnotes.md\n");
+        Assert.Equal(new[] { "", "intro" }, PeekMarks.Saved.Select(entry => entry.Name));
+        Assert.Equal(new PeekMarks.Window(path, 10, 5), PeekMarks.Saved[0].Window);
+        Assert.Equal(new PeekMarks.Window(path, 20, 3), PeekMarks.Last);
+        Assert.True(PeekMarks.IsName("intro-2"));
+        Assert.False(PeekMarks.IsName("2nd"));
+        Assert.False(PeekMarks.IsName("a b"));
+    }
+
+    [Fact]
+    public void PeekSaveAndBack_KeepAWindow_AndShowItAgainAsTheFileIsNow()
+    {
+        FortyLines();
+        var (output, errors, _, _) = Run("peek long.md +10 5\npeek save\npeek long.md +30 3\npeek save end\n" +
+                                         "peek long.md bottom\npeek back\n+\npeek back end\npeek back 1\npeek saved\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains(Lang.F("Saved: lines {0} of {1} (peek back)", "10-14", In("work", "long.md")), output);
+        Assert.Contains(Lang.F("Saved as {0}: lines {1} of {2} (peek back {0})", "end", "30-32", In("work", "long.md")), output);
+        // peek back: the window kept; it is the last peek then, so + goes on from it
+        Assert.Contains("  15  line 15\n", output);
+        Assert.Contains("  32  line 32\n", output);
+        // peek saved: numbered, the name ("-" without one), the lines and the file
+        Assert.Contains("1  -    10-14  " + In("work", "long.md"), output);
+        Assert.Contains("2  end  30-32  " + In("work", "long.md"), output);
+        Assert.Equal("\t10\t5\t" + In("work", "long.md") + "\nend\t30\t3\t" + In("work", "long.md") + "\n",
+            File.ReadAllText(PeekMarks.FilePath));
+        // Saved again by the same name: in its place
+        (_, errors, _, _) = Run("peek long.md +2 2\npeek save END\npeek save -d\npeek saved\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("end\t2\t2\t" + In("work", "long.md") + "\n", File.ReadAllText(PeekMarks.FilePath));
+    }
+
+    [Fact]
+    public void PeekSaveAndBack_TellWhatTheyCannotDo()
+    {
+        FortyLines();
+        var (output, errors, _, _) = Run("peek saved\npeek back\npeek save\npeek long.md 3\npeek save 2x\npeek save a b\n" +
+                                         "peek back none\npeek back 9\npeek save -d none\npeek saved x\n");
+        Assert.Contains(Lang.T("No peeks saved yet: peek save keeps the window of the last peek"), output);
+        Assert.Contains(Lang.T("No peeks saved yet: peek save keeps the window of the last peek"), errors);
+        Assert.Contains(Lang.T("No file peeked yet: peek a file first (peek plot.md)"), errors);
+        Assert.Contains(Lang.F("Not a name for a saved peek: {0} (a letter first, then letters, digits, - and _)", "2x"), errors);
+        Assert.Contains(Lang.T("Give one name, or none: peek save, peek save intro, peek save -d intro"), errors);
+        Assert.Contains(Lang.F("No saved peek named {0} (peek saved lists them)", "none"), errors);
+        Assert.Contains(Lang.T("No peeks saved yet: peek save keeps the window of the last peek"), errors);
+        Assert.Contains(Lang.T("peek saved takes nothing after it"), errors);
+        // A file gone since: told
+        (_, errors, _, _) = Run("peek long.md 3\npeek save gone\n");
+        File.Delete(In("work", "long.md"));
+        (output, errors, _, _) = Run("peek back gone\npeek saved\n");
+        Assert.Contains(Lang.F("Not found: {0}", In("work", "long.md")), errors);
+        Assert.Contains(Lang.T("(missing)"), output);
+        Assert.Equal("peek saved", Tab(Completion(), "peek saved"));
+        Assert.Equal("peek back gone", Tab(Completion(), "peek back g"));
+        Assert.Contains("peek save [name]", Run("help peek\n").Output);
+    }
+
+    [Fact]
+    public void PeekMarks_FollowAFileRenamedOrMoved_AndPeeksTxtIsProtected()
+    {
+        FortyLines();
+        Run("peek long.md 3\npeek save intro\nrename long.md longer.md\nmove longer.md notes\n");
+        Assert.Equal(In("work", "notes", "longer.md"), PeekMarks.Get("intro")!.Path);
+        var (_, errors, _, _) = Run("delete " + PeekMarks.FilePath + "\n", yes: true);
+        Assert.Contains(DialogText.FileUsedByBlyant, errors);
+    }
+
+    [Fact]
+    public void TheLastPeek_IsKeptForTheNextShell_TypedInAtATerminal()
+    {
+        FortyLines();
+        Run("peek long.md +20 4\n", terminal: true);
+        Assert.Equal(new PeekMarks.Window(In("work", "long.md"), 20, 4), PeekMarks.Last);
+        // The next shell goes on from it
+        var (output, _, _, _) = Run(".\n+\n", terminal: true);
+        Assert.Contains("  20  line 20\n", output);
+        Assert.Contains("  24  line 24\n", output);
+        // From a file or a pipe: neither taken nor kept
+        (output, _, _, _) = Run("peek long.md +5 2\n.\n");
+        Assert.Equal(new PeekMarks.Window(In("work", "long.md"), 21, 4), PeekMarks.Last);
+        // forget: no last peek for the next shell
+        Run("forget\n" + DialogText.ChoiceYes + "\n", terminal: true);
+        Assert.Null(PeekMarks.Last);
     }
 }

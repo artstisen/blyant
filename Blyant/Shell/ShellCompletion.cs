@@ -174,9 +174,18 @@ internal sealed class ShellCompletion
             case "peek":
                 // ("peek bottom": the file peeked last; "peek plot.md middle"; the files first, as with nothing typed
                 // the files opened last come first)
+                // ("peek back intro": the names of the peeks saved)
+                if (position == 1 && after[0].Equals("back", StringComparison.OrdinalIgnoreCase))
+                {
+                    PeekMarks.Load();
+                    return (Kind.Words, PeekMarks.Saved.Select(entry => entry.Name).Where(name => name.Length > 0));
+                }
+
+                if (position == 1 && after[0].Equals("save", StringComparison.OrdinalIgnoreCase))
+                    return (Kind.Words, new[] { "-d" });
                 return position switch
                 {
-                    0 => (Kind.PathThenWords, PeekPlaces),
+                    0 => (Kind.PathThenWords, PeekPlaces.Concat(ShellSession.PeekMarkWords)),
                     1 => (Kind.Words, PeekPlaces),
                     _ => (Kind.None, none)
                 };
