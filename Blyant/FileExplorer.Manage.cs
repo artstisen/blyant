@@ -419,8 +419,9 @@ internal static partial class FileExplorer
             // A directory moved: the hotlist follows it (and the bookmarks follow what is moved)
             if (isMove && item.IsDirectory) HotlistPathChanged(item.Path, path);
             if (isMove) Bookmarks.Follow(item.Path, path);
-            // (the tags of the shell follow what is moved, and go with a copy)
+            // (the directory the shell was in before follows what is moved: cd - goes there)
             if (isMove) ShellSession.PreviousFollows(item.Path, path);
+            // (the tags of the shell follow what is moved, and go with a copy)
             if (isMove) FileTags.Follow(item.Path, path);
             else FileTags.FollowCopy(item.Path, path);
             // The file history and the jumps follow it too (as when it is renamed)
@@ -578,7 +579,8 @@ internal static partial class FileExplorer
 
     /// <summary>
     /// A file or directory was renamed or moved: the favorites, the history, the jumps, the hotlist (a directory), the
-    /// projects and the bookmarks follow it, as when it is renamed or moved in the browser
+    /// projects, the bookmarks, the tags and the directory of cd - follow it, as when it is renamed or moved in the
+    /// browser
     /// </summary>
     internal static void PathMoved(string oldPath, string newPath, bool isDirectory)
     {

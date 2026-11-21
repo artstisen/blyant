@@ -117,11 +117,29 @@ internal sealed partial class ShellSession
         else if (_changing is { Count: > 0 } files)
         {
             _undo.Add(new UndoStep(command, files, was, (_file, _line)));
-            _redo.Clear();
+            // (a change of $cmd alone leaves what can be redone in the files worked on)
+            if (!files.All(file => IsCommandsFile(file.Path))) _redo.Clear();
             LetGo();
         }
 
         (_changing, _changingLost) = outer;
+    }
+
+    // The changes of the file of "again edit" taken out of undo and redo, when it is deleted or written anew: undo
+    // would stop at them (the file is gone, or has changed), and the steps before them could not be undone. A step
+    // of that file alone goes
+    private void ForgetCommandsSteps()
+    {
+        foreach (var steps in new[] { _undo, _redo })
+        {
+            for (var i = steps.Count - 1; i >= 0; i--)
+            {
+                var files = steps[i].Files.Where(file => !IsCommandsFile(file.Path)).ToList();
+                if (files.Count == steps[i].Files.Count) continue;
+                if (files.Count == 0) steps.RemoveAt(i);
+                else steps[i] = steps[i] with { Files = files };
+            }
+        }
     }
 
     // The oldest steps let go: past the setting (also made smaller meanwhile), or past UndoMaxBytes in all (the

@@ -18,7 +18,7 @@ internal sealed partial class ShellSession
     private (string Path, int Line, bool Blanks)? _wordsShown;
 
     // The width the numbered words are shown in (79 columns when it is not known, as to a file)
-    private int WordsWidth() => Terminal && WindowSize?.Invoke() is { Width: > 20 } size ? size.Width - 3 : 77;
+    private int WordsWidth() => WindowColumns(DefaultColumns) - 2;
 
     // The line of a file a command is about ("words notes.md 12", "+12" too): the file, its lines and the line (from
     // 1); null (and told) when it is not there

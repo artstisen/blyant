@@ -691,11 +691,7 @@ internal sealed partial class ShellSession
         if (FileIo.ParseSettings(FileIo.SettingsText()).Keys.Any(key => !FileIo.ParseSettings(content).ContainsKey(key)))
         {
             var written = FileIo.WriteSettingsFile(FileIo.SettingsText());
-            if (written != DialogText.Success)
-            {
-                Error(written);
-                return;
-            }
+            if (Failed(written)) return;
 
             content = FileIo.ReadSettingsFile();
         }

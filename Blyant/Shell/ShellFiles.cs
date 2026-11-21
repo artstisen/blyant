@@ -200,7 +200,9 @@ internal sealed partial class ShellSession
 
         if (Existing(words[0]) is not { } item || Protected(item)) return;
         var trash = FileOperations.TrashDirectory;
-        var toTrash = FileOperations.DeleteToTrash && FileOperations.CanTrash(item.Path, trash);
+        // ($cmd: deleted for good, as when the shell is left: what was typed is not kept in the trash)
+        var commands = !item.IsDirectory && IsCommandsFile(item.Path);
+        var toTrash = !commands && FileOperations.DeleteToTrash && FileOperations.CanTrash(item.Path, trash);
         if (!FileExplorer.ConfirmDeleteOf(item.Path, item.IsDirectory, toTrash))
         {
             Line(Lang.T("Nothing was deleted"));
@@ -233,6 +235,7 @@ internal sealed partial class ShellSession
         var deleted = FileOperations.Delete(item.Path);
         FileExplorer.LogFileOperation(kind, item.Path, deleted);
         if (deleted == DialogText.Success) Deleted(item);
+        if (deleted == DialogText.Success && commands) ForgetCommandsSteps();
         Done(deleted, Lang.F("Deleted: {0}", item.Path), null);
     }
 
@@ -444,9 +447,15 @@ internal sealed partial class ShellSession
         // shellautopeek; also when it shows no lines, so the next one goes on from it)
         // "all" keeps the window of the file as it was (where it was, as large), so "." and "+" go on from there; a
         // file not peeked before has a window at its top, of as many lines as the setting shellpeeklines
-        _lastPeek = !all ? (path, first, asked, StampOf(item.Path), text.GetHashCode())
-            : same ? _lastPeek!.Value with { Stamp = StampOf(item.Path), Hash = text.GetHashCode() }
-            : (path, 1, size, StampOf(item.Path), text.GetHashCode());
+        // $cmd is shown, but is not the last peek: "." and $peek stay those of the file worked on
+        var commands = IsCommandsFile(path);
+        if (!commands)
+        {
+            _lastPeek = !all ? (path, first, asked, StampOf(item.Path), text.GetHashCode())
+                : same ? _lastPeek!.Value with { Stamp = StampOf(item.Path), Hash = text.GetHashCode() }
+                : (path, 1, size, StampOf(item.Path), text.GetHashCode());
+        }
+
         // (from a line: "open 1" opens the file there)
         if (!auto)
         {
@@ -484,7 +493,7 @@ internal sealed partial class ShellSession
             Line((i == mark ? ">" + number[1..] : number) + "  " + lines[i - 1]);
         }
         // $peek: the lines shown, as they are now (to put them in another file: insert plan.md bottom $peek)
-        if (!auto) ShellRegisters.Peek = string.Join("\n", lines.GetRange(first - 1, last - first + 1));
+        if (!auto && !commands) ShellRegisters.Peek = string.Join("\n", lines.GetRange(first - 1, last - first + 1));
         // (where the window is: also at the end, when it was put or moved there; with the markers always)
         if (Shell.Markers)
         {
@@ -595,17 +604,8 @@ internal sealed partial class ShellSession
     // nearest to it is marked; when none has it, the window is at the line, with no mark
     private void PeekFound(string path, string searched, int line)
     {
-        string text;
-        try
-        {
-            text = TextFile.Load(path).Text;
-        }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException or InvalidDataException)
-        {
-            Error(Lang.F("{0} cannot be read: {1}", path, e.Message));
-            return;
-        }
-
+        if (ReadableFile(new Item(path, false)) is not { } file) return;
+        var text = file.Text;
         var lines = LinesOfText(text);
         var pattern = FileSearch.WildcardText(searched);
         var found = Enumerable.Range(1, lines.Count).Where(i => FileSearch.Matches(pattern, lines[i - 1])).ToList();

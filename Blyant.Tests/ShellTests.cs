@@ -1131,7 +1131,9 @@ public class ShellTests : IDisposable
             ["C-a"] = new('\u0001', ConsoleKey.A, false, false, true),
             ["C-e"] = new('\u0005', ConsoleKey.E, false, false, true),
             ["C-Left"] = new('\0', ConsoleKey.LeftArrow, false, false, true),
-            ["C-Right"] = new('\0', ConsoleKey.RightArrow, false, false, true)
+            ["C-Right"] = new('\0', ConsoleKey.RightArrow, false, false, true),
+            ["M-b"] = new('b', ConsoleKey.B, false, true, false),
+            ["M-f"] = new('f', ConsoleKey.F, false, true, false)
         };
         for (var i = 0; i < keys.Length; i++)
         {
@@ -7166,7 +7168,7 @@ public class ShellTests : IDisposable
         Assert.Contains(Lang.F("No file has the tag {0} (tags lists them)", "draft"), errors);
         Assert.Contains(Lang.T("Give the files and the tag: tag add notes.md draft (or rows: 2,4 or 2-5)"), errors);
         Assert.Contains(Lang.F("Not a name for a tag: {0} (letters, digits, - and _)", "a/b"), errors);
-        Assert.Contains(Lang.F("Not a name for a tag: {0} (letters, digits, - and _)", "add"), errors);
+        Assert.Contains(Lang.F("{0} is a word of the tag command: give the tag another name", "add"), errors);
         Assert.Contains(Lang.F("Not a file: {0}", In("work", "Draft")), errors);
         Assert.Contains(Lang.F("Not rows: {0} (as 2,4,7 or 2-5)", "2-9"), errors);
         Assert.Contains(Lang.T("@ is the file and the line of the last command: none yet (words notes.md 12)"), errors);
@@ -7655,6 +7657,8 @@ public class ShellTests : IDisposable
         Assert.Equal("Xinsert a b Y", ReadLine("insert a b<C-a>X<C-e> Y<CR>").Line);
         // Ctrl+Left twice: before "b"; Ctrl+Right: after "b"
         Assert.Equal("one two_ three", ReadLine("one two three<C-Left><C-Left><C-Right>_<CR>").Line);
+        // Option+Left and Option+Right of macOS (Alt+B, Alt+F): the same, and no letter typed
+        Assert.Equal("one two_ three", ReadLine("one two three<M-b><M-b><M-f>_<CR>").Line);
         // Blanks before a word are skipped; at the ends nothing moves
         Assert.Equal("[a  b", ReadLine("a  b<C-Left><C-Left><C-Left>[<CR>").Line);
         Assert.Equal("a  b]", ReadLine("a  b<C-Right><C-Right>]<CR>").Line);
@@ -7730,6 +7734,145 @@ public class ShellTests : IDisposable
         Assert.DoesNotContain(Lang.T("Run these commands?"), output);
         Assert.Contains("run [-y] $cmd", Run("help run\n").Output);
         Assert.Equal("run -y", Tab(Completion(), "run -"));
+    }
+
+    // ---- 1.6.0: the findings of the review before the release
+
+    // The folder of the file of "again edit"
+    private static string CommandsTemp() => Path.Combine(Path.GetFullPath(FileIo.GetDataDirectoryName()), "temp");
+
+    [Fact]
+    public void Undo_GoesOnAfterCmd_WasCancelledOrWrittenAnew_AndCmdLeavesRedo()
+    {
+        File.WriteAllText(In("work", "e.md"), "start\n");
+        // A change of $cmd, then Cancel: undo takes back the insert before it (the $cmd step is gone with the file)
+        var (_, errors, _, _) = Run("insert e.md bottom one\nagain edit\nreplace $cmd one two\nrun $cmd\nc\nundo\n",
+            terminal: true);
+        Assert.Equal("start\n", File.ReadAllText(In("work", "e.md")));
+        Assert.DoesNotContain("blyant-commands-", errors);
+        // A second again edit writes it anew: the same
+        File.WriteAllText(In("work", "e.md"), "start\n");
+        (_, errors, _, _) = Run("insert e.md bottom one\nagain edit\nreplace $cmd one two\npwd\nagain edit\nundo\n",
+            terminal: true);
+        Assert.Equal("start\n", File.ReadAllText(In("work", "e.md")));
+        Assert.DoesNotContain("blyant-commands-", errors);
+        // Deleted with delete: for good (not in the trash), and the same
+        File.WriteAllText(In("work", "e.md"), "start\n");
+        (_, errors, _, _) = Run("insert e.md bottom one\nagain edit\nreplace $cmd one two\ndelete $cmd\n" +
+                                DialogText.ChoiceYes + "\nundo\n",
+            terminal: true);
+        Assert.Equal("start\n", File.ReadAllText(In("work", "e.md")));
+        Assert.DoesNotContain("blyant-commands-", errors);
+        Assert.Empty(Directory.GetFiles(CommandsTemp()));
+        Assert.False(Directory.Exists(FileOperations.TrashDirectory) &&
+                     Directory.EnumerateFiles(FileOperations.TrashDirectory, "blyant-commands-*", SearchOption.AllDirectories).Any());
+        // A change of $cmd leaves the redo of the files worked on
+        File.WriteAllText(In("work", "e.md"), "start\n");
+        Run("insert e.md bottom one\nundo\nagain edit\nreplace $cmd one two\nredo\n", terminal: true);
+        Assert.Equal("start\none\n", File.ReadAllText(In("work", "e.md")));
+    }
+
+    [Fact]
+    public void CommandsFiles_LeftBehind_AreDeleted_WhenNoBlyantRunsWithTheNumber_AndAreNotCmd()
+    {
+        var temp = CommandsTemp();
+        Directory.CreateDirectory(temp);
+        // A number of the system (4 on Windows, 1 on Linux and macOS): a process that is not a Blyant, which a user
+        // may not open; and a temporary file of a save that was cut off
+        var system = Path.Combine(temp, "blyant-commands-" + (OperatingSystem.IsWindows() ? 4 : 1) + ".txt");
+        var cut = Path.Combine(temp, "blyant-commands-" + int.MaxValue + ".txt.1a2b3c4d.tmp");
+        File.WriteAllText(system, "pwd\n");
+        File.WriteAllText(cut, "pwd\n");
+        // A file with the number of this process, left by a Blyant before: not $cmd
+        File.WriteAllText(Path.Combine(temp, "blyant-commands-" + Environment.ProcessId + ".txt"), "pwd\n");
+        var (_, errors, _, _) = Run("echo $cmd\n");
+        Assert.Contains(Lang.T("No $cmd yet: again edit puts the commands typed in it"), errors);
+        Assert.Empty(Directory.GetFiles(temp));
+    }
+
+    [Fact]
+    public void OpenAndPeekCmd_LeaveFileThePeekAndTheLatestFiles()
+    {
+        File.WriteAllText(In("work", "e.md"), "one\ntwo\nthree\n");
+        FileHistory.Parse(string.Empty);
+        var (output, errors, _, session) = Run("peek e.md 2\nchnage e.md +2 TWO\nagain edit\nopen $cmd\npeek $cmd\n" +
+                                               "echo $peek\n.\n", terminal: true);
+        Assert.Contains(Lang.T("$cmd is changed in the shell: replace $cmd old new, word $cmd 1 3 replace new"), errors);
+        Assert.Equal(In("work", "e.md"), session.WorkedFile);
+        // $peek and "." are still those of e.md: its lines, and its window again (1-2, as peek e.md 2 showed it)
+        Assert.Contains("> one\ntwo\n", output);
+        Assert.Equal(2, output.Split("  1  one\n  2  two\n").Length - 1);
+        FileHistory.Load();
+        Assert.DoesNotContain(FileHistory.Items, item => item.Path.Contains("blyant-commands-"));
+    }
+
+    [Fact]
+    public void Tag_FilterIsNotANewName_AndATagNamedFilterBeforeIsStillListed()
+    {
+        File.WriteAllText(In("work", "plot.md"), "x\n");
+        var (_, errors, _, _) = Run("tag add plot.md filter\ntag add plot.md draft\ntag rename draft Filter\n");
+        Assert.Equal(2, errors.Split(Lang.F("{0} is a word of the tag command: give the tag another name", "filter"))
+            .Length - 1);
+        Assert.DoesNotContain(FileTags.All(), pair => pair.Tag == "filter");
+        // A tag named filter, given before: tag filter lists it, and it can be renamed
+        FileTags.Parse(In("work", "plot.md") + "\tfilter\n");
+        FileTags.Save();
+        var (output, _, _, _) = Run("tag filter\ntag rename filter old\n");
+        Assert.Contains("plot.md", output);
+        Assert.Contains(FileTags.All(), pair => pair.Tag == "old");
+        // tags filter alone is still a search without a text
+        Assert.Contains(Lang.T("Give a text: tags filter chapter, tag draft filter chapter (or *.md)"),
+            Run("tags filter\n").Errors);
+    }
+
+    [Fact]
+    public void Rec_PutsItsListInARegister_AndTabCompletesItsOptions()
+    {
+        File.WriteAllText(In("work", "plot.md"), "x\n");
+        FileHistory.Parse(string.Empty);
+        FileHistory.Add(In("work", "plot.md"), DateTime.Now);
+        FileHistory.Save();
+        var (_, errors, _, _) = Run("rec > $x\necho $x\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains("plot.md", ShellRegisters.Get("x"));
+        Assert.Equal("rec -l", Tab(Completion(), "rec -"));
+    }
+
+    [Fact]
+    public void Prev_BeforeAnyCd_IsTold_AndCdDashAfterARunThatRenamedTheDirectory()
+    {
+        Assert.Contains(Lang.T("No directory before this one yet: cd, up, home ... give $prev"), Run("ls $prev\n").Errors);
+        // In d: a run renames it and runs on; the directory before stays work, not the old name of d
+        Directory.CreateDirectory(In("work", "d"));
+        File.WriteAllText(In("work", "s.txt"), "rename . d2\npwd\n");
+        var (output, errors, _, session) = Run("cd d\nrun ../s.txt\necho $prev\ncd -\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains(In("work") + "\n", output.Split("echo $prev")[^1]);
+        Assert.Equal(In("work"), session.Directory);
+    }
+
+    [Fact]
+    public void PeekAll_OfAnEmptyFile_AndRunY_WithWordsAndInQuotes()
+    {
+        File.WriteAllText(In("work", "empty.md"), string.Empty);
+        Assert.Contains(Lang.F("{0} has {1} lines", In("work", "empty.md"), 0), Run("peek empty.md all\n").Output);
+        // run -y $cmd with a word: a command of one line gets it at its end; "-y" in quotes is -y too
+        var (output, errors, _, _) = Run("echo a\nagain edit\nrun -y $cmd b\nrun \"-y\" $cmd c\n", terminal: true);
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains("a b\n", output);
+        Assert.Contains("a c\n", output);
+    }
+
+    [Fact]
+    public void ShortForms_AreInTheTableOfTheShell_AndHelpTellsTheirCommands()
+    {
+        var all = Commands.All(CommandContext.Shell);
+        foreach (var (shortForm, command) in ShellSession.ShortFormsOf)
+        {
+            Assert.Contains(shortForm, all);
+            Assert.Contains(command, Commands.Names(CommandContext.Shell));
+            Assert.Equal(Run("help " + command + "\n").Output, Run("help " + shortForm + "\n").Output);
+        }
     }
 
     [Fact]

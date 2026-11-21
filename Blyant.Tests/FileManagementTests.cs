@@ -56,6 +56,25 @@ public class FileManagementTests : IDisposable
     }
 
     [Fact]
+    public void FollowedPath_TakesLetterCaseAsTheSystemDoes()
+    {
+        // Windows and macOS: "A" is the directory "a", which was renamed (also when only its case changed)
+        // Linux: "A" is another directory, and does not follow
+        var followed = FileOperations.FollowedPath(In("A", "x.md"), In("a"), In("b"));
+        if (FileOperations.NamesIgnoreCase) Assert.Equal(In("b", "x.md"), followed);
+        else Assert.Null(followed);
+        Assert.Equal(In("Proj", "x.md"), FileOperations.FollowedPath(In("proj", "x.md"), In("proj"), In("Proj")));
+    }
+
+    [UnixFact]
+    public void FollowedPath_OnLinux_LeavesADirectoryThatDiffersInCase()
+    {
+        if (FileOperations.NamesIgnoreCase) return;
+        Assert.Null(FileOperations.FollowedPath(In("Draft", "x.md"), In("draft"), In("final")));
+        Assert.False(FileOperations.SamePath(In("Draft"), In("draft")));
+    }
+
+    [Fact]
     public void CreateDirectory_RefusesBadAndUsedNames()
     {
         Assert.Equal(DialogText.Success, FileOperations.CreateDirectory(_root, " new ", out var path));

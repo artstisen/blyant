@@ -183,7 +183,7 @@ Some commands have a short form, which does the same: `fav` and `favs` (`favorit
 | `tag add file\|n name` | Give files a tag (`tag add 2,4 draft`) |
 | `tag remove file\|n [name]` | Take a tag off files, or every tag without a name |
 | `tags [-f]` | List the tags, or the files with tags (`-f`) |
-| `tags filter\|-t text`, `tag [name] filter\|-t text` | Search the files with any tag, or with a tag: a text in the name (`filter`) or in a line (`-t`) |
+| `tags filter\|-t text`, `tag [name] filter\|-t text` | Search the files with any tag, or with a tag: a text in the path (`filter`) or in a line (`-t`) |
 | `hotlist` (`hot`) | List the directory hotlist |
 | `hotlist filter text` | Show the directories of the hotlist with a text in their name or path (`hot filter novel`), or that match a pattern, numbered as in the whole hotlist |
 | `fav add file\|n [where]` | Add a file or directory to the favorites in use: at the top of the list (row 1, outside the folders), or at the place given: `top`, `bottom`, the place of a row (`5`) or into a `[folder]` (`fav add notes.md [Drafts]`) |
@@ -221,7 +221,7 @@ In a terminal the line of the shell is read key by key:
 - `Up` and `Down` bring back the commands you typed before, on Windows, Linux and macOS alike; they bring back only commands that start with what you have typed (`pe` and `Up`: the last `peek`)
 - `forget` clears what the shell keeps while Blyant runs, for a clean slate without leaving: the commands typed, `$clip`, `$peek` (and the window of the last peek), `$calc`, the last search of `find` and the undo and redo steps. It asks first, with how many commands and undo steps there are; from a script or `--run` the answer is no, unless `--yes` is given. What is saved stays: the registers, the settings, `$file`, the directory you are in and the last list. The commands typed on the full screen are kept apart, and stay
 - `again` lists the commands you typed, numbered, the newest first, and `again 3` (or `!3`) runs number 3 again, as it was typed: it is written out, then run. `!!` runs the last one. `!3` and `Tab` puts the command on the line instead, to be changed before `Enter` (another line number, another file). A command run again becomes the newest, number 1, and `again` itself is not kept. The last 50 are kept while Blyant runs, never in a file (a command can contain text from a file); commands from a file, a pipe or `--run` are not kept. When the list grows long, `again filter lines` shows only the commands with _lines_ in them (or `again filter peek*`, a pattern), with their numbers. The list of `again` does not replace the last list: `open 3` is still a row of the list shown before it
-- `Left`, `Right`, `Home` and `End` move on the line, `Ctrl+Left` and `Ctrl+Right` a word at a time, and `Ctrl+A` and `Ctrl+E` to the start and the end, as in bash. `Backspace` and `Delete` delete, `Ctrl+U` deletes the line before the cursor, `Ctrl+W` the word before it, and `Esc` the whole line. A line wider than the window is scrolled sideways on its row
+- `Left`, `Right`, `Home` and `End` move on the line, `Ctrl+Left` and `Ctrl+Right` a word at a time (on macOS, where the system takes them, `Option+Left` and `Option+Right` in Terminal.app), and `Ctrl+A` and `Ctrl+E` to the start and the end, as in bash. `Backspace` and `Delete` delete, `Ctrl+U` deletes the line before the cursor, `Ctrl+W` the word before it, and `Esc` the whole line. A line wider than the window is scrolled sideways on its row
 - `Ctrl+C` drops what you have typed, and `Ctrl+D` (or `Ctrl+Z` on Windows) on an empty line leaves, as `exit` does
 
 With a screen reader, turn the logo off (`set shelllogo false`), and the line may work best when the terminal reads it: turn the setting `shellcompletion` off (`set shellcompletion false` takes effect at once, or `shellcompletion=false` in the settings file; not on the pages of Configuration). The line is then read whole after `Enter`, without `Tab` and with the history your terminal gives. Commands from a file, a pipe or `--run` are always read that way.
@@ -975,7 +975,7 @@ blyant ~/novel> open 1
 - The rows keep the numbers of the whole list, so `open 4` opens row 4, at the line found. `filter` and `-t` together find the files that have both: `tags filter chapter -t storm`
 - `tag draft filter ...` and `tag draft -t ...` make `draft` the `$tag`, as `tag draft` does; `tags ...` leaves `$tag` as it is
 
-- A tag is letters, digits, `-` and `_` (`draft`, `chapter-3`, `to_check`), without blanks, and starts with a letter or a digit (a word starting with `-` is an option, as `-l`). The letter case does not matter: `Draft` is `draft`. `add`, `remove`, `rename` and `clear` are not tags, and `tag rename draft draft` is refused
+- A tag is letters, digits, `-` and `_` (`draft`, `chapter-3`, `to_check`), without blanks, and starts with a letter or a digit (a word starting with `-` is an option, as `-l`). The letter case does not matter: `Draft` is `draft`. `add`, `remove`, `rename`, `clear` and `filter` are not tags, and `tag rename draft draft` is refused. A tag named `filter` given before 1.6.0 is still listed by `tag filter`, and can be renamed: `tag rename filter check`
 - On Linux and macOS a file name can have a tab or a line break in it: such a file cannot have tags, as it would break the line of `tags.txt`
 - `tag add` leaves the last list as it was, so you can give more rows of the list a tag (`tag add 2 draft`, then `tag add 5 draft`)
 - The files keep their tags when you rename or move them, in the shell or on the full screen, and a copy gets the tags of what was copied (a directory copied: the tags of the files in it). A file you delete loses the tags
@@ -1071,7 +1071,7 @@ lines plot.md 3-5 > $notes          ">": the register is those lines alone
   | Name | Value |
   |---|---|
   | `$pwd` | the directory you are in (`copy 3 $pwd`) |
-  | `$prev` | the directory you were in before, where `cd -` goes (`copy notes.md $prev`, `ls $prev`). Kept while Blyant runs |
+  | `$prev` | the directory you were in before, where `cd -` goes (`copy notes.md $prev`, `ls $prev`). Kept while Blyant runs; before the first `cd` the shell says there is none |
   | `$cmd` | the file of `again edit`, with the commands to fix and run (`replace $cmd insrt insert`, `run $cmd`). There while the shell runs, after `again edit` |
   | `$file` | the file the last command worked on: opened, peeked, put lines in, made with `new` ... (`peek plot.md`, then `insert $file bottom Done`). It is kept when you leave the shell, and is `$file` again the next time you start it, while the file is there (setting `shelllastfile`; not for commands from a file, a pipe or `--run`). A list shown (`ls`, `fav`) does not change it. `file 3` makes row 3 of a list `$file` without peeking it, and `resume` opens it in the editor |
   | `$line` | the line of `$file` the last command worked on (`words notes.md 12` makes it 12), or set with `line 12`, else the line where the cursor was in the editor: with `$file` it is `@` (see [Working on one line](#working-on-one-line)). Used before there is a line, it gets the message that there is no line yet |
@@ -1266,9 +1266,10 @@ insert notes.md bottom The ferry came late, as it always did in October
 
 - `again edit 3` takes command 3 of `again`, and `again edit 3-5` commands 3 to 5, the oldest first, a command on each line. `run $cmd` runs them one after the other (after the question), and stops at the first that fails
 - Everything that changes a file works on `$cmd`, with the line given: `replace $cmd old new`, `words $cmd 1` and `word $cmd 1 11 replace always`, `change $cmd +1 ...` (the whole line), `lines $cmd 2 ...`, `insert` and `shift`, and `undo`. `peek $cmd` shows the file again
-- What you do with `$cmd` leaves `$file`, `$line`, `@`, the last list and `$tag` as they were, and the file is not put in the latest files. The commands that `run $cmd` runs work as typed, and change `$file` as they would at the prompt
+- What you do with `$cmd` leaves `$file`, `$line`, `@`, the last list, `$tag`, `$peek` and the window of peek (`.`, `+`) as they were, and the file is not put in the latest files. The commands that `run $cmd` runs work as typed, and change `$file` as they would at the prompt
 - The file is in the folder `temp` in the data directory: `blyant-commands-` and the number of the running Blyant, so two shells at a time have a file each. A new `again edit` writes over it, and it is deleted when you leave the shell (`exit`, `screen`): what you typed stays on the disk only while the shell runs. A file left by a Blyant that was stopped before you left the shell (the terminal closed) is deleted the next time a shell is left. Before `again edit`, or after you leave the shell, `$cmd` is not there, and the shell says so
 - `again edit` is for the commands typed at the prompt: in a `run`, a file of commands or `--run` it is refused
+- `$cmd` is changed in the shell, not in the editor: `open $cmd` is refused. `delete $cmd` deletes it for good (not to the trash), as Cancel does. Undo goes on past the changes of a `$cmd` that is gone or written anew, so the changes to your files before it can still be undone
 
 ### Script with words
 A script can take words when it runs, as a command does: write `$1` where the first word goes, `$2` for the second, and `$*` for all the words, and give the words after the register or file:

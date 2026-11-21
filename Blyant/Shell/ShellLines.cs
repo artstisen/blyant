@@ -347,11 +347,7 @@ internal sealed partial class ShellSession
         // English: the log (the name of the register and the lines, never the text)
         EventLog.Add(DialogText.LogShell + ": lines to register " + register + ": " + source.Item.Path + ":" +
                      Numbers(picked));
-        if (saved != DialogText.Success)
-        {
-            Error(saved);
-            return;
-        }
+        if (Failed(saved)) return;
 
         Line(adds
             ? picked.Count == 1

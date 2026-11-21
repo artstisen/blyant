@@ -319,13 +319,21 @@ internal static class Recovery
     // The signals of the terminal closing and of logging off or shutting down (kept, so they stay registered)
     private static readonly List<PosixSignalRegistration> Signals = new();
 
+    // What is done then: the copy of the text of the editor, the file of "again edit" of the shell deleted
+    private static readonly List<Action> CloseActions = new();
+
     /// <summary>
     /// Call an action when the terminal is closed (SIGHUP; on Windows the window or tab is closed) or Blyant is told
     /// to stop (SIGTERM; on Windows logging off or shutting down). The action may only write files: the terminal can
-    /// be gone. Blyant is stopped after it, as without it. Registered once
+    /// be gone. Blyant is stopped after it, as without it. Each action once (the signals are registered once)
     /// </summary>
     internal static void WatchCloseSignals(Action action)
     {
+        lock (CloseActions)
+        {
+            if (!CloseActions.Contains(action)) CloseActions.Add(action);
+        }
+
         if (Signals.Count > 0) return;
         foreach (var signal in new[] { PosixSignal.SIGHUP, PosixSignal.SIGTERM })
         {
@@ -333,13 +341,18 @@ internal static class Recovery
             {
                 Signals.Add(PosixSignalRegistration.Create(signal, _ =>
                 {
-                    try
+                    Action[] actions;
+                    lock (CloseActions) actions = CloseActions.ToArray();
+                    foreach (var each in actions)
                     {
-                        action();
-                    }
-                    catch
-                    {
-                        // Blyant is stopping: there is nobody to tell
+                        try
+                        {
+                            each();
+                        }
+                        catch
+                        {
+                            // Blyant is stopping: there is nobody to tell
+                        }
                     }
                 }));
             }

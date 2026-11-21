@@ -15,8 +15,10 @@ internal sealed partial class ShellSession
     /// </summary>
     internal static void ForgetTag() => _tag = null;
 
-    // The words after "tag" that are not tags
-    private static readonly HashSet<string> TagActions = new(StringComparer.OrdinalIgnoreCase) { "add", "remove", "rename", "clear" };
+    /// <summary>
+    /// The words after "tag" that are not tags (Tab completes tags after any other word)
+    /// </summary>
+    internal static readonly HashSet<string> TagActions = new(StringComparer.OrdinalIgnoreCase) { "add", "remove", "rename", "clear" };
 
     // "tag draft": the files with the tag (it is then $tag); "tag" alone: those of $tag; "tag -l draft": the full paths.
     // "tag add", "tag remove", "tag rename" and "tag clear" change the tags
@@ -30,18 +32,15 @@ internal sealed partial class ShellSession
         // ("tag -t storm", "tag filter chapter": those of $tag)
         if (words.Count == 0 || !TagActions.Contains(words[0]))
         {
-            if (TagSearch(full ? AfterWords(argument, 1) : argument) is not { } search) return;
+            if (TagSearch(full ? AfterWords(argument, 1) : argument, true) is not { } search) return;
             if (search.Tag == null && _tag == null)
             {
                 Error(Lang.T("No tag yet: tag add notes.md draft, then tag draft"));
                 return;
             }
 
-            if (search.Tag == null || search.Filter != null || search.Text != null)
-            {
-                ListTag(search.Tag ?? _tag!, full, search.Filter, search.Text);
-                return;
-            }
+            ListTag(search.Tag ?? _tag!, full, search.Filter, search.Text);
+            return;
         }
 
         switch (words[0].ToLowerInvariant())
@@ -59,20 +58,6 @@ internal sealed partial class ShellSession
                 TagClear(words);
                 return;
         }
-
-        if (words.Count > 1)
-        {
-            Error(Lang.T("Give one tag: tag draft (tag add notes.md draft gives a file a tag)"));
-            return;
-        }
-
-        if (!FileTags.IsName(words[0]))
-        {
-            Error(Lang.F("Not a name for a tag: {0} (letters, digits, - and _)", words[0]));
-            return;
-        }
-
-        ListTag(words[0].ToLowerInvariant(), full);
     }
 
     // The files with a tag, numbered (the last list: "open 2"); the tag is then $tag. "filter": only those with a text
@@ -91,12 +76,14 @@ internal sealed partial class ShellSession
         var names = Names(files.Select(path => (path, false)).ToList(), full);
         var rows = files.Select((path, i) => (new Item(path, false), names[i])).ToList();
         if (filter == null && text == null) List(rows, string.Empty);
-        else SearchTagged(files, rows, names, filter, text);
+        else SearchTagged(files, rows, names, filter, text, !full);
     }
 
     // What follows "tag" or "tags" when it is a search: a tag (null: none given), the text of "filter" (null: none),
     // and the text after "-t" (null: none). Null, and told, when it is not one ("filter" or "-t" without a text)
-    private (string? Tag, string? Filter, string? Text)? TagSearch(string argument)
+    // "filterCanBeTag": "tag filter" alone is a tag of that name when there is one (made before "filter" was a word
+    // of tag); after "tags" it never is
+    private (string? Tag, string? Filter, string? Text)? TagSearch(string argument, bool filterCanBeTag)
     {
         var (before, text) = TextOption(argument);
         if (text == string.Empty)
@@ -107,21 +94,18 @@ internal sealed partial class ShellSession
 
         var words = Words(before);
         string? tag = null;
-        if (words.Count > 0 && !words[0].Equals("filter", StringComparison.OrdinalIgnoreCase))
+        // ("filter" alone is a tag of that name when there is one: made before "filter" was a word of tag)
+        if (words.Count > 0 &&
+            (!IsFilterWord(words[0]) || (filterCanBeTag && words.Count == 1 && text == null && FilterIsATag())))
         {
-            tag = words[0].ToLowerInvariant();
-            if (!FileTags.IsName(tag))
-            {
-                Error(Lang.F("Not a name for a tag: {0} (letters, digits, - and _)", words[0]));
-                return null;
-            }
-
+            if (TagName(words[0]) is not { } named) return null;
+            tag = named;
             words.RemoveAt(0);
             before = AfterWords(before, 1);
         }
 
         if (words.Count == 0) return (tag, null, text);
-        if (!words[0].Equals("filter", StringComparison.OrdinalIgnoreCase))
+        if (!IsFilterWord(words[0]))
         {
             Error(Lang.T("Give one tag: tag draft (tag add notes.md draft gives a file a tag)"));
             return null;
@@ -139,9 +123,10 @@ internal sealed partial class ShellSession
 
     // The rows of tagged files that fit a filter (a text in the path, or a pattern for the name) and have a text in a
     // line (the line found instead of the rest of the row, so "open 3" opens the file there), numbered as in the whole
-    // list, as recent -t and hist filter show them. Only text files are read, and only those the filter takes
+    // list, as recent -t and hist filter show them. Only text files are read, and only those the filter takes.
+    // "lineUp": the lines found start in one column (not after full paths)
     private void SearchTagged(IReadOnlyList<string> paths, List<(Item Item, string Text)> rows, IReadOnlyList<string> names,
-        string? filter, string? text)
+        string? filter, string? text, bool lineUp)
     {
         var fits = paths.Select(path => filter == null || Fits(filter, path, null)).ToList();
         if (text == null)
@@ -150,15 +135,8 @@ internal sealed partial class ShellSession
             return;
         }
 
-        var pattern = FileSearch.WildcardText(text);
-        var found = paths.Select((path, i) => fits[i] ? FileSearch.FirstLineWith(path, pattern) : null).ToList();
-        var width = found.Select((line, i) => line == null ? 0 : TextMetrics.WidthOf(names[i]) + 1 +
-                                                                 (line.Value.Line + 1).ToString().Length).DefaultIfEmpty(0).Max();
-        var shown = rows.Select((row, i) => found[i] is { } line
-            ? (new Item(paths[i], false, (line.Line + 1, 1), text),
-                Padded(names[i] + ":" + (line.Line + 1), width) + "  " + line.Text)
-            : row).ToList();
-        Filtered(shown, i => found[i] != null, Lang.F("No file has {0} in a line", text));
+        var (shown, found) = FoundRows(paths, rows, names, text, lineUp, i => fits[i]);
+        Filtered(shown, i => found[i], Lang.F("No file has {0} in a line", text));
     }
 
     // "tag add notes.md draft", "tag add 2,4,7 draft", "tag add 2-5 draft", "tag add @ draft": the files get the tag,
@@ -171,7 +149,7 @@ internal sealed partial class ShellSession
             return;
         }
 
-        if (TagName(words[2]) is not { } tag || FilesOf(words[1], true) is not { } files) return;
+        if (TagName(words[2], true) is not { } tag || FilesOf(words[1], true) is not { } files) return;
         // (a tab or a line break in the name would break the line of tags.txt)
         if (files.FirstOrDefault(file => !FileTags.CanHaveTags(file.Path)) is { } odd)
         {
@@ -239,7 +217,7 @@ internal sealed partial class ShellSession
             return;
         }
 
-        if (TagName(words[1]) is not { } tag || TagName(words[2]) is not { } name) return;
+        if (TagName(words[1]) is not { } tag || TagName(words[2], true) is not { } name) return;
         // (the same name: renamed, the files would lose it)
         if (tag == name)
         {
@@ -305,7 +283,7 @@ internal sealed partial class ShellSession
         // "tags filter chapter", "tags -t storm": the files with any tag, with a text in the name, or in a line
         if (words.Count > 0 && (words[0].Equals("filter", StringComparison.OrdinalIgnoreCase) || words.Contains("-t")))
         {
-            if (TagSearch(argument) is not { } search) return;
+            if (TagSearch(argument, false) is not { } search) return;
             if (search.Tag != null)
             {
                 Error(Lang.T("tags lists the tags, tags -f the files with tags, and tags clear takes them all off"));
@@ -319,12 +297,8 @@ internal sealed partial class ShellSession
                 return;
             }
 
-            var paths = tagged.Select(entry => entry.Path).ToList();
-            var names = Names(paths.Select(path => (path, false)).ToList(), false);
-            var width = names.Max(TextMetrics.WidthOf);
-            var rows = tagged.Select((entry, i) => (new Item(entry.Path, false),
-                Padded(names[i], width) + "  " + string.Join(", ", entry.Tags))).ToList();
-            SearchTagged(paths, rows, names, search.Filter, search.Text);
+            var (rows, names) = TaggedRows(tagged);
+            SearchTagged(tagged.Select(entry => entry.Path).ToList(), rows, names, search.Filter, search.Text, true);
             return;
         }
 
@@ -342,12 +316,7 @@ internal sealed partial class ShellSession
 
         if (words.Count == 1)
         {
-            var tagged = FileTags.Tagged();
-            var names = Names(tagged.Select(entry => (entry.Path, false)).ToList(), false);
-            var width = names.Count == 0 ? 0 : names.Max(TextMetrics.WidthOf);
-            List(tagged.Select((entry, i) => (new Item(entry.Path, false),
-                Padded(names[i], width) + "  " + string.Join(", ", entry.Tags))).ToList(),
-                Lang.T("No tags yet: tag add notes.md draft"));
+            List(TaggedRows(FileTags.Tagged()).Rows, Lang.T("No tags yet: tag add notes.md draft"));
             return;
         }
 
@@ -392,11 +361,44 @@ internal sealed partial class ShellSession
     }
 
     // A name for a tag, in small letters (null, and told: not one; "add" and the other words of tag are not names)
-    private string? TagName(string word)
+    // "isNew": a name given to a tag (add, the new name of rename), which cannot be "filter" either: "tag filter"
+    // would search. A tag of that name made before can still be listed, renamed, removed and cleared
+    private string? TagName(string word, bool isNew = false)
     {
-        if (FileTags.IsName(word) && !TagActions.Contains(word)) return word.ToLowerInvariant();
-        Error(Lang.F("Not a name for a tag: {0} (letters, digits, - and _)", word));
-        return null;
+        if (!FileTags.IsName(word))
+        {
+            Error(Lang.F("Not a name for a tag: {0} (letters, digits, - and _)", word));
+            return null;
+        }
+
+        if (TagActions.Contains(word) || (isNew && IsFilterWord(word)))
+        {
+            Error(Lang.F("{0} is a word of the tag command: give the tag another name", word.ToLowerInvariant()));
+            return null;
+        }
+
+        return word.ToLowerInvariant();
+    }
+
+    // The rows of the files with tags (tags -f): the name (with the folder where names are alike) and the tags, lined
+    // up; and the names
+    private (List<(Item Item, string Text)> Rows, List<string> Names) TaggedRows(
+        IReadOnlyList<(string Path, IReadOnlyList<string> Tags)> tagged)
+    {
+        var names = Names(tagged.Select(entry => (entry.Path, false)).ToList(), false);
+        var width = names.Count == 0 ? 0 : names.Max(TextMetrics.WidthOf);
+        return (tagged.Select((entry, i) => (new Item(entry.Path, false),
+            Padded(names[i], width) + "  " + string.Join(", ", entry.Tags))).ToList(), names);
+    }
+
+    // "filter": the word of a search by the path, after "tag" and "tags"
+    private static bool IsFilterWord(string word) => word.Equals("filter", StringComparison.OrdinalIgnoreCase);
+
+    // A tag named "filter" is there (given before it was a word of tag)
+    private static bool FilterIsATag()
+    {
+        FileTags.Load();
+        return FileTags.FilesWith("filter").Count > 0;
     }
 
     // The files a word gives: rows of the last list ("2,4,7", "2-5"), "@" (the file worked on), or a file (a name, a

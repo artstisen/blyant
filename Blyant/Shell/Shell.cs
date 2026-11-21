@@ -267,7 +267,13 @@ internal static class Shell
             WindowSize = terminal ? WindowSizeOfTerminal : null,
             ReadKey = terminal ? ReadPauseKey : null
         };
-        if (terminal) session.ReadLinesWith(ReadPauseKey, WindowWidth);
+        if (terminal)
+        {
+            session.ReadLinesWith(ReadPauseKey, WindowWidth);
+            // (the terminal closed: the file of "again edit" is not left on the disk)
+            Recovery.WatchCloseSignals(ShellSession.DeleteOwnCommandsFile);
+        }
+
         // (from the editor: the file is the last list, "open 1" opens it again)
         if (file != null && File.Exists(file)) session.ShowFirst(file);
         var code = Run(session);

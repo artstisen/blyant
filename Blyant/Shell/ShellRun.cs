@@ -27,8 +27,8 @@ internal sealed partial class ShellSession
         if (Words(typed) is ["-y", ..])
         {
             yes = true;
-            typed = typed[2..].Trim();
-            argument = argument.Trim()[2..].Trim();
+            typed = AfterWords(typed, 1).Trim();
+            argument = AfterWords(argument.Trim(), 1).Trim();
         }
 
         if (typed.Length == 0)

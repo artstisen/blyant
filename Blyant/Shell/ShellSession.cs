@@ -173,7 +173,7 @@ internal sealed partial class ShellSession
         ShellRegisters.LineSource = () => FileLine;
         ShellRegisters.TagSource = () => _tag;
         ShellRegisters.PreviousSource = () => _previousDirectory;
-        ShellRegisters.CommandsSource = () => File.Exists(CommandsFile) ? CommandsFile : null;
+        ShellRegisters.CommandsSource = () => CommandsFileNow;
         Terminal = terminal;
         _yes = yes;
         // $file of the shell left last, while the file is there (typed in at a terminal: not for commands from a file,

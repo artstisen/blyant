@@ -51,6 +51,9 @@ internal sealed class ShellLineReader
             var key = _readKey();
             // Ctrl alone (Ctrl+Alt is AltGr, which types characters as $ @ { [ \ on many keyboards: they are typed)
             var control = (key.Modifiers & ConsoleModifiers.Control) != 0 && (key.Modifiers & ConsoleModifiers.Alt) == 0;
+            // Alt alone (Option on macOS: Option+Left and Option+Right of Terminal.app come as Alt+B and Alt+F, as in
+            // bash, since Ctrl+Left and Ctrl+Right are keys of the system there)
+            var alt = (key.Modifiers & ConsoleModifiers.Alt) != 0 && (key.Modifiers & ConsoleModifiers.Control) == 0;
             // (a terminal can give Enter, Tab and Backspace as their characters only)
             if (key.Key == ConsoleKey.Enter || key.KeyChar is '\r' or '\n')
             {
@@ -96,11 +99,11 @@ internal sealed class ShellLineReader
                     _cursor = _text.Length;
                     break;
                 case ConsoleKey.LeftArrow when control:
-                    // A word to the left: to the start of the word before the cursor (blanks before it skipped)
-                    while (_cursor > 0 && char.IsWhiteSpace(_text[_cursor - 1])) _cursor--;
-                    while (_cursor > 0 && !char.IsWhiteSpace(_text[_cursor - 1])) _cursor--;
+                case ConsoleKey.B when alt:
+                    _cursor = WordStartBefore(_text, _cursor);
                     break;
                 case ConsoleKey.RightArrow when control:
+                case ConsoleKey.F when alt:
                     // A word to the right: to the end of the word after the cursor (blanks before it skipped)
                     while (_cursor < _text.Length && char.IsWhiteSpace(_text[_cursor])) _cursor++;
                     while (_cursor < _text.Length && !char.IsWhiteSpace(_text[_cursor])) _cursor++;
@@ -145,15 +148,14 @@ internal sealed class ShellLineReader
                     break;
                 case ConsoleKey.W when control:
                     // The word before the cursor (and the blanks after it)
-                    var from = _cursor;
-                    while (from > 0 && char.IsWhiteSpace(_text[from - 1])) from--;
-                    while (from > 0 && !char.IsWhiteSpace(_text[from - 1])) from--;
+                    var from = WordStartBefore(_text, _cursor);
                     _text = _text.Remove(from, _cursor - from);
                     _cursor = from;
                     recall.Reset();
                     break;
                 default:
-                    if (key.KeyChar < ' ' || char.IsControl(key.KeyChar)) break;
+                    // (Alt with a letter is not a character: Option+B would type b)
+                    if (key.KeyChar < ' ' || char.IsControl(key.KeyChar) || (alt && char.IsAsciiLetter(key.KeyChar))) break;
                     _text = _text.Insert(_cursor, key.KeyChar.ToString());
                     _cursor++;
                     recall.Reset();
@@ -193,5 +195,14 @@ internal sealed class ShellLineReader
         _output.Write("\r" + prompt + TextMetrics.Printable(_text[_scroll.._cursor]));
         _output.Flush();
         _drawn = columns;
+    }
+
+    // The start of the word before a place in the line (the blanks before the place skipped): where Ctrl+Left goes,
+    // and where Ctrl+W deletes from
+    private static int WordStartBefore(string text, int at)
+    {
+        while (at > 0 && char.IsWhiteSpace(text[at - 1])) at--;
+        while (at > 0 && !char.IsWhiteSpace(text[at - 1])) at--;
+        return at;
     }
 }

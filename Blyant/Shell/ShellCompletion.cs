@@ -297,11 +297,12 @@ internal sealed class ShellCompletion
             case "history":
             case "hist":
             case "recent":
+            case "rec":
             {
                 // The options not given yet, after the options only ("recent -s -n", "hist -l filter draft")
                 if (after.Take(position).Any(word => !word.StartsWith('-'))) return (Kind.None, none);
                 var options = new[] { "-l", "-s", "-f", "-n" }.Except(after.Take(position));
-                return (Kind.Words, command == "recent" ? options : options.Append("filter"));
+                return (Kind.Words, command is "recent" or "rec" ? options : options.Append("filter"));
             }
             case "tag":
             {
@@ -318,7 +319,7 @@ internal sealed class ShellCompletion
                 var first = after[0] == "-l" ? 1 : 0;
                 if (position == first) return (Kind.Words, tags);
                 if (position == first + 1 && !TagSearchWords.Contains(after[first]) &&
-                    after[first] is not ("add" or "remove" or "rename" or "clear"))
+                    !ShellSession.TagActions.Contains(after[first]))
                 {
                     return (Kind.Words, TagSearchWords);
                 }

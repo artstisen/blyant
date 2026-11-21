@@ -118,13 +118,13 @@ internal sealed partial class ShellSession
         ("recent|hist|fav ... -t text", Lang.T("Only the files with a text in a line, and the line (-t *: line 1)")),
         ("tag name", Lang.T("List the files with a tag (tag alone: the files of $tag)")),
         ("tag -l [name]", Lang.T("The files of a tag with the full paths")),
-        ("tag [name] filter|-t text", Lang.T("Files of a tag with a text in the name, or in a line")),
+        ("tag [name] filter|-t text", Lang.T("Files of a tag with a text in the path, or in a line")),
         ("tag add file|n|2,4|2-5 name", Lang.T("Give files a tag (@: the file worked on)")),
         ("tag remove file|n [name]", Lang.T("Take a tag off files (no name: all tags)")),
         ("tag rename|clear name", Lang.T("Rename a tag, or take it off all files")),
         ("tags [-f]", Lang.T("List the tags, or the files with tags (-f)")),
         ("tags clear", Lang.T("Take all tags off all files")),
-        ("tags filter|-t text", Lang.T("Files with any tag: a text in the name, or in a line")),
+        ("tags filter|-t text", Lang.T("Files with any tag: a text in the path, or in a line")),
         ("hotlist", Lang.T("List the directory hotlist (hot)")),
         ("hotlist filter text", Lang.T("Show the directories with a text in them")),
         ("hotlist add|remove [dir|n]", Lang.T("Add a directory to the hotlist (this one), or take it off")),
@@ -305,6 +305,8 @@ internal sealed partial class ShellSession
         var was = (_file, _line);
         // (the directory before the command: when the command goes to another, that is the one "cd -" goes back to)
         var directoryBefore = Directory;
+        // (kept for the command it runs in: a "run" that renamed the directory the shell is in, then ran more)
+        var outerFollowed = _directoryFollowed;
         _directoryFollowed = false;
         var outerChanged = _changedFiles;
         _changedFiles = new List<string>();
@@ -324,6 +326,7 @@ internal sealed partial class ShellSession
             // ($tag follows the file worked on, when it has tags)
             TagFollowsFile(was.Item1, name);
             if (!_directoryFollowed && !FileOperations.SamePath(directoryBefore, Directory)) _previousDirectory = directoryBefore;
+            _directoryFollowed |= outerFollowed;
             // (the line "words" numbered can have moved: insert, shift, change, undo ...)
             if (name is not ("word" or "words") && _wordsShown is { } shown &&
                 _changedFiles.Any(path => FileOperations.NameComparer.Equals(path, shown.Path)))
@@ -466,7 +469,12 @@ internal sealed partial class ShellSession
             return Lang.T("No file yet: open, peek, insert, new ... give $file");
         }
 
-        if (!File.Exists(CommandsFile) && ShellRegisters.Mentions(argument, "cmd"))
+        if (_previousDirectory == null && ShellRegisters.Mentions(argument, "prev"))
+        {
+            return Lang.T("No directory before this one yet: cd, up, home ... give $prev");
+        }
+
+        if (CommandsFileNow == null && ShellRegisters.Mentions(argument, "cmd"))
         {
             return Lang.T("No $cmd yet: again edit puts the commands typed in it");
         }
@@ -484,7 +492,7 @@ internal sealed partial class ShellSession
 
     // The commands that put their result in a register named at the end ("> $name", ">> $name": added to it)
     private static readonly HashSet<string> TakesTarget =
-        new() { "file", "calc", "again", "find", "recent", "history", "hist", "favorites", "fav", "favs" };
+        new() { "file", "calc", "again", "find", "recent", "rec", "history", "hist", "favorites", "fav", "favs" };
 
     /// <summary>
     /// The words after a command with the "$" of the register after a ">" or ">>" at the end made "$$", so that it
@@ -842,7 +850,13 @@ internal sealed partial class ShellSession
     private bool _commandsTouched;
 
     // The file of "again edit" ($cmd)
-    private static bool IsCommandsFile(string path) => FileOperations.SamePath(Path.GetFullPath(path), CommandsFile);
+    private static bool IsCommandsFile(string path) => FileOperations.SamePath(path, CommandsFile);
+
+    /// <summary>
+    /// The file of "again edit" when this shell has written it and it is there, for $cmd (null: not now). A file with
+    /// the number of this process left by an earlier Blyant (the number given again) is not $cmd
+    /// </summary>
+    internal static string? CommandsFileNow => _commandsFile != null && File.Exists(_commandsFile) ? _commandsFile : null;
 
     // The file "again edit" puts commands in, while Blyant runs: in the folder "temp" of the data directory, with the
     // number of the process in the name (two shells at a time have a file each). Kept as written (the data directory
@@ -854,12 +868,32 @@ internal sealed partial class ShellSession
 
     private const string CommandsFilePrefix = "blyant-commands-";
 
-    // The folder of the file of "again edit": "temp" in the data directory
-    private static string CommandsDirectory => Path.Combine(Path.GetFullPath(FileIo.GetDataDirectoryName()), "temp");
+    // English: the name of a directory. The folder of the file of "again edit": "temp" in the data directory
+    private const string CommandsDirectoryName = "temp";
+
+    private static string CommandsDirectory =>
+        Path.Combine(Path.GetFullPath(FileIo.GetDataDirectoryName()), CommandsDirectoryName);
+
+    /// <summary>
+    /// The file of "again edit" of this shell deleted, and nothing else (the terminal is closed: no time to look at the
+    /// files of other processes)
+    /// </summary>
+    internal static void DeleteOwnCommandsFile()
+    {
+        try
+        {
+            FileIo.DeleteFile(CommandsFile);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            // (logged by FileIo; deleted when a shell is left later)
+        }
+    }
 
     /// <summary>
     /// The file of "again edit" deleted (the shell is left: exit, screen), and those that a Blyant stopped before it
-    /// left the shell (the terminal closed) has left: a file whose process is not running
+    /// left the shell (the terminal closed) has left: a file whose process is not a running Blyant. Also a temporary
+    /// file of one that was being written (a save that was cut off)
     /// </summary>
     internal static void DeleteCommandsFile()
     {
@@ -870,8 +904,10 @@ internal sealed partial class ShellSession
         {
             if (System.IO.Directory.Exists(CommandsDirectory))
             {
-                files.AddRange(System.IO.Directory.EnumerateFiles(CommandsDirectory, CommandsFilePrefix + "*.txt")
-                    .Where(path => !FileOperations.SamePath(path, own) && !Running(path)));
+                files.AddRange(System.IO.Directory.EnumerateFiles(CommandsDirectory, CommandsFilePrefix + "*")
+                    .Where(path => !FileOperations.SamePath(path, own) && ProcessOf(path) is { } id &&
+                                   (id == Environment.ProcessId ? IsTemporaryOf(path, own) : !BlyantRunning(id)))
+                    .ToList());
             }
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
@@ -892,23 +928,41 @@ internal sealed partial class ShellSession
         }
     }
 
-    // The process of a file of "again edit" is running (a name without a number is not touched)
-    private static bool Running(string path)
+    // The number of the process of a file of "again edit" ("blyant-commands-4711.txt", or a temporary file of it
+    // being written: "blyant-commands-4711.txt.1a2b3c4d.tmp"); null: another name, which is not touched
+    private static int? ProcessOf(string path)
     {
-        var name = Path.GetFileNameWithoutExtension(path);
-        if (!int.TryParse(name[CommandsFilePrefix.Length..], NumberStyles.None, CultureInfo.InvariantCulture, out var id))
-        {
-            return true;
-        }
+        var name = Path.GetFileName(path);
+        var rest = name[CommandsFilePrefix.Length..];
+        var end = rest.IndexOf(".txt", StringComparison.Ordinal);
+        if (end <= 0 || !int.TryParse(rest[..end], NumberStyles.None, CultureInfo.InvariantCulture, out var id)) return null;
+        var tail = rest[(end + 4)..];
+        return tail.Length == 0 || (tail.StartsWith('.') && tail.EndsWith(".tmp", StringComparison.Ordinal)) ? id : null;
+    }
 
+    // A temporary file of the file of "again edit" of this process (not the file itself)
+    private static bool IsTemporaryOf(string path, string own) =>
+        Path.GetFileName(path).StartsWith(Path.GetFileName(own) + ".", StringComparison.Ordinal);
+
+    // A Blyant runs with the number (a process named as this one is): its file of "again edit" is kept. A number not
+    // in use, or given to another program since, is not. When the system does not tell (a process of another user,
+    // of the system), the file is kept: it is looked at again when a shell is left later
+    private static bool BlyantRunning(int id)
+    {
         try
         {
             using var process = System.Diagnostics.Process.GetProcessById(id);
-            return !process.HasExited;
+            using var own = System.Diagnostics.Process.GetCurrentProcess();
+            return string.Equals(process.ProcessName, own.ProcessName, StringComparison.OrdinalIgnoreCase);
         }
         catch (Exception e) when (e is ArgumentException or InvalidOperationException)
         {
+            // Not running
             return false;
+        }
+        catch (Exception e) when (e is System.ComponentModel.Win32Exception or NotSupportedException)
+        {
+            return true;
         }
     }
 
@@ -931,9 +985,13 @@ internal sealed partial class ShellSession
         }
 
         var path = CommandsFile;
+        // (the changes of the file before are not undone any more: it is written anew)
+        ForgetCommandsSteps();
         try
         {
             FileIo.CreateDirectory(CommandsDirectory);
+            // (a link of that name is taken away: the commands are written in the folder, not where it points)
+            if (new FileInfo(path).LinkTarget != null) FileIo.DeleteFile(path);
             if (!File.Exists(path)) FileIo.CreateNewFile(path);
             FileIo.WriteAllBytesSafe(path, new System.Text.UTF8Encoding(false).GetBytes(string.Join("\n", commands) + "\n"));
             _commandsFile = path;
@@ -972,6 +1030,7 @@ internal sealed partial class ShellSession
         if (picked == 0) return true;
         if (picked == 2)
         {
+            ForgetCommandsSteps();
             DeleteCommandsFile();
             Line(Lang.T("Not run: $cmd is deleted (again edit makes a new one)"));
         }
@@ -1705,13 +1764,9 @@ internal sealed partial class ShellSession
         {
             // The rows with the text: the line found instead of the date ("02-storm.md:3  The storm came"), numbered
             // as in the whole list, so "open 4" opens row 4 at that line
-            var pattern = FileSearch.WildcardText(search);
-            var found = entries.Select(entry => FileSearch.FirstLineWith(entry.Path, pattern)).ToList();
-            rows = entries.Select((entry, i) => found[i] is { } line
-                ? (new Item(entry.Path, false, (line.Line + 1, 1), search),
-                    names[i] + ":" + (line.Line + 1) + "  " + line.Text)
-                : rows[i]).ToList();
-            Filtered(rows, i => found[i] != null && (filter == null || Fits(filter, entries[i].Path, null)),
+            var (shown, found) = FoundRows(entries.Select(entry => entry.Path).ToList(), rows, names, search, !full,
+                _ => true);
+            Filtered(shown, i => found[i] && (filter == null || Fits(filter, entries[i].Path, null)),
                 Lang.F("No file has {0} in a line", search));
             return;
         }
@@ -1741,6 +1796,25 @@ internal sealed partial class ShellSession
         }
 
         if (found == 0) Line(none);
+    }
+
+    // The rows of files with a text in a line (recent -t, tags -t): the line found instead of the rest of the row
+    // ("02-storm.md:3  The storm came"), and the row opens at it ("open 4"); the other rows as they were. "lineUp":
+    // the lines found start in one column (not after full paths, which would make the rows wider than the window).
+    // "look": the files read (only text files are)
+    private static (List<(Item Item, string Text)> Rows, List<bool> Found) FoundRows(IReadOnlyList<string> paths,
+        IReadOnlyList<(Item Item, string Text)> rows, IReadOnlyList<string> names, string text, bool lineUp,
+        Func<int, bool> look)
+    {
+        var pattern = FileSearch.WildcardText(text);
+        var found = paths.Select((path, i) => look(i) ? FileSearch.FirstLineWith(path, pattern) : null).ToList();
+        var width = !lineUp ? 0 : found.Select((line, i) => line == null ? 0 : TextMetrics.WidthOf(names[i]) + 1 +
+            (line.Value.Line + 1).ToString(CultureInfo.InvariantCulture).Length).DefaultIfEmpty(0).Max();
+        var shown = rows.Select((row, i) => found[i] is { } line
+            ? (new Item(paths[i], false, (line.Line + 1, 1), text),
+                Padded(names[i] + ":" + (line.Line + 1).ToString(CultureInfo.InvariantCulture), width) + "  " + line.Text)
+            : row).ToList();
+        return (shown, found.Select(line => line != null).ToList());
     }
 
     // A filter fits a path (or a name it has: of a directory of the hotlist): the text is in it (letter case alike),
@@ -1852,7 +1926,7 @@ internal sealed partial class ShellSession
         }
 
         // The columns of the window (0: not a terminal, or one that does not tell its size)
-        var width = Terminal && WindowSize?.Invoke() is { Width: > 20 } size ? size.Width - 1 : 0;
+        var width = WindowColumns(0);
         if (what == "license")
         {
             // In a terminal a line wider than the window is broken between words (the paragraphs of the license are
@@ -1895,7 +1969,7 @@ internal sealed partial class ShellSession
     // not known, as to a file) broken between words under its column
     private void CommandRows(IReadOnlyList<(string Command, string Text)> rows, string indent)
     {
-        var width = Terminal && WindowSize?.Invoke() is { Width: > 20 } size ? size.Width - 1 : 79;
+        var width = WindowColumns(DefaultColumns);
         var widest = rows.Max(row => row.Command.Length) + 2;
         var room = width - widest - indent.Length;
         foreach (var (command, text) in rows)
@@ -1920,19 +1994,8 @@ internal sealed partial class ShellSession
         if (name.Length > 0)
         {
             // The command, or the long name of a short one ("fav": favorites)
-            var full = name switch
+            var full = ShortFormsOf.FirstOrDefault(form => form.Short == name).Command ?? name switch
             {
-                "fav" or "favs" => "favorites",
-                "hist" => "history",
-                "hot" => "hotlist",
-                "book" => "bookmarks",
-                "proj" => "projects",
-                "h" => "help",
-                "rec" => "recent",
-                "res" => "resume",
-                "q" or "quit" => "exit",
-                "del" => "delete",
-                "cls" => "clear",
                 // (one row tells both)
                 "name" => "path",
                 "edit" => "open",
@@ -1990,17 +2053,33 @@ internal sealed partial class ShellSession
         if (forms.Count > 0) ShortForms(forms);
     }
 
-    // The short forms of the commands, and the commands they stand for (English: the same in all languages, as the
-    // commands are): after the commands of help, in rows as wide as the window (79 columns when it is not known)
-    private static readonly string[] ShortFormsShown =
+    /// <summary>
+    /// The short forms of the commands, and the commands they stand for (English: the same in all languages, as the
+    /// commands are). "help fav" tells favorites, and help ends with them; each is in the second list of the table of
+    /// the shell in Commands.cs
+    /// </summary>
+    internal static readonly (string Short, string Command)[] ShortFormsOf =
     {
-        "fav, favs (favorites)", "hist (history)", "rec (recent)", "res (resume)", "hot (hotlist)", "book (bookmarks)",
-        "proj (projects)", "del (delete)", "cls (clear)", "h (help)", "q, quit (exit)"
+        ("fav", "favorites"), ("favs", "favorites"), ("hist", "history"), ("rec", "recent"), ("res", "resume"),
+        ("hot", "hotlist"), ("book", "bookmarks"), ("proj", "projects"), ("del", "delete"), ("cls", "clear"),
+        ("h", "help"), ("q", "exit"), ("quit", "exit")
     };
+
+    // The short forms as help shows them, after the commands, in rows as wide as the window: "fav, favs (favorites)"
+    private static readonly string[] ShortFormsShown = ShortFormsOf.GroupBy(form => form.Command)
+        .Select(forms => string.Join(", ", forms.Select(form => form.Short)) + " (" + forms.Key + ")").ToArray();
+
+    // The columns of the window, less the last (Blyant does not write there); "unknown" when it is not a terminal or
+    // does not tell its size
+    private int WindowColumns(int unknown) =>
+        Terminal && WindowSize?.Invoke() is { Width: > 20 } size ? size.Width - 1 : unknown;
+
+    // The columns taken when the window does not tell its size: a window of 80
+    private const int DefaultColumns = 79;
 
     private void ShortForms(IReadOnlyList<string>? forms = null)
     {
-        var width = Terminal && WindowSize?.Invoke() is { Width: > 20 } size ? size.Width - 1 : 79;
+        var width = WindowColumns(DefaultColumns);
         var row = Lang.T("Short forms:");
         foreach (var form in forms ?? ShortFormsShown)
         {
@@ -2045,6 +2124,13 @@ internal sealed partial class ShellSession
         if (item.IsDirectory)
         {
             ChangeDirectory(item.Path);
+            return;
+        }
+
+        // ($cmd is changed with the commands of the shell: in the editor it would be $file, and a latest file)
+        if (IsCommandsFile(item.Path))
+        {
+            Error(Lang.T("$cmd is changed in the shell: replace $cmd old new, word $cmd 1 3 replace new"));
             return;
         }
 
