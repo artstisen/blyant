@@ -272,7 +272,7 @@ internal sealed class ShellCompletion
                         return (Kind.Words, new[] { "-a", "-d" });
                     var what = position == 2 || (position == 3 && after[1].StartsWith('+'));
                     return (what ? Kind.Words : Kind.None,
-                        new[] { ">", "start", "end", "unstart", "unend", "replace", "remove", "at", "sort", "upper", "lower", "title" });
+                        new[] { ">", "start", "end", "unstart", "unend", "replace", "remove", "at", "dup", "sort", "upper", "lower", "title" });
                 }
 
                 if (position == arrow + 1) return (Kind.Path, none);

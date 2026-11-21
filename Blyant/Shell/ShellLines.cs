@@ -12,7 +12,7 @@ internal sealed partial class ShellSession
 {
     // What "lines" does to the text in the lines (after the lines: "lines todo.md 4 start Note:")
     private static readonly string[] LineEdits =
-        { "start", "end", "unstart", "unend", "replace", "remove", "at", "sort", "upper", "lower", "title" };
+        { "start", "end", "unstart", "unend", "replace", "remove", "at", "dup", "sort", "upper", "lower", "title" };
 
     /// <summary>
     /// What the words after "lines" are: the place of the ">" of a copy (2, or 3 after "+10 5"), or of a word of
@@ -46,7 +46,7 @@ internal sealed partial class ShellSession
         // (after the lines: neither a ">" nor a word of what is done)
         else if (form.Arrow < 0 && words.Count > 2 && !words.Contains(">") && !words.Contains(">>"))
         {
-            Error(Lang.T("After the lines: > file place, > $name, start, end, unstart, unend, replace, remove, at, sort, upper, lower or title"));
+            Error(Lang.T("After the lines: > file place, > $name, start, end, unstart, unend, replace, remove, at, dup, sort, upper, lower or title"));
         }
         else CopyLines(argument);
     }
@@ -56,6 +56,7 @@ internal sealed partial class ShellSession
     // "unstart" and "unend" take the text off the start or end of the lines that have it (with the blank start and end
     // put there; in quotes: the text only). "replace old new": a text in the lines replaced (letter case as typed;
     // "" for none), and "remove text" the text taken out wherever it is in them. In quotes, "" is a quote ("""").
+    // "dup", "dup 3": the lines copied right below the last of them (3 copies), as :dup in the editor.
     // "at 10 text": the text put in before column 10 (as the editor and words count them), as typed, no blank added;
     // a line without that column (too short) is told, and nothing is changed. As insert: the line endings and byte order mark of the file kept, only a file in UTF-8 and not
     // one Blyant uses, and the file is then the last list, at the first line changed. Nothing is lost by it (unstart
@@ -112,6 +113,19 @@ internal sealed partial class ShellSession
             exact = true;
             replacement = atColumn.ToString(System.Globalization.CultureInfo.InvariantCulture);
         }
+        else if (kind == "dup")
+        {
+            text = string.Empty;
+            // (how many copies: 1, or as many as given, at most 500 as :dup takes)
+            if (rest.Length > 0 && (!rest.All(char.IsAsciiDigit) || !int.TryParse(rest, System.Globalization.NumberStyles.None,
+                    System.Globalization.CultureInfo.InvariantCulture, out var copies) || copies is < 1 or > MaxCopies))
+            {
+                Error(Lang.F("After dup: how many copies, 1 to {0} (lines notes.md 4-6 dup 3)", MaxCopies));
+                return;
+            }
+
+            replacement = rest.Length > 0 ? rest : "1";
+        }
         else if (kind is "sort" or "upper" or "lower" or "title")
         {
             text = string.Empty;
@@ -147,6 +161,11 @@ internal sealed partial class ShellSession
         var (item, file) = editable;
         var lines = LinesOfText(file.Text);
         if (PickedLines(words[1], at == 3 ? words[2] : null, lines, item.Path) is not { } picked) return;
+        if (kind == "dup")
+        {
+            Duplicate(item, file, lines, picked, int.Parse(replacement, System.Globalization.CultureInfo.InvariantCulture));
+            return;
+        }
 
         // At a column: every line must have it, or none is changed
         // (blank lines are left as they are, as start and end leave them)
@@ -202,6 +221,31 @@ internal sealed partial class ShellSession
                 ? Lang.F("{0}: line {1} changed", item.Path, changed[0])
                 : Lang.F("{0}: {1} lines changed", item.Path, changed.Count));
         }
+    }
+
+    // The most copies "dup" makes, as :dup in the editor
+    private const int MaxCopies = 500;
+
+    // "lines notes.md 4-6 dup 3": the lines, in their order, copied right below the last of them, as many times as
+    // asked. The copies are shown, the file is the last list at the first copy, and $line is the last copy, so
+    // "lines @ dup" copies it again
+    private void Duplicate(Item item, TextFile file, List<string> lines, List<int> picked, int copies)
+    {
+        var block = picked.Select(number => lines[number - 1]).ToList();
+        var added = Enumerable.Range(0, copies).SelectMany(_ => block).ToList();
+        var (text, first) = WithLinesAt(file.Text, added, picked[^1]);
+        // (the path and the lines, never the text)
+        if (!SavedEdit(file, text, "Duplicate lines", item.Path + ":" + Numbers(picked) + " x" + copies)) return;
+
+        LastList = new List<Item> { new(item.Path, false, (first, 1)) };
+        var last = first + added.Count - 1;
+        _line = last;
+        var now = LinesOfText(text);
+        var width = last.ToString(System.Globalization.CultureInfo.InvariantCulture).Length;
+        for (var i = first; i <= last; i++) Row(i, width, now[i - 1]);
+        Line(added.Count == 1
+            ? Lang.F("{0}: line {1} put in", item.Path, first)
+            : Lang.F("{0}: lines {1}-{2} put in", item.Path, first, last));
     }
 
     /// <summary>
@@ -297,7 +341,8 @@ internal sealed partial class ShellSession
         place = place.Trim('"').Trim();
         if (EditableFile(words[0]) is not { } source) return;
         if (EditableFile(words[arrow + 1]) is not { } target) return;
-        if (FileOperations.SamePath(LinkedPath(source.Item.Path), LinkedPath(target.Item.Path)))
+        // (a copy can go to another place of the same file; moving lines in a file is what shift does)
+        if (cut && FileOperations.SamePath(LinkedPath(source.Item.Path), LinkedPath(target.Item.Path)))
         {
             Error(Lang.T("The lines are in that file already: shift moves lines in a file"));
             return;

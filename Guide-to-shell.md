@@ -135,7 +135,8 @@ Some commands have a short form, which does the same: `fav` and `favs` (`favorit
 | `shift! file\|n lines place` | Move lines as `shift` does, and tick any task boxes (`- [ ]` to `- [x]`), or untick any that are ticked |
 | `shift file\|n lines up\|down [n]` | Move lines up or down, by a line or by n lines: `shift notes.md 12 up`, `shift notes.md 12-15 down 3`. See [Moving lines](#moving-lines) |
 | `shift -s file\|n heading place` | Move a section (a heading and what is under it) up or down past the sections of the same level, or to a place: `shift -s notes.md Ideas up`. See [Moving a section](#moving-a-section) |
-| `lines file\|n lines > file\|n place [copy\|cut]` | Copy lines to another file without opening the files (`lines notes.md 4-6 > plan.md bottom`), or with `cut` move them there. See [Moving lines](#moving-lines) |
+| `lines file\|n lines > file\|n place [copy\|cut]` | Copy lines to another file without opening the files (`lines notes.md 4-6 > plan.md bottom`), or with `cut` move them there. A copy can also go to another place of the same file (`lines notes.md 4-6 > notes.md Ideas`). See [Moving lines](#moving-lines) |
+| `lines file\|n lines dup [n]` | Copy lines right below them, as `:dup` in the editor: `lines notes.md 12 dup`, `lines notes.md 4-6 dup 3` (three copies). See [Moving lines](#moving-lines) |
 | `lines file\|n lines >\|>> $name [copy\|cut]` | Keep lines in a register (`lines notes.md 4-6 > $notes`), or add them at the end with `>>`; with `cut`, also take them out of the file. A register that holds a path is not written over: give the place in that file (`> $plan bottom`). See [Registers](#registers) |
 | `lines file\|n lines start\|end text` | Put a text at the start or the end of lines, keeping the rest (`lines todo.md 4 start Remember this:`). **A blank is put between the text and the line**: in quotes the text is put as typed, with no blank (`lines notes.md 48 end ", and more"`). See [Text in lines](#text-in-lines) |
 | `lines file\|n lines unstart\|unend text` | Take a text off the start or the end of the lines that have it |
@@ -513,10 +514,13 @@ shift! todo.md "Get pencils and paper" Done  moved, and its task box ticked
 - `up` and `down` move the lines by one line, or by as many as given (`down 3`), and stop at the top and the bottom of the file. Lines given apart (`5,8`) are put together. A heading named _Up_ or _Down_ is written in quotes (`"Up"`)
 - The lines moved are shown at their new place, and the file is then the last list there (`open 1`). As for `insert`, the file keeps its line endings and byte order mark, only a file in UTF-8 is changed and not the files Blyant uses, and `undo` puts it back; a move loses nothing, so there is no question first
 
-`lines` copies lines to another file, or moves them there with `cut` last:
+`lines` copies lines to another file, or moves them there with `cut` last. A copy can also go to another place of the same file, and `dup` copies lines right below them:
 
 ```
 lines notes.md 4-6 > plan.md bottom          lines 4 to 6 copied to the end
+lines notes.md 4-6 > notes.md Ideas          a copy under Ideas, in the same file
+lines notes.md 12 dup                        line 12 copied right below it
+lines notes.md 4-6 dup 3                     three copies of lines 4 to 6, below 6
 lines notes.md +10 5 > plan.md top           5 lines from line 10, as peek
 lines todo.md "Get pencils and paper" > done.md Done+ cut
                                              that line moved to the end of Done
@@ -526,6 +530,8 @@ lines todo.md "Get pencils and paper" > done.md Done+ cut
 - `copy` is the default, and can be written too. `cut` removes the lines from the first file after they are in the other: when something goes wrong, they are in both files, never in neither. The first file is not changed if it was changed by something else since it was read (the lines are then only copied, and the shell says so). A heading named _Cut_ is written in quotes (`"Cut"`), as the place
 - The lines put in are shown, and the other file is then the last list there (`open 1`). Both files keep their line endings and byte order mark, only files in UTF-8 are changed and not the files Blyant uses, and nothing is asked: no line is lost. To move lines within one file, use `shift`
 - `Tab` completes the other file after the `>`, then the headings of that file (also from a pattern, and of a row or `$file`), then `copy` and `cut`. A heading is found by the whole text, the start or a pattern, as for `shift`
+- In the same file, `>` makes a copy at the place given; `cut` is refused there, as moving lines in a file is what `shift` does
+- `dup` copies the lines right below the last of them, as `:dup` in the editor: one copy, or as many as given (`dup 3`, at most 500). Lines given apart (`4,7`) are copied as one block below the last, in their order. The copies are shown, the file is the last list at the first copy, and `$line` is the last copy, so `lines @ dup` copies that line again. `undo` takes all the copies back in one step
 - From the command line of your system, give the command in quotes: `blyant --run "lines notes.md 4-6 > plan.md bottom"`. Without them, bash, PowerShell and cmd take the `>` as a redirection to a file
 
 ### Moving a section
@@ -599,7 +605,7 @@ blyant ~/notes> lines todo.md 3 unstart "- [ ] "
 - `replace old new` replaces the text everywhere in the lines, with the letter case as typed (`draft`, not `Draft`). A text with blanks is written in quotes, and `""` is an empty text: what is replaced is removed
 - `remove text` takes the text out everywhere in the lines, with the letter case as typed. The text is all that follows `remove`, as for `start`; in quotes it is taken as written, blanks too. A `"` is written `""""` in quotes (see [Quotes in a text](#quotes-in-a-text)), or alone: `lines notes.md 1 remove "`
 - `at 32 text` puts the text in before column 32 of each line: the text then starts at column 32. The columns are counted from 1, as the editor counts them on the status line, and `words` shows the column each word starts at (`#9:32 want`). The text is put in as typed, with no blank added: write it in quotes to keep a blank at the start or the end of the text (`"really "`). A column one past the end of a line puts the text at the end. When a line has no such column (it is shorter), the shell says which line, and no line is changed. A blank line is left as it is, as `start` and `end` leave it
-- After the lines, `Tab` completes `start`, `end`, `unstart`, `unend`, `replace`, `remove`, `at`, `sort`, `upper`, `lower`, `title` and `>`, and after `sort` it completes `-a` and `-d`. A `>` or one of these words later on is part of the text: `lines notes.md 3 start ">"` makes line 3 a quote
+- After the lines, `Tab` completes `start`, `end`, `unstart`, `unend`, `replace`, `remove`, `at`, `dup`, `sort`, `upper`, `lower`, `title` and `>`, and after `sort` it completes `-a` and `-d`. A `>` or one of these words later on is part of the text: `lines notes.md 3 start ">"` makes line 3 a quote
 - `$name` and `$clip` put in their value: `lines todo.md 4 end $note`
 - The lines changed are shown, and the file is then the last list, at the first line changed (`open 1`). When no line changes, nothing is written, and the shell says so. As for `insert`, the file keeps its line endings and byte order mark, only a file in UTF-8 is changed and not the files Blyant uses, and `undo` puts it back; nothing is asked, as no line is lost
 

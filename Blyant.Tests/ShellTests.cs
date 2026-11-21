@@ -2242,7 +2242,7 @@ public class ShellTests : IDisposable
     {
         File.WriteAllText(In("work", "notes.md"), "one\ntwo\n");
         File.WriteAllText(In("work", "plan.md"), "# Plan\n");
-        var (_, errors, code, _) = Run("lines notes.md 1 plan.md bottom\nlines notes.md 1 > notes.md top\n" +
+        var (_, errors, code, _) = Run("lines notes.md 1 plan.md bottom\nlines notes.md 1 > notes.md top cut\n" +
                                        "lines notes.md 9 > plan.md top\nlines notes.md 1 > plan.md Nowhere cut\n" +
                                        "lines notes.md 1 > nothing.md top\nlines notes.md 1 3 > plan.md top\n" +
                                        "lines notes.md 1 > plan.md\n");
@@ -2526,7 +2526,8 @@ public class ShellTests : IDisposable
     {
         Directory.CreateDirectory(In("work", "case"));
         var two = TwoNamesByCase("case");
-        var (_, errors, _, _) = Run("lines case/Notes.md 1 > case/notes.md bottom\n");
+        // (cut: within one file it is refused, so the test tells whether the two names are one file)
+        var (_, errors, _, _) = Run("lines case/Notes.md 1 > case/notes.md bottom cut\n");
         if (two)
         {
             Assert.Equal(string.Empty, errors);
@@ -4865,7 +4866,7 @@ public class ShellTests : IDisposable
         Assert.Contains(Lang.T("Nothing changed: no uppercase letters in the lines"), output);
         var (_, wrong, _, _) = Run("lines t.md 1 upper now\nlines t.md 1 sideways\n");
         Assert.Contains(Lang.F("Nothing goes after {0}: lines notes.md 3-20 {0}", "upper"), wrong);
-        Assert.Contains(Lang.T("After the lines: > file place, > $name, start, end, unstart, unend, replace, remove, at, sort, upper, lower or title"), wrong);
+        Assert.Contains(Lang.T("After the lines: > file place, > $name, start, end, unstart, unend, replace, remove, at, dup, sort, upper, lower or title"), wrong);
     }
 
     [Fact]
@@ -8840,5 +8841,52 @@ public class ShellTests : IDisposable
         // (the prompt names $file: a file given is $file at once, also when nothing is typed in)
         var (output, _, _, _) = Run("peek a.md 1\ninput b.md bottom\n.\necho $file $line\n");
         Assert.Contains(In("work", "b.md") + " 1\n", output);
+    }
+
+    // ---- 1.6.2: lines dup, and a copy within the same file
+
+    [Fact]
+    public void LinesDup_CopiesTheLinesRightBelowThem_AsManyTimesAsAsked()
+    {
+        File.WriteAllText(In("work", "d.md"), "# T\r\none\r\ntwo\r\nlast\r\n");
+        var (output, errors, _, session) = Run("lines d.md 2 dup\nlines d.md 3-4 dup 2\necho $line\n");
+        Assert.Equal(string.Empty, errors);
+        // (the line endings of the file kept)
+        Assert.Equal("# T\r\none\r\none\r\ntwo\r\none\r\ntwo\r\none\r\ntwo\r\nlast\r\n", Text("d.md"));
+        Assert.Contains(Lang.F("{0}: line {1} put in", In("work", "d.md"), 3), output);
+        Assert.Contains(Lang.F("{0}: lines {1}-{2} put in", In("work", "d.md"), 5, 8), output);
+        // $line is the last copy; the file is the last list at the first copy
+        Assert.Contains("\n8\n", output);
+        Assert.Equal(5, session.LastList.Single().At?.Line);
+        // Lines given apart: one block below the last, in their order; @ the line worked on
+        File.WriteAllText(In("work", "d.md"), "a\nb\nc\n");
+        (_, errors, _, _) = Run("lines d.md 1,3 dup\nlines @ dup\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("a\nb\nc\na\nc\nc\n", Text("d.md"));
+    }
+
+    [Fact]
+    public void LinesDup_IsOneStepOfUndo_AndTellsACountItCannotTake()
+    {
+        File.WriteAllText(In("work", "d.md"), "a\nb\n");
+        var (output, errors, _, _) = Run("lines d.md 1-2 dup 3\nundo\nlines d.md 1 dup 0\nlines d.md 1 dup 501\nlines d.md 1 dup x\n");
+        Assert.Contains(Lang.F("Undone: {0}", "lines d.md 1-2 dup 3"), output);
+        Assert.Equal("a\nb\n", Text("d.md"));
+        Assert.Equal(3, errors.Split(Lang.F("After dup: how many copies, 1 to {0} (lines notes.md 4-6 dup 3)", 500)).Length - 1);
+        Assert.Equal("lines d.md 1 dup", Tab(Completion(), "lines d.md 1 du"));
+        Assert.Contains("lines file|n lines dup [n]", Run("help lines\n").Output);
+    }
+
+    [Fact]
+    public void LinesCopy_GoesToAnotherPlaceOfTheSameFile_ButCutIsShift()
+    {
+        File.WriteAllText(In("work", "c.md"), "# Notes\none\ntwo\n\n## Ideas\n\nlast\n");
+        var (_, errors, _, _) = Run("lines c.md 2 > c.md bottom\nlines c.md 3 > c.md top\n");
+        Assert.Equal(string.Empty, errors);
+        // (line 3 is "two" after the first copy)
+        Assert.Equal("two\n# Notes\none\ntwo\n\n## Ideas\n\nlast\none\n", Text("c.md"));
+        (_, errors, _, _) = Run("lines c.md 2 > c.md bottom cut\n");
+        Assert.Contains(Lang.T("The lines are in that file already: shift moves lines in a file"), errors);
+        Assert.Equal("two\n# Notes\none\ntwo\n\n## Ideas\n\nlast\none\n", Text("c.md"));
     }
 }
