@@ -97,6 +97,12 @@ internal sealed partial class ShellSession
         }
     }
 
+    /// <summary>
+    /// $line as the commands set it (null: none, and $line is where the editor left the cursor), kept with $file when
+    /// the shell is left (shelllastline)
+    /// </summary>
+    internal int? WorkedLine => _line;
+
     // The files the command running now has changed, for the history (see LatestChanged)
     private List<string> _changedFiles = new();
 
@@ -182,6 +188,9 @@ internal sealed partial class ShellSession
             File.Exists(Shell.LastFile))
         {
             _file = Path.GetFullPath(Shell.LastFile);
+            // $line too, while the file has that line (a file made shorter since: the line where the editor left the
+            // cursor, as before)
+            if (Shell.LastLine is { } kept && LineCount(_file).Count is { } count && kept <= count) _line = kept;
         }
 
         // The window of the last peek of the shell left last, so "." and "+" go on from it

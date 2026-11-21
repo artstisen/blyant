@@ -8908,4 +8908,39 @@ public class ShellTests : IDisposable
         Assert.Contains("$time  " + Lang.T("The time now, as 14:05"), output);
         Assert.Contains("$now  ", output);
     }
+
+    // ---- 1.6.2: $line kept with $file for the next shell
+
+    [Fact]
+    public void Line_IsKeptWithFile_AndIsLineAgainInTheNextShell_WhileTheFileHasIt()
+    {
+        try
+        {
+            File.WriteAllText(In("work", "kept.md"), "one\ntwo\nthree\n");
+            var (_, _, _, session) = Run("peek kept.md 1\ninput kept.md +2\nnew line\n.\n", terminal: true);
+            Assert.Equal(2, session.WorkedLine);
+            Shell.RememberLast(session.Directory, session.WorkedFile, session.WorkedLine);
+            Assert.Equal("2", FileIo.ParseSettings(FileIo.ReadSettingsFile())["shelllastline"]);
+            // The next shell at a terminal goes on at that line: input puts the next line after it
+            var (output, _, _, _) = Run("echo $file $line\ninput\nnext\n.\n", terminal: true);
+            Assert.Contains(In("work", "kept.md") + " 2\n", output);
+            Assert.Equal("one\nnew line\nnext\ntwo\nthree\n", Text("kept.md"));
+            // A file made shorter since: the line is not taken
+            File.WriteAllText(In("work", "kept.md"), "one\n");
+            (output, _, _, _) = Run("echo $line\n", terminal: true);
+            Assert.DoesNotContain("\n2\n", output);
+            // The line goes with its file: another file without a line keeps none of it
+            File.WriteAllText(In("work", "other.md"), "x\n");
+            Shell.RememberLast(In("work"), In("work", "other.md"));
+            Assert.Null(Shell.LastLine);
+            Assert.Equal(string.Empty, FileIo.ParseSettings(FileIo.ReadSettingsFile())["shelllastline"]);
+            Assert.Null(Shell.ParseLastLine("x"));
+            Assert.Equal(0, Shell.ParseLastLine("0"));
+        }
+        finally
+        {
+            Shell.LastFile = string.Empty;
+            Shell.LastLine = null;
+        }
+    }
 }

@@ -237,6 +237,7 @@ internal static class Actions
         Shell.StartSetting = string.Empty;
         Shell.LastDirectory = string.Empty;
         Shell.LastFile = string.Empty;
+        Shell.LastLine = null;
         EditorEngine.IndentSetting = EditorEngine.DefaultIndent;
         Modules.Projects = true;
         Modules.Board = true;

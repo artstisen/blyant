@@ -422,7 +422,7 @@ backup=
         Assert.False(settings.ContainsKey("stayloggedin"));
         Assert.False(settings.ContainsKey("projectsdir"));
         Assert.False(settings.ContainsKey("projectsask"));
-        Assert.Equal(76, settings.Count);
+        Assert.Equal(77, settings.Count);
         Assert.Equal("true", settings["modulejump"]);
         // The modules are on unless turned off
         Assert.Equal("true", settings["moduleprojects"]);
@@ -459,6 +459,7 @@ backup=
         Assert.Equal(string.Empty, settings["shelldir"]);
         Assert.Equal(string.Empty, settings["shelllastdir"]);
         Assert.Equal(string.Empty, settings["shelllastfile"]);
+        Assert.Equal(string.Empty, settings["shelllastline"]);
         // Tab, ">>" and "<<" indent by 4 spaces unless another width is set
         Assert.Equal("4", settings["indent"]);
         Assert.Equal("false", settings["marksapostrophe"]);

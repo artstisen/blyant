@@ -147,6 +147,21 @@ internal static class Shell
     /// </summary>
     internal static string LastFile { get; set; } = string.Empty;
 
+    /// <summary>
+    /// $line when the shell was left (setting "shelllastline", with shelllastfile: the line of that file; empty: none).
+    /// $line again in the next shell typed in at a terminal, while the file has that line
+    /// </summary>
+    internal static int? LastLine { get; set; }
+
+    /// <summary>
+    /// The line of shelllastline from the settings file: a whole number from 0 (the top of an empty file), else none
+    /// </summary>
+    internal static int? ParseLastLine(string? value) =>
+        int.TryParse(value?.Trim(), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture,
+            out var line)
+            ? line
+            : null;
+
     // The value of shelldir for the directory the shell was left in
     private const string Last = "last";
 
@@ -197,7 +212,7 @@ internal static class Shell
     {
         if (Current is not { Terminal: true } session) return;
         EventLog.Add(DialogText.LogShell + ": left"); // English: the log
-        RememberLast(session.Directory, session.WorkedFile);
+        RememberLast(session.Directory, session.WorkedFile, session.WorkedLine);
         if (session.LastPeekChanged) PeekMarks.SetLast(session.LastPeekWindow);
     }
 
@@ -209,9 +224,10 @@ internal static class Shell
 
     /// <summary>
     /// A shell typed in at a terminal is left: with shelldir=last the directory it is left in is kept (shelllastdir),
-    /// to start there next time, and $file (shelllastfile), to be $file again. Saved when one of them changed
+    /// to start there next time, and $file (shelllastfile) with $line (shelllastline: the line of that file, or none),
+    /// to be $file and $line again. Saved when one of them changed
     /// </summary>
-    internal static void RememberLast(string directory, string? file = null)
+    internal static void RememberLast(string directory, string? file = null, int? line = null)
     {
         // Only these two lines of the settings file are changed: a setting edited by hand in another program meanwhile
         // (without "reload") is kept. A path with a line break (Linux allows it) would break the file: not kept
@@ -223,10 +239,13 @@ internal static class Shell
             changed.Add(("shelllastdir", directory));
         }
 
-        if (file != null && LastFile != file && Keepable(file))
+        // ($line goes with $file: the line of another file is not kept for this one)
+        if (file != null && Keepable(file) && (LastFile != file || LastLine != line))
         {
+            if (LastFile != file) changed.Add(("shelllastfile", file));
             LastFile = file;
-            changed.Add(("shelllastfile", file));
+            LastLine = line;
+            changed.Add(("shelllastline", line?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty));
         }
 
         if (changed.Count > 0) FileIo.SaveSettingValues(changed);
@@ -297,7 +316,7 @@ internal static class Shell
         if (file != null && File.Exists(file)) session.ShowFirst(file);
         var code = Run(session);
         // (commands read from a file or a pipe do not change where the shell typed in starts)
-        if (terminal) RememberLast(session.Directory, session.WorkedFile);
+        if (terminal) RememberLast(session.Directory, session.WorkedFile, session.WorkedLine);
         return code;
     }
 
