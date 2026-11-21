@@ -345,7 +345,11 @@ internal static partial class ShellRegisters
             var word = line[start..i];
             var replaced = Replace(word);
             var hasQuote = word.Contains('"');
-            result.Append(!hasQuote && replaced != word && replaced.Any(char.IsWhiteSpace) ? "\"" + replaced + "\"" : replaced);
+            // (a value with a blank or a quote in it is one word in quotes, a quote in it doubled: a path on Linux and
+            // macOS can have one)
+            result.Append(!hasQuote && replaced != word && ShellSession.NeedsQuotes(replaced)
+                ? ShellSession.Quoted(replaced)
+                : replaced);
             count++;
         }
 

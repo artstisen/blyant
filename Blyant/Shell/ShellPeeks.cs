@@ -18,6 +18,15 @@ internal sealed partial class ShellSession
     internal PeekMarks.Window? LastPeekWindow =>
         _lastPeek is { } last ? new PeekMarks.Window(last.Path, last.First, last.Count) : null;
 
+    /// <summary>
+    /// The window of the last peek was changed in this shell (a peek, forget): it is kept for the next shell when it is
+    /// left. A window taken from the shell left before, and not changed, is left in peeks.txt as it is, also when its
+    /// file was not there when this shell started (a drive not plugged in)
+    /// </summary>
+    internal bool LastPeekChanged => _lastPeekChanged;
+
+    private bool _lastPeekChanged;
+
     // The window of the last peek of the shell left last, when its file is there (a shell typed in at a terminal)
     private void RestoreLastPeek()
     {
@@ -26,9 +35,11 @@ internal sealed partial class ShellSession
         _lastPeek = (window.Path, window.First, window.Count, StampOf(window.Path), HashOf(window.Path));
     }
 
-    // A hash of the text of a file, as the last peek keeps it for shellautopeek (0 when it cannot be read)
+    // A hash of the text of a file, as the last peek keeps it for shellautopeek (0 when it cannot be read, or the
+    // setting is off: the file is then not read when the shell starts)
     private static int HashOf(string path)
     {
+        if (!Shell.AutoPeek) return 0;
         try
         {
             return new FileInfo(path).Length > AutoPeekReadLimit ? 0 : TextFile.Load(path).Text.GetHashCode();
@@ -89,7 +100,7 @@ internal sealed partial class ShellSession
 
             if (Failed(removed)) return;
             EventLog.Add(DialogText.LogShell + ": peek save -d"); // English: the log (never the name or the path)
-            Line(name.Length > 0 ? Lang.F("Saved peek {0} deleted", name.ToLowerInvariant()) : Lang.T("Saved peek deleted"));
+            Line(name.Length > 0 ? Lang.F("Saved peek {0} deleted", PeekMarks.KeyOf(name)) : Lang.T("Saved peek deleted"));
             return;
         }
 
@@ -99,12 +110,18 @@ internal sealed partial class ShellSession
             return;
         }
 
+        // (a tab or a line break in the path, as Linux and macOS allow: it would break the line of peeks.txt)
+        if (!PeekMarks.Keepable(window.Path))
+        {
+            Error(Lang.F("A path with a tab or a line break cannot be saved: {0}", window.Path));
+            return;
+        }
+
         if (Failed(PeekMarks.Set(name, window))) return;
         EventLog.Add(DialogText.LogShell + ": peek save"); // English: the log (never the name or the path)
-        var lines = window.First.ToString(CultureInfo.InvariantCulture) + "-" +
-                    (window.First + window.Count - 1).ToString(CultureInfo.InvariantCulture);
+        var lines = RangeText(window);
         Line(name.Length > 0
-            ? Lang.F("Saved as {0}: lines {1} of {2} (peek back {0})", name.ToLowerInvariant(), lines, window.Path)
+            ? Lang.F("Saved as {0}: lines {1} of {2} (peek back {0})", PeekMarks.KeyOf(name), lines, window.Path)
             : Lang.F("Saved: lines {0} of {1} (peek back)", lines, window.Path));
     }
 
@@ -121,13 +138,15 @@ internal sealed partial class ShellSession
         PeekMarks.Load();
         var saved = PeekMarks.Saved;
         PeekMarks.Window? window;
-        if (words.Count == 1 && words[0].All(char.IsAsciiDigit) && int.TryParse(words[0], out var row))
+        // (a number is a row: a name starts with a letter)
+        if (words.Count == 1 && words[0].Length > 0 && words[0].All(char.IsAsciiDigit))
         {
+            var row = int.TryParse(words[0], NumberStyles.None, CultureInfo.InvariantCulture, out var number) ? number : 0;
             if (row < 1 || row > saved.Count)
             {
                 Error(saved.Count == 0
                     ? Lang.T("No peeks saved yet: peek save keeps the window of the last peek")
-                    : Lang.F("No saved peek {0}: {1} are saved (peek saved lists them)", row, saved.Count));
+                    : Lang.F("No saved peek {0}: {1} are saved (peek saved lists them)", words[0], saved.Count));
                 return;
             }
 
@@ -180,7 +199,8 @@ internal sealed partial class ShellSession
                 return;
             }
 
-            filter = Rest(before).Trim().Trim('"');
+            var typed = Rest(before).Trim();
+            filter = Unquoted(typed) ?? typed;
         }
 
         if (filter is { Length: 0 } || search is { Length: 0 })
@@ -215,9 +235,9 @@ internal sealed partial class ShellSession
 
         if (rows.Count == 0)
         {
-            Line(search != null
-                ? Lang.F("No saved peeks with {0} in their lines", search)
-                : Lang.F("No saved peeks with {0} in them", filter!));
+            Line(search == null ? Lang.F("No saved peeks with {0} in them", filter!)
+                : filter == null ? Lang.F("No saved peeks with {0} in their lines", search)
+                : Lang.F("No saved peeks with {0} in them and {1} in their lines", filter, search));
             return;
         }
 
@@ -237,12 +257,14 @@ internal sealed partial class ShellSession
         static string Place(PeekMarks.Window window, (int Line, string Text)? found) =>
             found is { } line
                 ? Path.GetFileName(window.Path) + ":" + line.Line.ToString(CultureInfo.InvariantCulture)
-                : LinesText(window);
-
-        static string LinesText(PeekMarks.Window window) =>
-            window.First.ToString(CultureInfo.InvariantCulture) + "-" +
-            (window.First + window.Count - 1).ToString(CultureInfo.InvariantCulture);
+                : RangeText(window);
     }
+
+    // The lines of a window, as "40-49" (in long: a window read from a file edited by hand can end past int)
+    private static string RangeText(PeekMarks.Window window) =>
+        window.First.ToString(CultureInfo.InvariantCulture) + "-" +
+        ((long)window.First + window.Count - 1).ToString(CultureInfo.InvariantCulture);
+
 
     // The first line of a window with a text, as the file is now: its number and its text (trimmed). Null when none
     // has it, or the file is gone or cannot be read
@@ -259,8 +281,11 @@ internal sealed partial class ShellSession
             return null;
         }
 
+        // (the lines peek back shows: at the end of a file that got shorter, the last lines, as many)
         var last = (int)Math.Min((long)window.First + window.Count - 1, lines.Count);
-        for (var number = window.First; number <= last; number++)
+        var first = window.First;
+        if ((long)window.First + window.Count - 1 > lines.Count) first = Math.Max(1, last - window.Count + 1);
+        for (var number = first; number <= last; number++)
         {
             if (FileSearch.Matches(pattern, lines[number - 1])) return (number, lines[number - 1].Trim());
         }

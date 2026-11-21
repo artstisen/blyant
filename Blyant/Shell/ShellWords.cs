@@ -1,4 +1,6 @@
-﻿namespace Blyant;
+﻿using System.Globalization;
+
+namespace Blyant;
 
 /// <summary>
 /// "words" and "word": the words of one line of a file numbered ("words notes.md 12"), and a word or words of it
@@ -22,7 +24,9 @@ internal sealed partial class ShellSession
 
     // The line of a file a command is about ("words notes.md 12", "+12" too): the file, its lines and the line (from
     // 1); null (and told) when it is not there
-    private (Item Item, TextFile File, List<string> Lines, int Line)? LineOf(string fileWord, string lineWord, string usage)
+    // "readOnly": the file is only read (clip words): any text file, also one Blyant uses or one not in UTF-8
+    private (Item Item, TextFile File, List<string> Lines, int Line)? LineOf(string fileWord, string lineWord, string usage,
+        bool readOnly = false)
     {
         if (!LinesToChange(lineWord, out var line, out var last) || last != line)
         {
@@ -30,15 +34,23 @@ internal sealed partial class ShellSession
             return null;
         }
 
-        if (EditableFile(fileWord) is not { } editable) return null;
-        var lines = LinesOfText(editable.File.Text);
+        (Item Item, TextFile File) file;
+        if (readOnly)
+        {
+            if (Existing(fileWord) is not { } item || ReadableFile(item) is not { } read) return null;
+            file = (item, read);
+        }
+        else if (EditableFile(fileWord) is { } editable) file = editable;
+        else return null;
+
+        var lines = LinesOfText(file.File.Text);
         if (line > lines.Count)
         {
-            Error(Lang.F("{0} has {1} lines", editable.Item.Path, lines.Count));
+            Error(Lang.F("{0} has {1} lines", file.Item.Path, lines.Count));
             return null;
         }
 
-        return (editable.Item, editable.File, lines, line);
+        return (file.Item, file.File, lines, line);
     }
 
     // The words of a line, numbered, a row at a time ("blanks": all between blanks, "-p"). With the setting
@@ -52,15 +64,88 @@ internal sealed partial class ShellSession
         Line(EndMarker + (count == 1 ? Lang.T("1 word") : Lang.F("{0} words", count)));
     }
 
-    // The numbers of words as words shows them, "#5-#7" ("#5:20-#7:31" with the columns), as typed without "#" and
-    // the columns: "5-7" (one "#" before each number)
-    internal static string WithoutHashes(string numbers) =>
-        string.Join('-', numbers.Split('-').Select(part =>
+    /// <summary>
+    /// The numbers of words as words shows them: "9", "#9", "#9:32" (with the column the word starts at), "5-7",
+    /// "#5-#7", "#5:20-#7:31". Each a number, with one "#" before it or none, and after ":" only digits. Not "+9", "9:",
+    /// "9:x" or "5-+7". The columns given are in "columns", to check against the line as it is now
+    /// </summary>
+    internal static bool WordNumbers(string text, out int first, out int last, out List<(int Word, int Column)> columns)
+    {
+        first = last = 0;
+        columns = new List<(int Word, int Column)>();
+        var parts = text.Split('-');
+        if (parts.Length > 2) return false;
+        var numbers = new List<int>();
+        foreach (var typed in parts)
         {
-            if (part.StartsWith('#')) part = part[1..];
+            var part = typed.StartsWith('#') ? typed[1..] : typed;
             var colon = part.IndexOf(':');
-            return colon > 0 ? part[..colon] : part;
-        }));
+            var column = colon >= 0 ? part[(colon + 1)..] : null;
+            if (colon >= 0) part = part[..colon];
+            if (!IsCount(part, out var number) || (column != null && !IsCount(column, out _))) return false;
+            numbers.Add(number);
+            if (column != null) columns.Add((number, int.Parse(column, CultureInfo.InvariantCulture)));
+        }
+
+        first = numbers[0];
+        last = numbers[^1];
+        return last >= first;
+
+        // A whole number from 1, in ASCII digits only
+        static bool IsCount(string digits, out int value)
+        {
+            value = 0;
+            return digits.Length is > 0 and <= 9 && digits.All(char.IsAsciiDigit) &&
+                   int.TryParse(digits, NumberStyles.None, CultureInfo.InvariantCulture, out value) && value > 0;
+        }
+    }
+
+    // The words given are in the line as words showed them: the other count is not taken for them (words -p, then word
+    // without -p: "a/b" is word 6 between blanks, "b" without), each number is a word of the line, and a column given
+    // ("#9:32") is where the word starts now. "ranges": the words, and a move's target. False (and told) when not
+    private bool WordsAsShown(string path, int lineNumber, string line, bool blanks, IReadOnlyList<(int First, int Last)> ranges,
+        IReadOnlyList<(int Word, int Column)> columns)
+    {
+        // (a number seen that the other count does not have is told this way too; a number not seen by the counts below)
+        if (_wordsShown is { } shown && shown.Blanks != blanks && shown.Line == lineNumber &&
+            FileOperations.NameComparer.Equals(shown.Path, Path.GetFullPath(path)))
+        {
+            var other = LineWords.Find(line, shown.Blanks).Count;
+            if (ranges.Any(range => range.Last <= other && !LineWords.SameWords(line, range.First, range.Last)))
+            {
+                Error(shown.Blanks
+                    ? Lang.F("words -p numbered line {0}, and without -p the numbers differ: give -p to word too", lineNumber)
+                    : Lang.F("words numbered line {0} without -p, and with -p the numbers differ: leave out -p", lineNumber));
+                return false;
+            }
+        }
+
+        var found = LineWords.Find(line, blanks);
+        if (found.Count == 0)
+        {
+            Error(Lang.F("Line {0} has no words", lineNumber));
+            return false;
+        }
+
+        var past = ranges.Select(range => range.Last).Where(number => number > found.Count).DefaultIfEmpty(0).Max();
+        if (past > 0)
+        {
+            Error(found.Count == 1
+                ? Lang.F("Line {0} has 1 word: {1} is not one", lineNumber, past)
+                : Lang.F("Line {0} has {1} words: {2} is not one", lineNumber, found.Count, past));
+            return false;
+        }
+
+        foreach (var (word, column) in columns)
+        {
+            var now = LineWords.ColumnOf(line, found[word - 1].Start);
+            if (now == column) continue;
+            Error(Lang.F("Word {0} starts at column {1} now, not {2}: words shows the line as it is", word, now, column));
+            return false;
+        }
+
+        return true;
+    }
 
     // "-p" first ("words -p notes.md 12", "word -p ..."): a word is all between blanks, with the punctuation and the
     // marks around it. Taken off the words; null (and told) for another option
@@ -135,8 +220,8 @@ internal sealed partial class ShellSession
             return;
         }
 
-        // ("#9", "#5-#7", "#5-7": the numbers as words shows them)
-        if (!LinesToChange(WithoutHashes(words[2]), out var first, out var last))
+        // ("#9", "#5-#7", "#5-7", "#9:32": the numbers as words shows them)
+        if (!WordNumbers(words[2], out var first, out var last, out var columns))
         {
             Error(Lang.F("Not words: {0} (as 9, or 5-7)", words[2]));
             return;
@@ -153,13 +238,14 @@ internal sealed partial class ShellSession
         {
             var where = Words(text);
             if (where.Count != 2 || where[0].ToLowerInvariant() is not ("before" or "after") ||
-                !LinesToChange(WithoutHashes(where[1]), out target, out var targetLast) || targetLast != target)
+                !WordNumbers(where[1], out target, out var targetLast, out var targetColumns) || targetLast != target)
             {
                 Error(Lang.T("Give where to: word notes.md 12 9 move before 6 (or after 6)"));
                 return;
             }
 
             moveBefore = where[0].Equals("before", StringComparison.OrdinalIgnoreCase);
+            columns.AddRange(targetColumns);
             text = string.Empty;
         }
 
@@ -178,51 +264,17 @@ internal sealed partial class ShellSession
 
         if (LineOf(words[0], words[1], usage) is not { } at) return;
         var line = at.Lines[at.Line - 1];
-        // ("words -p", then "word" without -p, or the other way: the numbers seen are of the other count. Refused
-        // when they point at other words: "a/b" is word 6 between blanks, "b" without. First, so a number seen that
-        // the other count does not have is told this way too; a number not seen is told by the counts below)
-        if (_wordsShown is { } shown && shown.Blanks != blanks && shown.Line == at.Line &&
-            FileOperations.NameComparer.Equals(shown.Path, Path.GetFullPath(at.Item.Path)) &&
-            last <= LineWords.Find(line, shown.Blanks).Count && !LineWords.SameWords(line, first, last))
+        // (the words, and the target of a move, as words showed them)
+        var ranges = action == "move" ? new[] { (first, last), (target, target) } : new[] { (first, last) };
+        if (!WordsAsShown(at.Item.Path, at.Line, line, blanks, ranges, columns)) return;
+        if (action == "move" && target >= first && target <= last)
         {
-            Error(shown.Blanks
-                ? Lang.F("words -p numbered line {0}, and without -p the numbers differ: give -p to word too", at.Line)
-                : Lang.F("words numbered line {0} without -p, and with -p the numbers differ: leave out -p", at.Line));
+            Error(Lang.F("Word {0} is one of the words moved: give a word outside them", target));
             return;
         }
 
-        var count = LineWords.Find(line, blanks).Count;
-        if (count == 0)
-        {
-            Error(Lang.F("Line {0} has no words", at.Line));
-            return;
-        }
-
-        if (last > count)
-        {
-            Error(count == 1
-                ? Lang.F("Line {0} has 1 word: {1} is not one", at.Line, last)
-                : Lang.F("Line {0} has {1} words: {2} is not one", at.Line, count, last));
-            return;
-        }
-
-        if (action == "move")
-        {
-            if (target > count)
-            {
-                Error(count == 1
-                    ? Lang.F("Line {0} has 1 word: {1} is not one", at.Line, target)
-                    : Lang.F("Line {0} has {1} words: {2} is not one", at.Line, count, target));
-                return;
-            }
-
-            if (target >= first && target <= last)
-            {
-                Error(Lang.F("Word {0} is one of the words moved: give a word outside them", target));
-                return;
-            }
-        }
-
+        // (Moved gives null only when the words could not be counted again after they are taken out: a guard, as
+        // taking them out leaves the other words as they were in every line tried)
         var changed = action == "move"
             ? LineWords.Moved(line, first, last, moveBefore, target, blanks)
             : LineWords.Change(line, first, last, action, text, blanks);

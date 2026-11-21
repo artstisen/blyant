@@ -119,7 +119,8 @@ internal sealed partial class ShellSession
             return null;
         }
 
-        var filter = Rest(before.Trim()).Trim().Trim('"');
+        var typedFilter = Rest(before.Trim()).Trim();
+        var filter = Unquoted(typedFilter) ?? typedFilter;
         if (filter.Length == 0)
         {
             Error(Lang.T("Give a text: tags filter chapter, tag draft filter chapter (or *.md)"));

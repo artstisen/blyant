@@ -39,8 +39,14 @@ internal static class CommandHistory
     /// <summary>
     /// The commands of a place, the newest first
     /// </summary>
-    internal static IReadOnlyList<string> Of(CommandContext context) =>
-        Places.TryGetValue(context, out var commands) ? commands.ToArray() : Array.Empty<string>();
+    internal static IReadOnlyList<string> Of(CommandContext context)
+    {
+        if (!Places.TryGetValue(context, out var commands)) return Array.Empty<string>();
+        // (the shell: no more than the setting keeps now, also when it was made lower since the last command)
+        var most = context == CommandContext.Shell ? ShellMaxCount : MaxCount;
+        if (commands.Count > most) commands.RemoveRange(most, commands.Count - most);
+        return commands.ToArray();
+    }
 
     /// <summary>
     /// Forget all the commands

@@ -172,45 +172,21 @@ internal sealed partial class ShellSession
             return false;
         }
 
-        if (!LinesToChange(WithoutHashes(words[2]), out var first, out var last))
+        if (!WordNumbers(words[2], out var first, out var last, out var columns))
         {
             Error(Lang.F("Not words: {0} (as 9, or 5-7)", words[2]));
             return false;
         }
 
-        if (!LinesToChange(words[1], out var number, out var lastLine) || lastLine != number)
-        {
-            Error(usage);
-            return false;
-        }
-
-        if (Existing(words[0]) is not { } item || ReadableFile(item) is not { } file) return false;
-        var lines = LinesOfText(TextBuffer.Normalize(file.Text));
-        if (number > lines.Count)
-        {
-            Error(Lang.F("{0} has {1} lines", item.Path, lines.Count));
-            return false;
-        }
-
-        var line = lines[number - 1];
+        if (LineOf(words[0], words[1], usage, true) is not { } at) return false;
+        var line = at.Lines[at.Line - 1];
+        // (the numbers as words showed them, as word takes them)
+        if (!WordsAsShown(at.Item.Path, at.Line, line, blanks, new[] { (first, last) }, columns)) return false;
         var found = LineWords.Find(line, blanks);
-        if (found.Count == 0)
-        {
-            Error(Lang.F("Line {0} has no words", number));
-            return false;
-        }
-
-        if (last > found.Count)
-        {
-            Error(found.Count == 1
-                ? Lang.F("Line {0} has 1 word: {1} is not one", number, last)
-                : Lang.F("Line {0} has {1} words: {2} is not one", number, found.Count, last));
-            return false;
-        }
-
+        var number = at.Line;
         var start = found[first - 1].Start;
         text = line[start..(found[last - 1].Start + found[last - 1].Length)];
-        var path = Path.GetFullPath(item.Path);
+        var path = Path.GetFullPath(at.Item.Path);
         shown = first == last
             ? Lang.F("Word {0} of line {1} of {2}", first, number, path)
             : Lang.F("Words {0}-{1} of line {2} of {3}", first, last, number, path);

@@ -71,6 +71,8 @@ internal sealed partial class ShellSession
         string text;
         var replacement = string.Empty;
         var exact = false;
+        // ("at 10": the column; also in "replacement", as EditedLine takes it)
+        var atColumn = 0;
         if (kind == "replace")
         {
             var parts = Words(rest);
@@ -91,7 +93,8 @@ internal sealed partial class ShellSession
                 return;
             }
 
-            if (!parts[0].All(char.IsAsciiDigit) || !int.TryParse(parts[0], out var column) || column < 1)
+            if (!parts[0].All(char.IsAsciiDigit) || !int.TryParse(parts[0], System.Globalization.NumberStyles.None,
+                    System.Globalization.CultureInfo.InvariantCulture, out atColumn) || atColumn < 1)
             {
                 Error(Lang.F("Not a column: {0} (as 10, the column words shows)", parts[0]));
                 return;
@@ -107,7 +110,7 @@ internal sealed partial class ShellSession
             }
 
             exact = true;
-            replacement = column.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            replacement = atColumn.ToString(System.Globalization.CultureInfo.InvariantCulture);
         }
         else if (kind is "sort" or "upper" or "lower" or "title")
         {
@@ -146,11 +149,11 @@ internal sealed partial class ShellSession
         if (PickedLines(words[1], at == 3 ? words[2] : null, lines, item.Path) is not { } picked) return;
 
         // At a column: every line must have it, or none is changed
-        if (kind == "at" && picked.FirstOrDefault(number =>
-                LineWords.IndexOfColumn(lines[number - 1], int.Parse(replacement, System.Globalization.CultureInfo.InvariantCulture)) == null)
-            is var tooShort and > 0)
+        // (blank lines are left as they are, as start and end leave them)
+        if (kind == "at" && picked.FirstOrDefault(number => lines[number - 1].Trim().Length > 0 &&
+                LineWords.IndexOfColumn(lines[number - 1], atColumn) == null) is var tooShort and > 0)
         {
-            Error(Lang.F("Line {0} has no column {1}: nothing changed", tooShort, replacement));
+            Error(Lang.F("Line {0} has no column {1}: nothing changed", tooShort, atColumn));
             return;
         }
 
@@ -172,7 +175,7 @@ internal sealed partial class ShellSession
         {
             Line(kind switch
             {
-                "start" or "end" => Lang.T("Nothing changed: the lines are blank"),
+                "start" or "end" or "at" => Lang.T("Nothing changed: the lines are blank"),
                 "sort" => Lang.T("Nothing changed: the lines are in that order already"),
                 "upper" => Lang.T("Nothing changed: no lowercase letters in the lines"),
                 "lower" => Lang.T("Nothing changed: no uppercase letters in the lines"),
@@ -238,7 +241,8 @@ internal sealed partial class ShellSession
                 return text.Length == 0 ? line : line.Replace(text, string.Empty, StringComparison.Ordinal);
             case "at":
             {
-                // ("replacement": the column)
+                // ("replacement": the column; a blank line as it is)
+                if (line.Trim().Length == 0) return line;
                 var at = int.TryParse(replacement, System.Globalization.NumberStyles.None,
                     System.Globalization.CultureInfo.InvariantCulture, out var column)
                     ? LineWords.IndexOfColumn(line, column)

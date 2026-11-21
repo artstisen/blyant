@@ -9,7 +9,9 @@ namespace Blyant;
 /// the end of the file when it is typed, so nothing is lost when the terminal is closed, and the file is written again
 /// with the newest commands when Blyant reads it and has more, or has grown to twice as many lines. Not kept: commands
 /// from a file, a pipe or --run, and a command typed with a blank in front. A command can hold a file name or a text:
-/// "forget" deletes the file, and the log has the path, never the commands
+/// "forget" deletes the file, and so does the setting 0, and the log has the path, never the commands.
+/// Several Blyants can add to the file at once (each line is appended whole). When one writes it again with the newest
+/// commands, a line another adds at that moment can be lost, which is fine for a list of commands
 /// </summary>
 internal static class ShellHistory
 {
@@ -44,13 +46,23 @@ internal static class ShellHistory
     /// </summary>
     internal static void Load()
     {
-        if (!Kept) return;
+        if (!Kept)
+        {
+            RemoveWhenOff();
+            return;
+        }
+
         var path = Path.GetFullPath(FilePath);
         if (_loaded != null && FileOperations.SamePath(_loaded, path)) return;
         _loaded = path;
         _lines = 0;
         _unreadable = false;
-        if (ReadLines(path) is not { } lines) return;
+        if (ReadLines(path) is not { } lines)
+        {
+            // (read again with the next command: the file may only have been locked for a moment)
+            _loaded = null;
+            return;
+        }
 
         var typed = CommandHistory.Of(CommandContext.Shell);
         CommandHistory.Clear(CommandContext.Shell);
@@ -67,7 +79,13 @@ internal static class ShellHistory
     internal static void Add(string command)
     {
         command = command.Trim();
-        if (!Kept || command.Length == 0 || command.IndexOfAny(['\n', '\r']) >= 0) return;
+        if (!Kept)
+        {
+            RemoveWhenOff();
+            return;
+        }
+
+        if (command.Length == 0 || command.IndexOfAny(['\n', '\r']) >= 0) return;
         Load();
         try
         {
@@ -91,10 +109,12 @@ internal static class ShellHistory
     /// <returns>DialogText.Success or an error message</returns>
     internal static string Clear()
     {
-        _lines = 0;
         try
         {
             FileIo.DeleteFile(FilePath);
+            // (a new file, which is read and written again as any)
+            _lines = 0;
+            _unreadable = false;
             return DialogText.Success;
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
@@ -154,8 +174,25 @@ internal static class ShellHistory
         }
     }
 
+    // The setting 0: no commands kept in the file, so a file kept before is deleted (logged by FileIo; one that cannot
+    // be deleted now is tried again with the next command)
+    private static void RemoveWhenOff()
+    {
+        _loaded = null;
+        _lines = 0;
+        if (!File.Exists(FilePath)) return;
+        try
+        {
+            FileIo.DeleteFile(FilePath);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            // (logged by FileIo)
+        }
+    }
+
     /// <summary>
-    /// Read the file again the next time (a test, or a data directory changed)
+    /// Read the file again the next time (for the tests: Load reads it again by itself when the data directory changed)
     /// </summary>
     internal static void Reset()
     {

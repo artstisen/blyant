@@ -428,6 +428,7 @@ internal static partial class FileExplorer
             {
                 FileTags.Follow(item.Path, path);
                 PeekMarks.Follow(item.Path, path);
+                ShellSession.LastPeekFollows(item.Path, path);
             }
             else FileTags.FollowCopy(item.Path, path);
             // The file history and the jumps follow it too (as when it is renamed)
@@ -553,6 +554,7 @@ internal static partial class FileExplorer
             Bookmarks.Follow(item.Path, path);
             FileTags.Follow(item.Path, path);
             PeekMarks.Follow(item.Path, path);
+            ShellSession.LastPeekFollows(item.Path, path);
             ShellSession.PreviousFollows(item.Path, path);
         }
     }
@@ -598,6 +600,7 @@ internal static partial class FileExplorer
         Bookmarks.Follow(oldPath, newPath);
         FileTags.Follow(oldPath, newPath);
         PeekMarks.Follow(oldPath, newPath);
+        ShellSession.LastPeekFollows(oldPath, newPath);
         ShellSession.PreviousFollows(oldPath, newPath);
     }
 

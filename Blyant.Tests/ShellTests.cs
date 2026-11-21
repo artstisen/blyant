@@ -6387,14 +6387,14 @@ public class ShellTests : IDisposable
     }
 
     [UnixFact]
-    public void At_APathWithAQuote_IsRefused_OnLinuxAndMacOs()
+    public void At_APathWithAQuote_IsPutInWithTheQuoteDoubled_OnLinuxAndMacOs()
     {
-        // (a name with a quote, as Linux and macOS allow: found by a search, so it is not typed)
+        // (a name with a quote, as Linux and macOS allow: found by a search, so it is not typed; put in as
+        // "say ""hi"".md", which Words takes back as it is)
         File.WriteAllText(In("work", "say \"hi\".md"), "a\n");
-        var (_, errors, _, _) = Run("find say\nfile 1 1\nword @ 1 upper\n");
-        Assert.Contains(Lang.F("A path with a quote in it cannot be put in for @: {0}", In("work", "say \"hi\".md")),
-            errors);
-        Assert.Equal("a\n", File.ReadAllText(In("work", "say \"hi\".md")));
+        var (_, errors, _, _) = Run("find say\nfile 1 1\nword @ 1 upper\nreg q $file\nlines $q 1 end x\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("A x\n", File.ReadAllText(In("work", "say \"hi\".md")));
     }
 
     [Fact]
@@ -6995,9 +6995,9 @@ public class ShellTests : IDisposable
         (_, errors, _, _) = Run("word v.md 1 ## delete\nword v.md 1 #x delete\n");
         Assert.Contains(Lang.F("Not words: {0} (as 9, or 5-7)", "##"), errors);
         Assert.Contains(Lang.F("Not words: {0} (as 9, or 5-7)", "#x"), errors);
-        Assert.Equal("5-7", ShellSession.WithoutHashes("#5-#7"));
-        Assert.Equal("5-7", ShellSession.WithoutHashes("#5-7"));
-        Assert.Equal("9", ShellSession.WithoutHashes("9"));
+        Assert.True(ShellSession.WordNumbers("#5-#7", out var five, out var seven, out _) && (five, seven) == (5, 7));
+        Assert.True(ShellSession.WordNumbers("#5-7", out five, out seven, out _) && (five, seven) == (5, 7));
+        Assert.True(ShellSession.WordNumbers("9", out var nine, out _, out _) && nine == 9);
         // Tab goes on after a number with "#" as after one without
         Assert.Equal("word v.md 1 #2 replace", Tab(Completion(), "word v.md 1 #2 re"));
     }
@@ -8011,7 +8011,9 @@ public class ShellTests : IDisposable
         var hint = Lang.T("line only sets $line: to change lines, use lines (lines notes.md +4 replace old new)");
         var (output, errors, _, _) = Run("peek t.md 2\nline $file +4 replace \"text1\" \"text2\"\nline 2 end x\n" +
                                          "line t.md 4\nline 3 > other.md bottom\necho $line\n");
-        Assert.Equal(4, errors.Split(hint).Length - 1);
+        // ("line t.md 4": a file and a line, as file takes them)
+        Assert.Equal(3, errors.Split(hint).Length - 1);
+        Assert.Contains(Lang.T("line sets only the line of $file: file notes.md 3 sets the file and the line"), errors);
         Assert.Equal("one\ntwo\nthree\nfour text1\n", Text("t.md"));
         Assert.False(File.Exists(In("work", "other.md")));
         Assert.EndsWith("\n1\n", output);
@@ -8238,8 +8240,10 @@ public class ShellTests : IDisposable
     [Fact]
     public void Word_TakesTheNumbersWithTheColumns_AsWordsShowsThem()
     {
-        Assert.Equal("2", ShellSession.WithoutHashes("#2:8"));
-        Assert.Equal("5-7", ShellSession.WithoutHashes("#5:20-#7:31"));
+        Assert.True(ShellSession.WordNumbers("#2:8", out var two, out _, out var columns) && two == 2);
+        Assert.Equal(new[] { (2, 8) }, columns);
+        Assert.True(ShellSession.WordNumbers("#5:20-#7:31", out var five, out var seven, out columns) && (five, seven) == (5, 7));
+        Assert.Equal(new[] { (5, 20), (7, 31) }, columns);
         File.WriteAllText(In("work", "v.md"), "Blyant v1 5 8 Shell\n");
         var (_, errors, _, _) = Run("word v.md 1 #2:8 replace v2\n");
         Assert.Equal(string.Empty, errors);
@@ -8464,12 +8468,262 @@ public class ShellTests : IDisposable
         Assert.DoesNotContain("list", output);
         // Both, and nothing found
         (output, _, _, _) = Run("peek saved filter notes -t harbour\npeek saved filter none\npeek saved -t none\n");
-        Assert.Contains(Lang.F("No saved peeks with {0} in their lines", "harbour"), output);
+        Assert.Contains(Lang.F("No saved peeks with {0} in them and {1} in their lines", "notes", "harbour"), output);
         Assert.Contains(Lang.F("No saved peeks with {0} in them", "none"), output);
         Assert.Contains(Lang.F("No saved peeks with {0} in their lines", "none"), output);
         var (_, wrong, _, _) = Run("peek saved filter\npeek saved -t\npeek saved x\n");
         Assert.Equal(2, wrong.Split(Lang.T("Give a text: peek saved filter storm, peek saved -t harbour")).Length - 1);
         Assert.Contains(Lang.T("After peek saved: filter text, -t text, or both"), wrong);
         Assert.Equal("peek saved filter", Tab(Completion(), "peek saved fi"));
+    }
+
+    // ---- 1.6.1: the findings of the review before the release
+
+    [Theory]
+    [InlineData("+9")]
+    [InlineData("9:")]
+    [InlineData("9:x")]
+    [InlineData("#9:32:1")]
+    [InlineData("5-+7")]
+    [InlineData("#:5")]
+    [InlineData("0")]
+    [InlineData("7-5")]
+    [InlineData("1-2-3")]
+    [InlineData(" 9")]
+    public void WordNumbers_TakeOnlyTheFormsWordsShows(string typed)
+    {
+        Assert.False(ShellSession.WordNumbers(typed, out _, out _, out _));
+    }
+
+    [Theory]
+    [InlineData("**bold** x", 2, 2, true, 1, false, "x **bold**")]
+    [InlineData("x (see)", 1, 1, false, 2, false, "(see) x")]
+    [InlineData("(see chapter) end", 3, 3, true, 1, false, "end (see chapter)")]
+    [InlineData("a, **b** c", 1, 1, false, 2, false, ", **b** a c")]
+    public void LineWords_Moved_PutsTheWordsOutsideTheMarksOfTheTarget(string line, int first, int last, bool before,
+        int target, bool blanks, string expected)
+    {
+        Assert.Equal(expected, LineWords.Moved(line, first, last, before, target, blanks));
+    }
+
+    [Fact]
+    public void WordMove_TheTargetIsCheckedAgainstTheNumbersWordsShowed()
+    {
+        File.WriteAllText(In("work", "m.md"), "x a/b y\n");
+        var (_, errors, _, _) = Run("words -p m.md 1\nword m.md 1 1 move after 2\n");
+        Assert.Contains(Lang.F("words -p numbered line {0}, and without -p the numbers differ: give -p to word too", 1), errors);
+        Assert.Equal("x a/b y\n", Text("m.md"));
+        // clip words checks them the same way
+        (_, errors, _, _) = Run("words -p m.md 1\nclip words m.md 1 2\n");
+        Assert.Contains(Lang.F("words -p numbered line {0}, and without -p the numbers differ: give -p to word too", 1), errors);
+    }
+
+    [Fact]
+    public void WordNumbers_WithAColumn_AreCheckedAgainstTheLineAsItIsNow()
+    {
+        File.WriteAllText(In("work", "c.md"), "one two three\n");
+        var (_, errors, _, _) = Run("word c.md 1 #2:9 upper\nclip words c.md 1 #3:5\nword c.md 1 +2 upper\n" +
+                                    "word c.md 1 1 move after #3:3\n");
+        Assert.Contains(Lang.F("Word {0} starts at column {1} now, not {2}: words shows the line as it is", 2, 5, 9), errors);
+        Assert.Contains(Lang.F("Word {0} starts at column {1} now, not {2}: words shows the line as it is", 3, 9, 5), errors);
+        Assert.Contains(Lang.F("Not words: {0} (as 9, or 5-7)", "+2"), errors);
+        Assert.Contains(Lang.F("Word {0} starts at column {1} now, not {2}: words shows the line as it is", 3, 9, 3), errors);
+        Assert.Equal("one two three\n", Text("c.md"));
+    }
+
+    [Fact]
+    public void ClipWords_ReadsAFileThatWordCannotChange()
+    {
+        // (not UTF-8: word refuses it, clip words only reads it)
+        File.WriteAllBytes(In("work", "l.md"), new byte[] { 0x63, 0x61, 0x66, 0xE9, 0x20, 0x6E, 0x6F, 0x69, 0x72, 0x0A });
+        var (output, errors, _, _) = Run("clip words l.md 1 2\necho $clip\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains("\nnoir\n", output);
+    }
+
+    [Fact]
+    public void TheLastPeek_FollowsARename_AndIsKeptOnlyWhenTheShellChangedIt()
+    {
+        File.WriteAllText(In("work", "p.md"), "a\nb\nc\n");
+        // The shell that runs follows a rename through the hook every rename and move calls (the shell's own, the file
+        // browser, the editor opened from the shell)
+        var (output, errors, _, _) = Run("peek p.md 2\nrename p.md q.md\n.\n", terminal: true);
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal(2, output.Split("   1  a\n").Length - 1);
+        Assert.Equal(new PeekMarks.Window(In("work", "q.md"), 1, 2), PeekMarks.Last);
+        // Without a shell that runs, the hook does nothing
+        ShellSession.LastPeekFollows(In("work", "q.md"), In("work", "r.md"));
+        // A shell that did not change the last peek leaves the window in peeks.txt, also when its file is not there
+        File.Move(In("work", "q.md"), In("work", "r.md"));
+        Run("pwd\n", terminal: true);
+        Assert.Equal(new PeekMarks.Window(In("work", "q.md"), 1, 2), PeekMarks.Last);
+    }
+
+    [Fact]
+    public void Forget_ClearsTheLastPeekInPeeksTxt_AtOnce()
+    {
+        File.WriteAllText(In("work", "p.md"), "a\nb\n");
+        Run("peek p.md 1\n", terminal: true);
+        Assert.NotNull(PeekMarks.Last);
+        // (peeks.txt read in the same shell, right after forget: a terminal closed then does not leave the shell)
+        var (_, errors, _, _) = Run("forget\n" + DialogText.ChoiceYes + "\nclip text " + PeekMarks.FilePath + "\n", terminal: true);
+        Assert.Contains(Lang.T("Nothing to copy: it is empty"), errors);
+        PeekMarks.Load();
+        Assert.Null(PeekMarks.Last);
+    }
+
+    [Fact]
+    public void PeekMarks_NumbersPastIntAreLeftOut_AndNamesAreOneInAnyLetterCase()
+    {
+        var path = In("work", "long.md");
+        PeekMarks.Parse("big\t2000000000\t500000000\t" + path + "\nStorm\t1\t2\t" + path + "\n");
+        Assert.Equal(new[] { "storm" }, PeekMarks.Saved.Select(entry => entry.Name));
+        File.WriteAllText(path, "one\ntwo\n");
+        var (output, errors, _, _) = Run("peek long.md 1\npeek save STORM\npeek saved\npeek back sToRm\n" +
+                                         "peek back 99999999999\npeek save -d Storm\n");
+        Assert.Contains("1  storm", output);
+        Assert.Contains(Lang.F("No saved peek {0}: {1} are saved (peek saved lists them)", "99999999999", 1), errors);
+        Assert.Contains(Lang.F("Saved peek {0} deleted", "storm"), output);
+    }
+
+    [Fact]
+    public void PeekSaved_T_SearchesTheLinesPeekBackShows_InAFileThatGotShorter()
+    {
+        File.WriteAllText(In("work", "s.md"), string.Concat(Enumerable.Range(1, 10).Select(i => "line " + i + "\n")));
+        Run("peek s.md +8 3\npeek save end\n");
+        File.WriteAllText(In("work", "s.md"), "one\nstorm here\nthree\n");
+        var (output, _, _, _) = Run("peek saved -t storm\npeek saved filter x -t storm\npeek saved filter \"e\"\"\"\n");
+        Assert.Contains("1  end  s.md:2  storm here", output);
+        Assert.Contains(Lang.F("No saved peeks with {0} in them and {1} in their lines", "x", "storm"), output);
+        // A filter in quotes, with "" a quote
+        Assert.Contains(Lang.F("No saved peeks with {0} in them", "e\""), output);
+        Assert.Equal("peek save -d end", Tab(Completion(), "peek save -d e"));
+        Assert.Equal("peek saved filter x -t", Tab(Completion(), "peek saved filter x -"));
+    }
+
+    [UnixFact]
+    public void PeekSave_APathWithATab_IsTold_OnLinuxAndMacOs()
+    {
+        File.WriteAllText(In("work", "a\tb.md"), "x\n");
+        var (_, errors, _, _) = Run("find a*\npeek 1\npeek save\n");
+        Assert.Contains(Lang.F("A path with a tab or a line break cannot be saved: {0}", In("work", "a\tb.md")), errors);
+    }
+
+    [Fact]
+    public void ShellHistory_SetTo0_DeletesTheFile_AndAFailedReadIsTriedAgain()
+    {
+        CommandHistory.Clear();
+        try
+        {
+            FileIo.SaveSettings();
+            Run("pwd\nls\n", terminal: true);
+            Assert.True(File.Exists(ShellHistory.FilePath));
+            Run("set shellhistory 0\npwd\n", terminal: true);
+            Assert.False(File.Exists(ShellHistory.FilePath));
+            // A file with CRLF line endings, as written on Windows, read on another system
+            Shell.HistoryCount = Shell.DefaultHistoryCount;
+            CommandHistory.Clear();
+            ShellHistory.Reset();
+            File.WriteAllText(ShellHistory.FilePath, "pwd\r\nls\r\n");
+            var (output, _, _, _) = Run("again\n", terminal: true);
+            Assert.Contains("1  ls\n", output);
+            // A lower setting: no more commands than it keeps, also before the next one
+            Shell.HistoryCount = 1;
+            Assert.Single(CommandHistory.Of(CommandContext.Shell));
+            Shell.HistoryCount = Shell.DefaultHistoryCount;
+            // forget empties the list, and the next file is written again when it grows
+            CommandHistory.Clear();
+            Run("forget\n" + DialogText.ChoiceYes + "\npwd\n", terminal: true);
+            Assert.Equal("pwd\n", File.ReadAllText(ShellHistory.FilePath));
+        }
+        finally
+        {
+            CommandHistory.Clear();
+        }
+    }
+
+    [Fact]
+    public void ShellHistory_KeepsALineAsTyped_NotAsItRan()
+    {
+        CommandHistory.Clear();
+        try
+        {
+            Run("reg w pwd\n$w\npwd\n!!\n", terminal: true);
+            var lines = File.ReadAllLines(ShellHistory.FilePath);
+            Assert.Contains("$w", lines);
+            Assert.DoesNotContain("!!", lines);
+            // A line typed with a blank in front does not move the numbers of again
+            var (output, _, _, _) = Run(" echo secret\nagain\n", terminal: true);
+            Assert.Contains("1  pwd\n", output);
+        }
+        finally
+        {
+            CommandHistory.Clear();
+        }
+    }
+
+    [Theory]
+    [InlineData("at last, peace", false)]
+    [InlineData("at 10 text", true)]
+    [InlineData("replace the old window", false)]
+    [InlineData("replace old new", true)]
+    [InlineData("end of part one", true)]
+    public void LinesMeantByChange_TakesAtAndReplaceInTheFormLinesTakes(string text, bool meant)
+    {
+        Assert.Equal(meant, ShellSession.LinesMeantByChange(text));
+    }
+
+    [Fact]
+    public void Line_WithAFileAndALine_PointsToFile()
+    {
+        File.WriteAllText(In("work", "f.md"), "a\nb\nc\n");
+        var (_, errors, _, _) = Run("line f.md 3\nline f.md bottom\n");
+        Assert.Equal(2, errors.Split(Lang.T("line sets only the line of $file: file notes.md 3 sets the file and the line")).Length - 1);
+    }
+
+    [Fact]
+    public void LinesAt_LeavesBlankLinesAsTheyAre_AndTellsAShortLineInTheMiddle()
+    {
+        File.WriteAllText(In("work", "b.md"), "first line\n\nthird line\n");
+        var (_, errors, _, _) = Run("lines b.md 1-3 at 7 \"big \"\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("first big line\n\nthird big line\n", Text("b.md"));
+        File.WriteAllText(In("work", "b.md"), "first line\nab\nthird line\n");
+        (_, errors, _, _) = Run("lines b.md 1-3 at 7 x\n");
+        Assert.Contains(Lang.F("Line {0} has no column {1}: nothing changed", 2, 7), errors);
+        Assert.Equal("first line\nab\nthird line\n", Text("b.md"));
+    }
+
+    [Theory]
+    [InlineData("a\u200Bb", 2, 2)]
+    [InlineData("\ud83d\ude00x", 3, 2)]
+    [InlineData("e\u0301x", 2, 2)]
+    [InlineData("a\tb", 3, 2)]
+    public void IndexOfColumn_GoesPastCharactersOfNoWidth_AsTheEditorShowsThem(string line, int column, int index)
+    {
+        Assert.Equal(index, LineWords.IndexOfColumn(line, column));
+    }
+
+    [Fact]
+    public void Quoted_DoublesTheQuotes_AndWordsTakeThemBack()
+    {
+        Assert.Equal("\"say \"\"hi\"\".md\"", ShellSession.Quoted("say \"hi\".md"));
+        Assert.Equal(new[] { "say \"hi\".md" }, ShellSession.Words(ShellSession.Quoted("say \"hi\".md")));
+        Assert.Equal(("remove ", "\"\""), ShellCompletion.LastWord("remove \"\""));
+        // A register with quotes in its value, put in a text in quotes
+        File.WriteAllText(In("work", "q.md"), "line\n");
+        var (_, errors, _, _) = Run("reg q a\"\"b\nlines q.md 1 end \"$q\"\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("linea\"b\n", Text("q.md"));
+    }
+
+    [Fact]
+    public void Filters_AndThePeekSearch_TakeAQuoteWrittenAsTwo()
+    {
+        File.WriteAllText(In("work", "q.md"), "one\nsay \"hi\"\n");
+        var (output, errors, _, _) = Run("peek q.md \"/say \"\"hi\"\"\"\nagain filter \"\"\"\"\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains("2  say \"hi\"", output);
+        Assert.Contains("(match 1 of 1", output);
     }
 }

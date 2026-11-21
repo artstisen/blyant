@@ -687,6 +687,14 @@ internal sealed partial class ShellSession
         }
     }
 
+    // A word that is a line as line takes it: "3", "+3", "top", "bottom"
+    private static bool IsLineWord(string word)
+    {
+        var digits = word.StartsWith('+') ? word[1..] : word;
+        return (digits.Length > 0 && digits.All(char.IsAsciiDigit)) ||
+               word.Equals("top", StringComparison.OrdinalIgnoreCase) || word.Equals("bottom", StringComparison.OrdinalIgnoreCase);
+    }
+
     // "line 3", "line +3", "line top", "line bottom": $line, the line of $file "@" stands for ("insert @ text" puts
     // the text after it), without peeking the file. "line" alone: $line shown. Nothing is written, and the last list
     // stays as it was. "line notes.md +4 replace a b" (a file first, or a word of lines after the line): lines was
@@ -696,9 +704,12 @@ internal sealed partial class ShellSession
         var words = Words(argument);
         if (words.Count > 1)
         {
-            var linesMeant = File.Exists(PathOf(words[0])) ||
-                             words.Skip(1).Any(word => word is ">" or ">>" || LineEdits.Contains(word.ToLowerInvariant()));
-            if (linesMeant) Error(Lang.T("line only sets $line: to change lines, use lines (lines notes.md +4 replace old new)"));
+            var file = File.Exists(PathOf(words[0]));
+            // ("line notes.md 3": a file and a line, as file takes them)
+            if (file && words.Count == 2 && IsLineWord(words[1]))
+                Error(Lang.T("line sets only the line of $file: file notes.md 3 sets the file and the line"));
+            else if (file || words.Skip(1).Any(word => word is ">" or ">>" || LineEdits.Contains(word.ToLowerInvariant())))
+                Error(Lang.T("line only sets $line: to change lines, use lines (lines notes.md +4 replace old new)"));
             else Error(Lang.T("Give one line: line 3, line top, line bottom"));
             return;
         }
@@ -1097,6 +1108,9 @@ internal sealed partial class ShellSession
         ShellRegisters.Calc = null;
         ForgetFind();
         _lastPeek = null;
+        _lastPeekChanged = true;
+        // (also in peeks.txt at once: a terminal closed before the shell is left does not keep it)
+        if (Terminal) PeekMarks.SetLast(null);
         _wordsShown = null;
         _lastSearch = null;
         _undo.Clear();
@@ -1747,7 +1761,8 @@ internal sealed partial class ShellSession
         string? filter = null;
         if (most == int.MaxValue && rest.Split(' ', 2)[0].Equals("filter", StringComparison.OrdinalIgnoreCase))
         {
-            filter = Rest(rest).Trim().Trim('"');
+            var typed = Rest(rest).Trim();
+            filter = Unquoted(typed) ?? typed;
             if (filter.Length == 0)
             {
                 Error(Lang.T("Give a text: hist filter draft (or *.md)"));

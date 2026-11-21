@@ -1368,6 +1368,7 @@ internal static partial class FileExplorer
         Bookmarks.Follow(oldPath, newPath);
         FileTags.Follow(oldPath, newPath);
         PeekMarks.Follow(oldPath, newPath);
+        ShellSession.LastPeekFollows(oldPath, newPath);
         ShellSession.PreviousFollows(oldPath, newPath);
         Splits.Follow(oldPath, newPath);
         CorkboardFollows(oldPath, newPath);

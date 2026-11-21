@@ -198,7 +198,7 @@ internal static class Shell
         if (Current is not { Terminal: true } session) return;
         EventLog.Add(DialogText.LogShell + ": left"); // English: the log
         RememberLast(session.Directory, session.WorkedFile);
-        PeekMarks.SetLast(session.LastPeekWindow);
+        if (session.LastPeekChanged) PeekMarks.SetLast(session.LastPeekWindow);
     }
 
     /// <summary>
@@ -354,8 +354,9 @@ internal static class Shell
         {
             var code = session.Run();
             ScreenRequested = session.ScreenDirectory;
-            // (typed in at a terminal: the window of the last peek, for the next shell; none when it was forgotten)
-            if (session.Terminal) PeekMarks.SetLast(session.LastPeekWindow);
+            // (typed in at a terminal: the window of the last peek, for the next shell, when this shell changed it;
+            // none when it was forgotten)
+            if (session.Terminal && session.LastPeekChanged) PeekMarks.SetLast(session.LastPeekWindow);
             return code;
         }
         finally

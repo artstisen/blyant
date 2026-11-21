@@ -219,13 +219,13 @@ Some commands have a short form, which does the same: `fav` and `favs` (`favorit
 ### Typing a command
 In a terminal the line of the shell is read key by key:
 
-- `Tab` completes the word you are typing, and `Tab` again gives the next match (after the last: what you typed; `Shift+Tab` goes back): the name of a command (`fa` to `favorites`), the words that can follow some commands (the names of the settings after `set`, the lists after `fav`, the projects after `project`, `add` and `remove` after `fav` and `hot`, `top` and `bottom` after `insert`, `top`, `bottom` and the headings of the file after the lines of `shift` and after the other file of `lines` (also from a pattern, and of a row or `$file`), `path`, `name`, `text` and `lines` after `clip`, the options not given yet after `recent`, `hist`, `find` and `ls`), and the names of files and directories after the commands that take a path (`open pl` to `open plot.md`). `cd` and `ls`, and the directory of `copy` and `move`, take directories only. A directory gets `/` after it, and when it is the only name that fits, `Tab` again goes on into it (`cd pr` to `cd projects/`, then `cd projects/Article/`). A name with a blank in it is put in quotes, and hidden names are offered only after a `.`
+- `Tab` completes the word you are typing, and `Tab` again gives the next match (after the last: what you typed; `Shift+Tab` goes back): the name of a command (`fa` to `favorites`), the words that can follow some commands (the names of the settings after `set`, the lists after `fav`, the projects after `project`, `add` and `remove` after `fav` and `hot`, `top` and `bottom` after `insert`, `top`, `bottom` and the headings of the file after the lines of `shift` and after the other file of `lines` (also from a pattern, and of a row or `$file`), `path`, `name`, `text` and `words` after `clip`, the options not given yet after `recent`, `hist`, `find` and `ls`), and the names of files and directories after the commands that take a path (`open pl` to `open plot.md`). `cd` and `ls`, and the directory of `copy` and `move`, take directories only. A directory gets `/` after it, and when it is the only name that fits, `Tab` again goes on into it (`cd pr` to `cd projects/`, then `cd projects/Article/`). A name with a blank in it is put in quotes, and hidden names are offered only after a `.`
 - With nothing typed after a command that takes a file (`open ` and `Tab`), the files you opened last that are in that directory come first, the last opened first: `Tab`, `Tab` goes between the files you are working on. The other names follow, sorted by name. It works after a directory too (`open drafts/` and `Tab`), and for a directory (`cd ` and `Tab`) the directories that have those files come first. Once you have typed a letter, the names are sorted by name. The files opened last are those of `recent` and `hist`. To have all names sorted by name, turn the setting `shellrecentfirst` off (`set shellrecentfirst false`, or `shellrecentfirst=false` in the settings file; not on the pages of Configuration)
 - A name with `*` (any characters) or `?` (one character) in it is a pattern: `open *151*` and `Tab` gives `open Blyant-v151.md`, and `Tab` again the next name that matches (ignoring letter case). It works in the name, also after a directory (`open drafts/*151*`), but not in the directories before it. Hidden names match only a pattern that starts with `.`. Without `Tab`, `*` and `?` are taken literally: `open *151*` looks for a file of that name
 - `Up` and `Down` bring back the commands you typed before, on Windows, Linux and macOS alike; they bring back only commands that start with what you have typed (`pe` and `Up`: the last `peek`)
 - `forget` clears what the shell keeps, for a clean slate without leaving: the commands typed (and deletes `shellhistory.txt`, see below), `$clip`, `$peek` (and the window of the last peek, also for the next shell; the windows saved with `peek save` stay), `$calc`, the last search of `find` and the undo and redo steps. It asks first, with how many commands and undo steps there are; from a script or `--run` the answer is no, unless `--yes` is given. What is saved stays: the registers, the settings, `$file`, the directory you are in and the last list. The commands typed on the full screen are kept apart, and stay
 - `again` lists the commands you typed, numbered, the newest first, and `again 3` (or `!3`) runs number 3 again, as it was typed: it is written out, then run. `!!` runs the last one. `!3` and `Tab` puts the command on the line instead, to be changed before `Enter` (another line number, another file). A command run again becomes the newest, number 1, and `again` itself is not kept. When the list grows long, `again filter lines` shows only the commands that contain _lines_ (or `again filter peek*`, a pattern), with their numbers. The list of `again` does not replace the last list: `open 3` is still a row of the list shown before it
-- The last 50 commands you typed are kept in `shellhistory.txt` in the data directory, so the next shell has them too, for `Up`, `Down` and `again`. A command typed again is kept once, as the newest. `set shellhistory 100` keeps more (at most 200), and `set shellhistory 0` keeps none in the file: then the last 50 are kept while Blyant runs, as before 1.6.1. Commands from a file, a pipe or `--run` are not kept
+- The last 50 commands you typed are kept in `shellhistory.txt` in the data directory, so the next shell has them too, for `Up`, `Down` and `again`. A command typed again is kept once, as the newest. `set shellhistory 100` keeps more (at most 200), and `set shellhistory 0` keeps none in the file, and deletes the file kept before: then the last 50 are kept while Blyant runs, as before 1.6.1. Commands from a file, a pipe or `--run` are not kept
 - A command can contain a file name or a text from a file (`insert notes.md bottom ...`), and the file is plain text. **A command typed with a blank in front is not kept**, as in bash: ` insert notes.md bottom private` leaves no trace in `again`, `Up` or the file. `forget` deletes the file and the commands typed. Several shells at once add to the same file, and each shell started reads it
 - `Left`, `Right`, `Home` and `End` move on the line, `Ctrl+Left` and `Ctrl+Right` a word at a time (on macOS, where the system takes them, `Option+Left` and `Option+Right` in Terminal.app), and `Ctrl+A` and `Ctrl+E` to the start and the end, as in bash. `Backspace` and `Delete` delete, `Ctrl+U` deletes the line before the cursor, `Ctrl+W` the word before it, and `Esc` the whole line. A line wider than the window scrolls sideways, and stays on one row
 - `Ctrl+C` drops what you have typed, and `Ctrl+D` (or `Ctrl+Z` on Windows) on an empty line leaves, as `exit` does
@@ -234,6 +234,7 @@ In a terminal the line of the shell is read key by key:
   | Typed | Meant |
   |---|---|
   | `line $file +4 replace old new` | `lines $file +4 replace old new` |
+  | `line notes.md 3` | `file notes.md 3` (the file and the line) |
   | `words notes.md 12 9 replace wish` | `word notes.md 12 9 replace wish` |
   | `word notes.md 12` | `words notes.md 12` |
   | `replace notes.md 2-5 old new` | `lines notes.md 2-5 replace old new` (`replace` works on the whole file) |
@@ -257,6 +258,8 @@ replace notes.md "say ""hi""" "say hello"   say "hi" made say hello
 - `""""` is one `"`: the outer two are the quotes, and the two in between are the quote. `""` alone is an empty text
 - It works wherever a text is written in quotes: `lines`, `replace`, `word`, `reg`, and the search texts (`find -t`, `-t` of the lists)
 - A text taken as typed, without quotes around all of it, keeps a `"` as it is: `insert notes.md bottom She said "hi"`, `lines notes.md 4 end said "hi"`
+- A `$name` in a text in quotes is put in before the quotes are read: a `""` in the value of a register is a quote then (`reg q a""b`, then `lines notes.md 4 end "$q"` puts in `a"b`)
+- A path with a `"` in the name (Linux and macOS allow it) is written in quotes with the `"` doubled, and the shell does so itself where it puts in a path: `Tab`, `$file` and `@`
 
 ## Line numbers
 The commands that work on the lines of a file take line numbers in a few ways. A plain number is a line to work on; a `+` before it is a place in the file, or the first line of a range counted from there:
@@ -590,7 +593,7 @@ blyant ~/notes> lines todo.md 3 unstart "- [ ] "
 - `unstart` and `unend` take the text off the lines that start or end with it, with the blank `start` and `end` put there (in quotes: the text only), so they undo `start` and `end`. The other lines are left as they are
 - `replace old new` replaces the text everywhere in the lines, with the letter case as typed (`draft`, not `Draft`). A text with blanks is written in quotes, and `""` is an empty text: what is replaced is removed
 - `remove text` takes the text out everywhere in the lines, with the letter case as typed. The text is all that follows `remove`, as for `start`; in quotes it is taken as written, blanks too. A `"` is written `""""` in quotes (see [Quotes in a text](#quotes-in-a-text)), or alone: `lines notes.md 1 remove "`
-- `at 32 text` puts the text in before column 32 of each line: the text then starts at column 32. The columns are counted from 1, as the editor counts them on the status line, and `words` shows the column each word starts at (`#9:32 want`). The text is put in as typed, with no blank added: write it in quotes to keep a blank at the start or end of it (`"really "`). A column one past the end of a line puts the text at the end. When a line has no such column (it is shorter), the shell says which line, and no line is changed
+- `at 32 text` puts the text in before column 32 of each line: the text then starts at column 32. The columns are counted from 1, as the editor counts them on the status line, and `words` shows the column each word starts at (`#9:32 want`). The text is put in as typed, with no blank added: write it in quotes to keep a blank at the start or end of it (`"really "`). A column one past the end of a line puts the text at the end. When a line has no such column (it is shorter), the shell says which line, and no line is changed. A blank line is left as it is, as `start` and `end` leave it
 - After the lines, `Tab` completes `start`, `end`, `unstart`, `unend`, `replace`, `remove`, `at`, `sort`, `upper`, `lower`, `title` and `>`, and after `sort` it completes `-a` and `-d`. A `>` or one of these words later on is part of the text: `lines notes.md 3 start ">"` makes line 3 a quote
 - `$name` and `$clip` put in their value: `lines todo.md 4 end $note`
 - The lines changed are shown, and the file is then the last list, at the first line changed (`open 1`). When no line changes, nothing is written, and the shell says so. As for `insert`, the file keeps its line endings and byte order mark, only a file in UTF-8 is changed and not the files Blyant uses, and `undo` puts it back; nothing is asked, as no line is lost
@@ -674,11 +677,11 @@ blyant ~/novel> word notes.md 12 9 replace wish
 - `delete` takes the word out with the marks around it that open and close each other (`**bold**`, `(see)` and `"why"` go whole). A mark that opens or closes something else stays (`(see chapter 3)` without `see` is `(chapter 3)`), and so does punctuation after the word (`the end.` without `end` is `the.`). One of the blanks around the word goes with it, and none is left at the start or the end of the line
 - A word is letters and digits with any accents or marks that go with them, also when an accent is a separate character, as in files from macOS
 - Several words are given as `5-7`: `replace` puts the text in place of all those words, and `before` and `after` go in front of the first and after the last
-- `move` takes the words out as `delete` does, with what is between them and any marks around them (`**bold**`), and puts them in before or after another word of the same line, with a blank. **All the numbers are those `words` showed before the move**, so you read them off one list: `word @ 9 move before 6` makes _a line of text, that I want to_ into _a line of want text, that I to_, and `word @ 6-7 move after 11` moves _text, that_ after _change_. Punctuation after the word given stays after it: the words go between the word and its comma. A word among those moved is refused, and the letter case is kept (`word ... lower` after it)
+- `move` takes the words out as `delete` does, with what is between them and any marks around them (`**bold**`), and puts them in before or after another word of the same line, with a blank, outside any marks around that word (`x **bold**`, not `**x bold**`). **All the numbers are those `words` showed before the move**, so you read them off one list: `word @ 9 move before 6` makes _a line of text, that I want to_ into _a line of want text, that I to_, and `word @ 6-7 move after 11` moves _text, that_ after _change_. Punctuation after the word given stays after it: the words go between the word and its comma. A word among those moved is refused, and the letter case is kept (`word ... lower` after it)
 - The line is given as `12` or `+12`, and the file as a name, a row of the last list or `$file`. After `words`, `@` is the file and the line, so the next command can be `word @ 9 ...` (see [Working on one line](#working-on-one-line))
 - The words come between two markers: `-> notes.md, line 12` above them, and `<- 15 words` below them (as for `peek`, `set shellmarkers false` leaves them out)
 - The numbers have `#` before them (`#9:32 want`), so a word that is a number (`2`, `v1`) is not taken for the number of a word. `word` takes the numbers with `#` or without it: `word @ #9 replace wish`, `word @ #5-#7 delete` and `word @ 5-7 delete` are the same
-- After the `:` is the column the word starts at, as the editor counts it on the status line (a wide character, as in Chinese, is two columns): `#9:32 want` starts at column 32. `lines notes.md 12 at 32 "really "` puts a text in there (see [Text in lines](#text-in-lines)). `word` also takes the number as shown, with the column: `word @ #9:32 replace wish`
+- After the `:` is the column the word starts at, as the editor counts it on the status line (a wide character, as in Chinese, is two columns): `#9:32 want` starts at column 32. `lines notes.md 12 at 32 "really "` puts a text in there (see [Text in lines](#text-in-lines)). `word` also takes the number as shown, with the column: `word @ #9:32 replace wish`. A column given is checked: when the line has changed since `words` showed it, and word 9 starts at another column now, the shell says so and changes nothing. After `words -p`, `word`, `word ... move` and `clip words` without `-p` are refused when the numbers point at other words, the target of a move too
 - After a change the line is shown, with the words numbered again, as the numbers after a word put in or taken out move
 - The text is all that follows `replace`, `before` or `after`, as typed; in quotes it is put in exactly as written. `$name` puts in a value
 - `undo` takes a change back. A file Blyant uses, or one that is not UTF-8, is not changed, and the line endings and byte order mark of the file are kept, as with `lines`
@@ -706,11 +709,11 @@ blyant ~/novel> word -p notes.md 12 15 replace commands.
 ```
 blyant ~/novel> words -p notes.md 4
 -> notes.md, line 4
-  #1 Well  #2 -  #3 she  #4 said:  #5 try  #6 a/b  #7 first.
+  #1:1 Well  #2:6 -  #3:8 she  #4:12 said:  #5:18 try  #6:22 a/b  #7:26 first.
 <- 7 words
 blyant ~/novel> words notes.md 4
 -> notes.md, line 4
-  #1 Well  #2 she  #3 said  #4 try  #5 a  #6 b  #7 first
+  #1:1 Well  #2:8 she  #3:12 said  #4:18 try  #5:22 a  #6:24 b  #7:26 first
 <- 7 words
 ```
 
@@ -719,7 +722,7 @@ Word 6 is `a/b` with `-p`, and only `b` without it. So `word @ 6 upper` after `w
 ```
 blyant ~/novel> words -p notes.md 4
 -> notes.md, line 4
-  #1 Well  #2 -  #3 she  #4 said:  #5 try  #6 a/b  #7 first.
+  #1:1 Well  #2:6 -  #3:8 she  #4:12 said:  #5:18 try  #6:22 a/b  #7:26 first.
 <- 7 words
 blyant ~/novel> word @ 6 upper
 words -p numbered line 4, and without -p the numbers differ: give -p to word too
@@ -727,7 +730,7 @@ blyant ~/novel> word -p @ 6 upper
    4  Well - she said: try A/B first.
 /home/anna/novel/notes.md: line 4 changed
 -> notes.md, line 4
-  #1 Well  #2 -  #3 she  #4 said:  #5 try  #6 A/B  #7 first.
+  #1:1 Well  #2:6 -  #3:8 she  #4:12 said:  #5:18 try  #6:22 A/B  #7:26 first.
 <- 7 words
 ```
 

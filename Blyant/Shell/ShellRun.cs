@@ -81,7 +81,7 @@ internal sealed partial class ShellSession
         {
             // (one path: in quotes, or with blanks from a $name put in)
             var path = argument.Trim();
-            if (path.Length >= 2 && path[0] == '"' && path[^1] == '"') path = path[1..^1];
+            path = Unquoted(path) ?? path;
             if (Existing(path) is not { } item || ReadableFile(item) is not { } file) return;
             text = file.Text;
             what = item.Path;
@@ -167,7 +167,7 @@ internal sealed partial class ShellSession
         }
 
         var words = arguments.Select(word => word.Replace("$", "$$"))
-            .Select(word => word.Any(char.IsWhiteSpace) ? "\"" + word + "\"" : word).ToList();
+            .Select(word => NeedsQuotes(word) ? Quoted(word) : word).ToList();
         if (highest == 0 && !all)
         {
             if (commands.Count == 1)

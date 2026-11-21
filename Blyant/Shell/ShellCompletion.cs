@@ -145,9 +145,9 @@ internal sealed class ShellCompletion
             Kind.PathThenWords => PathsFitting(word, false).Concat(Fitting(choices, word)).ToList(),
             // (a word with a blank in it in quotes: fitting what is typed after a quote)
             Kind.QuotedWords => Fitting(choices, word.TrimStart('"'))
-                .Select(w => w.Any(char.IsWhiteSpace) ? "\"" + w + "\"" : w).ToList(),
+                .Select(w => ShellSession.NeedsQuotes(w) ? ShellSession.Quoted(w) : w).ToList(),
             Kind.Names => NamesFitting(choices, word.TrimStart('"'))
-                .Select(w => w.Any(char.IsWhiteSpace) ? "\"" + w + "\"" : w).ToList(),
+                .Select(w => ShellSession.NeedsQuotes(w) ? ShellSession.Quoted(w) : w).ToList(),
             _ => new List<string>()
         };
         return _matches.Count > 0;
@@ -183,8 +183,19 @@ internal sealed class ShellCompletion
 
                 if (position == 1 && after[0].Equals("save", StringComparison.OrdinalIgnoreCase))
                     return (Kind.Words, new[] { "-d" });
+                // ("peek save -d storm": the names of the peeks saved)
+                if (position == 2 && after[0].Equals("save", StringComparison.OrdinalIgnoreCase) && after[1] == "-d")
+                {
+                    PeekMarks.Load();
+                    return (Kind.Words, PeekMarks.Saved.Select(entry => entry.Name).Where(name => name.Length > 0));
+                }
+
                 if (position == 1 && after[0].Equals("saved", StringComparison.OrdinalIgnoreCase))
                     return (Kind.Words, new[] { "filter", "-t" });
+                // ("peek saved filter ch -t": -t after the text of filter)
+                if (position == 3 && after[0].Equals("saved", StringComparison.OrdinalIgnoreCase) &&
+                    after[1].Equals("filter", StringComparison.OrdinalIgnoreCase))
+                    return (Kind.Words, new[] { "-t" });
                 return position switch
                 {
                     0 => (Kind.PathThenWords, PeekPlaces.Concat(ShellSession.PeekMarkWords)),
@@ -504,7 +515,7 @@ internal sealed class ShellCompletion
                 .ThenBy(entry => entry.Name, StringComparer.OrdinalIgnoreCase)
                 .Select(entry => folder + entry.Name + (entry.IsDirectory ? "/" : string.Empty))
                 .Where(path => !string.Equals(path, typed, StringComparison.Ordinal))
-                .Select(path => path.Contains(' ') ? "\"" + path + "\"" : path)
+                .Select(path => ShellSession.NeedsQuotes(path) ? ShellSession.Quoted(path) : path)
                 .ToList();
             return names;
         }

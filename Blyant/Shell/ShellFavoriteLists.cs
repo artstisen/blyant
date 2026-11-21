@@ -96,7 +96,8 @@ internal sealed partial class ShellSession
         }
 
         if (!text.Split(' ', 2)[0].Equals("filter", StringComparison.OrdinalIgnoreCase)) return null;
-        return (Rest(text).Trim().Trim('"'), full);
+        var filter = Rest(text).Trim();
+        return (Unquoted(filter) ?? filter, full);
     }
 
     // The favorites of the open list that a text is in (in the name or the path, letter case alike), or that a

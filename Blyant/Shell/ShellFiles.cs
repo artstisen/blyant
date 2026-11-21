@@ -53,6 +53,17 @@ internal sealed partial class ShellSession
     }
 
     /// <summary>
+    /// A text written in quotes, as one word: a quote in it is doubled ("my ""best"" notes.md"), so Words and Unquoted
+    /// give it back as it is
+    /// </summary>
+    internal static string Quoted(string text) => "\"" + text.Replace("\"", "\"\"") + "\"";
+
+    /// <summary>
+    /// A text that is one word only in quotes: with a blank in it, or a quote (a name on Linux and macOS can have one)
+    /// </summary>
+    internal static bool NeedsQuotes(string text) => text.Any(char.IsWhiteSpace) || text.Contains('"');
+
+    /// <summary>
     /// A text that is all in one pair of quotes: the text in them, with "" in them made one quote ("""" is ", and
     /// "say ""hi""" is say "hi"). Null when it is not ("a" "b", "a"b, a text without quotes): it is then taken as typed
     /// </summary>
@@ -271,11 +282,13 @@ internal sealed partial class ShellSession
         Done(deleted, Lang.F("Deleted: {0}", item.Path), null);
     }
 
-    // A file or directory renamed or moved: the lists follow it, and so does the shell when it is in it ("rename . d2")
+    // A file or directory renamed or moved: the lists follow it (the last peek too, see LastPeekFollows), and so does
+    // the shell when it is in it ("rename . d2")
     private void Moved(Item item, string path)
     {
         FileExplorer.PathMoved(item.Path, path, item.IsDirectory);
-        PeekFollows(item.Path, path);
+        // (a session that is not the shell that runs, as in a test: followed here)
+        if (Shell.Current != this) PeekFollows(item.Path, path);
         if (item.IsDirectory && In(item.Path))
         {
             Directory = Path.GetFullPath(Path.Combine(path, Path.GetRelativePath(item.Path, Directory)));
@@ -337,7 +350,9 @@ internal sealed partial class ShellSession
             : words.Count >= 2 && words[1].Length > 0 && words[1][0] == '/' ? 1 : -1;
         if (searchAt >= 0)
         {
-            var text = AfterWords(argument, searchAt).Trim().Trim('"')[1..];
+            // ("/storm", or in quotes: "/say ""hi""" searches say "hi")
+            var typed = AfterWords(argument, searchAt).Trim();
+            var text = (Unquoted(typed) ?? typed.Trim('"'))[1..];
             if (searchAt == 0)
             {
                 SearchLastPeek(text);
@@ -486,6 +501,7 @@ internal sealed partial class ShellSession
         var commands = IsCommandsFile(path);
         if (!commands)
         {
+            _lastPeekChanged = true;
             _lastPeek = !all ? (path, first, asked, StampOf(item.Path), text.GetHashCode())
                 : same ? _lastPeek!.Value with { Stamp = StampOf(item.Path), Hash = text.GetHashCode() }
                 : (path, 1, size, StampOf(item.Path), text.GetHashCode());
@@ -803,8 +819,14 @@ internal sealed partial class ShellSession
         PeekAgain(true);
     }
 
-    // The last peek follows its file when it is renamed or moved in the shell (or the directory it is in), so "." and
-    // "+" go on in it
+    /// <summary>
+    /// A file or directory renamed or moved (in the shell, on the full screen, or in the editor opened from the shell):
+    /// the last peek of the shell that runs follows it
+    /// </summary>
+    internal static void LastPeekFollows(string from, string to) => Shell.Current?.PeekFollows(from, to);
+
+    // The last peek follows its file when it is renamed or moved (or the directory it is in), so "." and "+" go on in
+    // it
     private void PeekFollows(string from, string to)
     {
         if (_lastPeek is { } previous && FileOperations.FollowedPath(previous.Path, from, to) is { } path)

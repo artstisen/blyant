@@ -117,7 +117,17 @@ internal static partial class LineWords
             i += length;
         }
 
-        return cells + 1 == column ? i : null;
+        if (cells + 1 != column) return null;
+        // (a character of no width there, as a zero-width space before a word: the column is where the word starts,
+        // as the next character is seen there)
+        while (i < line.Length)
+        {
+            var length = TextMetrics.ElementLength(line, i);
+            if (TextMetrics.Width(line, i, length) != 0) break;
+            i += length;
+        }
+
+        return i;
     }
 
     /// <summary>
@@ -241,7 +251,8 @@ internal static partial class LineWords
     /// <summary>
     /// The words first to last (numbers as Find gives them) put before or after word "target" of the line as it is,
     /// with the marks that wrap them ("**bold**") and what is between them, as delete takes them out; the blanks where
-    /// they were tidied as delete does, and a blank put between them and the word, as "before" and "after" do. Null
+    /// they were tidied as delete does, and a blank put between them and the word, outside any marks that wrap the word
+    /// ("(see) x", not "(see x)"). Null
     /// when the target is one of the words moved, or the words cannot be counted again after they are taken out
     /// </summary>
     internal static string? Moved(string line, int first, int last, bool before, int target, bool blanks = false)
@@ -254,10 +265,27 @@ internal static partial class LineWords
         var left = Find(rest, blanks);
         var count = last - first + 1;
         if (left.Count != words.Count - count) return null;
-        var (start, length) = left[(target > last ? target - count : target) - 1];
+        // (the target with the marks around it, so the words go outside them: "x **bold**", not "**x bold**"; "end
+        // (see chapter)", not "(end see chapter)")
+        var (start, end) = TargetSpan(rest, left[(target > last ? target - count : target) - 1]);
         return before
             ? rest[..start] + moved + " " + rest[start..]
-            : rest[..(start + length)] + " " + moved + rest[(start + length)..];
+            : rest[..end] + " " + moved + rest[end..];
+    }
+
+    // The place of the word a move puts words before or after: with the marks that open before it, back to a blank or
+    // the start of the line ("**", "(", a quote), and the marks that close after it (")", "**", a quote), but not the
+    // punctuation after it ("change," keeps the comma after the words moved there), nor a part of the same word
+    // between blanks ("a/b": "b" is from the "b")
+    private static (int Start, int End) TargetSpan(string line, (int Start, int Length) word)
+    {
+        var start = word.Start;
+        var back = start;
+        while (back > 0 && !char.IsWhiteSpace(line[back - 1]) && !char.IsLetterOrDigit(line[back - 1])) back--;
+        if (back == 0 || char.IsWhiteSpace(line[back - 1])) start = back;
+        var end = word.Start + word.Length;
+        while (end < line.Length && line[end] is ')' or ']' or '}' or '"' or '\'' or '”' or '’' or '»' or '*' or '_' or '`') end++;
+        return (start, end);
     }
 
     // What delete takes out of a line for the words first to last: from the start of the first to the end of the last,

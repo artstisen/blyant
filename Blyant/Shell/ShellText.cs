@@ -193,8 +193,16 @@ internal sealed partial class ShellSession
     {
         var trimmed = text.TrimStart();
         var blank = trimmed.IndexOfAny([' ', '\t']);
-        return blank > 0 && LinesTextEdits.Contains(trimmed[..blank], StringComparer.Ordinal) &&
-               trimmed[blank..].Trim().Length > 0;
+        if (blank <= 0 || !LinesTextEdits.Contains(trimmed[..blank], StringComparer.Ordinal)) return false;
+        var rest = Words(trimmed[blank..]);
+        // ("at 10 text" and "replace old new" only in the form lines takes, so "at last, peace" or "replace the
+        // window" are lines of text; start, end, unstart, unend and remove take any text)
+        return trimmed[..blank] switch
+        {
+            "at" => rest.Count >= 2 && rest[0].Length > 0 && rest[0].All(char.IsAsciiDigit),
+            "replace" => rest.Count == 2,
+            _ => rest.Count > 0
+        };
     }
 
     // The text of a file found (not a directory), as it is on the disk: null, and told, when it cannot be read
@@ -742,7 +750,7 @@ internal sealed partial class ShellSession
         // The line of the setting changed, the settings read again (and written as Blyant writes them)
         var wanted = parts[1].Trim();
         // (in quotes: without them; set shelldir "" empties the setting)
-        if (wanted.Length >= 2 && wanted[0] == '"' && wanted[^1] == '"') wanted = wanted[1..^1];
+        wanted = Unquoted(wanted) ?? wanted;
         var lines = content.Split('\n').Select(line =>
         {
             var separator = line.IndexOf('=');

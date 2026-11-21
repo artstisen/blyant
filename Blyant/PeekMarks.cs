@@ -52,6 +52,11 @@ internal static class PeekMarks
         name.All(c => char.IsLetterOrDigit(c) || c is '-' or '_');
 
     /// <summary>
+    /// A name as it is kept and compared: in lower case ("Storm" and "storm" are one name)
+    /// </summary>
+    internal static string KeyOf(string name) => name.ToLowerInvariant();
+
+    /// <summary>
     /// The windows saved, in order ("" is the one saved without a name)
     /// </summary>
     internal static IReadOnlyList<(string Name, Window Window)> Saved => Entries.ToList();
@@ -93,7 +98,7 @@ internal static class PeekMarks
             var parts = line.TrimEnd('\r').Split('\t', 4);
             if (parts.Length != 4 || !int.TryParse(parts[1], NumberStyles.None, CultureInfo.InvariantCulture, out var first) ||
                 !int.TryParse(parts[2], NumberStyles.None, CultureInfo.InvariantCulture, out var count) || first < 1 ||
-                count < 1 || !Path.IsPathFullyQualified(parts[3]))
+                count < 1 || (long)first + count - 1 > int.MaxValue || !Path.IsPathFullyQualified(parts[3]))
             {
                 continue;
             }
@@ -114,8 +119,10 @@ internal static class PeekMarks
             entry.Window.Count.ToString(CultureInfo.InvariantCulture) + "\t" + entry.Window.Path + "\n"));
     }
 
-    // A path that fits on a line of the file (Linux and macOS allow a tab or a line break in a name)
-    private static bool Keepable(string path) => path.IndexOfAny(['\t', '\n', '\r']) < 0;
+    /// <summary>
+    /// A path that fits on a line of the file (Linux and macOS allow a tab or a line break in a name)
+    /// </summary>
+    internal static bool Keepable(string path) => path.IndexOfAny(['\t', '\n', '\r']) < 0;
 
     /// <summary>
     /// Write the windows to the file
@@ -140,19 +147,20 @@ internal static class PeekMarks
     // A window saved by a name: in the place of one of that name (letter case alike), or at the end
     private static void Put(string name, Window window)
     {
-        var at = Entries.FindIndex(entry => string.Equals(entry.Name, name, StringComparison.OrdinalIgnoreCase));
-        if (at >= 0) Entries[at] = (Entries[at].Name.Length == 0 ? name : name.ToLowerInvariant(), window);
-        else Entries.Add((name.ToLowerInvariant(), window));
+        var key = KeyOf(name);
+        var at = Entries.FindIndex(entry => entry.Name == key);
+        if (at >= 0) Entries[at] = (key, window);
+        else Entries.Add((key, window));
     }
 
     /// <summary>
-    /// Save a window by a name ("" for the one without a name): read the file first, and write it
+    /// Save a window by a name ("" for the one without a name): read the file first, and write it. The path must be
+    /// one the file can keep (see Keepable)
     /// </summary>
     /// <returns>DialogText.Success or an error message</returns>
     internal static string Set(string name, Window window)
     {
         Load();
-        if (!Keepable(window.Path)) return DialogText.ListNotRead;
         Put(name, window);
         return Save();
     }
@@ -163,7 +171,8 @@ internal static class PeekMarks
     internal static Window? Get(string name)
     {
         Load();
-        return Entries.FirstOrDefault(entry => string.Equals(entry.Name, name, StringComparison.OrdinalIgnoreCase)).Window;
+        var key = KeyOf(name);
+        return Entries.FirstOrDefault(entry => entry.Name == key).Window;
     }
 
     /// <summary>
@@ -173,7 +182,8 @@ internal static class PeekMarks
     {
         Load();
         result = DialogText.Success;
-        if (Entries.RemoveAll(entry => string.Equals(entry.Name, name, StringComparison.OrdinalIgnoreCase)) == 0) return false;
+        var key = KeyOf(name);
+        if (Entries.RemoveAll(entry => entry.Name == key) == 0) return false;
         result = Save();
         return true;
     }
@@ -187,6 +197,13 @@ internal static class PeekMarks
         if (window != null && !Keepable(window.Path)) window = null;
         if (_last == window) return;
         _last = window;
+        SaveLogged();
+    }
+
+    // The file written after a change Blyant made by itself (the last peek, a file renamed): a failure is logged, as
+    // nobody asked for it to be told
+    private static void SaveLogged()
+    {
         var result = Save();
         // English: the log (the path, never what is in it)
         if (result != DialogText.Success) EventLog.Add(DialogText.LogFile + "Peeks not saved: " + FilePath + ": " + result);
@@ -212,10 +229,7 @@ internal static class PeekMarks
             changed = true;
         }
 
-        if (!changed) return;
-        var result = Save();
-        // English: the log (the path, never what is in it)
-        if (result != DialogText.Success) EventLog.Add(DialogText.LogFile + "Peeks not saved: " + FilePath + ": " + result);
+        if (changed) SaveLogged();
     }
 
     /// <summary>

@@ -14,14 +14,14 @@ internal sealed partial class ShellSession
     // The options of replace, before the file
     private static readonly string[] ReplaceOptions = { "-n", "-i" };
 
+    // Lines as lines and shift take them by number: "4", "+4", "4-6", "4,7,9-10" (ASCII digits, as lines takes them)
+    [System.Text.RegularExpressions.GeneratedRegex(@"^\+?[0-9]+(-[0-9]+)?(,[0-9]+(-[0-9]+)?)*$")]
+    private static partial System.Text.RegularExpressions.Regex LinesNumbers();
+
     /// <summary>
     /// The words of "replace" in which a $name puts in a path (made one word): the options and the file. The texts
     /// after them are put in as they are
     /// </summary>
-    // Lines as lines and shift take them by number: "4", "+4", "4-6", "4,7,9-10"
-    [System.Text.RegularExpressions.GeneratedRegex(@"^\+?\d+(-\d+)?(,\d+(-\d+)?)*$")]
-    private static partial System.Text.RegularExpressions.Regex LinesNumbers();
-
     internal static int ReplaceWords(string argument) =>
         Words(argument).TakeWhile(word => word.StartsWith('-') && word.Length > 1).Count() + 1;
 

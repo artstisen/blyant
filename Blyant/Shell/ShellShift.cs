@@ -299,13 +299,6 @@ internal sealed partial class ShellSession
             return null;
         }
 
-        // (a path with a quote in it, as Linux and macOS allow, would be split when it is put in)
-        if (_file.Contains('"'))
-        {
-            Error(Lang.F("A path with a quote in it cannot be put in for @: {0}", _file));
-            return null;
-        }
-
         // The line checked against the file as it is now (changed since, by another program or the editor): a line
         // past the end is refused, not taken as the end. An empty file is at its top. (A file that cannot be read is
         // told by the command)
