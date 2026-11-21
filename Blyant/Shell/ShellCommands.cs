@@ -672,13 +672,17 @@ internal sealed partial class ShellSession
 
     // "line 3", "line +3", "line top", "line bottom": $line, the line of $file "@" stands for ("insert @ text" puts
     // the text after it), without peeking the file. "line" alone: $line shown. Nothing is written, and the last list
-    // stays as it was
+    // stays as it was. "line notes.md +4 replace a b" (a file first, or a word of lines after the line): lines was
+    // meant, a letter away; it is told so, and nothing is done
     private void LineCommand(string argument)
     {
         var words = Words(argument);
         if (words.Count > 1)
         {
-            Error(Lang.T("Give one line: line 3, line top, line bottom"));
+            var linesMeant = File.Exists(PathOf(words[0])) ||
+                             words.Skip(1).Any(word => word is ">" or ">>" || LineEdits.Contains(word.ToLowerInvariant()));
+            if (linesMeant) Error(Lang.T("line only sets $line: to change lines, use lines (lines notes.md +4 replace old new)"));
+            else Error(Lang.T("Give one line: line 3, line top, line bottom"));
             return;
         }
 

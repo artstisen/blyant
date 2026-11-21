@@ -6125,6 +6125,7 @@ public class ShellTests : IDisposable
         Assert.Contains(Lang.F("Not a line: {0} (line 3, line top, line bottom)", "x"), more);
         Assert.Contains(Lang.F("Not a line: {0} (line 3, line top, line bottom)", "0"), more);
         Assert.Contains(Lang.T("Give one line: line 3, line top, line bottom"), more);
+        Assert.DoesNotContain(Lang.T("line only sets $line: to change lines, use lines (lines notes.md +4 replace old new)"), more);
         Assert.EndsWith("\n2\n", output);
         // An empty file: top and bottom are its top, for insert, as after new
         File.WriteAllText(In("work", "e.md"), string.Empty);
@@ -7992,5 +7993,23 @@ public class ShellTests : IDisposable
         Assert.Equal(string.Empty, errors);
         // (word 1 is Hi: the ' made of the quotes stay around it)
         Assert.Equal("'\"Hello\"' she said\n", Text("w.md"));
+    }
+
+    [Fact]
+    public void Line_WithAFileOrAWordOfLines_PointsToLines_AndDoesNothing()
+    {
+        File.WriteAllText(In("work", "t.md"), "one\ntwo\nthree\nfour text1\n");
+        var hint = Lang.T("line only sets $line: to change lines, use lines (lines notes.md +4 replace old new)");
+        var (output, errors, _, _) = Run("peek t.md 2\nline $file +4 replace \"text1\" \"text2\"\nline 2 end x\n" +
+                                         "line t.md 4\nline 3 > other.md bottom\necho $line\n");
+        Assert.Equal(4, errors.Split(hint).Length - 1);
+        Assert.Equal("one\ntwo\nthree\nfour text1\n", Text("t.md"));
+        Assert.False(File.Exists(In("work", "other.md")));
+        Assert.EndsWith("\n1\n", output);
+        // lines does it, and $line is the line changed
+        (output, errors, _, _) = Run("lines t.md +4 replace \"text1\" \"text2\"\necho $line\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("one\ntwo\nthree\nfour text2\n", Text("t.md"));
+        Assert.EndsWith("\n4\n", output);
     }
 }
