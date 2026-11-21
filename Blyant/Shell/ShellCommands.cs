@@ -75,6 +75,7 @@ internal sealed partial class ShellSession
         ("words -p, word -p", Lang.T("A word is all between blanks: give -p to both")),
         ("word file|n line n|n-m action [text]", Lang.T("Change words by number: replace, before, after, delete")),
         ("word ... upper|lower|title", Lang.T("Make words UPPERCASE, lowercase or Title Case")),
+        ("word ... move before|after n", Lang.T("Move the words in the line, before or after word n")),
         ("word @ n action", Lang.T("@ is the file and line worked on last")),
         ("format file|n", Lang.T("Format an HTML, CSS or XML file, as :format does")),
         ("trim file|n", Lang.T("Remove blank space at line ends, as :trim does (trim!)")),

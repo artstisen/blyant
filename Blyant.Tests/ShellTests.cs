@@ -5655,7 +5655,7 @@ public class ShellTests : IDisposable
                                     "word n.md 1 1 upper now\nword n.md 5 1 delete\nword n.md 1 x delete\nword n.md 1\n" +
                                     "words n.md\n");
         Assert.Contains(Lang.F("Line {0} has {1} words: {2} is not one", 1, 2, 3), errors);
-        Assert.Contains(Lang.F("Not taken: {0} (replace, before, after, delete, upper, lower or title)", "sideways"), errors);
+        Assert.Contains(Lang.F("Not taken: {0} (replace, before, after, delete, move, upper, lower or title)", "sideways"), errors);
         Assert.Contains(Lang.F("Give the text: word notes.md 12 9 {0} wish", "replace"), errors);
         Assert.Contains(Lang.F("Nothing goes after {0}: word notes.md 12 9 {0}", "upper"), errors);
         Assert.Contains(Lang.F("{0} has {1} lines", In("work", "n.md"), 1), errors);
@@ -8284,5 +8284,60 @@ public class ShellTests : IDisposable
         Assert.Contains(Lang.F("Not taken: {0} (-p: words between blanks, with punctuation)", "-q"), errors);
         Assert.Equal("clip words", Tab(Completion(), "clip wo"));
         Assert.Contains("clip words [-p] file|n line n|n-m", Run("help clip\n").Output);
+    }
+
+    // ---- 1.6.1: word ... move
+
+    [Theory]
+    [InlineData("This is a line of text, that I want to change", 9, 9, true, 6, false,
+        "This is a line of want text, that I to change")]
+    [InlineData("This is a line of text, that I want to change", 6, 7, false, 11, false,
+        "This is a line of I want to change text, that")]
+    [InlineData("Keep **bold** words here", 2, 2, false, 4, false, "Keep words here **bold**")]
+    [InlineData("one two three", 3, 3, true, 1, false, "three one two")]
+    [InlineData("one two three", 1, 1, false, 3, false, "two three one")]
+    [InlineData("a text, here", 2, 2, true, 1, true, "text, a here")]
+    [InlineData("one two three", 2, 3, true, 2, false, null)]
+    public void LineWords_Moved_PutsTheWordsBeforeOrAfterAWord_NumberedAsBefore(string line, int first, int last,
+        bool before, int target, bool blanks, string? expected)
+    {
+        Assert.Equal(expected, LineWords.Moved(line, first, last, before, target, blanks));
+    }
+
+    [Fact]
+    public void WordMove_MovesWordsInTheLine_ByTheNumbersShown_AndUndoTakesItBack()
+    {
+        File.WriteAllText(In("work", "m.md"), "# Notes\n" + WordLine + "\n");
+        var (output, errors, _, _) = Run("words m.md 2\nword @ 9 move before #6:19\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("# Notes\nThis is a line of want text, that I to change, with a few commands...\n", Text("m.md"));
+        // The line shown with the words numbered again
+        Assert.Contains("#6:19 want  #7:24 text", output);
+        File.WriteAllText(In("work", "m.md"), "# Notes\n" + WordLine + "\n");
+        (_, errors, _, _) = Run("word m.md 2 6-7 move after 11\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("# Notes\nThis is a line of I want to change text, that, with a few commands...\n", Text("m.md"));
+        // undo in the same shell
+        (_, errors, _, _) = Run("word m.md 2 1 move after 2\nundo\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("# Notes\nThis is a line of I want to change text, that, with a few commands...\n", Text("m.md"));
+    }
+
+    [Fact]
+    public void WordMove_TellsWhatItCannotDo_AndChangesNothing()
+    {
+        File.WriteAllText(In("work", "m.md"), "one two three\n");
+        var (output, errors, _, _) = Run("word m.md 1 2-3 move before 2\nword m.md 1 2 move before 9\n" +
+                                         "word m.md 1 2 move\nword m.md 1 2 move under 1\nword m.md 1 2 move before x\n" +
+                                         "word m.md 1 2 move after 1 2\nword m.md 1 2 move after 1\n");
+        Assert.Contains(Lang.F("Word {0} is one of the words moved: give a word outside them", 2), errors);
+        Assert.Contains(Lang.F("Line {0} has {1} words: {2} is not one", 1, 3, 9), errors);
+        Assert.Equal(4, errors.Split(Lang.T("Give where to: word notes.md 12 9 move before 6 (or after 6)")).Length - 1);
+        // Where they are already: nothing changed
+        Assert.Contains(Lang.T("Nothing changed: the words are so already"), output);
+        Assert.Equal("one two three\n", Text("m.md"));
+        Assert.Equal("word m.md 1 2 move", Tab(Completion(), "word m.md 1 2 mo"));
+        Assert.Equal("word m.md 1 2 move before", Tab(Completion(), "word m.md 1 2 move be"));
+        Assert.Contains("word ... move before|after n", Run("help word\n").Output);
     }
 }

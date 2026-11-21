@@ -208,7 +208,11 @@ internal sealed class ShellCompletion
                 var p = position > 0 && _words[0] == "-p" ? 1 : 0;
                 if (position == 0) return (Kind.PathOrWords, new[] { "-p" });
                 if (command == "word" && position == p + 3)
-                    return (Kind.Words, new[] { "replace", "before", "after", "delete", "upper", "lower", "title" });
+                    return (Kind.Words, new[] { "replace", "before", "after", "delete", "move", "upper", "lower", "title" });
+                // ("move before 6", "move after 11")
+                if (command == "word" && position == p + 4 && _words.Count > p + 3 &&
+                    _words[p + 3].Equals("move", StringComparison.OrdinalIgnoreCase))
+                    return (Kind.Words, new[] { "before", "after" });
                 return (position == p ? Kind.Path : Kind.None, none);
             }
             case "copy":

@@ -10,7 +10,7 @@
 internal sealed partial class ShellSession
 {
     // What "word" does to the words: the first three take a text after them
-    private static readonly string[] WordActions = { "replace", "before", "after", "delete", "upper", "lower", "title" };
+    private static readonly string[] WordActions = { "replace", "before", "after", "delete", "move", "upper", "lower", "title" };
 
     // The line "words" (or a change by "word") numbered last, and how: between blanks ("-p") or not. "word" on that
     // line counted the other way is refused when the numbers point at other words (see LineWords.SameWords).
@@ -131,7 +131,7 @@ internal sealed partial class ShellSession
         var action = words[3].ToLowerInvariant();
         if (!WordActions.Contains(action))
         {
-            Error(Lang.F("Not taken: {0} (replace, before, after, delete, upper, lower or title)", words[3]));
+            Error(Lang.F("Not taken: {0} (replace, before, after, delete, move, upper, lower or title)", words[3]));
             return;
         }
 
@@ -145,6 +145,24 @@ internal sealed partial class ShellSession
         // The text after replace, before and after: as typed (in quotes: as it is, blanks too)
         var text = AfterWords(argument, blanks ? 5 : 4).Trim();
         text = Unquoted(text) ?? text;
+        // "move before 6", "move after 11": where the words go, by the number of a word as words showed it (before
+        // the move; "#6" and "#6:19" too)
+        var target = 0;
+        var moveBefore = false;
+        if (action == "move")
+        {
+            var where = Words(text);
+            if (where.Count != 2 || where[0].ToLowerInvariant() is not ("before" or "after") ||
+                !LinesToChange(WithoutHashes(where[1]), out target, out var targetLast) || targetLast != target)
+            {
+                Error(Lang.T("Give where to: word notes.md 12 9 move before 6 (or after 6)"));
+                return;
+            }
+
+            moveBefore = where[0].Equals("before", StringComparison.OrdinalIgnoreCase);
+            text = string.Empty;
+        }
+
         var takesText = action is "replace" or "before" or "after";
         if (takesText && text.Length == 0)
         {
@@ -188,7 +206,32 @@ internal sealed partial class ShellSession
             return;
         }
 
-        var changed = LineWords.Change(line, first, last, action, text, blanks);
+        if (action == "move")
+        {
+            if (target > count)
+            {
+                Error(count == 1
+                    ? Lang.F("Line {0} has 1 word: {1} is not one", at.Line, target)
+                    : Lang.F("Line {0} has {1} words: {2} is not one", at.Line, count, target));
+                return;
+            }
+
+            if (target >= first && target <= last)
+            {
+                Error(Lang.F("Word {0} is one of the words moved: give a word outside them", target));
+                return;
+            }
+        }
+
+        var changed = action == "move"
+            ? LineWords.Moved(line, first, last, moveBefore, target, blanks)
+            : LineWords.Change(line, first, last, action, text, blanks);
+        if (changed == null)
+        {
+            Error(Lang.T("The words cannot be moved there: give the numbers words shows now"));
+            return;
+        }
+
         if (changed == line)
         {
             Line(Lang.T("Nothing changed: the words are so already"));

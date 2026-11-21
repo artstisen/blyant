@@ -238,7 +238,32 @@ internal static partial class LineWords
     // marks that do not (the "(" of "(see chapter 3)") stay, and so does the punctuation that ends a sentence or a
     // part of it ("the end." is "the."). Then the blank space is put right: one of the blanks around them goes, none
     // is left at the start or end of the line, and none between a mark and what it opens or closes
-    private static string Deleted(string line, List<(int Start, int Length)> words, int first, int last)
+    /// <summary>
+    /// The words first to last (numbers as Find gives them) put before or after word "target" of the line as it is,
+    /// with the marks that wrap them ("**bold**") and what is between them, as delete takes them out; the blanks where
+    /// they were tidied as delete does, and a blank put between them and the word, as "before" and "after" do. Null
+    /// when the target is one of the words moved, or the words cannot be counted again after they are taken out
+    /// </summary>
+    internal static string? Moved(string line, int first, int last, bool before, int target, bool blanks = false)
+    {
+        if (target >= first && target <= last) return null;
+        var words = Find(line, blanks);
+        var (from, to) = TakenOut(line, words, first, last);
+        var moved = line[from..to];
+        var rest = Deleted(line, words, first, last);
+        var left = Find(rest, blanks);
+        var count = last - first + 1;
+        if (left.Count != words.Count - count) return null;
+        var (start, length) = left[(target > last ? target - count : target) - 1];
+        return before
+            ? rest[..start] + moved + " " + rest[start..]
+            : rest[..(start + length)] + " " + moved + rest[(start + length)..];
+    }
+
+    // What delete takes out of a line for the words first to last: from the start of the first to the end of the last,
+    // and the marks that open and close around them when no other word is between the same blanks ("**bold**",
+    // "(see)"; not the "/" of "a/b")
+    private static (int From, int To) TakenOut(string line, List<(int Start, int Length)> words, int first, int last)
     {
         var from = words[first - 1].Start;
         var to = words[last - 1].Start + words[last - 1].Length;
@@ -260,6 +285,12 @@ internal static partial class LineWords
             }
         }
 
+        return (from, to);
+    }
+
+    private static string Deleted(string line, List<(int Start, int Length)> words, int first, int last)
+    {
+        var (from, to) = TakenOut(line, words, first, last);
         var before = line[..from];
         var after = line[to..];
         // (the blank space where the words were)
