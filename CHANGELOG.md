@@ -1,6 +1,8 @@
 # Changes
 
 ## v1.6.1
+- **A double quote in a text in the shell**: in quotes, `""` is a `"`, so a text can have one: `lines notes.md 1 remove """"` takes every `"` out of line 1, `lines notes.md 1 replace """" ""` does the same, and `replace notes.md "say ""hi""" "say hello"` replaces _say "hi"_. Before, a `"` could not be written in a text, only in the text of `insert` and `change`. It works wherever a text is written in quotes: `lines`, `replace`, `word`, `reg` and the search texts. A word like `"a""b"` is now _a"b_, not _ab_. See [Quotes in a text](Guide-to-shell.md#quotes-in-a-text).
+- **`lines … remove` in the shell**: `lines notes.md 5-9 remove " (draft)"` takes a text out of the lines, wherever it is in them, as `replace " (draft)" ""` does. The text is all that follows `remove` (in quotes: as written, blanks too), and `Tab` completes `remove`. See [Text in lines](Guide-to-shell.md#text-in-lines).
 
 ## v1.6.0 (2026-11-21)
 - **`peek all` in the shell**: `peek chapter-3.md all` (or `peek all`: the file peeked last) shows the whole file, in pages when it is longer than the window, between the markers of peek. The window of the last peek stays where it was, as large, so `.`, `+`, `j` and `G` go on from there; in a file not peeked before it starts at the top. `Tab` completes `all`. See [Peeking into a file](Guide-to-shell.md#peeking-into-a-file).

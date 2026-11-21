@@ -527,8 +527,7 @@ internal sealed partial class ShellSession
             : -1;
         if (at < 0) return (argument, null);
         var text = trimmed.Length > at + 3 ? trimmed[(at + 3)..].Trim() : string.Empty;
-        if (text.Length >= 2 && text[0] == '"' && text[^1] == '"' && text.Count(c => c == '"') == 2) text = text[1..^1];
-        return (trimmed[..at].TrimEnd(), text);
+        return (trimmed[..at].TrimEnd(), Unquoted(text) ?? text);
     }
 
     // "book": only "-l" can follow (true: given). Null (and told) for another word

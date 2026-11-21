@@ -401,10 +401,7 @@ internal sealed partial class ShellSession
         if (words[0] == "-t")
         {
             var sought = AfterWords(argument, 1).Trim();
-            if (sought.Length >= 2 && sought[0] == '"' && sought[^1] == '"' && sought.Count(c => c == '"') == 2)
-            {
-                sought = sought[1..^1];
-            }
+            sought = Unquoted(sought) ?? sought;
 
             if (sought.Length == 0)
             {
@@ -501,9 +498,7 @@ internal sealed partial class ShellSession
         {
             // (a text typed in quotes, as a path with blanks is: without them, so $docs is one path again)
             var trimmed = text.Trim();
-            kept = trimmed.Length >= 2 && trimmed[0] == '"' && trimmed[^1] == '"' && trimmed.Count(c => c == '"') == 2
-                ? trimmed[1..^1]
-                : text;
+            kept = Unquoted(trimmed) ?? text;
         }
 
         if (adds) ShellRegisters.Add(name, kept);

@@ -63,6 +63,8 @@ internal sealed partial class ShellSession
         ("lines file|n lines end \", text\"", Lang.T("In quotes: the text as typed, no blank added")),
         ("lines file lines unstart|unend text", Lang.T("Take a text off the start or the end of lines")),
         ("lines file|n lines replace old new", Lang.T("Replace a text in lines, the rest kept")),
+        ("lines file|n lines remove text", Lang.T("Remove a text from lines, wherever it is in them")),
+        ("lines file|n lines remove \"\"\"\"", Lang.T("In quotes, \"\" is a quote: this removes every \"")),
         ("lines file|n lines sort [-a|-d]", Lang.T("Sort lines: -a A to Z, capitals first (default), -d Z to A")),
         ("lines file|n lines upper|lower|title", Lang.T("Make lines UPPERCASE, lowercase or Title Case")),
         ("replace [-n] [-i] file|n old new", Lang.T("Replace a text everywhere in a file (undo takes it back)")),

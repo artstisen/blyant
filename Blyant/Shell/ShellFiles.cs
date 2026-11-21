@@ -18,10 +18,19 @@ internal sealed partial class ShellSession
         var word = new System.Text.StringBuilder();
         var quoted = false;
         var started = false;
-        foreach (var c in text)
+        for (var i = 0; i < text.Length; i++)
         {
+            var c = text[i];
             if (c == '"')
             {
+                // (in quotes, "" is a quote: "say ""hi""" is say "hi", and """" is ")
+                if (quoted && i + 1 < text.Length && text[i + 1] == '"')
+                {
+                    word.Append('"');
+                    i++;
+                    continue;
+                }
+
                 quoted = !quoted;
                 started = true;
                 continue;
@@ -41,6 +50,29 @@ internal sealed partial class ShellSession
 
         if (started) words.Add(word.ToString());
         return words;
+    }
+
+    /// <summary>
+    /// A text that is all in one pair of quotes: the text in them, with "" in them made one quote ("""" is ", and
+    /// "say ""hi""" is say "hi"). Null when it is not ("a" "b", "a"b, a text without quotes): it is then taken as typed
+    /// </summary>
+    internal static string? Unquoted(string text)
+    {
+        if (text.Length < 2 || text[0] != '"' || text[^1] != '"') return null;
+        var inner = new System.Text.StringBuilder();
+        for (var i = 1; i < text.Length - 1; i++)
+        {
+            if (text[i] == '"')
+            {
+                // (a quote alone closes the quotes before the end)
+                if (i + 1 >= text.Length - 1 || text[i + 1] != '"') return null;
+                i++;
+            }
+
+            inner.Append(text[i]);
+        }
+
+        return inner.ToString();
     }
 
     // The file or directory of a word (a row of the last list, or a path), which must be there: null (and told) if not
@@ -900,7 +932,7 @@ internal sealed partial class ShellSession
         {
             text = argument.Length > at + 3 ? argument[(at + 3)..].Trim() : string.Empty;
             // (in quotes: without them, "find -t "# *"", as the lists take -t)
-            if (text.Length >= 2 && text[0] == '"' && text[^1] == '"' && text.Count(c => c == '"') == 2) text = text[1..^1];
+            text = Unquoted(text) ?? text;
             argument = argument[..at];
         }
 

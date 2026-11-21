@@ -133,7 +133,7 @@ internal sealed partial class ShellSession
 
         // The text after replace, before and after: as typed (in quotes: as it is, blanks too)
         var text = AfterWords(argument, blanks ? 5 : 4).Trim();
-        if (text.Length >= 2 && text[0] == '"' && text[^1] == '"' && text.Count(c => c == '"') == 2) text = text[1..^1];
+        text = Unquoted(text) ?? text;
         var takesText = action is "replace" or "before" or "after";
         if (takesText && text.Length == 0)
         {

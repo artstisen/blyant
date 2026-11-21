@@ -3,7 +3,7 @@
 /// <summary>
 /// "lines": lines of a file copied to another file or kept in a register ("> $notes", ">> $notes": added), or cut
 /// ("cut": moved there), without opening them; or the text in them changed: a text put at their start or end ("start", "end"), taken off it ("unstart", "unend"), or a text in
-/// them replaced ("replace"), the lines sorted ("sort", "sort -d") or made upper or lower case or Title Case ("upper",
+/// them replaced ("replace") or removed ("remove"), the lines sorted ("sort", "sort -d") or made upper or lower case or Title Case ("upper",
 /// "lower", "title"). The
 /// lines and the place are those of shift. What is written is never logged, only the
 /// paths and the lines
@@ -12,7 +12,7 @@ internal sealed partial class ShellSession
 {
     // What "lines" does to the text in the lines (after the lines: "lines todo.md 4 start Note:")
     private static readonly string[] LineEdits =
-        { "start", "end", "unstart", "unend", "replace", "sort", "upper", "lower", "title" };
+        { "start", "end", "unstart", "unend", "replace", "remove", "sort", "upper", "lower", "title" };
 
     /// <summary>
     /// What the words after "lines" are: the place of the ">" of a copy (2, or 3 after "+10 5"), or of a word of
@@ -46,7 +46,7 @@ internal sealed partial class ShellSession
         // (after the lines: neither a ">" nor a word of what is done)
         else if (form.Arrow < 0 && words.Count > 2 && !words.Contains(">") && !words.Contains(">>"))
         {
-            Error(Lang.T("After the lines: > file place, > $name, start, end, unstart, unend, replace, sort, upper, lower or title"));
+            Error(Lang.T("After the lines: > file place, > $name, start, end, unstart, unend, replace, remove, sort, upper, lower or title"));
         }
         else CopyLines(argument);
     }
@@ -55,7 +55,7 @@ internal sealed partial class ShellSession
     // of the lines, with a blank between; in quotes as it is ("- [ ] ", ";"). Blank lines are left as they are.
     // "unstart" and "unend" take the text off the start or end of the lines that have it (with the blank start and end
     // put there; in quotes: the text only). "replace old new": a text in the lines replaced (letter case as typed;
-    // "" for none). As insert: the line endings and byte order mark of the file kept, only a file in UTF-8 and not
+    // "" for none), and "remove text" the text taken out wherever it is in them. In quotes, "" is a quote (""""). As insert: the line endings and byte order mark of the file kept, only a file in UTF-8 and not
     // one Blyant uses, and the file is then the last list, at the first line changed. Nothing is lost by it (unstart
     // undoes start), so it is not asked. "sort" sorts the lines A to Z ("-a", the default) or Z to A ("-d"), in the
     // same order as :sort in the editor, and puts them back in the places of the lines; "upper" and "lower" make them
@@ -100,9 +100,10 @@ internal sealed partial class ShellSession
         }
         else
         {
-            // (in quotes: as it is, the blanks in it too)
-            exact = rest.Length >= 2 && rest[0] == '"' && rest[^1] == '"' && rest.Count(c => c == '"') == 2;
-            text = exact ? rest[1..^1] : rest;
+            // (in quotes: as it is, the blanks in it too, and "" a quote)
+            var unquoted = Unquoted(rest);
+            exact = unquoted != null;
+            text = unquoted ?? rest;
             if (text.Length == 0)
             {
                 Error(Lang.F("Give the text: lines todo.md 4 {0} Remember this:", kind));
@@ -165,7 +166,8 @@ internal sealed partial class ShellSession
     /// <summary>
     /// A line with a text put at its start or end ("start", "end": with a blank between, or "exact" as it is; a blank
     /// line as it is), taken off them ("unstart", "unend": with the blank start and end put there, or "exact" the text
-    /// only; a line without it as it is), a text in it replaced ("replace", letter case as given), or the line made
+    /// only; a line without it as it is), a text in it replaced ("replace", letter case as given) or taken out
+    /// ("remove"), or the line made
     /// upper or lower case ("upper", "lower", as gU and gu in the editor) or Title Case ("title")
     /// </summary>
     internal static string EditedLine(string line, string kind, string text, bool exact, string replacement = "")
@@ -194,6 +196,8 @@ internal sealed partial class ShellSession
                 var rest = line[..^text.Length];
                 return !exact && rest.EndsWith(' ') ? rest[..^1] : rest;
             }
+            case "remove":
+                return text.Length == 0 ? line : line.Replace(text, string.Empty, StringComparison.Ordinal);
             default:
                 return text.Length == 0 ? line : line.Replace(text, replacement, StringComparison.Ordinal);
         }

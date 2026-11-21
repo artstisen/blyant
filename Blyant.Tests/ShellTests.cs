@@ -2569,6 +2569,7 @@ public class ShellTests : IDisposable
     [InlineData("A task (by Friday)", "unend", "(by Friday)", false, "", "A task")]
     [InlineData("a draft, a Draft", "replace", "draft", false, "final", "a final, a Draft")]
     [InlineData("one two", "replace", " two", false, "", "one")]
+    [InlineData("one two", "remove", " two", false, "", "one")]
     public void EditedLine_PutsInTakesOffOrReplaces(string line, string kind, string text, bool exact, string with,
         string expected)
     {
@@ -4855,7 +4856,7 @@ public class ShellTests : IDisposable
         Assert.Contains(Lang.T("Nothing changed: no uppercase letters in the lines"), output);
         var (_, wrong, _, _) = Run("lines t.md 1 upper now\nlines t.md 1 sideways\n");
         Assert.Contains(Lang.F("Nothing goes after {0}: lines notes.md 3-20 {0}", "upper"), wrong);
-        Assert.Contains(Lang.T("After the lines: > file place, > $name, start, end, unstart, unend, replace, sort, upper, lower or title"), wrong);
+        Assert.Contains(Lang.T("After the lines: > file place, > $name, start, end, unstart, unend, replace, remove, sort, upper, lower or title"), wrong);
     }
 
     [Fact]
@@ -7911,5 +7912,85 @@ public class ShellTests : IDisposable
         Assert.DoesNotContain(FileHistory.Items, item => item.Path.Contains("blyant-commands-"));
         // After the shell: no $cmd
         Assert.Contains(Lang.T("No $cmd yet: again edit puts the commands typed in it"), Run("echo $cmd\n").Errors);
+    }
+
+    // ---- 1.6.1: a quote in a text, and lines remove
+
+    [Theory]
+    [InlineData("replace \"\"\"\" \"\"", new[] { "replace", "\"", "" })]
+    [InlineData("\"say \"\"hi\"\"\"", new[] { "say \"hi\"" })]
+    [InlineData("\"a\"\"b\" c", new[] { "a\"b", "c" })]
+    [InlineData("\"\"\"lines\" lines", new[] { "\"lines", "lines" })]
+    [InlineData("rename \"my notes.md\" new.md", new[] { "rename", "my notes.md", "new.md" })]
+    [InlineData("\"\" \"\"", new[] { "", "" })]
+    public void Words_TakeTwoQuotesInQuotes_AsOneQuote(string text, string[] expected)
+    {
+        Assert.Equal(expected, ShellSession.Words(text));
+    }
+
+    [Theory]
+    [InlineData("\"\"\"\"", "\"")]
+    [InlineData("\"say \"\"hi\"\"\"", "say \"hi\"")]
+    [InlineData("\"- [ ] \"", "- [ ] ")]
+    [InlineData("\"\"", "")]
+    [InlineData("\"a\" \"b\"", null)]
+    [InlineData("\"a\"b\"", null)]
+    [InlineData("\"a\"\"", null)]
+    [InlineData("\"", null)]
+    [InlineData("plain", null)]
+    public void Unquoted_IsTheTextInOnePairOfQuotes_WithTwoQuotesAsOne(string text, string? expected)
+    {
+        Assert.Equal(expected, ShellSession.Unquoted(text));
+    }
+
+    [Theory]
+    [InlineData("lines a.md 1 remove \"say \"\"hi", "lines a.md 1 remove ", "\"say \"\"hi")]
+    [InlineData("lines a.md 1 remove \"\"\"\" x", "lines a.md 1 remove \"\"\"\" ", "x")]
+    public void LastWord_GoesOnOverTwoQuotesInQuotes(string text, string before, string word)
+    {
+        Assert.Equal((before, word), ShellCompletion.LastWord(text));
+    }
+
+    [Theory]
+    [InlineData("a draft, the draft", "draft", "a , the ")]
+    [InlineData("\"quoted\" text", "\"", "quoted text")]
+    [InlineData("nothing here", "x", "nothing here")]
+    public void EditedLine_Remove_TakesTheTextOutWhereverItIs(string line, string text, string expected)
+    {
+        Assert.Equal(expected, ShellSession.EditedLine(line, "remove", text, false));
+    }
+
+    [Fact]
+    public void Lines_ReplaceAndRemove_TakeAQuoteWrittenAsTwoInQuotes()
+    {
+        File.WriteAllText(In("work", "q.md"),
+            " * \"lines er en meget powerfull command\"\n\"one\" two\n\"three\"\nsay hi\n");
+        var (output, errors, _, _) = Run("lines q.md 1 replace \"\"\"\" \"\"\nlines q.md 2 remove \"\"\"\"\n" +
+                                         "lines q.md 3 remove \"\nlines q.md 4 replace hi \"\"\"hi\"\"\"\n" +
+                                         "lines q.md 4 end \"\"\"!\"\"\"\nlines q.md 1 remove x\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal(" * lines er en meget powerfull command\none two\nthree\nsay \"hi\"\"!\"\n", Text("q.md"));
+        Assert.Contains(Lang.F("Nothing changed: no line has {0} in it", "x"), output);
+    }
+
+    [Fact]
+    public void Lines_Remove_WithBlanks_AndWithoutAText()
+    {
+        File.WriteAllText(In("work", "r.md"), "Write chapter 3 (draft)\nCall Anna (draft)\n");
+        var (_, errors, _, _) = Run("lines r.md 1-2 remove \" (draft)\"\nlines r.md 1 remove\n");
+        Assert.Contains(Lang.F("Give the text: lines todo.md 4 {0} Remember this:", "remove"), errors);
+        Assert.Equal("Write chapter 3\nCall Anna\n", Text("r.md"));
+        Assert.Equal("lines r.md 1 remove", Tab(Completion(), "lines r.md 1 rem"));
+        Assert.Contains("lines file|n lines remove text", Run("help lines\n").Output);
+    }
+
+    [Fact]
+    public void ReplaceAndWord_TakeAQuoteWrittenAsTwoInQuotes()
+    {
+        File.WriteAllText(In("work", "w.md"), "\"Hi\" she said\n");
+        var (_, errors, _, _) = Run("replace w.md \"\"\"\" '\nword w.md 1 1 replace \"\"\"Hello\"\"\"\n");
+        Assert.Equal(string.Empty, errors);
+        // (word 1 is Hi: the ' made of the quotes stay around it)
+        Assert.Equal("'\"Hello\"' she said\n", Text("w.md"));
     }
 }

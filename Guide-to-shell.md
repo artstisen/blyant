@@ -136,6 +136,7 @@ Some commands have a short form, which does the same: `fav` and `favs` (`favorit
 | `lines file\|n lines start\|end text` | Put a text at the start or the end of lines, keeping the rest (`lines todo.md 4 start Remember this:`). **A blank is put between the text and the line**: in quotes the text is put as typed, with no blank (`lines notes.md 48 end ", and more"`). See [Text in lines](#text-in-lines) |
 | `lines file\|n lines unstart\|unend text` | Take a text off the start or the end of the lines that have it |
 | `lines file\|n lines replace old new` | Replace a text in lines, keeping the rest (`lines notes.md 5-9 replace draft final`) |
+| `lines file\|n lines remove text` | Take a text out of lines, wherever it is in them (`lines notes.md 5-9 remove " (draft)"`). A `"` is written `""""`: see [Quotes in a text](#quotes-in-a-text) |
 | `replace [-n] [-i] file\|n old new` | Replace a text everywhere in a file (`replace chapter-3.md Maren Marit`); `-i` in any letter case, `-n` only shows what would change. `undo` takes it back. See [Replacing in a file](#replacing-in-a-file) |
 | `lines file\|n lines sort [-a\|-d]` | Sort lines A to Z (`-a`, the default) or Z to A (`-d`): `lines notes.md 3-20 sort`. The order is that of `:sort` in the editor, by the value of the characters, so capital letters come before small ones. Lines given apart (`1,5,9`) are sorted among those places |
 | `lines file\|n lines upper\|lower\|title` | Make lines UPPERCASE, lowercase or Title Case (each word with a capital first letter), as `gU` and `gu` in the editor: `lines notes.md 1 upper` |
@@ -225,6 +226,20 @@ In a terminal the line of the shell is read key by key:
 - `Ctrl+C` drops what you have typed, and `Ctrl+D` (or `Ctrl+Z` on Windows) on an empty line leaves, as `exit` does
 
 With a screen reader, turn the logo off (`set shelllogo false`), and the line may work best when the terminal reads it: turn the setting `shellcompletion` off (`set shellcompletion false` takes effect at once, or `shellcompletion=false` in the settings file; not on the pages of Configuration). The line is then read whole after `Enter`, without `Tab` and with the history your terminal gives. Commands from a file, a pipe or `--run` are always read that way.
+
+### Quotes in a text
+A word or a text with blanks in it is written in double quotes: `rename "old notes.md" notes.md`, `lines todo.md 5-9 start "- [ ] "`. To put in a double quote itself, write it twice inside the quotes:
+
+```
+lines notes.md 1 remove """"                every " taken out of line 1
+lines notes.md 1 replace """" ""            the same, with replace
+lines notes.md 4 end """"                   a " at the end of line 4, no blank
+replace notes.md "say ""hi""" "say hello"   say "hi" made say hello
+```
+
+- `""""` is one `"`: the outer two are the quotes, and the two in between are the quote. `""` alone is an empty text
+- It works wherever a text is written in quotes: `lines`, `replace`, `word`, `reg`, and the search texts (`find -t`, `-t` of the lists)
+- A text taken as typed, without quotes around all of it, keeps a `"` as it is: `insert notes.md bottom She said "hi"`, `lines notes.md 4 end said "hi"`
 
 ## Line numbers
 The commands that work on the lines of a file take line numbers in a few ways. A plain number is a line to work on; a `+` before it is a place in the file, or the first line of a range counted from there:
@@ -491,6 +506,8 @@ lines todo.md 4 unstart Remember this:       taken off again
 lines todo.md 5-9 unstart "- [ ] "           the task boxes taken off
 lines notes.md 5-9 replace draft final       "draft" in lines 5 to 9 made "final"
 lines notes.md 5-9 replace " (draft)" ""     " (draft)" taken out of them
+lines notes.md 5-9 remove " (draft)"         the same: remove takes a text out
+lines notes.md 1 remove """"                 every " taken out of line 1
 ```
 
 **`start` and `end` put a blank between the text and the line.** `lines notes.md 48 end , and more` gives _Some text , and more_. When the text must touch the line, as a comma or a full stop does, write it in quotes: `lines notes.md 48 end ", and more"` gives _Some text, and more_. The quotes also keep any blanks in them (`start "- [ ] "`).
@@ -528,7 +545,8 @@ blyant ~/notes> lines todo.md 3 unstart "- [ ] "
 - `start` and `end` put the text with a blank between it and the line. In quotes it is put as it is: no blank, or the blanks in the quotes (`"- [ ] "`). A blank line is left as it is
 - `unstart` and `unend` take the text off the lines that start or end with it, with the blank `start` and `end` put there (in quotes: the text only), so they undo `start` and `end`. The other lines are left as they are
 - `replace old new` replaces the text everywhere in the lines, with the letter case as typed (`draft`, not `Draft`). A text with blanks is written in quotes, and `""` is an empty text: what is replaced is removed
-- After the lines, `Tab` completes `start`, `end`, `unstart`, `unend`, `replace`, `sort`, `upper`, `lower`, `title` and `>`, and after `sort` it completes `-a` and `-d`. A `>` or one of these words later on is part of the text: `lines notes.md 3 start ">"` makes line 3 a quote
+- `remove text` takes the text out everywhere in the lines, with the letter case as typed. The text is all that follows `remove`, as for `start`; in quotes it is taken as written, blanks too. A `"` is written `""""` in quotes (see [Quotes in a text](#quotes-in-a-text)), or alone: `lines notes.md 1 remove "`
+- After the lines, `Tab` completes `start`, `end`, `unstart`, `unend`, `replace`, `remove`, `sort`, `upper`, `lower`, `title` and `>`, and after `sort` it completes `-a` and `-d`. A `>` or one of these words later on is part of the text: `lines notes.md 3 start ">"` makes line 3 a quote
 - `$name` and `$clip` put in their value: `lines todo.md 4 end $note`
 - The lines changed are shown, and the file is then the last list, at the first line changed (`open 1`). When no line changes, nothing is written, and the shell says so. As for `insert`, the file keeps its line endings and byte order mark, only a file in UTF-8 is changed and not the files Blyant uses, and `undo` puts it back; nothing is asked, as no line is lost
 
@@ -554,7 +572,7 @@ Undone: replace chapter-3.md Maren Marit
 | `replace -i file\|n old new` | The same in any letter case: `replace -i chapter-3.md maren Marit` replaces `Maren`, `MAREN` and `maren`. The new text is put in as typed |
 | `replace -n file\|n old new` | Show what would change (the lines as they would be, and how many would be replaced), then ask whether to replace them. No is first: `Enter` alone changes nothing. From a file of commands, a pipe or `--run` it only shows, and writes nothing, not even with `--yes` (`-n: nothing written`) |
 
-- The text is exact text, not a pattern, and a text with blanks is written in quotes: `replace notes.md "the storm" "the gale"`. `""` as the new text takes the old text out
+- The text is exact text, not a pattern, and a text with blanks is written in quotes: `replace notes.md "the storm" "the gale"`. `""` as the new text takes the old text out, and `""""` is a `"`: `replace notes.md """" ""` takes all the double quotes out of the file (see [Quotes in a text](#quotes-in-a-text))
 - The file is given as a name, a row of the last list, `$file` or `@` (the file worked on). It is then the last list, at the first line changed: `open 1` opens it there, and `peek @` shows it
 - The text is replaced in each line, from the left; what replaced it is not searched again. A text with a line break in it cannot be typed, so a text is never replaced across two lines
 - At most as many lines are shown as `peek` shows (15; the setting `shellpeeklines`), then `(and 12 more lines)`. Above them, `->` tells that line 1 of the file was changed, and `-^` that it was not; below them, `<-` tells that the last line of the file was changed, and `-v` that it was not
