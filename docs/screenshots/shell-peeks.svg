@@ -8,7 +8,7 @@
 <circle cx="40" cy="17" r="6" fill="#FEBC2E"/>
 <circle cx="60" cy="17" r="6" fill="#28C840"/>
 <text x="434.0" y="22" fill="#A0A0A0" text-anchor="middle">Blyant: the shell, a window of peek kept, and shown again after moving around the file</text>
-<text x="14.0" y="60.8" fill="#CCCCCC" textLength="428.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Blyant v1.6.1: help lists the commands, exit leaves</text>
+<text x="14.0" y="60.8" fill="#CCCCCC" textLength="428.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Blyant v1.6.2: help lists the commands, exit leaves</text>
 <text x="14.0" y="77.8" fill="#CCCCCC" textLength="478.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">blyant C:\Writing\Harbour Lights&gt; peek chapter-01.md +3 2</text>
 <text x="14.0" y="94.8" fill="#CCCCCC" textLength="134.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">-^ chapter-01.md</text>
 <text x="14.0" y="111.8" fill="#CCCCCC" textLength="680.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">  3  The ferry was late, as it always was in October, and Maren Holt stood at the</text>

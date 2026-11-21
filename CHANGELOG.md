@@ -1,5 +1,7 @@
 # Changes
 
+## v1.6.2
+
 ## v1.6.1 (2026-11-21)
 - **Fixes from the review before the release**:
   - `word … move` puts the words outside any marks around the word they go before or after (`x **bold**`, not `**x bold**`), and checks that word, as the words moved, against the numbers `words -p` or `words` showed
