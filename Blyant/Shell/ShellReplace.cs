@@ -18,6 +18,10 @@ internal sealed partial class ShellSession
     /// The words of "replace" in which a $name puts in a path (made one word): the options and the file. The texts
     /// after them are put in as they are
     /// </summary>
+    // Lines as lines and shift take them by number: "4", "+4", "4-6", "4,7,9-10"
+    [System.Text.RegularExpressions.GeneratedRegex(@"^\+?\d+(-\d+)?(,\d+(-\d+)?)*$")]
+    private static partial System.Text.RegularExpressions.Regex LinesNumbers();
+
     internal static int ReplaceWords(string argument) =>
         Words(argument).TakeWhile(word => word.StartsWith('-') && word.Length > 1).Count() + 1;
 
@@ -41,7 +45,10 @@ internal sealed partial class ShellSession
 
         if (words.Count != 3 || words[1].Length == 0)
         {
-            Error(Lang.T("Give the file, the text and what replaces it: replace notes.md draft final"));
+            // ("replace notes.md 2-5 old new": lines given, as lines takes them)
+            if (words.Count == 4 && LinesNumbers().IsMatch(words[1]))
+                Error(Lang.T("replace works on the whole file: lines notes.md 2-5 replace old new works on lines"));
+            else Error(Lang.T("Give the file, the text and what replaces it: replace notes.md draft final"));
             return;
         }
 

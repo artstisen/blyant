@@ -79,7 +79,10 @@ internal sealed partial class ShellSession
         var usage = Lang.T("Give a file and a line: words notes.md 12");
         if (words.Count != 2)
         {
-            Error(usage);
+            // ("words notes.md 12 9 replace wish": word was meant, a letter away)
+            if (words.Count >= 4 && WordActions.Contains(words[3].ToLowerInvariant()))
+                Error(Lang.T("To change words: word notes.md 12 9 replace wish (words only shows them)"));
+            else Error(usage);
             return;
         }
 
@@ -113,7 +116,9 @@ internal sealed partial class ShellSession
         var usage = Lang.T("Give a file, a line, the words and what to do: word notes.md 12 9 replace wish");
         if (words.Count < 4)
         {
-            Error(usage);
+            // ("word notes.md 12": words was meant, a letter away)
+            if (words.Count == 2) Error(Lang.T("To see the words of a line: words notes.md 12 (word changes them)"));
+            else Error(usage);
             return;
         }
 

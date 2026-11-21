@@ -32,6 +32,14 @@ internal sealed partial class ShellSession
         // ("tag -t storm", "tag filter chapter": those of $tag)
         if (words.Count == 0 || !TagActions.Contains(words[0]))
         {
+            // ("tag notes.md draft": a file and a tag, add left out)
+            if (words.Count == 2 && FileTags.IsName(words[1]) && !IsFilterWord(words[1]) && words[1] != "-t" &&
+                File.Exists(PathOf(words[0])))
+            {
+                Error(Lang.F("To give a file a tag: tag add {0} {1}", words[0], words[1]));
+                return;
+            }
+
             if (TagSearch(full ? AfterWords(argument, 1) : argument, true) is not { } search) return;
             if (search.Tag == null && _tag == null)
             {
@@ -310,7 +318,10 @@ internal sealed partial class ShellSession
 
         if (words.Count > 1 || (words.Count == 1 && words[0] != "-f"))
         {
-            Error(Lang.T("tags lists the tags, tags -f the files with tags, and tags clear takes them all off"));
+            // ("tags draft": tag was meant, a letter away)
+            if (words.Count == 1 && FileTags.IsName(words[0]))
+                Error(Lang.F("tag {0} lists the files with the tag (tags lists the tags)", words[0].ToLowerInvariant()));
+            else Error(Lang.T("tags lists the tags, tags -f the files with tags, and tags clear takes them all off"));
             return;
         }
 

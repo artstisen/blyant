@@ -224,6 +224,18 @@ In a terminal the line of the shell is read key by key:
 - `again` lists the commands you typed, numbered, the newest first, and `again 3` (or `!3`) runs number 3 again, as it was typed: it is written out, then run. `!!` runs the last one. `!3` and `Tab` puts the command on the line instead, to be changed before `Enter` (another line number, another file). A command run again becomes the newest, number 1, and `again` itself is not kept. The last 50 are kept while Blyant runs, never in a file (a command can contain text from a file); commands from a file, a pipe or `--run` are not kept. When the list grows long, `again filter lines` shows only the commands that contain _lines_ (or `again filter peek*`, a pattern), with their numbers. The list of `again` does not replace the last list: `open 3` is still a row of the list shown before it
 - `Left`, `Right`, `Home` and `End` move on the line, `Ctrl+Left` and `Ctrl+Right` a word at a time (on macOS, where the system takes them, `Option+Left` and `Option+Right` in Terminal.app), and `Ctrl+A` and `Ctrl+E` to the start and the end, as in bash. `Backspace` and `Delete` delete, `Ctrl+U` deletes the line before the cursor, `Ctrl+W` the word before it, and `Esc` the whole line. A line wider than the window scrolls sideways, and stays on one row
 - `Ctrl+C` drops what you have typed, and `Ctrl+D` (or `Ctrl+Z` on Windows) on an empty line leaves, as `exit` does
+- Some commands are a letter apart, or take words that look alike. When the words fit the other command, the shell says which one to use, and does nothing:
+
+  | Typed | Meant |
+  |---|---|
+  | `line $file +4 replace old new` | `lines $file +4 replace old new` |
+  | `words notes.md 12 9 replace wish` | `word notes.md 12 9 replace wish` |
+  | `word notes.md 12` | `words notes.md 12` |
+  | `replace notes.md 2-5 old new` | `lines notes.md 2-5 replace old new` (`replace` works on the whole file) |
+  | `tags draft` | `tag draft` |
+  | `tag notes.md draft` | `tag add notes.md draft` |
+
+  `change notes.md 4 replace old new` puts _replace old new_ in place of line 4, as a line can start with such a word, and then tells you that `lines` changes a text in a line: `undo` takes the change back
 
 With a screen reader, turn the logo off (`set shelllogo false`), and the line may work best when the terminal reads it: turn the setting `shellcompletion` off (`set shellcompletion false` takes effect at once, or `shellcompletion=false` in the settings file; not on the pages of Configuration). The line is then read whole after `Enter`, without `Tab` and with the history your terminal gives. Commands from a file, a pipe or `--run` are always read that way.
 

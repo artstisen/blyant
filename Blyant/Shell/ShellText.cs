@@ -176,7 +176,25 @@ internal sealed partial class ShellSession
             Line(first == last
                 ? Lang.F("{0}: line {1} changed", item.Path, first)
                 : Lang.F("{0}: lines {1}-{2} changed", item.Path, first, last));
+            // ("change notes.md 4 replace old new": lines was meant, most likely, as the names are near. Done, as a
+            // line can start with such a word, but told)
+            if (LinesMeantByChange(text)) Line(Lang.T("change puts the text in place of the whole line: lines changes a text in it (undo takes it back)"));
         }
+    }
+
+    // The words of lines that take a text after them
+    private static readonly string[] LinesTextEdits = { "start", "end", "unstart", "unend", "replace", "remove" };
+
+    /// <summary>
+    /// True when the text of change starts with a word of lines that takes a text, in lower case as lines is typed,
+    /// with more after it ("replace old new", "end (by Friday)"): lines was meant, most likely
+    /// </summary>
+    internal static bool LinesMeantByChange(string text)
+    {
+        var trimmed = text.TrimStart();
+        var blank = trimmed.IndexOfAny([' ', '\t']);
+        return blank > 0 && LinesTextEdits.Contains(trimmed[..blank], StringComparer.Ordinal) &&
+               trimmed[blank..].Trim().Length > 0;
     }
 
     // The text of a file found (not a directory), as it is on the disk: null, and told, when it cannot be read

@@ -5656,7 +5656,8 @@ public class ShellTests : IDisposable
         Assert.Contains(Lang.F("Nothing goes after {0}: word notes.md 12 9 {0}", "upper"), errors);
         Assert.Contains(Lang.F("{0} has {1} lines", In("work", "n.md"), 1), errors);
         Assert.Contains(Lang.F("Not words: {0} (as 9, or 5-7)", "x"), errors);
-        Assert.Contains(Lang.T("Give a file, a line, the words and what to do: word notes.md 12 9 replace wish"), errors);
+        // (word with a file and a line only: words was meant)
+        Assert.Contains(Lang.T("To see the words of a line: words notes.md 12 (word changes them)"), errors);
         Assert.Contains(Lang.T("Give a file and a line: words notes.md 12"), errors);
         Assert.Equal("one two\n", File.ReadAllText(In("work", "n.md")));
         var (output, _, _, _) = Run("word n.md 1 1 lower\n");
@@ -7175,8 +7176,8 @@ public class ShellTests : IDisposable
         Assert.Contains(Lang.F("Not rows: {0} (as 2,4,7 or 2-5)", "2-9"), errors);
         Assert.Contains(Lang.T("@ is the file and the line of the last command: none yet (words notes.md 12)"), errors);
         Assert.Empty(FileTags.All());
-        Assert.Contains(Lang.T("tags lists the tags, tags -f the files with tags, and tags clear takes them all off"),
-            Run("tags x\n").Errors);
+        // (tags with a tag: tag was meant)
+        Assert.Contains(Lang.F("tag {0} lists the files with the tag (tags lists the tags)", "x"), Run("tags x\n").Errors);
     }
 
     [Fact]
@@ -8011,5 +8012,58 @@ public class ShellTests : IDisposable
         Assert.Equal(string.Empty, errors);
         Assert.Equal("one\ntwo\nthree\nfour text2\n", Text("t.md"));
         Assert.EndsWith("\n4\n", output);
+    }
+
+    // ---- 1.6.1: commands a letter or a word apart point to the one meant
+
+    [Theory]
+    [InlineData("replace three 3", true)]
+    [InlineData("end (by Friday)", true)]
+    [InlineData("  start - [ ] ", true)]
+    [InlineData("End of chapter", false)]
+    [InlineData("end", false)]
+    [InlineData("the end of it", false)]
+    [InlineData("sort -d", false)]
+    public void LinesMeantByChange_IsAWordOfLinesWithATextAfterIt(string text, bool meant)
+    {
+        Assert.Equal(meant, ShellSession.LinesMeantByChange(text));
+    }
+
+    [Fact]
+    public void Change_WithAWordOfLines_ChangesTheLine_AndTellsOfLines()
+    {
+        File.WriteAllText(In("work", "c.md"), "one\ntwo\nthree\n");
+        var note = Lang.T("change puts the text in place of the whole line: lines changes a text in it (undo takes it back)");
+        var (output, errors, _, _) = Run("change c.md 2 replace two 2\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains(note, output);
+        Assert.Equal("one\nreplace two 2\nthree\n", Text("c.md"));
+        (output, _, _, _) = Run("change c.md 2 End of chapter\n");
+        Assert.DoesNotContain(note, output);
+    }
+
+    [Fact]
+    public void CommandsALetterApart_PointToTheOneMeant_AndDoNothing()
+    {
+        File.WriteAllText(In("work", "h.md"), "one two\nthree four\n");
+        var (_, errors, _, _) = Run("words h.md 2 1 replace x\nword h.md 2\nreplace h.md 2 three 3\n" +
+                                    "replace h.md 1-2,4 three 3\ntags draft\ntag h.md draft\n");
+        Assert.Contains(Lang.T("To change words: word notes.md 12 9 replace wish (words only shows them)"), errors);
+        Assert.Contains(Lang.T("To see the words of a line: words notes.md 12 (word changes them)"), errors);
+        Assert.Equal(2, errors.Split(Lang.T("replace works on the whole file: lines notes.md 2-5 replace old new works on lines")).Length - 1);
+        Assert.Contains(Lang.F("tag {0} lists the files with the tag (tags lists the tags)", "draft"), errors);
+        Assert.Contains(Lang.F("To give a file a tag: tag add {0} {1}", "h.md", "draft"), errors);
+        Assert.Equal("one two\nthree four\n", Text("h.md"));
+        FileTags.Load();
+        Assert.Empty(FileTags.Tagged());
+        // The other wrong forms keep the messages they had
+        (_, errors, _, _) = Run("words h.md\nword h.md 2 1\nreplace h.md x\ntags a b\n");
+        Assert.Contains(Lang.T("Give a file and a line: words notes.md 12"), errors);
+        Assert.Contains(Lang.T("Give a file, a line, the words and what to do: word notes.md 12 9 replace wish"), errors);
+        Assert.Contains(Lang.T("Give the file, the text and what replaces it: replace notes.md draft final"), errors);
+        Assert.Contains(Lang.T("tags lists the tags, tags -f the files with tags, and tags clear takes them all off"), errors);
+        // A text that is a number is replaced as before (three words)
+        (_, errors, _, _) = Run("replace h.md 2 x\n");
+        Assert.Equal(string.Empty, errors);
     }
 }
