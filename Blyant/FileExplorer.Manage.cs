@@ -253,7 +253,7 @@ internal static partial class FileExplorer
     }
 
     // True for a file or directory that Blyant uses: the data directory and the directories it is in, the settings,
-    // the favorites, the history and the tags
+    // the favorites, the history, the tags and the commands typed in the shell
     private static bool UsedByBlyant(Item item)
     {
         var dataDirectory = System.IO.Path.GetFullPath(FileIo.GetDataDirectoryName());
@@ -267,7 +267,8 @@ internal static partial class FileExplorer
         return FileOperations.SamePath(item.Path, System.IO.Path.Combine(dataDirectory, FileIo.SettingsFileName)) ||
                FileOperations.SamePath(item.Path, FileFavorites.FilePath) ||
                FileOperations.SamePath(item.Path, FileHistory.FilePath) ||
-               FileOperations.SamePath(item.Path, FileTags.FilePath);
+               FileOperations.SamePath(item.Path, FileTags.FilePath) ||
+               FileOperations.SamePath(item.Path, ShellHistory.FilePath);
     }
 
     private static bool IsProtected(Item item)

@@ -3,7 +3,8 @@
 /// <summary>
 /// The commands given on the command lines, for each place (the editor, the file browser, a list ...), the newest
 /// first: Up and Down on a command line bring them back. They are kept in memory only (until Blyant is closed), and
-/// never written to a file, as a command can hold a file name or text of a file.
+/// never written to a file, as a command can hold a file name or text of a file; only the shell keeps its commands in
+/// a file too, as many as the setting shellhistory tells (see ShellHistory), which forget deletes.
 /// It does not touch the console, so it can be tested.
 /// </summary>
 internal static class CommandHistory
@@ -14,9 +15,10 @@ internal static class CommandHistory
     internal const int MaxCount = 20;
 
     /// <summary>
-    /// The most commands kept for the shell, where "again" lists them and runs one again by its number
+    /// The most commands kept for the shell, where "again" lists them and runs one again by its number: as many as are
+    /// kept in the file (the setting shellhistory), or 50 when none are
     /// </summary>
-    internal const int ShellMaxCount = 50;
+    internal static int ShellMaxCount => Shell.HistoryCount > 0 ? Shell.HistoryCount : Shell.DefaultHistoryCount;
 
     private static readonly Dictionary<CommandContext, List<string>> Places = new();
 

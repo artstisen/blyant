@@ -564,6 +564,8 @@ internal static class FileIo
         settings += "shellpeekbigstep=" + Shell.PeekBigStep + '\n';
         // How many changes of files "undo" can go back through
         settings += "shellundosteps=" + Shell.UndoSteps + '\n';
+        // The shell: how many commands typed are kept in shellhistory.txt for the next shell (0: none)
+        settings += "shellhistory=" + Shell.HistoryCount + '\n';
         // The directory the shell starts in (a path, "last", or empty: the one Blyant is started in), and the one it
         // was left in (for "last")
         settings += "shelldir=" + Shell.StartSetting + '\n';
@@ -790,6 +792,7 @@ internal static class FileIo
         Shell.PeekStep = Shell.ParsePeekStep(Get("shellpeekstep"), Shell.DefaultPeekStep);
         Shell.PeekBigStep = Shell.ParsePeekStep(Get("shellpeekbigstep"), Shell.DefaultPeekBigStep);
         Shell.UndoSteps = Shell.ParseUndoSteps(Get("shellundosteps"));
+        Shell.HistoryCount = Shell.ParseHistoryCount(Get("shellhistory"));
         Shell.StartSetting = Get("shelldir").Trim();
         Shell.LastDirectory = Get("shelllastdir").Trim();
         Shell.LastFile = Get("shelllastfile").Trim();

@@ -227,6 +227,8 @@ internal sealed partial class ShellSession
         }
 
         var first = true;
+        // The commands typed in the shells before, for Up, Down and again (only at a terminal: typed)
+        if (Terminal) ShellHistory.Load();
         while (true)
         {
             string? line;
@@ -265,8 +267,10 @@ internal sealed partial class ShellSession
                 break;
             }
 
-            // (typed at the prompt: kept for Up and Down, and "again"; read from a file or a pipe: not)
+            // (typed at the prompt: kept for Up and Down, and "again"; read from a file or a pipe: not. Typed with a
+            // blank in front: not kept, as in bash)
             _typed = Terminal;
+            _notKept = line.Length > 0 && char.IsWhiteSpace(line[0]);
             if (!RunLine(line)) break;
         }
 
@@ -276,6 +280,9 @@ internal sealed partial class ShellSession
 
     // The line run now was typed at the prompt (in a terminal): it is kept for Up and Down, and for "again"
     private bool _typed;
+
+    // The line run now was typed with a blank in front: not kept, neither for Up and "again" nor in the file
+    private bool _notKept;
 
     // How long Ctrl+C is waited for after the reading of a line ended without one (ms)
     private const int CancelKeyWait = 100;

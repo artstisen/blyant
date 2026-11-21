@@ -81,6 +81,8 @@ internal sealed partial class ShellSession
         ("reset", Lang.T("Reset all settings to the defaults (asks first)")),
         ("reload", Lang.T("Read the settings file and the registers again, after editing them")),
         ("forget", Lang.T("Forget commands typed, $clip, $peek, $calc, last search, undo (asks)")),
+        ("set shellhistory 50", Lang.T("Commands kept for the next shell (0: none; at most 200)")),
+        (" command", Lang.T("A blank in front: the command is not kept")),
         ("clip [path|name] file|dir|n|.", Lang.T("Copy a path, or a name, to the clipboard")),
         ("clip text file|n", Lang.T("Copy the text of a file to the clipboard")),
         ("clip lines file|n lines", Lang.T("Copy lines of a file (4, 4-6, 4,7, +100 20)")),
@@ -206,7 +208,7 @@ internal sealed partial class ShellSession
                     ? null
                     : kept.Count == 0
                         ? Terminal
-                            ? Lang.T("No commands typed yet (they are kept while Blyant runs)")
+                            ? NoCommandsYet
                             : Lang.T("No commands typed: from a file or a pipe they are not kept")
                         : kept.Count == 1
                             ? Lang.F("No command {0}: 1 is kept (again lists it)", number)
@@ -227,9 +229,12 @@ internal sealed partial class ShellSession
 
         // Typed at the prompt: kept for Up and Down and for "again" (the command an "again" ran, not the "again";
         // "$w notes.md 12" as typed)
-        if (_typed && !CommandLine.Name(line).Equals("again", StringComparison.OrdinalIgnoreCase))
+        if (_typed && !_notKept && !CommandLine.Name(line).Equals("again", StringComparison.OrdinalIgnoreCase))
         {
-            CommandHistory.Add(CommandContext.Shell, again == null ? typedLine : line);
+            var kept = again == null ? typedLine : line;
+            CommandHistory.Add(CommandContext.Shell, kept);
+            // (and in shellhistory.txt, for the next shell)
+            ShellHistory.Add(kept);
         }
 
         // By name only (never what follows it: a path, a name, the value of a register)
@@ -371,6 +376,11 @@ internal sealed partial class ShellSession
         return argument.All(char.IsAsciiDigit) && int.TryParse(argument, out var number) ? number : 0;
     }
 
+    // No commands typed at the prompt yet (looked up when shown: the setting can change)
+    private static string NoCommandsYet => ShellHistory.Kept
+        ? Lang.T("No commands typed yet")
+        : Lang.T("No commands typed yet (they are kept while Blyant runs)");
+
     // "again": the commands typed at the prompt, the newest first, numbered for "again 3" and "!3" (not a last list:
     // "open 3" is still a row of the list shown before)
     // "again filter lines": those with a text in them, or that a pattern fits ("lines*"), with their numbers, so "!7"
@@ -403,7 +413,7 @@ internal sealed partial class ShellSession
         var kept = CommandHistory.Of(CommandContext.Shell);
         if (kept.Count == 0)
         {
-            Line(Lang.T("No commands typed yet (they are kept while Blyant runs)"));
+            Line(NoCommandsYet);
             return;
         }
 
@@ -833,9 +843,7 @@ internal sealed partial class ShellSession
         var kept = CommandHistory.Of(CommandContext.Shell);
         if (kept.Count == 0)
         {
-            Error(Terminal
-                ? Lang.T("No commands typed yet (they are kept while Blyant runs)")
-                : Lang.T("No commands typed: from a file or a pipe they are not kept"));
+            Error(Terminal ? NoCommandsYet : Lang.T("No commands typed: from a file or a pipe they are not kept"));
             return null;
         }
 
@@ -1060,16 +1068,22 @@ internal sealed partial class ShellSession
             return;
         }
 
-        // (this command is the newest of the commands typed: not counted)
-        var commands = Math.Max(0, CommandHistory.Of(CommandContext.Shell).Count - (_typed ? 1 : 0));
-        var note = Lang.F("Commands typed: {0}. Undo steps: {1}. And $clip, $peek, $calc and the last search. " +
-                          "Registers, settings, $file and $tag stay.", commands, _undo.Count + _redo.Count);
-        if (!ChoiceBox.Confirm(Lang.T("Shell memory"), Lang.T("Forget what the shell keeps while Blyant runs?"), note, true))
+        // (this command is the newest of the commands typed: not counted; typed with a blank in front, it is not kept)
+        var commands = Math.Max(0, CommandHistory.Of(CommandContext.Shell).Count - (_typed && !_notKept ? 1 : 0));
+        var note = ShellHistory.Kept
+            ? Lang.F("Commands typed: {0}, also those kept in shellhistory.txt. Undo steps: {1}. And $clip, $peek, " +
+                     "$calc and the last search. Registers, settings, $file and $tag stay.", commands, _undo.Count + _redo.Count)
+            : Lang.F("Commands typed: {0}. Undo steps: {1}. And $clip, $peek, $calc and the last search. " +
+                     "Registers, settings, $file and $tag stay.", commands, _undo.Count + _redo.Count);
+        if (!ChoiceBox.Confirm(Lang.T("Shell memory"), Lang.T("Forget what the shell keeps?"), note, true))
         {
             Line(Lang.T("Nothing forgotten"));
             return;
         }
 
+        // (the commands kept for the next shell too, first: a file that cannot be deleted leaves all as it was; also
+        // when the setting is 0 now, so none are left in it)
+        if (Failed(ShellHistory.Clear())) return;
         CommandHistory.Clear(CommandContext.Shell);
         ShellRegisters.Clip = null;
         ShellRegisters.Peek = null;

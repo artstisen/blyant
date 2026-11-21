@@ -92,6 +92,24 @@ internal static class Shell
 
     internal const int DefaultUndoSteps = 50;
 
+    /// <summary>
+    /// How many commands typed in the shell are kept in shellhistory.txt in the data directory, for the next shell
+    /// (setting "shellhistory", 0 to 200; 0: none kept in a file, the last 50 while Blyant runs). See ShellHistory
+    /// </summary>
+    internal static int HistoryCount { get; set; } = DefaultHistoryCount;
+
+    internal const int DefaultHistoryCount = 50;
+    internal const int MaxHistoryCount = 200;
+
+    /// <summary>
+    /// The commands kept from the settings file: a whole number from 0 to 200, else the default
+    /// </summary>
+    internal static int ParseHistoryCount(string? value) =>
+        int.TryParse(value?.Trim(), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture,
+            out var count) && count <= MaxHistoryCount
+            ? count
+            : DefaultHistoryCount;
+
     // The fewest and the most steps the setting takes (all steps together keep at most ShellSession.UndoMaxBytes)
     internal const int MinUndoSteps = 10;
     internal const int MaxUndoSteps = 200;

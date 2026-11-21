@@ -422,7 +422,7 @@ backup=
         Assert.False(settings.ContainsKey("stayloggedin"));
         Assert.False(settings.ContainsKey("projectsdir"));
         Assert.False(settings.ContainsKey("projectsask"));
-        Assert.Equal(75, settings.Count);
+        Assert.Equal(76, settings.Count);
         Assert.Equal("true", settings["modulejump"]);
         // The modules are on unless turned off
         Assert.Equal("true", settings["moduleprojects"]);
@@ -451,6 +451,8 @@ backup=
         Assert.Equal("5", settings["shellpeekbigstep"]);
         // undo in the shell goes back through 50 changes unless set otherwise
         Assert.Equal("50", settings["shellundosteps"]);
+        // The shell keeps the last 50 commands typed in shellhistory.txt unless set otherwise
+        Assert.Equal("50", settings["shellhistory"]);
         // Blyant starts on the full screen unless the shell is set
         Assert.Equal("false", settings["startshell"]);
         // The shell starts in the directory Blyant is started in, unless another is set

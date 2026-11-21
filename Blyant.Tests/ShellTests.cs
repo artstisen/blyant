@@ -34,6 +34,8 @@ public class ShellTests : IDisposable
         ShellSession.ForgetFind();
         FileTags.FilePathOverride = Path.Combine(_data, FileTags.FileName);
         FileTags.Clear();
+        ShellHistory.FilePathOverride = Path.Combine(_data, ShellHistory.FileName);
+        ShellHistory.Reset();
         ShellSession.ForgetTag();
         ShellSession.ForgetPreviousDirectory();
         // (the tests written before the markers and the setting shellpeeklines see the output as it was then: the
@@ -67,6 +69,8 @@ public class ShellTests : IDisposable
         ShellSession.ForgetFind();
         FileTags.FilePathOverride = null;
         FileTags.Clear();
+        ShellHistory.FilePathOverride = null;
+        ShellHistory.Reset();
         ShellSession.ForgetTag();
         SystemClipboard.WriteOverride = null;
         Tools.ClearLineMemory();
@@ -8065,5 +8069,112 @@ public class ShellTests : IDisposable
         // A text that is a number is replaced as before (three words)
         (_, errors, _, _) = Run("replace h.md 2 x\n");
         Assert.Equal(string.Empty, errors);
+    }
+
+    // ---- 1.6.1: the commands typed kept in shellhistory.txt
+
+    [Fact]
+    public void ShellHistory_Newest_KeepsEachCommandOnce_WhereItWasLast_AndTheNewest()
+    {
+        Assert.Equal(new[] { "b", "a", "c" }, ShellHistory.Newest(new[] { "a", "b", "", "a", " c " }, 5));
+        Assert.Equal(new[] { "a", "c" }, ShellHistory.Newest(new[] { "a", "b", "a", "c" }, 2));
+        Assert.Empty(ShellHistory.Newest(Array.Empty<string>(), 3));
+    }
+
+    [Theory]
+    [InlineData("50", 50)]
+    [InlineData("0", 0)]
+    [InlineData("200", 200)]
+    [InlineData("201", 50)]
+    [InlineData("-1", 50)]
+    [InlineData("x", 50)]
+    [InlineData("", 50)]
+    public void ShellHistory_TheSettingIs0To200_Else50(string value, int expected)
+    {
+        Assert.Equal(expected, Shell.ParseHistoryCount(value));
+    }
+
+    [Fact]
+    public void ShellHistory_CommandsTyped_AreKeptForTheNextShell_ButNotOnesWithABlankInFront()
+    {
+        CommandHistory.Clear();
+        try
+        {
+            Run("pwd\n echo private\nls\n", terminal: true);
+            Assert.Equal("pwd\nls\n", File.ReadAllText(ShellHistory.FilePath));
+            Assert.DoesNotContain("echo private", CommandHistory.Of(CommandContext.Shell));
+            // A new Blyant: the commands come from the file
+            CommandHistory.Clear();
+            ShellHistory.Reset();
+            var (output, _, _, _) = Run("again\n", terminal: true);
+            Assert.Contains("1  ls\n", output);
+            Assert.Contains("2  pwd\n", output);
+            // From a file or a pipe: neither read nor added to
+            Run("version\n");
+            Assert.Equal("pwd\nls\n", File.ReadAllText(ShellHistory.FilePath));
+        }
+        finally
+        {
+            CommandHistory.Clear();
+        }
+    }
+
+    [Fact]
+    public void ShellHistory_IsWrittenAgainWithTheNewest_WhenItHasTooMany()
+    {
+        CommandHistory.Clear();
+        try
+        {
+            // Read with more than kept: the newest 50, each once
+            File.WriteAllText(ShellHistory.FilePath,
+                string.Concat(Enumerable.Range(1, 80).Select(i => "echo " + i + "\n")) + "echo 3\n");
+            Run("pwd\n", terminal: true);
+            var lines = File.ReadAllLines(ShellHistory.FilePath);
+            Assert.Equal(Shell.DefaultHistoryCount + 1, lines.Length);
+            Assert.Equal(new[] { "echo 80", "echo 3", "pwd" }, lines[^3..]);
+            Assert.Equal(Shell.DefaultHistoryCount, CommandHistory.Of(CommandContext.Shell).Count);
+            Assert.Equal("pwd", CommandHistory.Of(CommandContext.Shell)[0]);
+            // Grown to twice as many lines as kept: written again with the newest
+            Shell.HistoryCount = 3;
+            Run("echo a\necho b\necho c\necho d\necho e\necho f\n", terminal: true);
+            Assert.True(File.ReadAllLines(ShellHistory.FilePath).Length <= 5);
+            Assert.Equal(new[] { "echo d", "echo e", "echo f" }, File.ReadAllLines(ShellHistory.FilePath)[^3..]);
+        }
+        finally
+        {
+            CommandHistory.Clear();
+        }
+    }
+
+    [Fact]
+    public void ShellHistory_Zero_KeepsNoFile_AndForgetDeletesIt_AndItIsProtected()
+    {
+        CommandHistory.Clear();
+        try
+        {
+            Run("pwd\n", terminal: true);
+            Assert.True(File.Exists(ShellHistory.FilePath));
+            // A file of Blyant: not deleted from the shell
+            var (_, errors, _, _) = Run("delete " + ShellHistory.FilePath + "\n", yes: true);
+            Assert.Contains(DialogText.FileUsedByBlyant, errors);
+            // forget deletes it
+            var (output, _, _, _) = Run("forget\n", yes: true);
+            Assert.Contains(Lang.T("Forgotten: the commands typed, $clip, $peek, $calc, the last search and the undo steps"), output);
+            Assert.False(File.Exists(ShellHistory.FilePath));
+            // 0: the commands are kept while Blyant runs, not in the file
+            Shell.HistoryCount = 0;
+            (output, _, _, _) = Run("again\nls\nagain\n", terminal: true);
+            Assert.Contains(Lang.T("No commands typed yet (they are kept while Blyant runs)"), output);
+            Assert.Contains("1  ls\n", output);
+            Assert.False(File.Exists(ShellHistory.FilePath));
+            Shell.HistoryCount = Shell.DefaultHistoryCount;
+            CommandHistory.Clear();
+            (output, _, _, _) = Run("again\n", terminal: true);
+            Assert.Contains(Lang.T("No commands typed yet"), output);
+        }
+        finally
+        {
+            CommandHistory.Clear();
+        }
     }
 }
