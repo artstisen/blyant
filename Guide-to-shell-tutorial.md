@@ -121,7 +121,7 @@ blyant ~/novel> open 1
 `info plot.md` shows the size and dates of a file, and for a text file the number of characters, words and lines, the encoding and the line endings.
 
 ## Finding files
-`find` searches the directory you are in and its subdirectories, by name, by a text in the files, or both:
+`find` searches the directory you are in and the directories below it, by name, by a text in the files, or both:
 
 ```
 blyant ~/novel> find storm
@@ -520,12 +520,12 @@ Added to the hotlist: /home/anna/novel
 ```
 
 - A favorite added goes to the top of the list, so the one added last is row 1
-- `fav` lists the favorites, `hist` the files you have opened (newest first), and `recent` (or `rec`) the latest nine of them. `help` lists all the short forms at the end. `open 1`, `peek 1` and `cd 1` work in each list
+- `fav` lists the favorites, `hist` the files you have opened (newest first), and `recent` (or `rec`) the latest nine. `help` lists all the short forms at the end. `open 1`, `peek 1` and `cd 1` work in each list
 - `recent -t storm` shows only the latest files with _storm_ in a line, and the line, as `find -t` does; `recent -t *` shows the first line of each file, a quick look at what is in them. `hist` and `fav` take `-t` too
 - `recent -s` adds the size of each file, `recent -f` shows the folder before the name (`novel/plot.md`), and `recent -n` sorts the list by name. They work together (`recent -n -f -s`), and with `hist` too
 - A favorite is marked with ` *` after its name in the other lists: `ls` now shows `plot.md *` and `chapters/ *`
 - The lists show names only. `info 1` tells where row 1 is and shows its size and dates, and the list stays, so `info 2` and `open 2` work after it. `fav -l` shows the full paths
-- `hot` lists the directory hotlist, and `cd 2` goes to row 2 of it. `hot add` adds the directory you are in, and `hot remove 2` takes row 2 off
+- `hot` lists the directory hotlist, and `cd 2` goes to row 2. `hot add` adds the directory you are in, and `hot remove 2` takes row 2 off
 - `book` lists the bookmarks of the Jump menu, `projects` the projects, and `project novel` goes to the directory of a project
 - `fav remove 1` takes a favorite off the list (the file itself stays)
 
@@ -583,7 +583,7 @@ blyant ~/novel> tag draft
 blyant ~/novel> open 2
 ```
 
-- A file can have several tags: `tag add plot.md ferry`. `tags` lists the tags, and `tags -f` the files with their tags. `tags -t storm` finds the tagged files with _storm_ in a line, `tags filter chapter` those with _chapter_ in the name, and `tag draft -t storm` searches only the files tagged `draft`
+- A file can have several tags: `tag add plot.md ferry`. `tags` lists the tags, and `tags -f` the tagged files and the tags of each. `tags -t storm` finds the tagged files with _storm_ in a line, `tags filter chapter` those with _chapter_ in the name, and `tag draft -t storm` searches only the files tagged `draft`
 - `tag add 2,4 draft` gives rows 2 and 4 of the last list the tag, and `tag add @ draft` the file you work on
 - `$tag` is the tag you work with, and `tag` alone lists the files of `$tag`. It changes when you work on a file that has other tags (the shell says so: `$tag = ferry`), so look at it with `echo $tag` before you use it
 - `tag remove plot.md draft` takes the tag off, and `tag rename draft final` renames it on all files. Files keep their tags when you rename or move them, and a copy gets them too
