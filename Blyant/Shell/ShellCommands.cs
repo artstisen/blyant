@@ -1994,7 +1994,7 @@ internal sealed partial class ShellSession
             ("help [command]", Lang.T("List the commands, or tell what one does")),
             ("ls, cd 2, up", Lang.T("List a directory, go into row 2, or up")),
             ("open 3", Lang.T("Edit a file on the full screen (closing it returns here)")),
-            ("resume", Lang.T("Edit $file again, where you worked last")),
+            ("input", Lang.T("Type lines into a file after $line; a line with . ends")),
             ("peek 3, find plot", Lang.T("Show lines of a file; find files by name (-t: by text)")),
             // (the texts of the rows of help)
             ("/text", Lang.T("Search the file peeked last (as peek /text)")),
