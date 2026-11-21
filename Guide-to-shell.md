@@ -136,11 +136,12 @@ Some commands have a short form, which does the same: `fav` and `favs` (`favorit
 | `lines file\|n lines start\|end text` | Put a text at the start or the end of lines, keeping the rest (`lines todo.md 4 start Remember this:`). **A blank is put between the text and the line**: in quotes the text is put as typed, with no blank (`lines notes.md 48 end ", and more"`). See [Text in lines](#text-in-lines) |
 | `lines file\|n lines unstart\|unend text` | Take a text off the start or the end of the lines that have it |
 | `lines file\|n lines replace old new` | Replace a text in lines, keeping the rest (`lines notes.md 5-9 replace draft final`) |
+| `lines file\|n lines at column text` | Put a text in lines before a column, as typed, with no blank added (`lines notes.md 34 at 10 "big "`). `words` shows the column of each word. A line without that column is told, and no line is changed |
 | `lines file\|n lines remove text` | Take a text out of lines, wherever it is in them (`lines notes.md 5-9 remove " (draft)"`). A `"` is written `""""`: see [Quotes in a text](#quotes-in-a-text) |
 | `replace [-n] [-i] file\|n old new` | Replace a text everywhere in a file (`replace chapter-3.md Maren Marit`); `-i` in any letter case, `-n` only shows what would change. `undo` takes it back. See [Replacing in a file](#replacing-in-a-file) |
 | `lines file\|n lines sort [-a\|-d]` | Sort lines A to Z (`-a`, the default) or Z to A (`-d`): `lines notes.md 3-20 sort`. The order is that of `:sort` in the editor, by the value of the characters, so capital letters come before small ones. Lines given apart (`1,5,9`) are sorted among those places |
 | `lines file\|n lines upper\|lower\|title` | Make lines UPPERCASE, lowercase or Title Case (each word with a capital first letter), as `gU` and `gu` in the editor: `lines notes.md 1 upper` |
-| `words [-p] file\|n line` | Show the words of a line, numbered, for `word`: `words notes.md 12`; with `-p` a word is all between blanks, punctuation too. See [Words in a line](#words-in-a-line) |
+| `words [-p] file\|n line` | Show the words of a line, numbered, for `word`, and the column each word starts at (`#9:32 want`): `words notes.md 12`; with `-p` a word is all between blanks, punctuation too. See [Words in a line](#words-in-a-line) |
 | `word file\|n line n\|n-m action [text]` | Change words of a line by number: `replace`, `before`, `after` and `delete` (`word notes.md 12 9 replace wish`), or `upper`, `lower` and `title`. See [Words in a line](#words-in-a-line) |
 | `@` | The file and the line the last command worked on, in place of the file and the line: `words notes.md 12`, then `word @ 9 replace wish`. See [Working on one line](#working-on-one-line) |
 | `format file\|n` | Format an HTML, CSS or XML file, as `:format` in the editor does (see [Text and settings](#text-and-settings)) |
@@ -522,6 +523,7 @@ lines notes.md 5-9 replace draft final       "draft" in lines 5 to 9 made "final
 lines notes.md 5-9 replace " (draft)" ""     " (draft)" taken out of them
 lines notes.md 5-9 remove " (draft)"         the same: remove takes a text out
 lines notes.md 1 remove """"                 every " taken out of line 1
+lines notes.md 12 at 32 "really "            "really " put in before column 32
 ```
 
 **`start` and `end` put a blank between the text and the line.** `lines notes.md 48 end , and more` gives _Some text , and more_. When the text must touch the line, as a comma or a full stop does, write it in quotes: `lines notes.md 48 end ", and more"` gives _Some text, and more_. The quotes also keep any blanks in them (`start "- [ ] "`).
@@ -560,7 +562,8 @@ blyant ~/notes> lines todo.md 3 unstart "- [ ] "
 - `unstart` and `unend` take the text off the lines that start or end with it, with the blank `start` and `end` put there (in quotes: the text only), so they undo `start` and `end`. The other lines are left as they are
 - `replace old new` replaces the text everywhere in the lines, with the letter case as typed (`draft`, not `Draft`). A text with blanks is written in quotes, and `""` is an empty text: what is replaced is removed
 - `remove text` takes the text out everywhere in the lines, with the letter case as typed. The text is all that follows `remove`, as for `start`; in quotes it is taken as written, blanks too. A `"` is written `""""` in quotes (see [Quotes in a text](#quotes-in-a-text)), or alone: `lines notes.md 1 remove "`
-- After the lines, `Tab` completes `start`, `end`, `unstart`, `unend`, `replace`, `remove`, `sort`, `upper`, `lower`, `title` and `>`, and after `sort` it completes `-a` and `-d`. A `>` or one of these words later on is part of the text: `lines notes.md 3 start ">"` makes line 3 a quote
+- `at 32 text` puts the text in before column 32 of each line: the text then starts at column 32. The columns are counted from 1, as the editor counts them on the status line, and `words` shows the column each word starts at (`#9:32 want`). The text is put in as typed, with no blank added: write it in quotes to keep a blank at the start or end of it (`"really "`). A column one past the end of a line puts the text at the end. When a line has no such column (it is shorter), the shell says which line, and no line is changed
+- After the lines, `Tab` completes `start`, `end`, `unstart`, `unend`, `replace`, `remove`, `at`, `sort`, `upper`, `lower`, `title` and `>`, and after `sort` it completes `-a` and `-d`. A `>` or one of these words later on is part of the text: `lines notes.md 3 start ">"` makes line 3 a quote
 - `$name` and `$clip` put in their value: `lines todo.md 4 end $note`
 - The lines changed are shown, and the file is then the last list, at the first line changed (`open 1`). When no line changes, nothing is written, and the shell says so. As for `insert`, the file keeps its line endings and byte order mark, only a file in UTF-8 is changed and not the files Blyant uses, and `undo` puts it back; nothing is asked, as no line is lost
 
@@ -616,15 +619,17 @@ Replace: Replace them in chapter-3.md?
 ```
 blyant ~/novel> words notes.md 12
 -> notes.md, line 12
-  #1 This  #2 is  #3 a  #4 line  #5 of  #6 text  #7 that  #8 I  #9 want  #10 to
-  #11 change  #12 with  #13 a  #14 few  #15 commands
+  #1:1 This  #2:6 is  #3:9 a  #4:11 line  #5:16 of  #6:19 text  #7:25 that
+  #8:30 I  #9:32 want  #10:37 to  #11:40 change  #12:48 with  #13:53 a
+  #14:55 few  #15:59 commands
 <- 15 words
 blyant ~/novel> word notes.md 12 9 replace wish
   12  This is a line of text, that I wish to change, with a few commands...
 /home/anna/novel/notes.md: line 12 changed
 -> notes.md, line 12
-  #1 This  #2 is  #3 a  #4 line  #5 of  #6 text  #7 that  #8 I  #9 wish  #10 to
-  #11 change  #12 with  #13 a  #14 few  #15 commands
+  #1:1 This  #2:6 is  #3:9 a  #4:11 line  #5:16 of  #6:19 text  #7:25 that
+  #8:30 I  #9:32 wish  #10:37 to  #11:40 change  #12:48 with  #13:53 a
+  #14:55 few  #15:59 commands
 <- 15 words
 ```
 
@@ -642,7 +647,8 @@ blyant ~/novel> word notes.md 12 9 replace wish
 - Several words are given as `5-7`: `replace` puts the text in place of all those words, and `before` and `after` go in front of the first and after the last
 - The line is given as `12` or `+12`, and the file as a name, a row of the last list or `$file`. After `words`, `@` is the file and the line, so the next command can be `word @ 9 ...` (see [Working on one line](#working-on-one-line))
 - The words come between two markers: `-> notes.md, line 12` above them, and `<- 15 words` below them (as for `peek`, `set shellmarkers false` leaves them out)
-- The numbers have `#` before them (`#9 want`), so a word that is a number (`2`, `v1`) is not taken for the number of a word. `word` takes the numbers with `#` or without it: `word @ #9 replace wish`, `word @ #5-#7 delete` and `word @ 5-7 delete` are the same
+- The numbers have `#` before them (`#9:32 want`), so a word that is a number (`2`, `v1`) is not taken for the number of a word. `word` takes the numbers with `#` or without it: `word @ #9 replace wish`, `word @ #5-#7 delete` and `word @ 5-7 delete` are the same
+- After the `:` is the column the word starts at, as the editor counts it on the status line (a wide character, as in Chinese, is two columns): `#9:32 want` starts at column 32. `lines notes.md 12 at 32 "really "` puts a text in there (see [Text in lines](#text-in-lines)). `word` also takes the number as shown, with the column: `word @ #9:32 replace wish`
 - After a change the line is shown, with the words numbered again, as the numbers after a word put in or taken out move
 - The text is all that follows `replace`, `before` or `after`, as typed; in quotes it is put in exactly as written. `$name` puts in a value
 - `undo` takes a change back. A file Blyant uses, or one that is not UTF-8, is not changed, and the line endings and byte order mark of the file are kept, as with `lines`
@@ -653,8 +659,9 @@ With `-p` before the file, a word is all between blanks, with the punctuation an
 ```
 blyant ~/novel> words -p notes.md 12
 -> notes.md, line 12
-  #1 This  #2 is  #3 a  #4 line  #5 of  #6 text,  #7 that  #8 I  #9 want  #10 to
-  #11 change,  #12 with  #13 a  #14 few  #15 commands...
+  #1:1 This  #2:6 is  #3:9 a  #4:11 line  #5:16 of  #6:19 text,  #7:25 that
+  #8:30 I  #9:32 want  #10:37 to  #11:40 change,  #12:48 with  #13:53 a
+  #14:55 few  #15:59 commands...
 <- 15 words
 blyant ~/novel> word -p notes.md 12 6 replace note:
 blyant ~/novel> word -p notes.md 12 15 replace commands.

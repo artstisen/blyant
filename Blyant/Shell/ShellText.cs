@@ -183,7 +183,7 @@ internal sealed partial class ShellSession
     }
 
     // The words of lines that take a text after them
-    private static readonly string[] LinesTextEdits = { "start", "end", "unstart", "unend", "replace", "remove" };
+    private static readonly string[] LinesTextEdits = { "start", "end", "unstart", "unend", "replace", "remove", "at" };
 
     /// <summary>
     /// True when the text of change starts with a word of lines that takes a text, in lower case as lines is typed,

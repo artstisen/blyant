@@ -95,8 +95,34 @@ internal static partial class LineWords
     }
 
     /// <summary>
-    /// The words of a line numbered for the screen, "1 This  2 is  3 a ...", in rows no wider than the width (a word
-    /// longer than that has a row to itself)
+    /// The column of a place in a line, as the editor shows it on the status line: from 1, a wide character (and an
+    /// emoji) two columns
+    /// </summary>
+    internal static int ColumnOf(string line, int index) => TextMetrics.WidthOfRange(line, 0, index) + 1;
+
+    /// <summary>
+    /// The place in a line of a column (as ColumnOf gives it): a column one past the last character is the end of the
+    /// line. Null for a column past that, or in the middle of a wide character
+    /// </summary>
+    internal static int? IndexOfColumn(string line, int column)
+    {
+        if (column < 1) return null;
+        var i = 0;
+        var cells = 0;
+        while (cells + 1 < column)
+        {
+            if (i >= line.Length) return null;
+            var length = TextMetrics.ElementLength(line, i);
+            cells += TextMetrics.Width(line, i, length);
+            i += length;
+        }
+
+        return cells + 1 == column ? i : null;
+    }
+
+    /// <summary>
+    /// The words of a line numbered for the screen, with the column each starts at, "#1:1 This  #2:6 is  #3:9 a ...",
+    /// in rows no wider than the width (a word longer than that has a row to itself)
     /// </summary>
     internal static List<string> Numbered(string line, int width, bool blanks = false)
     {
@@ -105,8 +131,10 @@ internal static partial class LineWords
         var words = Find(line, blanks);
         for (var n = 0; n < words.Count; n++)
         {
-            // ("#" before the number: told apart from a word that is a number, "#3 5"; word takes "#3" too)
-            var part = "#" + (n + 1) + " " + line.Substring(words[n].Start, words[n].Length);
+            // ("#" before the number: told apart from a word that is a number, "#3:9 5"; word takes "#3" and "#3:9"
+            // too. The column after ":", for "lines ... at 9")
+            var part = "#" + (n + 1) + ":" + ColumnOf(line, words[n].Start) + " " +
+                       line.Substring(words[n].Start, words[n].Length);
             if (row.Length > 0 && TextMetrics.WidthOf(row) + 2 + TextMetrics.WidthOf(part) > width)
             {
                 rows.Add(row);

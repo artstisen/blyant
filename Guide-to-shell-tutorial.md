@@ -252,13 +252,13 @@ To change one word, without typing the line again, see the words of the line num
 ```
 blyant ~/novel> words plot.md 4
 -> plot.md, line 4
-  #1 The  #2 letter  #3 is  #4 from  #5 her  #6 mother
+  #1:1 The  #2:5 letter  #3:12 is  #4:15 from  #5:20 her  #6:24 mother
 <- 6 words
 blyant ~/novel> word @ 6 replace aunt
    4  The letter is from her aunt.
 /home/anna/novel/plot.md: line 4 changed
 -> plot.md, line 4
-  #1 The  #2 letter  #3 is  #4 from  #5 her  #6 aunt
+  #1:1 The  #2:5 letter  #3:12 is  #4:15 from  #5:20 her  #6:24 aunt
 <- 6 words
 ```
 
@@ -712,7 +712,7 @@ blyant ~/novel> reg show = words $1 $2
   $show = words $1 $2
 blyant ~/novel> run $show plot.md 4
 words plot.md 4
-  #1 The  #2 letter  #3 is  #4 from  #5 her  #6 aunt
+  #1:1 The  #2:5 letter  #3:12 is  #4:15 from  #5:20 her  #6:24 aunt
 ```
 
 A register of one line can be the start of a command, like a short name: after `reg w words`, `$w plot.md 4` does the same.

@@ -3,7 +3,7 @@
 /// <summary>
 /// "lines": lines of a file copied to another file or kept in a register ("> $notes", ">> $notes": added), or cut
 /// ("cut": moved there), without opening them; or the text in them changed: a text put at their start or end ("start", "end"), taken off it ("unstart", "unend"), or a text in
-/// them replaced ("replace") or removed ("remove"), the lines sorted ("sort", "sort -d") or made upper or lower case or Title Case ("upper",
+/// them replaced ("replace") or removed ("remove"), a text put in at a column ("at"), the lines sorted ("sort", "sort -d") or made upper or lower case or Title Case ("upper",
 /// "lower", "title"). The
 /// lines and the place are those of shift. What is written is never logged, only the
 /// paths and the lines
@@ -12,7 +12,7 @@ internal sealed partial class ShellSession
 {
     // What "lines" does to the text in the lines (after the lines: "lines todo.md 4 start Note:")
     private static readonly string[] LineEdits =
-        { "start", "end", "unstart", "unend", "replace", "remove", "sort", "upper", "lower", "title" };
+        { "start", "end", "unstart", "unend", "replace", "remove", "at", "sort", "upper", "lower", "title" };
 
     /// <summary>
     /// What the words after "lines" are: the place of the ">" of a copy (2, or 3 after "+10 5"), or of a word of
@@ -46,7 +46,7 @@ internal sealed partial class ShellSession
         // (after the lines: neither a ">" nor a word of what is done)
         else if (form.Arrow < 0 && words.Count > 2 && !words.Contains(">") && !words.Contains(">>"))
         {
-            Error(Lang.T("After the lines: > file place, > $name, start, end, unstart, unend, replace, remove, sort, upper, lower or title"));
+            Error(Lang.T("After the lines: > file place, > $name, start, end, unstart, unend, replace, remove, at, sort, upper, lower or title"));
         }
         else CopyLines(argument);
     }
@@ -55,7 +55,9 @@ internal sealed partial class ShellSession
     // of the lines, with a blank between; in quotes as it is ("- [ ] ", ";"). Blank lines are left as they are.
     // "unstart" and "unend" take the text off the start or end of the lines that have it (with the blank start and end
     // put there; in quotes: the text only). "replace old new": a text in the lines replaced (letter case as typed;
-    // "" for none), and "remove text" the text taken out wherever it is in them. In quotes, "" is a quote (""""). As insert: the line endings and byte order mark of the file kept, only a file in UTF-8 and not
+    // "" for none), and "remove text" the text taken out wherever it is in them. In quotes, "" is a quote ("""").
+    // "at 10 text": the text put in before column 10 (as the editor and words count them), as typed, no blank added;
+    // a line without that column (too short) is told, and nothing is changed. As insert: the line endings and byte order mark of the file kept, only a file in UTF-8 and not
     // one Blyant uses, and the file is then the last list, at the first line changed. Nothing is lost by it (unstart
     // undoes start), so it is not asked. "sort" sorts the lines A to Z ("-a", the default) or Z to A ("-d"), in the
     // same order as :sort in the editor, and puts them back in the places of the lines; "upper" and "lower" make them
@@ -79,6 +81,33 @@ internal sealed partial class ShellSession
             }
 
             (text, replacement) = (parts[0], parts[1]);
+        }
+        else if (kind == "at")
+        {
+            var parts = Words(rest);
+            if (parts.Count < 2)
+            {
+                Error(Lang.T("Give the column and the text: lines notes.md 34 at 10 text"));
+                return;
+            }
+
+            if (!parts[0].All(char.IsAsciiDigit) || !int.TryParse(parts[0], out var column) || column < 1)
+            {
+                Error(Lang.F("Not a column: {0} (as 10, the column words shows)", parts[0]));
+                return;
+            }
+
+            // (as typed, or in quotes as written; no blank added either way)
+            var typed = AfterWords(rest, 1).Trim();
+            text = Unquoted(typed) ?? typed;
+            if (text.Length == 0)
+            {
+                Error(Lang.T("Give the column and the text: lines notes.md 34 at 10 text"));
+                return;
+            }
+
+            exact = true;
+            replacement = column.ToString(System.Globalization.CultureInfo.InvariantCulture);
         }
         else if (kind is "sort" or "upper" or "lower" or "title")
         {
@@ -115,6 +144,15 @@ internal sealed partial class ShellSession
         var (item, file) = editable;
         var lines = LinesOfText(file.Text);
         if (PickedLines(words[1], at == 3 ? words[2] : null, lines, item.Path) is not { } picked) return;
+
+        // At a column: every line must have it, or none is changed
+        if (kind == "at" && picked.FirstOrDefault(number =>
+                LineWords.IndexOfColumn(lines[number - 1], int.Parse(replacement, System.Globalization.CultureInfo.InvariantCulture)) == null)
+            is var tooShort and > 0)
+        {
+            Error(Lang.F("Line {0} has no column {1}: nothing changed", tooShort, replacement));
+            return;
+        }
 
         var changed = new List<int>();
         // Sorted: the lines in the order they get, put back in the places of the lines picked
@@ -167,7 +205,7 @@ internal sealed partial class ShellSession
     /// A line with a text put at its start or end ("start", "end": with a blank between, or "exact" as it is; a blank
     /// line as it is), taken off them ("unstart", "unend": with the blank start and end put there, or "exact" the text
     /// only; a line without it as it is), a text in it replaced ("replace", letter case as given) or taken out
-    /// ("remove"), or the line made
+    /// ("remove"), put in at a column ("at", the column in "replacement"), or the line made
     /// upper or lower case ("upper", "lower", as gU and gu in the editor) or Title Case ("title")
     /// </summary>
     internal static string EditedLine(string line, string kind, string text, bool exact, string replacement = "")
@@ -198,6 +236,15 @@ internal sealed partial class ShellSession
             }
             case "remove":
                 return text.Length == 0 ? line : line.Replace(text, string.Empty, StringComparison.Ordinal);
+            case "at":
+            {
+                // ("replacement": the column)
+                var at = int.TryParse(replacement, System.Globalization.NumberStyles.None,
+                    System.Globalization.CultureInfo.InvariantCulture, out var column)
+                    ? LineWords.IndexOfColumn(line, column)
+                    : null;
+                return at is { } index ? line[..index] + text + line[index..] : line;
+            }
             default:
                 return text.Length == 0 ? line : line.Replace(text, replacement, StringComparison.Ordinal);
         }

@@ -52,9 +52,15 @@ internal sealed partial class ShellSession
         Line(EndMarker + (count == 1 ? Lang.T("1 word") : Lang.F("{0} words", count)));
     }
 
-    // The numbers of words as words shows them, "#5-#7", as typed without "#": "5-7" (one "#" before each number)
+    // The numbers of words as words shows them, "#5-#7" ("#5:20-#7:31" with the columns), as typed without "#" and
+    // the columns: "5-7" (one "#" before each number)
     internal static string WithoutHashes(string numbers) =>
-        string.Join('-', numbers.Split('-').Select(part => part.StartsWith('#') ? part[1..] : part));
+        string.Join('-', numbers.Split('-').Select(part =>
+        {
+            if (part.StartsWith('#')) part = part[1..];
+            var colon = part.IndexOf(':');
+            return colon > 0 ? part[..colon] : part;
+        }));
 
     // "-p" first ("words -p notes.md 12", "word -p ..."): a word is all between blanks, with the punctuation and the
     // marks around it. Taken off the words; null (and told) for another option
