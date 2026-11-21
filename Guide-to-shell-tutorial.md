@@ -31,7 +31,7 @@ MMM _MM" M%M      "MM__MM" MMM _M%M MMM_ M%M    M%M
 M%M" M%M M%M  ___   M%M    M%M" M%M M%M"_M%M    M%M
 MMM__MM" "MM__MMM   MMM    MMM  MMM MMM  "MM    MMM
 
-Blyant v1.6.0: help lists the commands, exit leaves
+Blyant v1.6.1: help lists the commands, exit leaves
 blyant ~/novel>
 ```
 

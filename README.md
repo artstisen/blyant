@@ -139,7 +139,7 @@ Blyant works in the style of Vim: the editor has Normal, Insert and Visual modes
 
 The guides are also put together as a **user manual**, in two forms:
 - **Markdown** (`Blyant-User-Manual.md`), in every release archive next to the program, to read in Blyant itself
-- **PDF** (`Blyant-User-Manual-1.6.0.pdf`), made with [Typst](https://typst.app), with a contents page and page numbers: a separate download on the [releases page](https://github.com/artstisen/blyant/releases), to read or print
+- **PDF** (`Blyant-User-Manual-1.6.1.pdf`), made with [Typst](https://typst.app), with a contents page and page numbers: a separate download on the [releases page](https://github.com/artstisen/blyant/releases), to read or print
 
 Inside Blyant, press `?` for the list of keys.
 
@@ -152,7 +152,7 @@ Inside Blyant, press `?` for the list of keys.
 | Core code base | Agnostic: no OS-specific logic, .NET handles the differences between the platforms |
 | Box drawing | Classic ASCII |
 | Console I/O encoding | UTF-8 |
-| Languages | English built in; German, Danish, Norwegian (bokmål), Swedish, Spanish, French, Italian, Polish, Dutch and Finnish as language files that can be changed, and more can be added (the commands and keys are the same in all languages). The language files are also a separate download on the releases page (`Blyant-languages-1.6.0.zip`) |
+| Languages | English built in; German, Danish, Norwegian (bokmål), Swedish, Spanish, French, Italian, Polish, Dutch and Finnish as language files that can be changed, and more can be added (the commands and keys are the same in all languages). The language files are also a separate download on the releases page (`Blyant-languages-1.6.1.zip`) |
 | Date/time format | ISO 8601 |
 | Software license | [MIT](LICENSE) |
 
