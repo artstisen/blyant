@@ -8468,9 +8468,9 @@ public class ShellTests : IDisposable
         Assert.DoesNotContain("list", output);
         // Both, and nothing found
         (output, _, _, _) = Run("peek saved filter notes -t harbour\npeek saved filter none\npeek saved -t none\n");
-        Assert.Contains(Lang.F("No saved peeks with {0} in them and {1} in their lines", "notes", "harbour"), output);
-        Assert.Contains(Lang.F("No saved peeks with {0} in them", "none"), output);
-        Assert.Contains(Lang.F("No saved peeks with {0} in their lines", "none"), output);
+        Assert.Contains(Lang.F("No saved peeks with {0} in the name or path and {1} in the lines", "notes", "harbour"), output);
+        Assert.Contains(Lang.F("No saved peeks with {0} in the name or path", "none"), output);
+        Assert.Contains(Lang.F("No saved peeks with {0} in the lines", "none"), output);
         var (_, wrong, _, _) = Run("peek saved filter\npeek saved -t\npeek saved x\n");
         Assert.Equal(2, wrong.Split(Lang.T("Give a text: peek saved filter storm, peek saved -t harbour")).Length - 1);
         Assert.Contains(Lang.T("After peek saved: filter text, -t text, or both"), wrong);
@@ -8594,9 +8594,9 @@ public class ShellTests : IDisposable
         File.WriteAllText(In("work", "s.md"), "one\nstorm here\nthree\n");
         var (output, _, _, _) = Run("peek saved -t storm\npeek saved filter x -t storm\npeek saved filter \"e\"\"\"\n");
         Assert.Contains("1  end  s.md:2  storm here", output);
-        Assert.Contains(Lang.F("No saved peeks with {0} in them and {1} in their lines", "x", "storm"), output);
+        Assert.Contains(Lang.F("No saved peeks with {0} in the name or path and {1} in the lines", "x", "storm"), output);
         // A filter in quotes, with "" a quote
-        Assert.Contains(Lang.F("No saved peeks with {0} in them", "e\""), output);
+        Assert.Contains(Lang.F("No saved peeks with {0} in the name or path", "e\""), output);
         Assert.Equal("peek save -d end", Tab(Completion(), "peek save -d e"));
         Assert.Equal("peek saved filter x -t", Tab(Completion(), "peek saved filter x -"));
     }

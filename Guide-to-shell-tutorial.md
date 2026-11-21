@@ -107,6 +107,7 @@ blyant ~/novel> peek 3
 - `peek all` shows the whole file peeked last, in pages, and leaves the window where it was: `.` and `+` go on from there
 - `.` (or `peek` alone) shows the last peek again, as the file is now: a window into the lines you are changing. `set shellautopeek true` shows it automatically after each change to that file
 - What `peek` showed last is `$peek`, to put in another file: `peek plot.md 3-4`, then `insert ideas.md bottom $peek`
+- `peek save` keeps the window you are at, and `peek back` brings you back to it after you have moved around the file (`peek save storm` keeps one under a name, and `peek saved` lists them). The next shell goes on from the last peek, so `.` shows it again
 - `peek chapters/02-storm.md +3 2` shows 2 lines from line 3. The file then becomes the last list, at that line, so `open 1` opens the file right there:
 
 ```
@@ -244,6 +245,7 @@ blyant ~/novel> lines plot.md 4 unstart Draft:
 
 - `start` and `end` put a blank between the text and the line. For a text that must touch the line, as a comma, write it in quotes: `lines plot.md 4 end ", she said"` (no blank)
 - `unstart` and `unend` take the text off again, and `lines plot.md 3-5 replace letter note` replaces a word in lines 3 to 5
+- `lines plot.md 3-5 remove " (draft)"` takes a text out of lines 3 to 5, and `lines plot.md 4 at 5 "old "` puts a text in at column 5 of line 4 (`words` shows the column each word starts at). In quotes, `""` is a quote: `lines plot.md 4 remove """"` takes every `"` out of line 4
 - `lines plot.md 3-5 sort` sorts lines 3 to 5 A to Z (`sort -d`: Z to A), and `lines plot.md 1 upper` makes line 1 UPPERCASE (`lower`: lowercase)
 - A text in quotes is put in exactly as written, with no blank added: `lines todo.md 5-7 start "- [ ] "` makes lines 5 to 7 tasks
 
@@ -265,6 +267,7 @@ blyant ~/novel> word @ 6 replace aunt
 - `@` is the file and the line of the last command: after `words plot.md 4`, `word @ 6 replace aunt` is `word plot.md 4 6 replace aunt`
 - `word @ 5 before rich` puts a word in front of word 5, `after` after it, and `delete` takes it out
 - `word @ 1-2 upper` makes words 1 and 2 UPPERCASE (`lower`, `title` too)
+- `word @ 6 move before 2` moves word 6 before word 2, with the numbers `words` showed, and `clip words @ 2-3` copies words 2 and 3 for `$clip`, to put in elsewhere (`word @ 6 after $clip`)
 - `shift @ up` moves the line one line up, and `@` goes with it: `shift @ up` again moves it further. `shift -s plot.md Ideas down` moves a whole section, with the heading
 - The full stop after `mother` stays where it is: punctuation is not part of a word. With `-p` a word is all between blanks, so `word -p @ 6 replace aunt!` takes the full stop too, and the line ends with `her aunt!`. Use `-p` on both or on neither: `words -p` can number the words differently (a `-` alone is a word with `-p` only), and the shell refuses `word` without `-p` after `words -p` of the same line when the numbers differ
 
@@ -463,9 +466,10 @@ blyant ~/novel> lines notes.md 2 > $other bottom
 - `reg -d note` removes a register, and `reg -d all` removes every register
 - `reg -t storm` finds the registers with _storm_ in the name or the value, when there are many
 - `calc 22 * 3500 > $words` keeps a result under a name, so several can be kept (`$calc` holds only the last)
-- `forget` clears what the shell keeps while Blyant runs (the commands typed, `$clip`, `$peek`, `$calc`, the last search, the undo steps), after asking; the registers stay
+- `forget` clears what the shell keeps (the commands typed, also those kept for the next shell, `$clip`, `$peek` and the last peek, `$calc`, the last search, the undo steps), after asking; the registers and the peeks saved with `peek save` stay
 - Put a path with blanks in quotes: `reg docs "~/my docs"`
-- `Tab` completes the names of the registers after a `$`
+- `Tab` completes the names of the registers after a `$` and after `reg`
+- A register makes a scratchpad for quick notes: `reg scratch += Call Anna` adds a line each time, and `reg scratch` shows them. The registers are kept in `registers.txt` in the data directory, so the notes are there the next day
 - A register can collect lines from several places: `peek plot.md 3-4`, then `reg notes += $peek`, and `lines todo.md 6 >> $notes` adds a line from another file. `insert ideas.md bottom $notes` puts all the lines in a file
 - Blyant sets some names itself: `$pwd` is the directory you are in, `$file` the file the last command worked on, `$calc` the result of the last `calc` (`calc 1250 * 1.25`, then `insert budget.md bottom Total: $calc`), and `$date`, `$time` and `$now` the time now. `insert todo.md bottom $date Called the editor` puts in a line with the date, and `peek plot.md` then `insert $file bottom The end` adds to the file you looked at
 - The registers of the shell are separate from the string memory of the editor

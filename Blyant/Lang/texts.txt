@@ -2237,9 +2237,9 @@ en: "No peeks saved yet: peek save keeps the window of the last peek"
 en: "No saved peek {0}: {1} are saved (peek saved lists them)"
 en: "After peek saved: filter text, -t text, or both"
 en: "Give a text: peek saved filter storm, peek saved -t harbour"
-en: "No saved peeks with {0} in them"
-en: "No saved peeks with {0} in their lines"
-en: "No saved peeks with {0} in them and {1} in their lines"
+en: "No saved peeks with {0} in the name or path"
+en: "No saved peeks with {0} in the lines"
+en: "No saved peeks with {0} in the name or path and {1} in the lines"
 
 # Shell/ShellRegisters.cs
 en: "{0} could not be read: the registers are not written"

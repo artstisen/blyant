@@ -235,9 +235,9 @@ internal sealed partial class ShellSession
 
         if (rows.Count == 0)
         {
-            Line(search == null ? Lang.F("No saved peeks with {0} in them", filter!)
-                : filter == null ? Lang.F("No saved peeks with {0} in their lines", search)
-                : Lang.F("No saved peeks with {0} in them and {1} in their lines", filter, search));
+            Line(search == null ? Lang.F("No saved peeks with {0} in the name or path", filter!)
+                : filter == null ? Lang.F("No saved peeks with {0} in the lines", search)
+                : Lang.F("No saved peeks with {0} in the name or path and {1} in the lines", filter, search));
             return;
         }
 
