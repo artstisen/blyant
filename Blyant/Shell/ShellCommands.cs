@@ -144,6 +144,7 @@ internal sealed partial class ShellSession
         ("changes", Lang.T("List the changes undo goes back through")),
         ("run $name|file", Lang.T("Run commands from a register or file, one per line")),
         ("run $name|file words", Lang.T("Run it with words for $1, $2 ... ($*: all of them)")),
+        ("run [-y] $cmd", Lang.T("Show the commands of again edit and ask: run, edit or cancel (-y: run)")),
         ("$name words", Lang.T("A register of one line as the start of a command")),
         ("help [command]", Lang.T("List the commands, or tell what one does")),
         ("help -t text", Lang.T("The rows of help with a text in them (help -t start)")),
@@ -942,8 +943,14 @@ internal sealed partial class ShellSession
             return;
         }
 
-        // (shown as peek shows lines, but not as a peek: "." and $peek stay those of the file worked on)
-        var width = commands.Count.ToString(CultureInfo.InvariantCulture).Length;
+        ShowCommands(path, commands);
+    }
+
+    // The commands of $cmd, numbered: shown as peek shows lines, but not as a peek ("." and $peek stay those of the file
+    // worked on)
+    private void ShowCommands(string path, IReadOnlyList<string> commands)
+    {
+        var width = Math.Max(commands.Count, 1).ToString(CultureInfo.InvariantCulture).Length;
         if (Shell.Markers) Line(TopMarker + Path.GetFileName(path));
         for (var i = 0; i < commands.Count; i++)
         {
@@ -951,6 +958,28 @@ internal sealed partial class ShellSession
         }
 
         if (Shell.Markers) Line(EndMarker + Lang.F("lines {0}-{1} of {2}", 1, commands.Count, commands.Count));
+    }
+
+    // "run $cmd" at a terminal: the commands shown, and asked about first. True: run them. Edit (and Esc): $cmd is
+    // kept, to change it and run it again; Cancel: $cmd is deleted. Not at a terminal: run, as nothing could answer
+    private bool RunCommandsAsked(string path, IReadOnlyList<string> commands)
+    {
+        if (!Terminal) return true;
+        ShowCommands(path, commands);
+        var picked = ChoiceBox.Pick(Lang.T("Run"), Lang.T("Run these commands?"), string.Empty,
+            new[] { Lang.T("Run"), Lang.T("Edit"), Lang.T("Cancel") }, new[] { "R", "E", "C" }, 0, false);
+        if (picked == 0) return true;
+        if (picked == 2)
+        {
+            DeleteCommandsFile();
+            Line(Lang.T("Not run: $cmd is deleted (again edit makes a new one)"));
+        }
+        else
+        {
+            Line(Lang.T("Not run: change $cmd, then run $cmd again"));
+        }
+
+        return false;
     }
 
     // "forget": what the shell keeps only while Blyant runs, forgotten after asking (in a script or with --run, the

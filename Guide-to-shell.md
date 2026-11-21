@@ -205,6 +205,7 @@ Some commands have a short form, which does the same: `fav` and `favs` (`favorit
 | `again edit [n\|n-m]` | Put the command typed last, or those with the numbers, in a file, `$cmd`, to change with the commands of the shell, and run it with `run $cmd`; `$file` stays the file you work on. See [Fix a command and run it](#fix-a-command-and-run-it) |
 | `again n\|n-m > $name` | Keep commands you typed in a register, as typed and the oldest first, for `run` (`again 3-5 > $tidy`); `>> $name` adds them. See [Running commands](#running-commands) |
 | `run $name\|file` | Run the commands of a register or of a file, one per line, each written out first; it stops at the first that fails. See [Running commands](#running-commands) |
+| `run [-y] $cmd` | Show the commands of `again edit` and ask first: run them, edit them more, or cancel (`$cmd` is deleted). `run -y $cmd` runs them at once. See [Fix a command and run it](#fix-a-command-and-run-it) |
 | `run $name\|file words` | Run it with the words put in where the commands have `$1`, `$2` ... (`$*`: all the words): `run $check $file 12`. A script of one command without `$1` gets the words added at the end. See [Script with words](#script-with-words) |
 | `$name words` | A register of one line as the start of a command: after `reg w words`, `$w $file 12` runs `words` with the file and the line. See [Script with words](#script-with-words) |
 | `help [command]` (`h`) | List the commands, or explain one |
@@ -1248,11 +1249,19 @@ blyant ~/novel> replace $cmd alwyas always
 blyant ~/novel> replace $cmd Octobr October
 ...
 blyant ~/novel> run $cmd
+-> blyant-commands-4711.txt
+  1  insert notes.md bottom The ferry came late, as it always did in October
+<- lines 1-1 of 1
+Run: Run these commands?
+  R Run*  E Edit  C Cancel: r
 insert notes.md bottom The ferry came late, as it always did in October
 /home/anna/novel/notes.md: line 12 put in
 ```
 
-- `again edit 3` takes command 3 of `again`, and `again edit 3-5` commands 3 to 5, the oldest first, a command on each line. `run $cmd` runs them one after the other, and stops at the first that fails
+- `run $cmd` shows the commands and asks before it runs them. `Enter` (or `r`) runs them. `e` (Edit) runs nothing and keeps `$cmd`, so you can change it further and `run $cmd` again. `c` (Cancel) runs nothing and deletes `$cmd`. `Esc` runs nothing either, and keeps `$cmd`
+- `run -y $cmd` runs the commands at once, without the question. Other files and registers (`run tidy.txt`, `run $tidy`) are never asked about
+
+- `again edit 3` takes command 3 of `again`, and `again edit 3-5` commands 3 to 5, the oldest first, a command on each line. `run $cmd` runs them one after the other (after the question), and stops at the first that fails
 - Everything that changes a file works on `$cmd`, with the line given: `replace $cmd old new`, `words $cmd 1` and `word $cmd 1 11 replace always`, `change $cmd +1 ...` (the whole line), `lines $cmd 2 ...`, `insert` and `shift`, and `undo`. `peek $cmd` shows the file again
 - What you do with `$cmd` leaves `$file`, `$line`, `@`, the last list and `$tag` as they were, and the file is not put in the latest files. The commands that `run $cmd` runs work as typed, and change `$file` as they would at the prompt
 - The file is in the folder `temp` in the data directory: `blyant-commands-` and the number of the running Blyant, so two shells at a time have a file each. A new `again edit` writes over it, and it is deleted when you leave the shell (`exit`, `screen`): what you typed stays on the disk only while the shell runs. A file left by a Blyant that was stopped before you left the shell (the terminal closed) is deleted the next time a shell is left. Before `again edit`, or after you leave the shell, `$cmd` is not there, and the shell says so

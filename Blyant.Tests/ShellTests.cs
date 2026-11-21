@@ -7665,7 +7665,7 @@ public class ShellTests : IDisposable
     {
         File.WriteAllText(In("work", "e.md"), "start\n");
         var (output, errors, _, _) = Run("insrt e.md bottom it alwyas did\nagain edit\nreplace $cmd insrt insert\n" +
-                                         "replace $cmd alwyas always\nrun $cmd\n", terminal: true);
+                                         "replace $cmd alwyas always\nrun $cmd\nr\n", terminal: true);
         Assert.Contains("  1  insrt e.md bottom it alwyas did\n", output);
         Assert.Equal("start\nit always did\n", File.ReadAllText(In("work", "e.md")));
         // In the folder "temp" of the data directory, and deleted when the shell is left
@@ -7694,6 +7694,45 @@ public class ShellTests : IDisposable
     }
 
     [Fact]
+    public void RunCmd_ShowsTheCommandsAndAsks_RunEditOrCancel_AndRunYRunsAtOnce()
+    {
+        File.WriteAllText(In("work", "e.md"), "start\n");
+        const string typed = "insert e.md bottom one\nagain edit\nundo\n";
+        // Enter: run (the first choice); the commands are shown before the question
+        var (output, _, _, _) = Run(typed + "run $cmd\n\n", terminal: true);
+        Assert.Contains(Lang.T("Run these commands?"), output);
+        Assert.Contains("  1  insert e.md bottom one\n", output.Split(Lang.T("Run these commands?"))[^2]);
+        Assert.Equal("start\none\n", File.ReadAllText(In("work", "e.md")));
+        // Edit: nothing runs, and $cmd is kept to change and run again
+        File.WriteAllText(In("work", "e.md"), "start\n");
+        (output, _, _, _) = Run(typed + "run $cmd\ne\nreplace $cmd one two\nrun $cmd\nr\n", terminal: true);
+        Assert.Contains(Lang.T("Not run: change $cmd, then run $cmd again"), output);
+        Assert.Equal("start\ntwo\n", File.ReadAllText(In("work", "e.md")));
+        // Cancel: nothing runs, and $cmd is deleted
+        File.WriteAllText(In("work", "e.md"), "start\n");
+        var errors = string.Empty;
+        (output, errors, _, _) = Run(typed + "run $cmd\nc\necho $cmd\n", terminal: true);
+        Assert.Contains(Lang.T("Not run: $cmd is deleted (again edit makes a new one)"), output);
+        Assert.Contains(Lang.T("No $cmd yet: again edit puts the commands typed in it"), errors);
+        Assert.Equal("start\n", File.ReadAllText(In("work", "e.md")));
+        // No answer (the end of the input, as Esc): kept, nothing runs
+        (output, _, _, _) = Run(typed + "run $cmd\n", terminal: true);
+        Assert.Contains(Lang.T("Not run: change $cmd, then run $cmd again"), output);
+        Assert.Equal("start\n", File.ReadAllText(In("work", "e.md")));
+        // -y: run at once, without the question
+        (output, _, _, _) = Run(typed + "run -y $cmd\n", terminal: true);
+        Assert.DoesNotContain(Lang.T("Run these commands?"), output);
+        Assert.Equal("start\none\n", File.ReadAllText(In("work", "e.md")));
+        // Another file of commands is not asked about, also with -y
+        File.WriteAllText(In("work", "c.txt"), "pwd\n");
+        (output, errors, _, _) = Run("run c.txt\nrun -y c.txt\n", terminal: true);
+        Assert.Equal(string.Empty, errors);
+        Assert.DoesNotContain(Lang.T("Run these commands?"), output);
+        Assert.Contains("run [-y] $cmd", Run("help run\n").Output);
+        Assert.Equal("run -y", Tab(Completion(), "run -"));
+    }
+
+    [Fact]
     public void AgainEdit_TakesSeveralCommands_AndIsRefusedInAFile()
     {
         File.WriteAllText(In("work", "e.md"), "x\n");
@@ -7717,7 +7756,7 @@ public class ShellTests : IDisposable
         // Working on e.md at line 2; then a command typed wrong, fixed in $cmd
         var (output, errors, _, session) = Run(
             "peek e.md 2\nchnage e.md +2 TWO\nagain edit\necho $cmd\nreplace $cmd chnage change\nwords $cmd 1\n" +
-            "peek $cmd\necho $file $line\nundo\nreplace $cmd chnage change\nrun $cmd\necho $file $line\n", terminal: true);
+            "peek $cmd\necho $file $line\nundo\nreplace $cmd chnage change\nrun -y $cmd\necho $file $line\n", terminal: true);
         Assert.Contains("blyant-commands-", output);
         // While $cmd is changed: $file and $line are still e.md at line 2
         Assert.Contains(In("work", "e.md") + " 2\n", output);

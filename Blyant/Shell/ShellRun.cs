@@ -6,7 +6,8 @@
 /// questions are asked as for any command. A $name in a command is put in when that command runs ("$$date" in the
 /// register keeps "$date" for then). A line starting with "#" is a comment. Words after the register or file are
 /// put in where a command has $1, $2 ... ($* all of them): "run $check $file 12"; a script of one line without them
-/// gets them at its end ("reg test open", "run $test $file")
+/// gets them at its end ("reg test open", "run $test $file"). "run $cmd" (the file of "again edit") shows the
+/// commands and asks first, at a terminal: run, edit or cancel; "run -y $cmd" runs them at once
 /// </summary>
 internal sealed partial class ShellSession
 {
@@ -21,6 +22,15 @@ internal sealed partial class ShellSession
     private void RunCommands(string argument)
     {
         var typed = (_typedArgument ?? argument).Trim();
+        // "-y": $cmd runs without asking first
+        var yes = false;
+        if (Words(typed) is ["-y", ..])
+        {
+            yes = true;
+            typed = typed[2..].Trim();
+            argument = argument.Trim()[2..].Trim();
+        }
+
         if (typed.Length == 0)
         {
             Error(Lang.T("Give a register or a file: run $tidy, run tidy.txt"));
@@ -51,6 +61,7 @@ internal sealed partial class ShellSession
 
         string text;
         string what;
+        var commandsFile = false;
         // "$tidy" alone: the commands in the register ($clip and $peek too); "$file", "$pwd/weekly.txt", "notes.txt":
         // a file, with the $names put in
         if (typed is ['$', .. var name] && ShellRegisters.IsName(name) &&
@@ -74,6 +85,7 @@ internal sealed partial class ShellSession
             if (Existing(path) is not { } item || ReadableFile(item) is not { } file) return;
             text = file.Text;
             what = item.Path;
+            commandsFile = IsCommandsFile(item.Path);
         }
 
         if (_runDepth >= MaxRunDepth)
@@ -85,6 +97,8 @@ internal sealed partial class ShellSession
         var lines = LinesOfText(text);
         if (WithArguments(lines, arguments) is not { } given) return;
         lines = given;
+        // The file of "again edit" (run $cmd): asked first, at a terminal
+        if (commandsFile && !yes && !RunCommandsAsked(what, lines)) return;
         // English: the log (the register or the file, never its commands: each is logged by its name as it runs)
         EventLog.Add(DialogText.LogShell + ": run " + (what.StartsWith('$') ? what : "file " + what));
         var typedBefore = _typed;

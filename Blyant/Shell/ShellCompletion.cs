@@ -364,8 +364,10 @@ internal sealed class ShellCompletion
                 return (Kind.Words, new[] { "-l", "-f", "-b", "-d", "-r", "-t" }.Except(after.Take(position)));
             }
             case "run":
-                // (a file of commands; $ and Tab the registers)
-                return (position == 0 ? Kind.Path : Kind.None, none);
+                // (a file of commands, after -y; $ and Tab the registers; "run -" and Tab: -y)
+                return _words.All(word => word == "-y")
+                    ? (Kind.PathOrOptions, new[] { "-y" }.Except(_words))
+                    : (Kind.None, none);
             case "about":
                 return (position == 0 ? Kind.Words : Kind.None, new[] { "license" });
             case "help":
