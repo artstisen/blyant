@@ -87,6 +87,7 @@ internal sealed partial class ShellSession
         ("clip [path|name] file|dir|n|.", Lang.T("Copy a path, or a name, to the clipboard")),
         ("clip text file|n", Lang.T("Copy the text of a file to the clipboard")),
         ("clip lines file|n lines", Lang.T("Copy lines of a file (4, 4-6, 4,7, +100 20)")),
+        ("clip words [-p] file|n line n|n-m", Lang.T("Copy words of a line, numbered as words shows them")),
         ("clip $name", Lang.T("Copy the value of a register to the clipboard")),
         ("clip ... $clip", Lang.T("The text copied last, in a command")),
         ("path [file|n], name [file|n]", Lang.T("Copy the path, or name, of $file (or of a file)")),

@@ -8241,4 +8241,48 @@ public class ShellTests : IDisposable
         Assert.Equal(string.Empty, errors);
         Assert.Equal("Blyant v2 5 8 Shell\n", Text("v.md"));
     }
+
+    // ---- 1.6.1: clip words
+
+    [Fact]
+    public void ClipWords_CopiesWordsAsTheyAreInTheLine_AndChangesNothing()
+    {
+        File.WriteAllText(In("work", "c.md"), "# Notes\n" + WordLine + "\n");
+        File.WriteAllText(In("work", "other.md"), "one\n");
+        var (output, errors, _, session) = Run("peek other.md\nclip words c.md 2 6-9\necho $clip\nclip words c.md 2 #9:32\n" +
+                                               "echo $clip\nclip words -p c.md 2 6\necho $clip\necho $file\n");
+        Assert.Equal(string.Empty, errors);
+        // From the start of the first word to the end of the last, what is between them too
+        Assert.Contains("\ntext, that I want\n", output);
+        Assert.Contains("\nwant\n", output);
+        // -p: a word is all between blanks, the comma too
+        Assert.Contains("\ntext,\n", output);
+        Assert.Contains(Lang.F("Words {0}-{1} of line {2} of {3}", 6, 9, 2, In("work", "c.md")), output);
+        // The file is only read: $file is still the file peeked
+        Assert.EndsWith(In("work", "other.md") + "\n", output);
+        Assert.Equal(In("work", "other.md"), session.WorkedFile);
+        // Put in elsewhere, at a column and after a word
+        (_, errors, _, _) = Run("clip words c.md 2 14-15\nlines other.md 1 at 4 \" $clip\"\nword other.md 1 1 before $clip\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("few commands one few commands\n", Text("other.md"));
+    }
+
+    [Fact]
+    public void ClipWords_WithAt_TakesTheFileAndTheLineWorkedOn_AndTellsWhatItCannotDo()
+    {
+        File.WriteAllText(In("work", "c.md"), "# Notes\n" + WordLine + "\n\n");
+        var (output, errors, _, _) = Run("words c.md 2\nclip words @ 1-2\necho $clip\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains("\nThis is\n", output);
+        (_, errors, _, _) = Run("clip words c.md 2\nclip words c.md 2 x\nclip words c.md 2 99\nclip words c.md 3 1\n" +
+                                "clip words c.md 9 1\nclip words -q c.md 2 1\n");
+        Assert.Contains(Lang.T("Give a file, a line and the words: clip words notes.md 12 6-9"), errors);
+        Assert.Contains(Lang.F("Not words: {0} (as 9, or 5-7)", "x"), errors);
+        Assert.Contains(Lang.F("Line {0} has {1} words: {2} is not one", 2, 15, 99), errors);
+        Assert.Contains(Lang.F("Line {0} has no words", 3), errors);
+        Assert.Contains(Lang.F("{0} has {1} lines", In("work", "c.md"), 3), errors);
+        Assert.Contains(Lang.F("Not taken: {0} (-p: words between blanks, with punctuation)", "-q"), errors);
+        Assert.Equal("clip words", Tab(Completion(), "clip wo"));
+        Assert.Contains("clip words [-p] file|n line n|n-m", Run("help clip\n").Output);
+    }
 }

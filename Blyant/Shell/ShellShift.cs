@@ -280,9 +280,11 @@ internal sealed partial class ShellSession
     // "@" in a text ("insert @ Ask @anna"), is as it is. Null (and told) when there is no line to take
     internal string? WithAt(string name, string argument)
     {
-        if (!TakesAt.Contains(name)) return argument;
+        // ("clip words @ 6-9": after the kind, as word takes it)
+        var clipWords = name == "clip" && CommandLine.Name(argument).Equals("words", StringComparison.OrdinalIgnoreCase);
+        if (!TakesAt.Contains(name) && !clipWords) return argument;
         var words = Words(argument);
-        var at = 0;
+        var at = clipWords ? 1 : 0;
         while (at < words.Count && words[at] is "-p" or "-s") at++;
         if (at >= words.Count || words[at] != "@") return argument;
         var from = AfterWords(argument, at);

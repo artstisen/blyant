@@ -162,6 +162,7 @@ Some commands have a short form, which does the same: `fav` and `favs` (`favorit
 | `clip [path\|name] file\|dir\|n\|.` | Copy the full path of a file or directory (`clip 3`: row 3 of the last list; `clip .`: the directory you are in), or its name, to the clipboard (see [Clipboard](#clipboard)) |
 | `clip text file\|n` | Copy the text of a file to the clipboard |
 | `clip lines file\|n lines` | Copy lines of a file to the clipboard, given as for `lines` (`40`, `4-6`, `4,7,9-10`, `+100 30`, a text in the line). See [Line numbers](#line-numbers) |
+| `clip words [-p] file\|n line n\|n-m` | Copy words of a line, by the numbers `words` shows (`clip words notes.md 12 6-9`, `clip words @ #9:32`), as they are in the line. See [Clipboard](#clipboard) |
 | `clip $name` | Copy the value of a register to the clipboard |
 | `path [file\|n]`, `name [file\|n]` | Copy the full path, or the name, of the file you worked on last (`$file`), as `:path` and `:name` do in the editor, or of a given file or row: `path 3`, `name plot.md`. See [Clipboard](#clipboard) |
 | `$clip` | The text `clip` copied last, used in a command like a register (`insert plan.md bottom $clip`: the lines copied) |
@@ -1190,6 +1191,7 @@ clip name 3                 its name only (plot.md)
 clip .                      the directory you are in
 clip text todo.md           the whole text of a file
 clip lines notes.md +40 10  10 lines from line 40 (also 40, 4-6, 4,7)
+clip words notes.md 12 6-9  words 6 to 9 of line 12, as words numbers them
 clip $note                  the value of a register, as it is
 path                        the full path of $file, as :path in the editor
 name                        its name, as :name
@@ -1200,6 +1202,9 @@ name                        its name, as :name
 What `clip` copied last is `$clip`, which puts it in a command, as a register does:
 
 ```
+clip words notes.md 12 6-9  "text, that I want"
+lines notes.md 20 at 15 "$clip "   put in at column 15 of line 20
+word plan.md 3 2 after $clip       or after word 2 of a line in another file
 clip lines notes.md 4-6     three lines
 insert plan.md bottom $clip they go at the end of plan.md
 clip name 3
@@ -1208,7 +1213,8 @@ insert todo.md top Read $clip
 
 - It goes where the [clipboard settings](Guide-to-editor.md#system-clipboard-and-paste-bin) of the editor send a yank: to the clipboard of the system through the terminal (OSC 52, also over SSH) and/or to the paste bin file. Text too long for the terminal goes only to the paste bin, if it is on. The shell tells what was copied: the path, or how much
 - It also goes to the string memory of the editor: after `open` (or `screen`), `p` in the editor puts it in, and `:reglist` lists it. This also works where the terminal has no clipboard (the console of Linux, the Terminal of macOS), or with the clipboard turned off
-- `text` and `lines` take text files only. Lines copied are joined by line breaks, without one after the last
+- `clip words` takes the words by the numbers `words` shows (`9`, `#9`, `#9:32`, `6-9`), and copies them as they are in the line: from the start of the first word to the end of the last, with what is between them (`text, that I want`), and without any punctuation before the first or after the last. With `-p` a word is all between blanks, punctuation too (`text,`), as for `words -p`. The file is a name, a row of the last list, `$file` or `@` (the file and the line worked on: `clip words @ 6-9`). It only reads the file: `$file`, `$line` and the last list stay as they were
+- `text`, `lines` and `words` take text files only. Lines copied are joined by line breaks, without one after the last
 - `$clip` is kept in Blyant, not taken from the clipboard of the system: text copied in another program is pasted on the line with the keys of the terminal (`Ctrl+Shift+V`). It is there until Blyant ends, and the next `clip` replaces it. Before the first `clip`, a command with `$clip` says that nothing is copied yet. Lines copied are put in as lines by `insert` and `change` (`change plan.md 3-5 $clip`), blank lines and trailing blanks too, and the text of a file (`clip text`) as lines; other commands take one line, and refuse it when `$clip` has more. An empty `$clip` (the text of a file of one blank line) is not taken by `change`, where no text deletes the lines. `reg` lists it after the registers, with the first line and the number of lines, and `reg clip` shows it all. `$clip` is not a register: `reg clip text` and `reg -d clip` are refused, and a line `clip` in `registers.txt` is kept there as a line that is not a register
 - When commands come from a file, a pipe or `--run` and the output goes to a file or a program, the clipboard sequence would end up in that output: then only the paste bin is used, if it is on, and `$clip`, so a script can copy lines and put them in another file
 - The log tells only that something was copied, and what kind (`clip: path`), never the text

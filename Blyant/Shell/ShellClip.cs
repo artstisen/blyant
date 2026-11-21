@@ -1,7 +1,8 @@
 ﻿namespace Blyant;
 
 /// <summary>
-/// "clip": a path, a name, the text of a file or some of its lines, or the value of a register, to the clipboard
+/// "clip": a path, a name, the text of a file, some of its lines or words of a line, or the value of a register, to
+/// the clipboard
 /// (OSC 52) and/or the paste bin, as set on the clipboard page of Configuration, and to the string memory, so "p" in
 /// the editor puts it in (after "open" or "screen", which run in the same Blyant), and to $clip, which the commands
 /// of the shell take as a register. What is copied is never logged
@@ -10,8 +11,9 @@ internal sealed partial class ShellSession
 {
     // "clip 3", "clip path 3": the full path of row 3 of the last list (or of a file or directory typed; "." the one
     // the shell is in); "clip name 3": its name; "clip text 3": the text of the file; "clip lines 3 4-6": lines of it,
-    // as "lines" and "shift" take them ("4", "4-6", "4,7,9-10", "+100 20", a text in the line); "clip $note": the
-    // value of the register, as it is
+    // as "lines" and "shift" take them ("4", "4-6", "4,7,9-10", "+100 20", a text in the line); "clip words 3 12
+    // 6-9": words of line 12, by the numbers words shows ("-p": all between blanks); "clip $note": the value of the
+    // register, as it is
     private void Clip(string argument)
     {
         var words = Words(argument);
@@ -32,9 +34,10 @@ internal sealed partial class ShellSession
         }
         else
         {
-            if (kind is not ("path" or "name" or "text" or "lines")) kind = "path";
+            if (kind is not ("path" or "name" or "text" or "lines" or "words")) kind = "path";
             else words.RemoveAt(0);
-            if (!ClipText(kind, words, out text, out shown)) return;
+            if (kind == "words" ? !ClipWords(words, out text, out shown) : !ClipText(kind, words, out text, out shown))
+                return;
         }
 
         CopyClip(kind, text, shown);
@@ -151,6 +154,66 @@ internal sealed partial class ShellSession
             : picked[^1] - picked[0] == picked.Count - 1
                 ? Lang.F("Lines {0}-{1} of {2}", picked[0], picked[^1], path)
                 : Lang.F("Lines {0} of {1}", Numbers(picked), path);
+        return true;
+    }
+
+    // "clip words notes.md 12 6-9" ("-p" first: a word is all between blanks): the words of the line by their numbers,
+    // as words shows them ("#6", "#6:19", "6-9"), from the start of the first to the end of the last, as they are in
+    // the line, what is between them too ("text, that I want"). The file is only read: $file, $line and the last list
+    // stay as they were. False when the words cannot be had (told)
+    private bool ClipWords(List<string> words, out string text, out string shown)
+    {
+        text = shown = string.Empty;
+        if (BlanksOption(words) is not { } blanks) return false;
+        var usage = Lang.T("Give a file, a line and the words: clip words notes.md 12 6-9");
+        if (words.Count != 3)
+        {
+            Error(usage);
+            return false;
+        }
+
+        if (!LinesToChange(WithoutHashes(words[2]), out var first, out var last))
+        {
+            Error(Lang.F("Not words: {0} (as 9, or 5-7)", words[2]));
+            return false;
+        }
+
+        if (!LinesToChange(words[1], out var number, out var lastLine) || lastLine != number)
+        {
+            Error(usage);
+            return false;
+        }
+
+        if (Existing(words[0]) is not { } item || ReadableFile(item) is not { } file) return false;
+        var lines = LinesOfText(TextBuffer.Normalize(file.Text));
+        if (number > lines.Count)
+        {
+            Error(Lang.F("{0} has {1} lines", item.Path, lines.Count));
+            return false;
+        }
+
+        var line = lines[number - 1];
+        var found = LineWords.Find(line, blanks);
+        if (found.Count == 0)
+        {
+            Error(Lang.F("Line {0} has no words", number));
+            return false;
+        }
+
+        if (last > found.Count)
+        {
+            Error(found.Count == 1
+                ? Lang.F("Line {0} has 1 word: {1} is not one", number, last)
+                : Lang.F("Line {0} has {1} words: {2} is not one", number, found.Count, last));
+            return false;
+        }
+
+        var start = found[first - 1].Start;
+        text = line[start..(found[last - 1].Start + found[last - 1].Length)];
+        var path = Path.GetFullPath(item.Path);
+        shown = first == last
+            ? Lang.F("Word {0} of line {1} of {2}", first, number, path)
+            : Lang.F("Words {0}-{1} of line {2} of {3}", first, last, number, path);
         return true;
     }
 

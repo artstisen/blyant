@@ -51,7 +51,7 @@ internal sealed class ShellCompletion
     }
 
     // What "clip" copies
-    private static readonly string[] ClipKinds = { "path", "name", "text", "lines" };
+    private static readonly string[] ClipKinds = { "path", "name", "text", "lines", "words" };
 
     // What can follow a tag: a search in the names of its files, or in their lines
     private static readonly string[] TagSearchWords = { "filter", "-t" };
@@ -349,6 +349,9 @@ internal sealed class ShellCompletion
             case "clip":
                 // The kind, or a path ("clip 3" copies the path)
                 if (position == 0) return (Kind.PathOrWords, ClipKinds);
+                // ("clip words -p notes.md": the file after -p)
+                if (after[0] == "words" && position == 1) return (Kind.PathOrWords, new[] { "-p" });
+                if (after[0] == "words" && position == 2 && after[1] == "-p") return (Kind.Path, none);
                 return (position == 1 && ClipKinds.Contains(after[0]) ? Kind.Path : Kind.None, none);
             case "reg":
                 if (position == 0) return (Kind.Words, new[] { "-d", "-t" }.Concat(ShellRegisters.All.Keys));
