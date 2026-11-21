@@ -8452,7 +8452,7 @@ public class ShellTests : IDisposable
         var (_, errors, _, _) = Run("peek ch1.md 1-2\npeek save storm\npeek ch1.md 3-4\npeek save lights\n" +
                                     "peek notes.md 2-2\npeek save list\n");
         Assert.Equal(string.Empty, errors);
-        var (output, _, _, _) = Run("peek saved filter ch1\n");
+        var (output, _, _, _) = Run("peek saved filter ch1.md\n");
         Assert.Contains("1  storm   1-2  " + In("work", "ch1.md"), output);
         Assert.Contains("2  lights  3-4  " + In("work", "ch1.md"), output);
         Assert.DoesNotContain("notes.md", output);
@@ -8592,9 +8592,10 @@ public class ShellTests : IDisposable
         File.WriteAllText(In("work", "s.md"), string.Concat(Enumerable.Range(1, 10).Select(i => "line " + i + "\n")));
         Run("peek s.md +8 3\npeek save end\n");
         File.WriteAllText(In("work", "s.md"), "one\nstorm here\nthree\n");
-        var (output, _, _, _) = Run("peek saved -t storm\npeek saved filter x -t storm\npeek saved filter \"e\"\"\"\n");
+        // (a filter that is in no temporary path: on macOS the path of the tests has "x" in it, /var/folders/xx/...)
+        var (output, _, _, _) = Run("peek saved -t storm\npeek saved filter qqz -t storm\npeek saved filter \"e\"\"\"\n");
         Assert.Contains("1  end  s.md:2  storm here", output);
-        Assert.Contains(Lang.F("No saved peeks with {0} in the name or path and {1} in the lines", "x", "storm"), output);
+        Assert.Contains(Lang.F("No saved peeks with {0} in the name or path and {1} in the lines", "qqz", "storm"), output);
         // A filter in quotes, with "" a quote
         Assert.Contains(Lang.F("No saved peeks with {0} in the name or path", "e\""), output);
         Assert.Equal("peek save -d end", Tab(Completion(), "peek save -d e"));
