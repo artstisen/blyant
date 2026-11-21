@@ -30,3 +30,6 @@ publish/
 
 # Spelling dictionaries (supplied by the user, not part of the source)
 /spell/
+
+# Notes for testing on a Raspberry Pi (kept on this computer, not part of the source)
+Raspberry-Pi-test-checklist.md
