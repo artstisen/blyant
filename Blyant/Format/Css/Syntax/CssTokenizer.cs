@@ -1,4 +1,4 @@
-﻿// Copied from Blyant Validator 0.6.2 (src/Blyant.Validator.Css/Syntax/CssTokenizer.cs) by tools/formatters.py: not changed by hand in Blyant.
+﻿// Copied from Blyant Validator 0.6.3 (src/Blyant.Validator.Css/Syntax/CssTokenizer.cs) by tools/formatters.py: not changed by hand in Blyant.
 // Change it in Blyant Validator, and copy it again. English: its messages are not translated
 using System.Globalization;
 using System.Text;
@@ -6,13 +6,13 @@ using System.Text;
 namespace Blyant.Format.Css.Syntax;
 
 /// <summary>A problem found while tokenizing or parsing.</summary>
-public sealed record CssSyntaxError(int Offset, string Code, string Message);
+internal sealed record CssSyntaxError(int Offset, string Code, string Message);
 
 /// <summary>
 /// Tokenizer following CSS Syntax Level 3, section 4. Unlike the specification it keeps comments as
 /// tokens (the formatter needs them) and records the offsets of every token.
 /// </summary>
-public sealed class CssTokenizer
+internal sealed class CssTokenizer
 {
     private readonly string _s;
     private int _pos;
@@ -25,7 +25,7 @@ public sealed class CssTokenizer
     public static List<CssToken> Tokenize(string source, out List<CssSyntaxError> errors)
     {
         var tokenizer = new CssTokenizer(source);
-        var tokens = new List<CssToken>();
+        List<CssToken> tokens = [];
         while (true)
         {
             var token = tokenizer.Next();

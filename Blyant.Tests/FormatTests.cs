@@ -53,18 +53,19 @@ public class FormatTests
 
     [Theory]
     // As Blyant Validator: XHTML is XML, and the files of other kinds are not formatted
-    [InlineData("page.xhtml", DocumentKind.Xml)]
-    [InlineData("PAGE.HTM", DocumentKind.Html)]
-    [InlineData("logo.svg", DocumentKind.Xml)]
-    [InlineData("feed.rss", DocumentKind.Xml)]
-    [InlineData("Blyant.csproj", DocumentKind.Unknown)]
-    [InlineData("notes.md", DocumentKind.Unknown)]
-    [InlineData("book.typ", DocumentKind.Unknown)]
-    [InlineData("index.php", DocumentKind.Unknown)]
-    public void Format_TellsTheKindOfFile_ByItsName_AsBlyantValidator(string fileName, DocumentKind expected)
+    [InlineData("page.xhtml", "Xml")]
+    [InlineData("PAGE.HTM", "Html")]
+    [InlineData("logo.svg", "Xml")]
+    [InlineData("feed.rss", "Xml")]
+    [InlineData("Blyant.csproj", "Unknown")]
+    [InlineData("notes.md", "Unknown")]
+    [InlineData("book.typ", "Unknown")]
+    [InlineData("index.php", "Unknown")]
+    public void Format_TellsTheKindOfFile_ByItsName_AsBlyantValidator(string fileName, string expected)
     {
+        // (the kind by its name: DocumentKind is internal, and a test method is public)
         var kind = SourceDocument.DetectKind(fileName);
-        Assert.Equal(expected, kind is DocumentKind.Markdown or DocumentKind.Typst ? DocumentKind.Unknown : kind);
+        Assert.Equal(Enum.Parse<DocumentKind>(expected), kind is DocumentKind.Markdown or DocumentKind.Typst ? DocumentKind.Unknown : kind);
     }
 
     [Fact]

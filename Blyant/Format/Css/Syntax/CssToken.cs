@@ -1,9 +1,9 @@
-﻿// Copied from Blyant Validator 0.6.2 (src/Blyant.Validator.Css/Syntax/CssToken.cs) by tools/formatters.py: not changed by hand in Blyant.
+﻿// Copied from Blyant Validator 0.6.3 (src/Blyant.Validator.Css/Syntax/CssToken.cs) by tools/formatters.py: not changed by hand in Blyant.
 // Change it in Blyant Validator, and copy it again. English: its messages are not translated
 namespace Blyant.Format.Css.Syntax;
 
 /// <summary>Token types from CSS Syntax Level 3 (https://www.w3.org/TR/css-syntax-3/#tokenization), plus comments.</summary>
-public enum CssTokenType
+internal enum CssTokenType
 {
     Ident,
     Function,
@@ -41,7 +41,7 @@ public enum CssTokenType
 /// Ident, function, at-keyword and hash names (without <c>(</c>, <c>@</c> or <c>#</c>), string and url
 /// contents, the character of a delim, and the unit of a dimension.
 /// </param>
-public sealed record CssToken(CssTokenType Type, int Start, int End, string Value)
+internal sealed record CssToken(CssTokenType Type, int Start, int End, string Value)
 {
     /// <summary>The number of Number, Percentage and Dimension tokens.</summary>
     public double Number { get; init; }

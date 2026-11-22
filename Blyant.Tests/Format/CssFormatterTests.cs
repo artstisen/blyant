@@ -1,4 +1,4 @@
-﻿// Copied from Blyant Validator 0.6.2 (tests/Blyant.Validator.Tests/CssFormatterTests.cs) by tools/formatters.py: not changed by hand in Blyant.
+﻿// Copied from Blyant Validator 0.6.3 (tests/Blyant.Validator.Tests/CssFormatterTests.cs) by tools/formatters.py: not changed by hand in Blyant.
 // Change it in Blyant Validator, and copy it again. English: its messages are not translated
 using Blyant.Format.Core;
 using Blyant.Format.Css;
@@ -6,7 +6,7 @@ using Blyant.Format.Css.Syntax;
 
 namespace Blyant.Format.Tests;
 
-public class CssFormatterTests
+public sealed class CssFormatterTests
 {
     // The raw string literals below get the line endings of this file, so inputs are made LF first.
     private static string Format(string css, FormatOptions? options = null) =>

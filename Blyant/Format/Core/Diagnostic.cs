@@ -1,9 +1,9 @@
-﻿// Copied from Blyant Validator 0.6.2 (src/Blyant.Validator.Core/Diagnostic.cs) by tools/formatters.py: not changed by hand in Blyant.
+﻿// Copied from Blyant Validator 0.6.3 (src/Blyant.Validator.Core/Diagnostic.cs) by tools/formatters.py: not changed by hand in Blyant.
 // Change it in Blyant Validator, and copy it again. English: its messages are not translated
 namespace Blyant.Format.Core;
 
 /// <summary>How serious a diagnostic is.</summary>
-public enum Severity
+internal enum Severity
 {
     Info,
     Warning,
@@ -11,7 +11,7 @@ public enum Severity
 }
 
 /// <summary>A 1-based position in a source file. Zero means "unknown".</summary>
-public readonly record struct SourcePosition(int Line, int Column)
+internal readonly record struct SourcePosition(int Line, int Column)
 {
     public override string ToString() => Line > 0 ? $"{Line}:{Column}" : "?";
 }
@@ -24,7 +24,7 @@ public readonly record struct SourcePosition(int Line, int Column)
 /// <param name="Start">Where the problem starts.</param>
 /// <param name="End">Where the problem ends (may equal <paramref name="Start"/>).</param>
 /// <param name="Engine">Which engine produced the finding: <c>native</c> or <c>vnu</c>.</param>
-public sealed record Diagnostic(
+internal sealed record Diagnostic(
     string File,
     Severity Severity,
     string Code,

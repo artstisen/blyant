@@ -1,9 +1,9 @@
-﻿// Copied from Blyant Validator 0.6.2 (src/Blyant.Validator.Core/Abstractions.cs) by tools/formatters.py: not changed by hand in Blyant.
+﻿// Copied from Blyant Validator 0.6.3 (src/Blyant.Validator.Core/Abstractions.cs) by tools/formatters.py: not changed by hand in Blyant.
 // Change it in Blyant Validator, and copy it again. English: its messages are not translated
 namespace Blyant.Format.Core;
 
 /// <summary>The kinds of documents Blyant Validator understands.</summary>
-public enum DocumentKind
+internal enum DocumentKind
 {
     Unknown,
     Html,
@@ -23,7 +23,7 @@ public enum DocumentKind
 /// <param name="Path">File path (used for reporting only).</param>
 /// <param name="Content">The full text of the document.</param>
 /// <param name="Kind">What kind of document it is.</param>
-public sealed record SourceDocument(string Path, string Content, DocumentKind Kind)
+internal sealed record SourceDocument(string Path, string Content, DocumentKind Kind)
 {
     /// <summary>True when the file started with a UTF-8 byte order mark (kept when it is written back).</summary>
     public bool HasUtf8Bom { get; init; }
@@ -75,10 +75,10 @@ public sealed record SourceDocument(string Path, string Content, DocumentKind Ki
 }
 
 /// <summary>An engine that runs another program (vnu with Java, the Typst CLI) and could not be run.</summary>
-public class EngineNotAvailableException(string message, Exception? inner = null) : Exception(message, inner);
+internal class EngineNotAvailableException(string message, Exception? inner = null) : Exception(message, inner);
 
 /// <summary>Checks a document and reports diagnostics.</summary>
-public interface IValidator
+internal interface IValidator
 {
     /// <summary>Short engine name shown in output, e.g. <c>native</c> or <c>vnu</c>.</summary>
     string Engine { get; }
@@ -89,7 +89,7 @@ public interface IValidator
 }
 
 /// <summary>Options shared by all formatters.</summary>
-public sealed record FormatOptions
+internal sealed record FormatOptions
 {
     public int IndentSize { get; init; } = 2;
     public bool UseTabs { get; init; }
@@ -104,10 +104,10 @@ public sealed record FormatOptions
 }
 
 /// <summary>Thrown when a document cannot be formatted safely, e.g. because a block is never closed.</summary>
-public sealed class FormatException(string message) : Exception(message);
+internal sealed class FormatException(string message) : Exception(message);
 
 /// <summary>Re-indents and normalises the layout of a document without changing its meaning.</summary>
-public interface IFormatter
+internal interface IFormatter
 {
     bool CanFormat(DocumentKind kind);
 

@@ -1,11 +1,11 @@
-﻿// Copied from Blyant Validator 0.6.2 (tests/Blyant.Validator.Tests/XmlFormatterTests.cs) by tools/formatters.py: not changed by hand in Blyant.
+﻿// Copied from Blyant Validator 0.6.3 (tests/Blyant.Validator.Tests/XmlFormatterTests.cs) by tools/formatters.py: not changed by hand in Blyant.
 // Change it in Blyant Validator, and copy it again. English: its messages are not translated
 using Blyant.Format.Core;
 using Blyant.Format.Xml;
 
 namespace Blyant.Format.Tests;
 
-public class XmlFormatterTests
+public sealed class XmlFormatterTests
 {
     private static string Format(string xml, string? newline = "\n") =>
         new XmlFormatter().Format(new SourceDocument("t.xml", xml.ReplaceLineEndings("\n"), DocumentKind.Xml),

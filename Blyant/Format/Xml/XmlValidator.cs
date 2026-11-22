@@ -1,4 +1,4 @@
-﻿// Copied from Blyant Validator 0.6.2 (src/Blyant.Validator.Xml/XmlValidator.cs) by tools/formatters.py: not changed by hand in Blyant.
+﻿// Copied from Blyant Validator 0.6.3 (src/Blyant.Validator.Xml/XmlValidator.cs) by tools/formatters.py: not changed by hand in Blyant.
 // Change it in Blyant Validator, and copy it again. English: its messages are not translated
 using System.Text.RegularExpressions;
 using System.Xml;
@@ -14,7 +14,7 @@ namespace Blyant.Format.Xml;
 /// no resolver, so a file cannot make the validator read other files or the network (XML external entities), and
 /// entities may expand to at most <see cref="MaxEntityCharacters"/> characters (no "billion laughs").
 /// </summary>
-public sealed partial class XmlValidator : IValidator
+internal sealed partial class XmlValidator : IValidator
 {
     public string Engine => "native";
 
@@ -29,7 +29,7 @@ public sealed partial class XmlValidator : IValidator
     /// <summary>Validates XML given as text.</summary>
     public static IReadOnlyList<Diagnostic> Validate(string path, string xml)
     {
-        var diagnostics = new List<Diagnostic>();
+        List<Diagnostic> diagnostics = [];
         var document = Parse(path, xml, diagnostics);
         // An entity in another file is never read (there is no resolver): its content is not checked
         foreach (Match external in ExternalEntity().Matches(xml))

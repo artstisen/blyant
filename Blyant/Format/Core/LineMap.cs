@@ -1,9 +1,9 @@
-﻿// Copied from Blyant Validator 0.6.2 (src/Blyant.Validator.Core/LineMap.cs) by tools/formatters.py: not changed by hand in Blyant.
+﻿// Copied from Blyant Validator 0.6.3 (src/Blyant.Validator.Core/LineMap.cs) by tools/formatters.py: not changed by hand in Blyant.
 // Change it in Blyant Validator, and copy it again. English: its messages are not translated
 namespace Blyant.Format.Core;
 
 /// <summary>Maps offsets in a text to 1-based line and column numbers.</summary>
-public sealed class LineMap
+internal sealed class LineMap
 {
     private readonly List<int> _lineStarts = [0];
 

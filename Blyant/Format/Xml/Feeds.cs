@@ -1,5 +1,6 @@
-﻿// Copied from Blyant Validator 0.6.2 (src/Blyant.Validator.Xml/Feeds.cs) by tools/formatters.py: not changed by hand in Blyant.
+﻿// Copied from Blyant Validator 0.6.3 (src/Blyant.Validator.Xml/Feeds.cs) by tools/formatters.py: not changed by hand in Blyant.
 // Change it in Blyant Validator, and copy it again. English: its messages are not translated
+using System.Collections.Frozen;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
@@ -27,25 +28,25 @@ internal static partial class Feeds
         diagnostics.Add(new Diagnostic(path, severity, code, message, position, position));
     };
 
-    #region RSS 2.0
+    // ---- RSS 2.0
 
-    private static readonly HashSet<string> ChannelElements =
+    private static readonly FrozenSet<string> ChannelElements =
     [
         "title", "link", "description", "language", "copyright", "managingEditor", "webMaster", "pubDate",
         "lastBuildDate", "category", "generator", "docs", "cloud", "ttl", "image", "rating", "textInput", "skipHours",
         "skipDays", "item",
     ];
 
-    private static readonly HashSet<string> ItemElements =
+    private static readonly FrozenSet<string> ItemElements =
         ["title", "link", "description", "author", "category", "comments", "enclosure", "guid", "pubDate", "source"];
 
-    private static readonly HashSet<string> Days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    private static readonly FrozenSet<string> Days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
     public static void CheckRss(string path, XElement rss, List<Diagnostic> diagnostics)
     {
         var report = MakeReporter(path, diagnostics);
         var version = rss.Attribute("version")?.Value;
-        if (version == null)
+        if (version is null)
             report(rss, Severity.Error, "rss.version", "The “rss” element is missing required attribute “version” (“2.0”).");
         else if (version != "2.0")
             report(rss, Severity.Warning, "rss.version", $"RSS version “{version}”: the rules of RSS 2.0 are used.");
@@ -64,29 +65,29 @@ internal static partial class Feeds
         CheckRssCommon(channel, report);
 
         if (channel.Element("ttl") is { } ttl && !IsNonNegativeInteger(ttl.Value))
-            report(ttl, Severity.Error, "rss.bad-value", $"“{Shorten(ttl.Value)}” is not a number of minutes.");
+            report(ttl, Severity.Error, "rss.bad-value", $"“{Texts.Shorten(ttl.Value, 60)}” is not a number of minutes.");
         if (channel.Element("language") is { } language && !LanguageCode().IsMatch(language.Value.Trim()))
-            report(language, Severity.Warning, "rss.bad-value", $"“{Shorten(language.Value)}” is not a language code (as “en” or “da-DK”).");
+            report(language, Severity.Warning, "rss.bad-value", $"“{Texts.Shorten(language.Value, 60)}” is not a language code (as “en” or “da-DK”).");
         if (channel.Element("image") is { } image)
         {
             foreach (var required in new[] { "url", "title", "link" })
-                if (image.Element(required) == null)
+                if (image.Element(required) is null)
                     report(image, Severity.Error, "rss.missing-element", $"Element “image” is missing required child element “{required}”.");
             CheckUrl(image.Element("url"), report);
             CheckUrl(image.Element("link"), report);
         }
         foreach (var hour in channel.Element("skipHours")?.Elements("hour") ?? [])
             if (!int.TryParse(hour.Value.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out var h) || h > 23)
-                report(hour, Severity.Error, "rss.bad-value", $"“{Shorten(hour.Value)}” is not an hour from 0 to 23.");
+                report(hour, Severity.Error, "rss.bad-value", $"“{Texts.Shorten(hour.Value, 60)}” is not an hour from 0 to 23.");
         foreach (var day in channel.Element("skipDays")?.Elements("day") ?? [])
             if (!Days.Contains(day.Value.Trim()))
-                report(day, Severity.Error, "rss.bad-value", $"“{Shorten(day.Value)}” is not a day (Monday … Sunday).");
+                report(day, Severity.Error, "rss.bad-value", $"“{Texts.Shorten(day.Value, 60)}” is not a day (Monday … Sunday).");
 
         var guids = new Dictionary<string, XElement>(StringComparer.Ordinal);
         foreach (var item in channel.Elements("item"))
         {
             CheckChildren(item, "item", ItemElements, [], report);
-            if (item.Element("title") == null && item.Element("description") == null)
+            if (item.Element("title") is null && item.Element("description") is null)
                 report(item, Severity.Error, "rss.missing-element", "An “item” must have a “title” or a “description”, or both.");
             CheckRssCommon(item, report);
 
@@ -95,31 +96,31 @@ internal static partial class Feeds
                 var permalink = guid.Attribute("isPermaLink")?.Value.Trim();
                 if (permalink is not (null or "true" or "false"))
                     report(guid, Severity.Error, "rss.bad-value", "The “isPermaLink” attribute must be “true” or “false”.");
-                else if (permalink != "false" && UrlProblem(guid.Value.Trim()) != null)
+                else if (permalink != "false" && UrlProblem(guid.Value.Trim()) is not null)
                     report(guid, Severity.Error, "rss.bad-guid",
-                        $"“{Shorten(guid.Value.Trim())}” is not a URL: a “guid” is a link unless it has isPermaLink=\"false\".");
+                        $"“{Texts.Shorten(guid.Value.Trim(), 60)}” is not a URL: a “guid” is a link unless it has isPermaLink=\"false\".");
                 if (!guids.TryAdd(guid.Value.Trim(), guid))
-                    report(guid, Severity.Warning, "rss.duplicate-guid", $"The guid “{Shorten(guid.Value.Trim())}” is used by more than one item.");
+                    report(guid, Severity.Warning, "rss.duplicate-guid", $"The guid “{Texts.Shorten(guid.Value.Trim(), 60)}” is used by more than one item.");
             }
 
             if (item.Element("enclosure") is { } enclosure)
             {
                 foreach (var required in new[] { "url", "length", "type" })
-                    if (enclosure.Attribute(required) == null)
+                    if (enclosure.Attribute(required) is null)
                         report(enclosure, Severity.Error, "rss.missing-attribute", $"Element “enclosure” is missing required attribute “{required}”.");
                 if (enclosure.Attribute("url") is { } url && UrlProblem(url.Value) is { } problem)
                     report(enclosure, Severity.Error, "rss.bad-url", problem);
                 if (enclosure.Attribute("length") is { } length && !IsNonNegativeInteger(length.Value))
-                    report(enclosure, Severity.Error, "rss.bad-value", $"The enclosure length “{Shorten(length.Value)}” is not a number of bytes.");
+                    report(enclosure, Severity.Error, "rss.bad-value", $"The enclosure length “{Texts.Shorten(length.Value, 60)}” is not a number of bytes.");
             }
 
-            if (item.Element("source") is { } source && source.Attribute("url") == null)
+            if (item.Element("source") is { } source && source.Attribute("url") is null)
                 report(source, Severity.Error, "rss.missing-attribute", "Element “source” is missing required attribute “url”.");
         }
     }
 
     // The children of a channel or item: known elements, the required ones, and single ones not repeated
-    private static void CheckChildren(XElement parent, string name, HashSet<string> known, string[] required, Reporter report)
+    private static void CheckChildren(XElement parent, string name, IReadOnlySet<string> known, string[] required, Reporter report)
     {
         foreach (var child in parent.Elements())
         {
@@ -131,7 +132,7 @@ internal static partial class Feeds
         }
 
         foreach (var element in required)
-            if (parent.Element(element) == null)
+            if (parent.Element(element) is null)
                 report(parent, Severity.Error, "rss.missing-element", $"Element “{name}” is missing required child element “{element}”.");
 
         foreach (var group in parent.Elements().Where(e => e.Name.NamespaceName.Length == 0 && e.Name.LocalName is not ("item" or "category"))
@@ -148,25 +149,25 @@ internal static partial class Feeds
         CheckUrl(element.Element("docs"), report);
         foreach (var date in new[] { element.Element("pubDate"), element.Element("lastBuildDate") })
         {
-            if (date == null) continue;
+            if (date is null) continue;
             var value = date.Value.Trim();
             switch (Rfc822(value))
             {
                 case DateCheck.Invalid:
                     report(date, Severity.Error, "rss.bad-date",
-                        $"“{Shorten(value)}” is not an RFC 822 date: use, for example, “Tue, 10 Nov 2026 14:30:00 GMT”.");
+                        $"“{Texts.Shorten(value, 60)}” is not an RFC 822 date: use, for example, “Tue, 10 Nov 2026 14:30:00 GMT”.");
                     break;
                 case DateCheck.WrongWeekday:
-                    report(date, Severity.Warning, "rss.bad-date", $"The weekday of “{Shorten(value)}” is not that of the date.");
+                    report(date, Severity.Warning, "rss.bad-date", $"The weekday of “{Texts.Shorten(value, 60)}” is not that of the date.");
                     break;
             }
         }
 
         foreach (var person in new[] { element.Element("managingEditor"), element.Element("webMaster"), element.Element("author") })
         {
-            if (person != null && !person.Value.Contains('@'))
+            if (person is not null && !person.Value.Contains('@'))
                 report(person, Severity.Warning, "rss.bad-value",
-                    $"“{Shorten(person.Value.Trim())}” is not an e-mail address: RSS expects one here (use dc:creator for a name).");
+                    $"“{Texts.Shorten(person.Value.Trim(), 60)}” is not an e-mail address: RSS expects one here (use dc:creator for a name).");
         }
     }
 
@@ -199,12 +200,10 @@ internal static partial class Feeds
         return DateCheck.Valid;
     }
 
-    #endregion
+    // ---- Atom
 
-    #region Atom
-
-    private static readonly HashSet<string> FeedSingles = ["id", "title", "updated", "subtitle", "rights", "icon", "logo", "generator"];
-    private static readonly HashSet<string> EntrySingles = ["id", "title", "updated", "summary", "content", "published", "rights", "source"];
+    private static readonly FrozenSet<string> FeedSingles = ["id", "title", "updated", "subtitle", "rights", "icon", "logo", "generator"];
+    private static readonly FrozenSet<string> EntrySingles = ["id", "title", "updated", "summary", "content", "published", "rights", "source"];
 
     public static void CheckAtom(string path, XElement feed, List<Diagnostic> diagnostics)
     {
@@ -224,16 +223,16 @@ internal static partial class Feeds
                 report(entry, Severity.Error, "atom.missing-author",
                     "An “entry” must have an “author” when the “feed” has none.");
 
-            if (entry.Element(Atom("content")) == null &&
+            if (entry.Element(Atom("content")) is null &&
                 !entry.Elements(Atom("link")).Any(l => (l.Attribute("rel")?.Value ?? "alternate") == "alternate"))
                 report(entry, Severity.Error, "atom.missing-content",
                     "An “entry” must have a “content” element or a link with rel=\"alternate\".");
-            if (entry.Element(Atom("content")) is { } content && content.Attribute("src") != null && !content.IsEmpty &&
+            if (entry.Element(Atom("content")) is { } content && content.Attribute("src") is not null && !content.IsEmpty &&
                 content.Value.Trim().Length > 0)
                 report(content, Severity.Error, "atom.bad-content", "A “content” element with a “src” attribute must be empty.");
 
             if (entry.Element(Atom("id")) is { } id && !ids.TryAdd(id.Value.Trim(), id))
-                report(id, Severity.Warning, "atom.duplicate-id", $"The id “{Shorten(id.Value.Trim())}” is used more than once.");
+                report(id, Severity.Warning, "atom.duplicate-id", $"The id “{Texts.Shorten(id.Value.Trim(), 60)}” is used more than once.");
         }
 
         if (!feedHasAuthor && !feed.Elements(Atom("entry")).Any())
@@ -241,11 +240,11 @@ internal static partial class Feeds
     }
 
     // A feed or an entry: the required elements, those that may appear once, ids, dates, links and people
-    private static void CheckAtomElement(XElement element, string name, HashSet<string> singles, Reporter report)
+    private static void CheckAtomElement(XElement element, string name, IReadOnlySet<string> singles, Reporter report)
     {
         static XName Atom(string local) => XName.Get(local, AtomNamespace);
         foreach (var required in new[] { "id", "title", "updated" })
-            if (element.Element(Atom(required)) == null)
+            if (element.Element(Atom(required)) is null)
                 report(element, Severity.Error, "atom.missing-element", $"Element “{name}” is missing required child element “{required}”.");
 
         foreach (var group in element.Elements().Where(e => e.Name.NamespaceName == AtomNamespace && singles.Contains(e.Name.LocalName))
@@ -255,19 +254,19 @@ internal static partial class Feeds
 
         if (element.Element(Atom("id")) is { } id && !IriScheme().IsMatch(id.Value.Trim()))
             report(id, Severity.Error, "atom.bad-id",
-                $"“{Shorten(id.Value.Trim())}” is not an absolute IRI: an id has a scheme, as “https://…”, “urn:uuid:…” or “tag:…”.");
+                $"“{Texts.Shorten(id.Value.Trim(), 60)}” is not an absolute IRI: an id has a scheme, as “https://…”, “urn:uuid:…” or “tag:…”.");
 
         foreach (var date in element.Elements().Where(e => e.Name == Atom("updated") || e.Name == Atom("published")))
             if (!IsRfc3339(date.Value.Trim()))
                 report(date, Severity.Error, "atom.bad-date",
-                    $"“{Shorten(date.Value.Trim())}” is not an RFC 3339 date: use, for example, “2026-11-10T14:30:00Z”.");
+                    $"“{Texts.Shorten(date.Value.Trim(), 60)}” is not an RFC 3339 date: use, for example, “2026-11-10T14:30:00Z”.");
 
         foreach (var link in element.Elements(Atom("link")))
-            if (link.Attribute("href") == null)
+            if (link.Attribute("href") is null)
                 report(link, Severity.Error, "atom.missing-attribute", "Element “link” is missing required attribute “href”.");
 
         foreach (var person in element.Elements().Where(e => e.Name == Atom("author") || e.Name == Atom("contributor")))
-            if (person.Element(Atom("name")) == null)
+            if (person.Element(Atom("name")) is null)
                 report(person, Severity.Error, "atom.missing-element",
                     $"Element “{person.Name.LocalName}” is missing required child element “name”.");
     }
@@ -279,11 +278,11 @@ internal static partial class Feeds
         DateTimeOffset.TryParse(value.Length > 19 && value[17..19] == "60" ? value[..17] + "59" + value[19..] : value,
             CultureInfo.InvariantCulture, DateTimeStyles.None, out _);
 
-    #endregion
+    // ---- Shared by RSS and Atom
 
     private static void CheckUrl(XElement? element, Reporter report)
     {
-        if (element != null && UrlProblem(element.Value.Trim()) is { } problem)
+        if (element is not null && UrlProblem(element.Value.Trim()) is { } problem)
             report(element, Severity.Error, "rss.bad-url", problem);
     }
 
@@ -291,16 +290,14 @@ internal static partial class Feeds
     private static string? UrlProblem(string url)
     {
         if (url.Length == 0) return "The URL is empty.";
-        if (url.Any(char.IsWhiteSpace)) return $"“{Shorten(url)}” contains a space: use “%20” instead.";
-        return Uri.TryCreate(url, UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https" && uri.Host.Length > 0
+        if (url.Any(char.IsWhiteSpace)) return $"“{Texts.Shorten(url, 60)}” contains a space: use “%20” instead.";
+        return Urls.IsAbsoluteHttp(url)
             ? null
-            : $"“{Shorten(url)}” is not an absolute http or https URL.";
+            : $"“{Texts.Shorten(url, 60)}” is not an absolute http or https URL.";
     }
 
     private static bool IsNonNegativeInteger(string value) =>
         value.Trim().Length is > 0 and < 19 && value.Trim().All(char.IsAsciiDigit);
-
-    private static string Shorten(string text) => text.Length > 60 ? text[..60] + "…" : text;
 
     [GeneratedRegex(@"^((?<wd>Mon|Tue|Wed|Thu|Fri|Sat|Sun),\s*)?(?<d>[0-9]{1,2})\s+(?<mon>Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(?<y>[0-9]{2}|[0-9]{4})\s+(?<hh>[0-9]{2}):(?<mm>[0-9]{2})(:(?<ss>[0-9]{2}))?\s+(UT|GMT|EST|EDT|CST|CDT|MST|MDT|PST|PDT|Z|[A-IK-Y]|[+-][0-9]{4})$")]
     private static partial Regex Rfc822Date();

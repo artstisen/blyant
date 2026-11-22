@@ -1,4 +1,4 @@
-﻿// Copied from Blyant Validator 0.6.2 (src/Blyant.Validator.Xml/XmlFormatter.cs) by tools/formatters.py: not changed by hand in Blyant.
+﻿// Copied from Blyant Validator 0.6.3 (src/Blyant.Validator.Xml/XmlFormatter.cs) by tools/formatters.py: not changed by hand in Blyant.
 // Change it in Blyant Validator, and copy it again. English: its messages are not translated
 using System.Text;
 using Blyant.Format.Core;
@@ -14,7 +14,7 @@ namespace Blyant.Format.Xml;
 /// runs of whitespace between attributes made one space. Comments, CDATA sections, the XML declaration and the
 /// doctype are kept. A file that is not well-formed, or nested deeper than <see cref="MaxDepth"/>, is not formatted.
 /// </summary>
-public sealed class XmlFormatter : IFormatter
+internal sealed class XmlFormatter : IFormatter
 {
     public bool CanFormat(DocumentKind kind) => kind == DocumentKind.Xml;
 
@@ -25,20 +25,17 @@ public sealed class XmlFormatter : IFormatter
     {
         var errors = XmlValidator.Validate(document.Path, document.Content)
             .FirstOrDefault(d => d.Code == "xml.not-well-formed");
-        if (errors != null)
+        if (errors is not null)
             throw new Core.FormatException($"{errors.Message} (line {errors.Start.Line})");
 
         var newline = options.NewLine ?? document.DetectNewLine();
         var root = XmlSourceReader.Read(document.Content, out var depth);
         if (depth > MaxDepth)
             throw new Core.FormatException($"Elements are nested more than {MaxDepth} deep.");
-        var lines = new List<string>();
+        List<string> lines = [];
         WriteChildren(document.Content, root.Children, 0, options.IndentUnit, lines, preserveBlankLines: true);
-        return lines.Count == 0 ? string.Empty : string.Join(newline, lines.Select(l => Newlines(l, newline))) + newline;
+        return lines.Count == 0 ? string.Empty : string.Join(newline, lines.Select(l => LineBreaks.Normalize(l, newline))) + newline;
     }
-
-    private static string Newlines(string text, string newline) =>
-        text.Contains('\n') || text.Contains('\r') ? text.Replace("\r\n", "\n").Replace('\r', '\n').Replace("\n", newline) : text;
 
     private static void WriteChildren(string source, List<SourceNode> children, int depth, string indentUnit, List<string> lines,
         bool preserveBlankLines)
@@ -51,7 +48,7 @@ public sealed class XmlFormatter : IFormatter
             if (child is SourceText { IsWhitespace: true } space)
             {
                 // One empty line in the source between two children is kept
-                if (preserveBlankLines && !first && CountNewlines(space.Raw) >= 2) blank = true;
+                if (preserveBlankLines && !first && LineBreaks.Count(space.Raw) >= 2) blank = true;
                 continue;
             }
 
@@ -105,7 +102,7 @@ public sealed class XmlFormatter : IFormatter
         var space = false;
         foreach (var c in tag)
         {
-            if (quote != null)
+            if (quote is not null)
             {
                 result.Append(c);
                 if (c == quote) quote = null;
@@ -127,8 +124,6 @@ public sealed class XmlFormatter : IFormatter
 
         return result.ToString();
     }
-
-    private static int CountNewlines(string text) => text.Replace("\r\n", "\n").Count(c => c is '\n' or '\r');
 }
 
 // A lightweight tree of the XML source, which keeps the source text of every part (as the HTML formatter's)
@@ -260,7 +255,7 @@ internal static class XmlSourceReader
         for (var i = start + 1; i < s.Length; i++)
         {
             var c = s[i];
-            if (quote != null)
+            if (quote is not null)
             {
                 if (c == quote) quote = null;
             }

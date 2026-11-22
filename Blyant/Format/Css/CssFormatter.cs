@@ -1,4 +1,4 @@
-﻿// Copied from Blyant Validator 0.6.2 (src/Blyant.Validator.Css/CssFormatter.cs) by tools/formatters.py: not changed by hand in Blyant.
+﻿// Copied from Blyant Validator 0.6.3 (src/Blyant.Validator.Css/CssFormatter.cs) by tools/formatters.py: not changed by hand in Blyant.
 // Change it in Blyant Validator, and copy it again. English: its messages are not translated
 using System.Text;
 using Blyant.Format.Core;
@@ -11,7 +11,7 @@ namespace Blyant.Format.Css;
 /// comments and single empty lines. Only whitespace changes (and a missing last <c>;</c> is added):
 /// the tokens of the style sheet stay the same.
 /// </summary>
-public sealed class CssFormatter : IFormatter
+internal sealed class CssFormatter : IFormatter
 {
     public bool CanFormat(DocumentKind kind) => kind == DocumentKind.Css;
 
@@ -72,7 +72,7 @@ public sealed class CssFormatter : IFormatter
                 var item = items[k];
                 if (k > 0 && item is CssComment && item.SameLineAsPrevious)
                 {
-                    AppendToLast(" " + NormalizeNewlines(item is CssComment c ? c.Token.Text(source) : ""));
+                    AppendToLast(" " + LineBreaks.Normalize(item is CssComment c ? c.Token.Text(source) : "", newline));
                     continue;
                 }
                 if (k > 0 && item.BlankLineBefore) _lines.Add("");
@@ -80,7 +80,7 @@ public sealed class CssFormatter : IFormatter
                 switch (item)
                 {
                     case CssComment comment:
-                        Line(depth, NormalizeNewlines(comment.Token.Text(source)));
+                        Line(depth, LineBreaks.Normalize(comment.Token.Text(source), newline));
                         break;
                     case CssDeclaration declaration:
                         WriteDeclaration(declaration, depth);
@@ -110,7 +110,7 @@ public sealed class CssFormatter : IFormatter
             if (declaration.IsCustomProperty)
             {
                 // The value of a custom property is kept exactly as written.
-                value = rest.Count == 0 ? "" : NormalizeNewlines(source[rest[0].Start..rest[^1].End]);
+                value = rest.Count == 0 ? "" : LineBreaks.Normalize(source[rest[0].Start..rest[^1].End], newline);
             }
             else if (declaration.Important && rest.FindLastIndex(t => t.IsDelim('!')) is var bang and > 0)
             {
@@ -176,20 +176,15 @@ public sealed class CssFormatter : IFormatter
                 }
                 else
                 {
-                    sb.Append(NormalizeNewlines(t.Text(source)));
+                    sb.Append(LineBreaks.Normalize(t.Text(source), newline));
                 }
             }
             return sb.ToString().TrimEnd(' ');
         }
 
-        private string NormalizeNewlines(string text) =>
-            text.Contains('\n') || text.Contains('\r')
-                ? text.Replace("\r\n", "\n").Replace('\r', '\n').Replace("\n", newline)
-                : text;
-
         private static List<List<CssToken>> SplitAtTopLevelCommas(List<CssToken> tokens)
         {
-            var parts = new List<List<CssToken>> { new() };
+            List<List<CssToken>> parts = [new()];
             var depth = 0;
             foreach (var t in tokens)
             {

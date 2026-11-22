@@ -2,7 +2,9 @@
 
 Blyant Validator (https://github.com/artstisen/blyant-validator) formats HTML, CSS and XML. Its formatters, and the
 parts of it they need (the CSS tokenizer and parser, the HTML reader, the XML validator), are copied as they are: only the namespaces
-change (Blyant.Validator.Css becomes Blyant.Format.Css ...), and each file gets a line telling where it came from.
+change (Blyant.Validator.Css becomes Blyant.Format.Css ...), their types are made internal (public in Blyant Validator,
+a library of several assemblies; in Blyant, as all its types, internal), and each file gets a line telling where it
+came from.
 Their tests are copied too (Blyant.Tests/Format). The files are not changed by hand in Blyant: change them in
 Blyant Validator, and run this again.
 
@@ -22,6 +24,9 @@ FILES = [
     ('Blyant.Validator.Core/Abstractions.cs', 'Core/Abstractions.cs'),
     ('Blyant.Validator.Core/Diagnostic.cs', 'Core/Diagnostic.cs'),
     ('Blyant.Validator.Core/LineMap.cs', 'Core/LineMap.cs'),
+    ('Blyant.Validator.Core/LineBreaks.cs', 'Core/LineBreaks.cs'),
+    ('Blyant.Validator.Core/Texts.cs', 'Core/Texts.cs'),
+    ('Blyant.Validator.Core/Urls.cs', 'Core/Urls.cs'),
     ('Blyant.Validator.Css/CssFormatter.cs', 'Css/CssFormatter.cs'),
     ('Blyant.Validator.Css/Syntax/CssParser.cs', 'Css/Syntax/CssParser.cs'),
     ('Blyant.Validator.Css/Syntax/CssToken.cs', 'Css/Syntax/CssToken.cs'),
@@ -56,9 +61,13 @@ def version_of(validator):
 
 
 def converted(text, source, version):
-    """The file as it is in Blyant: other namespaces, a line telling where it came from, UTF-8 with BOM and CRLF"""
+    """The file as it is in Blyant: other namespaces, the types internal (not those of the tests, which xUnit finds
+    only when they are public), a line telling where it came from, UTF-8 with BOM and CRLF"""
     text = text.lstrip('﻿').replace('\r\n', '\n')
     text = re.sub(r'\bBlyant\.Validator\.', 'Blyant.Format.', text)
+    if source.startswith('src/'):
+        text = re.sub(r'^public (?=(static |sealed |abstract |partial |readonly )*(class|record|struct|enum|interface)\b)',
+                      'internal ', text, flags=re.M)
     head = ('// Copied from Blyant Validator %s (%s) by tools/formatters.py: not changed by hand in Blyant.\n'
             '// Change it in Blyant Validator, and copy it again. English: its messages are not translated\n'
             % (version, source))

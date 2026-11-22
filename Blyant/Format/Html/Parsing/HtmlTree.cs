@@ -1,4 +1,4 @@
-﻿// Copied from Blyant Validator 0.6.2 (src/Blyant.Validator.Html/Parsing/HtmlTree.cs) by tools/formatters.py: not changed by hand in Blyant.
+﻿// Copied from Blyant Validator 0.6.3 (src/Blyant.Validator.Html/Parsing/HtmlTree.cs) by tools/formatters.py: not changed by hand in Blyant.
 // Change it in Blyant Validator, and copy it again. English: its messages are not translated
 using System.Collections.Frozen;
 
@@ -8,26 +8,26 @@ namespace Blyant.Format.Html.Parsing;
 /// A node of the lightweight tree made by <see cref="HtmlReader"/>, used by both the formatter and the
 /// validator. It keeps the source text of every part.
 /// </summary>
-public abstract class HNode
+internal abstract class HNode
 {
     /// <summary>Offset of the first character in the source.</summary>
     public int Start { get; init; }
 }
 
-public sealed class HText(string raw) : HNode
+internal sealed class HText(string raw) : HNode
 {
     public string Raw { get; } = raw;
 }
 
 /// <summary>A comment, CDATA section, processing instruction or doctype, kept exactly as written.</summary>
-public sealed class HVerbatim(string raw, bool isDoctype) : HNode
+internal sealed class HVerbatim(string raw, bool isDoctype) : HNode
 {
     public string Raw { get; } = raw;
     public bool IsDoctype { get; } = isDoctype;
 }
 
 /// <summary>An end tag with no open element to close. Kept as written.</summary>
-public sealed class HStrayEndTag(string raw) : HNode
+internal sealed class HStrayEndTag(string raw) : HNode
 {
     public string Raw { get; } = raw;
 }
@@ -36,7 +36,7 @@ public sealed class HStrayEndTag(string raw) : HNode
 /// <param name="RawValue">The value as written, with its quotes; null for an attribute without a value.</param>
 /// <param name="Start">Offset of the name in the source.</param>
 /// <param name="ValueStart">Offset of the value as written (at its quote, if it has one); -1 without a value.</param>
-public sealed record HAttribute(string Name, string? RawValue, int Start, int ValueStart = -1)
+internal sealed record HAttribute(string Name, string? RawValue, int Start, int ValueStart = -1)
 {
     /// <summary>Offset of the first character of <see cref="Value"/> (after the quote); -1 without a value.</summary>
     public int ValueContentStart => ValueStart < 0 ? -1 : RawValue is ['"' or '\'', ..] ? ValueStart + 1 : ValueStart;
@@ -51,7 +51,7 @@ public sealed record HAttribute(string Name, string? RawValue, int Start, int Va
     };
 }
 
-public sealed class HElement(string name) : HNode
+internal sealed class HElement(string name) : HNode
 {
     /// <summary>The name as written.</summary>
     public string Name { get; } = name;
@@ -104,7 +104,7 @@ public sealed class HElement(string name) : HNode
         }));
 }
 
-public static class HtmlNames
+internal static class HtmlNames
 {
     private static readonly StringComparer Ci = StringComparer.OrdinalIgnoreCase;
 

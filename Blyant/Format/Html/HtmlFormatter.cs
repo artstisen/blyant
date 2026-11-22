@@ -1,4 +1,4 @@
-﻿// Copied from Blyant Validator 0.6.2 (src/Blyant.Validator.Html/HtmlFormatter.cs) by tools/formatters.py: not changed by hand in Blyant.
+﻿// Copied from Blyant Validator 0.6.3 (src/Blyant.Validator.Html/HtmlFormatter.cs) by tools/formatters.py: not changed by hand in Blyant.
 // Change it in Blyant Validator, and copy it again. English: its messages are not translated
 using System.Text;
 using Blyant.Format.Core;
@@ -15,7 +15,7 @@ namespace Blyant.Format.Html;
 /// The contents of &lt;pre&gt;, &lt;textarea&gt; and &lt;script&gt; are kept exactly as written;
 /// &lt;style&gt; elements are formatted with the CSS formatter.
 /// </summary>
-public sealed class HtmlFormatter : IFormatter
+internal sealed class HtmlFormatter : IFormatter
 {
     public bool CanFormat(DocumentKind kind) => kind == DocumentKind.Html;
 
@@ -51,7 +51,7 @@ public sealed class HtmlFormatter : IFormatter
             return sb.ToString();
         }
 
-        private void Line(int depth, string text) => _lines.Add(Indent(depth) + NormalizeNewlines(text));
+        private void Line(int depth, string text) => _lines.Add(Indent(depth) + LineBreaks.Normalize(text, newline));
 
         private void BeginLine(int depth)
         {
@@ -59,25 +59,23 @@ public sealed class HtmlFormatter : IFormatter
             _lineDepth = depth;
         }
 
-        private void Append(string text) => _line!.Append(text);
+        // The line begun with BeginLine (Append and EndLine come after it)
+        private StringBuilder CurrentLine => _line ?? throw new InvalidOperationException("No line is begun.");
+
+        private void Append(string text) => CurrentLine.Append(text);
 
         private void EndLine()
         {
-            var text = _line!.ToString().Trim(' ');
+            var text = CurrentLine.ToString().Trim(' ');
             _line = null;
             if (text.Length > 0) Line(_lineDepth, text);
         }
-
-        private string NormalizeNewlines(string text) =>
-            text.Contains('\n') || text.Contains('\r')
-                ? text.Replace("\r\n", "\n").Replace('\r', '\n').Replace("\n", newline)
-                : text;
 
         /// <param name="container">The parent lays out its children itself (svg, select …): every element child gets a line.</param>
         /// <param name="foreign">Inside SVG or MathML.</param>
         public void FormatChildren(List<HNode> children, int depth, bool container, bool foreign)
         {
-            var run = new List<HNode>();
+            List<HNode> run = [];
             var emitted = false;
             var newlinesSinceLast = 0;
 
@@ -92,7 +90,7 @@ public sealed class HtmlFormatter : IFormatter
                 if (run.Count == 0) return;
                 if (run.All(n => n is HText t && IsWhitespace(t.Raw)))
                 {
-                    newlinesSinceLast += run.Sum(n => CountNewlines(((HText)n).Raw));
+                    newlinesSinceLast += run.Sum(n => LineBreaks.Count(((HText)n).Raw));
                     run.Clear();
                     return;
                 }
@@ -113,7 +111,7 @@ public sealed class HtmlFormatter : IFormatter
                 var child = children[index];
                 if (container && child is HText t && IsWhitespace(t.Raw))
                 {
-                    newlinesSinceLast += CountNewlines(t.Raw);
+                    newlinesSinceLast += LineBreaks.Count(t.Raw);
                     continue;
                 }
 
@@ -170,13 +168,13 @@ public sealed class HtmlFormatter : IFormatter
                 var raw = t.Raw;
                 if (IsWhitespace(raw))
                 {
-                    count += CountNewlines(raw);
+                    count += LineBreaks.Count(raw);
                     continue;
                 }
                 var edge = leading
                     ? raw[..raw.TakeWhile(IsHtmlSpace).Count()]
                     : raw[(raw.Length - raw.Reverse().TakeWhile(IsHtmlSpace).Count())..];
-                count += CountNewlines(edge);
+                count += LineBreaks.Count(edge);
                 break;
             }
             return count;
@@ -428,7 +426,5 @@ public sealed class HtmlFormatter : IFormatter
         private static bool IsHtmlSpace(char c) => c is ' ' or '\t' or '\n' or '\r' or '\f';
 
         private static bool IsWhitespace(string text) => text.All(IsHtmlSpace);
-
-        private static int CountNewlines(string text) => text.Replace("\r\n", "\n").Count(c => c is '\n' or '\r');
     }
 }

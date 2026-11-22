@@ -1,4 +1,4 @@
-﻿// Copied from Blyant Validator 0.6.2 (src/Blyant.Validator.Html/Parsing/HtmlReader.cs) by tools/formatters.py: not changed by hand in Blyant.
+﻿// Copied from Blyant Validator 0.6.3 (src/Blyant.Validator.Html/Parsing/HtmlReader.cs) by tools/formatters.py: not changed by hand in Blyant.
 // Change it in Blyant Validator, and copy it again. English: its messages are not translated
 using System.Collections.Frozen;
 using System.Globalization;
@@ -6,9 +6,9 @@ using System.Globalization;
 namespace Blyant.Format.Html.Parsing;
 
 /// <summary>A parse error, with the offset in the source where it was found.</summary>
-public sealed record HtmlParseError(int Offset, string Code, string Message);
+internal sealed record HtmlParseError(int Offset, string Code, string Message);
 
-public sealed class HtmlParseResult(HElement root, List<HtmlParseError> errors, int tooDeepAt = -1)
+internal sealed class HtmlParseResult(HElement root, List<HtmlParseError> errors, int tooDeepAt = -1)
 {
     /// <summary>The document; its children are the top-level nodes.</summary>
     public HElement Root { get; } = root;
@@ -29,7 +29,7 @@ public sealed class HtmlParseResult(HElement root, List<HtmlParseError> errors, 
 /// <c>td</c> …), keeps end tags without a start tag, and records the source text of everything, so the
 /// formatter can write it back.
 /// </summary>
-public sealed class HtmlReader
+internal sealed class HtmlReader
 {
     private static readonly StringComparer Ci = StringComparer.OrdinalIgnoreCase;
 

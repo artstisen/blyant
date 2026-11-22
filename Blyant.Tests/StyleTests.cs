@@ -6,7 +6,8 @@ namespace Blyant.Tests;
 /// The coding style (CLAUDE.md, the rules of CSharp Coding Kit): "is null" and "is not null", never "== null" or
 /// "!= null" (a pure check of the reference, which an operator == cannot change); no #region; and in Blyant the types
 /// internal, and the classes sealed (or static or abstract). The source is read, without the comments and the texts
-/// in quotes; the files of Blyant Validator in Format are copies, and left out
+/// in quotes. The copies of Blyant Validator in Format follow the same rules (they are changed in Blyant Validator,
+/// and copied with tools/formatters.py, which makes their types internal)
 /// </summary>
 public class StyleTests
 {
@@ -22,15 +23,14 @@ public class StyleTests
         return directory!.FullName;
     }
 
-    // The source files of a project, without the copies of Blyant Validator and what the build makes
+    // The source files of a project, without what the build makes
     private static IEnumerable<string> SourceFiles(string project)
     {
         var root = Path.Combine(Root(), project);
         return Directory.EnumerateFiles(root, "*.cs", SearchOption.AllDirectories).Where(path =>
         {
             var relative = Path.GetRelativePath(root, path).Replace('\\', '/');
-            return !relative.StartsWith("Format/", StringComparison.Ordinal) &&
-                   !relative.StartsWith("bin/", StringComparison.Ordinal) &&
+            return !relative.StartsWith("bin/", StringComparison.Ordinal) &&
                    !relative.StartsWith("obj/", StringComparison.Ordinal);
         });
     }
@@ -90,7 +90,8 @@ public class StyleTests
         var files = SourceFiles("Blyant").ToList();
         var open = Found(files, new Regex(@"^public\s+(static\s+|sealed\s+|abstract\s+|partial\s+)*(class|record|struct|enum|interface)\b"));
         Assert.True(open.Count == 0, "Make the type internal:\n" + string.Join("\n", open));
-        var unsealed = Found(files, new Regex(@"^(internal\s+)?(partial\s+)?class\b"));
+        // (EngineNotAvailableException, a copy of Blyant Validator, is a class that other exceptions derive from there)
+        var unsealed = Found(files, new Regex(@"^(internal\s+)?(partial\s+)?class\b(?!\s+EngineNotAvailableException\b)"));
         Assert.True(unsealed.Count == 0, "Make the class sealed (or static, or abstract):\n" + string.Join("\n", unsealed));
     }
 }

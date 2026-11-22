@@ -1,9 +1,11 @@
-﻿// Copied from Blyant Validator 0.6.2 (src/Blyant.Validator.Css/Syntax/CssParser.cs) by tools/formatters.py: not changed by hand in Blyant.
+﻿// Copied from Blyant Validator 0.6.3 (src/Blyant.Validator.Css/Syntax/CssParser.cs) by tools/formatters.py: not changed by hand in Blyant.
 // Change it in Blyant Validator, and copy it again. English: its messages are not translated
+using Blyant.Format.Core;
+
 namespace Blyant.Format.Css.Syntax;
 
 /// <summary>Something in a style sheet or a block: a rule, an at-rule, a declaration or a comment.</summary>
-public abstract class CssItem
+internal abstract class CssItem
 {
     /// <summary>Offset of the first character.</summary>
     public int Start { get; init; }
@@ -15,20 +17,20 @@ public abstract class CssItem
     public bool SameLineAsPrevious { get; set; }
 }
 
-public sealed class CssComment(CssToken token) : CssItem
+internal sealed class CssComment(CssToken token) : CssItem
 {
     public CssToken Token { get; } = token;
 }
 
 /// <summary>A rule with a selector: <c>a:hover { color: red }</c>.</summary>
-public sealed class CssStyleRule(List<CssToken> prelude, CssBlock block) : CssItem
+internal sealed class CssStyleRule(List<CssToken> prelude, CssBlock block) : CssItem
 {
     public List<CssToken> Prelude { get; } = prelude;
     public CssBlock Block { get; } = block;
 }
 
 /// <summary><c>@media screen { ... }</c> or <c>@import url(a.css);</c>.</summary>
-public sealed class CssAtRule(CssToken nameToken, List<CssToken> prelude, CssBlock? block) : CssItem
+internal sealed class CssAtRule(CssToken nameToken, List<CssToken> prelude, CssBlock? block) : CssItem
 {
     public CssToken NameToken { get; } = nameToken;
     public string Name => NameToken.Value.ToLowerInvariant();
@@ -39,7 +41,7 @@ public sealed class CssAtRule(CssToken nameToken, List<CssToken> prelude, CssBlo
 }
 
 /// <summary><c>color: red !important</c>.</summary>
-public sealed class CssDeclaration(CssToken nameToken, List<CssToken> value, bool important) : CssItem
+internal sealed class CssDeclaration(CssToken nameToken, List<CssToken> value, bool important) : CssItem
 {
     public CssToken NameToken { get; } = nameToken;
 
@@ -64,7 +66,7 @@ public sealed class CssDeclaration(CssToken nameToken, List<CssToken> value, boo
 }
 
 /// <summary>Text that could not be read as a declaration or rule. Kept as it is.</summary>
-public sealed class CssBogus(List<CssToken> tokens) : CssItem
+internal sealed class CssBogus(List<CssToken> tokens) : CssItem
 {
     public List<CssToken> Tokens { get; } = tokens;
 
@@ -72,13 +74,13 @@ public sealed class CssBogus(List<CssToken> tokens) : CssItem
     public bool HadSemicolon { get; init; }
 }
 
-public sealed class CssBlock(CssToken open)
+internal sealed class CssBlock(CssToken open)
 {
     public CssToken Open { get; } = open;
     public List<CssItem> Items { get; } = [];
 }
 
-public sealed class CssStylesheet
+internal sealed class CssStylesheet
 {
     public required string Source { get; init; }
     public required List<CssToken> Tokens { get; init; }
@@ -93,12 +95,13 @@ public sealed class CssStylesheet
 /// Parser following the structure of CSS Syntax Level 3, section 5, including nested rules
 /// (CSS Nesting). Comments are kept as items so the formatter can write them back.
 /// </summary>
-public sealed class CssParser
+internal sealed class CssParser
 {
     private readonly List<CssToken> _t;
     private readonly CssStylesheet _sheet;
     private int _i;
 
+    // (private: a parser is only made by Parse; a primary constructor would be public)
     private CssParser(CssStylesheet sheet)
     {
         _sheet = sheet;
@@ -216,7 +219,7 @@ public sealed class CssParser
     {
         var name = Current;
         _i++;
-        var prelude = new List<CssToken>();
+        List<CssToken> prelude = [];
         while (true)
         {
             var token = Current;
@@ -244,7 +247,7 @@ public sealed class CssParser
     private CssItem ParseQualifiedRule()
     {
         var start = Current;
-        var prelude = new List<CssToken>();
+        List<CssToken> prelude = [];
         while (true)
         {
             var token = Current;
@@ -302,10 +305,10 @@ public sealed class CssParser
             switch (token.Type)
             {
                 case CssTokenType.EndOfFile:
-                    if (open != null)
+                    if (open is not null)
                         Error(open, "css.parse.unclosed-block", "Block is never closed (missing “}”).", structural: true);
                     return;
-                case CssTokenType.RightCurly when open == null:
+                case CssTokenType.RightCurly when open is null:
                     Error(token, "css.parse.unexpected-close", "Unexpected “}”: there is no block to close.", structural: true);
                     _i++;
                     break;
@@ -365,7 +368,7 @@ public sealed class CssParser
     private CssItem ParseDeclaration()
     {
         var start = Current;
-        var tokens = new List<CssToken>();
+        List<CssToken> tokens = [];
         var custom = start.Type == CssTokenType.Ident && start.Value.StartsWith("--", StringComparison.Ordinal);
         while (Current.Type is not (CssTokenType.Semicolon or CssTokenType.RightCurly or CssTokenType.EndOfFile))
             tokens.AddRange(ConsumeComponent(allowBraces: custom));
@@ -375,7 +378,7 @@ public sealed class CssParser
 
         if (start.Type != CssTokenType.Ident)
         {
-            Error(start, "css.parse.invalid-declaration", $"“{Shorten(start.Text(_sheet.Source))}” is not a valid declaration: expected a property name.");
+            Error(start, "css.parse.invalid-declaration", $"“{Texts.Shorten(start.Text(_sheet.Source), 30)}” is not a valid declaration: expected a property name.");
             return new CssBogus(tokens) { Start = start.Start, HadSemicolon = semicolon };
         }
 
@@ -414,7 +417,7 @@ public sealed class CssParser
     {
         var token = Current;
         _i++;
-        var result = new List<CssToken> { token };
+        List<CssToken> result = [token];
 
         var close = token.Type switch
         {
@@ -431,7 +434,7 @@ public sealed class CssParser
             if (next.Type == CssTokenType.EndOfFile)
             {
                 var what = close == CssTokenType.RightSquare ? "]" : close == CssTokenType.RightCurly ? "}" : ")";
-                Error(token, "css.parse.unclosed-parenthesis", $"“{Shorten(token.Text(_sheet.Source))}” is never closed (missing “{what}”).", structural: true);
+                Error(token, "css.parse.unclosed-parenthesis", $"“{Texts.Shorten(token.Text(_sheet.Source), 30)}” is never closed (missing “{what}”).", structural: true);
                 return result;
             }
             if (next.Type == close)
@@ -444,7 +447,7 @@ public sealed class CssParser
             if (!allowBraces && next.Type is CssTokenType.RightCurly or CssTokenType.Semicolon)
             {
                 var what = close == CssTokenType.RightSquare ? "]" : ")";
-                Error(token, "css.parse.unclosed-parenthesis", $"“{Shorten(token.Text(_sheet.Source))}” is not closed (missing “{what}”).", structural: true);
+                Error(token, "css.parse.unclosed-parenthesis", $"“{Texts.Shorten(token.Text(_sheet.Source), 30)}” is not closed (missing “{what}”).", structural: true);
                 return result;
             }
             result.AddRange(ConsumeComponent(allowBraces));
@@ -459,6 +462,4 @@ public sealed class CssParser
         while (end > start && tokens[end - 1].Type == CssTokenType.Whitespace) end--;
         return tokens.GetRange(start, end - start);
     }
-
-    private static string Shorten(string text) => text.Length > 30 ? text[..30] + "…" : text;
 }
