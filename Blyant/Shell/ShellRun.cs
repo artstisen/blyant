@@ -200,8 +200,8 @@ internal sealed partial class ShellSession
         return Substituted(lines, words, text);
     }
 
-    // Which lines of a script are the text of an input: the lines after "input", up to the line with only "." (that
-    // line too), which input takes as they are
+    // Which lines of a script are the text of an input: the lines after "input" ("a", "i"), up to the line with only
+    // "." (that line too), which input takes as they are
     private static bool[] InputText(List<string> lines)
     {
         var text = new bool[lines.Count];
@@ -213,7 +213,7 @@ internal sealed partial class ShellSession
                 text[i] = true;
                 if (IsInputEnd(lines[i])) inText = false;
             }
-            else inText = CommandLine.Name(lines[i]).Equals("input", StringComparison.OrdinalIgnoreCase);
+            else inText = IsInput(CommandLine.Name(lines[i]).ToLowerInvariant());
         }
 
         return text;

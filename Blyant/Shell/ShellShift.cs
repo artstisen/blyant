@@ -256,13 +256,8 @@ internal sealed partial class ShellSession
         for (; blank > blankEnd && lines.Count > at; blank--) lines.RemoveAt(lines.Count - 1);
         for (; blank < blankEnd; blank++) lines.Add(string.Empty);
 
-        return (Joined(lines, endsWithBreak), at);
+        return (JoinedLines(lines, endsWithBreak), at);
     }
-
-    // Lines as a text, with a line break at the end when the file had one. A blank line last (moved there from
-    // inside a file without a line break at the end) gets a line break too: else it would be lost
-    private static string Joined(List<string> lines, bool endsWithBreak) =>
-        string.Join("\n", lines) + (endsWithBreak || lines is [.., { Length: 0 }] ? "\n" : string.Empty);
 
     /// <summary>
     /// The commands that take "@" as the file and the line: in the place of the file (after "-p" or "-s"). Tab
@@ -270,8 +265,11 @@ internal sealed partial class ShellSession
     /// </summary>
     internal static readonly HashSet<string> TakesAt = new()
     {
-        "words", "word", "change", "insert", "input", "peek", "shift", "shift!", "lines", "open", "edit"
+        "words", "word", "change", "insert", "input", "a", "i", "peek", "shift", "shift!", "lines", "open", "edit"
     };
+
+    // The names of input: "input", and "a" and "i" as in the line editor ed (after and before the line)
+    internal static bool IsInput(string name) => name is "input" or "a" or "i";
 
     // "word @ 9 replace wish": "@" in the place of the file is $file at $line, the file and the line the last command
     // worked on ("$file +12"; for insert the line after it, "+13", so the text goes after the line), or where the
@@ -280,8 +278,11 @@ internal sealed partial class ShellSession
     // "@" in a text ("insert @ Ask @anna"), is as it is. Null (and told) when there is no line to take
     internal string? WithAt(string name, string argument)
     {
-        // ("input" alone: after $line, as "input @")
-        if (name == "input" && argument.Trim().Length == 0) argument = "@";
+        // ("input" and "a" alone: after $line, as "input @"; "i" alone or "i @", "input before" and "input @ before":
+        // before $line, as the i of ed)
+        var input = IsInput(name);
+        var before = name == "i" ? Words(argument) is [] or ["@"] : name == "input" && Words(argument) is ["before"] or ["@", "before"];
+        if (before || (input && argument.Trim().Length == 0)) argument = "@";
         // ("clip words @ 6-9": after the kind, as word takes it)
         var clipWords = name == "clip" && CommandLine.Name(argument).Equals("words", StringComparison.OrdinalIgnoreCase);
         if (!TakesAt.Contains(name) && !clipWords) return argument;
@@ -318,7 +319,7 @@ internal sealed partial class ShellSession
         // (the top of a file, before line 1, as in an empty file: open, edit and peek take the file from line 1, and
         // only insert can put a line there; the others have no line to work on)
         if (line == 0 && name is "open" or "edit" or "peek") line = 1;
-        if (line == 0 && name is not ("insert" or "input"))
+        if (line == 0 && name != "insert" && !input)
         {
             Error(Lang.F("@ is at the top of {0}, before line 1: insert @ text puts a line there",
                 Path.GetFileName(_file)));
@@ -327,7 +328,8 @@ internal sealed partial class ShellSession
 
         var head = argument[..(argument.Length - from.Length)];
         var rest = AfterWords(argument, at + 1);
-        var put = "$file +" + (name is "insert" or "input" ? line + 1 : line);
+        // (before: as line $line, the line it is goes down; in an empty file, at the top)
+        var put = "$file +" + (before ? Math.Max(line, 1) : name == "insert" || input ? line + 1 : line);
         return head + put + (rest.Length > 0 ? " " + rest : string.Empty);
     }
 
@@ -569,7 +571,7 @@ internal sealed partial class ShellSession
         var index = position - moved.Count(n => n - 1 < position);
         var rest = lines.Where((_, i) => !moved.Contains(i + 1)).ToList();
         rest.InsertRange(index, taken);
-        return (Joined(rest, endsWithBreak), index + 1, ticked);
+        return (JoinedLines(rest, endsWithBreak), index + 1, ticked);
     }
 
     /// <summary>

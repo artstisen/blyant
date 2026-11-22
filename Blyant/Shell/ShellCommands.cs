@@ -57,6 +57,7 @@ internal sealed partial class ShellSession
         ("info [file|n]", Lang.T("Describe a file or directory (alone: this one)")),
         ("insert file|n top|bottom|+line text", Lang.T("Put a line of text in a file, without opening it")),
         ("input [file|n top|bottom|+line]", Lang.T("Type lines into a file after $line; a line with . ends")),
+        ("input before", Lang.T("Type lines into a file before $line; a line with . ends")),
         ("change file|n +line|from-to [text]", Lang.T("Replace lines of a file with text, or delete them")),
         ("shift file|n lines place", Lang.T("Move lines in a file: under a heading, +line, top or bottom")),
         ("shift! file|n lines place", Lang.T("Move lines, and tick or untick any task boxes")),
@@ -1305,6 +1306,8 @@ internal sealed partial class ShellSession
                 Insert(argument);
                 break;
             case "input":
+            case "a":
+            case "i":
                 Input(argument);
                 break;
             case "shift":
@@ -2147,7 +2150,7 @@ internal sealed partial class ShellSession
     {
         ("fav", "favorites"), ("favs", "favorites"), ("hist", "history"), ("rec", "recent"), ("res", "resume"),
         ("hot", "hotlist"), ("book", "bookmarks"), ("proj", "projects"), ("del", "delete"), ("cls", "clear"),
-        ("h", "help"), ("q", "exit"), ("quit", "exit")
+        ("h", "help"), ("q", "exit"), ("quit", "exit"), ("a", "input"), ("i", "input")
     };
 
     // The short forms as help shows them, after the commands, in rows as wide as the window: "fav, favs (favorites)"

@@ -9119,4 +9119,39 @@ public class ShellTests : IDisposable
         Assert.True(IsoDateTime.TryParseStored("0001-01-01 00:00", "yyyy-MM-dd HH:mm", out read));
         Assert.Equal(DateTime.MinValue, read);
     }
+
+    // ---- 1.6.2: a and i, input after and before $line, as in ed
+
+    [Fact]
+    public void A_IsInput_AndI_PutsTheLinesInBeforeLine()
+    {
+        File.WriteAllText(In("work", "n.md"), "one\ntwo\nthree\n");
+        var (output, errors, _, session) = Run("peek n.md 2\nline 2\ni\nbefore two\n.\necho $line\na\nafter it\n.\n" +
+                                               "input before\nB\n.\ni @\nC\n.\ni n.md +1\ntop\n.\n");
+        Assert.Equal(string.Empty, errors);
+        // i: as line 2, and two goes down; $line the last put in, so a goes on after it, and i before it
+        Assert.Equal("top\none\nbefore two\nC\nB\nafter it\ntwo\nthree\n", Text("n.md"));
+        Assert.Contains(Lang.F("{0}: line {1} put in", In("work", "n.md"), 2) + "\n2\n", output);
+        Assert.Equal(1, session.LastList.Single().At?.Line);
+        // In an empty file, at the top
+        (_, errors, _, _) = Run("new fresh\ni\nFirst\n.\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("First\n", File.ReadAllText(In("work", "fresh.md")).Replace("\r\n", "\n"));
+        // Only input takes "before" (a before is refused), and i a file only with a place, as input takes them
+        (_, errors, _, _) = Run("peek n.md 1\na before\ni n.md\n");
+        Assert.Equal(2, errors.Split(Lang.T("Give a file and where, or nothing: input, input notes.md bottom, input notes.md +12")).Length - 1);
+    }
+
+    [Fact]
+    public void AAndI_InAScript_TakeTheLinesAfterThem_AndHelpTellsThem()
+    {
+        File.WriteAllText(In("work", "n.md"), "one\n");
+        File.WriteAllText(In("work", "s.txt"), "a n.md bottom\nCost $1\n.\ni n.md top\n# Title $2\n.\n");
+        var (output, errors, _, _) = Run("run s.txt\nhelp i\nhelp\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("# Title $2\none\nCost $1\n", Text("n.md"));
+        Assert.Contains("input before", output);
+        Assert.Contains("a, i (input)", output);
+        Assert.Equal("i n.md top", Tab(Completion(), "i n.md t"));
+    }
 }

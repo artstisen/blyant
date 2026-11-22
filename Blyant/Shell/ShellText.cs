@@ -127,7 +127,8 @@ internal sealed partial class ShellSession
     internal static bool IsInputEnd(string line) => line.TrimEnd() == ".";
 
     // "input", "input @", "input notes.md bottom", "input notes.md +12": the lines typed put in the file one after
-    // another, as in the line editor ed: alone (or "@"), after $line, as insert @ puts a line; a line with only "." ends
+    // another, as in the line editor ed: alone (or "@", or "a" as in ed), after $line, as insert @ puts a line; "input
+    // before" (or "i" as in ed) before $line, which goes down (see WithAt); a line with only "." ends
     // it, and so does the end of the input (Ctrl+D). Each line is written when it is typed, so none is lost; all are one
     // step of undo. The file is $file from the start, and the prompt is "$file" and the number the next line gets
     // ("$file:14> ": short, whatever the name of the file; "echo $file" tells the path). The lines are put in as

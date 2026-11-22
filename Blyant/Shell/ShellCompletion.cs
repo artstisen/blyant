@@ -282,6 +282,8 @@ internal sealed class ShellCompletion
             }
             case "insert":
             case "input":
+            case "a":
+            case "i":
                 return position switch
                 {
                     0 => (Kind.Path, none),

@@ -1,6 +1,7 @@
 # Changes
 
 ## v1.6.2
+- **`a` and `i` in the shell, as in `ed`**: `a` is short for `input`, and puts the lines you type in after `$line`. `i` puts them in before `$line`, so the line you are at goes down below them; its long form is `input before`. With a file and a place, `a` and `i` take them as `input` does (`i notes.md +12`). In a script, the lines after `a` and `i` are text, as after `input`. `help` lists them with the short forms. See [Typing lines in](Guide-to-shell.md#typing-lines-in).
 - **Fixes from the review before the release**:
   - `input` and `insert … bottom` keep a blank line typed at the end of a file that has no line break at its end: before, it only became that line break, and the next line took its place. The same goes for `lines`, `change` and `cut` that leave a blank last line
   - `input` stops, and writes nothing over, when the file is saved in the editor or by another program, or deleted, while you type the lines

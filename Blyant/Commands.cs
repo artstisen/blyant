@@ -89,7 +89,7 @@ internal static class Commands
         [CommandContext.Shell] = new Table(
             "pwd ls cd up home data open edit resume peek find new mkdir rename copy move delete info insert input change replace shift shift! lines words word format trim trim! set reset reload reg clip favorites history " +
             "recent hotlist bookmarks projects project tag tags log clear screen version about again undo redo changes run echo calc forget path name file line help exit quit",
-            "fav favs hist rec res hot book proj h q del cls + ++ - -- . / ? j jj k kk gg G"),
+            "fav favs hist rec res hot book proj h q del cls a i + ++ - -- . / ? j jj k kk gg G"),
         [CommandContext.Editor] = new Table(
             "write saveas quit quit! wq help edit edit! reload reload! undo redo delete yank replace nohlsearch " +
             "spell nospell spellnext spellprev suggest spelladd syntax number nonumber timestamp " +
