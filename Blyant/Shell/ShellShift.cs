@@ -281,24 +281,19 @@ internal sealed partial class ShellSession
         // before $line, as the i of ed)
         var input = IsInput(name);
         // ("input -e", "input -e @": $line itself, to edit; "input -e +12": line 12 of $file)
-        var editing = name == "input" && Words(argument) is ["-e", ..];
-        if (editing && Words(argument) is ["-e", var lineOnly] && IsPlusLine(lineOnly, out _))
+        var editing = name == "input" && HasEditOption(argument);
+        var afterOption = editing ? AfterWords(argument, 1) : argument;
+        // ("input +12", "a +12", "i +12", "input -e +12": $file, the lines as line 12, as "input $file +12" puts them)
+        // ("blank +12", "blank +12 3": the same, with a count)
+        if ((input && Words(afterOption) is [var only] && IsPlusLine(only, out _)) ||
+            (name == "blank" && Words(argument) is [var lineWord, ..] and ([_] or [_, _]) && IsPlusLine(lineWord, out _)))
         {
-            if (_file is not null) return "-e $file " + lineOnly;
+            if (_file is not null) return (editing ? "-e " : string.Empty) + "$file " + afterOption.Trim();
             Error(Lang.T("@ is the file and the line of the last command: none yet (words notes.md 12)"));
             return null;
         }
 
-        if (editing && Words(argument) is ["-e"]) argument = "-e @";
-        // ("input +12", "a +12", "i +12": $file, the lines as line 12, as "input $file +12" puts them)
-        // ("blank +12", "blank +12 3": the same, with a count)
-        if ((input && Words(argument) is [var only] && IsPlusLine(only, out _)) ||
-            (name == "blank" && Words(argument) is [var lineWord, ..] and ([_] or [_, _]) && IsPlusLine(lineWord, out _)))
-        {
-            if (_file is not null) return "$file " + argument.Trim();
-            Error(Lang.T("@ is the file and the line of the last command: none yet (words notes.md 12)"));
-            return null;
-        }
+        if (editing && Words(afterOption) is []) argument = "-e @";
 
         var before = name == "i" ? Words(argument) is [] or ["@"] : name == "input" && Words(argument) is ["before"] or ["@", "before"];
         if (before || (input && argument.Trim().Length == 0)) argument = "@";
@@ -334,8 +329,10 @@ internal sealed partial class ShellSession
             if (count == 0) line = 0;
             else if (line > count)
             {
-                Error(Lang.F("@ is line {0}, and {1} has {2} lines: line bottom sets the last", line,
-                    Path.GetFileName(_file), count));
+                Error(count == 1
+                    ? Lang.F("@ is line {0}, and {1} has one line: line bottom sets the last", line, Path.GetFileName(_file))
+                    : Lang.F("@ is line {0}, and {1} has {2} lines: line bottom sets the last", line,
+                        Path.GetFileName(_file), count));
                 return null;
             }
         }
@@ -343,7 +340,8 @@ internal sealed partial class ShellSession
         // (the top of a file, before line 1, as in an empty file: open, edit and peek take the file from line 1, and
         // only insert can put a line there; the others have no line to work on)
         if (line == 0 && name is "open" or "edit" or "peek") line = 1;
-        if (line == 0 && name is not ("insert" or "blank") && !input)
+        // (input -e: no line there to edit)
+        if (line == 0 && name is not ("insert" or "blank") && (!input || editing))
         {
             Error(Lang.F("@ is at the top of {0}, before line 1: insert @ text puts a line there",
                 Path.GetFileName(_file)));

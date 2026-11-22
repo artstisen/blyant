@@ -160,6 +160,10 @@ internal sealed partial class ShellSession
     // "+12": line 12 (from 1), as IsLine takes it, but not "+0"
     internal static bool IsPlusLine(string word, out int line) => IsLine(word, out line) && line > 0;
 
+    // "-e" first, as written ("input -e notes.md +12"): a line edited first; "-e" in quotes is a name of a file
+    internal static bool HasEditOption(string argument) =>
+        Words(argument) is ["-e", ..] && argument.TrimStart().StartsWith("-e", StringComparison.Ordinal);
+
     // The line that ends input: only "." (blanks after it too; one before it is text: " ." is put in)
     internal static bool IsInputEnd(string line) => line.TrimEnd() == ".";
 
@@ -189,13 +193,20 @@ internal sealed partial class ShellSession
     // "input" in the script; from a file or a pipe, the lines after it. As insert: the line endings and byte order mark
     // of the file kept, only a file in UTF-8, and not one Blyant uses; the file is then the last list, at the first
     // line put in, and $line is the last
-    private void Input(string argument)
+    private void Input(string argument, string name)
     {
         // ("input" alone, "input @", "i" and "input +12" are "$file +line", put in before: see WithAt)
         var words = Words(argument);
         // "input -e notes.md +12" ("input -e" alone: $line): line 12 at the prompt to edit first, then the lines typed
-        // after it, as always. Only at a terminal: a line cannot be put before you to change in a script or a pipe
-        var edit = words is ["-e", ..];
+        // after it, as always. Only at a terminal: a line cannot be put before you to change in a script or a pipe.
+        // Only input: a and i tell after and before $line, which a line edited has not
+        var edit = HasEditOption(argument);
+        if (edit && name != "input")
+        {
+            Error(Lang.F("{0} -e is not taken: input -e edits a line, then goes on after it", name));
+            return;
+        }
+
         if (edit)
         {
             if (!Terminal || _runNext is not null)
@@ -218,30 +229,42 @@ internal sealed partial class ShellSession
 
         if (EditableFile(words[0]) is not { } editable) return;
         var (item, file) = editable;
-        // (the line to edit: "top" the first, "bottom" the last; one past the end is not there)
-        var lineCount = LinesOfText(file.Text).Count;
-        var editing = place.Value == int.MaxValue ? lineCount : place.Value;
-        if (edit && (editing < 1 || editing > lineCount))
+        var fileLines = LinesOfText(file.Text);
+        var lineCount = fileLines.Count;
+        // (the line to edit: "top" the first, "bottom" the last; one past the end is not there, also one too large for
+        // a number)
+        var editLine = 0;
+        if (edit)
         {
-            Error(Lang.F("{0} has no line {1} to edit: it has {2} lines", item.Path, place.Value == int.MaxValue ? 0 : place.Value,
-                lineCount));
-            return;
+            editLine = words[1].Equals("bottom", StringComparison.OrdinalIgnoreCase) ? lineCount : place.Value;
+            if (editLine < 1 || editLine > lineCount)
+            {
+                var asked = words[1].Equals("bottom", StringComparison.OrdinalIgnoreCase) ? "1" : words[1].TrimStart('+');
+                Error(lineCount switch
+                {
+                    0 => Lang.F("{0} has no lines to edit", item.Path),
+                    1 => Lang.F("{0} has no line {1} to edit: it has one line", item.Path, asked),
+                    _ => Lang.F("{0} has no line {1} to edit: it has {2} lines", item.Path, asked, lineCount)
+                });
+                return;
+            }
         }
+
         // (the lines of text after it are read here: from a file or a pipe they are not skipped, see SkipInputText)
         _inputExpected = false;
         // (the file keeps its ending: a line break at the end of the text only when it had one, or the last line is
         // blank)
         var endsWithBreak = file.Text.Length == 0 || TextBuffer.Normalize(file.Text).EndsWith('\n');
-        var next = edit ? editing + 1 : (int)Math.Min(place.Value, lineCount + 1L);
+        var next = edit ? editLine + 1 : (int)Math.Min(place.Value, lineCount + 1L);
         // (the file the lines go in is $file, at the line before them, from the start: the prompt names $file)
         _file = Path.GetFullPath(item.Path);
         _line = next - 1;
         // The lines of this input are first to next - 1: with -e the line edited first, then the lines typed (.d takes
         // out only those: the line edited was there before)
-        var first = edit ? editing : next;
+        var first = edit ? editLine : next;
         var count = edit ? 1 : 0;
         var firstTyped = edit ? first + 1 : first;
-        var editedBefore = edit ? LinesOfText(file.Text)[editing - 1] : null;
+        var editedBefore = edit ? fileLines[editLine - 1] : null;
         // (the dot commands only typed at a terminal: from a script, a file or a pipe the lines are text, up to ".")
         var dots = _runNext is null && Terminal;
         // English: "$file" is the name of the shell, the same in all languages
@@ -286,9 +309,10 @@ internal sealed partial class ShellSession
         }
 
         // A dot command: ".u" the last line typed back at the prompt, without its last word; ".e" all of it; ".d" the
-        // last line typed taken out; ".p" the lines typed shown; ".?" the commands told. Only the lines typed in this
-        // input, never those there before. False when input ends (at the end of the input, or "." while a line is
-        // edited, the line as it was; or the file changed meanwhile)
+        // last line typed taken out; ".p" the lines typed shown; ".?" the commands told. Only the lines of this input:
+        // those typed, and with -e the line edited first (which .d leaves, as it was there before), never other lines
+        // of the file. False when input ends (at the end of the input, or "." while a line is edited, the line as it
+        // was; or the file changed meanwhile)
         bool DotCommand(char command)
         {
             if (command == '?')

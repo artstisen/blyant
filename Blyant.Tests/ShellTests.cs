@@ -9580,7 +9580,7 @@ public class ShellTests : IDisposable
     {
         File.WriteAllText(In("work", "n.md"), "one\n");
         var (_, errors, _, _) = Run("input -e n.md +5\n.\ninput -e n.md\n.\n", terminal: true);
-        Assert.Contains(Lang.F("{0} has no line {1} to edit: it has {2} lines", In("work", "n.md"), 5, 1), errors);
+        Assert.Contains(Lang.F("{0} has no line {1} to edit: it has one line", In("work", "n.md"), "5"), errors);
         Assert.Contains(Lang.T("input -e takes a line: input -e, input -e +12, input -e notes.md +12"), errors);
         // From a pipe: refused, and its text skipped, so no line of it runs as a command
         (_, errors, _, _) = Run("input -e n.md +1\ndelete n.md\n.\n");
@@ -9601,6 +9601,97 @@ public class ShellTests : IDisposable
         var completion = Completion();
         Assert.Equal("input -e", Tab(completion, "input -"));
         Assert.Equal("input -e n.md top", Tab(Completion(), "input -e n.md t"));
-        Assert.Contains("input -e [+line|file|n +line]", Run("help input\n").Output);
+        Assert.Contains("input -e [+line|file|n top|bottom|+line]", Run("help input\n").Output);
+    }
+
+    // ---- 1.6.3: the fixes of the review of input -e
+
+    [Fact]
+    public void InputE_InAnEmptyFile_AndAtTheTop_TellsThereIsNoLine()
+    {
+        File.WriteAllText(In("work", "e.md"), string.Empty);
+        var (_, errors, _, _) = Run("new fresh\ninput -e\ninput -e e.md top\n", terminal: true);
+        Assert.Contains(Lang.F("@ is at the top of {0}, before line 1: insert @ text puts a line there", "fresh.md"), errors);
+        Assert.Contains(Lang.F("{0} has no lines to edit", In("work", "e.md")), errors);
+        Assert.DoesNotContain(Lang.T("input -e takes a line: input -e, input -e +12, input -e notes.md +12"), errors);
+    }
+
+    [Fact]
+    public void InputE_IsForInputOnly_AndALineTooLargeIsNotTheLast()
+    {
+        File.WriteAllText(In("work", "n.md"), "one\ntwo\n");
+        var (_, errors, _, _) = Run("peek n.md 1\na -e n.md +1\ni -e\ninput -e n.md +99999999999\n", terminal: true);
+        Assert.Contains(Lang.F("{0} -e is not taken: input -e edits a line, then goes on after it", "a"), errors);
+        Assert.Contains(Lang.F("{0} -e is not taken: input -e edits a line, then goes on after it", "i"), errors);
+        Assert.Contains(Lang.F("{0} has no line {1} to edit: it has {2} lines", In("work", "n.md"), "99999999999", 2), errors);
+        Assert.Equal("one\ntwo\n", Text("n.md"));
+        // "bottom" is the last line; "input -e @" is $line
+        // (line 1 sets $line: a peek of the file worked on is a look, and leaves it)
+        Run("input -e n.md bottom\nTWO\n.\nline 1\ninput -e @\nONE\n.\n", terminal: true);
+        Assert.Equal("ONE\nTWO\n", Text("n.md"));
+    }
+
+    [Fact]
+    public void AFileNamedMinusE_InQuotes_IsAFile_ForInput()
+    {
+        File.WriteAllText(In("work", "-e"), "x\n");
+        var (_, errors, _, _) = Run("input \"-e\" bottom\ny\n.\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("x\ny\n", Text("-e"));
+        Assert.False(ShellSession.HasEditOption("\"-e\" bottom"));
+        Assert.True(ShellSession.HasEditOption("-e notes.md +3"));
+    }
+
+    [Fact]
+    public void InputE_CtrlCThenDot_LeavesTheLine_AndEBringsTheLineEditedBackWhenTheLinesTypedAreGone()
+    {
+        File.WriteAllText(In("work", "n.md"), "one\ntwo\n");
+        // (without line editing: Enter alone keeps the line, as Ctrl+C would; then "." ends)
+        var (output, _, _, session) = Run("input -e n.md +1\n\n.\necho $line\n", terminal: true);
+        Assert.Contains(Lang.T("Nothing put in"), output);
+        // (at a terminal: "echo $line" after its prompt)
+        Assert.Contains("> 1\n", output);
+        // A line typed, deleted with .d: .e then brings back the line edited
+        Run("input -e n.md +2\n\nthree\n.d\n.e\nTWO\n.\n", terminal: true);
+        Assert.Equal("one\nTWO\n", Text("n.md"));
+    }
+
+    [Fact]
+    public void InputE_StopsWhenTheFileChanged_DuringTheFirstEdit()
+    {
+        File.WriteAllText(In("work", "n.md"), "one\ntwo\n");
+        var reader = new ChangingReader("input -e n.md +2\nTWO\n.\n", 2,
+            () => File.WriteAllText(In("work", "n.md"), "saved in the editor\n"));
+        var errors = new StringWriter();
+        Shell.Run(new ShellSession(reader, new StringWriter(), errors, In("work"), true, false));
+        Assert.Equal("saved in the editor\n", Text("n.md"));
+        Assert.Contains(Lang.F("{0} was changed meanwhile: the line is not put in, and input stops", In("work", "n.md")),
+            errors.ToString());
+    }
+
+    [Fact]
+    public void AtPastTheEnd_OfAFileOfOneLine_SaysOneLine()
+    {
+        File.WriteAllText(In("work", "s.md"), "one\ntwo\nthree\n");
+        // (@ is line 3, and the file has one line by the next command)
+        var reader = new ChangingReader("file s.md 3\nwords @\n", 2, () => File.WriteAllText(In("work", "s.md"), "only\n"));
+        var errors = new StringWriter();
+        Shell.Run(new ShellSession(reader, new StringWriter(), errors, In("work"), false, false));
+        Assert.Contains(Lang.F("@ is line {0}, and {1} has one line: line bottom sets the last", 3, "s.md"), errors.ToString());
+    }
+
+    [Fact]
+    public void TabAfterInputE_OffersNoPlaceAfterALine()
+    {
+        List<string> Offered(string typed)
+        {
+            var completion = Completion();
+            return Enumerable.Range(1, 4).Select(n => Tab(completion, typed, Enumerable.Repeat(true, n).ToArray())).ToList();
+        }
+
+        Assert.DoesNotContain("input -e +3 top", Offered("input -e +3 "));
+        Assert.DoesNotContain("input -e @ top", Offered("input -e @ "));
+        File.WriteAllText(In("work", "n.md"), "one\n");
+        Assert.Contains("input -e n.md top", Offered("input -e n.md "));
     }
 }

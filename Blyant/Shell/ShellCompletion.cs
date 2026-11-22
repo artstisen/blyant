@@ -125,7 +125,7 @@ internal sealed class ShellCompletion
         // ("word @ 2 " and Tab: "@" is the file and the line, so it counts as two words, as "word notes.md +12 2 ")
         if (ShellSession.TakesAt.Contains(command))
         {
-            var file = _words.FindIndex(w => w is not ("-p" or "-s"));
+            var file = _words.FindIndex(w => w is not ("-p" or "-s") && !(command == "input" && w == "-e"));
             if (file >= 0 && _words[file] == "@") _words.Insert(file + 1, "+0");
         }
 
@@ -284,7 +284,8 @@ internal sealed class ShellCompletion
                 return position switch
                 {
                     1 => (Kind.Path, none),
-                    2 => (Kind.Words, new[] { "top", "bottom" }),
+                    // ("input -e +3": the line given; a place only after a file)
+                    2 when !ShellSession.IsLine(_words[1]) => (Kind.Words, new[] { "top", "bottom" }),
                     _ => (Kind.None, none)
                 };
             case "input" when position == 0:
