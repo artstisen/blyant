@@ -12,7 +12,7 @@ internal sealed partial class ShellSession
 {
     // What "lines" does to the text in the lines (after the lines: "lines todo.md 4 start Note:")
     private static readonly string[] LineEdits =
-        { "start", "end", "unstart", "unend", "replace", "remove", "at", "dup", "sort", "upper", "lower", "title" };
+        { "start", "end", "unstart", "unend", "replace", "remove", "at", "dup", "sort", "upper", "lower", "title", "squeeze" };
 
     /// <summary>
     /// What the words after "lines" are: the place of the ">" of a copy (2, or 3 after "+10 5"), or of a word of
@@ -46,7 +46,7 @@ internal sealed partial class ShellSession
         // (after the lines: neither a ">" nor a word of what is done)
         else if (form.Arrow < 0 && words.Count > 2 && !words.Contains(">") && !words.Contains(">>"))
         {
-            Error(Lang.T("After the lines: > file place, > $name, start, end, unstart, unend, replace, remove, at, dup, sort, upper, lower or title"));
+            Error(Lang.T("After the lines: > file place, > $name, start, end, unstart, unend, replace, remove, at, dup, sort, upper, lower, title or squeeze"));
         }
         else CopyLines(argument);
     }
@@ -122,7 +122,7 @@ internal sealed partial class ShellSession
                 return;
             }
         }
-        else if (kind is "sort" or "upper" or "lower" or "title")
+        else if (kind is "sort" or "upper" or "lower" or "title" or "squeeze")
         {
             text = string.Empty;
             if (kind == "sort" && rest is not ("" or "-a" or "-d"))
@@ -160,6 +160,12 @@ internal sealed partial class ShellSession
         if (kind == "dup")
         {
             Duplicate(item, file, lines, picked, copies);
+            return;
+        }
+
+        if (kind == "squeeze")
+        {
+            Squeeze(item, file, lines, picked);
             return;
         }
 
@@ -217,6 +223,28 @@ internal sealed partial class ShellSession
                 ? Lang.F("{0}: line {1} changed", item.Path, changed[0])
                 : Lang.F("{0}: {1} lines changed", item.Path, changed.Count));
         }
+    }
+
+    // "lines notes.md 10-40 squeeze": each run of blank lines among the lines made one blank line (a blank line is empty,
+    // or only blanks: the first of a run is kept, as it is). Lines with text, and a blank line alone, stay. Only lines
+    // given next to each other are a run ("4,5" are; "4,6" not). The file is then the last list, at the first line
+    private void Squeeze(Item item, TextFile file, List<string> lines, List<int> picked)
+    {
+        var given = picked.ToHashSet();
+        var taken = picked.Where(number => number > 1 && given.Contains(number - 1) &&
+                                           lines[number - 1].Trim().Length == 0 && lines[number - 2].Trim().Length == 0).ToList();
+        if (taken.Count == 0)
+        {
+            Line(Lang.T("Nothing changed: no blank lines follow each other there"));
+            return;
+        }
+
+        // (the path and the lines taken out, never the text)
+        if (!SavedEdit(file, WithoutLines(file.Text, taken), "Squeeze lines", item.Path + ":" + Numbers(taken))) return;
+        LastList = new List<Item> { new(item.Path, false, (picked[0], 1)) };
+        Line(taken.Count == 1
+            ? Lang.F("{0}: a blank line taken out", item.Path)
+            : Lang.F("{0}: {1} blank lines taken out", item.Path, taken.Count));
     }
 
     // "lines notes.md 4-6 dup 3": the lines, in their order, copied right below the last of them, as many times as

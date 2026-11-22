@@ -264,7 +264,7 @@ internal sealed partial class ShellSession
     /// </summary>
     internal static readonly HashSet<string> TakesAt = new()
     {
-        "words", "word", "change", "insert", "input", "a", "i", "peek", "shift", "shift!", "lines", "open", "edit"
+        "words", "word", "change", "insert", "input", "a", "i", "blank", "peek", "shift", "shift!", "lines", "open", "edit"
     };
 
     // The names of input: "input", and "a" and "i" as in the line editor ed (after and before the line)
@@ -290,6 +290,11 @@ internal sealed partial class ShellSession
 
         var before = name == "i" ? Words(argument) is [] or ["@"] : name == "input" && Words(argument) is ["before"] or ["@", "before"];
         if (before || (input && argument.Trim().Length == 0)) argument = "@";
+        // ("blank" alone, and "blank 3": after $line, as "blank @" and "blank @ 3")
+        if (name == "blank" && Words(argument) is var given && (given is [] || (given is [var many] && IsNumber(many, out _))))
+        {
+            argument = ("@ " + argument.Trim()).TrimEnd();
+        }
         // ("clip words @ 6-9": after the kind, as word takes it)
         var clipWords = name == "clip" && CommandLine.Name(argument).Equals("words", StringComparison.OrdinalIgnoreCase);
         if (!TakesAt.Contains(name) && !clipWords) return argument;
@@ -326,7 +331,7 @@ internal sealed partial class ShellSession
         // (the top of a file, before line 1, as in an empty file: open, edit and peek take the file from line 1, and
         // only insert can put a line there; the others have no line to work on)
         if (line == 0 && name is "open" or "edit" or "peek") line = 1;
-        if (line == 0 && name != "insert" && !input)
+        if (line == 0 && name is not ("insert" or "blank") && !input)
         {
             Error(Lang.F("@ is at the top of {0}, before line 1: insert @ text puts a line there",
                 Path.GetFileName(_file)));
@@ -336,7 +341,7 @@ internal sealed partial class ShellSession
         var head = argument[..(argument.Length - from.Length)];
         var rest = AfterWords(argument, at + 1);
         // (before: as line $line, the line it is goes down; in an empty file, at the top)
-        var put = "$file +" + (before ? Math.Max(line, 1) : name == "insert" || input ? line + 1 : line);
+        var put = "$file +" + (before ? Math.Max(line, 1) : name is "insert" or "blank" || input ? line + 1 : line);
         return head + put + (rest.Length > 0 ? " " + rest : string.Empty);
     }
 

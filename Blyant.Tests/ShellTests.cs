@@ -4866,7 +4866,7 @@ public class ShellTests : IDisposable
         Assert.Contains(Lang.T("Nothing changed: no uppercase letters in the lines"), output);
         var (_, wrong, _, _) = Run("lines t.md 1 upper now\nlines t.md 1 sideways\n");
         Assert.Contains(Lang.F("Nothing goes after {0}: lines notes.md 3-20 {0}", "upper"), wrong);
-        Assert.Contains(Lang.T("After the lines: > file place, > $name, start, end, unstart, unend, replace, remove, at, dup, sort, upper, lower or title"), wrong);
+        Assert.Contains(Lang.T("After the lines: > file place, > $name, start, end, unstart, unend, replace, remove, at, dup, sort, upper, lower, title or squeeze"), wrong);
     }
 
     [Fact]
@@ -9349,5 +9349,81 @@ public class ShellTests : IDisposable
         session.ReadLinesWith(() => keys.Dequeue(), () => 80);
         Shell.Run(session);
         Assert.Equal("one\nThe ferry late\n", Text("n.md"));
+    }
+
+    // ---- 1.6.2: blank and lines ... squeeze
+
+    [Fact]
+    public void Blank_PutsInBlankLines_AfterLine_OrAtAPlace()
+    {
+        File.WriteAllText(In("work", "n.md"), "one\ntwo\nthree\n");
+        var (output, errors, _, session) = Run("peek n.md 1\nblank\nblank 2\na\nafter\n.\nblank n.md bottom 2\nblank @ 1\n");
+        Assert.Equal(string.Empty, errors);
+        // After line 1, then after the blank line; input goes on after them; at the bottom; "@ 1" after the last
+        Assert.Equal("one\n\n\n\nafter\ntwo\nthree\n\n\n\n", Text("n.md").Replace("\r\n", "\n"));
+        Assert.Contains(Lang.F("{0}: lines {1}-{2} put in", In("work", "n.md"), 3, 4), output);
+        Assert.Equal(10, session.LastList.Single().At?.Line);
+        // One step of undo each
+        (output, _, _, _) = Run("blank n.md +1 3\nundo\n");
+        Assert.Equal("one\n\n\n\nafter\ntwo\nthree\n\n\n\n", Text("n.md").Replace("\r\n", "\n"));
+        Assert.Equal("blank n.md top", Tab(Completion(), "blank n.md t"));
+    }
+
+    [Fact]
+    public void Blank_RefusesACountItCannotTake_AndNoFile()
+    {
+        File.WriteAllText(In("work", "n.md"), "one\n");
+        var (_, errors, _, _) = Run("peek n.md 1\nblank 0\nblank 501\nblank x\nblank n.md middle\n");
+        var usage = Lang.F("Give a file and where, or nothing, and how many (1 to {0}): blank, blank 3, blank notes.md +12 3", 500);
+        Assert.Equal(4, errors.Split(usage).Length - 1);
+        Assert.Equal("one\n", Text("n.md"));
+        (_, errors, _, _) = Run("blank\n");
+        Assert.Contains(Lang.T("@ is the file and the line of the last command: none yet (words notes.md 12)"), errors);
+    }
+
+    [Theory]
+    [InlineData("lf", "\n")]
+    [InlineData("crlf", "\r\n")]
+    public void Blank_InAFileWithoutLineBreaks_TakesThoseOfTheSetting_AndAFileKeepsItsOwn(string setting, string ending)
+    {
+        try
+        {
+            TextFile.NewFileLineEndings = setting;
+            File.WriteAllText(In("work", "e.md"), string.Empty);
+            File.WriteAllText(In("work", "a.md"), "a");
+            Run("blank e.md top 2\nblank a.md bottom\n");
+            Assert.Equal(ending + ending, File.ReadAllText(In("work", "e.md")));
+            Assert.Equal("a" + ending + ending, File.ReadAllText(In("work", "a.md")));
+            // A file with line breaks keeps them, whatever the setting
+            var own = ending == "\n" ? "\r\n" : "\n";
+            File.WriteAllText(In("work", "o.md"), "x" + own + "y" + own);
+            Run("blank o.md +2 2\n");
+            Assert.Equal("x" + own + own + own + "y" + own, File.ReadAllText(In("work", "o.md")));
+        }
+        finally
+        {
+            TextFile.NewFileLineEndings = "system";
+        }
+    }
+
+    [Fact]
+    public void LinesSqueeze_MakesEachRunOfBlankLinesOne()
+    {
+        File.WriteAllText(In("work", "s.md"), "a\n\n\n\nb\n  \n\nc\n\nd\n\n\n");
+        var (output, errors, _, session) = Run("lines s.md 1-20 squeeze\n");
+        Assert.Equal(string.Empty, errors);
+        // (a line of only blanks is blank too: the first of a run is kept as it is)
+        Assert.Equal("a\n\nb\n  \nc\n\nd\n\n", Text("s.md"));
+        Assert.Contains(Lang.F("{0}: {1} blank lines taken out", In("work", "s.md"), 4), output);
+        Assert.Equal(1, session.LastList.Single().At?.Line);
+        // Only among the lines given, and only those next to each other
+        File.WriteAllText(In("work", "s.md"), "a\n\n\n\nb\n\n\nc\n");
+        (output, _, _, _) = Run("lines s.md 1-3 squeeze\nlines s.md 5,7 squeeze\n");
+        Assert.Equal("a\n\n\nb\n\n\nc\n", Text("s.md"));
+        Assert.Contains(Lang.F("{0}: a blank line taken out", In("work", "s.md")), output);
+        Assert.Contains(Lang.T("Nothing changed: no blank lines follow each other there"), output);
+        (_, errors, _, _) = Run("lines s.md 1-9 squeeze more\nundo\n");
+        Assert.Contains(Lang.F("Nothing goes after {0}: lines notes.md 3-20 {0}", "squeeze"), errors);
+        Assert.Equal("lines s.md 1-9 squeeze", Tab(Completion(), "lines s.md 1-9 sq"));
     }
 }

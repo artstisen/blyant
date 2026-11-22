@@ -268,6 +268,7 @@ $file:7> .
 - Each line is written when you press `Enter`, and `undo` takes them all back in one step
 - `input plot.md bottom` puts the lines at the end of the file instead (`top` and `+12` work too)
 - `a` is short for `input`, as in `ed`, and `i` puts the lines in before the line you are at
+- `blank 3` puts in three blank lines after the line you are at, to make room, and `lines plot.md 1-200 squeeze` makes each run of blank lines one again
 - A typo in the line you just typed: `.u` alone on the next line brings it back without its last word, `.e` brings all of it back to change, and `.d` deletes it
 - `lines plot.md 4 dup` copies line 4 right below it (`lines plot.md 3-5 dup 2`: two copies of lines 3 to 5), and `lines plot.md 3-5 > plot.md bottom` copies them to the end of the same file
 

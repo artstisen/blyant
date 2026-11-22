@@ -93,6 +93,35 @@ internal sealed partial class ShellSession
         TellPutIn(item.Path, number, count);
     }
 
+    // "blank", "blank 3", "blank notes.md +12 3", "blank notes.md bottom": blank lines put in (1, or as many as given,
+    // at most as many as dup makes), to make room: alone (or "@"), after $line, as insert @ puts a line (see WithAt);
+    // with a file and a place, as insert takes them. $line is then the last of them, so input goes on after them, and
+    // the file is the last list at the first. As insert: the line endings of the file kept (a file without any: those
+    // of the setting newlineendings), and its byte order mark; only a file in UTF-8, and not one Blyant uses
+    private void Blank(string argument)
+    {
+        var words = Words(argument);
+        var place = words.Count is 2 or 3 ? InsertPlace(words[1]) : null;
+        var count = 1;
+        if (place is null || (words.Count == 3 && (!IsNumber(words[2], out count) || count is < 1 or > EditorEngine.MaxCopies)))
+        {
+            Error(Lang.F("Give a file and where, or nothing, and how many (1 to {0}): blank, blank 3, blank notes.md +12 3",
+                EditorEngine.MaxCopies));
+            return;
+        }
+
+        if (EditableFile(words[0]) is not { } editable) return;
+        var (item, file) = editable;
+        var (text, first) = WithLinesAt(file.Text, Enumerable.Repeat(string.Empty, count).ToList(), place.Value - 1);
+        // (the path, the line and how many)
+        if (!SavedEdit(file, text, "Blank lines", item.Path + ":" + first + " x" + count)) return;
+
+        LastList = new List<Item> { new(item.Path, false, (first, 1)) };
+        _file = Path.GetFullPath(item.Path);
+        _line = first + count - 1;
+        TellPutIn(item.Path, first, count);
+    }
+
     // What was put in told: "notes.md: line 5 put in", "notes.md: lines 5-7 put in"
     private void TellPutIn(string path, int first, int count) =>
         Line(count <= 1

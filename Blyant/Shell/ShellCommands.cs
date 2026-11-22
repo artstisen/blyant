@@ -56,6 +56,8 @@ internal sealed partial class ShellSession
         ("delete file|n", Lang.T("Delete a file or directory, to the trash (del)")),
         ("info [file|n]", Lang.T("Describe a file or directory (alone: this one)")),
         ("insert file|n top|bottom|+line text", Lang.T("Put a line of text in a file, without opening it")),
+        ("blank [n]", Lang.T("Put in blank lines after $line, to make room (n: that many)")),
+        ("blank file|n top|bottom|+line [n]", Lang.T("Put in blank lines at a place in a file")),
         ("input [+line]", Lang.T("Type lines into a file after $line; a line with . ends")),
         ("input file|n top|bottom|+line", Lang.T("Type lines into a file: at the top, the bottom, or as line +line")),
         ("input before", Lang.T("Type lines into a file before $line; a line with . ends")),
@@ -77,6 +79,7 @@ internal sealed partial class ShellSession
         ("lines file|n lines at column text", Lang.T("Put a text in lines at a column (words shows them)")),
         ("lines file|n lines sort [-a|-d]", Lang.T("Sort lines: -a A to Z, capitals first (default), -d Z to A")),
         ("lines file|n lines upper|lower|title", Lang.T("Make lines UPPERCASE, lowercase or Title Case")),
+        ("lines file|n lines squeeze", Lang.T("Make each run of blank lines one blank line")),
         ("replace [-n] [-i] file|n old new", Lang.T("Replace a text everywhere in a file (undo takes it back)")),
         ("replace -n", Lang.T("Show what would change, and ask at a terminal")),
         ("replace -i", Lang.T("Replace in any letter case")),
@@ -1308,6 +1311,9 @@ internal sealed partial class ShellSession
                 break;
             case "insert":
                 Insert(argument);
+                break;
+            case "blank":
+                Blank(argument);
                 break;
             case "input":
             case "a":
