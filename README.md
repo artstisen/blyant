@@ -3,11 +3,11 @@ A free, open-source, cross-platform, Vim-style modal text editor for writing in 
 
 **Website: [blyant-editor.com](https://blyant-editor.com)** – docs, downloads, screenshots, etc.
 
-This project began in 2022, with the application architecture and codebase written by hand. In later versions, I’ve used agentic tools to refine, rewrite, test, and conduct code reviews. Blyant is derived from my encryption editor [Marbles](https://github.com/artstisen/marbles), but there are many differences, as Blyant is designed for writing, programming, organizing files, planning projects, etc. Blyant has several features inspired by popular Neovim plugins for text navigation, commands, and much more. 
+This project began in 2022, with the application architecture and codebase written by hand. In later versions, I’ve used agentic tools to refine, rewrite, test, and conduct code reviews (see [CSharp Coding Kit](https://github.com/artstisen/csharp-coding-kit)). Blyant is derived from my encryption editor [Marbles](https://github.com/artstisen/marbles), but there are many differences, as Blyant is designed for writing, programming, organizing files, planning projects, etc. Blyant has several features inspired by popular Neovim plugins for text navigation, commands, and much more. 
 
-**My favorite feature? – Using bookmarks to create custom jump points and open them from anywhere via the command line.**
+**Favorite feature? – Using bookmarks to create custom jump points and open them from anywhere via the command line.**
 
-I also like to use Blyant in Shell mode, with no TUI at all, as a purely command driven tool in the CLI, for managing and editing files (see [shell tutorial](Guide-to-shell-tutorial.md)).
+I also like to use Blyant as a line editor in Shell mode, with no TUI at all, as a purely command driven tool in the CLI, for editing and managing files (see [shell tutorial](Guide-to-shell-tutorial.md)).
 
 ![The editor in split view, with command suggestions](docs/screenshots/split-view.svg)
 
