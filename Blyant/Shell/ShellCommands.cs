@@ -2202,9 +2202,7 @@ internal sealed partial class ShellSession
     {
         // (a name in quotes as it is: "a  b.md" keeps its blanks)
         var words = Words(argument);
-        var line = words.Select(word => IsLine(word)
-            ? IsNumber(word[1..], out var n) ? Math.Max(1, n) : int.MaxValue
-            : (int?)null).LastOrDefault(n => n is not null);
+        var line = words.Select(word => IsLine(word, out var n) ? Math.Max(1, n) : (int?)null).LastOrDefault(n => n is not null);
         var name = string.Join(' ', words.Where(word => !IsLine(word)));
         if (name.Length == 0)
         {
@@ -2313,7 +2311,7 @@ internal sealed partial class ShellSession
             return null;
         }
 
-        if (words.Count == 1) return (_file, int.TryParse(words[0][1..], out var given) ? Math.Max(1, given) : int.MaxValue);
+        if (words.Count == 1) return (_file, IsLine(words[0], out var given) ? Math.Max(1, given) : int.MaxValue);
         if (!ReferenceEquals(LastList, _listAtEditor) && LastList is [{ At: { } at } only] &&
             FileOperations.NameComparer.Equals(Path.GetFullPath(only.Path), _file))
         {
@@ -2322,9 +2320,6 @@ internal sealed partial class ShellSession
 
         return (_file, null);
     }
-
-    // "+12": a line to open or peek the file at ("+0": the first)
-    internal static bool IsLine(string word) => word.Length > 1 && word[0] == '+' && IsNumber(word[1..], out _);
 
     // The time of a row of "history -d"
     private const string HistoryTime = "yyyy-MM-dd HH:mm";

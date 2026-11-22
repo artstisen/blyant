@@ -9450,8 +9450,92 @@ public class ShellTests : IDisposable
         Assert.Single(session.LastList);
         // A name or a text is needed: -h is for a search made now
         (_, errors, _, _) = Run("find -h\nfind -h -r\n");
-        Assert.Equal(2, errors.Split(Lang.T("find -h searches here only: give a name or a text (find -h *.md, find -h -t storm)")).Length - 1);
+        Assert.Equal(2, errors.Split(Lang.T("find -h needs a name or a text: find -h *.md, find -h -t storm")).Length - 1);
         Assert.Equal("find -h", Tab(Completion(), "find -h"));
         Assert.Contains("find -h [name] [-t text]", Run("help find\n").Output);
+    }
+
+    // ---- 1.6.2: the fixes of the third review of the shell
+
+    [Fact]
+    public void AnInputThatStopsHalfway_FromAPipe_SkipsTheRestOfItsText()
+    {
+        File.WriteAllText(In("work", "n.md"), "one\n");
+        File.WriteAllText(In("work", "keep.md"), "kept\n");
+        // (the file changed while "B" is typed: B is not put in, and "delete keep.md" is text, skipped)
+        var reader = new ChangingReader("input n.md bottom\nA\nB\ndelete keep.md\n.\necho after\n", 3,
+            () => File.WriteAllText(In("work", "n.md"), "saved in the editor\n"));
+        var output = new StringWriter();
+        var errors = new StringWriter();
+        Shell.Run(new ShellSession(reader, output, errors, In("work"), false, false));
+        Assert.True(File.Exists(In("work", "keep.md")));
+        Assert.Equal("saved in the editor\n", Text("n.md"));
+        Assert.Contains(Lang.T("The lines of text after it are skipped, up to the line with only ."), errors.ToString());
+        Assert.EndsWith("after\n", output.ToString().Replace("\r\n", "\n"));
+    }
+
+    [Fact]
+    public void ALineTooLargeForANumber_IsTheEnd_ForPeekAndInsert()
+    {
+        File.WriteAllText(In("work", "n.md"), "one\ntwo\n");
+        Assert.True(ShellSession.IsLine("+99999999999", out var line));
+        Assert.Equal(int.MaxValue, line);
+        Assert.True(ShellSession.IsLine("+0", out line));
+        Assert.Equal(0, line);
+        Assert.False(ShellSession.IsPlusLine("+0", out _));
+        Assert.False(ShellSession.IsLine("++1"));
+        var (output, errors, _, _) = Run("peek n.md +99999999999\ninsert n.md +99999999999 last\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains(Lang.F("{0} has {1} lines", In("work", "n.md"), 2), output);
+        Assert.Equal("one\ntwo\nlast\n", Text("n.md"));
+    }
+
+    [Fact]
+    public void BlankWithAPlus_IsAsLineOfFile()
+    {
+        File.WriteAllText(In("work", "n.md"), "one\ntwo\n");
+        var (_, errors, _, session) = Run("peek n.md 1\nblank +2 2\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("one\n\n\ntwo\n", Text("n.md"));
+        Assert.Equal(2, session.LastList.Single().At?.Line);
+        (_, errors, _, _) = Run("blank +2\n");
+        Assert.Contains(Lang.T("@ is the file and the line of the last command: none yet (words notes.md 12)"), errors);
+    }
+
+    [Fact]
+    public void LinesSqueeze_KeepsTheLineEndings_OfACrLfFile()
+    {
+        File.WriteAllText(In("work", "c.md"), "a\r\n\r\n \r\n\r\nb\r\n");
+        var (_, errors, _, _) = Run("lines c.md 1-5 squeeze\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("a\r\n\r\nb\r\n", File.ReadAllText(In("work", "c.md")));
+    }
+
+    [Fact]
+    public void DotD_AtTheLineBroughtBack_DeletesIt()
+    {
+        File.WriteAllText(In("work", "n.md"), "one\n");
+        Run("input n.md bottom\nA\nB\n.e\n.d\n.\n", terminal: true);
+        Assert.Equal("one\nA\n", Text("n.md"));
+    }
+
+    [Fact]
+    public void FindTab_OffersNotMinusRAfterMinusH()
+    {
+        // (all that Tab offers, pressed again and again)
+        List<string> Offered(string typed)
+        {
+            var completion = Completion();
+            return Enumerable.Range(1, 9).Select(n => Tab(completion, typed, Enumerable.Repeat(true, n).ToArray())).ToList();
+        }
+
+        var afterH = Offered("find -h -");
+        Assert.Contains("find -h -t", afterH);
+        Assert.DoesNotContain("find -h -r", afterH);
+        var afterR = Offered("find -r -");
+        Assert.Contains("find -r -l", afterR);
+        Assert.DoesNotContain("find -r -h", afterR);
+        Assert.DoesNotContain("find -r -t", afterR);
+        Assert.Contains("find -r", Offered("find -"));
     }
 }

@@ -281,9 +281,11 @@ internal sealed partial class ShellSession
         // before $line, as the i of ed)
         var input = IsInput(name);
         // ("input +12", "a +12", "i +12": $file, the lines as line 12, as "input $file +12" puts them)
-        if (input && Words(argument) is [var only] && IsPlusLine(only, out _))
+        // ("blank +12", "blank +12 3": the same, with a count)
+        if ((input && Words(argument) is [var only] && IsPlusLine(only, out _)) ||
+            (name == "blank" && Words(argument) is [var lineWord, ..] and ([_] or [_, _]) && IsPlusLine(lineWord, out _)))
         {
-            if (_file is not null) return "$file " + only;
+            if (_file is not null) return "$file " + argument.Trim();
             Error(Lang.T("@ is the file and the line of the last command: none yet (words notes.md 12)"));
             return null;
         }

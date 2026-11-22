@@ -854,7 +854,8 @@ internal sealed partial class ShellSession
         if (text.StartsWith('+'))
         {
             var many = Shell.PeekLines;
-            if (!IsNumber(text[1..], out first) || first < 1 ||
+            // (a line too large for a number is past the end, as open and insert take it)
+            if (!IsLine(text, out first) || first < 1 ||
                 (count is not null && (!IsNumber(count, out many) || many < 1)))
             {
                 return false;
@@ -919,7 +920,7 @@ internal sealed partial class ShellSession
         // ("-h" is for a search made now: the last search shown or made again is as it was made)
         if (here && (repeat || argument.Trim().Length == 0))
         {
-            Error(Lang.T("find -h searches here only: give a name or a text (find -h *.md, find -h -t storm)"));
+            Error(Lang.T("find -h needs a name or a text: find -h *.md, find -h -t storm"));
             return;
         }
 

@@ -287,6 +287,7 @@ internal sealed partial class ShellSession
     }
 
     // The line reader is used: at a terminal, with the setting shellcompletion on (followed at once)
+    [System.Diagnostics.CodeAnalysis.MemberNotNullWhen(true, nameof(_lineReader))]
     private bool LineEditing => _lineReader is not null && Shell.Completion;
 
     // A line read after a prompt: a command ("text" false: Tab and Up complete and recall), or a line of text for
@@ -311,7 +312,7 @@ internal sealed partial class ShellSession
             string? line;
             if (LineEditing)
             {
-                line = _lineReader!.Read(prompt, text, start ?? string.Empty);
+                line = _lineReader.Read(prompt, text, start ?? string.Empty);
                 if (_lineReader.Dropped)
                 {
                     if (start is null) continue;
@@ -487,15 +488,15 @@ internal sealed partial class ShellSession
     /// </summary>
     private void List(IReadOnlyList<(Item Item, string Text)> rows, string empty) => Filtered(rows, _ => true, empty);
 
-    // A numbered row: the number at the right of a column as wide as the largest number and two more, then the text
-    // (indented: a folder in a tree)
-    // Lines of a file shown numbered, first to last (from 1), the numbers as wide as the last
+    // Lines first to last of a file, numbered as in the file (line 1 is the first), the numbers as wide as the last
     private void Rows(IReadOnlyList<string> lines, int first, int last)
     {
         var width = last.ToString(System.Globalization.CultureInfo.InvariantCulture).Length;
         for (var i = first; i <= last; i++) Row(i, width, lines[i - 1]);
     }
 
+    // A numbered row: the number at the right of a column as wide as the largest number and two more, then the text
+    // (indented: a folder in a tree)
     private void Row(int number, int width, string text, int indent = 0) =>
         Line(new string(' ', indent) + number.ToString(System.Globalization.CultureInfo.InvariantCulture).PadLeft(width + 2) + "  " + text);
 

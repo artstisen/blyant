@@ -232,7 +232,8 @@ internal sealed partial class ShellSession
     {
         var given = picked.ToHashSet();
         var taken = picked.Where(number => number > 1 && given.Contains(number - 1) &&
-                                           lines[number - 1].Trim().Length == 0 && lines[number - 2].Trim().Length == 0).ToList();
+                                           string.IsNullOrWhiteSpace(lines[number - 1]) &&
+                                           string.IsNullOrWhiteSpace(lines[number - 2])).ToList();
         if (taken.Count == 0)
         {
             Line(Lang.T("Nothing changed: no blank lines follow each other there"));

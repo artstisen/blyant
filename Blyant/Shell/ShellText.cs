@@ -116,8 +116,8 @@ internal sealed partial class ShellSession
         // (the path, the line and how many)
         if (!SavedEdit(file, text, "Blank lines", item.Path + ":" + first + " x" + count)) return;
 
+        // (the last list sets $file; $line the last of them)
         LastList = new List<Item> { new(item.Path, false, (first, 1)) };
-        _file = Path.GetFullPath(item.Path);
         _line = first + count - 1;
         TellPutIn(item.Path, first, count);
     }
@@ -145,12 +145,20 @@ internal sealed partial class ShellSession
         int.TryParse(text, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture,
             out number);
 
-    // "+12": line 12 (from 1); false for another word ("++12", "+ 12", "+0")
-    internal static bool IsPlusLine(string word, out int line)
+    // "+12": a line written with digits ("+0" too), and its number: int.MaxValue for one too large for a number, which
+    // is past the end of any file (the last line, or the bottom). False for another word ("++12", "+ 12", "+-1")
+    internal static bool IsLine(string word, out int line)
     {
         line = 0;
-        return word.Length > 1 && word[0] == '+' && IsNumber(word[1..], out line) && line > 0;
+        if (word.Length < 2 || word[0] != '+' || !word[1..].All(char.IsAsciiDigit)) return false;
+        line = IsNumber(word[1..], out var number) ? number : int.MaxValue;
+        return true;
     }
+
+    internal static bool IsLine(string word) => IsLine(word, out _);
+
+    // "+12": line 12 (from 1), as IsLine takes it, but not "+0"
+    internal static bool IsPlusLine(string word, out int line) => IsLine(word, out line) && line > 0;
 
     // The line that ends input: only "." (blanks after it too; one before it is text: " ." is put in)
     internal static bool IsInputEnd(string line) => line.TrimEnd() == ".";
@@ -215,14 +223,21 @@ internal sealed partial class ShellSession
         // gone (then nothing is written over, it is told, and input stops)
         bool Written(string text, int line)
         {
+            // (the path and the line, never the text)
+            if (!Changed(item.Path, file) && SavedEdit(file, EndedAs(text, endsWithBreak), "Input", item.Path + ":" + line))
+            {
+                return true;
+            }
+
             if (Changed(item.Path, file))
             {
                 Error(Lang.F("{0} was changed meanwhile: the line is not put in, and input stops", item.Path));
-                return false;
             }
 
-            // (the path and the line, never the text)
-            return SavedEdit(file, EndedAs(text, endsWithBreak), "Input", item.Path + ":" + line);
+            // (from a file of commands or a pipe, the rest of the text is skipped, up to the ".": none of it is run
+            // as a command)
+            _inputExpected = !Terminal && _runNext is null;
+            return false;
         }
 
         while (ReadText(PromptAt(next)) is { } typed)
@@ -287,9 +302,9 @@ internal sealed partial class ShellSession
                         if (IsInputEnd(edited)) return false;
                         // (a dot command typed alone, or after the words kept by .u, as they are at the prompt: "The
                         // ferry .u" takes off another word)
-                        var after = start.Length == 0 || char.IsWhiteSpace(start[^1]) && edited.StartsWith(start, StringComparison.Ordinal)
-                            ? edited[start.Length..]
-                            : edited;
+                        var afterKept = start.Length == 0 ||
+                                        (char.IsWhiteSpace(start[^1]) && edited.StartsWith(start, StringComparison.Ordinal));
+                        var after = afterKept ? edited[start.Length..] : edited;
                         if ((InputCommand(edited) ?? InputCommand(after)) is { } again)
                         {
                             if (again == 'd') return DotCommand('d');
