@@ -29,7 +29,7 @@ public class FileHistoryTests : IDisposable
     [Fact]
     public void SeveralFiles_AreTakenOutAtOnce()
     {
-        foreach (var name in new[] { "a", "b", "c", "d", "e" }) FileHistory.Add(In(name + ".md"), DateTime.Now);
+        foreach (var name in new[] { "a", "b", "c", "d", "e" }) FileHistory.Add(In(name + ".md"), DateTime.UtcNow);
         Assert.Equal("e.md d.md c.md b.md a.md", Names());
         // (the places in any order, once each, and those that are not in the list left out)
         Assert.Equal(3, FileHistory.RemoveMany([3, 0, 1, 3, 7]));
@@ -140,7 +140,7 @@ public class FileHistoryTests : IDisposable
     {
         for (var i = 0; i < FileHistory.MaxCount + 5; i++)
         {
-            FileHistory.Add(In(i + ".txt"), DateTime.Now);
+            FileHistory.Add(In(i + ".txt"), DateTime.UtcNow);
         }
 
         Assert.Equal(FileHistory.MaxCount, FileHistory.Items.Count);
@@ -179,8 +179,8 @@ public class FileHistoryTests : IDisposable
     [Fact]
     public void RemoveAndClear()
     {
-        FileHistory.Add(In("a.txt"), DateTime.Now);
-        FileHistory.Add(In("b.txt"), DateTime.Now);
+        FileHistory.Add(In("a.txt"), DateTime.UtcNow);
+        FileHistory.Add(In("b.txt"), DateTime.UtcNow);
         FileHistory.RemoveAt(0);
         FileHistory.RemoveAt(5);
         Assert.Equal("a.txt", Names());
@@ -197,7 +197,7 @@ public class FileHistoryTests : IDisposable
         Assert.Equal(DateTimeKind.Local, IsoDateTime.Local(utc).Kind);
         var plain = new DateTime(2026, 11, 22, 10, 0, 0);
         Assert.Equal(plain, IsoDateTime.Local(plain));
-        Assert.Equal(utc.ToLocalTime().ToString("HH:mm"), IsoDateTime.Local(utc, "HH:mm"));
+        Assert.Equal(utc.ToLocalTime().ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture), IsoDateTime.Local(utc, "HH:mm"));
         // Kept: in UTC with Z, and read back as UTC
         Assert.Equal("2026-11-22 09:05Z", IsoDateTime.Stored(utc, "yyyy-MM-dd HH:mm"));
         Assert.True(IsoDateTime.TryParseStored("2026-11-22 09:05Z", "yyyy-MM-dd HH:mm", out var read));

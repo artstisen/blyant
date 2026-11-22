@@ -65,7 +65,7 @@ public class JumpTests : IDisposable
     {
         for (var i = 0; i < JumpHistory.MaxCount + 5; i++)
         {
-            JumpHistory.Add(new JumpTarget(JumpKind.File, In("file" + i + ".txt")), DateTime.Now);
+            JumpHistory.Add(new JumpTarget(JumpKind.File, In("file" + i + ".txt")), DateTime.UtcNow);
         }
 
         Assert.Equal(JumpHistory.MaxCount, JumpHistory.Items.Count);

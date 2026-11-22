@@ -3,7 +3,7 @@
 namespace Blyant.Tests;
 
 /// <summary>
-/// The coding style (CLAUDE.md, the rules of CSharp Coding Kit): "is null" and "is not null", never "== null" or
+/// The coding style (the coding guidelines, CSharp Coding Kit, as README.md links it): "is null" and "is not null", never "== null" or
 /// "!= null" (a pure check of the reference, which an operator == cannot change); no #region; and in Blyant the types
 /// internal, and the classes sealed (or static or abstract). The source is read, without the comments and the texts
 /// in quotes. The copies of Blyant Validator in Format follow the same rules (they are changed in Blyant Validator,

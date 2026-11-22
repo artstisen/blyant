@@ -33,6 +33,9 @@ internal sealed partial class ShellSession
     private List<(string Path, byte[] Before, byte[] After)>? _changing;
     private bool _changingLost;
 
+    // The files told in the command running now as ones that cannot be undone (told once: input writes each line)
+    private readonly HashSet<string> _lostTold = new(FileOperations.NameComparer);
+
     // A change that cannot be undone has been made in this shell (told when there is nothing to undo)
     private bool _changeLost;
 
@@ -56,18 +59,22 @@ internal sealed partial class ShellSession
         if (result != DialogText.Success) return result;
         _changedFiles.Add(Path.GetFullPath(file.Path));
         var after = file.GetBytes(text);
+        var path = Path.GetFullPath(file.Path);
         if (before is null || after.Length > UndoMaxSize)
         {
-            Line(tooLarge || after.Length > UndoMaxSize
-                ? Lang.F("(this cannot be undone: {0} is larger than 2 MB)", Path.GetFileName(file.Path))
-                : Lang.F("(this cannot be undone: {0} could not be read first)", Path.GetFileName(file.Path)));
+            if (_lostTold.Add(path))
+            {
+                Line(tooLarge || after.Length > UndoMaxSize
+                    ? Lang.F("(this cannot be undone: {0} is larger than 2 MB)", Path.GetFileName(file.Path))
+                    : Lang.F("(this cannot be undone: {0} could not be read first)", Path.GetFileName(file.Path)));
+            }
+
             _changingLost = true;
             return result;
         }
 
         // A file written again in the same step (input writes each line): one entry, as it was before the first
         // write and after the last, so undo finds the file as the step left it
-        var path = Path.GetFullPath(file.Path);
         var at = _changing?.FindIndex(entry => FileOperations.SamePath(entry.Path, path)) ?? -1;
         if (at >= 0)
         {
@@ -94,7 +101,7 @@ internal sealed partial class ShellSession
 
     // The lines of a file joined again as the file ends: with a line break at the end when it had one
     private static string JoinedAs(TextFile file, IEnumerable<string> lines) =>
-        string.Join("\n", lines) + (TextBuffer.Normalize(file.Text).EndsWith('\n') ? "\n" : string.Empty);
+        JoinedLines(lines.ToList(), TextBuffer.Normalize(file.Text).EndsWith('\n'));
 
     // The files a command has changed are the newest of the latest files ("recent", "hist"), as files opened in the
     // editor: to find them again. $file last, so it is the newest ("lines ... cut" changes two files)
@@ -113,6 +120,7 @@ internal sealed partial class ShellSession
         var outer = (_changing, _changingLost);
         _changing = null;
         _changingLost = false;
+        _lostTold.Clear();
         return outer;
     }
 

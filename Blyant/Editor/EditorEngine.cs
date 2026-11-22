@@ -1770,8 +1770,8 @@ internal sealed partial class EditorEngine
     /// char, the lines of Visual Line mode (or of a range, or the line of the cursor) below the last of them, and a
     /// block of Visual Block mode to the right of the block. The cursor goes to the start of the copy
     /// </summary>
-    // The most copies ":dup" makes at once
-    private const int MaxCopies = 500;
+    // The most copies ":dup" makes at once (and "lines ... dup" in the shell)
+    internal const int MaxCopies = 500;
 
     private void Duplicate(int first, int last, bool fromSelection, int copies)
     {

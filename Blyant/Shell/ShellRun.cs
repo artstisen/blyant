@@ -146,7 +146,10 @@ internal sealed partial class ShellSession
     /// </summary>
     internal List<string>? WithArguments(List<string> lines, IReadOnlyList<string> arguments)
     {
-        var commands = lines.Where(line => line.Trim().Length > 0 && !line.TrimStart().StartsWith('#')).ToList();
+        // (the lines of text after "input", up to the ".", are put in as they are: not commands, and no $1 in them)
+        var text = InputText(lines);
+        var commands = lines.Where((line, i) => !text[i] && line.Trim().Length > 0 && !line.TrimStart().StartsWith('#'))
+            .ToList();
         var (highest, all) = ArgumentsUsed(commands);
         if (arguments.Count == 0)
         {
@@ -160,7 +163,7 @@ internal sealed partial class ShellSession
                 return null;
             }
 
-            return all ? Substituted(lines, Array.Empty<string>()) : lines;
+            return all ? Substituted(lines, Array.Empty<string>(), text) : lines;
         }
 
         // (a value with blanks put in as one word, in quotes; a "$" in a word stays a "$": the words were put in
@@ -177,7 +180,7 @@ internal sealed partial class ShellSession
         {
             if (commands.Count == 1)
             {
-                return lines.Select(line => ReferenceEquals(line, commands[0]) || line == commands[0]
+                return lines.Select((line, i) => !text[i] && (ReferenceEquals(line, commands[0]) || line == commands[0])
                     ? line.TrimEnd() + " " + string.Join(' ', words)
                     : line).ToList();
             }
@@ -194,7 +197,26 @@ internal sealed partial class ShellSession
             return null;
         }
 
-        return Substituted(lines, words);
+        return Substituted(lines, words, text);
+    }
+
+    // Which lines of a script are the text of an input: the lines after "input", up to the line with only "." (that
+    // line too), which input takes as they are
+    private static bool[] InputText(List<string> lines)
+    {
+        var text = new bool[lines.Count];
+        var inText = false;
+        for (var i = 0; i < lines.Count; i++)
+        {
+            if (inText)
+            {
+                text[i] = true;
+                if (IsInputEnd(lines[i])) inText = false;
+            }
+            else inText = CommandLine.Name(lines[i]).Equals("input", StringComparison.OrdinalIgnoreCase);
+        }
+
+        return text;
     }
 
     // The highest $n in commands, and whether $* is in one
@@ -215,9 +237,10 @@ internal sealed partial class ShellSession
         return (highest, all);
     }
 
-    // The words put in for $1 ... and $* in the commands; a comment ("# $2 is the line") as it is
-    private static List<string> Substituted(List<string> lines, IReadOnlyList<string> words) =>
-        lines.Select(line => line.TrimStart().StartsWith('#') ? line : ArgumentPattern().Replace(line, match =>
+    // The words put in for $1 ... and $* in the commands; a comment ("# $2 is the line") and the text of an input
+    // as they are
+    private static List<string> Substituted(List<string> lines, IReadOnlyList<string> words, bool[] text) =>
+        lines.Select((line, i) => text[i] || line.TrimStart().StartsWith('#') ? line : ArgumentPattern().Replace(line, match =>
             !match.Groups[1].Success ? match.Value
             : match.Groups[1].Value == "*" ? string.Join(' ', words)
             : match.Groups[1].Value[0] - '1' < words.Count ? words[match.Groups[1].Value[0] - '1'] : match.Value))

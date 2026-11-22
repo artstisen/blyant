@@ -90,10 +90,14 @@ internal sealed partial class ShellSession
         LastList = new List<Item> { new(item.Path, false, (number, 1)) };
         // ("open 1" at the first line put in; @ at the last, so the next "insert @" goes after them)
         _line = number + Math.Max(count, 1) - 1;
-        Line(count == 1
-            ? Lang.F("{0}: line {1} put in", item.Path, number)
-            : Lang.F("{0}: lines {1}-{2} put in", item.Path, number, number + count - 1));
+        TellPutIn(item.Path, number, count);
     }
+
+    // What was put in told: "notes.md: line 5 put in", "notes.md: lines 5-7 put in"
+    private void TellPutIn(string path, int first, int count) =>
+        Line(count <= 1
+            ? Lang.F("{0}: line {1} put in", path, first)
+            : Lang.F("{0}: lines {1}-{2} put in", path, first, first + count - 1));
 
     // The place insert and input take: "top" (line 1), "bottom" (after the last), "+12" (as line 12); null for another
     private static int? InsertPlace(string word)
@@ -103,9 +107,24 @@ internal sealed partial class ShellSession
         {
             "top" => 1,
             "bottom" => int.MaxValue,
-            _ => where.Length > 1 && where[0] == '+' && int.TryParse(where[1..], out var line) && line > 0 ? line : null
+            _ => IsPlusLine(where, out var line) ? line : null
         };
     }
+
+    // A number written with digits only ("12"; not "+12", " 12" or "1,2", which int.Parse takes too)
+    internal static bool IsNumber(string text, out int number) =>
+        int.TryParse(text, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture,
+            out number);
+
+    // "+12": line 12 (from 1); false for another word ("++12", "+ 12", "+0")
+    internal static bool IsPlusLine(string word, out int line)
+    {
+        line = 0;
+        return word.Length > 1 && word[0] == '+' && IsNumber(word[1..], out line) && line > 0;
+    }
+
+    // The line that ends input: only "." (blanks after it too; one before it is text: " ." is put in)
+    internal static bool IsInputEnd(string line) => line.TrimEnd() == ".";
 
     // "input", "input @", "input notes.md bottom", "input notes.md +12": the lines typed put in the file one after
     // another, as in the line editor ed: alone (or "@"), after $line, as insert @ puts a line; a line with only "." ends
@@ -138,7 +157,15 @@ internal sealed partial class ShellSession
         // English: "$file" is the name of the shell, the same in all languages
         while (ReadText("$file:" + next.ToString(System.Globalization.CultureInfo.InvariantCulture) + "> ") is { } typed)
         {
-            if (typed.Trim() == ".") break;
+            if (IsInputEnd(typed)) break;
+            // (the file as it was read, or as input wrote it last: changed meanwhile, in the editor or by another
+            // program, or gone, it is not written over)
+            if (Changed(item.Path, file))
+            {
+                Error(Lang.F("{0} was changed meanwhile: the line is not put in, and input stops", item.Path));
+                break;
+            }
+
             var (text, number) = WithLinesAt(file.Text, new List<string> { typed }, next - 1);
             // (the path and the line, never the text)
             if (!SavedEdit(file, text, "Input", item.Path + ":" + number)) break;
@@ -156,9 +183,7 @@ internal sealed partial class ShellSession
         LastList = new List<Item> { new(item.Path, false, (first, 1)) };
         // (@ at the last line put in, so the next "input" goes on after it)
         _line = first + count - 1;
-        Line(count == 1
-            ? Lang.F("{0}: line {1} put in", item.Path, first)
-            : Lang.F("{0}: lines {1}-{2} put in", item.Path, first, first + count - 1));
+        TellPutIn(item.Path, first, count);
     }
 
     // "change notes.md +12 A new line", "change notes.md 12-15 One line instead": the lines become the text (one line;
@@ -330,8 +355,8 @@ internal sealed partial class ShellSession
         first = last = 0;
         if (text.StartsWith('+')) text = text[1..];
         var dash = text.IndexOf('-');
-        if (dash < 0) return int.TryParse(text, out first) && first > 0 && (last = first) > 0;
-        return int.TryParse(text[..dash], out first) && int.TryParse(text[(dash + 1)..], out last) && first > 0 &&
+        if (dash < 0) return IsNumber(text, out first) && first > 0 && (last = first) > 0;
+        return IsNumber(text[..dash], out first) && IsNumber(text[(dash + 1)..], out last) && first > 0 &&
                last >= first;
     }
 
@@ -355,8 +380,15 @@ internal sealed partial class ShellSession
         lines.RemoveRange(first - 1, last - first + 1);
         if (line is not null) lines.InsertRange(first - 1, LinesPutIn(line));
         if (lines.Count == 0) return (string.Empty, 1);
-        return (string.Join("\n", lines) + (endsWithBreak ? "\n" : string.Empty), Math.Min(first, lines.Count));
+        return (JoinedLines(lines, endsWithBreak), Math.Min(first, lines.Count));
     }
+
+    /// <summary>
+    /// Lines joined into a text with "\n", with a line break at the end when the text had one, and always when the
+    /// last line is blank: without it, the blank line would only be the break the line before it ends with, and lost
+    /// </summary>
+    internal static string JoinedLines(IReadOnlyList<string> lines, bool endsWithBreak) =>
+        string.Join("\n", lines) + (endsWithBreak || (lines.Count > 0 && lines[^1].Length == 0) ? "\n" : string.Empty);
 
     /// <summary>
     /// A text with a line put in as line "at" (1: before the first; past the end: after the last), and the number it

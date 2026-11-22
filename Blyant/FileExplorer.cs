@@ -1259,8 +1259,7 @@ internal static partial class FileExplorer
         }
 
         var name = System.IO.Path.GetFileName(file.Path);
-        var note = Lang.F("Written {0}.", copy.Written.ToLocalTime().ToString("yyyy-MM-dd HH:mm",
-            System.Globalization.CultureInfo.InvariantCulture));
+        var note = Lang.F("Written {0}.", IsoDateTime.Local(copy.Written, "yyyy-MM-dd HH:mm"));
         try
         {
             if (File.Exists(file.Path) && File.GetLastWriteTimeUtc(file.Path) > copy.Written)

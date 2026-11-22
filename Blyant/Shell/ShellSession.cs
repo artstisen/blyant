@@ -238,46 +238,12 @@ internal sealed partial class ShellSession
             else _errors.WriteLine(StartNote);
         }
 
-        var first = true;
         // The commands typed in the shells before, for Up, Down and again (only at a terminal: typed)
         if (Terminal) ShellHistory.Load();
         while (true)
         {
-            string? line;
-            // (a Ctrl+C pressed while the last command ran, or at a question, is not taken for this prompt)
-            if (Terminal) Tools.TakeCancelKey();
-            // (the setting shellcompletion is followed at once: "set shellcompletion false")
-            if (_lineReader is not null && Shell.Completion)
-            {
-                line = _lineReader.Read(Prompt());
-            }
-            else
-            {
-                if (Terminal)
-                {
-                    _output.Write(Prompt());
-                    _output.Flush();
-                }
-
-                line = _input.ReadLine();
-                // (a file of commands saved with a byte order mark, as Notepad and PowerShell save it)
-                if (first && line is not null) line = line.TrimStart('\uFEFF');
-            }
-
-            first = false;
-            if (line is null)
-            {
-                // Ctrl+C at the prompt: a new prompt; the end of the input (Ctrl+D, Ctrl+Z, the end of the file):
-                // leave. (Ctrl+C can end the reading of a line before Blyant is told of it: it is waited for a moment)
-                if (Terminal && SpinWait.SpinUntil(Tools.TakeCancelKey, CancelKeyWait))
-                {
-                    _output.WriteLine();
-                    continue;
-                }
-
-                if (Terminal) _output.WriteLine();
-                break;
-            }
+            // (the end of the input: Ctrl+D, Ctrl+Z, the end of the file: leave)
+            if (ReadAtPrompt(Prompt(), false) is not { } line) break;
 
             // (typed at the prompt: kept for Up and Down, and "again"; read from a file or a pipe: not. Typed with a
             // blank in front: not kept, as in bash)
@@ -296,31 +262,48 @@ internal sealed partial class ShellSession
     // In a run: the next line of the script, for input (null: the end of it)
     private Func<string?>? _runNext;
 
-    // A line of text for input: from the script of a run, or read as a command is read, but without Tab and Up (it is
-    // text) and kept nowhere. Ctrl+C drops the line typed, and another is read. Null at the end of the input (Ctrl+D,
-    // the end of a file or a pipe, the end of the script)
-    private string? ReadText(string prompt)
+    // A line of text for input: from the script of a run (its lines, as LinesOfText made them), or read as a command
+    // is read, but without Tab and Up (it is text) and kept nowhere. Null at the end of the input (Ctrl+D, the end of
+    // a file or a pipe, the end of the script)
+    private string? ReadText(string prompt) => _runNext is not null ? _runNext() : ReadAtPrompt(prompt, true);
+
+    // Nothing read yet (the first line of a file of commands can start with a byte order mark)
+    private bool _firstRead = true;
+
+    // A line read after a prompt: a command ("text" false: Tab and Up complete and recall), or a line of text for
+    // input. With the line reader at a terminal, or from the input (a file, a pipe, or a terminal without it). Ctrl+C
+    // drops the line typed, and another is read; null at the end of the input (Ctrl+D, Ctrl+Z, the end of the file)
+    private string? ReadAtPrompt(string prompt, bool text)
     {
-        if (_runNext is not null) return _runNext()?.TrimEnd('\r');
         while (true)
         {
+            // (a Ctrl+C pressed while the last command ran, or at a question, is not taken for this prompt)
             if (Terminal) Tools.TakeCancelKey();
+            string? line;
+            // (the setting shellcompletion is followed at once: "set shellcompletion false")
             if (_lineReader is not null && Shell.Completion)
             {
-                var text = _lineReader.Read(prompt, true);
+                line = _lineReader.Read(prompt, text);
                 if (_lineReader.Dropped) continue;
-                return text;
+                // (the end of the input: the line reader has ended the line, and took Ctrl+C itself, as a key)
+                if (line is null) return null;
             }
-
-            if (Terminal)
+            else
             {
-                _output.Write(prompt);
-                _output.Flush();
+                if (Terminal)
+                {
+                    _output.Write(prompt);
+                    _output.Flush();
+                }
+
+                line = _input.ReadLine();
+                // (a file of commands saved with a byte order mark, as Notepad and PowerShell save it)
+                if (_firstRead && line is not null) line = line.TrimStart('\uFEFF');
             }
 
-            var line = _input.ReadLine();
+            _firstRead = false;
             if (line is not null) return line;
-            // (Ctrl+C can end the reading of a line before Blyant is told of it, as at the prompt)
+            // (Ctrl+C can end the reading of a line before Blyant is told of it: it is waited for a moment)
             if (Terminal && SpinWait.SpinUntil(Tools.TakeCancelKey, CancelKeyWait))
             {
                 _output.WriteLine();

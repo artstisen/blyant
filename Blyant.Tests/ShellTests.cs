@@ -305,7 +305,7 @@ public class ShellTests : IDisposable
     {
         FileFavorites.Toggle(In("work", "plot.md"));
         FileFavorites.Save();
-        FileHistory.Add(In("work", "plot.md"), DateTime.Now);
+        FileHistory.Add(In("work", "plot.md"), DateTime.UtcNow);
         FileHistory.Save();
         Run("rename plot.md story.md\n");
         FileFavorites.Load();
@@ -3014,7 +3014,7 @@ public class ShellTests : IDisposable
         }
         finally
         {
-            ShellRegisters.Clock = () => DateTime.Now;
+            ShellRegisters.Clock = () => DateTime.UtcNow;
         }
     }
 
@@ -3251,7 +3251,7 @@ public class ShellTests : IDisposable
         }
         finally
         {
-            ShellRegisters.Clock = () => DateTime.Now;
+            ShellRegisters.Clock = () => DateTime.UtcNow;
         }
     }
 
@@ -4549,7 +4549,7 @@ public class ShellTests : IDisposable
         var (output, errors, _, session) = Run("peek a.md 1-2\nls\necho $file was peeked on $date\necho cost $$5\necho\n" +
                                                "echo $peek\n");
         Assert.Equal(string.Empty, errors);
-        Assert.Contains(In("work", "a.md") + " was peeked on " + DateTime.Now.ToString("yyyy-MM-dd") + "\n", output);
+        Assert.Contains(In("work", "a.md") + " was peeked on " + IsoDateTime.Local(DateTime.UtcNow, "yyyy-MM-dd") + "\n", output);
         Assert.Contains("\ncost $5\n\n", output);
         // A value of several lines: all of them
         Assert.EndsWith("one\ntwo\n", output);
@@ -5332,7 +5332,7 @@ public class ShellTests : IDisposable
             // Run: the $date is put in when it runs
             ShellRegisters.Set("tidy", "insert log.md bottom First $date\ninsert log.md bottom Second");
             session.Execute("run $tidy");
-            Assert.Equal("# Log\nFirst " + DateTime.Now.ToString("yyyy-MM-dd") + "\nSecond\n", File.ReadAllText(In("work", "log.md")));
+            Assert.Equal("# Log\nFirst " + IsoDateTime.Local(DateTime.UtcNow, "yyyy-MM-dd") + "\nSecond\n", File.ReadAllText(In("work", "log.md")));
             session.Execute("again 9 > $x");
             session.Execute("again 2-x > $x");
             Assert.Contains(Lang.F("No command {0}: {1} are kept (again lists them)", 9, 3), errors.ToString());
@@ -5403,8 +5403,8 @@ public class ShellTests : IDisposable
         output.GetStringBuilder().Clear();
         session.Execute("find");
         var shown = output.ToString();
-        Assert.StartsWith(Lang.F("Last search: {0} in {1} ({2})", "-t storm", In("work"), DateTime.Now.ToString("HH:mm")),
-            shown.Replace(DateTime.Now.AddMinutes(-1).ToString("HH:mm"), DateTime.Now.ToString("HH:mm")));
+        Assert.StartsWith(Lang.F("Last search: {0} in {1} ({2})", "-t storm", In("work"), IsoDateTime.Local(DateTime.UtcNow, "HH:mm")),
+            shown.Replace(IsoDateTime.Local(DateTime.UtcNow.AddMinutes(-1), "HH:mm"), IsoDateTime.Local(DateTime.UtcNow, "HH:mm")));
         // The rows as found: the path from the directory searched, and the line
         Assert.Contains("  1  " + Path.Combine("novel", "part-1", "drafts", "storm.md") + ":2  storm later", shown);
         Assert.Equal(In("work", "novel", "part-1", "drafts", "storm.md"), session.LastList[0].Path);
@@ -7843,7 +7843,7 @@ public class ShellTests : IDisposable
     {
         File.WriteAllText(In("work", "plot.md"), "x\n");
         FileHistory.Parse(string.Empty);
-        FileHistory.Add(In("work", "plot.md"), DateTime.Now);
+        FileHistory.Add(In("work", "plot.md"), DateTime.UtcNow);
         FileHistory.Save();
         var (_, errors, _, _) = Run("rec > $x\necho $x\n");
         Assert.Equal(string.Empty, errors);
@@ -8207,14 +8207,14 @@ public class ShellTests : IDisposable
     }
 
     [Theory]
-    [InlineData("Some text", "at", "new ", "1", "new Some text")]
-    [InlineData("Some text", "at", ",", "5", "Some, text")]
-    [InlineData("Some text", "at", "!", "10", "Some text!")]
-    [InlineData("Some text", "at", "!", "11", "Some text")]
-    public void EditedLine_At_PutsTheTextInBeforeTheColumn(string line, string kind, string text, string column,
+    [InlineData("Some text", "at", "new ", 1, "new Some text")]
+    [InlineData("Some text", "at", ",", 5, "Some, text")]
+    [InlineData("Some text", "at", "!", 10, "Some text!")]
+    [InlineData("Some text", "at", "!", 11, "Some text")]
+    public void EditedLine_At_PutsTheTextInBeforeTheColumn(string line, string kind, string text, int column,
         string expected)
     {
-        Assert.Equal(expected, ShellSession.EditedLine(line, kind, text, true, column));
+        Assert.Equal(expected, ShellSession.EditedLine(line, kind, text, true, column: column));
     }
 
     [Fact]
@@ -8737,13 +8737,14 @@ public class ShellTests : IDisposable
     {
         File.WriteAllText(In("work", "in.md"), "one\ntwo\nthree\n");
         var (output, errors, _, session) = Run("peek in.md 1\ninput\nThe ferry was late.\n\n  Indented $5 \"quoted\"\n.\n" +
-                                               "echo $line\ninput in.md bottom\nlast\n .\n");
+                                               "echo $line\ninput in.md bottom\nlast\n .\n. \n");
         Assert.Equal(string.Empty, errors);
-        // After line 1, each line after the one before; as typed: blanks, $5 and quotes kept, a blank line too
-        Assert.Equal("one\nThe ferry was late.\n\n  Indented $5 \"quoted\"\ntwo\nthree\nlast\n", Text("in.md"));
+        // After line 1, each line after the one before; as typed: blanks, $5 and quotes kept, a blank line too, and
+        // " ." (only a line that starts with the "." ends input)
+        Assert.Equal("one\nThe ferry was late.\n\n  Indented $5 \"quoted\"\ntwo\nthree\nlast\n .\n", Text("in.md"));
         Assert.Contains(Lang.F("{0}: lines {1}-{2} put in", In("work", "in.md"), 2, 4), output);
         Assert.Contains("\n4\n", output);
-        Assert.Contains(Lang.F("{0}: line {1} put in", In("work", "in.md"), 7), output);
+        Assert.Contains(Lang.F("{0}: lines {1}-{2} put in", In("work", "in.md"), 7, 8), output);
         // The file is the last list at the first line put in, and $line the last
         Assert.Equal(7, session.LastList.Single().At?.Line);
     }
@@ -8963,5 +8964,159 @@ public class ShellTests : IDisposable
         (output, errors, _, _) = Run("peek p.md 50%\nhelp %\n");
         Assert.Equal(string.Empty, errors);
         Assert.Contains("%  " + Lang.T("$file, in the place of a file: peek %, copy % backup"), output);
+    }
+
+    // ---- 1.6.2: the fixes of the review before the release
+
+    [Fact]
+    public void Input_KeepsABlankLine_AtTheEndOfAFileWithoutALineBreak()
+    {
+        File.WriteAllText(In("work", "nl.md"), "a\nb");
+        var (output, errors, _, session) = Run("input nl.md bottom\n\nc\n.\necho $line\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("a\nb\n\nc\n", Text("nl.md"));
+        Assert.Contains(Lang.F("{0}: lines {1}-{2} put in", In("work", "nl.md"), 3, 4), output);
+        Assert.EndsWith("\n4\n", output);
+        // A blank line typed last is a line too, and the file now ends with a line break
+        File.WriteAllText(In("work", "nl.md"), "a\nb");
+        Run("input nl.md bottom\n\n.\n");
+        Assert.Equal("a\nb\n\n", Text("nl.md"));
+        Assert.Equal(3, ShellSession.LinesOfText(Text("nl.md")).Count);
+    }
+
+    [Theory]
+    // A blank last line is never only the line break of the line before it
+    [InlineData("a\nb", "", 2, "a\nb\n\n")]
+    [InlineData("a\nb", "c", 2, "a\nb\nc")]
+    [InlineData("a\nb\n", "", 2, "a\nb\n\n")]
+    [InlineData("a\nb", "", 1, "a\n\nb")]
+    public void LinesPutInAtTheEnd_KeepABlankLine(string text, string line, int position, string expected)
+    {
+        Assert.Equal(expected, ShellSession.WithLinesAt(text, new[] { line }, position).Text);
+    }
+
+    [Fact]
+    public void LinesTakenOutOrChanged_KeepABlankLastLine()
+    {
+        // (line 3 taken out of "a", "", "b": the blank line 2 is still a line)
+        Assert.Equal("a\n\n", ShellSession.WithoutLines("a\n\nb", new[] { 3 }));
+        Assert.Equal("a\n\n", ShellSession.WithLinesChanged("a\nb", 2, 2, string.Empty).Text);
+        File.WriteAllText(In("work", "nl.md"), "a\nb");
+        var (_, errors, _, _) = Run("lines nl.md 2 remove b\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal(2, ShellSession.LinesOfText(Text("nl.md")).Count);
+    }
+
+    [Fact]
+    public void Input_InAScript_GetsNoWordsOfTheRun_AndItsTextIsNoCommand()
+    {
+        File.WriteAllText(In("work", "in.md"), "one\n");
+        // "$5" in the text is no word the script takes, nor "$2" and "$*" when it is run with a word
+        File.WriteAllText(In("work", "price.txt"), "input in.md bottom\nPrice: $5\n# Heading $1\n.\n");
+        var (_, errors, _, _) = Run("run price.txt\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("one\nPrice: $5\n# Heading $1\n", Text("in.md"));
+        File.WriteAllText(In("work", "in.md"), "one\n");
+        File.WriteAllText(In("work", "file.txt"), "input $1 bottom\nCost $2 and $*\n.\n");
+        (_, errors, _, _) = Run("run file.txt in.md\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("one\nCost $2 and $*\n", Text("in.md"));
+        // One command and its text: the words go after the command, not after a line of the text
+        File.WriteAllText(In("work", "in.md"), "one\n");
+        File.WriteAllText(In("work", "one.txt"), "input\ninput\n.\n");
+        (_, errors, _, _) = Run("run one.txt in.md +1\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("input\none\n", Text("in.md"));
+    }
+
+    // A reader of the lines typed that changes a file when a line is read: as the file changed in the editor, or by
+    // another program, while input waits for a line
+    private sealed class ChangingReader(string text, int line, Action change) : TextReader
+    {
+        private readonly StringReader _lines = new(text);
+        private int _read;
+
+        public override string? ReadLine()
+        {
+            if (++_read == line) change();
+            return _lines.ReadLine();
+        }
+    }
+
+    [Fact]
+    public void Input_StopsWhenTheFileWasChangedMeanwhile_AndWritesNothingOverIt()
+    {
+        File.WriteAllText(In("work", "in.md"), "one\n");
+        var reader = new ChangingReader("input in.md bottom\ntwo\nthree\n.\n", 3,
+            () => File.WriteAllText(In("work", "in.md"), "one\ntwo\nsaved in the editor\n"));
+        var output = new StringWriter();
+        var errors = new StringWriter();
+        Shell.Run(new ShellSession(reader, output, errors, In("work"), false, false));
+        Assert.Equal("one\ntwo\nsaved in the editor\n", Text("in.md"));
+        Assert.Contains(Lang.F("{0} was changed meanwhile: the line is not put in, and input stops", In("work", "in.md")),
+            errors.ToString());
+        Assert.Contains(Lang.F("{0}: line {1} put in", In("work", "in.md"), 2), output.ToString());
+        // A file deleted meanwhile is not written again
+        File.WriteAllText(In("work", "in.md"), "one\n");
+        reader = new ChangingReader("input in.md bottom\ntwo\nthree\n.\n", 3, () => File.Delete(In("work", "in.md")));
+        Shell.Run(new ShellSession(reader, new StringWriter(), new StringWriter(), In("work"), false, false));
+        Assert.False(File.Exists(In("work", "in.md")));
+    }
+
+    [Fact]
+    public void Input_IntoAFileTooLargeForUndo_TellsItOnce()
+    {
+        File.WriteAllText(In("work", "big.md"), new string('x', (int)ShellSession.UndoMaxSize + 10) + "\n");
+        var (output, errors, _, _) = Run("input big.md bottom\na\nb\nc\n.\n");
+        Assert.Equal(string.Empty, errors);
+        var note = Lang.F("(this cannot be undone: {0} is larger than 2 MB)", "big.md");
+        Assert.Equal(1, output.Split(note).Length - 1);
+    }
+
+    [Fact]
+    public void LinesDup_RefusesMoreThanTheEditorPutsInAtOnce()
+    {
+        File.WriteAllText(In("work", "long.md"), new string('x', 25_000) + "\nend\n");
+        var (_, errors, _, _) = Run("lines long.md 1 dup 500\n");
+        Assert.Contains(Lang.T("Too much text to insert at once (use a smaller count)"), errors);
+        Assert.Equal(new string('x', 25_000) + "\nend\n", Text("long.md"));
+        (_, errors, _, _) = Run("lines long.md 2 dup 501\n");
+        Assert.Contains(Lang.F("After dup: how many copies, 1 to {0} (lines notes.md 4-6 dup 3)", 500), errors);
+    }
+
+    [Theory]
+    [InlineData("+12", 12)]
+    [InlineData("+1", 1)]
+    [InlineData("++12", null)]
+    [InlineData("+ 12", null)]
+    [InlineData("+-1", null)]
+    [InlineData("+0", null)]
+    [InlineData("12", null)]
+    [InlineData("+1,2", null)]
+    public void APlaceWithPlus_IsALineWrittenWithDigits(string word, int? expected)
+    {
+        Assert.Equal(expected, ShellSession.IsPlusLine(word, out var line) ? line : null);
+    }
+
+    [Fact]
+    public void InsertAndShift_RefuseAPlaceWithTwoSigns()
+    {
+        File.WriteAllText(In("work", "n.md"), "x\ny\n");
+        var (_, errors, _, _) = Run("insert n.md ++5 hi\nlines n.md 1 > n.md ++2\nchange n.md ++1 z\n");
+        Assert.Contains(Lang.F("Not a place in a file: {0} (top, bottom or +12)", "++5"), errors);
+        Assert.Equal("x\ny\n", Text("n.md"));
+        Assert.Equal(3, errors.TrimEnd('\n').Split('\n').Length);
+    }
+
+    [Fact]
+    public void AnUnknownTime_StaysUnknown_WhenItIsKept()
+    {
+        // (DateTime.MinValue: a line whose time could not be read; converted, west of UTC it would be a time)
+        Assert.Equal("0001-01-01 00:00Z", IsoDateTime.Stored(DateTime.MinValue, "yyyy-MM-dd HH:mm"));
+        Assert.True(IsoDateTime.TryParseStored("0001-01-01 00:00Z", "yyyy-MM-dd HH:mm", out var read));
+        Assert.Equal(DateTime.MinValue, read);
+        // (and as Blyant wrote it before 1.6.2, in local time)
+        Assert.True(IsoDateTime.TryParseStored("0001-01-01 00:00", "yyyy-MM-dd HH:mm", out read));
+        Assert.Equal(DateTime.MinValue, read);
     }
 }

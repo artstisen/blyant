@@ -1462,7 +1462,7 @@ internal sealed partial class EditorEngine
 
     // The most characters "p" and "P" (and ":dup") put in at once (the register times the count): more would take
     // the memory
-    private const long MaxPutLength = 10_000_000;
+    internal const long MaxPutLength = 10_000_000;
 
     // True (with the error shown) if text of a length is too much to put in at once
     private bool TooMuchToPut(long length)

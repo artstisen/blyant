@@ -389,7 +389,7 @@ internal sealed partial class ShellSession
         var lower = place.ToLowerInvariant();
         if (lower == "top") return 0;
         if (lower == "bottom") return lines.Count;
-        if (place.Length > 1 && place[0] == '+' && int.TryParse(place[1..], out var before) && before > 0)
+        if (IsPlusLine(place, out var before))
         {
             if (moved is not null && moved.Contains(before))
             {

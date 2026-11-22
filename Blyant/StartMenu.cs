@@ -339,8 +339,7 @@ internal static class StartMenu
                 return;
             }
 
-            var rows = copies.Select(copy => copy.Written.ToLocalTime().ToString("yyyy-MM-dd HH:mm",
-                    System.Globalization.CultureInfo.InvariantCulture) + "  " +
+            var rows = copies.Select(copy => IsoDateTime.Local(copy.Written, "yyyy-MM-dd HH:mm") + "  " +
                 (copy.IsUntitled ? DialogText.Untitled : Path.GetFileName(copy.FilePath))).ToList();
             var extras = new PickListBox.Extras
             {

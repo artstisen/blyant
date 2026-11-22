@@ -768,12 +768,12 @@ $file:16> .
 
 - `input` alone puts the lines in after `$line`, as `insert @` puts a line (see [Working on one line](#working-on-one-line)); in an empty file (after `new`) at the top. A file and a place can be given, as `insert` takes them: `input notes.md bottom`, `input notes.md top`, `input notes.md +12`
 - The file is `$file` from the start, also a file given (`input other.md bottom`), so the prompt stays short whatever the name of the file: `echo $file` after `input` tells the path
-- Each line is written when you press `Enter`, so nothing is lost when the terminal is closed. All the lines of one `input` are one step of `undo`
+- Each line is written when you press `Enter`, so nothing is lost when the terminal is closed. All the lines of one `input` are one step of `undo`. If the file is changed meanwhile (saved in the editor, or by another program) or deleted, the line is not put in and `input` stops, so nothing is written over
 - The lines go in as you type them: blanks, quotes and `$5` stay as they are (no `$name` is put in), and an empty line is a blank line. They are not kept with the commands typed (`Up`, `again`, `shellhistory.txt`), nor written to the log
-- A line with only `.` ends `input`, and so does `Ctrl+D` (or `Ctrl+Z` on Windows) on an empty line. `Ctrl+C` drops the line you are typing, and you go on with the next one. As in `ed`, a line of only `.` cannot be put in this way: use `insert` for it
+- A line with only `.` ends `input` (blanks after it too; a line that starts with a blank, ` .`, is put in), and so does `Ctrl+D` (or `Ctrl+Z` on Windows) on an empty line. `Ctrl+C` drops the line you are typing, and you go on with the next one. As in `ed`, a line of only `.` cannot be put in this way: use `insert` for it
 - `Tab` and `Up` do nothing while you type lines in: it is text, not commands
 - After it, the shell tells how many lines were put in. `$line` is the last of them, so another `input` goes on after it, and the file is the last list at the first line put in (`open 1`)
-- In a script (`run`, a file of commands, a pipe or `--run`), `input` takes the lines after it, up to the line with `.`: a block of text put in a file in one go
+- In a script (`run`, a file of commands, a pipe or `--run`), `input` takes the lines after it, up to the line with `.`: a block of text put in a file in one go. The words given to `run` are not put in these lines: `$1` and `$*` in them stay as they are
 - As for `insert`, the file keeps its line endings and byte order mark, only a file in UTF-8 is changed, and the files Blyant uses are refused
 
 ## Working on one line

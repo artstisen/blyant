@@ -34,15 +34,17 @@ internal static class IsoDateTime
 
     /// <summary>
     /// A time for a list kept in a file: in UTC, with "Z" after it ("2026-11-22 09:05Z"). A time of no kind is local
-    /// time, as Local takes it
+    /// time, as Local takes it. An unknown time (DateTime.MinValue) is written as it is: converted, it would be
+    /// another time west of UTC ("0001-01-01 05:00Z"), and no longer be unknown when it is read
     /// </summary>
     internal static string Stored(DateTime time, string format) =>
-        (time.Kind == DateTimeKind.Utc ? time : time.ToUniversalTime()).ToString(format, CultureInfo.InvariantCulture) +
-        UtcMark;
+        (time.Kind == DateTimeKind.Utc || time == DateTime.MinValue ? time : time.ToUniversalTime())
+        .ToString(format, CultureInfo.InvariantCulture) + UtcMark;
 
     /// <summary>
     /// A time read from a list kept in a file, as UTC: written with "Z" (UTC), or without it (local time, as Blyant
-    /// wrote it before 1.6.2). False for a text that is not a time in the format
+    /// wrote it before 1.6.2). An unknown time (DateTime.MinValue, written so for a time that could not be read) stays
+    /// unknown. False for a text that is not a time in the format
     /// </summary>
     internal static bool TryParseStored(string text, string format, out DateTime time)
     {
@@ -50,7 +52,9 @@ internal static class IsoDateTime
         var utc = text.EndsWith(UtcMark, StringComparison.Ordinal);
         if (utc) text = text[..^UtcMark.Length];
         if (!DateTime.TryParseExact(text, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out time)) return false;
-        time = utc ? DateTime.SpecifyKind(time, DateTimeKind.Utc) : DateTime.SpecifyKind(time, DateTimeKind.Local).ToUniversalTime();
+        time = utc || time == DateTime.MinValue
+            ? DateTime.SpecifyKind(time, DateTimeKind.Utc)
+            : DateTime.SpecifyKind(time, DateTimeKind.Local).ToUniversalTime();
         return true;
     }
 

@@ -72,8 +72,9 @@ internal sealed partial class ShellSession
         string text;
         var replacement = string.Empty;
         var exact = false;
-        // ("at 10": the column; also in "replacement", as EditedLine takes it)
+        // ("at 10": the column; "dup 3": the copies)
         var atColumn = 0;
+        var copies = 1;
         if (kind == "replace")
         {
             var parts = Words(rest);
@@ -94,8 +95,7 @@ internal sealed partial class ShellSession
                 return;
             }
 
-            if (!parts[0].All(char.IsAsciiDigit) || !int.TryParse(parts[0], System.Globalization.NumberStyles.None,
-                    System.Globalization.CultureInfo.InvariantCulture, out atColumn) || atColumn < 1)
+            if (!IsNumber(parts[0], out atColumn) || atColumn < 1)
             {
                 Error(Lang.F("Not a column: {0} (as 10, the column words shows)", parts[0]));
                 return;
@@ -111,20 +111,16 @@ internal sealed partial class ShellSession
             }
 
             exact = true;
-            replacement = atColumn.ToString(System.Globalization.CultureInfo.InvariantCulture);
         }
         else if (kind == "dup")
         {
             text = string.Empty;
             // (how many copies: 1, or as many as given, at most 500 as :dup takes)
-            if (rest.Length > 0 && (!rest.All(char.IsAsciiDigit) || !int.TryParse(rest, System.Globalization.NumberStyles.None,
-                    System.Globalization.CultureInfo.InvariantCulture, out var copies) || copies is < 1 or > MaxCopies))
+            if (rest.Length > 0 && (!IsNumber(rest, out copies) || copies is < 1 or > EditorEngine.MaxCopies))
             {
-                Error(Lang.F("After dup: how many copies, 1 to {0} (lines notes.md 4-6 dup 3)", MaxCopies));
+                Error(Lang.F("After dup: how many copies, 1 to {0} (lines notes.md 4-6 dup 3)", EditorEngine.MaxCopies));
                 return;
             }
-
-            replacement = rest.Length > 0 ? rest : "1";
         }
         else if (kind is "sort" or "upper" or "lower" or "title")
         {
@@ -163,7 +159,7 @@ internal sealed partial class ShellSession
         if (PickedLines(words[1], at == 3 ? words[2] : null, lines, item.Path) is not { } picked) return;
         if (kind == "dup")
         {
-            Duplicate(item, file, lines, picked, int.Parse(replacement, System.Globalization.CultureInfo.InvariantCulture));
+            Duplicate(item, file, lines, picked, copies);
             return;
         }
 
@@ -184,7 +180,7 @@ internal sealed partial class ShellSession
         for (var i = 0; i < picked.Count; i++)
         {
             var number = picked[i];
-            var edited = sorted is not null ? sorted[i] : EditedLine(lines[number - 1], kind, text, exact, replacement);
+            var edited = sorted is not null ? sorted[i] : EditedLine(lines[number - 1], kind, text, exact, replacement, atColumn);
             if (edited == lines[number - 1]) continue;
             lines[number - 1] = edited;
             changed.Add(number);
@@ -223,15 +219,20 @@ internal sealed partial class ShellSession
         }
     }
 
-    // The most copies "dup" makes, as :dup in the editor
-    private const int MaxCopies = 500;
-
     // "lines notes.md 4-6 dup 3": the lines, in their order, copied right below the last of them, as many times as
     // asked. The copies are shown, the file is the last list at the first copy, and $line is the last copy, so
-    // "lines @ dup" copies it again
+    // "lines @ dup" copies it again. As :dup: not more text than the editor puts in at once, nor a file larger than
+    // Blyant opens
     private void Duplicate(Item item, TextFile file, List<string> lines, List<int> picked, int copies)
     {
         var block = picked.Select(number => lines[number - 1]).ToList();
+        var size = block.Sum(line => line.Length + 1L) * copies;
+        if (size > EditorEngine.MaxPutLength || TextBuffer.Normalize(file.Text).Length + size > TextFile.MaxSize)
+        {
+            Error(Lang.T("Too much text to insert at once (use a smaller count)"));
+            return;
+        }
+
         var added = Enumerable.Range(0, copies).SelectMany(_ => block).ToList();
         var (text, first) = WithLinesAt(file.Text, added, picked[^1]);
         // (the path and the lines, never the text)
@@ -243,19 +244,18 @@ internal sealed partial class ShellSession
         var now = LinesOfText(text);
         var width = last.ToString(System.Globalization.CultureInfo.InvariantCulture).Length;
         for (var i = first; i <= last; i++) Row(i, width, now[i - 1]);
-        Line(added.Count == 1
-            ? Lang.F("{0}: line {1} put in", item.Path, first)
-            : Lang.F("{0}: lines {1}-{2} put in", item.Path, first, last));
+        TellPutIn(item.Path, first, added.Count);
     }
 
     /// <summary>
     /// A line with a text put at its start or end ("start", "end": with a blank between, or "exact" as it is; a blank
     /// line as it is), taken off them ("unstart", "unend": with the blank start and end put there, or "exact" the text
     /// only; a line without it as it is), a text in it replaced ("replace", letter case as given) or taken out
-    /// ("remove"), put in at a column ("at", the column in "replacement"), or the line made
+    /// ("remove"), put in before a column ("at", the column given), or the line made
     /// upper or lower case ("upper", "lower", as gU and gu in the editor) or Title Case ("title")
     /// </summary>
-    internal static string EditedLine(string line, string kind, string text, bool exact, string replacement = "")
+    internal static string EditedLine(string line, string kind, string text, bool exact, string replacement = "",
+        int column = 0)
     {
         switch (kind)
         {
@@ -285,13 +285,9 @@ internal sealed partial class ShellSession
                 return text.Length == 0 ? line : line.Replace(text, string.Empty, StringComparison.Ordinal);
             case "at":
             {
-                // ("replacement": the column; a blank line as it is)
+                // (a blank line as it is)
                 if (line.Trim().Length == 0) return line;
-                var at = int.TryParse(replacement, System.Globalization.NumberStyles.None,
-                    System.Globalization.CultureInfo.InvariantCulture, out var column)
-                    ? LineWords.IndexOfColumn(line, column)
-                    : null;
-                return at is { } index ? line[..index] + text + line[index..] : line;
+                return LineWords.IndexOfColumn(line, column) is { } index ? line[..index] + text + line[index..] : line;
             }
             default:
                 return text.Length == 0 ? line : line.Replace(text, replacement, StringComparison.Ordinal);
@@ -365,9 +361,7 @@ internal sealed partial class ShellSession
         var now = LinesOfText(text);
         var width = (at + taken.Count - 1).ToString().Length;
         for (var i = at; i < at + taken.Count; i++) Row(i, width, now[i - 1]);
-        Line(taken.Count == 1
-            ? Lang.F("{0}: line {1} put in", target.Item.Path, at)
-            : Lang.F("{0}: lines {1}-{2} put in", target.Item.Path, at, at + taken.Count - 1));
+        TellPutIn(target.Item.Path, at, taken.Count);
         if (cut) TakeOut(source, picked);
     }
 
@@ -493,7 +487,7 @@ internal sealed partial class ShellSession
         var lines = LinesOfText(text);
         var index = Math.Clamp(position, 0, lines.Count);
         lines.InsertRange(index, added);
-        return (string.Join("\n", lines) + (endsWithBreak ? "\n" : string.Empty), index + 1);
+        return (JoinedLines(lines, endsWithBreak), index + 1);
     }
 
     /// <summary>
@@ -505,6 +499,6 @@ internal sealed partial class ShellSession
         var endsWithBreak = text.EndsWith('\n');
         var rest = LinesOfText(text).Where((_, i) => !taken.Contains(i + 1)).ToList();
         if (rest.Count == 0) return string.Empty;
-        return string.Join("\n", rest) + (endsWithBreak ? "\n" : string.Empty);
+        return JoinedLines(rest, endsWithBreak);
     }
 }

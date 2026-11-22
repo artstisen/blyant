@@ -1807,7 +1807,9 @@ internal sealed partial class ShellSession
         var sizeTexts = sizes ? entries.Select(entry => SizeOf(entry.Path)).ToList() : null;
         var sizeWidth = sizeTexts is { Count: > 0 } ? sizeTexts.Max(TextMetrics.WidthOf) : 0;
         var rows = entries.Select((entry, i) => (new Item(entry.Path, false),
-            Padded(names[i], width) + "  " + IsoDateTime.Local(entry.Opened, "yyyy-MM-dd HH:mm") +
+            Padded(names[i], width) + "  " +
+            // (a time not known, from a line that could not be read: blank, as in the file browser)
+            (entry.Opened == DateTime.MinValue ? new string(' ', 16) : IsoDateTime.Local(entry.Opened, "yyyy-MM-dd HH:mm")) +
             (sizeTexts is null ? string.Empty : "  " + sizeTexts[i].PadLeft(sizeWidth)))).ToList();
         if (search is not null)
         {
