@@ -45,6 +45,7 @@ internal sealed partial class ShellSession
         ("find [-l|-f|-b|-d] [name] [-t text]", Lang.T("Find files here and below, by name (*.md) and by text")),
         ("find -f, find -b", Lang.T("Show the folder and name, or the name only")),
         ("find -d", Lang.T("Show when each file was last changed")),
+        ("find -h [name] [-t text]", Lang.T("Find files here only, not in the directories below")),
         ("find [-l|-f|-b|-d]", Lang.T("Show the last search again, as it was found")),
         ("find -r", Lang.T("Search again for the same, where it was searched")),
         ("find|recent|hist|fav ... > $name", Lang.T("Keep the paths of the rows shown in a register")),

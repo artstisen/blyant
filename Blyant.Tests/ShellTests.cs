@@ -5254,8 +5254,8 @@ public class ShellTests : IDisposable
         (output, _, _, _) = Run("find -f -l -b *.md -t storm\n");
         Assert.Contains(In("work", "novel", "part-1", "drafts", "storm.md") + ":2", output);
         var (_, wrong, _, _) = Run("find -x storm\nfind -b -q\n");
-        Assert.Contains(Lang.F("Not taken: {0} (-l full paths, -f folder/name, -b names only, -d dates, -r again, -t text)", "-x"), wrong);
-        Assert.Contains(Lang.F("Not taken: {0} (-l full paths, -f folder/name, -b names only, -d dates, -r again, -t text)", "-q"), wrong);
+        Assert.Contains(Lang.F("Not taken: {0} (-l full paths, -f folder/name, -b names only, -d dates, -h here only, -r again, -t text)", "-x"), wrong);
+        Assert.Contains(Lang.F("Not taken: {0} (-l full paths, -f folder/name, -b names only, -d dates, -h here only, -r again, -t text)", "-q"), wrong);
         // A name that starts with "-", in quotes
         File.WriteAllText(In("work", "-draft.md"), "x\n");
         (output, errors, _, _) = Run("find \"-draft\"\n");
@@ -6843,7 +6843,7 @@ public class ShellTests : IDisposable
         (output, _, _, _) = Run("find *.md\n");
         Assert.DoesNotContain("2026-", output);
         (_, errors, _, _) = Run("find -x plot\n");
-        Assert.Contains(Lang.F("Not taken: {0} (-l full paths, -f folder/name, -b names only, -d dates, -r again, -t text)", "-x"),
+        Assert.Contains(Lang.F("Not taken: {0} (-l full paths, -f folder/name, -b names only, -d dates, -h here only, -r again, -t text)", "-x"),
             errors);
         Assert.Contains("find -d", Run("help find\n").Output);
     }
@@ -9425,5 +9425,33 @@ public class ShellTests : IDisposable
         (_, errors, _, _) = Run("lines s.md 1-9 squeeze more\nundo\n");
         Assert.Contains(Lang.F("Nothing goes after {0}: lines notes.md 3-20 {0}", "squeeze"), errors);
         Assert.Equal("lines s.md 1-9 squeeze", Tab(Completion(), "lines s.md 1-9 sq"));
+    }
+
+    // ---- 1.6.2: find -h, here only
+
+    [Fact]
+    public void FindH_SearchesHereOnly_AndFindRMakesItHereOnlyAgain()
+    {
+        Directory.CreateDirectory(In("work", "h", "sub"));
+        File.WriteAllText(In("work", "h", "a.md"), "TODO here\n");
+        File.WriteAllText(In("work", "h", "sub", "b.md"), "TODO below\n");
+        var (output, errors, _, session) = Run("cd h\nfind -h *.md\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal(In("work", "h", "a.md"), Path.GetFullPath(session.LastList.Single().Path));
+        // Without -h: here and below
+        (_, _, _, session) = Run("cd h\nfind *.md\n");
+        Assert.Equal(2, session.LastList.Count);
+        // Kept with the search: "find" tells it, "find -r" makes it here only again; by text too
+        (output, errors, _, session) = Run("cd h\nfind -h -t TODO\nfind\nfind -r\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Contains("a.md:1  TODO here", output);
+        Assert.DoesNotContain("below", output);
+        Assert.Contains(Lang.F("Search again: {0} in {1}", "-h -t TODO", In("work", "h")), output);
+        Assert.Single(session.LastList);
+        // A name or a text is needed: -h is for a search made now
+        (_, errors, _, _) = Run("find -h\nfind -h -r\n");
+        Assert.Equal(2, errors.Split(Lang.T("find -h searches here only: give a name or a text (find -h *.md, find -h -t storm)")).Length - 1);
+        Assert.Equal("find -h", Tab(Completion(), "find -h"));
+        Assert.Contains("find -h [name] [-t text]", Run("help find\n").Output);
     }
 }

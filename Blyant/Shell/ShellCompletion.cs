@@ -395,7 +395,7 @@ internal sealed class ShellCompletion
             {
                 // The options not given yet, before the name ("find -f -t storm"); after -t the text
                 if (after.Take(position).Any(word => !word.StartsWith('-') || word == "-t")) return (Kind.None, none);
-                return (Kind.Words, new[] { "-l", "-f", "-b", "-d", "-r", "-t" }.Except(after.Take(position)));
+                return (Kind.Words, new[] { "-l", "-f", "-b", "-d", "-h", "-r", "-t" }.Except(after.Take(position)));
             }
             case "run":
                 // (a file of commands, after -y; $ and Tab the registers; "run -" and Tab: -y)

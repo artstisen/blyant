@@ -887,21 +887,22 @@ internal sealed partial class ShellSession
     // from the directory searched; options before the name, in any order: "-l" the full paths (without the mark of
     // a favorite, for scripts), "-f" the folder and the name ("drafts/storm.md"), "-b" the name only ("storm.md"),
     // with the folder after a name two rows have, "-d" when each file was last changed (after the name). The rows are
-    // the same in each: "open 3", "info 3" take row 3.
+    // the same in each: "open 3", "info 3" take row 3. "-h": here only, not in the directories in it (kept with the
+    // search, so "find -r" makes it here only again).
     // "find" alone (or with -l, -f, -b, -d only) shows the last search again, as it was found, from wherever you are;
     // "find -r" searches again for the same in the directory of the last search
     private void Find(string argument)
     {
-        var (full, folder, bare, dates, repeat) = (false, false, false, false, false);
+        var (full, folder, bare, dates, repeat, here) = (false, false, false, false, false, false);
         argument = argument.TrimStart();
         while (argument.StartsWith('-'))
         {
             var word = argument.Split((char[]?)null, 2)[0];
             // ("-t": the text, read below)
             if (word == "-t") break;
-            if (word is not ("-l" or "-f" or "-b" or "-d" or "-r"))
+            if (word is not ("-l" or "-f" or "-b" or "-d" or "-h" or "-r"))
             {
-                Error(Lang.F("Not taken: {0} (-l full paths, -f folder/name, -b names only, -d dates, -r again, -t text)",
+                Error(Lang.F("Not taken: {0} (-l full paths, -f folder/name, -b names only, -d dates, -h here only, -r again, -t text)",
                     word));
                 return;
             }
@@ -910,8 +911,16 @@ internal sealed partial class ShellSession
             else if (word == "-f") folder = true;
             else if (word == "-b") bare = true;
             else if (word == "-d") dates = true;
+            else if (word == "-h") here = true;
             else repeat = true;
             argument = argument[word.Length..].TrimStart();
+        }
+
+        // ("-h" is for a search made now: the last search shown or made again is as it was made)
+        if (here && (repeat || argument.Trim().Length == 0))
+        {
+            Error(Lang.T("find -h searches here only: give a name or a text (find -h *.md, find -h -t storm)"));
+            return;
         }
 
         // "find", "find -b": the last search shown again; "find -r": made again where it was made
@@ -962,7 +971,7 @@ internal sealed partial class ShellSession
         // ("*" and "?" in the name, as in the file browser, and in the text: "find -t storm*night")
         var options = new FileSearch.Options
         {
-            Name = argument.Trim().Trim('"'), Text = text, Subfolders = true, TextWildcards = true
+            Name = argument.Trim().Trim('"'), Text = text, Subfolders = !here, TextWildcards = true
         };
         var problem = FileSearch.Validate(options);
         if (problem != DialogText.Success)
@@ -974,16 +983,19 @@ internal sealed partial class ShellSession
         MakeSearch(Directory, options, full, folder, bare, dates);
     }
 
-    // What a search looked for, as typed: "storm", "-t storm", "*.md -t attic"
+    // What a search looked for, as typed: "storm", "-t storm", "*.md -t attic", "-h *.md" (here only)
     private static string Searched(FileSearch.Options options) =>
-        options.Text.Length == 0 ? options.Name
-        : options.Name.Length == 0 ? "-t " + options.Text
-        : options.Name + " -t " + options.Text;
+        (options.Subfolders ? string.Empty : "-h ") +
+        (options.Text.Length == 0 ? options.Name
+            : options.Name.Length == 0 ? "-t " + options.Text
+            : options.Name + " -t " + options.Text);
 
-    // A search made in a directory and its directories, kept as the last search, and shown
+    // A search made in a directory and its directories (or only in it: -h), kept as the last search, and shown
     private void MakeSearch(string directory, FileSearch.Options options, bool full, bool folder, bool bare, bool dates)
     {
-        FileExplorer.LogFileOperation("Search", directory + " (with subfolders)", DialogText.Success);
+        // English: the log
+        FileExplorer.LogFileOperation("Search", directory + (options.Subfolders ? " (with subfolders)" : " (here only)"),
+            DialogText.Success);
         var search = new FindSearch(directory, options, DateTime.UtcNow, FileSearch.Search(directory, options));
         _lastFind = search;
         ShowSearch(search, full, folder, bare, dates);
