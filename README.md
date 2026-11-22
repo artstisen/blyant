@@ -7,7 +7,7 @@ This project began in 2022, with the application architecture and codebase writt
 
 **Favorite feature? – Using bookmarks to create custom jump points and open them from anywhere via the command line.**
 
-I also like to use Blyant as a line editor in Shell mode, with no TUI at all, as a purely command driven tool in the CLI, for editing and managing files (see [shell tutorial](Guide-to-shell-tutorial.md)).
+I also like to use Blyant as a line editor in Shell mode, with no TUI at all, as a purely command-driven tool in the CLI, for editing and managing files (see [shell tutorial](Guide-to-shell-tutorial.md)).
 
 ![The editor in split view, with command suggestions](docs/screenshots/split-view.svg)
 
