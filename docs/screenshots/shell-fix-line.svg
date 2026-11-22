@@ -8,7 +8,7 @@
 <circle cx="40" cy="17" r="6" fill="#FEBC2E"/>
 <circle cx="60" cy="17" r="6" fill="#28C840"/>
 <text x="434.0" y="22" fill="#A0A0A0" text-anchor="middle">Blyant: the shell, a line typed with input fixed with .u, and the lines shown with .p</text>
-<text x="14.0" y="60.8" fill="#CCCCCC" textLength="428.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Blyant v1.6.2: help lists the commands, exit leaves</text>
+<text x="14.0" y="60.8" fill="#CCCCCC" textLength="428.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">Blyant v1.6.3: help lists the commands, exit leaves</text>
 <text x="14.0" y="77.8" fill="#CCCCCC" textLength="478.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">blyant C:\Writing\Harbour Lights&gt; input outline.md bottom</text>
 <text x="14.0" y="94.8" fill="#CCCCCC" textLength="445.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve">$file:8&gt; 6. The Crossing: Maren rows out to the Teeth</text>
 <text x="14.0" y="111.8" fill="#CCCCCC" textLength="344.4" lengthAdjust="spacingAndGlyphs" xml:space="preserve">$file:9&gt; 7. Low Light: the lamp lit agian</text>

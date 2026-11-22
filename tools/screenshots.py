@@ -655,6 +655,12 @@ SCENES = [
                             '6. The Crossing: Maren rows out to the Teeth<Enter>',
                             '7. Low Light: the lamp lit agian<Enter>', '.u<Enter>', 'again<Enter>',
                             '.p<Enter>', '.<Enter>'], True),
+    # input -e: a line of the outline at the prompt to change, and a line typed below it
+    ('shell-edit-line', 'Blyant: the shell, a line of the outline edited with input -e, and a line typed below it',
+     {},
+     ['--shell', PROJECT], ['<wait>', 'peek outline.md<Enter>', 'input -e outline.md +4<Enter>', ', the storm<Enter>',
+                            '   - Maren waits out the storm in the lamp room<Enter>', '.<Enter>',
+                            'peek outline.md<Enter>'], True),
 ]
 
 

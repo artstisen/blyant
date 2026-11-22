@@ -791,6 +791,8 @@ $file:16> .
 - As for `insert`, the file keeps its line endings and byte order mark, only a file in UTF-8 is changed, and the files Blyant uses are refused
 
 ### Editing a line, then typing on
+![The outline peeked, line 4 put at the prompt with input -e and given more text, a line typed below it, and the outline peeked again](docs/screenshots/shell-edit-line.svg)
+
 `input -e` puts a line that is in the file at the prompt, with its text, so you can change it, and then goes on as `input` does: the lines you type go in below it, and the lines after them move down.
 
 ```
