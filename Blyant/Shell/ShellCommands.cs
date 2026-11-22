@@ -56,7 +56,7 @@ internal sealed partial class ShellSession
         ("delete file|n", Lang.T("Delete a file or directory, to the trash (del)")),
         ("info [file|n]", Lang.T("Describe a file or directory (alone: this one)")),
         ("insert file|n top|bottom|+line text", Lang.T("Put a line of text in a file, without opening it")),
-        ("input [file|n top|bottom|+line]", Lang.T("Type lines into a file after $line; a line with . ends")),
+        ("input [+line|file|n top|bottom|+line]", Lang.T("Type lines into a file after $line; a line with . ends")),
         ("input before", Lang.T("Type lines into a file before $line; a line with . ends")),
         ("input .u|.e|.d|.p|.?", Lang.T("While typing lines: last word off, edit or delete last line, show them")),
         ("change file|n +line|from-to [text]", Lang.T("Replace lines of a file with text, or delete them")),

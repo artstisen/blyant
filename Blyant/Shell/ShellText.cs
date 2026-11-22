@@ -142,7 +142,7 @@ internal sealed partial class ShellSession
         return blank < 0 ? string.Empty : text[..(blank + 1)];
     }
 
-    // "input", "input @", "input notes.md bottom", "input notes.md +12": the lines typed put in the file one after
+    // "input", "input @", "input +12" ($file), "input notes.md bottom", "input notes.md +12": the lines typed put in the file one after
     // another, as in the line editor ed: alone (or "@", or "a" as in ed), after $line, as insert @ puts a line; "input
     // before" (or "i" as in ed) before $line, which goes down (see WithAt); a line with only "." ends
     // it, and so does the end of the input (Ctrl+D). Each line is written when it is typed, so none is lost; all are one

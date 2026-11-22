@@ -128,7 +128,7 @@ Some commands have a short form, which does the same: `fav` and `favs` (`favorit
 | `move file\|n dir\|n` | Move a file or directory into a directory. A moved file is added to the latest files, as with `new` |
 | `delete file\|n` (`del`) | Delete a file or directory: to the trash, after asking |
 | `info [file\|n]` | Describe a file or directory (alone: the one you are in): kind, size, dates and path, and for a text file characters, words, lines, encoding and line endings. The last list stays as it was |
-| `input [file\|n top\|bottom\|+line]` | Type lines into a file, as in the line editor `ed`: alone, after `$line` (as `insert @` puts a line); each line you type goes in after the one before, and a line with only `.` ends. `a` for short, as in `ed`. See [Typing lines in](#typing-lines-in) |
+| `input [+line\|file\|n top\|bottom\|+line]` | Type lines into a file, as in the line editor `ed`: alone, after `$line` (as `insert @` puts a line); each line you type goes in after the one before, and a line with only `.` ends. `a` for short, as in `ed`. See [Typing lines in](#typing-lines-in) |
 | `input before` | Type lines into a file before `$line`: the line you are at goes down. `i` for short, as in `ed`. See [Typing lines in](#typing-lines-in) |
 | `insert file\|n top\|bottom\|+line text` | Put a line of text in a file without opening it: before the first line, after the last, or as line 12 (`+12`). See [Text and settings](#text-and-settings) |
 | `change file\|n +line\|from-to [text]` | Replace a line (`+12`) or lines (`12-15`) of a file with a text, or delete them when no text is given (asks first). See [Text and settings](#text-and-settings) |
@@ -768,6 +768,7 @@ $file:16> .
 ```
 
 - `input` alone puts the lines in after `$line`, as `insert @` puts a line (see [Working on one line](#working-on-one-line)); in an empty file (after `new`) at the top. A file and a place can be given, as `insert` takes them: `input notes.md bottom`, `input notes.md top`, `input notes.md +12`
+- `input +12` starts at line 12 of `$file`, the file you are working on: the lines go in as line 12, 13 ..., and the line that was 12 goes down below them. Past the end of the file they go at the bottom. `a +12` and `i +12` do the same
 - `a` is short for `input`, and `i` is short for `input before`, as the `a` and `i` commands of `ed`: `i` puts the lines in before `$line`, so the line you are at goes down below them. With a file and a place, `a` and `i` take them as `input` does (`i notes.md +12`)
 - The file is `$file` from the start, also a file given (`input other.md bottom`), so the prompt stays short whatever the name of the file: `echo $file` after `input` tells the path
 - Each line is written when you press `Enter`, so nothing is lost when the terminal is closed. All the lines of one `input` are one step of `undo`. If the file is changed meanwhile (saved in the editor, or by another program) or deleted, the line is not put in and `input` stops, so nothing is written over

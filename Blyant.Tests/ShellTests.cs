@@ -8769,7 +8769,7 @@ public class ShellTests : IDisposable
         Assert.Equal(string.Empty, errors);
         Assert.Equal("First line\n", File.ReadAllText(In("work", "fresh.md")).Replace("\r\n", "\n"));
         Assert.Equal("input in.md top", Tab(Completion(), "input in.md t"));
-        Assert.Contains("input [file|n top|bottom|+line]", Run("help input\n").Output);
+        Assert.Contains("input [+line|file|n top|bottom|+line]", Run("help input\n").Output);
     }
 
     [Fact]
@@ -9215,5 +9215,25 @@ public class ShellTests : IDisposable
         var (_, errors, _, _) = Run("input n.md bottom\nA line\n.u\n.d\n.\n");
         Assert.Equal(string.Empty, errors);
         Assert.Equal("one\nA line\n.u\n.d\n", Text("n.md"));
+    }
+
+    // ---- 1.6.2: input +12, at a line of $file
+
+    [Fact]
+    public void InputWithALine_StartsAtThatLineOfFile()
+    {
+        File.WriteAllText(In("work", "n.md"), "one\ntwo\nthree\n");
+        var (output, errors, _, session) = Run("peek n.md 1\ninput +3\nX\n.\ni +1\nTop\n.\na +99\nEnd\n.\n");
+        Assert.Equal(string.Empty, errors);
+        // As line 3 (three goes down), at the top, and past the end at the bottom
+        Assert.Equal("Top\none\ntwo\nX\nthree\nEnd\n", Text("n.md"));
+        Assert.Contains(Lang.F("{0}: line {1} put in", In("work", "n.md"), 3), output);
+        Assert.Equal(6, session.LastList.Single().At?.Line);
+        // Refused: no $file yet, and a line written otherwise than with digits
+        (_, errors, _, _) = Run("input +2\n");
+        Assert.Contains(Lang.T("@ is the file and the line of the last command: none yet (words notes.md 12)"), errors);
+        (_, errors, _, _) = Run("peek n.md 1\ninput ++2\ninput +0\n");
+        Assert.Equal(2, errors.Split(Lang.T("Give a file and where, or nothing: input, input notes.md bottom, input notes.md +12")).Length - 1);
+        Assert.Contains("input [+line|file|n top|bottom|+line]", Run("help input\n").Output);
     }
 }

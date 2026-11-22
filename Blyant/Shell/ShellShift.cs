@@ -281,6 +281,14 @@ internal sealed partial class ShellSession
         // ("input" and "a" alone: after $line, as "input @"; "i" alone or "i @", "input before" and "input @ before":
         // before $line, as the i of ed)
         var input = IsInput(name);
+        // ("input +12", "a +12", "i +12": $file, the lines as line 12, as "input $file +12" puts them)
+        if (input && Words(argument) is [var only] && IsPlusLine(only, out _))
+        {
+            if (_file is not null) return "$file " + only;
+            Error(Lang.T("@ is the file and the line of the last command: none yet (words notes.md 12)"));
+            return null;
+        }
+
         var before = name == "i" ? Words(argument) is [] or ["@"] : name == "input" && Words(argument) is ["before"] or ["@", "before"];
         if (before || (input && argument.Trim().Length == 0)) argument = "@";
         // ("clip words @ 6-9": after the kind, as word takes it)
