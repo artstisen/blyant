@@ -9538,4 +9538,69 @@ public class ShellTests : IDisposable
         Assert.DoesNotContain("find -r -t", afterR);
         Assert.Contains("find -r", Offered("find -"));
     }
+
+    // ---- 1.6.3: input -e, a line edited first
+
+    [Fact]
+    public void InputE_EditsTheLineFirst_ThenTheLinesTypedGoBelowIt()
+    {
+        File.WriteAllText(In("work", "n.md"), "one\nThe ferry was late.\nthree\n");
+        // (a terminal without line editing: the line is shown above the prompt, and typed again)
+        var (output, errors, _, session) = Run("peek n.md 1\ninput -e n.md +2\nThe ferry was late, as always.\nMaren waited.\n.\n",
+            terminal: true);
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("one\nThe ferry was late, as always.\nMaren waited.\nthree\n", Text("n.md"));
+        Assert.Contains("The ferry was late.\n$file:2> ", output);
+        Assert.Contains(Lang.F("{0}: line {1} changed", In("work", "n.md"), 2), output);
+        Assert.Contains(Lang.F("{0}: line {1} put in", In("work", "n.md"), 3), output);
+        Assert.Equal(2, session.LastList.Single().At?.Line);
+        // Enter alone keeps the line: nothing changed, nothing put in; one step of undo for a change and the lines
+        (output, _, _, _) = Run("input -e n.md +1\n\n.\n", terminal: true);
+        Assert.Contains(Lang.T("Nothing put in"), output);
+        Run("input -e n.md top\nOne\nTwo\n.\nundo\n", terminal: true);
+        Assert.Equal("one\nThe ferry was late, as always.\nMaren waited.\nthree\n", Text("n.md"));
+    }
+
+    [Fact]
+    public void InputE_TakesLineOrALineOfFile_AndDDeletesOnlyTheLinesTyped()
+    {
+        File.WriteAllText(In("work", "n.md"), "one\ntwo\nthree\n");
+        // "input -e" alone: $line; "input -e +3": line 3 of $file
+        Run("peek n.md +2 1\ninput -e\nTWO\n.\ninput -e +3\nTHREE\n.\n", terminal: true);
+        Assert.Equal("one\nTWO\nTHREE\n", Text("n.md"));
+        // .d takes out the lines typed, not the line edited
+        var (output, _, _, _) = Run("input -e n.md bottom\n\nfour\n.d\n.d\n.\n", terminal: true);
+        Assert.Equal("one\nTWO\nTHREE\n", Text("n.md"));
+        Assert.Contains(Lang.T("No line typed yet: the dot commands work on the lines typed in this input"), output);
+        Assert.Contains(Lang.T("Nothing put in"), output);
+    }
+
+    [Fact]
+    public void InputE_IsRefused_PastTheEnd_AndOutsideATerminal()
+    {
+        File.WriteAllText(In("work", "n.md"), "one\n");
+        var (_, errors, _, _) = Run("input -e n.md +5\n.\ninput -e n.md\n.\n", terminal: true);
+        Assert.Contains(Lang.F("{0} has no line {1} to edit: it has {2} lines", In("work", "n.md"), 5, 1), errors);
+        Assert.Contains(Lang.T("input -e takes a line: input -e, input -e +12, input -e notes.md +12"), errors);
+        // From a pipe: refused, and its text skipped, so no line of it runs as a command
+        (_, errors, _, _) = Run("input -e n.md +1\ndelete n.md\n.\n");
+        Assert.Contains(Lang.T("input -e edits a line at a terminal only: in a script, use change, then input"), errors);
+        Assert.True(File.Exists(In("work", "n.md")));
+        Assert.Equal("one\n", Text("n.md"));
+    }
+
+    [Fact]
+    public void InputE_AtTheLineEditor_PutsTheLineAtThePrompt()
+    {
+        File.WriteAllText(In("work", "n.md"), "one\nThe ferry was late.\n");
+        var keys = new Queue<ConsoleKeyInfo>(LineKeys("input -e n.md +2<CR><BS>, as always.<CR>Maren waited.<CR>.<CR>exit<CR>"));
+        var session = new ShellSession(new StringReader(string.Empty), new StringWriter(), new StringWriter(), In("work"), true, false);
+        session.ReadLinesWith(() => keys.Dequeue(), () => 80);
+        Shell.Run(session);
+        Assert.Equal("one\nThe ferry was late, as always.\nMaren waited.\n", Text("n.md"));
+        var completion = Completion();
+        Assert.Equal("input -e", Tab(completion, "input -"));
+        Assert.Equal("input -e n.md top", Tab(Completion(), "input -e n.md t"));
+        Assert.Contains("input -e [+line|file|n +line]", Run("help input\n").Output);
+    }
 }

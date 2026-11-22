@@ -280,6 +280,15 @@ internal sealed class ShellCompletion
                     return (Kind.Names, new[] { "top", "bottom" }.Concat(HeadingsOf(_words[arrow + 1])));
                 return (position == arrow + 3 ? Kind.Words : Kind.None, new[] { "copy", "cut" });
             }
+            case "input" when _words.Count > 0 && _words[0] == "-e" && position > 0:
+                return position switch
+                {
+                    1 => (Kind.Path, none),
+                    2 => (Kind.Words, new[] { "top", "bottom" }),
+                    _ => (Kind.None, none)
+                };
+            case "input" when position == 0:
+                return (Kind.PathOrOptions, new[] { "-e" });
             case "insert":
             case "blank":
             case "input":

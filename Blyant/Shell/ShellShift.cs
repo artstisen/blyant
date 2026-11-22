@@ -280,6 +280,16 @@ internal sealed partial class ShellSession
         // ("input" and "a" alone: after $line, as "input @"; "i" alone or "i @", "input before" and "input @ before":
         // before $line, as the i of ed)
         var input = IsInput(name);
+        // ("input -e", "input -e @": $line itself, to edit; "input -e +12": line 12 of $file)
+        var editing = name == "input" && Words(argument) is ["-e", ..];
+        if (editing && Words(argument) is ["-e", var lineOnly] && IsPlusLine(lineOnly, out _))
+        {
+            if (_file is not null) return "-e $file " + lineOnly;
+            Error(Lang.T("@ is the file and the line of the last command: none yet (words notes.md 12)"));
+            return null;
+        }
+
+        if (editing && Words(argument) is ["-e"]) argument = "-e @";
         // ("input +12", "a +12", "i +12": $file, the lines as line 12, as "input $file +12" puts them)
         // ("blank +12", "blank +12 3": the same, with a count)
         if ((input && Words(argument) is [var only] && IsPlusLine(only, out _)) ||
@@ -302,7 +312,7 @@ internal sealed partial class ShellSession
         if (!TakesAt.Contains(name) && !clipWords) return argument;
         var words = Words(argument);
         var at = clipWords ? 1 : 0;
-        while (at < words.Count && words[at] is "-p" or "-s") at++;
+        while (at < words.Count && (words[at] is "-p" or "-s" || (editing && words[at] == "-e"))) at++;
         if (at >= words.Count || words[at] != "@") return argument;
         var from = AfterWords(argument, at);
         // (a file named "@" is written in quotes)
@@ -343,7 +353,7 @@ internal sealed partial class ShellSession
         var head = argument[..(argument.Length - from.Length)];
         var rest = AfterWords(argument, at + 1);
         // (before: as line $line, the line it is goes down; in an empty file, at the top)
-        var put = "$file +" + (before ? Math.Max(line, 1) : name is "insert" or "blank" || input ? line + 1 : line);
+        var put = "$file +" + (editing ? line : before ? Math.Max(line, 1) : name is "insert" or "blank" || input ? line + 1 : line);
         return head + put + (rest.Length > 0 ? " " + rest : string.Empty);
     }
 

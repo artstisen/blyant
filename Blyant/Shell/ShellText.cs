@@ -193,27 +193,55 @@ internal sealed partial class ShellSession
     {
         // ("input" alone, "input @", "i" and "input +12" are "$file +line", put in before: see WithAt)
         var words = Words(argument);
+        // "input -e notes.md +12" ("input -e" alone: $line): line 12 at the prompt to edit first, then the lines typed
+        // after it, as always. Only at a terminal: a line cannot be put before you to change in a script or a pipe
+        var edit = words is ["-e", ..];
+        if (edit)
+        {
+            if (!Terminal || _runNext is not null)
+            {
+                Error(Lang.T("input -e edits a line at a terminal only: in a script, use change, then input"));
+                return;
+            }
+
+            words = words.Skip(1).ToList();
+        }
+
         var place = words.Count == 2 ? InsertPlace(words[1]) : null;
         if (place is null)
         {
-            Error(Lang.T("Give a file and where, or nothing: input, input notes.md bottom, input notes.md +12"));
+            Error(edit
+                ? Lang.T("input -e takes a line: input -e, input -e +12, input -e notes.md +12")
+                : Lang.T("Give a file and where, or nothing: input, input notes.md bottom, input notes.md +12"));
             return;
         }
 
         if (EditableFile(words[0]) is not { } editable) return;
         var (item, file) = editable;
+        // (the line to edit: "top" the first, "bottom" the last; one past the end is not there)
+        var lineCount = LinesOfText(file.Text).Count;
+        var editing = place.Value == int.MaxValue ? lineCount : place.Value;
+        if (edit && (editing < 1 || editing > lineCount))
+        {
+            Error(Lang.F("{0} has no line {1} to edit: it has {2} lines", item.Path, place.Value == int.MaxValue ? 0 : place.Value,
+                lineCount));
+            return;
+        }
         // (the lines of text after it are read here: from a file or a pipe they are not skipped, see SkipInputText)
         _inputExpected = false;
         // (the file keeps its ending: a line break at the end of the text only when it had one, or the last line is
         // blank)
         var endsWithBreak = file.Text.Length == 0 || TextBuffer.Normalize(file.Text).EndsWith('\n');
-        var next = (int)Math.Min(place.Value, LinesOfText(file.Text).Count + 1L);
+        var next = edit ? editing + 1 : (int)Math.Min(place.Value, lineCount + 1L);
         // (the file the lines go in is $file, at the line before them, from the start: the prompt names $file)
         _file = Path.GetFullPath(item.Path);
         _line = next - 1;
-        // The lines typed in this input are first to next - 1
-        var first = next;
-        var count = 0;
+        // The lines of this input are first to next - 1: with -e the line edited first, then the lines typed (.d takes
+        // out only those: the line edited was there before)
+        var first = edit ? editing : next;
+        var count = edit ? 1 : 0;
+        var firstTyped = edit ? first + 1 : first;
+        var editedBefore = edit ? LinesOfText(file.Text)[editing - 1] : null;
         // (the dot commands only typed at a terminal: from a script, a file or a pipe the lines are text, up to ".")
         var dots = _runNext is null && Terminal;
         // English: "$file" is the name of the shell, the same in all languages
@@ -240,7 +268,9 @@ internal sealed partial class ShellSession
             return false;
         }
 
-        while (ReadText(PromptAt(next)) is { } typed)
+        // (-e: the line at the prompt first, as .e brings it; Ctrl+C leaves it, "." ends)
+        var ended = edit && !DotCommand('e');
+        while (!ended && ReadText(PromptAt(next)) is { } typed)
         {
             if (IsInputEnd(typed)) break;
             if (dots && InputCommand(typed) is { } command)
@@ -274,6 +304,12 @@ internal sealed partial class ShellSession
             }
 
             var last = next - 1;
+            if (command == 'd' && last < firstTyped)
+            {
+                Line(Lang.T("No line typed yet: the dot commands work on the lines typed in this input"));
+                return true;
+            }
+
             var lines = LinesOfText(file.Text);
             switch (command)
             {
@@ -321,7 +357,10 @@ internal sealed partial class ShellSession
             }
         }
 
-        if (count == 0)
+        // (-e: the line edited is told as changed, when it was, and the lines typed after it as put in)
+        var changed = edit && LinesOfText(file.Text)[first - 1] != editedBefore;
+        var typedCount = edit ? count - 1 : count;
+        if (typedCount == 0 && !changed)
         {
             Line(Lang.T("Nothing put in"));
             return;
@@ -330,7 +369,8 @@ internal sealed partial class ShellSession
         LastList = new List<Item> { new(item.Path, false, (first, 1)) };
         // (@ at the last line put in, so the next "input" goes on after it)
         _line = first + count - 1;
-        TellPutIn(item.Path, first, count);
+        if (changed) Line(Lang.F("{0}: line {1} changed", item.Path, first));
+        if (typedCount > 0) TellPutIn(item.Path, firstTyped, typedCount);
     }
 
     // "change notes.md +12 A new line", "change notes.md 12-15 One line instead": the lines become the text (one line;

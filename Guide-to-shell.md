@@ -29,7 +29,7 @@ MMM _MM" M%M      "MM__MM" MMM _M%M MMM_ M%M    M%M
 M%M" M%M M%M  ___   M%M    M%M" M%M M%M"_M%M    M%M
 MMM__MM" "MM__MMM   MMM    MMM  MMM MMM  "MM    MMM
 
-Blyant v1.6.2: help lists the commands, exit leaves
+Blyant v1.6.3: help lists the commands, exit leaves
 ```
 
 - The logo is the one chosen for the start page (the setting `logo`; the logo editor makes your own), so the shell shows the same
@@ -131,6 +131,7 @@ Some commands have a short form, which does the same: `fav` and `favs` (`favorit
 | `input [+line]` | Type lines into a file, as in the line editor `ed`: alone, after `$line` (as `insert @` puts a line); each line you type goes in after the one before, and a line with only `.` ends the input. `input +12`: as line 12 of `$file`. `a` for short, as in `ed`. See [Typing lines in](#typing-lines-in) |
 | `input file\|n top\|bottom\|+line` | Type lines into a file at a place: before the first line, after the last, or as line 12 (`+12`) |
 | `input before` | Type lines into a file before `$line`: the line you are at moves down. `i` for short, as in `ed`. See [Typing lines in](#typing-lines-in) |
+| `input -e [+line\|file\|n +line]` | Edit a line at the prompt first, then type lines after it: `input -e` takes `$line`, `input -e +12` line 12 of `$file`. At a terminal only. See [Editing a line, then typing on](#editing-a-line-then-typing-on) |
 | `.u`, `.e`, `.d`, `.p`, `.?` | While you type lines with `input`: bring the last line back without its last word (`.u`) or whole (`.e`), delete it (`.d`), show the lines typed (`.p`), or list these commands (`.?`). See [Fixing a line while you type](#fixing-a-line-while-you-type) |
 | `insert file\|n top\|bottom\|+line text` | Put a line of text in a file without opening it: before the first line, after the last, or as line 12 (`+12`). See [Text and settings](#text-and-settings) |
 | `blank [+line] [n]` | Put in blank lines after `$line`, to make room: `blank 3` puts in three, and `blank +12 3` puts them in as line 12 of `$file`. `blank notes.md +12 3` and `blank notes.md bottom` take a file and a place, as `insert` does. See [Text and settings](#text-and-settings) |
@@ -788,6 +789,24 @@ $file:16> .
 - In a script (`run`, a file of commands, a pipe or `--run`), `input` takes the lines after it, up to the line with `.`: a block of text put in a file in one go. The words given to `run` are not put in these lines: `$1` and `$*` in them stay as they are
 - If `input` is refused there (the file is missing, or the place is not `top`, `bottom` or `+12`), or stops halfway (the file was changed meanwhile, or could not be written), Blyant skips the lines of text up to the line with `.`, and says so: none of them is run as a command. In `run` the script stops at that `input`
 - As for `insert`, the file keeps its line endings and byte order mark, only a file in UTF-8 is changed, and the files Blyant uses are refused
+
+### Editing a line, then typing on
+`input -e` puts a line that is in the file at the prompt, with its text, so you can change it, and then goes on as `input` does: the lines you type go in below it, and the lines after them move down.
+
+```
+blyant ~/novel> input -e notes.md +12
+$file:12> The ferry was late, as always.
+$file:13> Maren waited at the rail.
+$file:14> .
+/home/anna/novel/notes.md: line 12 changed
+/home/anna/novel/notes.md: line 13 put in
+```
+
+- `input -e` alone takes `$line`, and `input -e +12` line 12 of `$file`. A file and a line can be given: `input -e notes.md +12`, and `top` and `bottom` take the first and the last line
+- The line comes with its number in the prompt, and the cursor at its end. `Enter` writes it in place of the old line (nothing is written when it is the same), and `Ctrl+C` leaves it as it was. Then you type the next lines
+- To end at once, press `Ctrl+C` and then type `.`: a `.` typed after the text of the line is part of the line
+- The dot commands work as in any `input`: `.e` and `.u` also bring the line edited back, but `.d` deletes only the lines typed, not the line that was there before. `undo` takes back the change and the lines in one step
+- At a terminal only: in a script, a file of commands or a pipe it is refused (and its text skipped). There, `change notes.md +12 New text` and then `input` do the same. Without line editing (`set shellcompletion false`), the line is shown above the prompt: type it again, or press `Enter` alone to keep it
 
 ### Fixing a line while you type
 ![Two lines typed into the outline with input, a typo in the second fixed with .u, the lines shown with .p, and a dot that ends](docs/screenshots/shell-fix-line.svg)
