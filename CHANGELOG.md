@@ -1,6 +1,7 @@
 # Changes
 
 ## v1.6.2
+- **Fixing a line while you type with `input`**: alone on a line, `.u` brings the last line typed back to the prompt, at its number, without its last word, so you type the rest again; `.e` brings all of it back to change with the arrow keys, `Backspace` and `Ctrl+W`; `.d` deletes it (again for the line before); `.p` shows the lines typed, numbered; and `.?` lists them. `Enter` writes the line in place of the old one, and `Ctrl+C` leaves it as it was. They work only on the lines typed in this `input`, all is still one step of `undo`, and only typed at a terminal: in a script or a pipe the lines are text. See [Fixing a line while you type](Guide-to-shell.md#fixing-a-line-while-you-type).
 - **`a` and `i` in the shell, as in `ed`**: `a` is short for `input`, and puts the lines you type in after `$line`. `i` puts them in before `$line`, so the line you are at goes down below them; its long form is `input before`. With a file and a place, `a` and `i` take them as `input` does (`i notes.md +12`). In a script, the lines after `a` and `i` are text, as after `input`. `help` lists them with the short forms. See [Typing lines in](Guide-to-shell.md#typing-lines-in).
 - **Fixes from the review before the release**:
   - `input` and `insert … bottom` keep a blank line typed at the end of a file that has no line break at its end: before, it only became that line break, and the next line took its place. The same goes for `lines`, `change` and `cut` that leave a blank last line

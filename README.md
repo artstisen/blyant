@@ -173,8 +173,8 @@ dotnet run --project Blyant
 ## Tools used
 - Written in C#, a single binary file, no dependencies, runs in the terminal you already use
 - CLI tools: JetBrains Command Line Tools, .NET CLI compiler, PowerShell, and GitHub CLI
+- Coding guidelines: [CSharp Coding Kit](https://github.com/artstisen/csharp-coding-kit)  
 - Agentic tools: Claude Opus 5.5 (scripting/testing/code review)
-- Coding Guidelines: [CSharp Coding Kit](https://github.com/artstisen/csharp-coding-kit)  
 - Code editor: Blyant with syntax highlighting, code completion, and code snippets
 - Programming language: C# 14
 - Framework: .NET 10

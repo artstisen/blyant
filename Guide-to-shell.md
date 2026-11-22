@@ -778,6 +778,28 @@ $file:16> .
 - In a script (`run`, a file of commands, a pipe or `--run`), `input` takes the lines after it, up to the line with `.`: a block of text put in a file in one go. The words given to `run` are not put in these lines: `$1` and `$*` in them stay as they are
 - As for `insert`, the file keeps its line endings and byte order mark, only a file in UTF-8 is changed, and the files Blyant uses are refused
 
+### Fixing a line while you type
+A line is written when you press `Enter`. To fix it, type a dot command alone on the next line:
+
+```
+$file:14> The ferry was laet
+$file:15> .u
+$file:14> The ferry was late
+$file:15> .
+```
+
+| Command | What it does |
+|---|---|
+| `.u` | The last line typed back at the prompt, at its number, without its last word: type the rest of it again |
+| `.e` | The last line typed back at the prompt, all of it, to change with the arrow keys, `Backspace` and `Ctrl+W` |
+| `.d` | Delete the last line typed: you go on at its number. Again for the line before it |
+| `.p` | Show the lines typed in this `input`, numbered |
+| `.?` | List the dot commands |
+
+- After `.u` or `.e`, `Enter` writes the line in place of the old one, and `Ctrl+C` leaves it as it was. A `.` there ends `input`, with the line as it was
+- The dot commands work only on the lines typed in this `input`, never on the lines that were in the file before. `undo` still takes back the whole `input` in one step
+- A dot command is the dot and its letter alone on the line: `.unity`, `...` and ` .u` are text. Typed at a terminal only: in a script, a file of commands or a pipe, the lines after `input` are text up to the `.`
+
 ## Working on one line
 `@` stands for the file and the line the last command worked on, so the next command takes them without typing them again:
 

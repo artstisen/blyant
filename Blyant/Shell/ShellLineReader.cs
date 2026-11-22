@@ -40,14 +40,15 @@ internal sealed class ShellLineReader
     internal bool Dropped { get; private set; }
 
     /// <summary>
-    /// Read a line after a prompt. "text": a line of text (input), not a command: Tab and Up and Down do nothing
+    /// Read a line after a prompt. "text": a line of text (input), not a command: Tab and Up and Down do nothing.
+    /// "start": the line to start from (a line taken back to edit), the cursor at its end
     /// </summary>
     /// <returns>The line (empty after Ctrl+C), or null at the end of the input (Ctrl+D or Ctrl+Z on an empty line)</returns>
-    internal string? Read(string prompt, bool text = false)
+    internal string? Read(string prompt, bool text = false, string start = "")
     {
         Dropped = false;
-        _text = string.Empty;
-        _cursor = 0;
+        _text = start;
+        _cursor = start.Length;
         _scroll = 0;
         _drawn = 0;
         var recall = new CommandRecall(CommandContext.Shell);

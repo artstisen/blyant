@@ -126,6 +126,22 @@ internal sealed partial class ShellSession
     // The line that ends input: only "." (blanks after it too; one before it is text: " ." is put in)
     internal static bool IsInputEnd(string line) => line.TrimEnd() == ".";
 
+    // A dot command typed in input: ".u", ".e", ".d", ".p" or ".?" alone on the line (blanks after it too), its
+    // letter; null for a line of text (".unity", "...", " .u")
+    internal static char? InputCommand(string line) =>
+        line.TrimEnd() is { Length: 2 } command && command[0] == '.' && command[1] is 'u' or 'e' or 'd' or 'p' or '?'
+            ? command[1]
+            : null;
+
+    // A line without its last word (the words between blanks), and with the blanks before it, so the next word typed
+    // goes after them: "Some text" is "Some ", "Some" is ""
+    internal static string WithoutLastWord(string line)
+    {
+        var text = line.TrimEnd();
+        var blank = text.LastIndexOfAny(new[] { ' ', '\t' });
+        return blank < 0 ? string.Empty : text[..(blank + 1)];
+    }
+
     // "input", "input @", "input notes.md bottom", "input notes.md +12": the lines typed put in the file one after
     // another, as in the line editor ed: alone (or "@", or "a" as in ed), after $line, as insert @ puts a line; "input
     // before" (or "i" as in ed) before $line, which goes down (see WithAt); a line with only "." ends
@@ -153,26 +169,87 @@ internal sealed partial class ShellSession
         // (the file the lines go in is $file, at the line before them, from the start: the prompt names $file)
         _file = Path.GetFullPath(item.Path);
         _line = next - 1;
+        // The lines typed in this input are first to next - 1
         var first = next;
         var count = 0;
+        // (the dot commands only typed at a terminal: from a script, a file or a pipe the lines are text, up to ".")
+        var dots = _runNext is null && Terminal;
         // English: "$file" is the name of the shell, the same in all languages
-        while (ReadText("$file:" + next.ToString(System.Globalization.CultureInfo.InvariantCulture) + "> ") is { } typed)
+        static string PromptAt(int line) => "$file:" + line.ToString(System.Globalization.CultureInfo.InvariantCulture) + "> ";
+
+        // The file written with a text: not when it was changed meanwhile, in the editor or by another program, or is
+        // gone (then nothing is written over, it is told, and input stops)
+        bool Written(string text, int line)
         {
-            if (IsInputEnd(typed)) break;
-            // (the file as it was read, or as input wrote it last: changed meanwhile, in the editor or by another
-            // program, or gone, it is not written over)
             if (Changed(item.Path, file))
             {
                 Error(Lang.F("{0} was changed meanwhile: the line is not put in, and input stops", item.Path));
-                break;
+                return false;
+            }
+
+            // (the path and the line, never the text)
+            return SavedEdit(file, text, "Input", item.Path + ":" + line);
+        }
+
+        while (ReadText(PromptAt(next)) is { } typed)
+        {
+            if (IsInputEnd(typed)) break;
+            if (dots && InputCommand(typed) is { } command)
+            {
+                if (!DotCommand(command)) break;
+                continue;
             }
 
             var (text, number) = WithLinesAt(file.Text, new List<string> { typed }, next - 1);
-            // (the path and the line, never the text)
-            if (!SavedEdit(file, text, "Input", item.Path + ":" + number)) break;
-            if (count == 0) first = number;
+            if (!Written(text, number)) break;
             count++;
             next = number + 1;
+        }
+
+        // A dot command: ".u" the last line typed back at the prompt, without its last word; ".e" all of it; ".d" the
+        // last line typed taken out; ".p" the lines typed shown; ".?" the commands told. Only the lines typed in this
+        // input, never those there before. False when input ends (at the end of the input, or "." while a line is
+        // edited, the line as it was; or the file changed meanwhile)
+        bool DotCommand(char command)
+        {
+            if (command == '?')
+            {
+                Line(Lang.T(".u last word off, .e edit last line, .d delete it, .p show lines, . ends"));
+                return true;
+            }
+
+            if (count == 0)
+            {
+                Line(Lang.T("No line typed yet: the dot commands work on the lines typed in this input"));
+                return true;
+            }
+
+            var last = next - 1;
+            var lines = LinesOfText(file.Text);
+            switch (command)
+            {
+                case 'p':
+                {
+                    var width = last.ToString(System.Globalization.CultureInfo.InvariantCulture).Length;
+                    for (var i = first; i <= last; i++) Row(i, width, lines[i - 1]);
+                    return true;
+                }
+                case 'd':
+                    if (!Written(WithLinesChanged(file.Text, last, last, null).Text, last)) return false;
+                    Line(Lang.F("{0}: line {1} taken out", item.Path, last));
+                    count--;
+                    next--;
+                    return true;
+                default:
+                {
+                    // ('e', 'u': the line at the prompt again, its number in the prompt; Ctrl+C leaves it as it was)
+                    var line = lines[last - 1];
+                    var edited = ReadEdited(PromptAt(last), command == 'u' ? WithoutLastWord(line) : line, out var dropped);
+                    if (edited is null) return dropped;
+                    if (IsInputEnd(edited)) return false;
+                    return edited == line || Written(WithLinesChanged(file.Text, last, last, edited).Text, last);
+                }
+            }
         }
 
         if (count == 0)

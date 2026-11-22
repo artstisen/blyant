@@ -273,8 +273,18 @@ internal sealed partial class ShellSession
     // A line read after a prompt: a command ("text" false: Tab and Up complete and recall), or a line of text for
     // input. With the line reader at a terminal, or from the input (a file, a pipe, or a terminal without it). Ctrl+C
     // drops the line typed, and another is read; null at the end of the input (Ctrl+D, Ctrl+Z, the end of the file)
-    private string? ReadAtPrompt(string prompt, bool text)
+    private string? ReadAtPrompt(string prompt, bool text) => ReadAtPrompt(prompt, text, null, out _);
+
+    // A line of input taken back to edit (.e, .u): read with the text to start from. Null at the end of the input, or
+    // after Ctrl+C ("dropped": the line stays as it was)
+    private string? ReadEdited(string prompt, string start, out bool dropped) =>
+        ReadAtPrompt(prompt, true, start, out dropped);
+
+    // (a line to edit: "start", which Ctrl+C drops, ending the reading; without line editing it is shown above the
+    // prompt, to be typed again)
+    private string? ReadAtPrompt(string prompt, bool text, string? start, out bool dropped)
     {
+        dropped = false;
         while (true)
         {
             // (a Ctrl+C pressed while the last command ran, or at a question, is not taken for this prompt)
@@ -283,8 +293,14 @@ internal sealed partial class ShellSession
             // (the setting shellcompletion is followed at once: "set shellcompletion false")
             if (_lineReader is not null && Shell.Completion)
             {
-                line = _lineReader.Read(prompt, text);
-                if (_lineReader.Dropped) continue;
+                line = _lineReader.Read(prompt, text, start ?? string.Empty);
+                if (_lineReader.Dropped)
+                {
+                    if (start is null) continue;
+                    dropped = true;
+                    return null;
+                }
+
                 // (the end of the input: the line reader has ended the line, and took Ctrl+C itself, as a key)
                 if (line is null) return null;
             }
@@ -292,6 +308,7 @@ internal sealed partial class ShellSession
             {
                 if (Terminal)
                 {
+                    if (start is not null) _output.WriteLine(start);
                     _output.Write(prompt);
                     _output.Flush();
                 }
@@ -307,7 +324,9 @@ internal sealed partial class ShellSession
             if (Terminal && SpinWait.SpinUntil(Tools.TakeCancelKey, CancelKeyWait))
             {
                 _output.WriteLine();
-                continue;
+                if (start is null) continue;
+                dropped = true;
+                return null;
             }
 
             if (Terminal) _output.WriteLine();

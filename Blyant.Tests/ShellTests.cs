@@ -9154,4 +9154,66 @@ public class ShellTests : IDisposable
         Assert.Contains("a, i (input)", output);
         Assert.Equal("i n.md top", Tab(Completion(), "i n.md t"));
     }
+
+    // ---- 1.6.2: the dot commands of input (.u, .e, .d, .p, .?)
+
+    [Theory]
+    [InlineData(".u", 'u')]
+    [InlineData(".e ", 'e')]
+    [InlineData(".d", 'd')]
+    [InlineData(".p", 'p')]
+    [InlineData(".?", '?')]
+    [InlineData(".unity", null)]
+    [InlineData(" .u", null)]
+    [InlineData("...", null)]
+    [InlineData(".x", null)]
+    [InlineData(".", null)]
+    public void InputCommand_IsADotAndALetter_AloneOnTheLine(string line, char? expected)
+    {
+        Assert.Equal(expected, ShellSession.InputCommand(line));
+    }
+
+    [Theory]
+    [InlineData("Some text", "Some ")]
+    [InlineData("Some  text  ", "Some  ")]
+    [InlineData("Some", "")]
+    [InlineData("", "")]
+    [InlineData("- [ ] Buy milk", "- [ ] Buy ")]
+    public void WithoutLastWord_LeavesTheBlankBeforeIt(string line, string expected)
+    {
+        Assert.Equal(expected, ShellSession.WithoutLastWord(line));
+    }
+
+    [Fact]
+    public void DotCommands_TakeBackEditDeleteAndShowTheLinesTyped_AtATerminal()
+    {
+        File.WriteAllText(In("work", "n.md"), "one\ntwo\n");
+        // (without line editing the line taken back is shown above the prompt, and typed again)
+        var (output, errors, _, session) = Run("peek n.md 1\ninput\n.u\nSome text\n.u\nSome words\nThird linee\n.e\n" +
+                                               "Third line!\nGone\n.d\n.p\n.?\nKeep\n.e\n.\n", terminal: true);
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("one\nSome words\nThird line!\nKeep\ntwo\n", Text("n.md"));
+        Assert.Contains(Lang.T("No line typed yet: the dot commands work on the lines typed in this input"), output);
+        // .u: the line at its number again, without the last word
+        Assert.Contains("Some \n$file:2> ", output);
+        Assert.Contains("Third linee\n$file:3> ", output);
+        Assert.Contains(Lang.F("{0}: line {1} taken out", In("work", "n.md"), 4), output);
+        Assert.Contains("  2  Some words\n  3  Third line!\n", output);
+        Assert.Contains(Lang.T(".u last word off, .e edit last line, .d delete it, .p show lines, . ends"), output);
+        // "." while a line is edited ends input, and the line is as it was; one step of undo for all
+        Assert.Contains(Lang.F("{0}: lines {1}-{2} put in", In("work", "n.md"), 2, 4), output);
+        Assert.Equal(2, session.LastList.Single().At?.Line);
+        File.WriteAllText(In("work", "n.md"), "one\ntwo\n");
+        Run("input n.md +2\nA\nB\n.e\nC\n.d\n.\nundo\n", terminal: true);
+        Assert.Equal("one\ntwo\n", Text("n.md"));
+    }
+
+    [Fact]
+    public void DotCommands_AreText_InAScriptOrAPipe()
+    {
+        File.WriteAllText(In("work", "n.md"), "one\n");
+        var (_, errors, _, _) = Run("input n.md bottom\nA line\n.u\n.d\n.\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("one\nA line\n.u\n.d\n", Text("n.md"));
+    }
 }

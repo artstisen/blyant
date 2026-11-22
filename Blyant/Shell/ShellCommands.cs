@@ -58,6 +58,7 @@ internal sealed partial class ShellSession
         ("insert file|n top|bottom|+line text", Lang.T("Put a line of text in a file, without opening it")),
         ("input [file|n top|bottom|+line]", Lang.T("Type lines into a file after $line; a line with . ends")),
         ("input before", Lang.T("Type lines into a file before $line; a line with . ends")),
+        ("input .u|.e|.d|.p|.?", Lang.T("While typing lines: last word off, edit or delete last line, show them")),
         ("change file|n +line|from-to [text]", Lang.T("Replace lines of a file with text, or delete them")),
         ("shift file|n lines place", Lang.T("Move lines in a file: under a heading, +line, top or bottom")),
         ("shift! file|n lines place", Lang.T("Move lines, and tick or untick any task boxes")),
