@@ -141,7 +141,7 @@ internal sealed partial class ShellSession
         // (a number is a row: a name starts with a letter)
         if (words.Count == 1 && words[0].Length > 0 && words[0].All(char.IsAsciiDigit))
         {
-            var row = int.TryParse(words[0], NumberStyles.None, CultureInfo.InvariantCulture, out var number) ? number : 0;
+            var row = IsNumber(words[0], out var number) ? number : 0;
             if (row < 1 || row > saved.Count)
             {
                 Error(saved.Count == 0

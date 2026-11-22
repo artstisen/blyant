@@ -56,7 +56,8 @@ internal sealed partial class ShellSession
         ("delete file|n", Lang.T("Delete a file or directory, to the trash (del)")),
         ("info [file|n]", Lang.T("Describe a file or directory (alone: this one)")),
         ("insert file|n top|bottom|+line text", Lang.T("Put a line of text in a file, without opening it")),
-        ("input [+line|file|n top|bottom|+line]", Lang.T("Type lines into a file after $line; a line with . ends")),
+        ("input [+line]", Lang.T("Type lines into a file after $line; a line with . ends")),
+        ("input file|n top|bottom|+line", Lang.T("Type lines into a file: at the top, the bottom, or as line +line")),
         ("input before", Lang.T("Type lines into a file before $line; a line with . ends")),
         ("input .u|.e|.d|.p|.?", Lang.T("While typing lines: last word off, edit or delete last line, show them")),
         ("change file|n +line|from-to [text]", Lang.T("Replace lines of a file with text, or delete them")),
@@ -260,6 +261,9 @@ internal sealed partial class ShellSession
         var name = typed == "G" ? typed : typed.ToLowerInvariant();
         if (name is "j" or "jj" or "k" or "kk" or "gg" && typed != name) name = typed;
         var argument = CommandLine.Argument(line);
+        // (an input from a file of commands or a pipe: until it reads its lines of text, they are skipped if it is
+        // refused; in a run the script stops)
+        _inputExpected = !Terminal && _runNext is null && IsInput(name);
         // ("word @ 9 replace wish": @ is $file at $line)
         if (WithAt(name, argument) is not { } atPutIn)
         {
@@ -971,7 +975,7 @@ internal sealed partial class ShellSession
         var name = Path.GetFileName(path);
         var rest = name[CommandsFilePrefix.Length..];
         var end = rest.IndexOf(".txt", StringComparison.Ordinal);
-        if (end <= 0 || !int.TryParse(rest[..end], NumberStyles.None, CultureInfo.InvariantCulture, out var id)) return null;
+        if (end <= 0 || !IsNumber(rest[..end], out var id)) return null;
         var tail = rest[(end + 4)..];
         return tail.Length == 0 || (tail.StartsWith('.') && tail.EndsWith(".tmp", StringComparison.Ordinal)) ? id : null;
     }
@@ -1227,8 +1231,7 @@ internal sealed partial class ShellSession
             case "kk":
             {
                 var steps = 1;
-                if (argument.Trim().Length > 0 && !(int.TryParse(argument.Trim(), NumberStyles.None,
-                        CultureInfo.InvariantCulture, out steps) && steps >= 1))
+                if (argument.Trim().Length > 0 && !(IsNumber(argument.Trim(), out steps) && steps >= 1))
                 {
                     Error(Lang.F("{0} takes a number of steps, or nothing: {0} 20", name));
                 }
@@ -1813,7 +1816,7 @@ internal sealed partial class ShellSession
         var rows = entries.Select((entry, i) => (new Item(entry.Path, false),
             Padded(names[i], width) + "  " +
             // (a time not known, from a line that could not be read: blank, as in the file browser)
-            (entry.Opened == DateTime.MinValue ? new string(' ', 16) : IsoDateTime.Local(entry.Opened, "yyyy-MM-dd HH:mm")) +
+            (entry.Opened == DateTime.MinValue ? new string(' ', HistoryTime.Length) : IsoDateTime.Local(entry.Opened, HistoryTime)) +
             (sizeTexts is null ? string.Empty : "  " + sizeTexts[i].PadLeft(sizeWidth)))).ToList();
         if (search is not null)
         {
@@ -2070,6 +2073,8 @@ internal sealed partial class ShellSession
                 _ when name.StartsWith('!') => "again",
                 _ => name
             };
+            // ("i": input before, told with input)
+            full = full.Split(' ')[0];
             // (all the rows of the command: "help clip" tells each of its forms)
             // ("trim!", "shift!": with the command)
             // (the steps "+ n" ... with peek)
@@ -2151,7 +2156,7 @@ internal sealed partial class ShellSession
     {
         ("fav", "favorites"), ("favs", "favorites"), ("hist", "history"), ("rec", "recent"), ("res", "resume"),
         ("hot", "hotlist"), ("book", "bookmarks"), ("proj", "projects"), ("del", "delete"), ("cls", "clear"),
-        ("h", "help"), ("q", "exit"), ("quit", "exit"), ("a", "input"), ("i", "input")
+        ("h", "help"), ("q", "exit"), ("quit", "exit"), ("a", "input"), ("i", "input before")
     };
 
     // The short forms as help shows them, after the commands, in rows as wide as the window: "fav, favs (favorites)"
@@ -2191,7 +2196,7 @@ internal sealed partial class ShellSession
         // (a name in quotes as it is: "a  b.md" keeps its blanks)
         var words = Words(argument);
         var line = words.Select(word => IsLine(word)
-            ? int.TryParse(word[1..], out var n) ? Math.Max(1, n) : int.MaxValue
+            ? IsNumber(word[1..], out var n) ? Math.Max(1, n) : int.MaxValue
             : (int?)null).LastOrDefault(n => n is not null);
         var name = string.Join(' ', words.Where(word => !IsLine(word)));
         if (name.Length == 0)
@@ -2311,8 +2316,11 @@ internal sealed partial class ShellSession
         return (_file, null);
     }
 
-    // "+12": a line to open the file at
-    private static bool IsLine(string word) => word.Length > 1 && word[0] == '+' && word[1..].All(char.IsAsciiDigit);
+    // "+12": a line to open or peek the file at ("+0": the first)
+    internal static bool IsLine(string word) => word.Length > 1 && word[0] == '+' && IsNumber(word[1..], out _);
+
+    // The time of a row of "history -d"
+    private const string HistoryTime = "yyyy-MM-dd HH:mm";
 
     // The editor of the full screen, with the file browser of its directory behind it, which closes with it (as when
     // a file is opened from the corkboard). A jump to another place leaves the editor (asking about changes first)

@@ -103,8 +103,7 @@ internal sealed partial class ShellSession
         }
         else
         {
-            var width = (first + moved.Count - 1).ToString().Length;
-            for (var i = first; i < first + moved.Count; i++) Row(i, width, now[i - 1]);
+            Rows(now, first, first + moved.Count - 1);
             Line(moved.Count == 1
                 ? Lang.F("{0}: line moved to line {1}", item.Path, first)
                 : Lang.F("{0}: {1} lines moved to line {2}", item.Path, moved.Count, first));

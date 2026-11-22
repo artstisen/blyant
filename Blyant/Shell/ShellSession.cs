@@ -250,6 +250,7 @@ internal sealed partial class ShellSession
             _typed = Terminal;
             _notKept = line.Length > 0 && char.IsWhiteSpace(line[0]);
             if (!RunLine(line)) break;
+            if (_inputExpected) SkipInputText();
         }
 
         EventLog.Add(DialogText.LogShell + ": left"); // English: the log
@@ -269,6 +270,24 @@ internal sealed partial class ShellSession
 
     // Nothing read yet (the first line of a file of commands can start with a byte order mark)
     private bool _firstRead = true;
+
+    // An input from a file of commands or a pipe has not read its lines of text: it was refused (no file, a place
+    // that is not one)
+    private bool _inputExpected;
+
+    // The lines of text of an input that was refused, from a file of commands or a pipe, skipped up to the line with
+    // only "." (told), so none of them is run as a command. (In a run the script stops at the input refused)
+    private void SkipInputText()
+    {
+        _inputExpected = false;
+        Error(Lang.T("The lines of text after it are skipped, up to the line with only ."));
+        while (ReadText(string.Empty) is { } line && !IsInputEnd(line))
+        {
+        }
+    }
+
+    // The line reader is used: at a terminal, with the setting shellcompletion on (followed at once)
+    private bool LineEditing => _lineReader is not null && Shell.Completion;
 
     // A line read after a prompt: a command ("text" false: Tab and Up complete and recall), or a line of text for
     // input. With the line reader at a terminal, or from the input (a file, a pipe, or a terminal without it). Ctrl+C
@@ -290,10 +309,9 @@ internal sealed partial class ShellSession
             // (a Ctrl+C pressed while the last command ran, or at a question, is not taken for this prompt)
             if (Terminal) Tools.TakeCancelKey();
             string? line;
-            // (the setting shellcompletion is followed at once: "set shellcompletion false")
-            if (_lineReader is not null && Shell.Completion)
+            if (LineEditing)
             {
-                line = _lineReader.Read(prompt, text, start ?? string.Empty);
+                line = _lineReader!.Read(prompt, text, start ?? string.Empty);
                 if (_lineReader.Dropped)
                 {
                     if (start is null) continue;
@@ -471,6 +489,13 @@ internal sealed partial class ShellSession
 
     // A numbered row: the number at the right of a column as wide as the largest number and two more, then the text
     // (indented: a folder in a tree)
+    // Lines of a file shown numbered, first to last (from 1), the numbers as wide as the last
+    private void Rows(IReadOnlyList<string> lines, int first, int last)
+    {
+        var width = last.ToString(System.Globalization.CultureInfo.InvariantCulture).Length;
+        for (var i = first; i <= last; i++) Row(i, width, lines[i - 1]);
+    }
+
     private void Row(int number, int width, string text, int indent = 0) =>
         Line(new string(' ', indent) + number.ToString(System.Globalization.CultureInfo.InvariantCulture).PadLeft(width + 2) + "  " + text);
 

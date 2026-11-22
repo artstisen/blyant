@@ -111,8 +111,8 @@ internal sealed partial class ShellSession
         };
     }
 
-    // A number written with digits only ("12"; not "+12", " 12" or "1,2", which int.Parse takes too)
-    internal static bool IsNumber(string text, out int number) =>
+    // A number written with digits only ("12"; not "+12", " 12" or "1,2", which int.Parse takes too; null: none)
+    internal static bool IsNumber(string? text, out int number) =>
         int.TryParse(text, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture,
             out number);
 
@@ -142,10 +142,10 @@ internal sealed partial class ShellSession
         return blank < 0 ? string.Empty : text[..(blank + 1)];
     }
 
-    // "input", "input @", "input +12" ($file), "input notes.md bottom", "input notes.md +12": the lines typed put in the file one after
-    // another, as in the line editor ed: alone (or "@", or "a" as in ed), after $line, as insert @ puts a line; "input
-    // before" (or "i" as in ed) before $line, which goes down (see WithAt); a line with only "." ends
-    // it, and so does the end of the input (Ctrl+D). Each line is written when it is typed, so none is lost; all are one
+    // "input", "input @", "input +12" (in $file), "input notes.md bottom", "input notes.md +12": the lines typed put
+    // in the file one after another, as in the line editor ed: alone (or "@"; "a" as in ed), after $line, as insert @
+    // puts a line; "input before" ("i" as in ed) before $line, which goes down; "+12" as line 12 (see WithAt). A line
+    // with only "." ends it, and so does the end of the input (Ctrl+D). Each line is written when it is typed, so none is lost; all are one
     // step of undo. The file is $file from the start, and the prompt is "$file" and the number the next line gets
     // ("$file:14> ": short, whatever the name of the file; "echo $file" tells the path). The lines are put in as
     // typed: no $name, and kept nowhere else (not in the commands typed, nor in the log). In a run, the lines after
@@ -154,7 +154,7 @@ internal sealed partial class ShellSession
     // line put in, and $line is the last
     private void Input(string argument)
     {
-        // ("input" alone and "input @" are $file after $line, put in before: see WithAt)
+        // ("input" alone, "input @", "i" and "input +12" are "$file +line", put in before: see WithAt)
         var words = Words(argument);
         var place = words.Count == 2 ? InsertPlace(words[1]) : null;
         if (place is null)
@@ -165,6 +165,11 @@ internal sealed partial class ShellSession
 
         if (EditableFile(words[0]) is not { } editable) return;
         var (item, file) = editable;
+        // (the lines of text after it are read here: from a file or a pipe they are not skipped, see SkipInputText)
+        _inputExpected = false;
+        // (the file keeps its ending: a line break at the end of the text only when it had one, or the last line is
+        // blank)
+        var endsWithBreak = file.Text.Length == 0 || TextBuffer.Normalize(file.Text).EndsWith('\n');
         var next = (int)Math.Min(place.Value, LinesOfText(file.Text).Count + 1L);
         // (the file the lines go in is $file, at the line before them, from the start: the prompt names $file)
         _file = Path.GetFullPath(item.Path);
@@ -188,7 +193,7 @@ internal sealed partial class ShellSession
             }
 
             // (the path and the line, never the text)
-            return SavedEdit(file, text, "Input", item.Path + ":" + line);
+            return SavedEdit(file, EndedAs(text, endsWithBreak), "Input", item.Path + ":" + line);
         }
 
         while (ReadText(PromptAt(next)) is { } typed)
@@ -229,11 +234,8 @@ internal sealed partial class ShellSession
             switch (command)
             {
                 case 'p':
-                {
-                    var width = last.ToString(System.Globalization.CultureInfo.InvariantCulture).Length;
-                    for (var i = first; i <= last; i++) Row(i, width, lines[i - 1]);
+                    Rows(lines, first, last);
                     return true;
-                }
                 case 'd':
                     if (!Written(WithLinesChanged(file.Text, last, last, null).Text, last)) return false;
                     Line(Lang.F("{0}: line {1} taken out", item.Path, last));
@@ -242,12 +244,35 @@ internal sealed partial class ShellSession
                     return true;
                 default:
                 {
-                    // ('e', 'u': the line at the prompt again, its number in the prompt; Ctrl+C leaves it as it was)
+                    // ('e', 'u': the line at the prompt again, its number in the prompt. Enter writes it, Ctrl+C leaves
+                    // it as it was, and the dot commands work there too: ".u" another word off, ".e" all of it back,
+                    // ".d" the line deleted. Without line editing it is shown above the prompt: after .u what is typed
+                    // goes after it, after .e it is typed again, and Enter alone keeps what is shown)
                     var line = lines[last - 1];
-                    var edited = ReadEdited(PromptAt(last), command == 'u' ? WithoutLastWord(line) : line, out var dropped);
-                    if (edited is null) return dropped;
-                    if (IsInputEnd(edited)) return false;
-                    return edited == line || Written(WithLinesChanged(file.Text, last, last, edited).Text, last);
+                    var adding = command == 'u';
+                    var start = adding ? WithoutLastWord(line) : line;
+                    while (true)
+                    {
+                        var edited = ReadEdited(PromptAt(last), start, out var dropped);
+                        if (edited is null) return dropped;
+                        if (IsInputEnd(edited)) return false;
+                        // (a dot command typed alone, or after the words kept by .u, as they are at the prompt: "The
+                        // ferry .u" takes off another word)
+                        var after = start.Length == 0 || char.IsWhiteSpace(start[^1]) && edited.StartsWith(start, StringComparison.Ordinal)
+                            ? edited[start.Length..]
+                            : edited;
+                        if ((InputCommand(edited) ?? InputCommand(after)) is { } again)
+                        {
+                            if (again == 'd') return DotCommand('d');
+                            if (again is 'p' or '?') DotCommand(again);
+                            else if (again == 'e') (start, adding) = (line, false);
+                            else (start, adding) = (WithoutLastWord(start), true);
+                            continue;
+                        }
+
+                        if (!LineEditing) edited = edited.Length == 0 ? start : adding ? start + edited : edited;
+                        return edited == line || Written(WithLinesChanged(file.Text, last, last, edited).Text, last);
+                    }
                 }
             }
         }
@@ -302,9 +327,8 @@ internal sealed partial class ShellSession
         {
             // The lines that would go, and the question (they are back only with undo, while Blyant runs). Between the
             // markers of peek (the setting shellmarkers)
-            var width = last.ToString().Length;
             if (Shell.Markers) Line((first > 1 ? AboveMarker : TopMarker) + Path.GetFileName(item.Path));
-            for (var i = first; i <= last; i++) Row(i, width, lines[i - 1]);
+            Rows(lines, first, last);
             if (Shell.Markers) Line((last < count ? BelowMarker : EndMarker) + Lang.F("lines {0}-{1} of {2}", first, last, count));
             var question = first == last
                 ? Lang.F("Delete line {0} of {1}?", first, Path.GetFileName(item.Path))
@@ -467,6 +491,16 @@ internal sealed partial class ShellSession
     /// </summary>
     internal static string JoinedLines(IReadOnlyList<string> lines, bool endsWithBreak) =>
         string.Join("\n", lines) + (endsWithBreak || (lines.Count > 0 && lines[^1].Length == 0) ? "\n" : string.Empty);
+
+    /// <summary>
+    /// A text that ends as its file did: without the line break at its end when the file had none, unless its last
+    /// line is blank, which needs it (see JoinedLines). Input writes a file many times: a blank line typed last gives
+    /// the text a line break at its end, which is not kept when lines come after it, or it is deleted
+    /// </summary>
+    internal static string EndedAs(string text, bool endsWithBreak) =>
+        endsWithBreak || !text.EndsWith('\n') || text == "\n" || text.EndsWith("\n\n", StringComparison.Ordinal)
+            ? text
+            : text[..^1];
 
     /// <summary>
     /// A text with a line put in as line "at" (1: before the first; past the end: after the last), and the number it

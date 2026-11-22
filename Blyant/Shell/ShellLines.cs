@@ -222,7 +222,7 @@ internal sealed partial class ShellSession
     // "lines notes.md 4-6 dup 3": the lines, in their order, copied right below the last of them, as many times as
     // asked. The copies are shown, the file is the last list at the first copy, and $line is the last copy, so
     // "lines @ dup" copies it again. As :dup: not more text than the editor puts in at once, nor a file larger than
-    // Blyant opens
+    // Blyant opens (counted in characters, not bytes: a guard against a file far too large, not its exact size)
     private void Duplicate(Item item, TextFile file, List<string> lines, List<int> picked, int copies)
     {
         var block = picked.Select(number => lines[number - 1]).ToList();
@@ -241,9 +241,7 @@ internal sealed partial class ShellSession
         LastList = new List<Item> { new(item.Path, false, (first, 1)) };
         var last = first + added.Count - 1;
         _line = last;
-        var now = LinesOfText(text);
-        var width = last.ToString(System.Globalization.CultureInfo.InvariantCulture).Length;
-        for (var i = first; i <= last; i++) Row(i, width, now[i - 1]);
+        Rows(LinesOfText(text), first, last);
         TellPutIn(item.Path, first, added.Count);
     }
 
@@ -358,9 +356,7 @@ internal sealed partial class ShellSession
         LastList = new List<Item> { new(target.Item.Path, false, (at, 1)) };
         // ("open 1" at the first line put in; @ at the last, so "insert @" goes after them, as after insert)
         _line = at + taken.Count - 1;
-        var now = LinesOfText(text);
-        var width = (at + taken.Count - 1).ToString().Length;
-        for (var i = at; i < at + taken.Count; i++) Row(i, width, now[i - 1]);
+        Rows(LinesOfText(text), at, at + taken.Count - 1);
         TellPutIn(target.Item.Path, at, taken.Count);
         if (cut) TakeOut(source, picked);
     }

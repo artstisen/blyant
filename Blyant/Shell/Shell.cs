@@ -105,8 +105,7 @@ internal static class Shell
     /// The commands kept from the settings file: a whole number from 0 to 200, else the default
     /// </summary>
     internal static int ParseHistoryCount(string? value) =>
-        int.TryParse(value?.Trim(), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture,
-            out var count) && count <= MaxHistoryCount
+        ShellSession.IsNumber(value?.Trim(), out var count) && count <= MaxHistoryCount
             ? count
             : DefaultHistoryCount;
 
@@ -119,8 +118,7 @@ internal static class Shell
     /// took (1 to 50), are 10: the fewest steps there are now, not the default
     /// </summary>
     internal static int ParseUndoSteps(string? value) =>
-        !int.TryParse(value?.Trim(), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture,
-            out var steps) || steps is < 1 or > MaxUndoSteps
+        !ShellSession.IsNumber(value?.Trim(), out var steps) || steps is < 1 or > MaxUndoSteps
             ? DefaultUndoSteps
             : Math.Max(steps, MinUndoSteps);
 
@@ -157,8 +155,7 @@ internal static class Shell
     /// The line of shelllastline from the settings file: a whole number from 0 (the top of an empty file), else none
     /// </summary>
     internal static int? ParseLastLine(string? value) =>
-        int.TryParse(value?.Trim(), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture,
-            out var line)
+        ShellSession.IsNumber(value?.Trim(), out var line)
             ? line
             : null;
 

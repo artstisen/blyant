@@ -96,7 +96,7 @@ internal sealed partial class ShellSession
         {
             value = 0;
             return digits.Length is > 0 and <= 9 && digits.All(char.IsAsciiDigit) &&
-                   int.TryParse(digits, NumberStyles.None, CultureInfo.InvariantCulture, out value) && value > 0;
+                   IsNumber(digits, out value) && value > 0;
         }
     }
 

@@ -178,7 +178,8 @@ internal sealed partial class ShellSession
             .Select(word => NeedsQuotes(word) ? Quoted(word) : word).ToList();
         if (highest == 0 && !all)
         {
-            if (commands.Count == 1)
+            // (not after an input with lines of text: they would go after its place, which it refuses)
+            if (commands.Count == 1 && !text.Contains(true))
             {
                 return lines.Select((line, i) => !text[i] && (ReferenceEquals(line, commands[0]) || line == commands[0])
                     ? line.TrimEnd() + " " + string.Join(' ', words)

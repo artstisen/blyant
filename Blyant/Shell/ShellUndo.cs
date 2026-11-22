@@ -179,8 +179,7 @@ internal sealed partial class ShellSession
     private void Undo(string argument, bool redo)
     {
         var steps = 1;
-        if (argument.Trim().Length > 0 && !(int.TryParse(argument.Trim(), System.Globalization.NumberStyles.None,
-                System.Globalization.CultureInfo.InvariantCulture, out steps) && steps >= 1))
+        if (argument.Trim().Length > 0 && !(IsNumber(argument.Trim(), out steps) && steps >= 1))
         {
             Error(redo ? Lang.T("Give how many: redo, redo 2") : Lang.T("Give how many: undo, undo 3 (changes lists them)"));
             return;

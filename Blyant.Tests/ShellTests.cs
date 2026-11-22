@@ -7883,7 +7883,7 @@ public class ShellTests : IDisposable
         foreach (var (shortForm, command) in ShellSession.ShortFormsOf)
         {
             Assert.Contains(shortForm, all);
-            Assert.Contains(command, Commands.Names(CommandContext.Shell));
+            Assert.Contains(command.Split(' ')[0], Commands.Names(CommandContext.Shell));
             Assert.Equal(Run("help " + command + "\n").Output, Run("help " + shortForm + "\n").Output);
         }
     }
@@ -8757,7 +8757,7 @@ public class ShellTests : IDisposable
         Assert.Equal(string.Empty, errors);
         Assert.Contains(Lang.F("Undone: {0}", "input in.md top"), output);
         Assert.Equal("one\ntwo\n", Text("in.md"));
-        (output, errors, _, _) = Run("input\ninput in.md\ninput in.md middle\ninput in.md +2\n.\n");
+        (output, errors, _, _) = Run("input\n.\ninput in.md\n.\ninput in.md middle\n.\ninput in.md +2\n.\n");
         Assert.Contains(Lang.T("@ is the file and the line of the last command: none yet (words notes.md 12)"), errors);
         Assert.Equal(2, errors.Split(Lang.T("Give a file and where, or nothing: input, input notes.md bottom, input notes.md +12")).Length - 1);
         Assert.Contains(Lang.T("Nothing put in"), output);
@@ -8769,7 +8769,7 @@ public class ShellTests : IDisposable
         Assert.Equal(string.Empty, errors);
         Assert.Equal("First line\n", File.ReadAllText(In("work", "fresh.md")).Replace("\r\n", "\n"));
         Assert.Equal("input in.md top", Tab(Completion(), "input in.md t"));
-        Assert.Contains("input [+line|file|n top|bottom|+line]", Run("help input\n").Output);
+        Assert.Contains("input [+line]", Run("help input\n").Output);
     }
 
     [Fact]
@@ -8974,7 +8974,7 @@ public class ShellTests : IDisposable
         File.WriteAllText(In("work", "nl.md"), "a\nb");
         var (output, errors, _, session) = Run("input nl.md bottom\n\nc\n.\necho $line\n");
         Assert.Equal(string.Empty, errors);
-        Assert.Equal("a\nb\n\nc\n", Text("nl.md"));
+        Assert.Equal("a\nb\n\nc", Text("nl.md").Replace("\r\n", "\n"));
         Assert.Contains(Lang.F("{0}: lines {1}-{2} put in", In("work", "nl.md"), 3, 4), output);
         Assert.EndsWith("\n4\n", output);
         // A blank line typed last is a line too, and the file now ends with a line break
@@ -9021,12 +9021,6 @@ public class ShellTests : IDisposable
         (_, errors, _, _) = Run("run file.txt in.md\n");
         Assert.Equal(string.Empty, errors);
         Assert.Equal("one\nCost $2 and $*\n", Text("in.md"));
-        // One command and its text: the words go after the command, not after a line of the text
-        File.WriteAllText(In("work", "in.md"), "one\n");
-        File.WriteAllText(In("work", "one.txt"), "input\ninput\n.\n");
-        (_, errors, _, _) = Run("run one.txt in.md +1\n");
-        Assert.Equal(string.Empty, errors);
-        Assert.Equal("input\none\n", Text("in.md"));
     }
 
     // A reader of the lines typed that changes a file when a line is read: as the file changed in the editor, or by
@@ -9138,7 +9132,7 @@ public class ShellTests : IDisposable
         Assert.Equal(string.Empty, errors);
         Assert.Equal("First\n", File.ReadAllText(In("work", "fresh.md")).Replace("\r\n", "\n"));
         // Only input takes "before" (a before is refused), and i a file only with a place, as input takes them
-        (_, errors, _, _) = Run("peek n.md 1\na before\ni n.md\n");
+        (_, errors, _, _) = Run("peek n.md 1\na before\n.\ni n.md\n.\n");
         Assert.Equal(2, errors.Split(Lang.T("Give a file and where, or nothing: input, input notes.md bottom, input notes.md +12")).Length - 1);
     }
 
@@ -9151,7 +9145,8 @@ public class ShellTests : IDisposable
         Assert.Equal(string.Empty, errors);
         Assert.Equal("# Title $2\none\nCost $1\n", Text("n.md"));
         Assert.Contains("input before", output);
-        Assert.Contains("a, i (input)", output);
+        Assert.Contains("a (input)", output);
+        Assert.Contains("i (input before)", output);
         Assert.Equal("i n.md top", Tab(Completion(), "i n.md t"));
     }
 
@@ -9189,7 +9184,7 @@ public class ShellTests : IDisposable
     {
         File.WriteAllText(In("work", "n.md"), "one\ntwo\n");
         // (without line editing the line taken back is shown above the prompt, and typed again)
-        var (output, errors, _, session) = Run("peek n.md 1\ninput\n.u\nSome text\n.u\nSome words\nThird linee\n.e\n" +
+        var (output, errors, _, session) = Run("peek n.md 1\ninput\n.u\nSome text\n.u\nwords\nThird linee\n.e\n" +
                                                "Third line!\nGone\n.d\n.p\n.?\nKeep\n.e\n.\n", terminal: true);
         Assert.Equal(string.Empty, errors);
         Assert.Equal("one\nSome words\nThird line!\nKeep\ntwo\n", Text("n.md"));
@@ -9232,8 +9227,127 @@ public class ShellTests : IDisposable
         // Refused: no $file yet, and a line written otherwise than with digits
         (_, errors, _, _) = Run("input +2\n");
         Assert.Contains(Lang.T("@ is the file and the line of the last command: none yet (words notes.md 12)"), errors);
-        (_, errors, _, _) = Run("peek n.md 1\ninput ++2\ninput +0\n");
+        (_, errors, _, _) = Run("peek n.md 1\ninput ++2\n.\ninput +0\n.\n");
         Assert.Equal(2, errors.Split(Lang.T("Give a file and where, or nothing: input, input notes.md bottom, input notes.md +12")).Length - 1);
-        Assert.Contains("input [+line|file|n top|bottom|+line]", Run("help input\n").Output);
+        Assert.Contains("input [+line]", Run("help input\n").Output);
+    }
+
+    // ---- 1.6.2: the fixes of the second review of the shell
+
+    [Fact]
+    public void ARefusedInput_FromAPipe_SkipsItsText_SoNoLineOfItRunsAsACommand()
+    {
+        File.WriteAllText(In("work", "n.md"), "one\n");
+        var (output, errors, _, _) = Run("input gone.md bottom\ndelete n.md\necho inside\n.\necho after\n" +
+                                         "i +2\necho inside too\n.\necho last\n");
+        Assert.True(File.Exists(In("work", "n.md")));
+        Assert.Equal(2, errors.Split(Lang.T("The lines of text after it are skipped, up to the line with only .")).Length - 1);
+        Assert.DoesNotContain("inside", output);
+        Assert.Contains("after\n", output);
+        Assert.EndsWith("last\n", output);
+        // An input that reads its lines skips nothing
+        (output, errors, _, _) = Run("input n.md bottom\ntwo\n.\necho after\n");
+        Assert.Equal(string.Empty, errors);
+        Assert.Equal("one\ntwo\n", Text("n.md"));
+        Assert.EndsWith("after\n", output);
+    }
+
+    [Fact]
+    public void Input_KeepsTheEndingOfTheFile_WithoutALineBreak()
+    {
+        File.WriteAllText(In("work", "a.md"), "a");
+        // A blank line, then a line after it: no line break at the end, as the file had none
+        Run("input a.md bottom\n\nc\n.\n");
+        Assert.Equal("a\n\nc", Text("a.md").Replace("\r\n", "\n"));
+        // A blank line typed last needs one; deleted again, the file is as it was, and there is nothing to undo
+        File.WriteAllText(In("work", "a.md"), "a");
+        var (output, _, _, _) = Run("input a.md bottom\n\n.d\n.\nundo\n", terminal: true);
+        Assert.Equal("a", Text("a.md"));
+        Assert.Contains(Lang.T("Nothing put in"), output);
+        Assert.Equal("x\n\n", ShellSession.EndedAs("x\n\n", false));
+        Assert.Equal("x", ShellSession.EndedAs("x\n", false));
+        Assert.Equal("x\n", ShellSession.EndedAs("x\n", true));
+        Assert.Equal("\n", ShellSession.EndedAs("\n", false));
+    }
+
+    [Fact]
+    public void DotCommands_WorkAtTheLineTakenBack_AndWithoutLineEditing_EnterKeepsIt()
+    {
+        File.WriteAllText(In("work", "n.md"), "one\n");
+        // (a terminal without line editing: the line taken back is shown, and what is typed after .u goes after it)
+        Run("input n.md bottom\nThe ferry was laet\n.u\nlate\nAnother line\n.e\n\n.u\n.u\n.u\n.e\n.d\n.\n", terminal: true);
+        // .u then "late": the line completed; .e then Enter: as it was; .u three times, .e back, .d: deleted
+        Assert.Equal("one\nThe ferry was late\n", Text("n.md"));
+        File.WriteAllText(In("work", "n.md"), "one\n");
+        var (output, _, _, _) = Run("input n.md bottom\nThe ferry was late\n.u\n.u\n.p\n\n.\n", terminal: true);
+        // .u twice: two words off; .p shows the lines and the line is asked again; Enter keeps "The ferry "
+        Assert.Equal("one\nThe ferry \n", Text("n.md"));
+        Assert.Contains("  2  The ferry was late\n", output);
+    }
+
+    [Fact]
+    public void DotCommands_DToNothing_AndEWhenTheFileChanged_AndIWithoutAFile()
+    {
+        File.WriteAllText(In("work", "n.md"), "one\n");
+        var (output, errors, _, _) = Run("input n.md bottom\nA\nB\n.d\n.d\n.d\n.\nundo\n", terminal: true);
+        Assert.Equal("one\n", Text("n.md"));
+        Assert.Contains(Lang.T("No line typed yet: the dot commands work on the lines typed in this input"), output);
+        Assert.Contains(Lang.T("Nothing put in"), output);
+        // (nothing changed: no step to undo)
+        Assert.DoesNotContain(Lang.F("Undone: {0}", "input n.md bottom"), output);
+        // The file changed while the line is edited: not written over
+        var reader = new ChangingReader("input n.md bottom\nA\n.e\nB\n.\n", 4,
+            () => File.WriteAllText(In("work", "n.md"), "saved in the editor\n"));
+        var errorsOf = new StringWriter();
+        Shell.Run(new ShellSession(reader, new StringWriter(), errorsOf, In("work"), true, false));
+        Assert.Equal("saved in the editor\n", Text("n.md"));
+        Assert.Contains(Lang.F("{0} was changed meanwhile: the line is not put in, and input stops", In("work", "n.md")),
+            errorsOf.ToString());
+        // i and input before without a file worked on
+        (_, errors, _, _) = Run("i\n.\ninput before\n.\n");
+        Assert.Equal(2, errors.Split(Lang.T("@ is the file and the line of the last command: none yet (words notes.md 12)")).Length - 1);
+    }
+
+    [Fact]
+    public void LineReader_WithAStartText_EditsIt_AndCtrlCDropsIt()
+    {
+        var queue = new Queue<ConsoleKeyInfo>(LineKeys("<BS>x<CR>"));
+        var reader = new ShellLineReader(() => queue.Dequeue(), new StringWriter(), () => 80, (text, _) => text);
+        Assert.Equal("The ferry was latx", reader.Read("> ", true, "The ferry was late"));
+        queue = new Queue<ConsoleKeyInfo>(LineKeys("<C-c>"));
+        reader = new ShellLineReader(() => queue.Dequeue(), new StringWriter(), () => 80, (text, _) => text);
+        Assert.Equal(string.Empty, reader.Read("> ", true, "The ferry"));
+        Assert.True(reader.Dropped);
+    }
+
+    [Fact]
+    public void AScriptOfOneInput_GivenWords_TellsItHasNoDollarOne()
+    {
+        File.WriteAllText(In("work", "n.md"), "one\n");
+        File.WriteAllText(In("work", "s.txt"), "input n.md bottom\nhello\n.\n");
+        var (_, errors, _, _) = Run("run s.txt word\n");
+        Assert.Contains(Lang.T("The script has no $1: write $1, $2 ... where the words go (reg tidy = trim $1)"), errors);
+        Assert.Equal("one\n", Text("n.md"));
+    }
+
+    [Fact]
+    public void HelpOfI_TellsInputBefore_AndInputHasARowForAPlace()
+    {
+        var output = Run("help i\n").Output;
+        Assert.Contains("input before", output);
+        Assert.Contains("input file|n top|bottom|+line", output);
+    }
+
+    [Fact]
+    public void DotCommands_AfterTheWordsKept_AtTheLineEditor()
+    {
+        File.WriteAllText(In("work", "n.md"), "one\n");
+        // ("The ferry was laet", .u: "The ferry was " at the prompt; ".u" typed after it: "The ferry ", then "late")
+        var keys = new Queue<ConsoleKeyInfo>(LineKeys("input n.md bottom<CR>The ferry was laet<CR>.u<CR>.u<CR>late<CR>.<CR>exit<CR>"));
+        var output = new StringWriter();
+        var session = new ShellSession(new StringReader(string.Empty), output, new StringWriter(), In("work"), true, false);
+        session.ReadLinesWith(() => keys.Dequeue(), () => 80);
+        Shell.Run(session);
+        Assert.Equal("one\nThe ferry late\n", Text("n.md"));
     }
 }

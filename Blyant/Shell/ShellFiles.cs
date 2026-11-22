@@ -374,8 +374,7 @@ internal sealed partial class ShellSession
         var place = words.Count is 1 or 2 ? PlaceOf(words[^1]) : null;
         var alone = words.Count == 1 && !File.Exists(PathOf(words[0])) && !System.IO.Directory.Exists(PathOf(words[0]));
         // "peek +120": the file peeked last, from line 120, its window as large
-        var fromLine = alone && place is null && words[0].Length > 1 && words[0][0] == '+' &&
-                       words[0][1..].All(char.IsAsciiDigit);
+        var fromLine = alone && place is null && IsLine(words[0]);
         if (alone && (place is not null || fromLine))
         {
             if (_lastPeek is not { } previous)
@@ -623,7 +622,7 @@ internal sealed partial class ShellSession
         }
 
         return word.Length is > 1 and <= 4 && word[^1] == '%' &&
-               int.TryParse(word[..^1], NumberStyles.None, CultureInfo.InvariantCulture, out var percent) && percent <= 100
+               IsNumber(word[..^1], out var percent) && percent <= 100
             ? (PeekPlace.Percent, percent)
             : null;
     }
@@ -855,8 +854,8 @@ internal sealed partial class ShellSession
         if (text.StartsWith('+'))
         {
             var many = Shell.PeekLines;
-            if (!int.TryParse(text[1..], out first) || first < 1 ||
-                (count is not null && (!int.TryParse(count, out many) || many < 1)))
+            if (!IsNumber(text[1..], out first) || first < 1 ||
+                (count is not null && (!IsNumber(count, out many) || many < 1)))
             {
                 return false;
             }
@@ -867,9 +866,8 @@ internal sealed partial class ShellSession
 
         if (count is not null) return false;
         var dash = text.IndexOf('-');
-        if (dash < 0) return int.TryParse(text, out last) && last > 0;
-        return int.TryParse(text[..dash], out first) && int.TryParse(text[(dash + 1)..], out last) &&
-               first > 0 && last >= first;
+        if (dash < 0) return IsNumber(text, out last) && last > 0;
+        return IsNumber(text[..dash], out first) && IsNumber(text[(dash + 1)..], out last) && first > 0 && last >= first;
     }
 
     // The last search of this Blyant ("find" alone shows it again, "find -r" makes it again): where, what was looked
@@ -1102,7 +1100,7 @@ internal sealed partial class ShellSession
 
         // The place of a row, counted as the list is before the favorite is added: the row after the last is the
         // bottom
-        if (int.TryParse(where.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out var row))
+        if (IsNumber(where.Trim(), out var row))
         {
             var count = FavoriteRows().Count;
             if (row == count + 1)

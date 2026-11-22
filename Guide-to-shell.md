@@ -95,7 +95,7 @@ Commands read from a file or a pipe, and `--run`, are never paged, so `blyant --
 To get all output at once (with a screen reader, say), turn the pages off: `set shellpaging false` in the shell, or `shellpaging=false` in the settings file (`settings.ini` in the data directory). The setting is not on the pages of Configuration.
 
 ## Commands
-Some commands have a short form, which does the same: `fav` and `favs` (`favorites`), `hist` (`history`), `rec` (`recent`), `res` (`resume`), `hot` (`hotlist`), `book` (`bookmarks`), `proj` (`projects`), `del` (`delete`), `cls` (`clear`), `h` (`help`), and `q` and `quit` (`exit`). `help` lists them at the end, and `help rec` tells what `recent` does. `Tab` offers the full names only.
+Some commands have a short form, which does the same: `fav` and `favs` (`favorites`), `hist` (`history`), `rec` (`recent`), `res` (`resume`), `hot` (`hotlist`), `book` (`bookmarks`), `proj` (`projects`), `del` (`delete`), `cls` (`clear`), `h` (`help`), `q` and `quit` (`exit`), `a` (`input`) and `i` (`input before`). `help` lists them at the end, and `help rec` tells what `recent` does. `Tab` offers the full names only.
 
 | Command | What it does |
 |---|---|
@@ -128,7 +128,8 @@ Some commands have a short form, which does the same: `fav` and `favs` (`favorit
 | `move file\|n dir\|n` | Move a file or directory into a directory. A moved file is added to the latest files, as with `new` |
 | `delete file\|n` (`del`) | Delete a file or directory: to the trash, after asking |
 | `info [file\|n]` | Describe a file or directory (alone: the one you are in): kind, size, dates and path, and for a text file characters, words, lines, encoding and line endings. The last list stays as it was |
-| `input [+line\|file\|n top\|bottom\|+line]` | Type lines into a file, as in the line editor `ed`: alone, after `$line` (as `insert @` puts a line); each line you type goes in after the one before, and a line with only `.` ends. `a` for short, as in `ed`. See [Typing lines in](#typing-lines-in) |
+| `input [+line]` | Type lines into a file, as in the line editor `ed`: alone, after `$line` (as `insert @` puts a line); each line you type goes in after the one before, and a line with only `.` ends. `input +12`: as line 12 of `$file`. `a` for short, as in `ed`. See [Typing lines in](#typing-lines-in) |
+| `input file\|n top\|bottom\|+line` | Type lines into a file at a place: before the first line, after the last, or as line 12 (`+12`) |
 | `input before` | Type lines into a file before `$line`: the line you are at goes down. `i` for short, as in `ed`. See [Typing lines in](#typing-lines-in) |
 | `insert file\|n top\|bottom\|+line text` | Put a line of text in a file without opening it: before the first line, after the last, or as line 12 (`+12`). See [Text and settings](#text-and-settings) |
 | `change file\|n +line\|from-to [text]` | Replace a line (`+12`) or lines (`12-15`) of a file with a text, or delete them when no text is given (asks first). See [Text and settings](#text-and-settings) |
@@ -777,6 +778,7 @@ $file:16> .
 - `Tab` and `Up` do nothing while you type lines in: it is text, not commands
 - After it, the shell tells how many lines were put in. `$line` is the last of them, so another `input` goes on after it, and the file is the last list at the first line put in (`open 1`)
 - In a script (`run`, a file of commands, a pipe or `--run`), `input` takes the lines after it, up to the line with `.`: a block of text put in a file in one go. The words given to `run` are not put in these lines: `$1` and `$*` in them stay as they are
+- If `input` is refused there (the file is not there, a place that is not one), its lines of text are skipped, up to the line with `.`, and it is told: none of them is run as a command. In `run` the script stops at the `input` refused
 - As for `insert`, the file keeps its line endings and byte order mark, only a file in UTF-8 is changed, and the files Blyant uses are refused
 
 ### Fixing a line while you type
@@ -798,6 +800,8 @@ $file:15> .
 | `.?` | List the dot commands |
 
 - After `.u` or `.e`, `Enter` writes the line in place of the old one, and `Ctrl+C` leaves it as it was. A `.` there ends `input`, with the line as it was
+- The dot commands work at the line brought back too: `.u` takes off another word, `.e` brings all of the line back again, and `.d` deletes it
+- Without line editing (`set shellcompletion false`) the line brought back is shown above the prompt. After `.u`, what you type goes after the words kept; after `.e`, you type the line again. `Enter` alone keeps the line as shown
 - The dot commands work only on the lines typed in this `input`, never on the lines that were in the file before. `undo` still takes back the whole `input` in one step
 - A dot command is the dot and its letter alone on the line: `.unity`, `...` and ` .u` are text. Typed at a terminal only: in a script, a file of commands or a pipe, the lines after `input` are text up to the `.`
 
