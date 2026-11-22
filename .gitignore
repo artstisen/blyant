@@ -33,3 +33,7 @@ publish/
 
 # Notes for testing on a Raspberry Pi (kept on this computer, not part of the source)
 Raspberry-Pi-test-checklist.md
+
+# Claude Code: CLAUDE.md and the rules of CSharp Coding Kit (kept on this computer, not part of the source)
+CLAUDE.md
+.claude/
