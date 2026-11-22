@@ -790,6 +790,8 @@ $file:16> .
 - As for `insert`, the file keeps its line endings and byte order mark, only a file in UTF-8 is changed, and the files Blyant uses are refused
 
 ### Fixing a line while you type
+![Two lines typed into the outline with input, a typo in the second fixed with .u, the lines shown with .p, and a dot that ends](docs/screenshots/shell-fix-line.svg)
+
 A line is written when you press `Enter`. To fix it, type a dot command alone on the next line:
 
 ```

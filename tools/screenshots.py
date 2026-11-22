@@ -648,6 +648,13 @@ SCENES = [
      ['--shell', PROJECT], ['<wait>', 'peek outline.md<Enter>', 'input outline.md bottom<Enter>',
                             '6. The Crossing: Maren rows out to the Teeth<Enter>',
                             '7. Low Light: the lamp lit again<Enter>', '.<Enter>', 'peek outline.md<Enter>'], True),
+    # The dot commands of input: a typo fixed with .u (the line back without its last word), the lines shown with .p
+    ('shell-fix-line', 'Blyant: the shell, a line typed with input fixed with .u, and the lines shown with .p',
+     {},
+     ['--shell', PROJECT], ['<wait>', 'input outline.md bottom<Enter>',
+                            '6. The Crossing: Maren rows out to the Teeth<Enter>',
+                            '7. Low Light: the lamp lit agian<Enter>', '.u<Enter>', 'again<Enter>',
+                            '.p<Enter>', '.<Enter>'], True),
 ]
 
 
