@@ -66,18 +66,7 @@ See the [guide to the corkboard](Guide-to-corkboard.md).
 - Color schemes and logos, which you can edit and make your own; `:colorscheme name` changes the scheme from any command line
 - English built in, and ten more languages as files that can be changed or added to
 - Runs on Windows, Linux (also Raspberry Pi) and macOS, as a single file with nothing else to install
-- Shell mode, a line editor (`blyant --shell`): edit files line by line with typed commands, as in `ed`, and work with your files and lists through numbered lists, for screen readers and scripts, with the full editor a command away ([tutorial](Guide-to-shell-tutorial.md))
-  - Type lines into a file with `input`: each line you type goes in after the line you are at, and a line with only `.` ends, as in `ed`; `a` and `i` for short, after and before the line, and `.u`, `.e` and `.d` fix the line just typed ([typing lines in](Guide-to-shell.md#typing-lines-in))
-  - Make files, and add, move, copy and change lines in them without opening an editor: `insert todo.md bottom Get pencils and paper`, `shift todo.md 4-6 Done`, `shift notes.md 12 up`, a whole section with `shift -s notes.md Ideas down`, `lines notes.md 4-6 > plan.md bottom` (`cut` moves them), `change notes.md +12 New text` (and `undo` puts it back), and copy and paste with `clip` and `$clip` ([practice](Guide-to-shell-tutorial.md#practice))
-  - Read through a file with `peek` and `+` or `-` (or `j` and `k`, and `gg` and `G` for the top and the end), see the whole file with `peek notes.md all`, and search it (`peek notes.md /storm`). Keep a window with `peek save` and come back to it with `peek back` after moving around the file, and the next shell goes on from the last peek. The lines come between two markers, so a peek stands out from the commands around it, and the markers show whether the file goes on above (`-^`) or below (`-v`). Collect lines from several files in a register (`reg notes += $peek`), keep commands in a register or file and run them as a small script (`run $tidy`), and run a command again with `!!` (the last 50 commands are kept for the next shell; one typed with a blank in front is not kept). A long command with a mistake is fixed in a file: `again edit` puts it in `$cmd`, `replace $cmd insrt insert` fixes it, and `run $cmd` shows it and asks before it runs ([running commands](Guide-to-shell.md#running-commands))
-  - Work with a file from a list: `file 2` makes row 2 of `recent` or `fav` the file you work on (`$file`), `echo $file` shows which file it is, and `path` and `name` copy the path or name of the file, as `:path` and `:name` do in the editor
-  - Go back to the text you worked on last with `resume`, also the next day: it opens `$file` in the editor where you left off. `cd -` goes back to the directory you were in before, as in bash
-  - Sort lines and change the letter case without opening an editor (`lines notes.md 3-20 sort`, `upper`, `lower`), do simple calculations with `calc` and put the result in a file (`insert budget.md bottom Total: $calc`), and see the latest files with sizes and folders (`recent -s -f`) ([calculating](Guide-to-shell.md#calculating))
-  - Replace a text everywhere in a file, and see first what would change: `replace -n chapter-3.md Maren Marit`, then `replace chapter-3.md Maren Marit` (`-i`: any letter case; `undo` takes it back)
-  - Change a word without typing the line again: `words notes.md 12` numbers the words of a line, with the column each starts at (`#9:32 want`), and `word notes.md 12 9 replace wish` changes word 9 (also `before`, `after`, `delete`, `upper`, `lower`, `title`). After a command, `@` is the file and the line it worked on: `word @ 9 replace wish`, `shift @ up`. `lines notes.md 12 at 32 "really "` puts a text in at a column, `word @ 9 move before 6` moves a word in the line, and `clip words @ 6-9` copies words for `$clip`. In quotes `""` is a quote: `lines notes.md 1 remove """"` takes every `"` out of line 1
-  - Keep results in registers with `>`: a file (`file plot.md > $other`), a calculation (`calc 22 * 3500 > $words`), the files of a search (`find -t TODO > $open`), or commands you just typed as a script (`again 3-5 > $tidy`), jot down quick notes (`reg scratch += Call Anna`, kept until you take them away), and give a script words (`run $check $file 12`) ([registers](Guide-to-shell.md#registers))
-  - Give files tags and find them again, wherever they are: `tag add chapter-3.md draft`, then `tag draft` lists the files with the tag, numbered (`open 2`), `tags -t storm` searches the text of all tagged files, and `tags filter chapter` the paths. `$tag` is the tag you work with ([tags](Guide-to-shell.md#tags))
-  - Find files in a large tree with short rows (`find -b storm`: the names only), see when each file was last changed (`find -d`, and `ls -d -s` with the sizes), see the last search again with `find`, and search the latest files, the history and the favorites for a text (`recent -t storm`)
+- Shell mode, a line editor (`blyant --shell`): change files line by line, as in `ed`, and work with them through numbered lists, also with a screen reader or in scripts ([guide](Guide-to-shell.md), [tutorial](Guide-to-shell-tutorial.md))
 
 ## Blyant Validator
 **[Blyant Validator](https://github.com/artstisen/blyant-validator)** is a companion tool, which also works as a standalone program: validate HTML, CSS, XML, Markdown and Typst, and format HTML, CSS and XML, side by side with your editor, in any terminal. It checks a file again each time it is saved, checks links to files and to places in a page, gives hints for accessible HTML with `--accessibility`, and turns a Typst document into a PDF with `:typst`.
@@ -134,7 +123,7 @@ Blyant works in the style of Vim: the editor has Normal, Insert and Visual modes
 - [Corkboard](Guide-to-corkboard.md)
 - [Editor](Guide-to-editor.md)
 - [Writing with Typst](Guide-to-typst.md)
-- [Shell](Guide-to-shell.md), and a [shell tutorial](Guide-to-shell-tutorial.md)
+- [Shell, a line editor](Guide-to-shell.md), and a [shell tutorial](Guide-to-shell-tutorial.md)
 - [Settings file](Guide-to-settings-file.md): every setting, with its values and default
 - [Changes](CHANGELOG.md)
 
@@ -173,7 +162,7 @@ dotnet run --project Blyant
 ## Tools used
 - Written in C#, a single binary file, no dependencies, runs in the terminal you already use
 - CLI tools: JetBrains Command Line Tools, .NET CLI compiler, PowerShell, and GitHub CLI
-- Coding guidelines: [CSharp Coding Kit](https://github.com/artstisen/csharp-coding-kit)  
+- Coding guidelines: [CSharp Coding Kit](https://github.com/artstisen/csharp-coding-kit)
 - Agentic tools: Claude Opus 5.5 (scripting/testing/code review)
 - Code editor: Blyant with syntax highlighting, code completion, and code snippets
 - Programming language: C# 14

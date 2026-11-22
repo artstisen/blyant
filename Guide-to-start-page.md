@@ -504,7 +504,7 @@ The file history lists the files you have opened in the editor from the file bro
 - `?` Help, `:` the command line
 - `Esc`, `Q`, `O`, `h` or `-` Back to the file browser
 
-The history holds the last 100 files: when it is full, the file opened longest ago is dropped. A file that is gone is shown as _(missing)_. The list is kept in the file `history.txt` in the data directory (one line per file: the time it was opened, in UTC (`2026-11-22 09:05Z`; shown in your local time), a tab character and the path, with the line and column of the cursor and a tab character before the path once the file has been closed in the editor).
+The history holds the last 100 files: when it is full, the file opened longest ago is dropped. A file that is gone is shown as _(missing)_. The list is kept in the file `history.txt` in the data directory (one line per file: the time it was opened, in UTC (`2026-11-22 09:05Z`; the history shows it in your local time; a line written before 1.6.2, without `Z`, is read as local time), a tab character and the path, with the line and column of the cursor and a tab character before the path once the file has been closed in the editor).
 
 ### Directory hotlist
 The list has two columns, as the favorites: _Name_ (the name of the directory, or the name you gave it) and _Path_ (with _(missing)_ at the end for one that is gone).

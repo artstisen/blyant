@@ -256,8 +256,8 @@ To write several lines at once, `input` takes the lines you type and puts them i
 ```
 blyant ~/novel> peek plot.md +4 1
 -^ plot.md
-  4  The letter is from her aunt.
--v lines 4-4 of 6
+  4  The letter is from her mother.
+-v lines 4-4 of 5
 blyant ~/novel> input
 $file:5> The ferryman knows.
 $file:6> He has always known.
@@ -294,7 +294,7 @@ blyant ~/novel> word @ 6 replace aunt
 - `shift @ up` moves the line one line up, and `@` goes with it: `shift @ up` again moves it further. `shift -s plot.md Ideas down` moves a whole section, with the heading
 - The full stop after `mother` stays where it is: punctuation is not part of a word. With `-p` a word is all between blanks, so `word -p @ 6 replace aunt!` takes the full stop too, and the line ends with `her aunt!`. Use `-p` on both or on neither: `words -p` can number the words differently (a `-` alone is a word with `-p` only), and the shell refuses `word` without `-p` after `words -p` of the same line when the numbers differ
 
-`undo` takes back the last change made by `insert`, `change`, `lines` (also a sort), `word` or `shift` while Blyant is running (`redo` makes it again, and `changes` lists the changes). Still, `peek` first to be sure of the line numbers. A file keeps its line endings and byte order mark, and these commands leave the files Blyant uses alone.
+`undo` takes back the last change made by `insert`, `input`, `blank`, `change`, `lines` (also a sort), `word` or `shift` while Blyant is running (`redo` makes it again, and `changes` lists the changes). Still, `peek` first to be sure of the line numbers. A file keeps its line endings and byte order mark, and these commands leave the files Blyant uses alone.
 
 To replace a name everywhere in a file, use `replace`. With `-n` it first shows what would change, and asks: `y` replaces, and `Enter` alone (No) leaves the file as it is. `undo` takes a replace back:
 
@@ -302,7 +302,7 @@ To replace a name everywhere in a file, use `replace`. With `-n` it first shows 
 blyant ~/novel> replace -n plot.md Anna Maren
 -^ plot.md
   3  Maren finds a letter in the attic.
--v 1 line of 5
+-v 1 line of 7
 /home/anna/novel/plot.md: 1 would be replaced, in line 3
 Replace: Replace them in plot.md?
   Y Yes  N No*: y

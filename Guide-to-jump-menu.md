@@ -171,7 +171,7 @@ Where a jump goes:
 
 When you jump from the editor and the text has unsaved changes, you are asked whether to save them first (`Esc` stays in the editor).
 
-The jumps are kept in the file `jump.txt` in the data directory, one line for each place (at most 100): the time in UTC (`2026-11-22 09:05Z`; shown in your local time), a tab character, the kind (`file`, `dir` or `page`), a tab character and the place (the path of a file or directory, or the name of a page such as `config/editor`). Lines for data files that Marbles wrote to this file (`data`) are skipped.
+The jumps are kept in the file `jump.txt` in the data directory, one line for each place (at most 100): the time in UTC (`2026-11-22 09:05Z`; the Jump menu shows it in your local time; a line written before 1.6.2, without `Z`, is read as local time), a tab character, the kind (`file`, `dir` or `page`), a tab character and the place (the path of a file or directory, or the name of a page such as `config/editor`). Lines for data files that Marbles wrote to this file (`data`) are skipped.
 
 ## Color schemes
 ![The color schemes, the colors of the command line](docs/screenshots/color-schemes.svg)

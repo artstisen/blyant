@@ -128,18 +128,19 @@ Some commands have a short form, which does the same: `fav` and `favs` (`favorit
 | `move file\|n dir\|n` | Move a file or directory into a directory. A moved file is added to the latest files, as with `new` |
 | `delete file\|n` (`del`) | Delete a file or directory: to the trash, after asking |
 | `info [file\|n]` | Describe a file or directory (alone: the one you are in): kind, size, dates and path, and for a text file characters, words, lines, encoding and line endings. The last list stays as it was |
-| `input [+line]` | Type lines into a file, as in the line editor `ed`: alone, after `$line` (as `insert @` puts a line); each line you type goes in after the one before, and a line with only `.` ends. `input +12`: as line 12 of `$file`. `a` for short, as in `ed`. See [Typing lines in](#typing-lines-in) |
+| `input [+line]` | Type lines into a file, as in the line editor `ed`: alone, after `$line` (as `insert @` puts a line); each line you type goes in after the one before, and a line with only `.` ends the input. `input +12`: as line 12 of `$file`. `a` for short, as in `ed`. See [Typing lines in](#typing-lines-in) |
 | `input file\|n top\|bottom\|+line` | Type lines into a file at a place: before the first line, after the last, or as line 12 (`+12`) |
-| `input before` | Type lines into a file before `$line`: the line you are at goes down. `i` for short, as in `ed`. See [Typing lines in](#typing-lines-in) |
+| `input before` | Type lines into a file before `$line`: the line you are at moves down. `i` for short, as in `ed`. See [Typing lines in](#typing-lines-in) |
+| `.u`, `.e`, `.d`, `.p`, `.?` | While you type lines with `input`: bring the last line back without its last word (`.u`) or whole (`.e`), delete it (`.d`), show the lines typed (`.p`), or list these commands (`.?`). See [Fixing a line while you type](#fixing-a-line-while-you-type) |
 | `insert file\|n top\|bottom\|+line text` | Put a line of text in a file without opening it: before the first line, after the last, or as line 12 (`+12`). See [Text and settings](#text-and-settings) |
-| `blank [n]` | Put in blank lines after `$line`, to make room: `blank 3` puts in three. `blank notes.md +12 3` and `blank notes.md bottom` take a file and a place, as `insert` does. See [Text and settings](#text-and-settings) |
+| `blank [+line] [n]` | Put in blank lines after `$line`, to make room: `blank 3` puts in three, and `blank +12 3` puts them in as line 12 of `$file`. `blank notes.md +12 3` and `blank notes.md bottom` take a file and a place, as `insert` does. See [Text and settings](#text-and-settings) |
 | `change file\|n +line\|from-to [text]` | Replace a line (`+12`) or lines (`12-15`) of a file with a text, or delete them when no text is given (asks first). See [Text and settings](#text-and-settings) |
 | `shift file\|n lines place` | Move lines in a file without opening it: under a heading (`shift todo.md 4-6 Done`), at the end of the section under the heading (`Done+`), before a line (`+12`), to the `top` or the `bottom`. See [Moving lines](#moving-lines) |
 | `shift! file\|n lines place` | Move lines as `shift` does, and tick any task boxes (`- [ ]` to `- [x]`), or untick any that are ticked |
 | `shift file\|n lines up\|down [n]` | Move lines up or down, by a line or by n lines: `shift notes.md 12 up`, `shift notes.md 12-15 down 3`. See [Moving lines](#moving-lines) |
 | `shift -s file\|n heading place` | Move a section (a heading and what is under it) up or down past the sections of the same level, or to a place: `shift -s notes.md Ideas up`. See [Moving a section](#moving-a-section) |
 | `lines file\|n lines > file\|n place [copy\|cut]` | Copy lines to another file without opening the files (`lines notes.md 4-6 > plan.md bottom`), or with `cut` move them there. A copy can also go to another place of the same file (`lines notes.md 4-6 > notes.md Ideas`). See [Moving lines](#moving-lines) |
-| `lines file\|n lines dup [n]` | Copy lines right below them, as `:dup` in the editor: `lines notes.md 12 dup`, `lines notes.md 4-6 dup 3` (three copies). See [Moving lines](#moving-lines) |
+| `lines file\|n lines dup [n]` | Copy lines to just below the last line given, as `:dup` in the editor: `lines notes.md 12 dup`, `lines notes.md 4-6 dup 3` (three copies). See [Moving lines](#moving-lines) |
 | `lines file\|n lines >\|>> $name [copy\|cut]` | Keep lines in a register (`lines notes.md 4-6 > $notes`), or add them at the end with `>>`; with `cut`, also take them out of the file. A register that holds a path is not written over: give the place in that file (`> $plan bottom`). See [Registers](#registers) |
 | `lines file\|n lines start\|end text` | Put a text at the start or the end of lines, keeping the rest (`lines todo.md 4 start Remember this:`). **A blank is put between the text and the line**: in quotes the text is put as typed, with no blank (`lines notes.md 48 end ", and more"`). See [Text in lines](#text-in-lines) |
 | `lines file\|n lines unstart\|unend text` | Take a text off the start or the end of the lines that have it |
@@ -209,7 +210,7 @@ Some commands have a short form, which does the same: `fav` and `favs` (`favorit
 | `screen` | Switch to the full screen, opening the file browser in the directory you are in (see [Between the full screen and the shell](#between-the-full-screen-and-the-shell)) |
 | `version` | Show the version of Blyant |
 | `about [license]` | Show the version of Blyant and the commands used the most (`help`, `ls`, `open`, `input`, `peek`, `/text`, `set language de` ...), and `about license` shows the license, as on the second page of [About](Guide-to-start-page.md#help) |
-| `undo [n]` | Put back the last change a command made to a file (`insert`, `change`, `shift`, `lines`, `format`, `trim`), or the last `n`. See [Undo](#undo) |
+| `undo [n]` | Put back the last change a command made to a file (`insert`, `input`, `blank`, `change`, `shift`, `lines`, `word`, `replace`, `format`, `trim`), or the last `n`. See [Undo](#undo) |
 | `redo [n]` | Do again what `undo` put back |
 | `changes` | List the changes `undo` goes back through, the newest first, and those `redo` does again |
 | `again filter text` | Show the commands you typed that contain a text (`again filter lines`), or that match a pattern (`again filter peek*`), with their numbers: `!7` runs the one numbered 7 |
@@ -298,7 +299,7 @@ The shell works on files with the rules of the file browser:
 - The files and directories Blyant uses (the data directory, the settings, the favorites, the history, the tags) cannot be renamed, moved or deleted from the shell
 - The favorites, the history, the hotlist, the projects, the bookmarks and the tags follow what is renamed or moved, as in the file browser, and what is deleted is removed from the favorites and the tags
 - `find` searches the directory you are in and the directories below it, as the search of the file browser does: hidden files are left out, and at most 5000 files are found. `find plot` finds the names with _plot_ in them, `find *.md` the names that match (`*` and `?`), `find -t storm` the text files with _storm_ in a line (with the line), and `find *.md -t storm` both. The text takes `*` and `?` too: `find -t storm*night` finds a line with _storm_ and then _night_ in it, `find -t st?rm` _storm_ and _starm_ (a `*` you mean literally, as in `**` for bold, is also taken as a wildcard, and finds more lines). `open` on a file found with `-t` opens it at that line, and `peek` shows the window around it
-- `find -h` searches the directory you are in only, not the directories below it: `find -h *.md`, `find -h -t TODO`. It goes with the other options, and is kept with the search: `find` alone shows `-h` in front of what was searched for, and `find -r` searches here only again
+- `find -h` searches the directory you are in only, not the directories below it: `find -h *.md`, `find -h -t TODO`. It goes with the other options, and is kept with the search: `find` alone shows `-h` in front of what was searched for, and `find -r` searches again in the directory where it was searched, and not below it
 - In a large tree the paths get long. `find -f storm` shows the folder and the name (`drafts/storm.md`), and `find -b storm` the name only (`storm.md`); a name that more rows have gets as many folders after it as tell the rows apart (`storm.md (part-1/drafts)`). The rows are the same with each option, so `open 2`, `info 2` (the full path, size and dates) and `path 2` (the full path copied) work on the same file. The options go before the name, in any order (`find -b -t storm`), and `-l` wins over the others. A name that starts with `-` is written in quotes (`find "-draft"`)
 ![ls with the date and the size of each file, and find with the date each chapter was last changed](docs/screenshots/shell-dates.svg)
 
@@ -482,9 +483,9 @@ The window of the last peek is also kept when you leave a shell you typed in at 
 - A file with more than one kind of line endings (some lines CRLF, some LF) is left as it is too: saving it would give every line the same kind. The editor reports it, and saves it with one kind. This also goes for `insert`, `change`, `shift` and `lines`, as does leaving alone the files Blyant uses
 - A file changed by `format` or `trim` is saved at once; `undo` puts it back, while Blyant runs (see [Undo](#undo))
 
-`insert` puts a line of text in a file, like jotting down a quick note: `insert todo.md bottom Get pencils and paper`, `insert notes.md top # Monday`, `insert 3 +12 A new line` (a row of the last list). The text is all that follows the place, as you type it (blanks and quotes too), and it is one line; `$clip` holding copied lines puts in those lines. `+12` makes it line 12, before the line that was there, and a line past the end puts it after the last. The file keeps its line endings and byte order mark, and the file is then the last list, at the line put in: `open 1` opens it there. As for `format`, only a file in UTF-8 is changed, the files Blyant uses are not, and `undo` puts the file back. `insert notes.md +12` without a text puts in a blank line; `insert notes.md +12 ""` puts in the two characters `""`, as typed.
+`insert` puts a line of text in a file, like jotting down a quick note: `insert todo.md bottom Get pencils and paper`, `insert notes.md top # Monday`, `insert 3 +12 A new line` (a row of the last list). The text is all that follows the place, as you type it (blanks and quotes too), and it is one line; `$clip` holding copied lines puts in those lines. `+12` makes it line 12, before the line that was there, and a line past the end puts it after the last. The file keeps its line endings and byte order mark, and the file is then the last list, at the line put in: `open 1` opens it there. As for `format`, only a file in UTF-8 is changed, the files Blyant uses are not, and `undo` puts the file back. `insert notes.md +12` without a text puts in a blank line; `insert notes.md +12 ""` puts in the two characters `""`, because `insert` takes all the text as typed. For blank lines, use `insert` without a text, or `blank`.
 
-`blank` puts in blank lines, to make room between paragraphs, or for text to come: `blank` puts in one after `$line`, as `insert @` would, and `blank 3` three. With a file and a place, as `insert` takes them: `blank notes.md +12 3`, `blank notes.md bottom 2`. `$line` is then the last of them, so `input` (or `a`) goes on after the room made, and `i` puts lines in before the last blank line. `blank +12` (and `blank +12 3`) puts them in as line 12 of `$file`. At most 500 at once, all one step of `undo`. A file with line breaks keeps them; in an empty file, or one without any, the blank lines get those of the setting `newlineendings` (see [Settings file](Guide-to-settings-file.md)). To tidy up afterwards, `lines notes.md 1-200 squeeze` makes each run of blank lines one blank line (see [Text in lines](#text-in-lines)).
+`blank` puts in blank lines, to make room between paragraphs, or for text to come: `blank` puts in one after `$line`, as `insert @` would, and `blank 3` three. `blank` also takes a file and a place, as `insert` does: `blank notes.md +12 3`, `blank notes.md bottom 2`. `$line` is then the last of them, so after `blank 2`, `input` (or `a`) puts lines in below both blank lines, as a new paragraph after a gap, and `i` puts them in between the two. `blank +12` (and `blank +12 3`) puts them in as line 12 of `$file`. At most 500 at once, all one step of `undo`. The blank lines get the line endings of the file; in an empty file, or a file without a line break, they get the line endings of the setting `newlineendings` (see [Settings file](Guide-to-settings-file.md)). To tidy up afterwards, `lines notes.md 1-200 squeeze` makes each run of blank lines one blank line (see [Text in lines](#text-in-lines)).
 
 `change` replaces lines of a file with a text, without opening it: `change notes.md +12 A new line` (line 12), `change notes.md 12-15 One line instead` (lines 12 to 15 become one line). The text is all that follows the lines, as you type it, and it is one line (`$clip` holding copied lines: those lines). Without a text, the lines are deleted: `change notes.md 12-15` shows them, between the markers of `peek`, and asks first (No is selected: deleted lines are back only with `undo`, while Blyant runs), and from a file or with `--run` they are only deleted with `--yes`. A range past the end stops at the last line. As for `insert`, the file keeps its line endings and byte order mark, only a file in UTF-8 is changed and not the files Blyant uses, and the file is then the last list at the place changed (`open 1`). (The editor's `:replace` finds a text and replaces it with another; `change` works on whole lines.)
 
@@ -538,7 +539,7 @@ lines todo.md "Get pencils and paper" > done.md Done+ cut
 - The lines put in are shown, and the other file is then the last list there (`open 1`). Both files keep their line endings and byte order mark, only files in UTF-8 are changed and not the files Blyant uses, and nothing is asked: no line is lost. To move lines within one file, use `shift`
 - `Tab` completes the other file after the `>`, then the headings of that file (also from a pattern, and of a row or `$file`), then `copy` and `cut`. A heading is found by the whole text, the start or a pattern, as for `shift`
 - In the same file, `>` makes a copy at the place given; `cut` is refused there, as moving lines in a file is what `shift` does
-- `dup` copies the lines right below the last of them, as `:dup` in the editor: one copy, or as many as given (`dup 3`, at most 500). Lines given apart (`4,7`) are copied as one block below the last, in their order. The copies are shown, the file is the last list at the first copy, and `$line` is the last copy, so `lines @ dup` copies that line again. `undo` takes all the copies back in one step
+- `dup` copies the lines to just below the last line given, as `:dup` in the editor: one copy, or as many as given (`dup 3`, at most 500). Lines given apart (`4,7`) are copied as one block below the last line given, in the order of the file. The copies are shown, the file is the last list at the first copy, and `$line` is the last copy, so `lines @ dup` copies that line again. `undo` takes all the copies back in one step
 - From the command line of your system, give the command in quotes: `blyant --run "lines notes.md 4-6 > plan.md bottom"`. Without them, bash, PowerShell and cmd take the `>` as a redirection to a file
 
 ### Moving a section
@@ -613,7 +614,7 @@ blyant ~/notes> lines todo.md 3 unstart "- [ ] "
 - `replace old new` replaces the text everywhere in the lines, with the letter case as typed (`draft`, not `Draft`). A text with blanks is written in quotes, and `""` is an empty text: what is replaced is removed
 - `remove text` takes the text out everywhere in the lines, with the letter case as typed. The text is all that follows `remove`, as for `start`; in quotes it is taken as written, blanks too. A `"` is written `""""` in quotes (see [Quotes in a text](#quotes-in-a-text)), or alone: `lines notes.md 1 remove "`
 - `at 32 text` puts the text in before column 32 of each line: the text then starts at column 32. The columns are counted from 1, as the editor counts them on the status line, and `words` shows the column each word starts at (`#9:32 want`). The text is put in as typed, with no blank added: write it in quotes to keep a blank at the start or the end of the text (`"really "`). A column one past the end of a line puts the text at the end. When a line has no such column (it is shorter), the shell says which line, and no line is changed. A blank line is left as it is, as `start` and `end` leave it
-- `squeeze` takes out the blank lines that follow another blank line, among the lines given: each run of blank lines becomes one, and the text and a single blank line stay. A line of only blanks counts as blank, and the first of a run is kept as it is. Only lines given next to each other are a run (`4,5`, not `4,6`)
+- `squeeze` takes out the blank lines that follow another blank line, among the lines given: each run of blank lines becomes one, and the text and a single blank line stay. A line of only blanks counts as blank, and the first blank line of a run is kept as it is. Only lines given next to each other are a run (`4,5`, not `4,6`)
 - After the lines, `Tab` completes `start`, `end`, `unstart`, `unend`, `replace`, `remove`, `at`, `dup`, `sort`, `upper`, `lower`, `title`, `squeeze` and `>`, and after `sort` it completes `-a` and `-d`. A `>` or one of these words later on is part of the text: `lines notes.md 3 start ">"` makes line 3 a quote
 - `$name` and `$clip` put in their value: `lines todo.md 4 end $note`
 - The lines changed are shown, and the file is then the last list, at the first line changed (`open 1`). When no line changes, nothing is written, and the shell says so. As for `insert`, the file keeps its line endings and byte order mark, only a file in UTF-8 is changed and not the files Blyant uses, and `undo` puts it back; nothing is asked, as no line is lost
@@ -760,7 +761,7 @@ blyant ~/novel> word -p @ 6 upper
 ## Typing lines in
 ![The outline peeked, two lines typed in at the end with input and a line with a dot, and the outline peeked again](docs/screenshots/shell-input.svg)
 
-`input` puts in the lines you type, one after another, as the `a` command of the line editor `ed` does. The prompt shows `$file`, the file the lines go in, and the number the next line gets, and a line with only a `.` ends it:
+`input` puts in the lines you type, one after another, as the `a` command of the line editor `ed` does. The prompt shows `$file` (the file the lines go in) and the number the next line gets. A line with only `.` ends `input`:
 
 ```
 blyant ~/novel> peek notes.md +12 1
@@ -775,17 +776,17 @@ $file:16> .
 /home/anna/novel/notes.md: lines 13-15 put in
 ```
 
-- `input` alone puts the lines in after `$line`, as `insert @` puts a line (see [Working on one line](#working-on-one-line)); in an empty file (after `new`) at the top. A file and a place can be given, as `insert` takes them: `input notes.md bottom`, `input notes.md top`, `input notes.md +12`
-- `input +12` starts at line 12 of `$file`, the file you are working on: the lines go in as line 12, 13 ..., and the line that was 12 goes down below them. Past the end of the file they go at the bottom. `a +12` and `i +12` do the same
-- `a` is short for `input`, and `i` is short for `input before`, as the `a` and `i` commands of `ed`: `i` puts the lines in before `$line`, so the line you are at goes down below them. With a file and a place, `a` and `i` take them as `input` does (`i notes.md +12`)
-- The file is `$file` from the start, also a file given (`input other.md bottom`), so the prompt stays short whatever the name of the file: `echo $file` after `input` tells the path
+- `input` alone puts the lines in after `$line`, as `insert @` puts a line (see [Working on one line](#working-on-one-line)); in an empty file (after `new`) at the top. A peek of the file you already work on only looks, and leaves `$line` where it was: to go on after line 12 in any case, use `line 12` first, or `input notes.md +13`. A file and a place can be given, as `insert` takes them: `input notes.md bottom`, `input notes.md top`, `input notes.md +12`
+- `input +12` starts at line 12 of `$file`, the file you are working on: the lines go in as line 12, 13 ..., and the line that was 12 goes down below them. Past the end of the file they go at the bottom. `a +12` and `i +12` do the same. Unlike `12a` in `ed`, `+12` makes the first line typed line 12, for `a` and `i` alike: to go on after line 12, use `a +13`, or `line 12` and then `a`
+- `a` is short for `input`, and `i` is short for `input before`, as the `a` and `i` commands of `ed`: `i` puts the lines in before `$line`, and the line you are at moves down below them. `a` and `i` also take a file and a place, as `input` does (`i notes.md +12`)
+- The prompt always shows `$file`, never the name of the file, so it stays short: `input other.md bottom` makes `other.md` the `$file` at once, and `echo $file` tells the path
 - Each line is written when you press `Enter`, so nothing is lost when the terminal is closed. All the lines of one `input` are one step of `undo`. If the file is changed meanwhile (saved in the editor, or by another program) or deleted, the line is not put in and `input` stops, so nothing is written over
-- The lines go in as you type them: blanks, quotes and `$5` stay as they are (no `$name` is put in), and an empty line is a blank line. They are not kept with the commands typed (`Up`, `again`, `shellhistory.txt`), nor written to the log
-- A line with only `.` ends `input` (blanks after it too; a line that starts with a blank, ` .`, is put in), and so does `Ctrl+D` (or `Ctrl+Z` on Windows) on an empty line. `Ctrl+C` drops the line you are typing, and you go on with the next one. As in `ed`, a line of only `.` cannot be put in this way: use `insert` for it
-- `Tab` and `Up` do nothing while you type lines in: it is text, not commands
-- After it, the shell tells how many lines were put in. `$line` is the last of them, so another `input` goes on after it, and the file is the last list at the first line put in (`open 1`)
+- The lines go in as you type them: blanks, quotes and `$5` stay as they are (`$date` stays `$date`: no value is put in), and an empty line is a blank line. They are not kept with the commands typed (`Up`, `again`, `shellhistory.txt`), nor written to the log
+- A line with only `.` ends `input` (blanks after it too; a line that starts with a blank, ` .`, is put in), and so does `Ctrl+D` on an empty line (on Windows also `Ctrl+Z`). `Ctrl+C` drops the line you are typing, and you go on with the next one. As in `ed`, a line of only `.` cannot be put in this way: use `insert` for it
+- `Tab` and `Up` do nothing while you type lines in: the lines are text, not commands
+- When `input` ends, the shell tells how many lines were put in. `$line` is the last line put in, so another `input` goes on after it, and the file is the last list at the first line put in (`open 1`)
 - In a script (`run`, a file of commands, a pipe or `--run`), `input` takes the lines after it, up to the line with `.`: a block of text put in a file in one go. The words given to `run` are not put in these lines: `$1` and `$*` in them stay as they are
-- If `input` is refused there (the file is not there, a place that is not one), its lines of text are skipped, up to the line with `.`, and it is told: none of them is run as a command. In `run` the script stops at the `input` refused
+- If `input` is refused there (the file is missing, or the place is not `top`, `bottom` or `+12`), or stops halfway (the file was changed meanwhile, or could not be written), Blyant skips the lines of text up to the line with `.`, and says so: none of them is run as a command. In `run` the script stops at that `input`
 - As for `insert`, the file keeps its line endings and byte order mark, only a file in UTF-8 is changed, and the files Blyant uses are refused
 
 ### Fixing a line while you type
@@ -798,11 +799,13 @@ $file:14> The ferry was late
 $file:15> .
 ```
 
+After `.u`, `The ferry was ` is back at the prompt, and you type only `late`.
+
 | Command | What it does |
 |---|---|
-| `.u` | The last line typed back at the prompt, at its number, without its last word: type the rest of it again |
-| `.e` | The last line typed back at the prompt, all of it, to change with the arrow keys, `Backspace` and `Ctrl+W` |
-| `.d` | Delete the last line typed: you go on at its number. Again for the line before it |
+| `.u` | Bring the last line typed back to the prompt, at the same line number, without the last word: type the rest again |
+| `.e` | Bring the whole last line typed back to the prompt, to change with `Left`, `Right`, `Backspace` and `Ctrl+W` |
+| `.d` | Delete the last line typed: you go on at that line number. `.d` again deletes the line before |
 | `.p` | Show the lines typed in this `input`, numbered |
 | `.?` | List the dot commands |
 
@@ -810,7 +813,7 @@ $file:15> .
 - The dot commands work at the line brought back too: `.u` takes off another word, `.e` brings all of the line back again, and `.d` deletes it
 - Without line editing (`set shellcompletion false`) the line brought back is shown above the prompt. After `.u`, what you type goes after the words kept; after `.e`, you type the line again. `Enter` alone keeps the line as shown
 - The dot commands work only on the lines typed in this `input`, never on the lines that were in the file before. `undo` still takes back the whole `input` in one step
-- A dot command is the dot and its letter alone on the line: `.unity`, `...` and ` .u` are text. Typed at a terminal only: in a script, a file of commands or a pipe, the lines after `input` are text up to the `.`
+- A dot command is a dot and one letter, alone on the line: `.unity`, `...` and ` .u` are text. To put in a line that is only `.u` or `.`, use `insert` afterwards. Typed at a terminal only: in a script, a file of commands or a pipe, the lines after `input` are text up to the `.`
 
 ## Working on one line
 `@` stands for the file and the line the last command worked on, so the next command takes them without typing them again:
@@ -824,16 +827,16 @@ shift @ up                                   line 13 one line up, and @ with it
 shift @ up                                   ... and up again
 ```
 
-- `@` goes in the place of the file and the line: in `words`, `word`, `change`, `peek`, `shift` (the lines, or with `-s` the heading), `lines` (the lines), and `open` and `edit` (the cursor at the line). With `insert` the text goes after the line
+- `@` goes in the place of the file and the line: in `words`, `word`, `change`, `peek`, `shift` (the lines, or with `-s` the heading), `lines` (the lines), and `open` and `edit` (the cursor at the line). With `insert`, `input`, `a` and `blank` the lines go after the line, and with `i` before it
 - It follows the line: after `shift @ up` it is the line at the new place, and after `insert` the last line put in (with several lines, as from `$clip`, the next `insert @` goes after them all). After `lines ... > plan.md` it is the other file, at the last line put in. A section moved with `shift -s` is followed by its heading
-- The line is that of the last command that worked on a line: `words`, `word`, `insert`, `change`, `shift` and `lines` (the other file, at the lines put in). A peek of the same file is a look, and leaves it; a search with peek (`peek notes.md /storm`) makes the line found `@`, and a peek of another file the first line shown (a peek past the end of a file sets no line). `format` and `trim` keep it, and `undo` and `redo` put `@` back where it was before the change, or after it. After the editor (`open`, `edit`, `resume`), `@` is where the cursor was when you left it
+- The line is that of the last command that worked on a line: `words`, `word`, `insert`, `input`, `blank`, `change`, `shift` and `lines` (the other file, at the lines put in). A peek of the same file is a look, and leaves it; a search with peek (`peek notes.md /storm`) makes the line found `@`, and a peek of another file the first line shown (a peek past the end of a file sets no line). `format` and `trim` keep it, and `undo` and `redo` put `@` back where it was before the change, or after it. After the editor (`open`, `edit`, `resume`), `@` is where the cursor was when you left it
 - `@` is checked against the file as it is now: a line past the end (the file got shorter in the editor or in another program) is refused, not taken as the end
 - `$file` and `$line` are the two parts: `echo $file $line` shows where `@` is
 - With `line 3` you set the line: `file test1.html`, `line 3`, then `insert @ <p>&nbsp;</p>` puts the text in after line 3. `line top` and `line bottom` are the first and the last line, and `file test1.html 3` sets both at once. `line` alone shows the line. Nothing is written, and a line that is not in the file is refused
 - `line` only sets the line, and `lines` changes the text in lines. As the names are a letter apart, `line` given a file or a word of `lines` (`line $file +4 replace old new`) does nothing, and tells you to use `lines`
 - A file you pick before any command has worked on a line in that file (`recent`, then `file 2`; `file plot.md`) has the line where the cursor was when you closed it in the editor last, as `resume` takes it: `file 2`, then `insert @ <p>&nbsp;</p>` puts the line in after it. A file never opened in the editor has no line until a command works on one, and `@` says so (`peek` it, or give the line)
 - `%` alone, in the place of a file, is `$file`, as in Vim: `peek %`, `copy % backup`, `lines % 4-6 dup`, `tag add % draft`, `cd %` (the directory of the file). Where a command takes a line too, `@` is still the file and the line together. In a text `%` stays as it is (`insert notes.md bottom 100% done`), and so does `peek notes.md 50%`; a file named `%` is written `./%`
-- When you leave the shell, `$line` is kept with `$file`, so the next shell you start at a terminal goes on at the line you worked on last: `input` and `insert @` put lines in after it. A file made shorter than that line since has the line where the cursor was in the editor, as above
+- When you leave the shell, `$line` is kept with `$file`, so the next shell you start at a terminal goes on at the line you worked on last: `input` and `insert @` put lines in after it. If the file has fewer lines by then, `$line` is where the cursor was when the file was last closed in the editor, as above
 - After `new`, `@` is the top of the empty file (`$line` is 0), as in any empty file: `new scene` and `insert @ The ferry was late.` writes the first line, and each `insert @` after it adds a line below the last. Until then `insert` puts a line there, and `open`, `edit` and `peek` take the file from line 1; `word` and the other commands have no line to work on
 - `Tab` after `@` goes on as after a file and a line: `word @ 2 re` and `Tab` gives `replace`, and `lines @ st` gives `start`
 - `@` counts only alone in the place of the file. In a text it stays as it is (`insert @ Ask @anna`), and a file named _@_ is written in quotes (`peek "@"`)
@@ -877,7 +880,7 @@ shift -s @ up                        the section above "The quay"
 ```
 
 ## Undo
-The commands that change the text of a file (`insert`, `change`, `shift`, `lines`, `format` and `trim`) keep what the file was before, so `undo` puts it back:
+The commands that change the text of a file (`insert`, `input`, `blank`, `change`, `shift`, `lines`, `word`, `replace`, `format` and `trim`) keep what the file was before, so `undo` puts it back:
 
 ```
 blyant ~/notes> change todo.md +3 Get pencils and paper
@@ -1399,7 +1402,7 @@ Commands you have typed can go in a register as they are: `again` lists them, th
 - Each command is written out before it runs, as `again` does, so you see what is done. `run` stops at the first command that fails, and tells at which line: the commands after it are not run
 - Questions are asked as for any command: `delete` and `change` without a text ask first (from a file or `--run`, the answer is no unless `--yes` is given)
 - A `$name` in a command is put in when that command runs. When you set the register, a `$name` is put in at once: write `$$date` to keep `$date` in the register, so that it is the date of each run (`reg tidy` shows what the register holds)
-- A line starting with `#` is a comment, and blank lines are left out, in a register, in a file for `run`, and in a file of commands read by `blyant --shell < file`
+- A line starting with `#` is a comment, and blank lines are left out, in a register, in a file for `run`, and in a file of commands read by `blyant --shell < file`. The lines of text after `input` are the exception: they are put in as they are (see [Typing lines in](#typing-lines-in))
 - `echo` in a register or file writes a line while it runs (`echo Tidied on $date`), to tell what was done
 - A file for `run` is a text file of commands, as for `blyant --shell < file`: one a line. A register or file can run another (`run $more` in it); one that runs itself is stopped at 10 runs deep
 - `run file` takes a path as other commands do: `run weekly.txt`, `run $pwd/weekly.txt`, `run $file` (the file the last command worked on) or a register that holds a path (`run $docs/weekly.txt`). `run $tidy` runs the lines of the register `tidy` itself
