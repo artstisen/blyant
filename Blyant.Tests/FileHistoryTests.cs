@@ -114,8 +114,8 @@ public class FileHistoryTests : IDisposable
         Assert.Equal((12, 5, ""), FileHistory.CaretOf(In("a.txt")));
 
         var text = FileHistory.Serialize();
-        Assert.Contains("2026-10-14 09:31\t12:5\t" + In("a.txt") + "\n", text);
-        Assert.Contains("2026-10-14 09:30\t" + In("b.txt") + "\n", text);
+        Assert.Contains(Stored(time.AddMinutes(1)) + "\t12:5\t" + In("a.txt") + "\n", text);
+        Assert.Contains(Stored(time) + "\t" + In("b.txt") + "\n", text);
         FileHistory.Parse(text);
         Assert.Equal((12, 5, ""), FileHistory.CaretOf(In("a.txt")));
         Assert.Null(FileHistory.CaretOf(In("b.txt")));
@@ -148,6 +148,9 @@ public class FileHistoryTests : IDisposable
         Assert.Equal("5.txt", Path.GetFileName(FileHistory.Items[^1].Path));
     }
 
+    // A time as the history keeps it: in UTC, with Z after it
+    private static string Stored(DateTime time) => IsoDateTime.Stored(time, "yyyy-MM-dd HH:mm");
+
     [Fact]
     public void TheList_IsSavedAndReadAgain()
     {
@@ -158,8 +161,10 @@ public class FileHistoryTests : IDisposable
         FileHistory.Clear();
         FileHistory.Load();
         Assert.Equal("my notes.md a.txt", Names());
-        Assert.Equal(time, FileHistory.Items[1].Opened);
-        Assert.Equal("2026-10-11 20:45\t" + In("my notes.md") + "\n2026-10-10 20:45\t" + In("a.txt") + "\n",
+        // (kept in UTC, read back as UTC: the same time in local time)
+        Assert.Equal(time, IsoDateTime.Local(FileHistory.Items[1].Opened));
+        Assert.Equal(DateTimeKind.Utc, FileHistory.Items[1].Opened.Kind);
+        Assert.Equal(Stored(time.AddDays(1)) + "\t" + In("my notes.md") + "\n" + Stored(time) + "\t" + In("a.txt") + "\n",
             FileHistory.Serialize());
     }
 
@@ -181,5 +186,30 @@ public class FileHistoryTests : IDisposable
         Assert.Equal("a.txt", Names());
         FileHistory.Clear();
         Assert.Empty(FileHistory.Items);
+    }
+
+    [Fact]
+    public void Times_AreKeptInUtc_AndShownInLocalTime_AndOldLocalTimesAreRead()
+    {
+        var utc = new DateTime(2026, 11, 22, 9, 5, 0, DateTimeKind.Utc);
+        // Shown: a UTC time in local time; a local time, or one of no kind, as it is
+        Assert.Equal(utc.ToLocalTime(), IsoDateTime.Local(utc));
+        Assert.Equal(DateTimeKind.Local, IsoDateTime.Local(utc).Kind);
+        var plain = new DateTime(2026, 11, 22, 10, 0, 0);
+        Assert.Equal(plain, IsoDateTime.Local(plain));
+        Assert.Equal(utc.ToLocalTime().ToString("HH:mm"), IsoDateTime.Local(utc, "HH:mm"));
+        // Kept: in UTC with Z, and read back as UTC
+        Assert.Equal("2026-11-22 09:05Z", IsoDateTime.Stored(utc, "yyyy-MM-dd HH:mm"));
+        Assert.True(IsoDateTime.TryParseStored("2026-11-22 09:05Z", "yyyy-MM-dd HH:mm", out var read));
+        Assert.Equal(utc, read);
+        Assert.Equal(DateTimeKind.Utc, read.Kind);
+        // A time written before 1.6.2, in local time without Z: read as that local time, kept as UTC
+        Assert.True(IsoDateTime.TryParseStored("2026-11-22 10:00", "yyyy-MM-dd HH:mm", out var old));
+        Assert.Equal(DateTimeKind.Utc, old.Kind);
+        Assert.Equal(plain, IsoDateTime.Local(old));
+        Assert.False(IsoDateTime.TryParseStored("not a time", "yyyy-MM-dd HH:mm", out _));
+        Assert.False(IsoDateTime.TryParseStored("Z", "yyyy-MM-dd HH:mm", out _));
+        // The time now for :ts and $now: local time, as a person reads it
+        Assert.Matches(@"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$", IsoDateTime.GetDateTimeNow());
     }
 }

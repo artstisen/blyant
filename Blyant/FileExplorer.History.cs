@@ -454,7 +454,7 @@ internal static partial class FileExplorer
     internal static void AddToHistory(IReadOnlyList<string> paths)
     {
         FileHistory.Load();
-        foreach (var path in paths) FileHistory.Add(path, DateTime.Now);
+        foreach (var path in paths) FileHistory.Add(path, DateTime.UtcNow);
         var result = FileHistory.Save();
         if (result != DialogText.Success) EventLog.Add(DialogText.LogFile + "History: " + result);
     }
@@ -533,7 +533,7 @@ internal static partial class FileExplorer
             var entry = FileHistory.Items[_historyShown[index]];
             var exists = File.Exists(entry.Path);
             var info = !exists ? DialogText.FavoriteMissing :
-                entry.Opened == DateTime.MinValue ? string.Empty : entry.Opened.ToString("yyyy-MM-dd HH:mm");
+                entry.Opened == DateTime.MinValue ? string.Empty : IsoDateTime.Local(entry.Opened, "yyyy-MM-dd HH:mm");
             DrawHistoryPointer(index, index == _historyIndex);
             ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
             Console.Write(" " + Tools.TruncateString(System.IO.Path.GetFileName(entry.Path), nameWidth + 1, true));

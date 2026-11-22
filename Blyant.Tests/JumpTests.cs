@@ -41,8 +41,9 @@ public class JumpTests : IDisposable
 
         // The file: a line for each place, read again the same
         var text = JumpHistory.Serialize();
-        Assert.StartsWith("2026-10-14 09:44\tfile\t" + In("report.md") + "\n", text);
-        Assert.Contains("2026-10-14 09:41\tpage\tconfig/editor\n", text);
+        // (kept in UTC, with Z after it)
+        Assert.StartsWith(IsoDateTime.Stored(time.AddMinutes(4), "yyyy-MM-dd HH:mm") + "\tfile\t" + In("report.md") + "\n", text);
+        Assert.Contains(IsoDateTime.Stored(time.AddMinutes(1), "yyyy-MM-dd HH:mm") + "\tpage\tconfig/editor\n", text);
         Assert.Equal(DialogText.Success, JumpHistory.Save());
         JumpHistory.Clear();
         JumpHistory.Load();

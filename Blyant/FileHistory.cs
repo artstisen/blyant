@@ -9,7 +9,8 @@ namespace Blyant;
 /// file opened longest ago is dropped.
 ///
 /// The list is kept in the file "history.txt" in the data directory, with one line for each file: the time it
-/// was last opened (yyyy-MM-dd HH:mm), a tab character and the path. When the file was closed in the editor, the
+/// was last opened (yyyy-MM-dd HH:mmZ, in UTC; without the Z, as before 1.6.2, in local time), a tab character and
+/// the path. When the file was closed in the editor, the
 /// line and column of the cursor (as "12:5") and a tab character come before the path: the file is opened there
 /// the next time. A file closed in a split (":split") also has the place of the cursor of the other pane after it
 /// ("12:5|40:1", or "12:5|<40:1" when that pane was at the left), and is opened split again.
@@ -81,11 +82,7 @@ internal static class FileHistory
             var (caretLine, caretColumn, split) = CaretPosition.Take(ref path);
             path = FileOperations.ListedPath(path);
             if (path.Length == 0 || List.Any(entry => FileOperations.SamePath(entry.Path, path))) continue;
-            if (!DateTime.TryParseExact(line[..tab].Trim(), TimeFormat, CultureInfo.InvariantCulture,
-                    DateTimeStyles.None, out var opened))
-            {
-                opened = DateTime.MinValue;
-            }
+            if (!IsoDateTime.TryParseStored(line[..tab], TimeFormat, out var opened)) opened = DateTime.MinValue;
 
             List.Add(new Entry(path, opened, caretLine, caretColumn, split));
             if (List.Count == MaxCount) break;
@@ -97,7 +94,7 @@ internal static class FileHistory
         var text = new StringBuilder();
         foreach (var entry in List)
         {
-            text.Append(entry.Opened.ToString(TimeFormat, CultureInfo.InvariantCulture)).Append('\t')
+            text.Append(IsoDateTime.Stored(entry.Opened, TimeFormat)).Append('\t')
                 .Append(CaretPosition.Write(entry.Line, entry.Column, entry.Split)).Append(entry.Path).Append('\n');
         }
 

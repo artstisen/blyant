@@ -1001,7 +1001,7 @@ internal static partial class FileExplorer
                     return;
                 }
 
-                files.Add((path, file, File.GetLastWriteTime(path)));
+                files.Add((path, file, File.GetLastWriteTimeUtc(path)));
             }
             catch (Exception e)
             {
@@ -1022,7 +1022,7 @@ internal static partial class FileExplorer
         string Named(string path, DateTime changed) =>
             (!sameName ? System.IO.Path.GetFileName(path)
                 : common.Length > 0 ? System.IO.Path.GetRelativePath(common, path)
-                : path) + "  " + changed.ToString("yyyy-MM-dd HH:mm");
+                : path) + "  " + IsoDateTime.Local(changed, "yyyy-MM-dd HH:mm");
         // The line endings and the encodings are not compared: they are told about
         var notes = new List<string>();
         if (oldFile.LineEndingLabel != newFile.LineEndingLabel)
@@ -1420,8 +1420,8 @@ internal static partial class FileExplorer
                                            (size >= 1024 ? " (" + Lang.F("{0} bytes", size.ToString("N0")) + ")" : "")));
         }
 
-        rows.Add((DialogText.InfoCreated, info.CreationTime.ToString("yyyy-MM-dd HH:mm:ss")));
-        rows.Add((DialogText.InfoChanged, info.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss")));
+        rows.Add((DialogText.InfoCreated, IsoDateTime.Local(info.CreationTimeUtc, "yyyy-MM-dd HH:mm:ss")));
+        rows.Add((DialogText.InfoChanged, IsoDateTime.Local(info.LastWriteTimeUtc, "yyyy-MM-dd HH:mm:ss")));
         if (FileFavorites.Contains(path)) rows.Add((DialogText.InfoFavorite, DialogText.InfoFavoriteYes));
         rows.Add((DialogText.InfoPath, path));
         return rows;

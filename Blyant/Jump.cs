@@ -175,7 +175,7 @@ internal static class JumpPages
 /// to the top, and the list holds at most MaxCount places.
 ///
 /// The list is kept in the file "jump.txt" in the data directory, with one line for each place: the time of
-/// the jump (yyyy-MM-dd HH:mm), a tab character, the kind of place (file, dir or page), a tab character and the
+/// the jump (yyyy-MM-dd HH:mmZ, in UTC; without the Z, as before 1.6.2, in local time), a tab character, the kind of place (file, dir or page), a tab character and the
 /// place: the path of a file or directory, or the name of a page. (The lines of data files, kept by Marbles, are
 /// left out.)
 /// </summary>
@@ -249,11 +249,7 @@ internal static class JumpHistory
             if (place.Length == 0) continue;
             var target = new JumpTarget(kind, place);
             if (List.Any(entry => entry.Target.SameAs(target))) continue;
-            if (!DateTime.TryParseExact(parts[0].Trim(), TimeFormat, CultureInfo.InvariantCulture,
-                    DateTimeStyles.None, out var jumped))
-            {
-                jumped = DateTime.MinValue;
-            }
+            if (!IsoDateTime.TryParseStored(parts[0], TimeFormat, out var jumped)) jumped = DateTime.MinValue;
 
             List.Add(new Entry(target, jumped));
             if (List.Count == MaxCount) break;
@@ -265,7 +261,7 @@ internal static class JumpHistory
         var text = new StringBuilder();
         foreach (var entry in List)
         {
-            text.Append(entry.Jumped.ToString(TimeFormat, CultureInfo.InvariantCulture)).Append('\t')
+            text.Append(IsoDateTime.Stored(entry.Jumped, TimeFormat)).Append('\t')
                 .Append(KindName(entry.Target.Kind)).Append('\t').Append(entry.Target.Target).Append('\n');
         }
 
@@ -646,7 +642,7 @@ internal static class Jump
     private static void Remember(JumpTarget target)
     {
         JumpHistory.Load();
-        JumpHistory.Add(target with { At = null }, DateTime.Now);
+        JumpHistory.Add(target with { At = null }, DateTime.UtcNow);
         var status = JumpHistory.Save();
         if (status != DialogText.Success) EventLog.Add(DialogText.LogFile + "Jumps: " + status);
     }

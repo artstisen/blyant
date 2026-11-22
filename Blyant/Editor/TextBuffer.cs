@@ -69,7 +69,7 @@ internal sealed class TextBuffer
     /// <summary>
     /// The clock the steps are timed with (set by the tests)
     /// </summary>
-    internal Func<DateTime> Clock { get; set; } = () => DateTime.Now;
+    internal Func<DateTime> Clock { get; set; } = () => DateTime.UtcNow;
 
     /// <summary>
     /// The undo history, oldest first: the steps that can be undone, then the steps that were undone (which redo

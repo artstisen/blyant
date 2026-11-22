@@ -587,8 +587,9 @@ internal static class FileOperations
         var isDirectory = Directory.Exists(path) && !File.Exists(path);
         if (!isDirectory && !File.Exists(path)) return DialogText.FileNotFound;
         if (!CanTrash(path, trashDirectory)) return DialogText.TrashNotPossible;
-        var deleted = DateTime.Now;
-        var name = deleted.ToString("yyyy-MM-dd HH.mm.ss ", System.Globalization.CultureInfo.InvariantCulture) +
+        // (taken in UTC; the name of the file in the trash and trash.txt are read by people: local time)
+        var deleted = DateTime.UtcNow;
+        var name = IsoDateTime.Local(deleted, "yyyy-MM-dd HH.mm.ss ") +
                    StoredName(Path.GetFileName(Trimmed(path)));
         try
         {
@@ -643,7 +644,7 @@ internal static class FileOperations
             // LF on all systems, as the files of projects. The list is only for finding where it was
             var list = Path.Combine(trashDirectory, TrashListName);
             var line = Path.GetFileName(trashedPath) + "\t" +
-                       deleted.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture) +
+                       IsoDateTime.Local(deleted, "yyyy-MM-dd HH:mm:ss") +
                        "\t" + Path.GetFullPath(path) + "\n";
             if (!File.Exists(list))
             {

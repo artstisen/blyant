@@ -314,8 +314,8 @@ internal static class JumpMenu
     // When a place was jumped to or opened: the time today, else the date
     private static string When(DateTime time) =>
         time == DateTime.MinValue ? string.Empty
-        : time.Date == DateTime.Today ? time.ToString("HH:mm")
-        : time.ToString("yyyy-MM-dd");
+        : IsoDateTime.Local(time).Date == IsoDateTime.Today ? IsoDateTime.Local(time, "HH:mm")
+        : IsoDateTime.Local(time, "yyyy-MM-dd");
 
     /// <summary>
     /// Show the Jump menu until a place is picked (Enter) or it is closed (Esc)
@@ -1865,7 +1865,7 @@ internal static class JumpMenu
         if (row.Time != DateTime.MinValue)
         {
             rows.Add((tab == Tab.Jumps ? Lang.T("Jumped to:") : Lang.T("Opened:"),
-                row.Time.ToString("yyyy-MM-dd HH:mm")));
+                IsoDateTime.Local(row.Time, "yyyy-MM-dd HH:mm")));
         }
 
         ChoiceBox.Forget();

@@ -108,9 +108,9 @@ internal static partial class ShellRegisters
     internal static Func<string?>? CommandsSource { get; set; }
 
     /// <summary>
-    /// The time now, for $date, $time and $now (another for tests)
+    /// The time now, for $date, $time and $now (another for tests): taken in UTC, written in local time
     /// </summary>
-    internal static Func<DateTime> Clock { get; set; } = () => DateTime.Now;
+    internal static Func<DateTime> Clock { get; set; } = () => DateTime.UtcNow;
 
     // The value of a name set by Blyant (null: none now: nothing copied, no file yet)
     private static string? ReservedValue(string name) => name.ToLowerInvariant() switch
@@ -125,9 +125,9 @@ internal static partial class ShellRegisters
         "cmd" => CommandsSource?.Invoke(),
         CalcName => Calc,
         // (as :ts in the editor: ISO, the same in every language)
-        "date" => Clock().ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
-        "time" => Clock().ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture),
-        _ => Clock().ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture)
+        "date" => IsoDateTime.Local(Clock(), "yyyy-MM-dd"),
+        "time" => IsoDateTime.Local(Clock(), "HH:mm"),
+        _ => IsoDateTime.Local(Clock(), "yyyy-MM-dd HH:mm:ss")
     };
 
     [GeneratedRegex("^[A-Za-z][A-Za-z0-9_]*$")]

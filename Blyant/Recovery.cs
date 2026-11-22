@@ -234,7 +234,8 @@ internal static class Recovery
     /// </summary>
     internal static string NewUntitledCopyPath()
     {
-        var stamp = DateTime.Now.ToString("yyyy-MM-dd HH.mm.ss", CultureInfo.InvariantCulture);
+        // (a name read by people: local time)
+        var stamp = IsoDateTime.Local(DateTime.UtcNow, "yyyy-MM-dd HH.mm.ss");
         var path = Path.Combine(Directory, UntitledPrefix + stamp + Extension);
         for (var number = 2; File.Exists(path); number++)
         {

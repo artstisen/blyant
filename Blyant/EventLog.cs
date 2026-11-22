@@ -47,7 +47,8 @@ internal static class EventLog
     {
         text = text.Replace('\r', ' ').Replace('\n', ' ');
         if (text.Length > MaxLineLength) text = text[..MaxLineLength] + "...";
-        var now = DateTime.Now;
+        // (taken in UTC, written in local time: the log is read by people)
+        var now = IsoDateTime.Local(DateTime.UtcNow);
         var line = "[" + now.ToString("HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture) + "] " + text;
         Write(now.ToString("yyyy-MM-dd ", System.Globalization.CultureInfo.InvariantCulture) + line);
         Lines.Add(line);

@@ -573,7 +573,7 @@ internal sealed partial class ShellSession
             var info = new FileInfo(path);
             var file = info.LinkTarget != null ? info.ResolveLinkTarget(true) as FileInfo : info;
             return file is { Exists: true }
-                ? file.LastWriteTime.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture)
+                ? IsoDateTime.Local(file.LastWriteTimeUtc, "yyyy-MM-dd HH:mm")
                 : null;
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException or
@@ -939,7 +939,7 @@ internal sealed partial class ShellSession
             }
 
             Line(Lang.F("Last search: {0} in {1} ({2})", Searched(last.Options), last.Directory,
-                last.When.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture)));
+                IsoDateTime.Local(last.When, "HH:mm")));
             ShowSearch(last, full, folder, bare, dates);
             return;
         }
@@ -986,7 +986,7 @@ internal sealed partial class ShellSession
     private void MakeSearch(string directory, FileSearch.Options options, bool full, bool folder, bool bare, bool dates)
     {
         FileExplorer.LogFileOperation("Search", directory + " (with subfolders)", DialogText.Success);
-        var search = new FindSearch(directory, options, DateTime.Now, FileSearch.Search(directory, options));
+        var search = new FindSearch(directory, options, DateTime.UtcNow, FileSearch.Search(directory, options));
         _lastFind = search;
         ShowSearch(search, full, folder, bare, dates);
     }

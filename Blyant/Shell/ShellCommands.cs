@@ -1813,7 +1813,7 @@ internal sealed partial class ShellSession
         var sizeTexts = sizes ? entries.Select(entry => SizeOf(entry.Path)).ToList() : null;
         var sizeWidth = sizeTexts is { Count: > 0 } ? sizeTexts.Max(TextMetrics.WidthOf) : 0;
         var rows = entries.Select((entry, i) => (new Item(entry.Path, false),
-            Padded(names[i], width) + "  " + entry.Opened.ToString("yyyy-MM-dd HH:mm") +
+            Padded(names[i], width) + "  " + IsoDateTime.Local(entry.Opened, "yyyy-MM-dd HH:mm") +
             (sizeTexts == null ? string.Empty : "  " + sizeTexts[i].PadLeft(sizeWidth)))).ToList();
         if (search != null)
         {

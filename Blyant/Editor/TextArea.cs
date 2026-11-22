@@ -1552,8 +1552,8 @@ public partial class TextArea
                 var info = new FileInfo(path);
                 if (info.Exists)
                 {
-                    rows.Add((DialogText.InfoCreated, info.CreationTime.ToString("yyyy-MM-dd HH:mm:ss")));
-                    rows.Add((DialogText.InfoChanged, info.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss")));
+                    rows.Add((DialogText.InfoCreated, IsoDateTime.Local(info.CreationTimeUtc, "yyyy-MM-dd HH:mm:ss")));
+                    rows.Add((DialogText.InfoChanged, IsoDateTime.Local(info.LastWriteTimeUtc, "yyyy-MM-dd HH:mm:ss")));
                 }
             }
             catch
@@ -1991,7 +1991,7 @@ public partial class TextArea
 
         var kinds = changes.Select(KindOf).ToList();
         var places = changes.Select(change => PlaceOf(change.Place)).ToList();
-        var times = changes.Select(change => change.Undone ? Lang.T("undone") : change.Time.ToString("HH:mm:ss"))
+        var times = changes.Select(change => change.Undone ? Lang.T("undone") : IsoDateTime.Local(change.Time, "HH:mm:ss"))
             .ToList();
         var kindWidth = kinds.Max(TextMetrics.WidthOf);
         var placeWidth = places.Max(TextMetrics.WidthOf);
