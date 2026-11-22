@@ -139,7 +139,7 @@ internal static partial class ShellRegisters
     /// value stay as typed
     /// </summary>
     internal static string Parenthesized(string line) => DollarsOrName().Replace(line, match =>
-        match.Groups[1].Success && Get(match.Groups[1].Value) != null ? "(" + match.Value + ")" : match.Value);
+        match.Groups[1].Success && Get(match.Groups[1].Value) is not null ? "(" + match.Value + ")" : match.Value);
 
     [GeneratedRegex(@"\$\$|\$([A-Za-z][A-Za-z0-9_]*)")]
     private static partial Regex DollarsOrName();
@@ -221,7 +221,7 @@ internal static partial class ShellRegisters
         string? current = null;
         foreach (var line in TextBuffer.Normalize(text).Split('\n'))
         {
-            if (current != null && line.StartsWith('\t'))
+            if (current is not null && line.StartsWith('\t'))
             {
                 Values[current] += "\n" + line[1..];
                 continue;
@@ -251,7 +251,7 @@ internal static partial class ShellRegisters
         try
         {
             // A file that could not be read is not written over: its registers would be lost
-            if (_text == null)
+            if (_text is null)
             {
                 // Read now: its registers, with the changes made since on top of them (none is lost)
                 if (Read() is not { } now) return Lang.F("{0} could not be read: the registers are not written", FileName);

@@ -33,7 +33,7 @@ internal sealed partial class ShellSession
         if (Change(argument) is { } add)
         {
             // ("fav remove [Drafts]": a folder)
-            if (!add && FolderFirst(Rest(argument)) != null) RemoveFavoriteFolder(Rest(argument));
+            if (!add && FolderFirst(Rest(argument)) is not null) RemoveFavoriteFolder(Rest(argument));
             else ChangeFavorites(Rest(argument), add);
             return;
         }
@@ -60,7 +60,7 @@ internal sealed partial class ShellSession
                 break;
             case "rename":
                 // ("fav rename [Drafts] Old drafts": a folder; "fav rename work writing": a list)
-                if (FolderFirst(Rest(argument)) != null) RenameFavoriteFolder(Rest(argument));
+                if (FolderFirst(Rest(argument)) is not null) RenameFavoriteFolder(Rest(argument));
                 else RenameFavoriteList(Rest(argument));
                 break;
             case "delete":
@@ -126,8 +126,8 @@ internal sealed partial class ShellSession
         }
 
         // (with a search: the line found, and the row opens at it)
-        var pattern = search == null ? null : FileSearch.WildcardText(search);
-        var lines = rows.Select(row => pattern == null || row.Item.IsDirectory
+        var pattern = search is null ? null : FileSearch.WildcardText(search);
+        var lines = rows.Select(row => pattern is null || row.Item.IsDirectory
             ? null
             : FileSearch.FirstLineWith(row.Item.Path, pattern)).ToList();
         for (var row = 0; row < rows.Count; row++)
@@ -143,8 +143,8 @@ internal sealed partial class ShellSession
         for (var row = 0; row < rows.Count; row++)
         {
             var favorite = items[rows[row].Index];
-            if (text != null && !Fits(text, favorite.Path, null)) continue;
-            if (pattern != null && lines[row] == null) continue;
+            if (text is not null && !Fits(text, favorite.Path, null)) continue;
+            if (pattern is not null && lines[row] is null) continue;
 
             // (the folder and subfolder it is in, above it, once)
             var folders = new List<int>();
@@ -166,7 +166,7 @@ internal sealed partial class ShellSession
 
         if (found == 0)
         {
-            Line(search != null
+            Line(search is not null
                 ? Lang.F("No favorite has {0} in a line", search)
                 : Lang.F("No favorites with {0} in them", text ?? string.Empty));
         }

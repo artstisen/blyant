@@ -66,7 +66,7 @@ internal static class EventLog
     internal static void StartFile(string path)
     {
         path = Path.GetFullPath(path);
-        if (_filePath != null && FileOperations.SamePath(_filePath, path)) return;
+        if (_filePath is not null && FileOperations.SamePath(_filePath, path)) return;
         _filePath = path;
         string? renamed = null;
         var old = Path.Combine(Path.GetDirectoryName(path) ?? string.Empty, OldFileName);
@@ -88,7 +88,7 @@ internal static class EventLog
         var earlier = new List<string>(Unwritten);
         Unwritten.Clear();
         foreach (var line in earlier) Write(line);
-        if (renamed != null) Add(DialogText.LogFile + renamed);
+        if (renamed is not null) Add(DialogText.LogFile + renamed);
     }
 
     /// <summary>
@@ -103,7 +103,7 @@ internal static class EventLog
     // Add a line (with the date) to the file, or keep it until there is one
     private static void Write(string line)
     {
-        if (_filePath == null)
+        if (_filePath is null)
         {
             Unwritten.Add(line);
             if (Unwritten.Count > MaxLines) Unwritten.RemoveAt(0);

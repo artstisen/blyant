@@ -15,7 +15,7 @@ internal static class FileOperations
     internal static long FileLength(string path)
     {
         var info = new FileInfo(path);
-        return info.LinkTarget != null && info.ResolveLinkTarget(true) is FileInfo target ? target.Length : info.Length;
+        return info.LinkTarget is not null && info.ResolveLinkTarget(true) is FileInfo target ? target.Length : info.Length;
     }
 
     /// <summary>
@@ -42,7 +42,7 @@ internal static class FileOperations
     internal static string FileTypeName(string extension)
     {
         var type = FileTypes.FirstOrDefault(type => type.Extension == extension);
-        if (type.Name == null) return extension;
+        if (type.Name is null) return extension;
         return type.Name == PlainText ? Lang.T("Plain text") : type.Name;
     }
 
@@ -139,7 +139,7 @@ internal static class FileOperations
         try
         {
             var info = new FileInfo(path);
-            return info.LinkTarget == null || info.ResolveLinkTarget(true) is { Exists: true };
+            return info.LinkTarget is null || info.ResolveLinkTarget(true) is { Exists: true };
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
@@ -167,7 +167,7 @@ internal static class FileOperations
                 var next = Path.Combine(current, parts[i]);
                 FileSystemInfo item = Directory.Exists(next) ? new DirectoryInfo(next) : new FileInfo(next);
                 if (!item.Exists) return Path.Combine(new[] { current }.Concat(parts[i..]).ToArray());
-                current = item.LinkTarget != null && item.ResolveLinkTarget(true) is { } target
+                current = item.LinkTarget is not null && item.ResolveLinkTarget(true) is { } target
                     ? Path.GetFullPath(target.FullName)
                     : next;
             }
@@ -247,7 +247,7 @@ internal static class FileOperations
         newPath = string.Empty;
         name = name.Trim();
         var problem = Tools.FileNameProblem(name);
-        if (problem != null) return problem;
+        if (problem is not null) return problem;
         var path = Path.Combine(parent, name);
         if (Exists(path)) return DialogText.NameExists;
         try
@@ -271,9 +271,9 @@ internal static class FileOperations
         newPath = string.Empty;
         newName = newName.Trim();
         var problem = Tools.FileNameProblem(newName);
-        if (problem != null) return problem;
+        if (problem is not null) return problem;
         var directory = Path.GetDirectoryName(Trimmed(path));
-        if (directory == null) return DialogText.InvalidFileName;
+        if (directory is null) return DialogText.InvalidFileName;
         var target = Path.Combine(directory, newName);
         var oldName = Path.GetFileName(Trimmed(path));
         if (oldName == newName)
@@ -397,14 +397,14 @@ internal static class FileOperations
         var info = new DirectoryInfo(source);
         foreach (var file in info.EnumerateFiles())
         {
-            if (progress != null && !progress(file.Name)) return false;
+            if (progress is not null && !progress(file.Name)) return false;
             file.CopyTo(Path.Combine(target, file.Name), false);
         }
 
         foreach (var directory in info.EnumerateDirectories())
         {
             var copy = Path.Combine(target, directory.Name);
-            if (directory.LinkTarget != null)
+            if (directory.LinkTarget is not null)
             {
                 // A link is copied as a link: what it points to is not followed
                 Directory.CreateSymbolicLink(copy, directory.LinkTarget);

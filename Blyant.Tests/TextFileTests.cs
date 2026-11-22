@@ -174,7 +174,7 @@ public class TextFileTests
     {
         var file = TextFile.Read(Encoding.UTF8.GetBytes(content));
         Assert.Equal(mixed, file.MixedLineEndings);
-        if (ending != null) Assert.Equal(ending, file.LineEnding);
+        if (ending is not null) Assert.Equal(ending, file.LineEnding);
         // Changed: saved with the new ones, and no longer mixed
         file.SetLineEnding("\n");
         Assert.False(file.MixedLineEndings);

@@ -31,8 +31,6 @@ public class FileManagementTests : IDisposable
         return path;
     }
 
-    #region File operations
-
     [Fact]
     public void Paths_AreCompared()
     {
@@ -284,10 +282,6 @@ public class FileManagementTests : IDisposable
         Assert.True(File.Exists(inTrash));
     }
 
-    #endregion
-
-    #region Saving
-
     [Fact]
     public void SavingAFile_KeepsTheTimeItWasCreated()
     {
@@ -406,10 +400,6 @@ public class FileManagementTests : IDisposable
         Assert.Equal("new text", File.ReadAllText(link));
     }
 
-    #endregion
-
-    #region Favorites
-
     [Fact]
     public void Favorites_AreSavedWithOrderAndColors()
     {
@@ -507,10 +497,6 @@ public class FileManagementTests : IDisposable
         Assert.Equal(new[] { other }, FileFavorites.Items.Select(f => f.Path));
         Assert.False(FileFavorites.PathsDeleted(new[] { In("new") }));
     }
-
-    #endregion
-
-    #region Folders of favorites
 
     // The list as text: folders in brackets (with "+" when closed), favorites in a folder after a blank space
     private static string Show()
@@ -742,8 +728,6 @@ public class FileManagementTests : IDisposable
         Assert.Equal(-1, FileFavorites.UndoRemove());
         Assert.Equal(0, FileFavorites.RemoveMany(new List<FileFavorites.Favorite>()));
     }
-
-    #endregion
 
     [Fact]
     public void Favorites_AFileAdded_GoesToTheTop_AndSeveralKeepTheirOrder()

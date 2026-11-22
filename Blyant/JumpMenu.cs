@@ -361,7 +361,7 @@ internal static class JumpMenu
                 ? BookmarkRows(filter)
                 : RowsOf(current).Where(row => filter.Length == 0 ||
                     row.Name.Contains(filter, StringComparison.OrdinalIgnoreCase)).ToList();
-            if (_select != null)
+            if (_select is not null)
             {
                 // The bookmark or folder that was moved, added or put back
                 var found = rows.FindIndex(row => ReferenceEquals(row.Bookmark, _select));
@@ -414,7 +414,7 @@ internal static class JumpMenu
             }
 
             var count = Count.Take();
-            if (count != null && key.Key == ConsoleKey.Escape)
+            if (count is not null && key.Key == ConsoleKey.Escape)
             {
                 full = false;
                 continue;
@@ -684,7 +684,7 @@ internal static class JumpMenu
         if (paneRows > 0) visible -= paneRows + 1;
         scroll = Math.Clamp(scroll, Math.Max(0, selected - visible + 1), selected);
         var before = _shown;
-        var partial = !full && before != null && before.Tab == tab && before.Filter == filter &&
+        var partial = !full && before is not null && before.Tab == tab && before.Filter == filter &&
                       before.Rows == rows.Count && before.Scroll == scroll && before.Moving == _moving &&
                       before.Marks == Marks.Count && before.LineWidth == Init.LineWidth &&
                       before.LineCount == Init.LineCount;
@@ -860,7 +860,7 @@ internal static class JumpMenu
             Console.Write(index == selected ? (_moving ? "<>" : "->") : "  ");
 
             // A marked bookmark has a "+" in front
-            if (row.Bookmark != null && Marks.Contains(row.Bookmark))
+            if (row.Bookmark is not null && Marks.Contains(row.Bookmark))
             {
                 Tools.SetCursorEx(first + line, left + 3 + numbers);
                 ConsoleColors.SetColors(ConsoleColors.ColorPreset.AttentionInverted);
@@ -879,7 +879,7 @@ internal static class JumpMenu
                 Tools.SetCursorEx(first + line, left + 3 + numbers);
                 Console.Write(" ");
             }
-            else if (row.IsFolder && row.Color == null) ConsoleColors.SetColors(ConsoleColors.ColorPreset.HeaderColor);
+            else if (row.IsFolder && row.Color is null) ConsoleColors.SetColors(ConsoleColors.ColorPreset.HeaderColor);
             else if (!exists) ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
             else if (row.Color is { } color) ConsoleColors.SetTextColor(color);
             else ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
@@ -910,7 +910,7 @@ internal static class JumpMenu
         {
             var entry = rows.Count > 0 ? rows[selected].Bookmark : null;
             NotePanes.Draw(first + visible, left + 2, width - 2, paneRows, lines, entry?.Note,
-                BookmarkPeek ? entry == null ? new List<string>() : PeekOf(entry, paneRows) : null);
+                BookmarkPeek ? entry is null ? new List<string>() : PeekOf(entry, paneRows) : null);
         }
 
         DrawPosition(top + height + 1, left, width, rows.Count == 0 ? 0 : selected + 1, rows.Count);
@@ -998,7 +998,7 @@ internal static class JumpMenu
             : JumpHistory.KindName(entry.Target.Kind) + "\t" + entry.Target.Target;
         var error = FileExplorer.EditListNote(entry.Note, NotePanes.NoteFileName(BookmarkNoteFile, key),
             DialogText.CaptionsJump, written => KeepBookmarkNote(entry, index, parentName, written));
-        if (error != null) _message = error;
+        if (error is not null) _message = error;
         // (the editor covered the page: the menu is drawn on an empty page, as after the help)
         Tools.ClearScreen();
     }
@@ -1010,7 +1010,7 @@ internal static class JumpMenu
         if (!Bookmarks.Items.Contains(entry))
         {
             var same = FindSameBookmark(entry, index, parentName);
-            if (same == null)
+            if (same is null)
             {
                 _message = Lang.T("The bookmark is no longer in the list: the note was not kept");
                 return;
@@ -1064,11 +1064,11 @@ internal static class JumpMenu
                 .FirstOrDefault(item => !item.IsFolder && item.Target.Kind != JumpKind.Page);
         }
 
-        if (entry == null || entry.Target.Kind == JumpKind.Page) return null;
+        if (entry is null || entry.Target.Kind == JumpKind.Page) return null;
         var path = entry.Target.FullPath;
         if (Directory.Exists(path)) return path;
         var directory = Path.GetDirectoryName(path);
-        return File.Exists(path) && directory != null && Directory.Exists(directory) ? directory : null;
+        return File.Exists(path) && directory is not null && Directory.Exists(directory) ? directory : null;
     }
 
     // W or ":new name": a new file, made with the box of the start page (the name, with ":new name" filled in, and Tab
@@ -1081,7 +1081,7 @@ internal static class JumpMenu
         ChoiceBox.Forget();
         var path = StartMenu.AskNewFile(DialogText.NewFile, name, FolderForNewFile(entry));
         ChoiceBox.Forget();
-        if (path == null) return null;
+        if (path is null) return null;
         if (path.IndexOfAny(new[] { '\t', '\r', '\n' }) >= 0)
         {
             // (it could not be kept in bookmarks.txt)
@@ -1100,7 +1100,7 @@ internal static class JumpMenu
         }
 
         var target = new JumpTarget(JumpKind.File, path);
-        Bookmarks.AddBelow(target, entry == null ? -1 : IndexOf(entry));
+        Bookmarks.AddBelow(target, entry is null ? -1 : IndexOf(entry));
         Marks.Clear();
         SaveBookmarks();
         return target;
@@ -1172,7 +1172,7 @@ internal static class JumpMenu
             ChoiceBox.Forget();
             var name = ChoiceBox.AskText(DialogText.FavoriteNewFolder, DialogText.TypeNameAndPressEnter,
                 DialogText.NameColon, string.Empty);
-            if (name == null) return;
+            if (name is null) return;
             var at = Bookmarks.AddFolder(name, index);
             if (at < 0)
             {
@@ -1189,7 +1189,7 @@ internal static class JumpMenu
 
         if (Bookmarks.MoveFolderTo(folder, into) < 0) return;
         _select = folder;
-        _message = DialogText.FavoriteMovedOne + (into == null ? DialogText.FavoriteNoFolder : into.Name);
+        _message = DialogText.FavoriteMovedOne + (into is null ? DialogText.FavoriteNoFolder : into.Name);
         SaveBookmarks();
     }
 
@@ -1227,7 +1227,7 @@ internal static class JumpMenu
             ChoiceBox.Forget();
             var name = ChoiceBox.AskText(DialogText.FavoriteNewFolder, DialogText.TypeNameAndPressEnter,
                 DialogText.NameColon, string.Empty);
-            if (name == null) return;
+            if (name is null) return;
             var index = Bookmarks.AddFolder(name, IndexOf(items[0]));
             if (index < 0)
             {
@@ -1245,7 +1245,7 @@ internal static class JumpMenu
         if (Bookmarks.MoveToFolder(items, folder) < 0) return;
         Marks.Clear();
         _select = folder ?? items[0];
-        var where = folder == null ? DialogText.FavoriteNoFolder : folder.Name;
+        var where = folder is null ? DialogText.FavoriteNoFolder : folder.Name;
         _message = items.Count == 1 ? DialogText.FavoriteMovedOne + where
             : Lang.F("Bookmarks moved: {0}, to {1}", items.Count, where);
         SaveBookmarks();
@@ -1279,7 +1279,7 @@ internal static class JumpMenu
             ChoiceBox.Forget();
             var asked = ChoiceBox.AskText(DialogText.FavoriteNewFolder, DialogText.TypeNameAndPressEnter,
                 DialogText.NameColon, string.Empty);
-            if (asked == null) return;
+            if (asked is null) return;
             name = asked;
         }
 
@@ -1316,7 +1316,7 @@ internal static class JumpMenu
             ChoiceBox.Forget();
             var asked = ChoiceBox.AskText(Lang.T("New subfolder"), DialogText.TypeNameAndPressEnter,
                 DialogText.NameColon, string.Empty);
-            if (asked == null) return;
+            if (asked is null) return;
             name = asked;
         }
 
@@ -1344,7 +1344,7 @@ internal static class JumpMenu
                     DialogText.NameColon, entry.Name)
                 : ChoiceBox.AskText(DialogText.BookmarkRename, DialogText.BookmarkRenameNote, DialogText.NameColon,
                     entry.Shown);
-            if (asked == null) return;
+            if (asked is null) return;
             name = asked;
         }
 
@@ -1611,7 +1611,7 @@ internal static class JumpMenu
     private static bool RunBookmarkCommand(Tab current, List<Row> rows, int selected, string filter)
     {
         var command = CommandLine.Read(CommandContext.Jump);
-        if (command == null) return false;
+        if (command is null) return false;
         // A name can follow the command
         if (CommandLine.Name(command) is "folder" or "subfolder" or "rename" or "import" or "new")
         {
@@ -1739,20 +1739,20 @@ internal static class JumpMenu
                 break;
             case "new":
                 _jumpTo = NewBookmarkFile(rows, selected, CommandLine.LastArgument);
-                if (_jumpTo != null) return true;
+                if (_jumpTo is not null) return true;
                 break;
             case "note":
-                if (row != null) EditBookmarkNote(row);
+                if (row is not null) EditBookmarkNote(row);
                 break;
             case "panes":
             case "peek":
                 ToggleBookmarkPanes(command == "peek");
                 break;
             case "rename":
-                if (row != null) RenameBookmark(row, CommandLine.LastArgument);
+                if (row is not null) RenameBookmark(row, CommandLine.LastArgument);
                 break;
             case "color":
-                if (row != null) PickBookmarkColor(row);
+                if (row is not null) PickBookmarkColor(row);
                 break;
             case "remove":
                 RemoveBookmarks(rows, selected);
@@ -1762,7 +1762,7 @@ internal static class JumpMenu
                 break;
             case "top":
             case "bottom":
-                if (row != null) MoveBookmarksToEnd(rows, selected, command == "top");
+                if (row is not null) MoveBookmarksToEnd(rows, selected, command == "top");
                 break;
             case "u":
             case "undo":

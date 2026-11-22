@@ -206,8 +206,6 @@ public class EditorSearchTests
         Assert.Equal(EditorMode.Command, editor.Mode);
     }
 
-    #region The find-and-replace box (:replace)
-
     [Fact]
     public void ReplaceCommand_AsksForTheBox()
     {
@@ -280,6 +278,4 @@ public class EditorSearchTests
         Assert.Equal("Pattern not found: a(b", editor.Message);
         Assert.Equal("text", editor.GetText());
     }
-
-    #endregion
 }

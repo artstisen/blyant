@@ -34,7 +34,7 @@ internal static class RecentBox
     /// The files of the box: the newest first, without the file being edited (null: none), at most MaxFiles
     /// </summary>
     internal static List<string> Files(IEnumerable<string> history, string? current) =>
-        history.Where(path => current == null || !FileOperations.SamePath(path, current)).Take(MaxFiles).ToList();
+        history.Where(path => current is null || !FileOperations.SamePath(path, current)).Take(MaxFiles).ToList();
 
     /// <summary>
     /// Show the box and let the user pick a file

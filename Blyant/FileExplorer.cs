@@ -303,7 +303,7 @@ internal static partial class FileExplorer
             // Where a folder was picked last (or the picking canceled)
             StartPaneIn(PickPane, place.Directory, place.Select);
         }
-        else if (mode == BrowseMode.PickFile && _pickFileStart != null &&
+        else if (mode == BrowseMode.PickFile && _pickFileStart is not null &&
                  System.IO.Path.GetDirectoryName(_pickFileStart) is { } startDirectory &&
                  System.IO.Directory.Exists(startDirectory))
         {
@@ -319,7 +319,7 @@ internal static partial class FileExplorer
         var jumpFile = _jumpFile;
         var jumpAt = _jumpAt;
         var jumpBack = _jumpBack;
-        if (mode == BrowseMode.Edit && _jumpDirectory != null && System.IO.Directory.Exists(_jumpDirectory))
+        if (mode == BrowseMode.Edit && _jumpDirectory is not null && System.IO.Directory.Exists(_jumpDirectory))
         {
             StartPaneIn(ActivePane, _jumpDirectory, _jumpSelect);
         }
@@ -402,7 +402,7 @@ internal static partial class FileExplorer
 
         // The folder picked: the one it is in, with it selected (the folders next to it are near)
         var parent = System.IO.Path.GetDirectoryName(place);
-        if (parent == null || !Directory.Exists(parent)) return null;
+        if (parent is null || !Directory.Exists(parent)) return null;
         return (parent, System.IO.Path.GetFileName(place));
     }
 
@@ -410,11 +410,11 @@ internal static partial class FileExplorer
     private static void RememberPickPlace(string? picked)
     {
         string place;
-        if (picked != null)
+        if (picked is not null)
         {
             place = System.IO.Path.TrimEndingDirectorySeparator(System.IO.Path.GetFullPath(picked));
             // A root ("C:\") has no folder it is in: started in itself
-            if (System.IO.Path.GetDirectoryName(place) == null) place = System.IO.Path.GetFullPath(picked);
+            if (System.IO.Path.GetDirectoryName(place) is null) place = System.IO.Path.GetFullPath(picked);
         }
         else if (PickPane.Directory.Length > 0)
         {
@@ -443,7 +443,7 @@ internal static partial class FileExplorer
     private static string? BrowseLoop(BrowseMode mode, string? jumpFile, (int Line, int Column)? jumpAt, bool jumpBack)
     {
         Init.ApplyAutoSize();
-        if (mode == BrowseMode.Edit && jumpFile != null && File.Exists(jumpFile))
+        if (mode == BrowseMode.Edit && jumpFile is not null && File.Exists(jumpFile))
         {
             // A jump to a file: the browser is only the way to the editor, so it is drawn when the editor is closed
             // (or when the file could not be opened, or a question is asked about it), not shown for a moment
@@ -496,7 +496,7 @@ internal static partial class FileExplorer
             }
 
             var count = _listCount.Take();
-            if (count != null && key.Key == ConsoleKey.Escape)
+            if (count is not null && key.Key == ConsoleKey.Escape)
             {
                 Draw(hadMessage);
                 continue;
@@ -504,12 +504,12 @@ internal static partial class FileExplorer
 
             // A key that uses the other pane (copy, move, compare ...) ends the peek first
             if (_peeking && !KeepsPeek(key)) StopPeek();
-            if (_mode == BrowseMode.Edit && _pending == null && Jump.IsKey(key))
+            if (_mode == BrowseMode.Edit && _pending is null && Jump.IsKey(key))
             {
                 // The Jump menu
                 Jump.Open();
             }
-            else if (_mode == BrowseMode.Edit && _pending == null && RecentBox.IsKey(key))
+            else if (_mode == BrowseMode.Edit && _pending is null && RecentBox.IsKey(key))
             {
                 // The latest files: the one picked is opened in the editor
                 RecentBox.Open();
@@ -522,12 +522,12 @@ internal static partial class FileExplorer
             {
                 FocusPeek();
             }
-            else if (_pending != null && key.Key is ConsoleKey.Escape or ConsoleKey.Q)
+            else if (_pending is not null && key.Key is ConsoleKey.Escape or ConsoleKey.Q)
             {
                 // Not copied or moved after all
                 StopSelectingTarget();
             }
-            else if (_pending != null && key.Key is ConsoleKey.S or ConsoleKey.Spacebar)
+            else if (_pending is not null && key.Key is ConsoleKey.S or ConsoleKey.Spacebar)
             {
                 CompleteSelectingTarget();
             }
@@ -536,10 +536,10 @@ internal static partial class FileExplorer
                 // The command is read as typed, as paths can be case sensitive
                 var command = CommandLine.Read(':', false,
                     _mode == BrowseMode.Edit ? CommandContext.Files : CommandContext.FilePicker);
-                var name = command == null ? string.Empty : CommandLine.Name(command).ToLowerInvariant();
+                var name = command is null ? string.Empty : CommandLine.Name(command).ToLowerInvariant();
                 // A command ends the peek first (":peek" ends it itself)
-                if (_peeking && command != null && name != "peek") StopPeek();
-                if (_pending != null && command != null &&
+                if (_peeking && command is not null && name != "peek") StopPeek();
+                if (_pending is not null && command is not null &&
                     name is not ("cd" or "home" or "data" or "projects" or "proj" or "pro" or "h" or "help" or "panes"))
                 {
                     // Only going to a directory while the place to copy or move to is selected
@@ -548,7 +548,7 @@ internal static partial class FileExplorer
                     name = string.Empty;
                 }
 
-                if (command != null)
+                if (command is not null)
                 {
                     // File names and paths are logged, but not something typed that is not a command
                     EventLog.Add(DialogText.LogFilesCommand + ": :" +
@@ -606,7 +606,7 @@ internal static partial class FileExplorer
                     {
                         _message = DialogText.DirectoryNotFound;
                     }
-                    else if (ProjectsBox.AddFolder(ActivePane.Directory) != null)
+                    else if (ProjectsBox.AddFolder(ActivePane.Directory) is not null)
                     {
                         _message = Lang.F("Added to the projects: {0}", System.IO.Path.GetFileName(
                             System.IO.Path.TrimEndingDirectorySeparator(ActivePane.Directory)));
@@ -650,7 +650,7 @@ internal static partial class FileExplorer
                     _message = FileNumbers ? DialogText.LineNumbersOn : DialogText.LineNumbersOff;
                     FileIo.SaveSettings();
                 }
-                else if (name == "cd" && command != null)
+                else if (name == "cd" && command is not null)
                 {
                     // Go to a directory by path (a relative path starts from the directory shown)
                     var path = CommandLine.Argument(command);
@@ -668,7 +668,7 @@ internal static partial class FileExplorer
                         _message = DialogText.DirectoryNotFound;
                     }
                 }
-                else if (command != null)
+                else if (command is not null)
                 {
                     var result = _mode == BrowseMode.Edit
                         ? RunFileCommand(name, CommandLine.Argument(command))
@@ -754,7 +754,7 @@ internal static partial class FileExplorer
             {
                 // (while the place to copy or move to is selected, only directories are opened)
                 if (ActivePane.Items.Count > 0 &&
-                    (_pending == null || ActivePane.Items[ActivePane.Index].IsDirectory) &&
+                    (_pending is null || ActivePane.Items[ActivePane.Index].IsDirectory) &&
                     Open(ActivePane.Items[ActivePane.Index]))
                 {
                     // A file was picked: the browser is closed
@@ -786,7 +786,7 @@ internal static partial class FileExplorer
                 // The projects (also while the place to copy or move to is selected)
                 OpenProject();
             }
-            else if (_pending != null)
+            else if (_pending is not null)
             {
                 // The other keys do nothing until the place to copy or move to is selected
             }
@@ -846,7 +846,7 @@ internal static partial class FileExplorer
             return;
         }
 
-        var found = selected == null ? -1 : pane.Items.FindIndex(item => item.Name == selected.Name);
+        var found = selected is null ? -1 : pane.Items.FindIndex(item => item.Name == selected.Name);
         pane.Index = found >= 0 ? found : Math.Min(index, Math.Max(0, pane.Items.Count - 1));
         pane.Top = top;
     }
@@ -871,8 +871,6 @@ internal static partial class FileExplorer
         return home.Length > 0 && Directory.Exists(home) ? home : System.IO.Path.GetFullPath(FileIo.GetDataDirectoryName());
     }
 
-    #region Directories
-
     private static void ChangeDirectory(string directory, string? select)
     {
         var previous = ActivePane.Directory;
@@ -893,7 +891,7 @@ internal static partial class FileExplorer
         if (ActivePane.Directory.Length == 0) return;
         var parent = Directory.GetParent(ActivePane.Directory)?.FullName;
         var name = System.IO.Path.GetFileName(ActivePane.Directory.TrimEnd(System.IO.Path.DirectorySeparatorChar));
-        if (parent != null)
+        if (parent is not null)
         {
             ChangeDirectory(parent, name);
         }
@@ -954,8 +952,8 @@ internal static partial class FileExplorer
         pane.MarksDirectory = pane.Directory;
         // The entry to select: by its name or path as written, else by a path as the file system compares them (a file
         // opened by a name in other capitals, on Windows and macOS: on Linux they are other files)
-        var index = select == null ? 0 : items.FindIndex(i => i.Name == select || i.Path == select);
-        if (index < 0 && select != null && System.IO.Path.IsPathRooted(select))
+        var index = select is null ? 0 : items.FindIndex(i => i.Name == select || i.Path == select);
+        if (index < 0 && select is not null && System.IO.Path.IsPathRooted(select))
         {
             index = items.FindIndex(i => FileOperations.SamePath(i.Path, select));
         }
@@ -997,10 +995,6 @@ internal static partial class FileExplorer
         if ((info.Attributes & (FileAttributes.Hidden | FileAttributes.System)) != 0) return false;
         return filter.Length == 0 || info.Name.Contains(filter, StringComparison.OrdinalIgnoreCase);
     }
-
-    #endregion
-
-    #region Opening files
 
     /// <returns>True if a file was picked and the browser must close</returns>
     // A jump opens a file before the browser is drawn (a question about the file draws it first)
@@ -1144,14 +1138,14 @@ internal static partial class FileExplorer
                 Splits.Load();
                 TextArea.NextReference = Splits.Get(file.Path);
                 // The recovered text is opened as changes that are not saved yet
-                if (recovered != null) modified = true;
-                TextArea.NextRecoveredCopy = recovered != null ? recoveredCopy : null;
+                if (recovered is not null) modified = true;
+                TextArea.NextRecoveredCopy = recovered is not null ? recoveredCopy : null;
                 var textArea = new TextArea(Console.CursorLeft, Console.CursorTop, Init.LineWidth - 1,
                     Init.LineCount - 3, recovered ?? _file?.Text ?? string.Empty, cursorIndex, false, false, false,
                     TextArea.SaveAsFile, modified);
                 recovered = null;
                 textArea.ClearUndoRedoCache();
-                if (_file != null) file = _file; // Renamed in the editor
+                if (_file is not null) file = _file; // Renamed in the editor
                 KeepCaret(file.Path, textArea);
                 // ":new name": the new file (made next to this one) in its place
                 if (TextArea.TakeNewDocumentRequest() is { } newName)
@@ -1200,7 +1194,7 @@ internal static partial class FileExplorer
         _file = TextFile.Create(string.Empty);
         UntitledCopy = Recovery.NewUntitledCopyPath();
         EventLog.Add(DialogText.LogFile + "Open: (blank page)" +
-                     (recoveredCopy != null ? " from " + recoveredCopy : string.Empty));
+                     (recoveredCopy is not null ? " from " + recoveredCopy : string.Empty));
         try
         {
             Tools.ClearScreen();
@@ -1250,7 +1244,7 @@ internal static partial class FileExplorer
     {
         copyPath = string.Empty;
         var copy = Recovery.Find(file.Path);
-        if (copy == null) return null;
+        if (copy is null) return null;
         copyPath = copy.CopyPath;
         if (Recovery.WrittenByOtherRunning(copy))
         {
@@ -1327,7 +1321,7 @@ internal static partial class FileExplorer
     /// <returns>DialogText.Success, an error message, or empty if the box was closed without a name</returns>
     internal static string RenameCurrentFile(string name)
     {
-        if (_file == null) return DialogText.FileNotFound;
+        if (_file is null) return DialogText.FileNotFound;
         if (IsUntitled) return DialogText.SaveFirst;
         var path = System.IO.Path.GetFullPath(_file.Path);
         var settings = System.IO.Path.GetFullPath(System.IO.Path.Combine(FileIo.GetDataDirectoryName(),
@@ -1342,7 +1336,7 @@ internal static partial class FileExplorer
         {
             ChoiceBox.Forget();
             var asked = AskName(DialogText.RenameFile, System.IO.Path.GetFileName(path));
-            if (asked == null) return string.Empty;
+            if (asked is null) return string.Empty;
             name = asked;
         }
 
@@ -1400,7 +1394,7 @@ internal static partial class FileExplorer
 
     internal static void KeepCaretOfCurrentFile(TextArea textArea)
     {
-        if (_file != null && !IsUntitled) KeepCaret(_file.Path, textArea);
+        if (_file is not null && !IsUntitled) KeepCaret(_file.Path, textArea);
     }
 
     // Keep where the cursor is in a file that is closed in the editor: in the history, and in the favorites if
@@ -1510,11 +1504,11 @@ internal static partial class FileExplorer
             EventLog.Add(DialogText.LogFile + "Open: " + _file.Path);
             Tools.ClearScreen();
             Actions.DrawEditFileMenu();
-            TextArea.NextRecoveredCopy = recovered != null ? recoveredCopy : null;
+            TextArea.NextRecoveredCopy = recovered is not null ? recoveredCopy : null;
             var text = recovered ?? _file.Text;
             var textArea = new TextArea(Console.CursorLeft, Console.CursorTop, Init.LineWidth - 1,
                 Init.LineCount - 3, text, Snippets.IndexOfLine(text, line), false, false, false,
-                TextArea.SaveAsFile, recovered != null);
+                TextArea.SaveAsFile, recovered is not null);
             textArea.ClearUndoRedoCache();
             TextArea.TakeSideFileRequest();
         }
@@ -1533,12 +1527,12 @@ internal static partial class FileExplorer
     /// <summary>
     /// The name of the file being edited (for the title of the editor)
     /// </summary>
-    internal static string CurrentFileName => _file == null ? string.Empty : System.IO.Path.GetFileName(_file.Path);
+    internal static string CurrentFileName => _file is null ? string.Empty : System.IO.Path.GetFileName(_file.Path);
 
     /// <summary>
     /// The text being edited is a blank page: not a file yet (it is named when it is saved)
     /// </summary>
-    internal static bool IsUntitled => _file != null && _file.Path.Length == 0;
+    internal static bool IsUntitled => _file is not null && _file.Path.Length == 0;
 
     /// <summary>
     /// The file of the recovery copy of the blank page being edited (empty if it is not one)
@@ -1556,7 +1550,7 @@ internal static partial class FileExplorer
     /// The full path of the file being edited (empty if none)
     /// </summary>
     internal static string CurrentFilePath =>
-        _file == null || _file.Path.Length == 0 ? string.Empty : System.IO.Path.GetFullPath(_file.Path);
+        _file is null || _file.Path.Length == 0 ? string.Empty : System.IO.Path.GetFullPath(_file.Path);
 
     /// <summary>
     /// The type and encoding of the file being edited, and line endings of the file being edited, for the bottom line of the editor:
@@ -1566,7 +1560,7 @@ internal static partial class FileExplorer
     {
         get
         {
-            if (_file == null) return string.Empty;
+            if (_file is null) return string.Empty;
             // (a blank page is Markdown until it is saved)
             var extension = IsUntitled ? FileOperations.DefaultExtension : System.IO.Path.GetExtension(_file.Path);
             // (".blyant" is a type, as in the file browser)
@@ -1588,7 +1582,7 @@ internal static partial class FileExplorer
     /// </summary>
     internal static bool SetLineEnding(string ending)
     {
-        if (_file == null || _file.LineEnding == ending) return false;
+        if (_file is null || _file.LineEnding == ending) return false;
         _file.SetLineEnding(ending);
         return true;
     }
@@ -1612,7 +1606,7 @@ internal static partial class FileExplorer
     /// Save the file being edited with the byte order mark of UTF-8, or without it, from now on (":bom on"). False if
     /// it is so already, or no file is edited
     /// </summary>
-    internal static bool SetBom(bool on) => _file != null && _file.SetBom(on);
+    internal static bool SetBom(bool on) => _file is not null && _file.SetBom(on);
 
     /// <summary>
     /// What the editor tells when the file was read with more than one kind of line endings (null: one kind)
@@ -1629,7 +1623,7 @@ internal static partial class FileExplorer
     internal static string ReloadCurrentFile(out string text)
     {
         text = string.Empty;
-        if (_file == null) return DialogText.FileNotFound;
+        if (_file is null) return DialogText.FileNotFound;
         if (IsUntitled) return DialogText.SaveFirst;
         try
         {
@@ -1652,12 +1646,12 @@ internal static partial class FileExplorer
     /// <returns>DialogText.Success or an error message</returns>
     internal static string SaveCurrentFile(string text, string name = "")
     {
-        if (_file == null) return DialogText.StatusUnableToSave;
+        if (_file is null) return DialogText.StatusUnableToSave;
         if (IsUntitled)
         {
             // A blank page: where and as what is asked (as for a new file), and the file is made
             var path = StartMenu.AskNewFile(DialogText.SaveAs, name);
-            if (path == null) return DialogText.NotSaved;
+            if (path is null) return DialogText.NotSaved;
             try
             {
                 FileIo.CreateNewFile(path);
@@ -1700,7 +1694,7 @@ internal static partial class FileExplorer
     /// <returns>Null if it was saved, else why not (empty: the user gave up)</returns>
     internal static string? SaveCurrentFileAs(string text, string name, bool saveAs)
     {
-        if (_file == null || IsUntitled) return DialogText.NoFilePath;
+        if (_file is null || IsUntitled) return DialogText.NoFilePath;
         var original = System.IO.Path.GetFullPath(_file.Path);
         var path = PathNextToCurrent(original, name);
         var fileName = System.IO.Path.GetFileName(path);
@@ -1780,7 +1774,7 @@ internal static partial class FileExplorer
     /// </summary>
     internal static string? NewFileProblem(string name)
     {
-        if (_file == null) return DialogText.NoFilePath;
+        if (_file is null) return DialogText.NoFilePath;
         if (IsUntitled) return DialogText.SaveFirst;
         if (Tools.FileNameProblem(name) is { } problem) return problem;
         var path = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(_file.Path) ?? string.Empty, name);
@@ -1793,7 +1787,7 @@ internal static partial class FileExplorer
     /// <returns>Null if it was made, else why it was not</returns>
     internal static string? CreateFileNextToCurrent(string name)
     {
-        if (_file == null) return DialogText.NoFilePath;
+        if (_file is null) return DialogText.NoFilePath;
         var path = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(_file.Path) ?? string.Empty, name);
         try
         {
@@ -1824,7 +1818,7 @@ internal static partial class FileExplorer
         if (name.Length == 0)
         {
             var asked = AskName(DialogText.NewFile, string.Empty);
-            if (asked == null) return;
+            if (asked is null) return;
             name = asked;
         }
 
@@ -1832,7 +1826,7 @@ internal static partial class FileExplorer
         var path = System.IO.Path.Combine(ActivePane.Directory, name);
         var problem = Tools.FileNameProblem(name) ??
                       (File.Exists(path) || Directory.Exists(path) ? DialogText.NameExists : null);
-        if (problem != null)
+        if (problem is not null)
         {
             _message = problem;
             LogOperation("New file", path, _message);
@@ -1853,10 +1847,6 @@ internal static partial class FileExplorer
         Edit(TextFile.Create(path), false);
         LoadItems(name);
     }
-
-    #endregion
-
-    #region Drawing
 
     private static int _shownActive = -1; // The pane that had the focus when the browser was drawn last
     private static bool _shownDual;
@@ -1916,7 +1906,7 @@ internal static partial class FileExplorer
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
         Tools.ClearScreen();
         // While the place to copy or move to is selected, the label stands out
-        Menu.WriteModeLabel(_caption, string.Empty, 0, _pending != null);
+        Menu.WriteModeLabel(_caption, string.Empty, 0, _pending is not null);
         Menu.WriteNameInTopBar();
         if (Unprotected && _mode == BrowseMode.Edit)
         {
@@ -1998,7 +1988,7 @@ internal static partial class FileExplorer
         var label = peek ? Lang.T("PEEK") : Lang.F("PANE {0}", number + 1);
         if (focused)
         {
-            ConsoleColors.SetColors(_pending != null
+            ConsoleColors.SetColors(_pending is not null
                 ? ConsoleColors.ColorPreset.AttentionInverted
                 : ConsoleColors.ColorPreset.HighlightInverted);
             Console.Write(" " + label + " ");
@@ -2128,7 +2118,7 @@ internal static partial class FileExplorer
             {
                 BrowseMode.PickFile => DialogText.FilePickKeys,
                 BrowseMode.PickDirectory => DialogText.DirectoryPickKeys,
-                _ when _pending != null => (IsDual ? DialogText.FileTargetDualKeys : DialogText.FileTargetKeys)
+                _ when _pending is not null => (IsDual ? DialogText.FileTargetDualKeys : DialogText.FileTargetKeys)
                     .Replace("{0}", _pending.IsMove ? DialogText.FileMoveHere : DialogText.FileCopyHere),
                 // What can be done with the marked files and directories
                 _ when ActivePane.Marks.Count > 0 => DialogText.FileMarkedKeys,
@@ -2139,6 +2129,4 @@ internal static partial class FileExplorer
 
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
     }
-
-    #endregion
 }

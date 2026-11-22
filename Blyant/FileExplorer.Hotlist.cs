@@ -84,7 +84,7 @@ internal static partial class FileExplorer
             }
 
             var count = _listCount.Take();
-            if (count != null && key.Key == ConsoleKey.Escape)
+            if (count is not null && key.Key == ConsoleKey.Escape)
             {
                 redraw = hadMessage;
                 continue;
@@ -125,21 +125,21 @@ internal static partial class FileExplorer
             if (key.KeyChar == ':')
             {
                 var command = CommandLine.Read(CommandContext.Hotlist);
-                if (command != null && CommandLine.Name(command) is "exit" or "qa")
+                if (command is not null && CommandLine.Name(command) is "exit" or "qa")
                 {
                     // Leave Blyant (asked first)
                     Jump.Exit();
                     continue;
                 }
 
-                if (command != null && CommandLine.Name(command) == "shell")
+                if (command is not null && CommandLine.Name(command) == "shell")
                 {
                     // Go on as the shell, in the directory of the file browser
                     Jump.ToShell(directory: ShellDirectory);
                     continue;
                 }
 
-                if (command != null && CommandLine.Name(command) is "jump" or "ju" or "jmp" or "board" or "corkboard"
+                if (command is not null && CommandLine.Name(command) is "jump" or "ju" or "jmp" or "board" or "corkboard"
                         or "favorites" or "favs" or "history" or "hist" or "hotlist" or "hot" or "browse"
                         or "file" or "open")
                 {
@@ -149,21 +149,21 @@ internal static partial class FileExplorer
                     continue;
                 }
 
-                if (command != null && CommandLine.Name(command) == "book")
+                if (command is not null && CommandLine.Name(command) == "book")
                 {
                     // ":book 3": jump to bookmark 3
                     Jump.ToBookmark(CommandLine.Argument(command));
                     continue;
                 }
 
-                if (command != null && CommandLine.Name(command) == "log")
+                if (command is not null && CommandLine.Name(command) == "log")
                 {
                     // The log, on top of the page
                     Jump.ShowLog();
                     continue;
                 }
 
-                if (command != null && CommandLine.Name(command) is "colorscheme" or "colo")
+                if (command is not null && CommandLine.Name(command) is "colorscheme" or "colo")
                 {
                     // ":colorscheme name": another color scheme, the page drawn again in it
                     _hotlistMessage = SchemeEditor.UseByName(CommandLine.Argument(command), out _);
@@ -171,7 +171,7 @@ internal static partial class FileExplorer
                 }
 
                 // A name can follow ":rename" and ":bookmark"
-                if (command != null && CommandLine.Name(command) is "rename" or "bookmark" or "bookmark!")
+                if (command is not null && CommandLine.Name(command) is "rename" or "bookmark" or "bookmark!")
                 {
                     command = CommandLine.Name(command);
                 }
@@ -383,7 +383,7 @@ internal static partial class FileExplorer
     private static bool GoToHotlistDirectory(int number)
     {
         var path = HotlistPath(number);
-        if (path == null) return false;
+        if (path is null) return false;
         ChangeDirectory(path, null);
         return true;
     }
@@ -391,7 +391,7 @@ internal static partial class FileExplorer
     private static void ShowHotlistInfo(int number)
     {
         var path = HotlistPath(number);
-        if (path == null) return;
+        if (path is null) return;
         _message = string.Empty;
         ShowInfo(new Item(HotlistName(path), path, true, 0));
         _hotlistMessage = _message;
@@ -433,7 +433,7 @@ internal static partial class FileExplorer
         {
             var asked = ChoiceBox.AskText(DialogText.HotlistRename, DialogText.HotlistRenameNote,
                 DialogText.NameColon, entry.Shown);
-            if (asked == null) return;
+            if (asked is null) return;
             name = asked;
         }
 
@@ -554,8 +554,6 @@ internal static partial class FileExplorer
         if (DirectoryHotlist.PathChanged(oldPath, newPath)) DirectoryHotlist.Save();
         Projects.PathChanged(oldPath, newPath);
     }
-
-    #region Drawing
 
     // The column of the line between the columns of the list (none when it is empty)
     private static int[] _hotlistLines = Array.Empty<int>();
@@ -702,6 +700,4 @@ internal static partial class FileExplorer
 
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
     }
-
-    #endregion
 }

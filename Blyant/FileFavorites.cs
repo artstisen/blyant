@@ -242,7 +242,7 @@ internal static class FileFavorites
             line = line.TrimStart(' ');
             if (Notes.IsNote(line, out var note))
             {
-                if (last != null) last.Note = note;
+                if (last is not null) last.Note = note;
                 continue;
             }
 
@@ -330,7 +330,7 @@ internal static class FileFavorites
         try
         {
             var directory = Path.GetDirectoryName(Path.GetFullPath(FilePath));
-            if (directory != null) FileIo.CreateDirectory(directory);
+            if (directory is not null) FileIo.CreateDirectory(directory);
             FileIo.WriteAllBytesSafe(FilePath, new UTF8Encoding(false).GetBytes(Serialize()));
             return DialogText.Success;
         }
@@ -497,7 +497,7 @@ internal static class FileFavorites
     {
         try
         {
-            return new DirectoryInfo(folder).LinkTarget != null;
+            return new DirectoryInfo(folder).LinkTarget is not null;
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
@@ -568,7 +568,7 @@ internal static class FileFavorites
         while (folders.Count > 0)
         {
             var folder = folders.Pop();
-            if (progress != null && !progress(folder, files.Count)) return new FolderFiles(name, files, Stopped: true);
+            if (progress is not null && !progress(folder, files.Count)) return new FolderFiles(name, files, Stopped: true);
             try
             {
                 files.AddRange(FilesIn(folder, max + 1 - files.Count, ref other));
@@ -679,8 +679,6 @@ internal static class FileFavorites
         if (index >= 0 && index < List.Count) List[index].Color = color;
     }
 
-    #region Folders
-
     /// <summary>
     /// A name that can be used for a folder (the brackets mark a folder in the file)
     /// </summary>
@@ -764,8 +762,6 @@ internal static class FileFavorites
     /// The number of favorites in a folder, with those in its subfolders
     /// </summary>
     internal static int FolderCount(int index) => Folders.FolderCount(index);
-
-    #endregion
 
     /// <summary>
     /// Move a favorite or a folder one place up or down in the list.

@@ -35,7 +35,7 @@ public class EditorFixTests : IDisposable
         for (var i = 0; i < lines.Length; i++)
         {
             var styles = SyntaxHighlighter.Highlight(type, lines[i], state, out state);
-            result[i] = styles == null
+            result[i] = styles is null
                 ? new string('.', lines[i].Length)
                 : string.Concat(styles.Select(style => Codes[(int)style]));
         }

@@ -82,9 +82,9 @@ internal sealed partial class ShellSession
             var colon = part.IndexOf(':');
             var column = colon >= 0 ? part[(colon + 1)..] : null;
             if (colon >= 0) part = part[..colon];
-            if (!IsCount(part, out var number) || (column != null && !IsCount(column, out _))) return false;
+            if (!IsCount(part, out var number) || (column is not null && !IsCount(column, out _))) return false;
             numbers.Add(number);
-            if (column != null) columns.Add((number, int.Parse(column, CultureInfo.InvariantCulture)));
+            if (column is not null) columns.Add((number, int.Parse(column, CultureInfo.InvariantCulture)));
         }
 
         first = numbers[0];
@@ -278,7 +278,7 @@ internal sealed partial class ShellSession
         var changed = action == "move"
             ? LineWords.Moved(line, first, last, moveBefore, target, blanks)
             : LineWords.Change(line, first, last, action, text, blanks);
-        if (changed == null)
+        if (changed is null)
         {
             Error(Lang.T("The words cannot be moved there: give the numbers words shows now"));
             return;

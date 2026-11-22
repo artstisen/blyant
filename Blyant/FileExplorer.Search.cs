@@ -44,7 +44,7 @@ internal static partial class FileExplorer
             // (closing the box of a new search returns to the files found before)
             var result = BrowseFound();
             // "S" in the list of files found: search again
-            if (result != null) return result.Value;
+            if (result is not null) return result.Value;
             Draw(true);
         }
     }
@@ -158,7 +158,7 @@ internal static partial class FileExplorer
             }
 
             var count = _listCount.Take();
-            if (count != null && key.Key == ConsoleKey.Escape)
+            if (count is not null && key.Key == ConsoleKey.Escape)
             {
                 redraw = hadMessage;
                 continue;
@@ -168,21 +168,21 @@ internal static partial class FileExplorer
             if (key.KeyChar == ':')
             {
                 var command = CommandLine.Read(CommandContext.Search);
-                if (command != null && CommandLine.Name(command) is "exit" or "qa")
+                if (command is not null && CommandLine.Name(command) is "exit" or "qa")
                 {
                     // Leave Blyant (asked first)
                     Jump.Exit();
                     continue;
                 }
 
-                if (command != null && CommandLine.Name(command) == "shell")
+                if (command is not null && CommandLine.Name(command) == "shell")
                 {
                     // Go on as the shell, in the directory of the file browser
                     Jump.ToShell(directory: ShellDirectory);
                     continue;
                 }
 
-                if (command != null && CommandLine.Name(command) is "jump" or "ju" or "jmp" or "board" or "corkboard"
+                if (command is not null && CommandLine.Name(command) is "jump" or "ju" or "jmp" or "board" or "corkboard"
                         or "favorites" or "favs" or "history" or "hist" or "hotlist" or "hot" or "browse"
                         or "file" or "open")
                 {
@@ -192,21 +192,21 @@ internal static partial class FileExplorer
                     continue;
                 }
 
-                if (command != null && CommandLine.Name(command) == "book")
+                if (command is not null && CommandLine.Name(command) == "book")
                 {
                     // ":book 3": jump to bookmark 3
                     Jump.ToBookmark(CommandLine.Argument(command));
                     continue;
                 }
 
-                if (command != null && CommandLine.Name(command) == "log")
+                if (command is not null && CommandLine.Name(command) == "log")
                 {
                     // The log, on top of the page
                     Jump.ShowLog();
                     continue;
                 }
 
-                if (command != null && CommandLine.Name(command) is "colorscheme" or "colo")
+                if (command is not null && CommandLine.Name(command) is "colorscheme" or "colo")
                 {
                     // ":colorscheme name": another color scheme, the page drawn again in it
                     _foundMessage = SchemeEditor.UseByName(CommandLine.Argument(command), out _);
@@ -214,7 +214,7 @@ internal static partial class FileExplorer
                 }
 
                 // A name can follow ":bookmark"
-                if (command != null && CommandLine.Name(command) is "bookmark" or "bookmark!")
+                if (command is not null && CommandLine.Name(command) is "bookmark" or "bookmark!")
                 {
                     command = CommandLine.Name(command);
                 }
@@ -232,11 +232,11 @@ internal static partial class FileExplorer
                         Tools.WriteEditorHelp(Tools.HelpTopic.Search);
                         break;
                     case "pin":
-                        if (selected != null) _foundMessage = PinFile(selected.Path);
+                        if (selected is not null) _foundMessage = PinFile(selected.Path);
                         break;
                     case "bookmark":
                     case "bookmark!":
-                        if (selected == null) break;
+                        if (selected is null) break;
                         _foundMessage = BookmarkPlace(selected.Path, selected.IsDirectory, CommandLine.LastArgument,
                             command == "bookmark!");
                         break;
@@ -251,7 +251,7 @@ internal static partial class FileExplorer
                         ShowFoundInfo(selected);
                         break;
                     case "goto":
-                        if (selected != null && ShowFoundInBrowser(selected)) return KeyResult.Handled;
+                        if (selected is not null && ShowFoundInBrowser(selected)) return KeyResult.Handled;
                         break;
                     case "fav":
                     case "favorite":
@@ -331,7 +331,7 @@ internal static partial class FileExplorer
             {
                 return null;
             }
-            else if (selected == null)
+            else if (selected is null)
             {
                 // The other keys need a file to work on
             }
@@ -409,7 +409,7 @@ internal static partial class FileExplorer
     {
         if (!FoundExists(result)) return false;
         var parent = System.IO.Path.GetDirectoryName(result.Path);
-        if (parent == null || !Directory.Exists(parent))
+        if (parent is null || !Directory.Exists(parent))
         {
             _foundMessage = DialogText.DirectoryNotFound;
             return false;
@@ -421,7 +421,7 @@ internal static partial class FileExplorer
 
     private static void ShowFoundInfo(FileSearch.Result? result)
     {
-        if (result == null || !FoundExists(result)) return;
+        if (result is null || !FoundExists(result)) return;
         _message = string.Empty;
         ShowInfo(new Item(System.IO.Path.GetFileName(result.Path), result.Path, result.IsDirectory, result.Size));
         _foundMessage = _message;
@@ -430,13 +430,11 @@ internal static partial class FileExplorer
 
     private static void ToggleFoundFavorite(FileSearch.Result? result)
     {
-        if (result == null || !FoundExists(result) || !ConfirmNotesRemoved(new[] { result.Path })) return;
+        if (result is null || !FoundExists(result) || !ConfirmNotesRemoved(new[] { result.Path })) return;
         _foundMessage = FileFavorites.Toggle(result.Path) ? DialogText.FavoriteAdded : DialogText.FavoriteRemoved;
         var saved = FileFavorites.Save();
         if (saved != DialogText.Success) _foundMessage = saved;
     }
-
-    #region Drawing
 
     private static int FoundPageSize => Init.LineCount - ListTop - 2;
     // The columns of the lines between the columns of the list (none when it is empty)
@@ -611,6 +609,4 @@ internal static partial class FileExplorer
 
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
     }
-
-    #endregion
 }

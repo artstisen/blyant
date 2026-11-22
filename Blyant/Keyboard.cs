@@ -6,8 +6,6 @@ internal static class Keyboard
 {
     private static ConsoleKeyInfo _c;
 
-    #region Navigation keys
-
     public static ConsoleKeyInfo ToNavigationKey(ConsoleKeyInfo key)
     {
         var arrow = key.KeyChar switch
@@ -29,10 +27,6 @@ internal static class Keyboard
         return key.Key == letter && (key.Modifiers & ConsoleModifiers.Control) != 0 &&
                (key.Modifiers & ConsoleModifiers.Alt) == 0;
     }
-
-    #endregion
-
-    #region The key of a page
 
     // A key to be read next, handed back by a page that closed before it could use it (a peek closed by Esc, with
     // the key typed right after it, see TextArea.ReadKey)
@@ -159,15 +153,11 @@ internal static class Keyboard
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern uint WaitForSingleObject(IntPtr handle, uint milliseconds);
 
-    #endregion
-
-    #region Await keypress
     public static void AwaitAnyKey()
     {
         Console.Write(DialogText.HitAnyKeyToContinue);
         _c = Console.ReadKey(true);
     }
-
 
     public static bool AwaitAnyKeyOrEscape()
     {
@@ -189,10 +179,9 @@ internal static class Keyboard
         _c = Console.ReadKey(true);
         return _c;
     }
-    #endregion
 }
 
-class Shortcut
+internal sealed class Shortcut
 {
     private string _key;
     private string _description;
@@ -258,5 +247,4 @@ class Shortcut
             Console.Write("\n");
         }
     }
-
 }

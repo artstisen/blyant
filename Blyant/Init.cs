@@ -5,7 +5,6 @@ namespace Blyant;
 
 internal static class Init
 {
-    #region Output dimensions
     // Min/Max line values
     // Standard line count (row count)
     internal const byte MinLineCount = 23; // Default
@@ -51,7 +50,6 @@ internal static class Init
         LineCount = MinLineCount;
     }
 
-  
     /// <summary>
     /// Use the size of the terminal window as the output dimensions (setting "autosize", on unless turned off)
     /// </summary>
@@ -129,7 +127,6 @@ internal static class Init
     internal static void SetLineWidth(byte width)
     {
         LineWidth = width is >= MinLineWidth and <= MaxLineWidth ? width : MinLineWidth;
-
     }
 
     internal static void SetLineCount(byte count)
@@ -169,7 +166,6 @@ internal static class Init
         }
     }
 
-
     private const char TempOutputCornerChar = '+';
 
     internal static bool TestOutputDimensions()
@@ -207,7 +203,6 @@ internal static class Init
             return false;
         }
     }
-
 
     internal static void DisplayOutputDimensions()
     {
@@ -263,12 +258,6 @@ internal static class Init
         }
     }
 
-    #endregion
-
-
-    #region Console init sequence
-
-
     internal static bool DimensionsExceptionCaught { get; set; }
     internal static bool DataDirectoryCreated { get; set; }
     internal static bool UsingDefaultSettings { get; set; }
@@ -278,7 +267,7 @@ internal static class Init
 
     private static void WatchContinue()
     {
-        if (_continueSignal != null || OperatingSystem.IsWindows()) return;
+        if (_continueSignal is not null || OperatingSystem.IsWindows()) return;
         try
         {
             _continueSignal = PosixSignalRegistration.Create(PosixSignal.SIGCONT, _ => Tools.NoteContinued());
@@ -490,6 +479,4 @@ internal static class Init
         Console.Write(Tools.GetProgressBar(value, 18));
         Tools.LoadCursorPosition(0);
     }
-
-    #endregion
 }

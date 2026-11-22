@@ -148,7 +148,7 @@ internal sealed partial class ShellSession
         {
             // (in quotes: as it is, the blanks in it too, and "" a quote)
             var unquoted = Unquoted(rest);
-            exact = unquoted != null;
+            exact = unquoted is not null;
             text = unquoted ?? rest;
             if (text.Length == 0)
             {
@@ -170,7 +170,7 @@ internal sealed partial class ShellSession
         // At a column: every line must have it, or none is changed
         // (blank lines are left as they are, as start and end leave them)
         if (kind == "at" && picked.FirstOrDefault(number => lines[number - 1].Trim().Length > 0 &&
-                LineWords.IndexOfColumn(lines[number - 1], atColumn) == null) is var tooShort and > 0)
+                LineWords.IndexOfColumn(lines[number - 1], atColumn) is null) is var tooShort and > 0)
         {
             Error(Lang.F("Line {0} has no column {1}: nothing changed", tooShort, atColumn));
             return;
@@ -184,7 +184,7 @@ internal sealed partial class ShellSession
         for (var i = 0; i < picked.Count; i++)
         {
             var number = picked[i];
-            var edited = sorted != null ? sorted[i] : EditedLine(lines[number - 1], kind, text, exact, replacement);
+            var edited = sorted is not null ? sorted[i] : EditedLine(lines[number - 1], kind, text, exact, replacement);
             if (edited == lines[number - 1]) continue;
             lines[number - 1] = edited;
             changed.Add(number);
@@ -211,10 +211,10 @@ internal sealed partial class ShellSession
 
         LastList = new List<Item> { new(item.Path, false, (changed[0], 1)) };
         // (sorted: all the lines, in their new order)
-        var shown = sorted != null ? picked.ToList() : changed;
+        var shown = sorted is not null ? picked.ToList() : changed;
         var width = shown[^1].ToString().Length;
         foreach (var number in shown) Row(number, width, lines[number - 1]);
-        if (sorted != null) Line(Lang.F("{0}: {1} lines sorted", item.Path, picked.Count));
+        if (sorted is not null) Line(Lang.F("{0}: {1} lines sorted", item.Path, picked.Count));
         else
         {
             Line(changed.Count == 1
@@ -417,7 +417,7 @@ internal sealed partial class ShellSession
     {
         var words = Words(argument);
         var arrow = LinesForm(words).Arrow;
-        if (arrow < 0 || RegisterTarget(words, arrow) == null) return argument;
+        if (arrow < 0 || RegisterTarget(words, arrow) is null) return argument;
         var match = System.Text.RegularExpressions.Regex.Match(argument, @"(^|\s)>>?\s+\$(?=[A-Za-z])");
         return match.Success ? argument[..(match.Index + match.Length - 1)] + "$" + argument[(match.Index + match.Length - 1)..] : argument;
     }

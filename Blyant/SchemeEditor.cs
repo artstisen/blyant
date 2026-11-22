@@ -184,8 +184,8 @@ internal static class SchemeEditor
         if (argument.Length == 0) return Lang.F("Color scheme: {0}", ColorSchemes.DisplayName(ConsoleColors.Current.Name));
         var name = ColorSchemes.Find(argument, ColorSchemes.AllNames(), out var several);
         if (several) return Lang.F("Several color schemes start with {0}", argument);
-        var scheme = name == null ? null : ColorSchemes.Load(name);
-        if (scheme == null) return Lang.F("No color scheme named {0}", argument);
+        var scheme = name is null ? null : ColorSchemes.Load(name);
+        if (scheme is null) return Lang.F("No color scheme named {0}", argument);
         UseLogoOf(scheme);
         Use(scheme);
         // Run in the Jump menu opened on the Color schemes page: the colors shown there are those of this scheme,
@@ -232,7 +232,7 @@ internal static class SchemeEditor
             ChoiceBox.Forget();
             var name = ChoiceBox.AskText(DialogText.SchemeSaveCaption, DialogText.SchemeSavePrompt,
                 DialogText.NameColon, suggested);
-            if (name == null) return false;
+            if (name is null) return false;
             suggested = name;
             if (!ColorSchemes.IsValidName(name))
             {
@@ -410,7 +410,7 @@ internal static class SchemeEditor
                 ChoiceBox.Forget();
                 var typed = ChoiceBox.AskText(DialogText.SchemeDuplicateCaption, DialogText.SchemeSavePrompt,
                     DialogText.NameColon, suggested);
-                if (typed == null) return TabResult.Redraw;
+                if (typed is null) return TabResult.Redraw;
                 suggested = typed;
                 var status = ColorSchemes.Duplicate(name, typed);
                 if (status != DialogText.Success)
@@ -444,7 +444,7 @@ internal static class SchemeEditor
                 ChoiceBox.Forget();
                 var typed = ChoiceBox.AskText(DialogText.SchemeRenameCaption, DialogText.SchemeSavePrompt,
                     DialogText.NameColon, suggested);
-                if (typed == null) return TabResult.Redraw;
+                if (typed is null) return TabResult.Redraw;
                 suggested = typed;
                 var status = ColorSchemes.Rename(name, typed);
                 if (status != DialogText.Success)
@@ -483,7 +483,7 @@ internal static class SchemeEditor
             }
 
             var scheme = ColorSchemes.Load(name);
-            if (scheme == null) return TabResult.Redraw;
+            if (scheme is null) return TabResult.Redraw;
             UseLogoOf(scheme);
             Use(scheme);
             ConsoleColors.Preview = scheme.Clone();
@@ -823,7 +823,7 @@ internal static class SchemeEditor
             return;
         }
 
-        if (picked == null && !ColorScheme.CanBeDefault(item)) return;
+        if (picked is null && !ColorScheme.CanBeDefault(item)) return;
         Preview.Set(item, picked);
         _changed = true;
     }
@@ -858,30 +858,30 @@ internal static class SchemeEditor
             };
         }
 
-        if (group.Color == ColorItem.Unsaved && Preview.Unsaved == null && Preview.UnsavedText == null)
+        if (group.Color == ColorItem.Unsaved && Preview.Unsaved is null && Preview.UnsavedText is null)
         {
             return Lang.T("[Default]: the text inverted");
         }
 
-        if (group.Color == ColorItem.Tab && Preview.Tab == null && Preview.TabText == null)
+        if (group.Color == ColorItem.Tab && Preview.Tab is null && Preview.TabText is null)
         {
             return Lang.T("[Default]: Tab focus on the tab frames");
         }
 
         // The pairs of the boxes that have no colors of their own: what they follow
-        if (group.Color == ColorItem.BoxBackground && Preview.BoxBackground == null && Preview.BoxText == null)
+        if (group.Color == ColorItem.BoxBackground && Preview.BoxBackground is null && Preview.BoxText is null)
         {
             return Lang.T("[Default]: the tab text");
         }
 
-        if (group.Color == ColorItem.BoxTitle && Preview.BoxTitle == null && Preview.BoxTitleText == null)
+        if (group.Color == ColorItem.BoxTitle && Preview.BoxTitle is null && Preview.BoxTitleText is null)
         {
             return Lang.T("[Default]: the tab highlight");
         }
 
         // The pairs of the command line that have no colors of their own: what they follow
-        if (group.Text is { } pairText && ColorScheme.IsCommand(group.Color) && Preview.Get(group.Color) == null &&
-            Preview.Get(pairText) == null)
+        if (group.Text is { } pairText && ColorScheme.IsCommand(group.Color) && Preview.Get(group.Color) is null &&
+            Preview.Get(pairText) is null)
         {
             switch (group.Color)
             {

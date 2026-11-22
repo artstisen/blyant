@@ -352,7 +352,7 @@ internal sealed class ColorScheme
     /// </summary>
     internal void Set(ColorItem item, ConsoleColor? color)
     {
-        if (color == null && !CanBeDefault(item)) return;
+        if (color is null && !CanBeDefault(item)) return;
         if (IsSyntax(item, out var syntax))
         {
             _syntax[syntax] = color;
@@ -460,7 +460,7 @@ internal sealed class ColorScheme
     {
         if (item == ColorItem.Background) return OnBackground.All(text => Shown(text) != color);
         // The text of the focused tab is also the text of the highlight, when that has no text color of its own
-        if (item == ColorItem.TabShown && TabText == null && color == TabColor) return false;
+        if (item == ColorItem.TabShown && TabText is null && color == TabColor) return false;
         if (OnBackground.Contains(item) || IsSyntax(item, out _)) return color != BackgroundColor;
         foreach (var (background, text) in Pairs)
         {
@@ -470,8 +470,6 @@ internal sealed class ColorScheme
 
         return true;
     }
-
-    #region Files
 
     // The names of the items in a file, in the order they are written
     private static readonly (string Key, ColorItem Item)[] Keys =
@@ -591,10 +589,6 @@ internal sealed class ColorScheme
         scheme.SelectorText ??= scheme.HighlightText;
     }
 
-    #endregion
-
-    #region Built-in schemes
-
     // The color schemes that come with Blyant, in the order they are offered (the first is the default). Each is a
     // file built into the program (Blyant/Schemes/name.txt), written as a scheme of the user is, with its colors
     // set; "default" there is what it is in any scheme (the color another follows, or that of the terminal)
@@ -624,8 +618,6 @@ internal sealed class ColorScheme
     /// The default color scheme (a copy)
     /// </summary>
     internal static ColorScheme Default => BuiltIn[0].Clone();
-
-    #endregion
 }
 
 /// <summary>
@@ -701,7 +693,7 @@ internal static class ColorSchemes
         name = name.Trim();
         var builtIn = ColorScheme.BuiltIn.FirstOrDefault(scheme =>
             scheme.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
-        if (builtIn != null) return builtIn.Clone();
+        if (builtIn is not null) return builtIn.Clone();
         if (!IsValidName(name)) return null;
         try
         {
@@ -769,7 +761,7 @@ internal static class ColorSchemes
         if (!IsValidName(newName)) return DialogText.SchemeNameInvalid;
         if (Exists(newName)) return DialogText.SchemeNameTaken;
         var copy = Load(name);
-        if (copy == null) return DialogText.SchemeNameInvalid;
+        if (copy is null) return DialogText.SchemeNameInvalid;
         copy.Name = newName.Trim();
         return Save(copy);
     }
@@ -815,7 +807,7 @@ internal static class ColorSchemes
         var all = names.ToList();
         var same = all.FirstOrDefault(name => name.Equals(typed, StringComparison.Ordinal)) ?? all.FirstOrDefault(name => name.Equals(typed, StringComparison.OrdinalIgnoreCase) ||
                                               DisplayName(name).Equals(typed, StringComparison.OrdinalIgnoreCase));
-        if (same != null) return same;
+        if (same is not null) return same;
         var starting = all.Where(name => name.StartsWith(typed, StringComparison.OrdinalIgnoreCase) ||
                                          DisplayName(name).StartsWith(typed, StringComparison.OrdinalIgnoreCase))
             .ToList();

@@ -220,7 +220,7 @@ internal static class Shell
     /// The shell writes on lines, in the colors of the terminal (Blyant started as the shell, or the shell runs and
     /// the full screen is not shown from it): the colors of a scheme are not set
     /// </summary>
-    internal static bool OnLines => Init.Plain || Prompts != null;
+    internal static bool OnLines => Init.Plain || Prompts is not null;
 
     /// <summary>
     /// A shell typed in at a terminal is left: with shelldir=last the directory it is left in is kept (shelllastdir),
@@ -240,7 +240,7 @@ internal static class Shell
         }
 
         // ($line goes with $file: the line of another file is not kept for this one)
-        if (file != null && Keepable(file) && (LastFile != file || LastLine != line))
+        if (file is not null && Keepable(file) && (LastFile != file || LastLine != line))
         {
             if (LastFile != file) changed.Add(("shelllastfile", file));
             LastFile = file;
@@ -313,7 +313,7 @@ internal static class Shell
         }
 
         // (from the editor: the file is the last list, "open 1" opens it again)
-        if (file != null && File.Exists(file)) session.ShowFirst(file);
+        if (file is not null && File.Exists(file)) session.ShowFirst(file);
         var code = Run(session);
         // (commands read from a file or a pipe do not change where the shell typed in starts)
         if (terminal) RememberLast(session.Directory, session.WorkedFile, session.WorkedLine);

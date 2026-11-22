@@ -256,14 +256,14 @@ internal static class CorkboardPage
         if (filter.Length == 0) return null;
         var found = cards.Where(card => (!card.IsShape || card.IsFrame) && Found(card, filter)).ToList();
         if (found.Count == 0) return null;
-        if (selected != null && found.Contains(selected) && inMode(selected)) return selected;
+        if (selected is not null && found.Contains(selected) && inMode(selected)) return selected;
         return found.LastOrDefault(inMode) ?? found[^1];
     }
 
     private static void Run()
     {
         Corkboard.Load();
-        if (Selected == null) SelectLast();
+        if (Selected is null) SelectLast();
         while (true)
         {
             Init.ApplyAutoSize();
@@ -317,7 +317,7 @@ internal static class CorkboardPage
             {
                 var number = int.Parse(_typed);
                 _typed = string.Empty;
-                if (Corkboard.Numbered(number) != null) _selected = number;
+                if (Corkboard.Numbered(number) is not null) _selected = number;
                 else _message = Lang.F("No card {0}", number);
                 continue;
             }
@@ -346,7 +346,7 @@ internal static class CorkboardPage
             (key.Modifiers & ConsoleModifiers.Shift) == 0 && !char.IsUpper(key.KeyChar))
         {
             // The nearest card that way
-            if (card == null) return true;
+            if (card is null) return true;
             var (columns, rows) = Direction(navigation);
             if (Corkboard.Nearest(card, columns, rows, Corkboard.BoardWidth, Height, InMode) is { } next)
             {
@@ -384,14 +384,14 @@ internal static class CorkboardPage
                 Open(card);
                 break;
             case ConsoleKey.V:
-                if (card != null) _moving = true;
+                if (card is not null) _moving = true;
                 break;
             case ConsoleKey.Spacebar:
-                if (card != null && !_marks.Remove(card.Number)) _marks[card.Number] = MarkOf(card);
+                if (card is not null && !_marks.Remove(card.Number)) _marks[card.Number] = MarkOf(card);
                 break;
             case ConsoleKey.T:
             case ConsoleKey.E:
-                if (card == null) break;
+                if (card is null) break;
                 Corkboard.ToFront(Group(), key.Key == ConsoleKey.T);
                 _message = key.Key == ConsoleKey.T ? Lang.T("On top of the other cards") : Lang.T("Below the other cards");
                 SaveCards();
@@ -463,7 +463,7 @@ internal static class CorkboardPage
     private static void Move(ConsoleKeyInfo key)
     {
         var card = Selected;
-        if (card == null || key.Key is ConsoleKey.Escape or ConsoleKey.Enter or ConsoleKey.V)
+        if (card is null || key.Key is ConsoleKey.Escape or ConsoleKey.Enter or ConsoleKey.V)
         {
             _moving = false;
             _sizing = false;
@@ -543,7 +543,7 @@ internal static class CorkboardPage
     // note
     private static void Open(Corkboard.Card? card)
     {
-        if (card == null || card.IsShape) return;
+        if (card is null || card.IsShape) return;
         if (card.IsNote)
         {
             EditNote(card);
@@ -582,7 +582,7 @@ internal static class CorkboardPage
             // A new note left without text is not kept, also when the editor was left by a jump
             if (Corkboard.ChangeCard(board, card.Number, kept => kept.IsNote && kept.Text.Length == 0 &&
                                                                  Corkboard.Discard(kept)) == DialogText.Success &&
-                Selected == null)
+                Selected is null)
             {
                 SelectLast();
             }
@@ -685,7 +685,7 @@ internal static class CorkboardPage
                     return true;
                 });
                 // (not there, or saving it failed: told why)
-                if (result == null || result == string.Empty)
+                if (result is null || result == string.Empty)
                 {
                     _message = card.IsBadge
                         ? Lang.T("The badge is no longer on the board: the note was not kept")
@@ -696,7 +696,7 @@ internal static class CorkboardPage
                     _message = result;
                 }
             });
-        if (error != null) _message = error;
+        if (error is not null) _message = error;
     }
 
     // W or ":tofile": the text of the selected note is written to a new file (Markdown unless another extension is
@@ -705,7 +705,7 @@ internal static class CorkboardPage
     // or where the file browser was. u makes it a note again; the file stays
     private static void NoteToFile(Corkboard.Card? card)
     {
-        if (card == null) return;
+        if (card is null) return;
         if (!card.IsNote)
         {
             _message = Lang.T("Only a note can become a file");
@@ -729,7 +729,7 @@ internal static class CorkboardPage
         var path = StartMenu.AskNewFile(Lang.T("Note to file"),
             Corkboard.FileNameOf(card) + FileOperations.DefaultExtension, Corkboard.ProjectFolder);
         Tools.ClearScreen();
-        if (path == null) return;
+        if (path is null) return;
         // The text as it is, ending with a line break, with the line endings of new files
         var text = card.Text.EndsWith('\n') ? card.Text : card.Text + "\n";
         try
@@ -767,7 +767,7 @@ internal static class CorkboardPage
     // I or ":info": what the card is, and its file
     private static void ShowInfo(Corkboard.Card? card)
     {
-        if (card == null) return;
+        if (card is null) return;
         if (card.IsLine || card.IsFrame)
         {
             var (x, y) = Corkboard.Shown(card, Corkboard.BoardWidth, Height);
@@ -834,7 +834,7 @@ internal static class CorkboardPage
 
     private static void PickColor(Corkboard.Card? card)
     {
-        if (card == null) return;
+        if (card is null) return;
         if (!ColorPicker.Pick(DialogText.ColorCaption, (Init.LineWidth - 26) / 2, true, card.Color, null, null,
                 out var picked))
         {
@@ -849,7 +849,7 @@ internal static class CorkboardPage
     // X or ":rename title": a title of its own for the card (the file keeps its name)
     private static void Rename(Corkboard.Card? card, string title)
     {
-        if (card == null) return;
+        if (card is null) return;
         if (card.IsBadge)
         {
             _message = Lang.T("A badge has no title: Enter writes the note");
@@ -883,7 +883,7 @@ internal static class CorkboardPage
     // D or ":remove": take the card off the board, after asking (u puts it back), or the marked ones with it
     private static void Remove(Corkboard.Card? card)
     {
-        if (card == null) return;
+        if (card is null) return;
         ChoiceBox.Forget();
         var group = Group();
         if (group.Count > 1)
@@ -1015,7 +1015,7 @@ internal static class CorkboardPage
     {
         var path = FileExplorer.PickDirectory(Lang.T("Pin a folder to the corkboard"));
         Corkboard.Reload();
-        if (path == null) return;
+        if (path is null) return;
         _message = Corkboard.PinWithMessage(path, Height);
         if (Corkboard.CardOf(path) is { } card) Select(card);
     }
@@ -1025,7 +1025,7 @@ internal static class CorkboardPage
     {
         var path = FileExplorer.PickFile(Lang.T("Pin a file to the corkboard"));
         Corkboard.Reload();
-        if (path == null) return;
+        if (path is null) return;
         _message = Corkboard.PinWithMessage(path, Height);
         if (Corkboard.CardOf(path) is { } card) Select(card);
     }
@@ -1037,7 +1037,7 @@ internal static class CorkboardPage
         var selected = Selected;
         var marked = Corkboard.Cards.Where(IsMarked).ToList();
         var status = Corkboard.Save();
-        if (selected != null) _selected = selected.Number;
+        if (selected is not null) _selected = selected.Number;
         _marks.Clear();
         foreach (var card in marked) _marks[card.Number] = MarkOf(card);
         if (status != DialogText.Success) _message = status;
@@ -1047,7 +1047,7 @@ internal static class CorkboardPage
     private static bool RunCommand()
     {
         var command = CommandLine.Read(CommandContext.Board);
-        if (command == null) return true;
+        if (command is null) return true;
         var name = CommandLine.Name(command);
         var argument = CommandLine.LastArgument;
         switch (name)
@@ -1163,7 +1163,7 @@ internal static class CorkboardPage
                 break;
             case "top":
             case "bottom":
-                if (Selected == null) break;
+                if (Selected is null) break;
                 Corkboard.ToFront(Group(), name == "top");
                 SaveCards();
                 break;
@@ -1181,8 +1181,6 @@ internal static class CorkboardPage
         // (the end of the commands)
         return true;
     }
-
-    #region Boards
 
     private static string BoardName(string key) =>
         key.Length == 0 ? Lang.T("Main board")
@@ -1218,7 +1216,7 @@ internal static class CorkboardPage
                         {
                             case ConsoleKey.N:
                                 open = NewBoard();
-                                return open != null ? PickListBox.KeyUse.Close : PickListBox.KeyUse.Used;
+                                return open is not null ? PickListBox.KeyUse.Close : PickListBox.KeyUse.Used;
                             case ConsoleKey.R:
                                 return RenameBoard(boards[row]);
                             case ConsoleKey.D:
@@ -1229,9 +1227,9 @@ internal static class CorkboardPage
                     }
                 });
             if (picked == PickListBox.Reload) continue;
-            if (open != null) OpenBoard(open);
+            if (open is not null) OpenBoard(open);
             else if (picked >= 0 && boards[picked] != Corkboard.CurrentBoard) OpenBoard(boards[picked]);
-            if (open != null || picked >= 0) _message = Lang.F("Board: {0}", BoardName(Corkboard.CurrentBoard));
+            if (open is not null || picked >= 0) _message = Lang.F("Board: {0}", BoardName(Corkboard.CurrentBoard));
             return;
         }
     }
@@ -1242,7 +1240,7 @@ internal static class CorkboardPage
         ChoiceBox.Forget();
         var name = ChoiceBox.AskText(Lang.T("New board"), DialogText.TypeNameAndPressEnter, DialogText.NameColon,
             string.Empty);
-        if (name == null) return null;
+        if (name is null) return null;
         var result = Corkboard.NewBoard(name);
         if (result == DialogText.Success) return name.Trim();
         ChoiceBox.Message(Lang.T("New board"), result, string.Empty);
@@ -1267,7 +1265,7 @@ internal static class CorkboardPage
 
         var newName = ChoiceBox.AskText(Lang.T("Rename board"), DialogText.TypeNameAndPressEnter, DialogText.NameColon,
             name);
-        if (newName == null) return PickListBox.KeyUse.Used;
+        if (newName is null) return PickListBox.KeyUse.Used;
         var result = Corkboard.RenameBoard(name, newName);
         if (result == DialogText.Success)
         {
@@ -1323,8 +1321,6 @@ internal static class CorkboardPage
         return PickListBox.KeyUse.Reload;
     }
 
-    #endregion
-
     // The cards whose file or folder is not there
     private static List<Corkboard.Card> Missing(MissingPlaces.Checker check) =>
         Corkboard.Cards.Where(card => IsMissing(card, check)).ToList();
@@ -1364,12 +1360,10 @@ internal static class CorkboardPage
         Draw();
         if (!MissingPlaces.Confirm(Lang.T("Remove card"), prune.Count, kept.Count, 0, false)) return;
         var count = Corkboard.RemoveMany(prune);
-        if (Selected == null) SelectLast();
+        if (Selected is null) SelectLast();
         _message = Lang.F("Cards removed: {0}", count);
         SaveCards();
     }
-
-    #region Drawing
 
     /// <summary>
     /// The title in the top bar: the board (null: the main board) and the mode, which is always shown whole. Where
@@ -1378,8 +1372,8 @@ internal static class CorkboardPage
     internal static string TopBarTitle(string? board, string mode, int room)
     {
         var tail = " | " + mode;
-        var whole = (board == null ? Lang.T("Corkboard") : Lang.F("{0}: {1}", Lang.T("Corkboard"), board)) + tail;
-        if (board == null || TextMetrics.WidthOf(whole) <= room) return whole;
+        var whole = (board is null ? Lang.T("Corkboard") : Lang.F("{0}: {1}", Lang.T("Corkboard"), board)) + tail;
+        if (board is null || TextMetrics.WidthOf(whole) <= room) return whole;
         var left = room - TextMetrics.WidthOf(tail);
         if (left < 4) return whole; // (no room for a name: cut at the end as before)
         return Tools.TruncateString(board, left, true) + tail;
@@ -1416,7 +1410,7 @@ internal static class CorkboardPage
         foreach (var card in Corkboard.Cards.Where(card => !card.IsShape && card != selected)
                      .Append(selected is { IsShape: false } ? selected : null))
         {
-            if (card != null) DrawCard(card, card == selected, IsMissing(card, check), width, Height);
+            if (card is not null) DrawCard(card, card == selected, IsMissing(card, check), width, Height);
         }
 
         if (selected is { IsFrame: true }) DrawFrame(selected, true, width);
@@ -1661,7 +1655,7 @@ internal static class CorkboardPage
         {
             if (selected && _moving) ConsoleColors.SetColors(ConsoleColors.ColorPreset.AttentionInverted);
             else if (selected) ConsoleColors.SetColors(ConsoleColors.ColorPreset.Accent);
-            else if (dim || card.Color == null) ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
+            else if (dim || card.Color is null) ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
             else ConsoleColors.SetTextColor(card.Color.Value);
         }
 
@@ -1751,7 +1745,7 @@ internal static class CorkboardPage
         {
             if (selected && _moving) ConsoleColors.SetColors(ConsoleColors.ColorPreset.AttentionInverted);
             else if (selected) ConsoleColors.SetColors(ConsoleColors.ColorPreset.Accent);
-            else if (dim || card.Color == null) ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
+            else if (dim || card.Color is null) ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
             else ConsoleColors.SetTextColor(card.Color.Value);
         }
 
@@ -1815,11 +1809,11 @@ internal static class CorkboardPage
         if (!shown) return;
         Tools.SetCursorEx(top, left);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
-        var label = cards == null ? Lang.T("No corkboard: B makes one")
+        var label = cards is null ? Lang.T("No corkboard: B makes one")
             : Lang.F("Corkboard ({0})", cards.Count);
         Console.Write(Tools.TruncateString(label, width, true));
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
-        if (cards == null) return;
+        if (cards is null) return;
         for (var i = 0; i < cards.Count; i++)
         {
             var row = top + 1 + i * 2;
@@ -1835,10 +1829,10 @@ internal static class CorkboardPage
         var row = Init.LineCount - 2 - PeekRows;
         Tools.SetCursorEx(row, 0);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
-        var label = Tools.TruncateString("-- " + Lang.T("Peek") + (card != null ? ": " + card.Name : string.Empty) + " ",
+        var label = Tools.TruncateString("-- " + Lang.T("Peek") + (card is not null ? ": " + card.Name : string.Empty) + " ",
             Init.LineWidth - 1, true);
         Console.Write(label + new string('-', Math.Max(0, Init.LineWidth - 1 - TextMetrics.WidthOf(label))));
-        if (card == null) return;
+        if (card is null) return;
         var lines = card.IsShape ? new List<string>()
             : card.IsNote ? card.Text.Split('\n').ToList()
             : NotePanes.PeekPlace(card.Path, PeekRows - 1);
@@ -1912,6 +1906,4 @@ internal static class CorkboardPage
         Console.Write(count);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
     }
-
-    #endregion
 }

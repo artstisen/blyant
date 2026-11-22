@@ -90,7 +90,7 @@ internal sealed partial class ShellSession
     private Item? Existing(string word)
     {
         var item = Resolve(word, false);
-        if (item == null) return null;
+        if (item is null) return null;
         var isDirectory = System.IO.Directory.Exists(item.Path);
         if (isDirectory || File.Exists(item.Path)) return item with { IsDirectory = isDirectory };
         Error(Lang.F("Not found: {0}", item.Path));
@@ -119,7 +119,7 @@ internal sealed partial class ShellSession
         if (Failed(result)) return;
 
         Line(message);
-        if (path != null) LastList = new List<Item> { new(path, System.IO.Directory.Exists(path)) };
+        if (path is not null) LastList = new List<Item> { new(path, System.IO.Directory.Exists(path)) };
     }
 
     // "new notes": a new, empty file in the directory you are in (without an extension: that of new files, .md)
@@ -313,8 +313,8 @@ internal sealed partial class ShellSession
         FileExplorer.PathDeleted(item.Path);
         if (!item.IsDirectory || !In(item.Path)) return;
         var above = Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(item.Path));
-        while (above != null && !System.IO.Directory.Exists(above)) above = Path.GetDirectoryName(above);
-        if (above == null) return;
+        while (above is not null && !System.IO.Directory.Exists(above)) above = Path.GetDirectoryName(above);
+        if (above is null) return;
         Directory = above;
         _directoryFollowed = true;
         Line(Lang.F("In {0}", Directory));
@@ -374,9 +374,9 @@ internal sealed partial class ShellSession
         var place = words.Count is 1 or 2 ? PlaceOf(words[^1]) : null;
         var alone = words.Count == 1 && !File.Exists(PathOf(words[0])) && !System.IO.Directory.Exists(PathOf(words[0]));
         // "peek +120": the file peeked last, from line 120, its window as large
-        var fromLine = alone && place == null && words[0].Length > 1 && words[0][0] == '+' &&
+        var fromLine = alone && place is null && words[0].Length > 1 && words[0][0] == '+' &&
                        words[0][1..].All(char.IsAsciiDigit);
-        if (alone && (place != null || fromLine))
+        if (alone && (place is not null || fromLine))
         {
             if (_lastPeek is not { } previous)
             {
@@ -388,13 +388,13 @@ internal sealed partial class ShellSession
                 ? new List<string> { previous.Path, words[0], previous.Count.ToString(CultureInfo.InvariantCulture) }
                 : new List<string> { previous.Path, words[0] };
         }
-        else if (place != null && words.Count == 1)
+        else if (place is not null && words.Count == 1)
         {
             // (a file named "top", "+" ... here: that file)
             place = null;
         }
 
-        if (place == null && (words.Count > 3 || (words.Count == 3 && !words[1].StartsWith('+'))))
+        if (place is null && (words.Count > 3 || (words.Count == 3 && !words[1].StartsWith('+'))))
         {
             Error(Lang.T("Give a file, and the lines if you want: peek 3 10-30, peek 3 +100 30, peek 3 bottom"));
             return;
@@ -441,7 +441,7 @@ internal sealed partial class ShellSession
             first = (int)Math.Clamp(from, 1, int.MaxValue - size + 1);
             last = first + size - 1;
         }
-        else if (place == null && words.Count >= 2 && !LinesOf(words[1], words.Count == 3 ? words[2] : null, out first, out last))
+        else if (place is null && words.Count >= 2 && !LinesOf(words[1], words.Count == 3 ? words[2] : null, out first, out last))
         {
             Error(Lang.F("Not lines: {0} (as 40, 100-120, or +100 30)", string.Join(' ', words.Skip(1))));
             return;
@@ -486,7 +486,7 @@ internal sealed partial class ShellSession
         // The size of the window asked for: kept, also where the file has fewer lines
         var asked = (int)Math.Min((long)last - first + 1, int.MaxValue);
         // Moved past the end (or the file got shorter): the last lines, as many as the window
-        var moved = (place != null || again) && last > lines.Count && lines.Count > 0;
+        var moved = (place is not null || again) && last > lines.Count && lines.Count > 0;
         if (moved)
         {
             last = lines.Count;
@@ -514,9 +514,9 @@ internal sealed partial class ShellSession
             // (@ is the line worked on: a window of the same file is a look and keeps it, a line found is the line,
             // and another file is at the first line shown)
             // (a window past the end of the file: no line there to take; an empty file is at its top)
-            var kept = _file != null && FileOperations.NameComparer.Equals(_file, Path.GetFullPath(item.Path)) ? FileLine : null;
+            var kept = _file is not null && FileOperations.NameComparer.Equals(_file, Path.GetFullPath(item.Path)) ? FileLine : null;
             LastList = new List<Item> { opened > 1 ? item with { At = (opened, 1) } : item };
-            _line = mark == 0 && kept != null ? kept
+            _line = mark == 0 && kept is not null ? kept
                 : opened <= lines.Count ? opened
                 : lines.Count == 0 ? 0
                 : kept;
@@ -556,7 +556,7 @@ internal sealed partial class ShellSession
         {
             Line(Lang.F("(match {0} of {1}, lines {2}-{3} of {4})", told.Number, told.Count, first, last, lines.Count));
         }
-        else if (last < lines.Count || place != null || moved)
+        else if (last < lines.Count || place is not null || moved)
         {
             Line(Lang.F("(lines {0}-{1} of {2})", first, last, lines.Count));
         }
@@ -571,7 +571,7 @@ internal sealed partial class ShellSession
         try
         {
             var info = new FileInfo(path);
-            var file = info.LinkTarget != null ? info.ResolveLinkTarget(true) as FileInfo : info;
+            var file = info.LinkTarget is not null ? info.ResolveLinkTarget(true) as FileInfo : info;
             return file is { Exists: true }
                 ? IsoDateTime.Local(file.LastWriteTimeUtc, "yyyy-MM-dd HH:mm")
                 : null;
@@ -800,7 +800,7 @@ internal sealed partial class ShellSession
         }
 
         var now = StampOf(previous.Path);
-        if (now == null) return;
+        if (now is null) return;
         if (now == previous.Stamp)
         {
             if (now.Value.Item2 > AutoPeekReadLimit) return;
@@ -856,7 +856,7 @@ internal sealed partial class ShellSession
         {
             var many = Shell.PeekLines;
             if (!int.TryParse(text[1..], out first) || first < 1 ||
-                (count != null && (!int.TryParse(count, out many) || many < 1)))
+                (count is not null && (!int.TryParse(count, out many) || many < 1)))
             {
                 return false;
             }
@@ -865,7 +865,7 @@ internal sealed partial class ShellSession
             return true;
         }
 
-        if (count != null) return false;
+        if (count is not null) return false;
         var dash = text.IndexOf('-');
         if (dash < 0) return int.TryParse(text, out last) && last > 0;
         return int.TryParse(text[..dash], out first) && int.TryParse(text[(dash + 1)..], out last) &&
@@ -917,7 +917,7 @@ internal sealed partial class ShellSession
         }
 
         // "find", "find -b": the last search shown again; "find -r": made again where it was made
-        if (argument.Trim().Length == 0 && (_lastFind != null || repeat))
+        if (argument.Trim().Length == 0 && (_lastFind is not null || repeat))
         {
             if (_lastFind is not { } last)
             {
@@ -1011,7 +1011,7 @@ internal sealed partial class ShellSession
         {
             // The name or path, then the mark of a favorite (not after a line found), then "(missing)" (not with -l:
             // the full paths for scripts), as recent and fav show them
-            var name = names != null
+            var name = names is not null
                 ? names[i].EndsWith(missing, StringComparison.Ordinal) ? names[i][..^missing.Length] : names[i]
                 : (full ? result.Path : Path.GetRelativePath(search.Directory, result.Path)) +
                   (result.IsDirectory ? "/" : string.Empty);
@@ -1021,9 +1021,9 @@ internal sealed partial class ShellSession
         var changed = dates
             ? outcome.Results.Select(result => result.IsDirectory ? null : ChangedOf(result.Path)).ToList()
             : null;
-        var width = changed == null || full
+        var width = changed is null || full
             ? 0
-            : outcome.Results.Select((result, i) => result.Line < 0 && changed[i] != null ? TextMetrics.WidthOf(shownNames[i]) : 0)
+            : outcome.Results.Select((result, i) => result.Line < 0 && changed[i] is not null ? TextMetrics.WidthOf(shownNames[i]) : 0)
                 .DefaultIfEmpty(0).Max();
         var rows = outcome.Results.Select((result, i) =>
         {
@@ -1128,7 +1128,7 @@ internal sealed partial class ShellSession
 
         var added = FileFavorites.Items[^1];
         var error = MoveRows(new List<FileFavorites.Favorite> { added }, where);
-        if (error != null)
+        if (error is not null)
         {
             FileFavorites.Parse(before);
             // (a place fav move does not know: told as for fav add)
@@ -1158,7 +1158,7 @@ internal sealed partial class ShellSession
 
         // (one that is gone can be taken off)
         var item = words.Count == 0 ? new Item(Directory, true) : add ? Existing(words[0]) : Resolve(words[0], true);
-        if (item == null) return;
+        if (item is null) return;
         if (!item.IsDirectory || (!add && File.Exists(item.Path)))
         {
             Error(Lang.F("Not a directory: {0}", item.Path));

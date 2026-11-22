@@ -208,7 +208,7 @@ internal sealed class TabFrame
                 continue;
             }
 
-            if (key.KeyChar == ':' && Commands != null && !page.CapturesKeys)
+            if (key.KeyChar == ':' && Commands is not null && !page.CapturesKeys)
             {
                 var result = Commands();
                 if (result == TabResult.Close) return;
@@ -216,7 +216,7 @@ internal sealed class TabFrame
                 continue;
             }
 
-            if (OnJumpKey != null && Jump.IsKey(key) && !page.CapturesKeys)
+            if (OnJumpKey is not null && Jump.IsKey(key) && !page.CapturesKeys)
             {
                 // The Jump menu, on every tab and sub-tab (a place opened on top of the page returns here)
                 OnJumpKey();
@@ -224,7 +224,7 @@ internal sealed class TabFrame
                 continue;
             }
 
-            if (OnRecentKey != null && RecentBox.IsKey(key) && !page.CapturesKeys)
+            if (OnRecentKey is not null && RecentBox.IsKey(key) && !page.CapturesKeys)
             {
                 // The latest files, on every tab and sub-tab
                 OnRecentKey();

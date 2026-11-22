@@ -33,7 +33,7 @@ internal static class DiffView
         var oldLines = TextBuffer.Normalize(oldText).Split('\n');
         var newLines = TextBuffer.Normalize(newText).Split('\n');
         var lines = LineDiff.Compare(oldLines, newLines, ignoreSpace);
-        if (lines == null)
+        if (lines is null)
         {
             message = Lang.F("Too many differences to show (more than {0} lines)", LineDiff.MaxDifferences);
             return null;

@@ -46,7 +46,7 @@ internal sealed partial class ShellSession
             var rest = AfterWords(typed, 1);
             // (a value with blanks and quotes cannot be one word: it would be split wrongly)
             if (ShellRegisters.NamesIn(rest).Select(ShellRegisters.Get)
-                    .FirstOrDefault(value => value != null && value.Any(char.IsWhiteSpace) && value.Contains('"')) is
+                    .FirstOrDefault(value => value is not null && value.Any(char.IsWhiteSpace) && value.Contains('"')) is
                 { } quoted)
             {
                 Error(Lang.F("A word with blanks and quotes cannot be given to a script: {0}", quoted));
@@ -68,7 +68,7 @@ internal sealed partial class ShellSession
             (!ShellRegisters.IsReserved(name) || ShellRegisters.IsClip(name) ||
              name.Equals(ShellRegisters.PeekName, StringComparison.OrdinalIgnoreCase)))
         {
-            if (ShellRegisters.Get(name) == null)
+            if (ShellRegisters.Get(name) is null)
             {
                 Error(Lang.F("No register named {0} (reg lists them)", name));
                 return;

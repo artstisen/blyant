@@ -13,12 +13,10 @@ public class LangTests : IDisposable
         Lang.Set(Lang.English);
     }
 
-    #region The texts of the code
-
     private static string SourceDirectory()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);
-        while (directory != null && !File.Exists(Path.Combine(directory.FullName, "Blyant.sln")))
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "Blyant.sln")))
         {
             directory = directory.Parent;
         }
@@ -77,12 +75,12 @@ public class LangTests : IDisposable
             var line = raw.TrimEnd('\r');
             if (line.StartsWith("en:", StringComparison.Ordinal))
             {
-                Assert.True(english == null, code + ": an English text without a translation line before: " + line);
+                Assert.True(english is null, code + ": an English text without a translation line before: " + line);
                 english = Value(line[3..]);
             }
             else if (line.StartsWith(code + ":", StringComparison.Ordinal))
             {
-                Assert.True(english != null, code + ": a translation without an English text: " + line);
+                Assert.True(english is not null, code + ": a translation without an English text: " + line);
                 pairs.Add((english!, Value(line[(code.Length + 1)..])));
                 english = null;
             }
@@ -118,8 +116,6 @@ public class LangTests : IDisposable
         .OrderBy(code => code, StringComparer.Ordinal).ToArray();
 
     public static IEnumerable<object[]> LanguageFiles() => Translated.Select(code => new object[] { code });
-
-    #endregion
 
     [Fact]
     public void TheDanishAndGermanFiles_AreThere()

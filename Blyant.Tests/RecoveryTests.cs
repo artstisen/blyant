@@ -87,7 +87,7 @@ public class RecoveryTests : IDisposable
         // A process that is running, but started at another time than the one that wrote it
         var other = System.Diagnostics.Process.GetProcesses()
             .FirstOrDefault(process => process.Id != Environment.ProcessId && process.Id > 4);
-        if (other != null)
+        if (other is not null)
         {
             Assert.False(Recovery.WrittenByOtherRunning(copy with
             {

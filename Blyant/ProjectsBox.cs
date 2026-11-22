@@ -58,7 +58,7 @@ internal static class ProjectsBox
                     {
                         case 'P':
                             result = NewProject(string.Empty);
-                            return result != null ? PickListBox.KeyUse.Close : PickListBox.KeyUse.Used;
+                            return result is not null ? PickListBox.KeyUse.Close : PickListBox.KeyUse.Used;
                         case 'A':
                             if (AddFolder() is { } added)
                             {
@@ -68,7 +68,7 @@ internal static class ProjectsBox
 
                             return PickListBox.KeyUse.Used;
                         case 'D':
-                            if (project != null && RemoveProject(project))
+                            if (project is not null && RemoveProject(project))
                             {
                                 select = null;
                                 return PickListBox.KeyUse.Reload;
@@ -85,18 +85,18 @@ internal static class ProjectsBox
                                     return PickListBox.KeyUse.Close;
                                 case CommandResult.Reload:
                                     return PickListBox.KeyUse.Reload;
-                                case CommandResult.Opened when _commandResult != null:
+                                case CommandResult.Opened when _commandResult is not null:
                                     result = _commandResult;
                                     return PickListBox.KeyUse.Close;
                             }
 
                             // Drawn again: the command line (and its list of commands) covered the box. A command may
                             // have changed the color, note or board of the project
-                            if (project != null) info[i] = Info(project.Path);
+                            if (project is not null) info[i] = Info(project.Path);
                             return PickListBox.KeyUse.Used;
                     }
 
-                    if (project == null) return PickListBox.KeyUse.None;
+                    if (project is null) return PickListBox.KeyUse.None;
                     switch (char.ToUpperInvariant(key.KeyChar))
                     {
                         case 'C':
@@ -122,9 +122,9 @@ internal static class ProjectsBox
                 }
             };
             var caption = Lang.F("Projects ({0})", projects.Count);
-            var selected = select == null ? 0 : Math.Max(0, projects.FindIndex(p => FileOperations.SamePath(p.Path, select)));
+            var selected = select is null ? 0 : Math.Max(0, projects.FindIndex(p => FileOperations.SamePath(p.Path, select)));
             var picked = PickListBox.Show(caption, names, i => Preview(projects[i]), selected, Keys(), extras);
-            if (result != null) return result;
+            if (result is not null) return result;
             if (picked == PickListBox.Reload) continue;
             if (picked < 0) return null;
             if (!projects[picked].Missing) return projects[picked].Path;
@@ -158,8 +158,6 @@ internal static class ProjectsBox
         CorkboardPage.ShowProjectBoard(project.Path);
     }
 
-    #region Making, adding and removing projects
-
     /// <summary>
     /// Make a new project: its folder, in a folder the user picks in the file browser (it starts where a folder was
     /// picked last). The name is asked for if it is not given
@@ -171,14 +169,14 @@ internal static class ProjectsBox
         ChoiceBox.Forget();
         var parent = FileExplorer.PickDirectory(Lang.T("Where to make the project"));
         Tools.ClearScreen();
-        if (parent == null) return null;
+        if (parent is null) return null;
         ChoiceBox.Forget();
         name = name.Trim();
         if (name.Length == 0)
         {
             var asked = ChoiceBox.AskText(DialogText.NewProject, Lang.F("The project is a folder in {0}", parent),
                 DialogText.ProjectNameColon, string.Empty);
-            if (asked == null) return null;
+            if (asked is null) return null;
             name = asked;
         }
 
@@ -201,7 +199,7 @@ internal static class ProjectsBox
         ChoiceBox.Forget();
         var picked = FileExplorer.PickDirectory(Lang.T("Add a folder to projects"));
         Tools.ClearScreen();
-        if (picked == null) return null;
+        if (picked is null) return null;
         return AddFolder(picked);
     }
 
@@ -238,10 +236,6 @@ internal static class ProjectsBox
         ChoiceBox.Message(DialogText.OpenProject, status, project.Path);
         return false;
     }
-
-    #endregion
-
-    #region Keys of a project
 
     // C: the color of the name of the project in the list
     private static void PickColor(string project)
@@ -309,7 +303,7 @@ internal static class ProjectsBox
     {
         _commandResult = null;
         var command = CommandLine.Read(CommandContext.Projects);
-        if (command == null) return CommandResult.None;
+        if (command is null) return CommandResult.None;
         var name = CommandLine.Name(command).ToLowerInvariant();
         var argument = command.Length > name.Length ? command[name.Length..].Trim() : string.Empty;
         if (name is "q" or "quit" or "close") return CommandResult.Close;
@@ -321,9 +315,9 @@ internal static class ProjectsBox
                 return CommandResult.None;
             case "new":
                 _commandResult = NewProject(argument);
-                return _commandResult != null ? CommandResult.Opened : CommandResult.None;
+                return _commandResult is not null ? CommandResult.Opened : CommandResult.None;
             case "add":
-                return AddFolder() != null ? CommandResult.Reload : CommandResult.None;
+                return AddFolder() is not null ? CommandResult.Reload : CommandResult.None;
             case "log":
                 // The log (the page behind the list is drawn again when the list is closed, as after the help)
                 Jump.ShowLog();
@@ -365,7 +359,7 @@ internal static class ProjectsBox
             }
         }
 
-        if (project == null)
+        if (project is null)
         {
             if (Commands.IsKnown(CommandContext.Projects, name))
             {
@@ -435,7 +429,7 @@ internal static class ProjectsBox
         // Before the path, which may take several rows
         var color = Projects.ColorOf(project.Path);
         var note = Projects.NoteSnippet(project.Path);
-        rows.Insert(rows.Count - 1, (Lang.T("Color:"), color == null ? DialogText.ColorDefault : ColorPicker.Name(color.Value)));
+        rows.Insert(rows.Count - 1, (Lang.T("Color:"), color is null ? DialogText.ColorDefault : ColorPicker.Name(color.Value)));
         rows.Insert(rows.Count - 1, (Lang.T("Note:"), note.Length == 0 ? Lang.T("(none)") : Tools.TruncateString(note, 160, true)));
         ChoiceBox.ShowRows(DialogText.ProjectInfo, rows);
     }
@@ -446,6 +440,4 @@ internal static class ProjectsBox
         ChoiceBox.Forget();
         ChoiceBox.Message(DialogText.OpenProject, result, path);
     }
-
-    #endregion
 }

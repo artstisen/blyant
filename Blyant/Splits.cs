@@ -62,7 +62,7 @@ internal static class Splits
             if (parts.Length < 2) continue;
             var left = FileOperations.ListedPath(parts[0]);
             var right = FileOperations.ListedPath(parts[1]);
-            if (left.Length == 0 || right.Length == 0 || Get(left) != null) continue;
+            if (left.Length == 0 || right.Length == 0 || Get(left) is not null) continue;
             var (line, column) = (1, 1);
             if (parts.Length > 2 && parts[2].Split(':') is [var l, var c] && int.TryParse(l, out var readLine) &&
                 int.TryParse(c, out var readColumn) && readLine > 0 && readColumn > 0)
@@ -97,7 +97,7 @@ internal static class Splits
         try
         {
             var directory = Path.GetDirectoryName(Path.GetFullPath(FilePath));
-            if (directory != null) FileIo.CreateDirectory(directory);
+            if (directory is not null) FileIo.CreateDirectory(directory);
             FileIo.WriteAllBytesSafe(FilePath, new UTF8Encoding(false).GetBytes(Serialize()));
             return DialogText.Success;
         }
@@ -145,7 +145,7 @@ internal static class Splits
         {
             var left = CaretPosition.NewPath(List[i].Left, oldPath, newPath);
             var right = CaretPosition.NewPath(List[i].Right, oldPath, newPath);
-            if (left == null && right == null) continue;
+            if (left is null && right is null) continue;
             List[i] = List[i] with { Left = left ?? List[i].Left, Right = right ?? List[i].Right };
             changed = true;
         }

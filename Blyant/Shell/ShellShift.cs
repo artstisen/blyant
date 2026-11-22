@@ -69,7 +69,7 @@ internal sealed partial class ShellSession
         {
             position = at;
             // (a section at the bottom goes before the blank lines at the end of the file, which stay last)
-            if (heading != null && at == lines.Count)
+            if (heading is not null && at == lines.Count)
             {
                 while (position > 0 && lines[position - 1].Trim().Length == 0 && !moved.Contains(position)) position--;
             }
@@ -84,10 +84,10 @@ internal sealed partial class ShellSession
             return;
         }
 
-        if (heading != null) (text, first) = SpacedSection(file.Text, text, moved, first);
+        if (heading is not null) (text, first) = SpacedSection(file.Text, text, moved, first);
 
         // (the path and the lines, never the text)
-        if (!SavedEdit(file, text, heading != null ? "Shift section" : "Shift lines",
+        if (!SavedEdit(file, text, heading is not null ? "Shift section" : "Shift lines",
                 item.Path + ":" + Numbers(moved) + " to " + first))
         {
             return;
@@ -203,7 +203,7 @@ internal sealed partial class ShellSession
             {
                 // The heading before it at its level or above: one of its level is the section above
                 var before = headings.LastOrDefault(h => h.Line < at.Line && h.Level <= heading.Level);
-                if (before.Name == null || before.Level != heading.Level) break;
+                if (before.Name is null || before.Level != heading.Level) break;
                 at = before;
                 position = before.Line - 1;
             }
@@ -211,7 +211,7 @@ internal sealed partial class ShellSession
             {
                 var section = SectionLines(lines, headings, at);
                 var after = headings.FirstOrDefault(h => h.Line == section[^1] + 1);
-                if (after.Name == null || after.Level != heading.Level) break;
+                if (after.Name is null || after.Level != heading.Level) break;
                 at = after;
                 position = SectionLines(lines, headings, after)[^1];
             }
@@ -292,9 +292,9 @@ internal sealed partial class ShellSession
         var from = AfterWords(argument, at);
         // (a file named "@" is written in quotes)
         if (!from.TrimStart().StartsWith('@')) return argument;
-        if (_file == null || FileLine is not { } line)
+        if (_file is null || FileLine is not { } line)
         {
-            Error(_file == null
+            Error(_file is null
                 ? Lang.T("@ is the file and the line of the last command: none yet (words notes.md 12)")
                 : Lang.F("@ has no line in {0} yet: peek it, or give the line (insert {0} +5 ...)",
                     Path.GetFileName(_file)));
@@ -336,7 +336,7 @@ internal sealed partial class ShellSession
     // if they are not there
     private List<int>? PickedLines(string word, string? count, List<string> lines, string path)
     {
-        if (count != null)
+        if (count is not null)
         {
             if (!LinesOf(word, count, out var first, out var last))
             {
@@ -391,7 +391,7 @@ internal sealed partial class ShellSession
         if (lower == "bottom") return lines.Count;
         if (place.Length > 1 && place[0] == '+' && int.TryParse(place[1..], out var before) && before > 0)
         {
-            if (moved != null && moved.Contains(before))
+            if (moved is not null && moved.Contains(before))
             {
                 Error(Lang.F("Target {0} is among the lines moved", place));
                 return null;
@@ -422,7 +422,7 @@ internal sealed partial class ShellSession
             return null;
         }
 
-        if (moved != null && moved.Contains(found[0].Line))
+        if (moved is not null && moved.Contains(found[0].Line))
         {
             Error(Lang.F("Target {0} is among the lines moved", place));
             return null;
@@ -489,13 +489,13 @@ internal sealed partial class ShellSession
         for (var i = 0; i < lines.Count; i++)
         {
             var line = lines[i].TrimStart();
-            if (fence == null && (line.StartsWith("```") || line.StartsWith("~~~")))
+            if (fence is null && (line.StartsWith("```") || line.StartsWith("~~~")))
             {
                 fence = line[..3];
                 continue;
             }
 
-            if (fence != null)
+            if (fence is not null)
             {
                 if (line.StartsWith(fence)) fence = null;
                 continue;

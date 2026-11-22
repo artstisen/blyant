@@ -32,7 +32,7 @@ internal sealed partial class EditorEngine
             DocumentKind.Xml => new XmlFormatter(),
             _ => null
         };
-        if (formatter == null)
+        if (formatter is null)
         {
             SetError(Lang.T("Only HTML, CSS and XML files can be formatted"));
             return;

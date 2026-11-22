@@ -56,7 +56,7 @@ internal sealed partial class ShellSession
         if (result != DialogText.Success) return result;
         _changedFiles.Add(Path.GetFullPath(file.Path));
         var after = file.GetBytes(text);
-        if (before == null || after.Length > UndoMaxSize)
+        if (before is null || after.Length > UndoMaxSize)
         {
             Line(tooLarge || after.Length > UndoMaxSize
                 ? Lang.F("(this cannot be undone: {0} is larger than 2 MB)", Path.GetFileName(file.Path))
@@ -103,7 +103,7 @@ internal sealed partial class ShellSession
         if (_changedFiles.Count == 0) return;
         // (not the file of "again edit": not a file worked on)
         var files = _changedFiles.Where(path => !IsCommandsFile(path)).Distinct(FileOperations.NameComparer)
-            .OrderBy(path => _file != null && FileOperations.NameComparer.Equals(path, _file)).ToList();
+            .OrderBy(path => _file is not null && FileOperations.NameComparer.Equals(path, _file)).ToList();
         if (files.Count > 0) FileExplorer.AddToHistory(files);
     }
 
@@ -259,7 +259,7 @@ internal sealed partial class ShellSession
         void Done(List<Item> files)
         {
             if (files.Count > 0) LastList = files.DistinctBy(item => item.Path).ToList();
-            if (done == null) return;
+            if (done is null) return;
             // (no $file before the command: the line it left is no line of the file as it is now)
             if ((redo ? done.Now : done.Was) is { File: { } file } place)
             {

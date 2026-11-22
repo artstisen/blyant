@@ -181,7 +181,7 @@ internal static class SystemClipboard
         if (term == "linux" || variable("TERM_PROGRAM") == "Apple_Terminal") return true;
         if (string.IsNullOrEmpty(variable("VTE_VERSION"))) return false;
         if (!string.IsNullOrEmpty(variable("TMUX")) || !string.IsNullOrEmpty(variable("TERM_PROGRAM"))) return false;
-        if (term != null && ClipboardTerms.Any(name => term.StartsWith(name, StringComparison.Ordinal))) return false;
+        if (term is not null && ClipboardTerms.Any(name => term.StartsWith(name, StringComparison.Ordinal))) return false;
         return !ClipboardMarkers.Any(marker => !string.IsNullOrEmpty(variable(marker)));
     }
 
@@ -203,8 +203,6 @@ internal static class SystemClipboard
             : PasteBin ? DialogText.CopiedToPasteBinAndMemory
             : DialogText.CopiedToMemory, false);
     }
-
-    #region The paste bin
 
     /// <summary>
     /// True if there is text in the paste bin, which writing to it would replace
@@ -237,7 +235,7 @@ internal static class SystemClipboard
         {
             var path = PasteBinPath;
             var directory = Path.GetDirectoryName(path);
-            if (directory != null && !Directory.Exists(directory)) return DialogText.DirectoryNotFound;
+            if (directory is not null && !Directory.Exists(directory)) return DialogText.DirectoryNotFound;
             // The line endings of the system, as other programs expect them
             var lines = text.Replace("\r\n", "\n").Replace('\r', '\n');
             if (!lines.EndsWith('\n')) lines += "\n";
@@ -302,10 +300,6 @@ internal static class SystemClipboard
         }
     }
 
-    #endregion
-
-    #region OSC 52
-
     /// <summary>
     /// For tests: takes the clipboard sequence instead of the terminal (null: written to the terminal)
     /// </summary>
@@ -316,7 +310,7 @@ internal static class SystemClipboard
     private static void WriteOsc52(string text)
     {
         var sequence = Osc52Sequence(text);
-        if (WriteOverride != null)
+        if (WriteOverride is not null)
         {
             WriteOverride(sequence);
             return;
@@ -356,6 +350,4 @@ internal static class SystemClipboard
 
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern bool SetConsoleMode(IntPtr handle, uint mode);
-
-    #endregion
 }

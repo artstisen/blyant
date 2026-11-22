@@ -220,7 +220,6 @@ internal sealed partial class EditorEngine
     /// </summary>
     internal string SnippetText { get; private set; } = string.Empty;
 
-
     internal bool MessageIsError { get; private set; }
 
     /// <summary>
@@ -445,8 +444,6 @@ internal sealed partial class EditorEngine
         if (!SingleLine) OpenCommandLine('/');
     }
 
-    #region Key handling
-
     /// <summary>
     /// The new name given with ":rename" or ":title" (empty: it is asked for)
     /// </summary>
@@ -607,7 +604,7 @@ internal sealed partial class EditorEngine
             _found = null;
         }
 
-        if (selectionBefore != null && !IsVisual) _lastSelection = selectionBefore;
+        if (selectionBefore is not null && !IsVisual) _lastSelection = selectionBefore;
 
         // A command is complete when back in Normal mode with nothing pending
         if ((Mode == EditorMode.Normal || IsVisual) && !HasPending)
@@ -692,10 +689,6 @@ internal sealed partial class EditorEngine
         SetError(message);
         MessageIsCommandError = true;
     }
-
-    #endregion
-
-    #region Editing helpers
 
     private string CurrentLine => Buffer[Cursor.Line];
 
@@ -783,7 +776,7 @@ internal sealed partial class EditorEngine
         text = TextBuffer.Normalize(text).Replace("\t", new string(' ', TabWidth));
         var selection = _snippetSelection;
         _snippetSelection = null;
-        if (selection != null && text.Contains(Snippets.CursorMark, StringComparison.Ordinal))
+        if (selection is not null && text.Contains(Snippets.CursorMark, StringComparison.Ordinal))
         {
             WrapInSnippet(text, selection.Value);
             return;
@@ -841,10 +834,6 @@ internal sealed partial class EditorEngine
         Cursor = new TextPos(0, 0);
         TopRow = 0;
     }
-
-    #endregion
-
-    #region Insert mode
 
     private void EnterInsert()
     {
@@ -991,10 +980,6 @@ internal sealed partial class EditorEngine
         }
     }
 
-    #endregion
-
-    #region Command line (":" commands and "/" search)
-
     private readonly CommandCompletion _completion = new(CommandContext.Editor);
 
     // Up and Down on the command line: the commands given in the editor before (CommandHistory)
@@ -1053,7 +1038,7 @@ internal sealed partial class EditorEngine
             // An earlier command (not in a search, a field of one line, or a macro being played)
             if (Mode != EditorMode.Command || SingleLine || IsPlayingMacro) return;
             var recalled = key.Key == ConsoleKey.UpArrow ? _recall.Previous(CommandText) : _recall.Next();
-            if (recalled == null || recalled.Length > MaxCommandLength) return;
+            if (recalled is null || recalled.Length > MaxCommandLength) return;
             CommandText = recalled;
             _completion.Reset();
         }
@@ -1683,13 +1668,13 @@ internal sealed partial class EditorEngine
         }
 
         var first = ReadLine(command);
-        if (first == null) return true; // No range
+        if (first is null) return true; // No range
         var second = first;
         if (index < command.Length && command[index] == ',')
         {
             index++;
             second = ReadLine(command);
-            if (second == null) return false;
+            if (second is null) return false;
         }
 
         range = (Math.Min(first.Value, second.Value), Math.Max(first.Value, second.Value));
@@ -2054,10 +2039,6 @@ internal sealed partial class EditorEngine
         Cursor = new TextPos(first, FirstNonBlank(first));
     }
 
-    #endregion
-
-    #region Search and replace
-
     private static readonly TimeSpan SearchTimeout = TimeSpan.FromSeconds(2);
 
     // The most time a search or a replacement of many lines takes in all (each line has SearchTimeout): many slow
@@ -2142,7 +2123,7 @@ internal sealed partial class EditorEngine
     {
         found = from;
         _searchTimedOut = false;
-        if (_searchRegex == null) return false;
+        if (_searchRegex is null) return false;
         var count = Buffer.LineCount;
         var deadline = Environment.TickCount64 + CommandTimeoutMilliseconds;
         try
@@ -2225,7 +2206,7 @@ internal sealed partial class EditorEngine
     {
         current = 0;
         total = 0;
-        if (!IsSearchHighlighted || _searchRegex == null || _countTimedOut == _searchRegex) return false;
+        if (!IsSearchHighlighted || _searchRegex is null || _countTimedOut == _searchRegex) return false;
         if (_countedRegex != _searchRegex || _countedBuffer != Buffer || _countedVersion != Buffer.Version)
         {
             if (!CountMatches()) return false;
@@ -2283,14 +2264,14 @@ internal sealed partial class EditorEngine
     /// <summary>
     /// True while the character found by "f", "F", "t" or "T" is shown
     /// </summary>
-    internal bool IsFoundShown => _found != null;
+    internal bool IsFoundShown => _found is not null;
 
     /// <summary>
     /// The places on a line (start and end char index) of the character found by "f", "F", "t" or "T"
     /// </summary>
     internal IEnumerable<(int Start, int End)> FoundMatches(int line)
     {
-        if (_found == null) yield break;
+        if (_found is null) yield break;
         var text = Buffer[line];
         for (var at = text.IndexOf(_found, StringComparison.Ordinal); at >= 0;
              at = text.IndexOf(_found, at + _found.Length, StringComparison.Ordinal))
@@ -2304,7 +2285,7 @@ internal sealed partial class EditorEngine
     /// </summary>
     internal IEnumerable<(int Start, int End)> SearchMatches(int line)
     {
-        if (!HighlightSearch || _highlightRegex == null) yield break;
+        if (!HighlightSearch || _highlightRegex is null) yield break;
         MatchCollection matches;
         try
         {
@@ -2508,10 +2489,6 @@ internal sealed partial class EditorEngine
         return result.ToString();
     }
 
-    #endregion
-
-    #region View
-
     private void EnsureCursorVisible()
     {
         if (!Layout.Wrap && !SingleLine)
@@ -2600,6 +2577,4 @@ internal sealed partial class EditorEngine
             return _prefix == '\0' ? keys : keys + _prefix;
         }
     }
-
-    #endregion
 }

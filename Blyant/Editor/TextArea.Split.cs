@@ -13,7 +13,7 @@
 /// yank; Tab or Esc back, Enter opens it in the editor). The text being edited is the only one saved or closed:
 /// ":q" closes the file at the right first
 /// </summary>
-public partial class TextArea
+internal sealed partial class TextArea
 {
     // The other pane of a split: its editor, and where it is and what is shown of it
     private sealed class Pane
@@ -50,7 +50,7 @@ public partial class TextArea
     // right, as ":split name" shows it; ":view name" shows that file. Esc in the browser keeps the text as it was
     private void View()
     {
-        if (_peek != null || _singleLine) return;
+        if (_peek is not null || _singleLine) return;
         if (_engine.SplitArgument.Length > 0)
         {
             ShowReference(_engine.SplitArgument);
@@ -61,7 +61,7 @@ public partial class TextArea
         var picked = FileExplorer.PickFile(Lang.T("View beside the text"),
             FileExplorer.CurrentFilePath.Length > 0 ? FileExplorer.CurrentFilePath : null);
         RedrawAll();
-        if (picked != null) ShowReference(picked);
+        if (picked is not null) ShowReference(picked);
     }
 
     /// <summary>
@@ -76,7 +76,7 @@ public partial class TextArea
     {
         get
         {
-            if (_referencePath == null || _otherPane == null) return null;
+            if (_referencePath is null || _otherPane is null) return null;
             var (line, column) = CaretPosition.Of(_otherPane.Engine.Buffer.GetText(),
                 _otherPane.Engine.GetCursorIndex());
             return (_referencePath, line, column);
@@ -94,7 +94,7 @@ public partial class TextArea
         }
 
         ShowReference(entry.Right);
-        if (_referencePath == null || _otherPane == null) return;
+        if (_referencePath is null || _otherPane is null) return;
         var other = _otherPane.Engine;
         other.SetCursorIndex(CaretPosition.IndexOf(other.Buffer.GetText(), entry.Line, entry.Column));
         _engine.SetMessage(Lang.F("{0} at the right as before (Tab: go there, :only: close)", name), false);
@@ -118,14 +118,14 @@ public partial class TextArea
     // The text in two panes, or one again (as ":only")
     private void SplitText()
     {
-        if (_otherPane != null)
+        if (_otherPane is not null)
         {
             CloseOtherPane();
             return;
         }
 
         // (A peek refuses the request, and a field of one line does not make it)
-        if (_peek != null || _singleLine) return;
+        if (_peek is not null || _singleLine) return;
 
         _wholeLeft = _left;
         _wholeWidth = _width;
@@ -156,13 +156,13 @@ public partial class TextArea
     /// left. Null when not split
     /// </summary>
     internal (int Index, bool OtherLeft)? SplitPlace =>
-        _otherPane == null || _referencePath != null ? null : (_otherPane.Engine.GetCursorIndex(), _otherPane.Left < _left);
+        _otherPane is null || _referencePath is not null ? null : (_otherPane.Engine.GetCursorIndex(), _otherPane.Left < _left);
 
     // Opened split, as it was when it was closed: the other pane at its cursor, at the left or the right
     private void RestoreSplit(int index, bool otherLeft)
     {
         SplitText();
-        if (_otherPane == null) return;
+        if (_otherPane is null) return;
         var other = _otherPane.Engine;
         other.SetCursorIndex(index);
         other.StartFollowing();
@@ -181,13 +181,13 @@ public partial class TextArea
     // Tab (Shift+Tab): the other pane gets the keys
     private void SwitchPane()
     {
-        if (_otherPane == null)
+        if (_otherPane is null)
         {
             _engine.SetMessage(Lang.T("One pane: :split shows the text in two"), false);
             return;
         }
 
-        if (_referencePath != null)
+        if (_referencePath is not null)
         {
             FocusReference();
             return;
@@ -206,9 +206,9 @@ public partial class TextArea
     // other one shows the text
     private void ClosePane()
     {
-        if (_otherPane == null) return;
+        if (_otherPane is null) return;
         // The file at the right is closed first: the text being edited stays
-        if (_referencePath != null)
+        if (_referencePath is not null)
         {
             CloseOtherPane();
             return;
@@ -227,7 +227,7 @@ public partial class TextArea
 
     private void Uncover(int firstRow, int rows, int right)
     {
-        if (_otherPane != null)
+        if (_otherPane is not null)
         {
             _redrawWhole = true;
             return;
@@ -243,7 +243,7 @@ public partial class TextArea
     // ":only": the other pane is closed, and the one with the focus takes the whole width
     private void CloseOtherPane()
     {
-        if (_otherPane == null)
+        if (_otherPane is null)
         {
             _engine.SetMessage(Lang.T("One pane: :split shows the text in two"), false);
             return;
@@ -283,7 +283,7 @@ public partial class TextArea
     // The rows of the other pane, as they are (no mode, status line or cursor of its own)
     private void DrawOtherPane()
     {
-        if (_otherPane == null) return;
+        if (_otherPane is null) return;
         _otherPane.Engine.UpdateFollowingView();
         SwapPanes();
         try
@@ -299,7 +299,7 @@ public partial class TextArea
     // After the whole screen is drawn again: the other pane is written again, and the column between the panes
     private void RedrawSplit()
     {
-        if (_otherPane == null) return;
+        if (_otherPane is null) return;
         Array.Fill(_otherPane.ShownRows, null);
         Array.Fill(_otherPane.ShownCells, 0);
         // Just before the pane at the right
@@ -318,7 +318,7 @@ public partial class TextArea
     // is from the directory of the file being edited; the file itself is shown as ":split" shows it
     private void ShowReference(string name)
     {
-        if (_peek != null || _singleLine) return;
+        if (_peek is not null || _singleLine) return;
         var directory = FileExplorer.CurrentFilePath.Length > 0
             ? Path.GetDirectoryName(FileExplorer.CurrentFilePath) ?? Environment.CurrentDirectory
             : Environment.CurrentDirectory;
@@ -354,7 +354,7 @@ public partial class TextArea
             return;
         }
 
-        if (_otherPane != null) CloseOtherPane();
+        if (_otherPane is not null) CloseOtherPane();
         if (_saveMode == SaveAsFile && FileOperations.SamePath(path, FileExplorer.CurrentFilePath))
         {
             // The file being edited: the text in two panes
@@ -438,7 +438,7 @@ public partial class TextArea
             var directory = FileExplorer.CurrentFilePath.Length > 0
                 ? Path.GetDirectoryName(FileExplorer.CurrentFilePath)
                 : Environment.CurrentDirectory;
-            if (directory == null) return Array.Empty<string>();
+            if (directory is null) return Array.Empty<string>();
             return new DirectoryInfo(directory).EnumerateFiles()
                 .Where(info => (info.Attributes & (FileAttributes.Hidden | FileAttributes.System)) == 0)
                 .Select(info => info.Name).OrderBy(n => n, StringComparer.OrdinalIgnoreCase).ToList();

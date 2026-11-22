@@ -113,18 +113,18 @@ internal static class FileReference
                 return;
             }
 
-            if (currentFile != null && FileOperations.SamePath(path, currentFile)) return;
+            if (currentFile is not null && FileOperations.SamePath(path, currentFile)) return;
             if (found.Any(other => FileOperations.SamePath(other, path)) || !isFile(path)) return;
             found.Add(path);
         }
 
         // A full path, or one from the folder of the file being edited (a path from the top is looked for below)
-        var folder = currentFile == null ? null : Path.GetDirectoryName(currentFile);
+        var folder = currentFile is null ? null : Path.GetDirectoryName(currentFile);
         var fromTop = names.Where(IsFromTop).ToList();
         foreach (var each in names.Where(each => !IsFromTop(each)))
         {
             if (Path.IsPathRooted(each)) Add(each);
-            else if (folder != null) Add(Path.Combine(folder, each));
+            else if (folder is not null) Add(Path.Combine(folder, each));
         }
 
         if (found.Count > 0) return found;
@@ -132,7 +132,7 @@ internal static class FileReference
         {
             // The folders above the file, below the root of the drive, up to the top of a site or repository
             var above = new List<string>();
-            for (var each = folder; each != null && Path.GetPathRoot(each) != each; each = Path.GetDirectoryName(each))
+            for (var each = folder; each is not null && Path.GetPathRoot(each) != each; each = Path.GetDirectoryName(each))
             {
                 above.Add(each);
                 if (isTop?.Invoke(each) == true) break;
@@ -152,7 +152,7 @@ internal static class FileReference
             if (found.Count > 0) return found;
             // Last, from the root of the drive of the file being edited (on Linux and macOS a full path is written so
             // too). On Windows "/" alone would be the root of the drive Blyant was started on
-            var driveRoot = folder == null ? null : Path.GetPathRoot(folder);
+            var driveRoot = folder is null ? null : Path.GetPathRoot(folder);
             foreach (var each in fromTop)
             {
                 Add(string.IsNullOrEmpty(driveRoot) ? each : Path.Combine(driveRoot, each.TrimStart('/')));

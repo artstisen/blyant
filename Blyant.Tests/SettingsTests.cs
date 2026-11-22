@@ -602,7 +602,7 @@ backup=
     public void TheGuideToTheSettingsFile_HasARowForEverySetting()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);
-        while (directory != null && !File.Exists(Path.Combine(directory.FullName, "Blyant.sln"))) directory = directory.Parent;
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "Blyant.sln"))) directory = directory.Parent;
         Assert.NotNull(directory);
         var guide = File.ReadAllText(Path.Combine(directory.FullName, "Guide-to-settings-file.md"));
         var documented = System.Text.RegularExpressions.Regex.Matches(guide, @"^\| `([a-z0-9]+)` \|",

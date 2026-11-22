@@ -153,7 +153,7 @@ internal sealed partial class EditorEngine
         error = string.Empty;
         if (_macroCache.TryGetValue(name, out var cached)) return cached;
         var text = MacroLoader?.Invoke(name);
-        if (text == null)
+        if (text is null)
         {
             error = Lang.F("There is no macro named {0}", name);
             return null;
@@ -172,7 +172,7 @@ internal sealed partial class EditorEngine
         var first = _macroDepth == 0;
         if (first) _macroCache.Clear();
         var steps = MacroSteps(name, out var error);
-        if (steps == null) return error;
+        if (steps is null) return error;
 
         if (first)
         {
@@ -195,7 +195,7 @@ internal sealed partial class EditorEngine
                 {
                     // Each step counts (also one that plays another macro, or one without keys)
                     if (--_macroKeysLeft < 0) return Lang.T("Macro stopped: too many steps");
-                    if (step.Play != null)
+                    if (step.Play is not null)
                     {
                         var inner = PlayMacroSteps(step.Play, step.Times);
                         if (inner.Length > 0) return inner;

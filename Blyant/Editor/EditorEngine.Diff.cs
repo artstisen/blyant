@@ -47,13 +47,13 @@ internal sealed partial class EditorEngine
     /// <summary>
     /// The matches of a search are highlighted ("n" "N" go to them, not to the changes of a comparison)
     /// </summary>
-    internal bool IsSearchHighlighted => HighlightSearch && _searchRegex != null;
+    internal bool IsSearchHighlighted => HighlightSearch && _searchRegex is not null;
 
     // "]c" "[c" (and "n" "N" in a comparison without a search): the next or the previous change. It does not go
     // round: at the last change it tells that there are no more
     private void JumpToChange(bool forward, int count)
     {
-        if (ChangeLines == null || ChangeLines.Count == 0)
+        if (ChangeLines is null || ChangeLines.Count == 0)
         {
             Message = DialogText.DiffNoChanges;
             return;

@@ -272,7 +272,7 @@ internal static class Corkboard
         {
             var found = names.FirstOrDefault(board => board.Equals(name, comparison)) ??
                         projects.FirstOrDefault(key => NameOf(key).Equals(name, comparison));
-            if (found != null) return found;
+            if (found is not null) return found;
         }
 
         return null;
@@ -520,7 +520,7 @@ internal static class Corkboard
         // (the separator after a folder; the root of a drive is written with its own: "D:\\", "/")
         if (isFolder) written = System.IO.Path.GetPathRoot(trimmed) == trimmed ? trimmed : trimmed[..^1];
         if (written.Trim().Length == 0) return (isFolder ? root ?? string.Empty : string.Empty, isFolder);
-        if (root != null && !System.IO.Path.IsPathRooted(written.Trim()))
+        if (root is not null && !System.IO.Path.IsPathRooted(written.Trim()))
         {
             try
             {
@@ -540,7 +540,7 @@ internal static class Corkboard
     {
         if (card.IsNote) return string.Empty;
         var path = card.Path;
-        var relative = root != null && (FileOperations.IsInside(path, root) || FileOperations.SamePath(path, root));
+        var relative = root is not null && (FileOperations.IsInside(path, root) || FileOperations.SamePath(path, root));
         if (relative)
         {
             path = System.IO.Path.GetRelativePath(root!, path);
@@ -942,7 +942,7 @@ internal static class Corkboard
         // The board is full: on top of the others, a step from the last one (a new card can be laid over a divider,
         // a line or a frame)
         var last = _cards.LastOrDefault(card => !card.IsShape);
-        return last == null
+        return last is null
             ? (0, 0)
             : (Math.Min(last.X + 2, Math.Max(0, width - cardWidth)), Math.Min(last.Y + 1, Math.Max(0, height - CardHeight)));
     }
@@ -1084,7 +1084,7 @@ internal static class Corkboard
         {
             "number" => cards.OrderBy(card => card.Number),
             "name" => cards.OrderBy(card => card.Name, NaturalOrder.Instance).ThenBy(card => card.Number),
-            "color" => cards.OrderBy(card => card.Color == null ? int.MaxValue : (int)card.Color.Value)
+            "color" => cards.OrderBy(card => card.Color is null ? int.MaxValue : (int)card.Color.Value)
                 .ThenBy(card => card.Number),
             _ => Array.Empty<Card>()
         };
@@ -1213,7 +1213,7 @@ internal static class Corkboard
     {
         if (columns == 0 && from.IsDivider) return null;
         var (fx, fy) = Shown(from, width, height);
-        bool Skipped(Card card) => card == from || (takes != null && !takes(card)) || (columns == 0 && card.IsDivider);
+        bool Skipped(Card card) => card == from || (takes is not null && !takes(card)) || (columns == 0 && card.IsDivider);
         // The cards in the same row (h, l) or column (j, k) first: those beside the card, sharing at least two of its
         // three rows (or half the columns of the narrower: a badge under a card), so a card laid a little lower is in
         // the row and one a row lower is not.
@@ -1235,7 +1235,7 @@ internal static class Corkboard
             inLineDistance = distance;
         }
 
-        if (inLine != null) return inLine;
+        if (inLine is not null) return inLine;
 
         // Else (at the end of a row or column) the nearest that way in another
         Card? best = null;

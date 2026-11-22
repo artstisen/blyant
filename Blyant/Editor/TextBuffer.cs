@@ -100,8 +100,6 @@ internal sealed class TextBuffer
         return text.Contains('\r') ? text.Replace("\r\n", "\n").Replace('\r', NewLine) : text;
     }
 
-    #region Reading
-
     internal int LineCount => _lines.Count;
     internal string this[int line] => _lines[line];
     internal int LineLength(int line) => _lines[line].Length;
@@ -187,10 +185,6 @@ internal sealed class TextBuffer
 
         return new TextPos(start.Line + lines, text.Length - lastNewLine - 1);
     }
-
-    #endregion
-
-    #region Editing
 
     /// <summary>
     /// The text cannot be changed: inserting and deleting do nothing, and ChangeRefused tells that it was tried
@@ -298,11 +292,7 @@ internal sealed class TextBuffer
         Marks.Deleted(from, to);
     }
 
-    #endregion
-
-    #region Undo/redo
-
-    internal bool IsStepOpen => _openStep != null;
+    internal bool IsStepOpen => _openStep is not null;
 
     // While a group is open (a macro plays) the steps are kept as usual, so an undo in it undoes one step; when the
     // group ends, the steps made in it are merged into one
@@ -356,7 +346,7 @@ internal sealed class TextBuffer
     /// <param name="cursor">The cursor position to return to when the step is redone</param>
     internal void EndStep(TextPos cursor)
     {
-        if (_openStep == null) return;
+        if (_openStep is null) return;
         if (_openStep.Edits.Count > 0)
         {
             _openStep.CursorAfter = cursor;
@@ -379,7 +369,7 @@ internal sealed class TextBuffer
     {
         while (_undo.Count > MaxUndoSteps)
         {
-            if (_savedStep == null || _savedStep == _undo[0]) _savedStateLost = true;
+            if (_savedStep is null || _savedStep == _undo[0]) _savedStateLost = true;
             _undo.RemoveAt(0);
         }
     }
@@ -387,7 +377,7 @@ internal sealed class TextBuffer
     private void Record(Edit edit)
     {
         // Edits made outside a step become a step of their own
-        if (_openStep == null)
+        if (_openStep is null)
         {
             AddStep(new UndoStep { CursorBefore = edit.Start, CursorAfter = edit.Start, Edits = { edit } });
         }
@@ -399,7 +389,7 @@ internal sealed class TextBuffer
         // A new edit makes the undone steps unreachable
         if (_redo.Count > 0)
         {
-            if (_savedStep != null && _redo.Contains(_savedStep)) _savedStateLost = true;
+            if (_savedStep is not null && _redo.Contains(_savedStep)) _savedStateLost = true;
             _redo.Clear();
         }
     }
@@ -463,7 +453,7 @@ internal sealed class TextBuffer
     internal void MarkSaved()
     {
         // Edits made before saving and after saving must not end up in the same step
-        if (_openStep != null)
+        if (_openStep is not null)
         {
             EndStep(_openStep.CursorBefore);
         }
@@ -483,6 +473,4 @@ internal sealed class TextBuffer
         _redo.Clear();
         _savedStep = null;
     }
-
-    #endregion
 }

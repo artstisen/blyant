@@ -41,14 +41,14 @@ internal static class NotePanes
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
         Console.Write(new string('-', width));
         // Where the lines of the list end, and the line between the panes starts
-        FileExplorer.DrawColumnEnds(top, peek != null ? listLines.Append(line).ToArray() : listLines);
-        FileExplorer.DrawColumnLabels(top, peek != null
+        FileExplorer.DrawColumnEnds(top, peek is not null ? listLines.Append(line).ToArray() : listLines);
+        FileExplorer.DrawColumnLabels(top, peek is not null
             ? new[] { (left, Lang.T("Note")), (line, Lang.T("Peek")) }
             : new[] { (left, Lang.T("Note")) }, Array.Empty<int>());
 
-        var noteWidth = (peek != null ? line - left : width) - 3;
+        var noteWidth = (peek is not null ? line - left : width) - 3;
         var peekWidth = left + width - line - 3;
-        var notes = note == null ? new List<string>() : NoteLines(note, noteWidth, rows);
+        var notes = note is null ? new List<string>() : NoteLines(note, noteWidth, rows);
         // (the last column of the screen is not written, so the terminal does not scroll)
         var clear = Math.Min(width, Init.LineWidth - 1 - left);
         for (var row = 0; row < rows; row++)
@@ -66,7 +66,7 @@ internal static class NotePanes
                 Console.Write(Tools.TruncateString(notes[row], noteWidth, false));
             }
 
-            if (peek == null) continue;
+            if (peek is null) continue;
             FileExplorer.DrawColumnLine(y, line);
             if (row >= peek.Count) continue;
             ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);

@@ -8,7 +8,7 @@
 /// (Keyboard.WaitForInput), which follow the window the same way. Ctrl+C (cancelled in Init) is told about here: it does not close the editor. Only the editor of a file
 /// or of the settings follows the window: a peek and a field of a box are drawn again by the page they are on
 /// </summary>
-public partial class TextArea
+internal sealed partial class TextArea
 {
     // The dimensions the editor is laid out for (Init.LineWidth, Init.LineCount), and the size of the window then
     private int _lineWidth;
@@ -16,7 +16,7 @@ public partial class TextArea
     private (int Width, int Height) _windowSize;
 
     // The editor of a file or of the settings, on the whole screen
-    private bool FollowsWindow => _peek == null && !_singleLine && _saveMode is SaveAsFile or SaveAsSettings;
+    private bool FollowsWindow => _peek is null && !_singleLine && _saveMode is SaveAsFile or SaveAsSettings;
 
     // When the editor opens: the dimensions it is laid out for (a Ctrl+C from before is forgotten)
     private void StartFollowingWindow()
@@ -143,7 +143,7 @@ public partial class TextArea
     private void Resize(int widthChange, int heightChange)
     {
         SetTextHeight(_height + heightChange);
-        if (_otherPane == null)
+        if (_otherPane is null)
         {
             SetPlace(_left, Math.Max(2, _width + widthChange));
             return;
@@ -169,7 +169,7 @@ public partial class TextArea
         _shownRows = new string?[_height];
         _shownCells = new int[_height];
         _engine.SetHeight(_height);
-        if (_otherPane == null) return;
+        if (_otherPane is null) return;
         _otherPane.ShownRows = new string?[_height];
         _otherPane.ShownCells = new int[_height];
         _otherPane.Engine.SetHeight(_height);

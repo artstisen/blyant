@@ -275,7 +275,7 @@ internal static partial class FileExplorer
     private static bool IsProtected(Item item)
     {
         var protection = Protection(item);
-        if (protection == null) return false;
+        if (protection is null) return false;
         _message = protection;
         return true;
     }
@@ -286,7 +286,7 @@ internal static partial class FileExplorer
         foreach (var item in items)
         {
             var protection = Protection(item);
-            if (protection == null) continue;
+            if (protection is null) continue;
             _message = items.Count == 1 ? protection : item.Name + ": " + protection;
             return true;
         }
@@ -294,13 +294,11 @@ internal static partial class FileExplorer
         return false;
     }
 
-    #region Marks
-
     // Mark (or unmark) the selected file or directory and go to the next
     private static void ToggleMark()
     {
         var item = SelectedItem();
-        if (item == null) return;
+        if (item is null) return;
         var pane = ActivePane;
         if (!pane.Marks.Remove(item.Path)) pane.Marks.Add(item.Path);
         DrawItem(IsDual ? _active : 0, pane, pane.Index);
@@ -315,7 +313,7 @@ internal static partial class FileExplorer
         if (pane.Marks.Count == 0)
         {
             var item = SelectedItem();
-            return item == null ? new List<Item>() : new List<Item> { item };
+            return item is null ? new List<Item>() : new List<Item> { item };
         }
 
         // A marked item can be hidden by a filter
@@ -338,15 +336,11 @@ internal static partial class FileExplorer
         return items.Count == 1 ? result : item.Name + ": " + result;
     }
 
-    #endregion
-
     // Ask for a name in a box on top of the list. Returns null if canceled
     private static string? AskName(string caption, string name)
     {
         return ChoiceBox.AskText(caption, DialogText.TypeNameAndPressEnter, DialogText.NameColon, name);
     }
-
-    #region Selecting where to copy or move to
 
     // A file or directory that is being copied or moved: the user is selecting the directory to put it in.
     // This is done in the panes as they are: any directory can be gone to, in either pane, and "S" selects
@@ -373,7 +367,7 @@ internal static partial class FileExplorer
 
     private static void StopSelectingTarget()
     {
-        if (_pending == null) return;
+        if (_pending is null) return;
         _active = _pending.Pane;
         _pending = null;
         _caption = DialogText.CaptionsFiles;
@@ -382,7 +376,7 @@ internal static partial class FileExplorer
     // Copy or move to the directory shown in the pane with the focus
     private static void CompleteSelectingTarget()
     {
-        if (_pending == null) return;
+        if (_pending is null) return;
         var target = ActivePane.Directory;
         if (target.Length == 0)
         {
@@ -453,8 +447,6 @@ internal static partial class FileExplorer
         if (FileFavorites.PathsChanged(moved)) SaveFavorites();
     }
 
-    #endregion
-
     // Show the file being copied on the bottom line. Esc cancels
     private static bool ShowProgress(string name)
     {
@@ -485,14 +477,14 @@ internal static partial class FileExplorer
     {
         var index = ActivePane.Index;
         LoadItems(select);
-        if (select != null && ActivePane.Filter.Length > 0 && !ActivePane.Items.Any(item => item.Path == select))
+        if (select is not null && ActivePane.Filter.Length > 0 && !ActivePane.Items.Any(item => item.Path == select))
         {
             // The item no longer matches the filter (it has a new name): show all
             ActivePane.Filter = string.Empty;
             LoadItems(select);
         }
 
-        if (select == null) ActivePane.Index = index;
+        if (select is null) ActivePane.Index = index;
         _message = result == DialogText.Success ? message : result;
     }
 
@@ -522,7 +514,7 @@ internal static partial class FileExplorer
         if (name.Length == 0)
         {
             var asked = AskName(DialogText.NewDirectory, string.Empty);
-            if (asked == null) return;
+            if (asked is null) return;
             name = asked;
         }
 
@@ -534,11 +526,11 @@ internal static partial class FileExplorer
     private static void RenameSelected(string name)
     {
         var item = SelectedItem();
-        if (item == null || IsProtected(item)) return;
+        if (item is null || IsProtected(item)) return;
         if (name.Length == 0)
         {
             var asked = AskName(DialogText.RenameFile, item.Name);
-            if (asked == null) return;
+            if (asked is null) return;
             name = asked;
         }
 
@@ -558,8 +550,6 @@ internal static partial class FileExplorer
             ShellSession.PreviousFollows(item.Path, path);
         }
     }
-
-    #region For the shell
 
     // The shell (Blyant on lines) works on files with the same rules as the file browser, and keeps the same lists:
     // these take a path, where the browser takes its selected item
@@ -613,8 +603,6 @@ internal static partial class FileExplorer
         if (FileFavorites.PathsDeleted(new[] { path })) FileFavorites.Save();
         FileTags.FollowDelete(new[] { path });
     }
-
-    #endregion
 
     // The file history, the jumps (Recent), the splits and the corkboard follow a file or directory that was renamed or
     // moved
@@ -676,7 +664,7 @@ internal static partial class FileExplorer
             return;
         }
 
-        if (SelectedItem() == null && PeekedDirectory() == null)
+        if (SelectedItem() is null && PeekedDirectory() is null)
         {
             _message = DialogText.PeekSelectFile;
             return;
@@ -750,14 +738,14 @@ internal static partial class FileExplorer
         var (left, width) = PaneArea(1 - _active);
         string? note = null;
         TextFile? file = null;
-        if (directory != null)
+        if (directory is not null)
         {
             // What is in it, as the pane will show it when Tab opens it there: directories first (ending in "/")
             DrawPeekLines(left, width, PeekContents(directory, PageSize), false);
             return;
         }
 
-        if (item == null || item.IsDirectory)
+        if (item is null || item.IsDirectory)
         {
             note = DialogText.PeekSelectFile;
         }
@@ -779,7 +767,7 @@ internal static partial class FileExplorer
             }
         }
 
-        if (file == null || item == null)
+        if (file is null || item is null)
         {
             // The pane is cleared, with the note on its first row
             DrawPeekLines(left, width, new[] { note ?? string.Empty }, true);
@@ -819,14 +807,14 @@ internal static partial class FileExplorer
     private static void FocusPeek()
     {
         var directory = PeekedDirectory();
-        if (directory != null)
+        if (directory is not null)
         {
             OpenPeekedDirectory(directory);
             return;
         }
 
         var item = SelectedItem();
-        if (item == null || item.IsDirectory)
+        if (item is null || item.IsDirectory)
         {
             _message = DialogText.PeekSelectFile;
             return;
@@ -932,7 +920,7 @@ internal static partial class FileExplorer
         if (name.Length > 0)
         {
             var item = SelectedItem();
-            if (item == null || item.IsDirectory)
+            if (item is null || item.IsDirectory)
             {
                 _message = DialogText.DiffSelectFile;
                 return;
@@ -1055,7 +1043,7 @@ internal static partial class FileExplorer
     private static string CommonDirectory(string first, string second)
     {
         var directory = System.IO.Path.GetDirectoryName(first);
-        while (directory != null)
+        while (directory is not null)
         {
             var withSeparator = directory.EndsWith(System.IO.Path.DirectorySeparatorChar)
                 ? directory
@@ -1081,7 +1069,7 @@ internal static partial class FileExplorer
             return;
         }
 
-        var target = new JumpTarget(item == null || item.IsDirectory ? JumpKind.Directory : JumpKind.File, path);
+        var target = new JumpTarget(item is null || item.IsDirectory ? JumpKind.Directory : JumpKind.File, path);
         _message = Bookmarks.AddWithMessage(target, bookmarkName, moveName, true, out _);
     }
 
@@ -1090,12 +1078,12 @@ internal static partial class FileExplorer
     private static void CopyName()
     {
         var name = SelectedItem()?.Name;
-        if (name == null && ActivePane.Directory.Length == 0)
+        if (name is null && ActivePane.Directory.Length == 0)
         {
             // The list of drives
             name = ActivePane.Items.Count > 0 ? ActivePane.Items[ActivePane.Index].Name : string.Empty;
         }
-        else if (name == null)
+        else if (name is null)
         {
             var directory = ActivePane.Directory.TrimEnd(System.IO.Path.DirectorySeparatorChar,
                 System.IO.Path.AltDirectorySeparatorChar);
@@ -1299,7 +1287,7 @@ internal static partial class FileExplorer
 
     // What the question before deleting tells about the trash. In the shell (asked on lines) where it is opened, as
     // ":trash" is a command of the file browser
-    private static string TrashNote => Shell.Prompts != null
+    private static string TrashNote => Shell.Prompts is not null
         ? Lang.T("It can be found again in the trash (:trash in the file browser)")
         : DialogText.TrashFileNote;
 
@@ -1359,7 +1347,7 @@ internal static partial class FileExplorer
 
         // Files or directories Blyant uses among them (the protection lifted): told first
         var used = items.FirstOrDefault(UsedByBlyant);
-        var usedNote = used == null ? string.Empty : UsedByBlyantNote(used) + " ";
+        var usedNote = used is null ? string.Empty : UsedByBlyantNote(used) + " ";
         if (toTrash)
         {
             return ChoiceBox.ConfirmGuarded(DialogText.DeleteMarkedCaption,
@@ -1378,7 +1366,7 @@ internal static partial class FileExplorer
     private static void ShowInfo()
     {
         var item = SelectedItem();
-        if (item != null) ShowInfo(item);
+        if (item is not null) ShowInfo(item);
     }
 
     private static void ShowInfo(Item item)
@@ -1433,7 +1421,7 @@ internal static partial class FileExplorer
         var type = item.IsDirectory ? DialogText.InfoTypeDirectory :
             info.Extension.Length > 1 ? Lang.F("{0} file", info.Extension[1..].ToUpperInvariant()) :
             DialogText.InfoTypeNoExtension;
-        if (info.LinkTarget != null) type += Lang.F(", link to {0}", info.LinkTarget);
+        if (info.LinkTarget is not null) type += Lang.F(", link to {0}", info.LinkTarget);
         if ((info.Attributes & FileAttributes.ReadOnly) != 0 && !item.IsDirectory) type += DialogText.InfoTypeReadOnly;
         return type;
     }

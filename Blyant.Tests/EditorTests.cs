@@ -97,8 +97,6 @@ public class EditorTests
         Assert.Equal(new TextPos(line, col), editor.Cursor);
     }
 
-    #region Modes and inserting
-
     [Fact]
     public void StartsInNormalMode_UnlessEmpty()
     {
@@ -165,10 +163,6 @@ public class EditorTests
         editor.HandleKey(new ConsoleKeyInfo('{', ConsoleKey.D7, false, true, true));
         Assert.Equal("@{", editor.GetText());
     }
-
-    #endregion
-
-    #region Movement
 
     [Theory]
     [InlineData("w", 0, 4)]
@@ -492,10 +486,6 @@ public class EditorTests
         Assert.Equal(5, editor.TopRow);
     }
 
-    #endregion
-
-    #region Operators
-
     [Theory]
     [InlineData("dw", "bar.(boo) end", 0)]
     [InlineData("2dw", ".(boo) end", 0)]
@@ -633,10 +623,6 @@ public class EditorTests
         AssertState(editor, "one \nthree", 0, 3);
     }
 
-    #endregion
-
-    #region Registers (string memory)
-
     [Fact]
     public void YankAndPutLines()
     {
@@ -713,10 +699,6 @@ public class EditorTests
         Assert.Equal("1/2", Tools.GetLineMemoryPosition());
     }
 
-    #endregion
-
-    #region Visual mode
-
     [Theory]
     [InlineData("ved", " two three\nsecond line", 0, 0)]
     [InlineData("vwd", "wo three\nsecond line", 0, 0)]
@@ -757,7 +739,7 @@ public class EditorTests
         Assert.Equal(EditorMode.VisualLine, editor.Mode);
         for (var line = 0; line < 5; line++)
         {
-            Assert.Equal(line >= firstLine && line <= lastLine, editor.Selection(line) != null);
+            Assert.Equal(line >= firstLine && line <= lastLine, editor.Selection(line) is not null);
         }
     }
 
@@ -792,10 +774,6 @@ public class EditorTests
         editor.Type("yiwwviwp");
         Assert.Equal("one one", editor.GetText());
     }
-
-    #endregion
-
-    #region Undo, redo and repeat
 
     [Fact]
     public void UndoAndRedo()
@@ -876,10 +854,6 @@ public class EditorTests
         editor.Type("A;<Esc>j.j.");
         Assert.Equal("a;\nb;\nc;", editor.GetText());
     }
-
-    #endregion
-
-    #region Search and command line
 
     [Fact]
     public void Search_FindsNextAndPreviousAndWraps()
@@ -983,10 +957,6 @@ public class EditorTests
         AssertState(editor, "one two three", 0, 4);
         Assert.Equal("", editor.PendingKeys);
     }
-
-    #endregion
-
-    #region Text handling
 
     [Fact]
     public void LineEndings_AreNormalized()
@@ -1146,10 +1116,6 @@ public class EditorTests
         Assert.StartsWith("xLorem", editor.Buffer[9999]);
     }
 
-    #endregion
-
-    #region Single line editor
-
     private static EditorEngine SingleLine(string text, int maxCells = 10)
     {
         var editor = new EditorEngine(text, maxCells + 2, 1, true) { MaxCells = maxCells };
@@ -1187,10 +1153,6 @@ public class EditorTests
         Assert.Equal(EditorRequest.None, editor.Type(":q"));
         Assert.Equal(EditorMode.Insert, editor.Mode);
     }
-
-    #endregion
-
-    #region Line numbers
 
     [Fact]
     public void LineNumberCommands()
@@ -1248,10 +1210,6 @@ public class EditorTests
         Assert.Equal(1, editor.Height);
     }
 
-    #endregion
-
-    #region Reading the file again
-
     [Theory]
     [InlineData(":e<CR>", nameof(EditorRequest.Reload))]
     [InlineData(":edit<CR>", nameof(EditorRequest.Reload))]
@@ -1283,8 +1241,6 @@ public class EditorTests
         editor.ReloadText("only");
         AssertState(editor, "only", 0, 0);
     }
-
-    #endregion
 
     [Fact]
     public void Trim_RemovesBlankSpaceAtLineEnds_AndKeepsIndentation()

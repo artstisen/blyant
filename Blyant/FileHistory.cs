@@ -111,7 +111,7 @@ internal static class FileHistory
         try
         {
             var directory = Path.GetDirectoryName(Path.GetFullPath(FilePath));
-            if (directory != null) FileIo.CreateDirectory(directory);
+            if (directory is not null) FileIo.CreateDirectory(directory);
             FileIo.WriteAllBytesSafe(FilePath, new UTF8Encoding(false).GetBytes(Serialize()));
             return DialogText.Success;
         }

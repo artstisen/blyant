@@ -56,7 +56,7 @@ internal sealed partial class ShellSession
             }
 
             // (a line found is a row of find -t only: a command that works on the file makes it a file again)
-            _lastList = value.Select(item => item.Found == null ? item : item with { Found = null }).ToList();
+            _lastList = value.Select(item => item.Found is null ? item : item with { Found = null }).ToList();
             _listShown = true;
             // One file: one a command worked on (peek, insert, new ...): $file, and $line the line it worked on. A
             // command on the same file without a line (format, trim, undo) keeps the line; another file without one
@@ -65,7 +65,7 @@ internal sealed partial class ShellSession
             {
                 var path = Path.GetFullPath(one.Path);
                 if (one.At is { } at) _line = at.Line;
-                else if (_file == null || !FileOperations.NameComparer.Equals(_file, path)) _line = null;
+                else if (_file is null || !FileOperations.NameComparer.Equals(_file, path)) _line = null;
                 _file = path;
             }
         }
@@ -92,7 +92,7 @@ internal sealed partial class ShellSession
     {
         get
         {
-            if (_file == null) return null;
+            if (_file is null) return null;
             return _line ?? FileExplorer.CaretOfFile(_file)?.Line;
         }
     }
@@ -232,7 +232,7 @@ internal sealed partial class ShellSession
                 DialogText.ApplicationVersion));
         }
 
-        if (StartNote != null)
+        if (StartNote is not null)
         {
             if (Terminal) Line(StartNote);
             else _errors.WriteLine(StartNote);
@@ -247,7 +247,7 @@ internal sealed partial class ShellSession
             // (a Ctrl+C pressed while the last command ran, or at a question, is not taken for this prompt)
             if (Terminal) Tools.TakeCancelKey();
             // (the setting shellcompletion is followed at once: "set shellcompletion false")
-            if (_lineReader != null && Shell.Completion)
+            if (_lineReader is not null && Shell.Completion)
             {
                 line = _lineReader.Read(Prompt());
             }
@@ -261,11 +261,11 @@ internal sealed partial class ShellSession
 
                 line = _input.ReadLine();
                 // (a file of commands saved with a byte order mark, as Notepad and PowerShell save it)
-                if (first && line != null) line = line.TrimStart('\uFEFF');
+                if (first && line is not null) line = line.TrimStart('\uFEFF');
             }
 
             first = false;
-            if (line == null)
+            if (line is null)
             {
                 // Ctrl+C at the prompt: a new prompt; the end of the input (Ctrl+D, Ctrl+Z, the end of the file):
                 // leave. (Ctrl+C can end the reading of a line before Blyant is told of it: it is waited for a moment)
@@ -301,11 +301,11 @@ internal sealed partial class ShellSession
     // the end of a file or a pipe, the end of the script)
     private string? ReadText(string prompt)
     {
-        if (_runNext != null) return _runNext()?.TrimEnd('\r');
+        if (_runNext is not null) return _runNext()?.TrimEnd('\r');
         while (true)
         {
             if (Terminal) Tools.TakeCancelKey();
-            if (_lineReader != null && Shell.Completion)
+            if (_lineReader is not null && Shell.Completion)
             {
                 var text = _lineReader.Read(prompt, true);
                 if (_lineReader.Dropped) continue;
@@ -319,7 +319,7 @@ internal sealed partial class ShellSession
             }
 
             var line = _input.ReadLine();
-            if (line != null) return line;
+            if (line is not null) return line;
             // (Ctrl+C can end the reading of a line before Blyant is told of it, as at the prompt)
             if (Terminal && SpinWait.SpinUntil(Tools.TakeCancelKey, CancelKeyWait))
             {
@@ -371,8 +371,6 @@ internal sealed partial class ShellSession
             : path;
     }
 
-    #region Output
-
     // A line of what a command shows. In a terminal a long output comes in pages (setting "shellpaging"): when the
     // window is full, the shell waits for a key (Enter or Space: the next page, q: the rest is not shown)
     private void Line(string text = "")
@@ -399,7 +397,7 @@ internal sealed partial class ShellSession
     // no pages (from a file or a pipe, paging off, or a terminal that does not tell its size)
     private (int Width, int Height)? PageSize()
     {
-        if (!Terminal || !Shell.Paging || ReadKey == null || WindowSize?.Invoke() is not { } size) return null;
+        if (!Terminal || !Shell.Paging || ReadKey is null || WindowSize?.Invoke() is not { } size) return null;
         return size.Width > 0 && size.Height > 2 ? size : null;
     }
 
@@ -540,11 +538,11 @@ internal sealed partial class ShellSession
         {
             var parts = new List<string>();
             var folder = Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(path));
-            for (var i = 0; folder != null && parts.Count < depth; i++)
+            for (var i = 0; folder is not null && parts.Count < depth; i++)
             {
                 var above = Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(folder));
                 // (the root, "C:\" or "/", has no name to show: there the whole folder is told instead)
-                if (above == null) break;
+                if (above is null) break;
                 if (i >= skip) parts.Insert(0, NameOf(folder));
                 folder = above;
             }
@@ -557,7 +555,7 @@ internal sealed partial class ShellSession
         {
             var trimmed = Path.TrimEndingDirectorySeparator(path);
             var parent = Path.GetDirectoryName(trimmed);
-            var folder = parent == null ? string.Empty : Path.GetFileName(Path.TrimEndingDirectorySeparator(parent));
+            var folder = parent is null ? string.Empty : Path.GetFileName(Path.TrimEndingDirectorySeparator(parent));
             return folder.Length > 0 ? folder + "/" + Path.GetFileName(trimmed) : trimmed;
         }
     }
@@ -645,10 +643,6 @@ internal sealed partial class ShellSession
                (there ? string.Empty : " " + DialogText.FavoriteMissing);
     }
 
-    #endregion
-
-    #region Questions
-
     // The questions of Blyant (ChoiceBox) while the shell runs: on lines. From a file (not a terminal) nothing is
     // asked: the answer is no (the box closed), or yes with "--yes"
 
@@ -686,7 +680,7 @@ internal sealed partial class ShellSession
         _output.Flush();
         var typed = _input.ReadLine()?.Trim();
         NewPage();
-        if (typed == null) return -1;
+        if (typed is null) return -1;
         if (guarded) return string.Equals(typed, choices[0], StringComparison.CurrentCultureIgnoreCase) ? 0 : -1;
         if (typed.Length == 0) return selected;
         for (var i = 0; i < choices.Count; i++)
@@ -745,6 +739,4 @@ internal sealed partial class ShellSession
         NewPage();
         return string.IsNullOrEmpty(typed) ? null : typed;
     }
-
-    #endregion
 }

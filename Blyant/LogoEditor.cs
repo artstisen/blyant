@@ -102,7 +102,7 @@ internal static class LogoEditor
             ChoiceBox.Forget();
             var name = ChoiceBox.AskText(DialogText.LogoSaveCaption, DialogText.LogoSavePrompt, DialogText.NameColon,
                 suggested);
-            if (name == null) return false;
+            if (name is null) return false;
             suggested = name;
             if (!Logos.IsValidName(name))
             {
@@ -331,7 +331,7 @@ internal static class LogoEditor
                     {
                         ConsoleColors.SetBackground(ConsoleColors.Current.BackgroundColor);
                         ConsoleColors.SetForeground(color);
-                    }, out var picked) || picked == null)
+                    }, out var picked) || picked is null)
             {
                 return false;
             }
@@ -370,7 +370,7 @@ internal static class LogoEditor
             if (key.Key == ConsoleKey.Spacebar)
             {
                 // Paint: the color is asked for the first time
-                var asked = _paint == null;
+                var asked = _paint is null;
                 if (asked && !PickPaint()) return TabResult.Redraw;
                 var single = !_visual;
                 var result = Apply(_paint);
@@ -734,7 +734,7 @@ internal static class LogoEditor
                 ChoiceBox.Forget();
                 var typed = ChoiceBox.AskText(DialogText.LogoDuplicateCaption, DialogText.LogoSavePrompt,
                     DialogText.NameColon, suggested);
-                if (typed == null) return TabResult.Redraw;
+                if (typed is null) return TabResult.Redraw;
                 suggested = typed;
                 var status = Logos.Duplicate(name, typed);
                 if (status != DialogText.Success)
@@ -768,7 +768,7 @@ internal static class LogoEditor
                 ChoiceBox.Forget();
                 var typed = ChoiceBox.AskText(DialogText.LogoRenameCaption, DialogText.LogoSavePrompt,
                     DialogText.NameColon, suggested);
-                if (typed == null) return TabResult.Redraw;
+                if (typed is null) return TabResult.Redraw;
                 suggested = typed;
                 var status = Logos.Rename(name, typed);
                 if (status != DialogText.Success)
@@ -807,7 +807,7 @@ internal static class LogoEditor
             }
 
             var logo = Logos.Load(name);
-            if (logo == null) return TabResult.Redraw;
+            if (logo is null) return TabResult.Redraw;
             if (!edit) Use(logo);
             _editing = logo.Clone();
             _changed = false;

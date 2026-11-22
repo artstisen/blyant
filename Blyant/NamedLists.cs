@@ -101,7 +101,7 @@ internal sealed class NamedLists
     {
         name = name.Trim();
         if (NameProblem(name) is { } problem) return problem;
-        if (Find(name) != null) return Lang.T("There is a list of that name");
+        if (Find(name) is not null) return Lang.T("There is a list of that name");
         try
         {
             FileIo.CreateDirectory(Directory);

@@ -17,8 +17,6 @@ namespace Blyant;
 /// </summary>
 internal sealed class SpellDictionary
 {
-    #region File format constants
-
     private const string FileId = "VIMspell";
     private const int FileVersion = 50;
 
@@ -50,8 +48,6 @@ internal sealed class SpellDictionary
     private const int FlagNoCompoundAfter = 0x2000; // No word may be joined after the word
 
     private const int MaxWordLength = 254;
-
-    #endregion
 
     /// <summary>
     /// A tree of words. Each node is a list of siblings sorted by byte: "Bytes" holds the number of siblings
@@ -93,8 +89,6 @@ internal sealed class SpellDictionary
     private SpellDictionary()
     {
     }
-
-    #region Reading the file
 
     private byte[] _data = Array.Empty<byte>();
     private int _pos;
@@ -311,10 +305,6 @@ internal sealed class SpellDictionary
         return index;
     }
 
-    #endregion
-
-    #region Checking a word
-
     /// <summary>
     /// Check the spelling of a word
     /// </summary>
@@ -481,7 +471,7 @@ internal sealed class SpellDictionary
 
         // A word that is, or will be, part of a compound word
         var compoundFlag = (flags >> 24) & 0xFF;
-        if (_compoundRules == null || compoundFlag == 0) return false;
+        if (_compoundRules is null || compoundFlag == 0) return false;
         if (start + chars - state.CompoundOffset < _compoundMinLength) return false;
         if (!isEnd && compoundFlags.Count + compoundExtra + 2 > _compoundMax) return false;
         if (inCompound && (flags & FlagNoCompoundBefore) != 0) return false;
@@ -607,10 +597,6 @@ internal sealed class SpellDictionary
                ((flags & (FlagAllCap | FlagKeepCap)) == 0 &&
                 ((flags & FlagOneCap) == 0 || caps == CapType.OneCap));
     }
-
-    #endregion
-
-    #region Suggestions
 
     /// <summary>
     /// Find words in the dictionary that are close to a (misspelled) word
@@ -757,6 +743,4 @@ internal sealed class SpellDictionary
             }
         }
     }
-
-    #endregion
 }

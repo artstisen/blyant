@@ -64,7 +64,7 @@ internal static partial class FileExplorer
             }
 
             var count = _listCount.Take();
-            if (count != null && key.Key == ConsoleKey.Escape)
+            if (count is not null && key.Key == ConsoleKey.Escape)
             {
                 redraw = hadMessage;
                 continue;
@@ -74,21 +74,21 @@ internal static partial class FileExplorer
             if (key.KeyChar == ':')
             {
                 var command = CommandLine.Read(CommandContext.History);
-                if (command != null && CommandLine.Name(command) is "exit" or "qa")
+                if (command is not null && CommandLine.Name(command) is "exit" or "qa")
                 {
                     // Leave Blyant (asked first)
                     Jump.Exit();
                     continue;
                 }
 
-                if (command != null && CommandLine.Name(command) == "shell")
+                if (command is not null && CommandLine.Name(command) == "shell")
                 {
                     // Go on as the shell, in the directory of the file browser
                     Jump.ToShell(directory: ShellDirectory);
                     continue;
                 }
 
-                if (command != null && CommandLine.Name(command) is "jump" or "ju" or "jmp" or "board" or "corkboard"
+                if (command is not null && CommandLine.Name(command) is "jump" or "ju" or "jmp" or "board" or "corkboard"
                         or "favorites" or "favs" or "history" or "hist" or "hotlist" or "hot" or "browse"
                         or "file" or "open")
                 {
@@ -98,21 +98,21 @@ internal static partial class FileExplorer
                     continue;
                 }
 
-                if (command != null && CommandLine.Name(command) == "book")
+                if (command is not null && CommandLine.Name(command) == "book")
                 {
                     // ":book 3": jump to bookmark 3
                     Jump.ToBookmark(CommandLine.Argument(command));
                     continue;
                 }
 
-                if (command != null && CommandLine.Name(command) == "log")
+                if (command is not null && CommandLine.Name(command) == "log")
                 {
                     // The log, on top of the page
                     Jump.ShowLog();
                     continue;
                 }
 
-                if (command != null && CommandLine.Name(command) is "colorscheme" or "colo")
+                if (command is not null && CommandLine.Name(command) is "colorscheme" or "colo")
                 {
                     // ":colorscheme name": another color scheme, the page drawn again in it
                     _historyMessage = SchemeEditor.UseByName(CommandLine.Argument(command), out _);
@@ -120,7 +120,7 @@ internal static partial class FileExplorer
                 }
 
                 // A name can follow ":bookmark"
-                if (command != null && CommandLine.Name(command) is "bookmark" or "bookmark!")
+                if (command is not null && CommandLine.Name(command) is "bookmark" or "bookmark!")
                 {
                     command = CommandLine.Name(command);
                 }
@@ -317,7 +317,7 @@ internal static partial class FileExplorer
     private static bool OpenFromHistory(int number)
     {
         var path = HistoryPath(number);
-        if (path == null) return false;
+        if (path is null) return false;
         _message = string.Empty;
         var close = Open(new Item(System.IO.Path.GetFileName(path), path, false, new FileInfo(path).Length));
         _historyMessage = _message;
@@ -332,9 +332,9 @@ internal static partial class FileExplorer
     private static bool ShowHistoryInBrowser(int number)
     {
         var path = HistoryPath(number);
-        if (path == null) return false;
+        if (path is null) return false;
         var parent = System.IO.Path.GetDirectoryName(path);
-        if (parent == null || !Directory.Exists(parent))
+        if (parent is null || !Directory.Exists(parent))
         {
             _historyMessage = DialogText.DirectoryNotFound;
             return false;
@@ -347,7 +347,7 @@ internal static partial class FileExplorer
     private static void ShowHistoryInfo(int number)
     {
         var path = HistoryPath(number);
-        if (path == null) return;
+        if (path is null) return;
         _message = string.Empty;
         ShowInfo(new Item(System.IO.Path.GetFileName(path), path, false, new FileInfo(path).Length));
         _historyMessage = _message;
@@ -357,7 +357,7 @@ internal static partial class FileExplorer
     private static void ToggleHistoryFavorite(int number)
     {
         var path = HistoryPath(number);
-        if (path == null || !ConfirmNotesRemoved(new[] { path })) return;
+        if (path is null || !ConfirmNotesRemoved(new[] { path })) return;
         _historyMessage = FileFavorites.Toggle(path) ? DialogText.FavoriteAdded : DialogText.FavoriteRemoved;
         var saved = FileFavorites.Save();
         if (saved != DialogText.Success) _historyMessage = saved;
@@ -458,8 +458,6 @@ internal static partial class FileExplorer
         var result = FileHistory.Save();
         if (result != DialogText.Success) EventLog.Add(DialogText.LogFile + "History: " + result);
     }
-
-    #region Drawing
 
     private static int _shownHistoryTop = -1;
     private static int _shownHistoryIndex = -1;
@@ -612,6 +610,4 @@ internal static partial class FileExplorer
 
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
     }
-
-    #endregion
 }

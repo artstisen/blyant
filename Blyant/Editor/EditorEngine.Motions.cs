@@ -17,8 +17,6 @@ internal sealed partial class EditorEngine
     private char _lastFindCommand; // The last of the "f", "F", "t" and "T" commands used
     private string _lastFindChar = string.Empty; // One character: two chars for an emoji
 
-    #region Basic movement
-
     private TextPos Left(TextPos pos, int count)
     {
         var line = Buffer[pos.Line];
@@ -65,10 +63,6 @@ internal sealed partial class EditorEngine
         // At the top or bottom of the document only the cursor moves
         MoveRows(moved != 0 ? moved : rows);
     }
-
-    #endregion
-
-    #region Words
 
     // 0 = blank space, 1 = word character, 2 = other characters (punctuation). The chars of a character made of
     // more than one (an emoji with a variation selector, a letter with an accent) all have the class of the first,
@@ -174,10 +168,6 @@ internal sealed partial class EditorEngine
         while (col + 1 < line.Length && CharClass(line, col + 1, bigWord) == charClass) col++;
         return new TextPos(lineIndex, TextMetrics.ElementStart(line, col));
     }
-
-    #endregion
-
-    #region Paragraphs and find character
 
     private bool IsBlankLine(int line)
     {
@@ -317,10 +307,6 @@ internal sealed partial class EditorEngine
         }
     }
 
-    #endregion
-
-    #region Motions by key
-
     /// <summary>
     /// Resolve a motion key
     /// </summary>
@@ -428,7 +414,7 @@ internal sealed partial class EditorEngine
                 if (key == ',') command = char.IsLower(command) ? char.ToUpper(command) : char.ToLower(command);
                 var found = FindChar(command, _lastFindChar, n, true, out motion);
                 // (still shown when there is no more to find)
-                if (!forOperator && (found || _found != null)) ShowFound(_lastFindChar);
+                if (!forOperator && (found || _found is not null)) ShowFound(_lastFindChar);
                 return found;
             }
             case 'n':
@@ -457,6 +443,4 @@ internal sealed partial class EditorEngine
                 return false;
         }
     }
-
-    #endregion
 }

@@ -34,7 +34,7 @@ public class ColorSchemeTests : IDisposable
     private static string SchemesDirectory()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);
-        while (directory != null && !File.Exists(Path.Combine(directory.FullName, "Blyant.sln")))
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "Blyant.sln")))
         {
             directory = directory.Parent;
         }
@@ -83,7 +83,7 @@ public class ColorSchemeTests : IDisposable
                      }.Concat(Enum.GetValues<ColorItem>().Where(item =>
                          ColorScheme.IsCommand(item) && item != ColorItem.CommandBox)))
             {
-                Assert.True(scheme.Get(item) != null, scheme.Name + ": " + item);
+                Assert.True(scheme.Get(item) is not null, scheme.Name + ": " + item);
             }
 
             // (Lush Blue has a box of commands of its own color)

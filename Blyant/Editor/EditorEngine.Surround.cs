@@ -23,7 +23,7 @@ internal sealed partial class EditorEngine
         }
 
         var item = Completions.Named(word, Syntax != SyntaxType.None ? Syntax : CompletionSyntax);
-        if (item == null)
+        if (item is null)
         {
             SetError(Lang.F("There is no completion {0} for this text", word));
             return;

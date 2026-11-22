@@ -9,7 +9,7 @@ namespace Blyant;
 /// DateTime.Now: a time kept in local time is ambiguous in the hour the clocks go back, and moves when the time zone
 /// changes
 /// </summary>
-public static class IsoDateTime
+internal static class IsoDateTime
 {
     // The mark after a time written in UTC in a list ("2026-11-22 09:05Z"); a time without it was written in local
     // time (before 1.6.2)
@@ -59,5 +59,5 @@ public static class IsoDateTime
     /// editor and the macros. The time is read once: read for each part, a date written at midnight could have the
     /// day of one day and the month or year of the next ("2026-12-31" + a second = "2026-01-01")
     /// </summary>
-    public static string GetDateTimeNow() => Local(DateTime.UtcNow, "yyyy-MM-dd HH:mm:ss");
+    internal static string GetDateTimeNow() => Local(DateTime.UtcNow, "yyyy-MM-dd HH:mm:ss");
 }

@@ -227,11 +227,9 @@ public class SpellTests : IDisposable
     private SpellChecker Checker(string languages = "xx")
     {
         var checker = SpellChecker.Load(languages, _directory, out var error);
-        Assert.True(checker != null, error);
+        Assert.True(checker is not null, error);
         return checker!;
     }
-
-    #region The dictionary
 
     [Fact]
     public void Dictionary_FindsWords()
@@ -306,10 +304,6 @@ public class SpellTests : IDisposable
         Assert.False(dictionary.Check("footballxyz"));
         Assert.True(dictionary.Check("footxyz"));
     }
-
-    #endregion
-
-    #region The spell checker
 
     [Fact]
     public void Checker_FindsMisspelledWords()
@@ -418,10 +412,6 @@ public class SpellTests : IDisposable
         var checker = Checker();
         Assert.Equal(new List<(int, int)> { (5, 10) }, checker.FindMisspelled("good hello other"));
     }
-
-    #endregion
-
-    #region The editor
 
     private static EditorEngine Editor(string text)
     {
@@ -606,8 +596,6 @@ public class SpellTests : IDisposable
         editor.Type("20Gzt");
         Assert.Equal(19, editor.TopRow);
     }
-
-    #endregion
 
     [Fact]
     public void TheLanguagesOfTheSpellChecker_AreTurnedOnAndOff()

@@ -55,7 +55,7 @@ internal sealed partial class ShellSession
         var fileWord = words[0];
         if (fileWord == "@")
         {
-            if (_file == null)
+            if (_file is null)
             {
                 Error(Lang.T("@ is the file and the line of the last command: none yet (words notes.md 12)"));
                 return;

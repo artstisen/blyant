@@ -110,11 +110,11 @@ internal sealed partial class EditorEngine
             {
                 Mode = EditorMode.Normal;
             }
-            else if (_found != null)
+            else if (_found is not null)
             {
                 // (hidden as after any other key)
             }
-            else if (HighlightSearch && _searchRegex != null)
+            else if (HighlightSearch && _searchRegex is not null)
             {
                 HighlightSearch = false;
             }
@@ -206,7 +206,7 @@ internal sealed partial class EditorEngine
         }
 
         // A comparison: "n" "N" go to the changes (to the matches when a search is highlighted)
-        if (!operatorPending && cmd is 'n' or 'N' && ChangeLines != null && !IsSearchHighlighted)
+        if (!operatorPending && cmd is 'n' or 'N' && ChangeLines is not null && !IsSearchHighlighted)
         {
             JumpToChange(cmd == 'n', TakeCount() ?? 1);
             ResetPending();
@@ -490,7 +490,7 @@ internal sealed partial class EditorEngine
             case '[' or ']':
                 if (cmd == 's') JumpToMisspelled(prefix == ']', TakeCount() ?? 1);
                 // A comparison: the next/previous change
-                if (cmd == 'c' && ChangeLines != null) JumpToChange(prefix == ']', TakeCount() ?? 1);
+                if (cmd == 'c' && ChangeLines is not null) JumpToChange(prefix == ']', TakeCount() ?? 1);
                 break;
             case 'z' when cmd == '=':
                 RequestSuggestions();
@@ -523,8 +523,6 @@ internal sealed partial class EditorEngine
 
         ResetPending();
     }
-
-    #region Operators
 
     private void HandleOperatorKey(char op)
     {
@@ -724,10 +722,6 @@ internal sealed partial class EditorEngine
         Delete(from, to);
         Insert(from, changed);
     }
-
-    #endregion
-
-    #region Text objects
 
     // The "iw", "aw", "i(" ... objects: a piece of text on the current line selected by what it is
     private bool TextObject(char obj, bool around, out TextPos from, out TextPos to)
@@ -935,10 +929,6 @@ internal sealed partial class EditorEngine
         return (first, last);
     }
 
-    #endregion
-
-    #region Visual mode commands
-
     private bool HandleVisualCommand(char cmd, int count)
     {
         if (Mode == EditorMode.VisualBlock)
@@ -1067,7 +1057,7 @@ internal sealed partial class EditorEngine
     // shown and the last one change places
     private void ReselectLast()
     {
-        if (_lastSelection == null)
+        if (_lastSelection is null)
         {
             Message = Lang.T("No selection yet");
             return;
@@ -1080,7 +1070,7 @@ internal sealed partial class EditorEngine
         Cursor = Buffer.Clamp(last.Cursor);
         Mode = last.Mode;
         _blockToEnd = last.ToEnd;
-        if (current != null) _lastSelection = current;
+        if (current is not null) _lastSelection = current;
     }
 
     // Move the selected lines down (or up for a negative number of lines), keeping them selected
@@ -1113,8 +1103,6 @@ internal sealed partial class EditorEngine
         }
     }
 
-    #endregion
-
     // The keys of a change with another count: its own counts (before the command, and after an operator, as in
     // "2d3w") are left out, and the count is put first
     private static ConsoleKeyInfo[] WithCount(ConsoleKeyInfo[] keys, int count)
@@ -1140,8 +1128,6 @@ internal sealed partial class EditorEngine
         while (at < keys.Length && char.IsAsciiDigit(keys[at].KeyChar)) at++;
         return at;
     }
-
-    #region Normal mode commands
 
     private void HandleCommand(char cmd, int? count)
     {
@@ -1418,7 +1404,7 @@ internal sealed partial class EditorEngine
         if (_replaying || _lastChange.Length == 0) return;
         ResetPending();
         Buffer.EndStep(Cursor);
-        var keys = count == null ? _lastChange : WithCount(_lastChange, count.Value);
+        var keys = count is null ? _lastChange : WithCount(_lastChange, count.Value);
         _replaying = true;
         try
         {
@@ -1434,10 +1420,6 @@ internal sealed partial class EditorEngine
             _request = EditorRequest.None;
         }
     }
-
-    #endregion
-
-    #region Registers
 
     // Yanked and deleted text is kept in the string memory shared by all editors in the session, where the
     // current string acts as the register used by "p". Text ending with a newline is whole lines.
@@ -1588,6 +1570,4 @@ internal sealed partial class EditorEngine
             ? Lang.F("String {0} (lines): {1}", Tools.GetLineMemoryPosition(), preview)
             : Lang.F("String {0}: {1}", Tools.GetLineMemoryPosition(), preview);
     }
-
-    #endregion
 }

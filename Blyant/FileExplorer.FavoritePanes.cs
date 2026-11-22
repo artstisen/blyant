@@ -84,7 +84,7 @@ internal static partial class FileExplorer
         var selected = _favorites.Count > 0 ? _favorites[_favoriteIndex] : -1;
         var favorite = selected >= 0 ? FileFavorites.Items[selected] : null;
         NotePanes.Draw(ListTop + FavoritePageSize, 0, Init.LineWidth - 1, rows, _favoriteLines, favorite?.Note,
-            FavoritePeek ? favorite == null ? new List<string>() : PeekOf(selected, rows) : null);
+            FavoritePeek ? favorite is null ? new List<string>() : PeekOf(selected, rows) : null);
     }
 
     // What the peek shows of an item of the list: the top of a file, what is in a directory, or what is in a folder
@@ -189,7 +189,7 @@ internal static partial class FileExplorer
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
-            if (leaving != null) System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw(leaving);
+            if (leaving is not null) System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw(leaving);
             return e.Message;
         }
         finally
@@ -205,7 +205,7 @@ internal static partial class FileExplorer
         }
 
         keep(written);
-        if (leaving != null) System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw(leaving);
+        if (leaving is not null) System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw(leaving);
         return null;
     }
 
@@ -218,7 +218,7 @@ internal static partial class FileExplorer
         var parentName = parent < 0 ? string.Empty : FileFavorites.Items[parent].Name;
         var error = EditListNote(favorite.Note, FavoriteNoteFileName(favorite, parentName),
             DialogText.CaptionsFavorites, written => KeepFavoriteNote(favorite, number, parentName, written));
-        if (error != null) _favoriteMessage = error;
+        if (error is not null) _favoriteMessage = error;
     }
 
     // The note written in the editor, given to its favorite or folder and saved
@@ -229,7 +229,7 @@ internal static partial class FileExplorer
         if (!FileFavorites.Items.Contains(favorite))
         {
             var same = FindSameFavorite(favorite, number, parentName);
-            if (same == null)
+            if (same is null)
             {
                 _favoriteMessage = Lang.T("The favorite is no longer in the list: the note was not kept");
                 return;

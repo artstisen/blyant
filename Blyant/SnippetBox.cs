@@ -211,7 +211,7 @@ internal static class SnippetBox
                 {
                     var title = Add(selection);
                     drawBox = true;
-                    if (title == null) break;
+                    if (title is null) break;
                     var index = Snippets.IndexOf(title);
                     // A snippet without text is written in the file
                     if (Snippets.Items[index].Text.Length == 0)
@@ -259,7 +259,7 @@ internal static class SnippetBox
         }
 
         var title = AskTitle(DialogText.SnippetAdd, DialogText.SnippetAddPrompt, string.Empty, -1);
-        if (title == null || !Snippets.Add(title, text)) return null;
+        if (title is null || !Snippets.Add(title, text)) return null;
         status = Snippets.Save();
         if (status == DialogText.Success) return title;
         ShowMessage(status);
@@ -290,7 +290,7 @@ internal static class SnippetBox
     {
         var title = AskTitle(DialogText.SnippetRename, DialogText.SnippetRenamePrompt, Snippets.Items[index].Title,
             index);
-        if (title == null || title == Snippets.Items[index].Title || !Snippets.Rename(index, title)) return;
+        if (title is null || title == Snippets.Items[index].Title || !Snippets.Rename(index, title)) return;
         var status = Snippets.Save();
         if (status != DialogText.Success) ShowMessage(status);
     }
@@ -317,7 +317,7 @@ internal static class SnippetBox
         {
             Cover();
             var title = ChoiceBox.AskText(caption, prompt, DialogText.TitleColon, text);
-            if (title == null) return null;
+            if (title is null) return null;
             if (!Snippets.TitleExists(title, index)) return title;
             Cover();
             ChoiceBox.Message(caption, DialogText.SnippetTitleTaken, string.Empty);
@@ -336,8 +336,6 @@ internal static class SnippetBox
         Cover();
         ChoiceBox.Message(DialogText.CaptionsSnippets, message, string.Empty);
     }
-
-    #region Drawing
 
     // The frame, and where the parts of the box go: a row for the order and the filter, the list, and the
     // first lines of the selected snippet
@@ -445,6 +443,4 @@ internal static class SnippetBox
             Console.Write(line + new string(' ', Math.Max(0, _inner - TextMetrics.WidthOf(line))));
         }
     }
-
-    #endregion
 }

@@ -263,8 +263,6 @@ internal static class PickListBox
             .Where(i => filter.Length == 0 || rows[i].Contains(filter, StringComparison.OrdinalIgnoreCase)).ToList();
     }
 
-    #region Drawing
-
     private static void DrawBox(string caption)
     {
         ChoiceBox.Forget();
@@ -294,7 +292,7 @@ internal static class PickListBox
     private static (int Preview, int Side) PartColumns()
     {
         var preview = _left + 3;
-        if (_extras?.Side == null) return (preview, -1);
+        if (_extras?.Side is null) return (preview, -1);
         var width = (_inner - 4) / 2 - 1;
         return (preview, _left + 1 + width + 2 + 2);
     }
@@ -338,7 +336,7 @@ internal static class PickListBox
     // The width of the column to the right of the list (0: none), with a blank column before it; at least 20
     // columns are left for the list
     private static int BesideWidth() =>
-        _extras?.Beside == null ? 0 : Math.Clamp(_extras.BesideWidth, 0, Math.Max(0, _inner - 4 - 20 - 1));
+        _extras?.Beside is null ? 0 : Math.Clamp(_extras.BesideWidth, 0, Math.Max(0, _inner - 4 - 20 - 1));
 
     // The list ends here (the arrows of more above or below are in its last column but one)
     private static int ListWidth() => BesideWidth() > 0 ? _inner - 1 - BesideWidth() - 1 : _inner;
@@ -402,7 +400,7 @@ internal static class PickListBox
     private static void DrawPreview(string text, string side)
     {
         var lines = text.Length == 0 ? Array.Empty<string>() : text.Split('\n');
-        var hasSide = _extras?.Side != null;
+        var hasSide = _extras?.Side is not null;
         var width = hasSide ? (_inner - 4) / 2 - 1 : _inner - 4;
         // "| " between the two, and a blank column before the border
         var sideWidth = _inner - 2 - width - 2 - 2;
@@ -431,6 +429,4 @@ internal static class PickListBox
             Console.Write(part + new string(' ', Math.Max(0, _inner - used - 2 - TextMetrics.WidthOf(part))));
         }
     }
-
-    #endregion
 }

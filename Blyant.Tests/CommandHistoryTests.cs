@@ -24,7 +24,7 @@ public class CommandHistoryTests : IDisposable
         // for Up and Down). Test classes that type commands are not run at the same time as each other: else two
         // of them change the history at once, and one of them fails now and then (in Dictionary or List)
         var directory = new DirectoryInfo(AppContext.BaseDirectory);
-        while (directory != null && !File.Exists(Path.Combine(directory.FullName, "Blyant.sln"))) directory = directory.Parent;
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "Blyant.sln"))) directory = directory.Parent;
         Assert.NotNull(directory);
         var outside = Directory.GetFiles(Path.Combine(directory!.FullName, "Blyant.Tests"), "*.cs")
             .Where(path => System.Text.RegularExpressions.Regex.IsMatch(File.ReadAllText(path), @"\.Type\(""[^""]*:"))

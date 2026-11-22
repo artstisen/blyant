@@ -223,8 +223,6 @@ internal static class Recovery
         }
     }
 
-    #region Blank pages
-
     // The copies of blank pages: "untitled-2026-10-23 14.03.11.txt"
     private const string UntitledPrefix = "untitled-"; // English: the start of the name of a file
 
@@ -274,8 +272,6 @@ internal static class Recovery
 
         return copies.OrderByDescending(copy => copy.Written).ToList();
     }
-
-    #endregion
 
     // When this process was started (UTC)
     private static DateTime OwnStart => _ownStart ??= StartOf(Process.GetCurrentProcess()) ?? DateTime.UtcNow;

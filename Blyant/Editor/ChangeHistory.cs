@@ -86,7 +86,7 @@ internal static class ChangeHistory
         {
             var joined = parts.FirstOrDefault(part => Join(part, edit));
             foreach (var part in parts.Where(part => part != joined)) part.Start = Shift(part.Start, edit);
-            if (joined == null)
+            if (joined is null)
             {
                 parts.Add(new Part { Start = edit.Start, Removed = edit.Removed, Inserted = edit.Inserted });
             }

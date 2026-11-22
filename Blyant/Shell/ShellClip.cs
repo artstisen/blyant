@@ -50,7 +50,7 @@ internal sealed partial class ShellSession
         var words = Words(argument);
         if (words.Count == 0)
         {
-            if (_file == null)
+            if (_file is null)
             {
                 Error(Lang.T("No file yet: open, peek, insert, new ... give $file"));
                 return;
@@ -198,6 +198,6 @@ internal sealed partial class ShellSession
     {
         var words = Words(line);
         return words.Count == 2 && words[0].Equals("clip", StringComparison.OrdinalIgnoreCase) &&
-               words[1] is ['$', .. var name] && ShellRegisters.IsName(name) && ShellRegisters.Get(name) != null;
+               words[1] is ['$', .. var name] && ShellRegisters.IsName(name) && ShellRegisters.Get(name) is not null;
     }
 }

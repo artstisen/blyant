@@ -119,8 +119,6 @@ internal static class ConsoleColors
     /// </summary>
     internal static bool Monochrome { get; set; }
 
-    #region The styles
-
     public enum ColorPreset
     {
         Reset, // Use the default color scheme
@@ -468,16 +466,14 @@ internal static class ConsoleColors
     internal static void SetBoxTitleColors(bool preview = false)
     {
         var scheme = preview ? Preview : Current;
-        if ((Monochrome && !preview) || (scheme.BoxTitle == null && scheme.BoxTitleText == null))
+        if ((Monochrome && !preview) || (scheme.BoxTitle is null && scheme.BoxTitleText is null))
         {
             SetTabColors(preview);
             return;
         }
 
-        if (scheme.BoxTitle == null && !scheme.TabHighlight) SetStyle(scheme, ColorPreset.BoxText);
+        if (scheme.BoxTitle is null && !scheme.TabHighlight) SetStyle(scheme, ColorPreset.BoxText);
         else SetBackground(scheme.BoxTitleColor);
         SetForeground(scheme.BoxTitleTextColor);
     }
-
-    #endregion
 }

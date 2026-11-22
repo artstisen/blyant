@@ -123,7 +123,7 @@ internal static class Snippets
 
         void Finish()
         {
-            if (title == null) return;
+            if (title is null) return;
             // Blank lines at the end are not part of the snippet
             while (body.Count > 0 && body[^1].Trim().Length == 0) body.RemoveAt(body.Count - 1);
             List.Add(new Snippet(title, string.Join("\n", body), titleLine));
@@ -147,7 +147,7 @@ internal static class Snippets
                 line = line[1..];
             }
 
-            if (title == null) preamble.Add(line);
+            if (title is null) preamble.Add(line);
             else body.Add(line);
         }
 
@@ -201,7 +201,7 @@ internal static class Snippets
         try
         {
             var directory = Path.GetDirectoryName(Path.GetFullPath(FilePath));
-            if (directory != null) FileIo.CreateDirectory(directory);
+            if (directory is not null) FileIo.CreateDirectory(directory);
             FileIo.WriteAllBytesSafe(FilePath, new UTF8Encoding(false).GetBytes(text));
             Parse(text);
             return DialogText.Success;

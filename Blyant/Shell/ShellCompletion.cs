@@ -105,7 +105,7 @@ internal sealed class ShellCompletion
             ShellRegisters.Refresh();
             // ($clip when clip has copied a text)
             // (and those set by Blyant that have a value now: $clip when something is copied, $file ...)
-            var names = ShellRegisters.All.Keys.Concat(ShellRegisters.Reserved.Where(name => ShellRegisters.Get(name) != null));
+            var names = ShellRegisters.All.Keys.Concat(ShellRegisters.Reserved.Where(name => ShellRegisters.Get(name) is not null));
             _matches = Fitting(names.Order(StringComparer.Ordinal).Select(name => "$" + name), word);
             return _matches.Count > 0;
         }
@@ -512,7 +512,7 @@ internal sealed class ShellCompletion
             }
 
             var names = fitting
-                .OrderBy(entry => recent == null ? 0 : Rank(recent, entry.Name))
+                .OrderBy(entry => recent is null ? 0 : Rank(recent, entry.Name))
                 .ThenBy(entry => entry.Name, StringComparer.OrdinalIgnoreCase)
                 .Select(entry => folder + entry.Name + (entry.IsDirectory ? "/" : string.Empty))
                 .Where(path => !string.Equals(path, typed, StringComparison.Ordinal))
@@ -571,7 +571,7 @@ internal sealed class ShellCompletion
             }
 
             // (letter case as the file system has it: "Notes.md" is not "notes.md" on Linux)
-            if (name != null && !names.Contains(name, FileOperations.NameComparer)) names.Add(name);
+            if (name is not null && !names.Contains(name, FileOperations.NameComparer)) names.Add(name);
         }
 
         return names;

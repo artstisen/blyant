@@ -1,6 +1,6 @@
 ﻿namespace Blyant;
 
-class Program
+internal static class Program
 {
     private static void Main(string[] args)
     {
@@ -42,7 +42,7 @@ class Program
 
             Environment.Exit(code);
         }
-        if (Lang.Missing != null)
+        if (Lang.Missing is not null)
         {
             // The language set has no file (a language file in a folder "lang" that is gone): English is used
             Tools.ClearScreen();
@@ -60,7 +60,7 @@ class Program
             ChoiceBox.Message(DialogText.ApplicationName, start.Message, string.Empty);
             StartMenu.Start();
         }
-        else if (start.Path != null && OpenArgument(start.Path, start.Line, currentDirectory) is { } target)
+        else if (start.Path is not null && OpenArgument(start.Path, start.Line, currentDirectory) is { } target)
         {
             Jump.OpenAtStart(target);
         }
@@ -77,7 +77,7 @@ class Program
     private static int RunShell(IReadOnlyList<string> arguments, string currentDirectory, bool yes,
         IReadOnlyList<string> run)
     {
-        if (Lang.Missing != null)
+        if (Lang.Missing is not null)
         {
             Console.Error.WriteLine(Lang.F("The language file {0} was not found: English is used.",
                 Lang.Missing + ".txt"));
@@ -91,7 +91,7 @@ class Program
         }
 
         var directory = currentDirectory;
-        if (start.Path != null)
+        if (start.Path is not null)
         {
             var result = StartArgument.Resolve(start.Path, currentDirectory);
             if (result.Target is { Kind: JumpKind.Directory } folder && !result.AskToCreate)
@@ -112,7 +112,7 @@ class Program
         // Without a directory given: the one of the setting shelldir (not for --run, nor for commands read from a file
         // or a pipe: their commands are of the directory Blyant is started in)
         string? note = null;
-        if (start.Path == null && run.Count == 0 && !Console.IsInputRedirected)
+        if (start.Path is null && run.Count == 0 && !Console.IsInputRedirected)
         {
             directory = Shell.StartIn(currentDirectory, out note);
         }
@@ -203,7 +203,7 @@ class Program
                     Shell.Requested = null;
                     ToShell(request);
                 }
-                else if (Jump.Pending != null)
+                else if (Jump.Pending is not null)
                 {
                     // A place was picked in the Jump menu (or given at startup): go there
                     Jump.RunPending();

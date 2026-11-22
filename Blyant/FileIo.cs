@@ -22,7 +22,7 @@ internal static class FileIo
     {
         get
         {
-            if (DataDirectoryOverride != null) return DataDirectoryOverride;
+            if (DataDirectoryOverride is not null) return DataDirectoryOverride;
             var current = Environment.CurrentDirectory;
             if (_chosenIn != current)
             {
@@ -126,8 +126,6 @@ internal static class FileIo
         }
     }
 
-    #region Logged file operations
-
     // Every change Blyant makes by itself to files and directories goes through these methods (or through
     // WriteAllBytesSafe), so the log tells them all: what was made, written, added to, renamed, copied or deleted,
     // and why it failed. The operations of the file browser (FileOperations) are logged there, as a whole
@@ -216,10 +214,6 @@ internal static class FileIo
         Logged(verb + Path.GetFullPath(path), () => File.AppendAllText(path, text, new UTF8Encoding(false)));
     }
 
-    #endregion
-
-    #region Write file
-
     private const string TempFileNameExtension = ".tmp";
 
     /// <summary>
@@ -288,7 +282,7 @@ internal static class FileIo
         // A file that this user may not write (chmod -w, or a file of another user) is not replaced: the replacing
         // would only need the directory to be writable, so it is refused here, as Windows refuses a read-only file.
         // The system is asked (opening it for writing changes nothing in it), so groups and other users count too
-        if (mode != null && !MayWrite(path))
+        if (mode is not null && !MayWrite(path))
         {
             throw new UnauthorizedAccessException(Lang.F("{0} is read only: it is not written", Path.GetFileName(path)));
         }
@@ -355,7 +349,7 @@ internal static class FileIo
         try
         {
             var info = new FileInfo(path);
-            if (info.LinkTarget == null) return path;
+            if (info.LinkTarget is null) return path;
             var target = info.ResolveLinkTarget(true);
             return target is { Exists: true } ? target.FullName : path;
         }
@@ -369,7 +363,7 @@ internal static class FileIo
     // on Linux there is none to set (and setting it would change the time the file was last written)
     private static void RestoreCreationTime(string path, DateTime? created)
     {
-        if (created == null || !(OperatingSystem.IsWindows() || OperatingSystem.IsMacOS())) return;
+        if (created is null || !(OperatingSystem.IsWindows() || OperatingSystem.IsMacOS())) return;
         try
         {
             File.SetCreationTimeUtc(path, created.Value);
@@ -380,17 +374,12 @@ internal static class FileIo
         }
     }
 
-    #endregion
-
-    #region Settings
-
     private static string GetSettingsFolderAndFileName()
     {
         return
             Path.Combine(DataDirectory,
                 SettingsFileName); // Will insert the correct path separator char according to OS/platform (like using the Path.DirectorySeparatorChar)
     }
-
 
     /// <summary>
     /// True for the settings file of Blyant (a path of it, as the file browser and the shell give it)
@@ -637,7 +626,6 @@ internal static class FileIo
         }
     }
 
-
     /// <summary>
     /// Load the settings file. The settings are read by name, so they can be in any order.
     /// Missing or invalid settings get their default value and unknown settings (as those
@@ -761,7 +749,7 @@ internal static class FileIo
         SystemClipboard.PasteBinAppend = Tools.TrimToLower(Get("pastebinappend")) == DialogText.BTrue;
         var pasteBinFile = Get("pastebinfile").Trim();
         // (one of Blyant's own files, written in the settings file by hand, is not used)
-        SystemClipboard.PasteBinFile = pasteBinFile.Length > 0 && SystemClipboard.PasteBinProblem(pasteBinFile) == null
+        SystemClipboard.PasteBinFile = pasteBinFile.Length > 0 && SystemClipboard.PasteBinProblem(pasteBinFile) is null
             ? pasteBinFile
             : SystemClipboard.DefaultPasteBinFile;
         Snippets.Sort = Snippets.ParseSort(Get("snipsort"));
@@ -857,7 +845,6 @@ internal static class FileIo
         SpellChecker.Languages = spellLanguages.Length > 0 && spellLanguages.Split(',').All(Tools.IsValidFileName)
             ? spellLanguages
             : SpellChecker.DefaultLanguages;
-
     }
 
     /// <summary>
@@ -897,7 +884,7 @@ internal static class FileIo
             text = null;
         }
 
-        if (text == null)
+        if (text is null)
         {
             SaveSettings();
             return;
@@ -938,13 +925,9 @@ internal static class FileIo
 
         return _tempSettings;
     }
-
-    #endregion
 }
 
-#region File size
-
-public static class FileSizeFormatter
+internal static class FileSizeFormatter
 {
     // Load all suffixes in an array  
     private static string[] Suffixes => new[] { " " + Lang.T("bytes"), " kB", " MB", " GB", " TB", " PB" };
@@ -978,5 +961,3 @@ public static class FileSizeFormatter
         }
     }
 }
-
-#endregion

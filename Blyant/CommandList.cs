@@ -161,14 +161,14 @@ internal sealed class CommandList
 
         // What the command does (the one typed whole, or the only one left), else the keys
         var described = whole ?? (names.Count == 1 && typed.Length > 0 ? names[0] : null);
-        var help = described != null && !text.Contains(' ')
+        var help = described is not null && !text.Contains(' ')
             ? Tools.CommandDescription(Topic(_context), described)
             : null;
-        var bottom = help != null ? ":" + described + "  " + help : Lang.T("Tab completes, Enter runs, Esc cancels");
+        var bottom = help is not null ? ":" + described + "  " + help : Lang.T("Tab completes, Enter runs, Esc cancels");
         Tools.SetCursorEx(top + 1 + _rows, 0);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.CommandCorner);
         Console.Write("| ");
-        ConsoleColors.SetColors(help != null
+        ConsoleColors.SetColors(help is not null
             ? ConsoleColors.ColorPreset.CommandText
             : ConsoleColors.ColorPreset.CommandHint);
         var line = Tools.TruncateString(bottom, inner, true);

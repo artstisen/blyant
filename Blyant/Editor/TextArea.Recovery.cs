@@ -7,7 +7,7 @@
 /// is closed, the last changes are copied before Blyant stops. A blank page (a text that is not a file yet) has a
 /// copy of its own ("untitled-..."), until it is saved as a file
 /// </summary>
-public partial class TextArea
+internal sealed partial class TextArea
 {
     /// <summary>
     /// The next editor opens the text of a recovery copy (the path of the copy): the copy is its own, removed with
@@ -32,7 +32,7 @@ public partial class TextArea
     private readonly object _recoveryLock = new();
 
     // Copies are made of a file in the editor, or a blank page (not of a peek, a box, the settings, or a copy)
-    private bool RecoveryActive => Recovery.Enabled && _saveMode == SaveAsFile && _peek == null && !_singleLine &&
+    private bool RecoveryActive => Recovery.Enabled && _saveMode == SaveAsFile && _peek is null && !_singleLine &&
                                    !_readOnly && (FileExplorer.IsUntitled ||
                                                   (FileExplorer.CurrentFilePath.Length > 0 &&
                                                    !Recovery.IsCopy(FileExplorer.CurrentFilePath)));
@@ -146,7 +146,7 @@ public partial class TextArea
     // The text is saved
     private void RecoverySaved()
     {
-        if (_saveMode != SaveAsFile || _peek != null) return;
+        if (_saveMode != SaveAsFile || _peek is not null) return;
         RemoveRecovery();
         _copiedVersion = _engine.Buffer.Version;
         _uncopiedSince = 0;
@@ -156,7 +156,7 @@ public partial class TextArea
     // stopped on an error and the text was not saved: then the copy is what is left of it
     private void EndRecovery()
     {
-        if (_saveMode != SaveAsFile || _peek != null) return;
+        if (_saveMode != SaveAsFile || _peek is not null) return;
         RemoveRecovery();
     }
 

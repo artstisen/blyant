@@ -278,7 +278,7 @@ internal static class JumpHistory
         try
         {
             var directory = Path.GetDirectoryName(Path.GetFullPath(FilePath));
-            if (directory != null) FileIo.CreateDirectory(directory);
+            if (directory is not null) FileIo.CreateDirectory(directory);
             FileIo.WriteAllBytesSafe(FilePath, new UTF8Encoding(false).GetBytes(Serialize()));
             return DialogText.Success;
         }
@@ -398,7 +398,7 @@ internal static class Jump
         // (the page it is opened from is below it while it is shown: ":exit" in the menu asks about its changes)
         var target = OnTop(hasChanges, () => JumpMenu.Pick(current));
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
-        if (target != null) Go(target, beforeLeaving, hasChanges, here);
+        if (target is not null) Go(target, beforeLeaving, hasChanges, here);
     }
 
     /// <summary>
@@ -466,7 +466,7 @@ internal static class Jump
     private static void Go(JumpTarget target, Func<bool>? beforeLeaving, Func<bool>? hasChanges,
         Func<JumpTarget, bool>? here)
     {
-        if (here != null && here(target))
+        if (here is not null && here(target))
         {
             Remember(target);
             return;
@@ -518,7 +518,7 @@ internal static class Jump
         {
             // A name (upper and lower case alike)
             bookmark = Bookmarks.FindByName(argument);
-            if (bookmark == null)
+            if (bookmark is null)
             {
                 ChoiceBox.Message(Lang.T("Bookmarks"), Lang.F("No bookmark is named {0}", argument),
                     DialogText.BookNumbersNote);
@@ -635,7 +635,7 @@ internal static class Jump
             return false;
         }
 
-        return beforeLeaving == null || beforeLeaving();
+        return beforeLeaving is null || beforeLeaving();
     }
 
     // Keep a jump in the jump history
@@ -721,7 +721,7 @@ internal static class Jump
         var back = BackToBoard;
         Pending = null;
         BackToBoard = false;
-        if (target == null) return;
+        if (target is null) return;
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
         Tools.ClearScreen();
         switch (target.Kind)

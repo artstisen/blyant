@@ -28,8 +28,6 @@ namespace Blyant;
 /// </summary>
 internal static class MacroLanguage
 {
-    #region Keys written as text
-
     private static readonly (string Name, ConsoleKeyInfo Key)[] NamedKeys =
     {
         ("Esc", new ConsoleKeyInfo('\u001b', ConsoleKey.Escape, false, false, false)),
@@ -79,7 +77,7 @@ internal static class MacroLanguage
                 var end = text.IndexOf('>', i);
                 var name = end > 0 ? text.Substring(i + 1, end - i - 1) : string.Empty;
                 var named = NamedKeys.FirstOrDefault(item => item.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
-                if (named.Name != null)
+                if (named.Name is not null)
                 {
                     keys.Add(named.Key);
                     i = end;
@@ -147,11 +145,7 @@ internal static class MacroLanguage
     }
 
     private static string FormatKeys(IEnumerable<ConsoleKeyInfo> keys) =>
-        string.Concat(keys.Select(FormatKey).Where(text => text != null));
-
-    #endregion
-
-    #region Texts in quotes
+        string.Concat(keys.Select(FormatKey).Where(text => text is not null));
 
     /// <summary>
     /// A text in quotes, with "\n" for a new line, "\t" for a tab, "\"" for a quote and "\\" for a "\"
@@ -201,10 +195,6 @@ internal static class MacroLanguage
 
         return result.ToString();
     }
-
-    #endregion
-
-    #region The steps of the language
 
     // Steps without a text: their name, and the keys they are (a count can be given before the keys)
     private static readonly (string Name, string Keys, bool Count)[] Simple =
@@ -292,10 +282,6 @@ internal static class MacroLanguage
         }
     }
 
-    #endregion
-
-    #region Recorded keys to lines
-
     /// <summary>
     /// The lines of a macro for what was recorded: the keys of each command, from NORMAL mode back to it. Each is
     /// written as a step with a name where it has one, else as "keys"
@@ -306,7 +292,7 @@ internal static class MacroLanguage
         foreach (var keys in commands)
         {
             var line = ToLine(keys);
-            if (line == null) continue;
+            if (line is null) continue;
             // The same movement again: one line with a count ("down", "down" is "down 2")
             if (lines.Count > 0 && Merge(lines[^1], line) is { } merged)
             {
@@ -354,7 +340,7 @@ internal static class MacroLanguage
         {
             if (!rest.EndsWith("<CR>", StringComparison.Ordinal)) return null;
             var typed = Typed(keys.Skip(1).Take(keys.Length - 2));
-            if (typed == null) return "keys " + text;
+            if (typed is null) return "keys " + text;
             if (rest[0] == ':')
             {
                 var play = Regex.Match(typed, @"^play +(.+)$");
@@ -399,10 +385,6 @@ internal static class MacroLanguage
         return text.ToString();
     }
 
-    #endregion
-
-    #region Lines to keys
-
     /// <summary>
     /// A step of a macro: the keys it is (or another macro to play), and the line it is on (from 1)
     /// </summary>
@@ -421,7 +403,7 @@ internal static class MacroLanguage
             var line = lines[i].Trim();
             if (line.Length == 0 || line.StartsWith('#')) continue;
             var step = CompileLine(line, i + 1);
-            if (step == null)
+            if (step is null)
             {
                 error = Lang.F("Line {0} of the macro is not understood: {1}", i + 1, Tools.TruncateString(line, 40, true));
                 return new List<Step>();
@@ -508,8 +490,6 @@ internal static class MacroLanguage
 
         return null;
     }
-
-    #endregion
 }
 
 /// <summary>
@@ -534,7 +514,7 @@ internal static class MacroFiles
     /// </summary>
     internal static bool IsValidName(string name)
     {
-        return NameProblem(name) == null;
+        return NameProblem(name) is null;
     }
 
     /// <summary>
@@ -680,7 +660,7 @@ internal static class MacroBoxes
             if (choice != 1) return; // Recording goes on
             // Esc: recording goes on (nothing is lost)
             var name = AskName();
-            if (name == null) return;
+            if (name is null) return;
             var status = MacroFiles.Save(name, engine.StopRecording());
             engine.ShowMessage(status == DialogText.Success ? Lang.F("Macro saved: {0} (:play {0})", name) : status,
                 status != DialogText.Success);
@@ -696,7 +676,7 @@ internal static class MacroBoxes
         {
             var name = ChoiceBox.AskText(Lang.T("Save the macro"), DialogText.TypeNameAndPressEnter,
                 DialogText.NameColon, string.Empty);
-            if (name == null) return null;
+            if (name is null) return null;
             name = name.Trim();
             if (MacroFiles.NameProblem(name) is { } problem)
             {
@@ -720,20 +700,20 @@ internal static class MacroBoxes
     private static bool EditRecorded(EditorEngine engine, Action drawBehind)
     {
         string? saved = null;
-        EditInBox(() => saved == null ? Lang.T("New macro (named when saved)") : Lang.F("Macro: {0}", saved),
+        EditInBox(() => saved is null ? Lang.T("New macro (named when saved)") : Lang.F("Macro: {0}", saved),
             string.Join("\n", engine.RecordedLines()), true, text =>
             {
                 if (Check(text) is { } problem) return problem;
                 var name = saved ?? AskName();
-                if (name == null) return DialogText.NotSaved;
+                if (name is null) return DialogText.NotSaved;
                 var lines = TextBuffer.Normalize(text).TrimEnd('\n').Split('\n');
                 var status = MacroFiles.Save(name, lines);
                 if (status != DialogText.Success) return status;
-                if (saved == null) engine.StopRecording();
+                if (saved is null) engine.StopRecording();
                 saved = name;
                 return null;
             }, drawBehind);
-        if (saved == null) return false;
+        if (saved is null) return false;
         engine.ShowMessage(Lang.F("Macro saved: {0} (:play {0})", saved), false);
         return true;
     }

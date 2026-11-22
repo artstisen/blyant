@@ -101,7 +101,7 @@ public class MissingPlacesTests : IDisposable
         Assert.False(MissingPlaces.OnAbsentDrive("/home/anna/ch1.md", Exists));
         // A drive letter that is not used, on this computer
         var unused = "QRSTUVWXYZ".Select(letter => letter + @":\").FirstOrDefault(drive => !Directory.Exists(drive));
-        if (unused != null) Assert.True(new MissingPlaces.Checker().IsMissing(unused + @"Book\ch1.md", true));
+        if (unused is not null) Assert.True(new MissingPlaces.Checker().IsMissing(unused + @"Book\ch1.md", true));
     }
 
     [Fact]

@@ -105,7 +105,7 @@ internal sealed class TextLayout
             i += length;
         }
 
-        return starts == null ? SingleSegment : starts.ToArray();
+        return starts is null ? SingleSegment : starts.ToArray();
     }
 
     internal int RowCount(int line)

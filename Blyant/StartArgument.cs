@@ -39,12 +39,12 @@ internal static class StartArgument
                 continue;
             }
 
-            if (path != null) return new Arguments(null, null, Lang.F("One file or directory at a time: {0}", argument));
+            if (path is not null) return new Arguments(null, null, Lang.F("One file or directory at a time: {0}", argument));
             path = argument;
         }
 
         // A line without a file to open at it: told (Blyant starts as it is set to)
-        if (path == null && line is { } at)
+        if (path is null && line is { } at)
         {
             return new Arguments(null, null, Lang.F("No file to open at line {0}", at));
         }
@@ -205,7 +205,7 @@ internal static class StartArgument
 
         // Not there: a text file can be made (in a directory that is there)
         var parent = System.IO.Path.GetDirectoryName(path);
-        if (parent != null && Directory.Exists(parent))
+        if (parent is not null && Directory.Exists(parent))
         {
             return new Result(new JumpTarget(JumpKind.File, path), path, AskToCreate: true);
         }

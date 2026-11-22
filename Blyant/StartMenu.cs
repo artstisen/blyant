@@ -124,7 +124,7 @@ internal static class StartMenu
     private static TabResult ReadCommand()
     {
         var command = CommandLine.Read(CommandContext.Start);
-        return command == null ? TabResult.Redraw : RunCommand(command);
+        return command is null ? TabResult.Redraw : RunCommand(command);
     }
 
     // The commands of the start page: make or open a file or a project, go to a tab or a page of Configuration,
@@ -299,7 +299,7 @@ internal static class StartMenu
     // Go to a page of the frame (0 Start, 1 to 6 the pages of Configuration)
     private static void ShowPage(int page)
     {
-        if (_frame != null) _frame.Selected = page;
+        if (_frame is not null) _frame.Selected = page;
     }
 
     // New file: a file made in the directory the file browser was in last, or another (Tab in the box: the places
@@ -309,7 +309,7 @@ internal static class StartMenu
     {
         ChoiceBox.Forget();
         var path = AskNewFile(DialogText.NewFile, name);
-        if (path == null) return;
+        if (path is null) return;
         try
         {
             // Only a new file: one that was made in the meantime is not emptied (it is logged, or why it failed)
@@ -380,7 +380,7 @@ internal static class StartMenu
     /// <returns>The full path of the file to make (it is not made), or null if canceled</returns>
     internal static string? AskNewFile(string caption, string name, string? suggested = null)
     {
-        if (suggested != null && !Directory.Exists(suggested)) suggested = null;
+        if (suggested is not null && !Directory.Exists(suggested)) suggested = null;
         var directory = suggested ?? FileExplorer.LastDirectory;
         name = name.Trim();
         while (true)
@@ -398,13 +398,13 @@ internal static class StartMenu
                 continue;
             }
 
-            if (asked == null) return null;
+            if (asked is null) return null;
             name = asked;
             var file = FileOperations.WithDefaultExtension(name);
             var path = Path.Combine(directory, file);
             var problem = Tools.FileNameProblem(file) ??
                           (File.Exists(path) || Directory.Exists(path) ? DialogText.NameExists : null);
-            if (problem == null) return Path.GetFullPath(path);
+            if (problem is null) return Path.GetFullPath(path);
             // A name that cannot be used (the file is not tried): told, and the name asked for again
             EventLog.Add(DialogText.LogFile + "New: " + path + " (" + problem + ")");
             ChoiceBox.Message(caption, problem, file);
@@ -430,7 +430,7 @@ internal static class StartMenu
             places.Add((directory, label));
         }
 
-        if (favorite != null) Add(favorite, Lang.T("favorite"));
+        if (favorite is not null) Add(favorite, Lang.T("favorite"));
         Add(FileExplorer.StartDirectory, Lang.T("pane 1"));
         Add(FileExplorer.StartDirectory2, Lang.T("pane 2"));
         // The folder picked (or, ending with a separator, the one the picking was canceled in)
@@ -1116,7 +1116,7 @@ internal static class StartMenu
         // The selection on the entry it was on (or in the list), when the guides of the modules have changed
         private void KeepSelection(string[] choices)
         {
-            if (_selectedName != null && Array.IndexOf(choices, _selectedName) is var at and >= 0) _selected = at;
+            if (_selectedName is not null && Array.IndexOf(choices, _selectedName) is var at and >= 0) _selected = at;
             _selected = Math.Clamp(_selected, 0, choices.Length - 1);
             _selectedName = choices[_selected];
         }

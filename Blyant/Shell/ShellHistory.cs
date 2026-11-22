@@ -53,7 +53,7 @@ internal static class ShellHistory
         }
 
         var path = Path.GetFullPath(FilePath);
-        if (_loaded != null && FileOperations.SamePath(_loaded, path)) return;
+        if (_loaded is not null && FileOperations.SamePath(_loaded, path)) return;
         _loaded = path;
         _lines = 0;
         _unreadable = false;
@@ -90,7 +90,7 @@ internal static class ShellHistory
         try
         {
             var directory = Path.GetDirectoryName(Path.GetFullPath(FilePath));
-            if (directory != null && !Directory.Exists(directory)) FileIo.CreateDirectory(directory);
+            if (directory is not null && !Directory.Exists(directory)) FileIo.CreateDirectory(directory);
             FileIo.AppendText(FilePath, command + "\n");
             _lines++;
         }

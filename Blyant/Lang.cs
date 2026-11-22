@@ -51,7 +51,7 @@ internal static class Lang
 
     private static IEnumerable<(string Path, Source From)> Folders()
     {
-        if (FoldersOverride != null)
+        if (FoldersOverride is not null)
         {
             return FoldersOverride.Select((path, i) => (path, i == 0 ? Source.DataFolder : Source.ProgramFolder));
         }
@@ -138,7 +138,7 @@ internal static class Lang
                 }
 
                 var content = ReadText(path);
-                if (content == null) continue;
+                if (content is null) continue;
                 var percent = PercentOf(content, code);
                 // A file without translations is not a language
                 if (Parse(content, code).Count == 0) continue;
@@ -164,7 +164,7 @@ internal static class Lang
                 if (!Directory.Exists(folder)) continue;
                 var named = Directory.EnumerateFiles(folder, "*.txt").FirstOrDefault(file =>
                     string.Equals(Path.GetFileNameWithoutExtension(file), code, StringComparison.OrdinalIgnoreCase));
-                if (named != null) return named;
+                if (named is not null) return named;
             }
             catch
             {
@@ -211,7 +211,7 @@ internal static class Lang
     // How much of the texts of this version is translated in a file (0 to 100)
     private static int PercentOf(string? content, string code)
     {
-        if (content == null) return 0;
+        if (content is null) return 0;
         _reference ??= new HashSet<string>(EnglishTexts(ReadTexts() ?? string.Empty), StringComparer.Ordinal);
         if (_reference.Count == 0) return 100;
         var texts = Parse(content, code);
@@ -282,7 +282,7 @@ internal static class Lang
         }
 
         var content = ReadFile(code);
-        if (content == null)
+        if (content is null)
         {
             Use(English, new Dictionary<string, string>(StringComparer.Ordinal));
             return false;
@@ -317,7 +317,7 @@ internal static class Lang
     {
         var assembly = Assembly.GetExecutingAssembly();
         using var stream = assembly.GetManifestResourceStream("Blyant.Lang.texts.txt");
-        if (stream == null) return null;
+        if (stream is null) return null;
         using var reader = new StreamReader(stream, Encoding.UTF8);
         return reader.ReadToEnd();
     }
@@ -337,10 +337,10 @@ internal static class Lang
             {
                 english = Unquote(line[(English.Length + 1)..]);
             }
-            else if (english != null && line.StartsWith(code + ":", StringComparison.Ordinal))
+            else if (english is not null && line.StartsWith(code + ":", StringComparison.Ordinal))
             {
                 var text = Unquote(line[(code.Length + 1)..]);
-                if (text != null && text.Length > 0) texts[english] = text;
+                if (text is not null && text.Length > 0) texts[english] = text;
                 english = null;
             }
         }

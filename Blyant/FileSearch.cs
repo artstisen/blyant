@@ -119,7 +119,7 @@ internal static class FileSearch
 
     private static bool IsMatch(Regex? pattern, string text)
     {
-        if (pattern == null) return true;
+        if (pattern is null) return true;
         try
         {
             return pattern.IsMatch(text);
@@ -147,7 +147,7 @@ internal static class FileSearch
         while (directories.Count > 0)
         {
             var directory = directories.Pop();
-            if (progress != null && !progress(directory, outcome.Results.Count))
+            if (progress is not null && !progress(directory, outcome.Results.Count))
             {
                 outcome.Stopped = true;
                 break;
@@ -178,7 +178,7 @@ internal static class FileSearch
 
                 if (!IsMatch(namePattern, entry.Name)) continue;
                 var result = new Result { Path = entry.FullName, IsDirectory = isDirectory };
-                if (textPattern != null)
+                if (textPattern is not null)
                 {
                     // Only files have text
                     if (isDirectory || !FindText(entry.FullName, textPattern, result)) continue;

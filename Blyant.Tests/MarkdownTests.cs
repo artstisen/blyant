@@ -9,7 +9,7 @@ public class MarkdownTests
     private static string Styles(string line, bool inCodeBlock = false)
     {
         var styles = MarkdownHighlighter.Highlight(line, inCodeBlock);
-        if (styles == null) return new string('.', line.Length);
+        if (styles is null) return new string('.', line.Length);
         return string.Concat(styles.Select(style => ".123456BICKQLAUR"[(int)style]));
     }
 
@@ -127,8 +127,6 @@ public class MarkdownTests
         Assert.Equal(expected, SyntaxHighlighter.TypeOfFile(name) == SyntaxType.Markdown);
     }
 
-    #region In the editor
-
     private static EditorEngine Editor(string text)
     {
         return new EditorEngine(text, 40, 10, false);
@@ -137,7 +135,7 @@ public class MarkdownTests
     private static string Styles(EditorEngine editor, int line)
     {
         var styles = editor.SyntaxStyles(line);
-        return styles == null ? "" : string.Concat(styles.Select(style => ".123456BICKQLAUR"[(int)style]));
+        return styles is null ? "" : string.Concat(styles.Select(style => ".123456BICKQLAUR"[(int)style]));
     }
 
     [Fact]
@@ -180,6 +178,4 @@ public class MarkdownTests
         Assert.Equal("KKK", Styles(editor, 2));
         Assert.Equal("111", Styles(editor, 4));
     }
-
-    #endregion
 }

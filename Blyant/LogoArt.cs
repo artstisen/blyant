@@ -99,7 +99,7 @@ internal sealed class LogoArt
     /// </summary>
     internal ConsoleColor? ColorAt(int row, int column) => _cellColors[row][column] ?? _colors[row];
 
-    internal bool HasCellColors => _cellColors.Any(row => row.Any(color => color != null));
+    internal bool HasCellColors => _cellColors.Any(row => row.Any(color => color is not null));
 
     /// <summary>
     /// Take the colors of their own from all the cells: they have the colors of their rows again
@@ -152,7 +152,7 @@ internal sealed class LogoArt
     internal string Serialize()
     {
         var text = string.Join("\n", AllRows.Select(row => row.TrimEnd())) + "\n";
-        if (_colors.Any(color => color != null))
+        if (_colors.Any(color => color is not null))
         {
             text += ColorsKey + string.Join(",", _colors.Select(color => color?.ToString() ?? "default")) + "\n";
         }
@@ -176,7 +176,7 @@ internal sealed class LogoArt
         var lines = TextBuffer.Normalize(text).Split('\n');
         var logo = new LogoArt(name, lines.Take(Rows).ToList());
         var colors = lines.Skip(Rows).FirstOrDefault(line => line.StartsWith(ColorsKey, StringComparison.OrdinalIgnoreCase));
-        var names = colors == null ? Array.Empty<string>() : colors[ColorsKey.Length..].Split(',');
+        var names = colors is null ? Array.Empty<string>() : colors[ColorsKey.Length..].Split(',');
         for (var row = 0; row < Rows && row < names.Length; row++)
         {
             if (Enum.TryParse<ConsoleColor>(names[row].Trim(), true, out var color) && Enum.IsDefined(color))
@@ -412,7 +412,7 @@ internal static class Logos
         if (!IsValidName(newName)) return DialogText.LogoNameInvalid;
         if (Exists(newName)) return DialogText.LogoNameTaken;
         var copy = Load(name);
-        if (copy == null) return DialogText.LogoNameInvalid;
+        if (copy is null) return DialogText.LogoNameInvalid;
         copy.Name = newName.Trim();
         return Save(copy);
     }

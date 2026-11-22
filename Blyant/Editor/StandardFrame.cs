@@ -101,7 +101,7 @@ internal sealed class StandardFrame : EditorFrame
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Divider);
         Console.Write(new string('-', Init.LineWidth - 1));
         // Over the pane with the focus in a split
-        var center = facts.Other == null ? Init.LineWidth / 2 : facts.FocusLeft + facts.FocusWidth / 2;
+        var center = facts.Other is null ? Init.LineWidth / 2 : facts.FocusLeft + facts.FocusWidth / 2;
         Tools.SetCursorEx(row, Math.Max(0, center - (TextMetrics.WidthOf(label) / 2 + 1)));
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.EditorTitle);
         Console.Write(" " + label + " ");
@@ -123,7 +123,7 @@ internal sealed class StandardFrame : EditorFrame
     // The name of the file read only at the right, on the divider over it: highlighted while it has the keys
     private static void DrawReferenceName(EditorFacts facts, int row, bool focused)
     {
-        if (facts.ReferenceName == null || facts.Other is not { } other) return;
+        if (facts.ReferenceName is null || facts.Other is not { } other) return;
         var name = Tools.TruncateString(" " + ReferenceLabel(facts.ReferenceName) + " ", Math.Max(0, other.Width - 2),
             true);
         Tools.SetCursorEx(row, Math.Max(0, other.Left + other.Width / 2 - TextMetrics.WidthOf(name) / 2));

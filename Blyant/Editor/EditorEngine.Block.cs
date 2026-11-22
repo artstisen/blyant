@@ -198,7 +198,7 @@ internal sealed partial class EditorEngine
         var block = _blockInsert;
         _blockInsert = null;
         // Only text typed on the first line, without a line break, is repeated
-        if (block == null || Cursor.Line != block.FirstLine) return;
+        if (block is null || Cursor.Line != block.FirstLine) return;
         var added = Buffer.LineLength(block.FirstLine) - block.LengthBefore;
         if (added <= 0 || block.InsertCol + added > Buffer.LineLength(block.FirstLine)) return;
         var text = Buffer[block.FirstLine].Substring(block.InsertCol, added);

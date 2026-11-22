@@ -54,7 +54,6 @@ internal static class Menu
         }
     }
 
-
     /// <summary>
     /// Ask yes or no in a box on top of the page (ChoiceBox)
     /// </summary>
@@ -85,9 +84,6 @@ internal static class Menu
             _ => 3
         };
     }
-
-
-    #region Mode Label
 
     private static int _tempModeLabelCursorMemoryTop;
     private static int _tempModeLabelCursorMemoryLeft;
@@ -142,8 +138,6 @@ internal static class Menu
 
         ModeLabelLoadCursor();
     }
-
-    #endregion
 
     /// <summary>
     /// The width kept free at the right of the top row of the editor, for the label Unsaved or Read only (the

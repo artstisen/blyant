@@ -14,7 +14,7 @@ public class SyntaxTests
         for (var i = 0; i < lines.Length; i++)
         {
             var styles = SyntaxHighlighter.Highlight(type, lines[i], state, out state);
-            result[i] = styles == null
+            result[i] = styles is null
                 ? new string('.', lines[i].Length)
                 : string.Concat(styles.Select(style => Codes[(int)style]));
         }
@@ -23,8 +23,6 @@ public class SyntaxTests
     }
 
     private static string Style(SyntaxType type, string line) => Styles(type, line)[0];
-
-    #region JavaScript
 
     [Theory]
     [InlineData("const x = 12;", "WWWWW.....99.")]
@@ -52,10 +50,6 @@ public class SyntaxTests
         Assert.Equal(new[] { "....SSS", "WWW..." }, Styles(SyntaxType.JavaScript, "s = 'ab", "let x;"));
     }
 
-    #endregion
-
-    #region JSON
-
     [Theory]
     [InlineData("{\"name\": \"value\",", ".NNNNNN..SSSSSSS.")]
     [InlineData("  \"n\": -12.5e3, \"b\": true, \"c\": null}", "..NNN..9999999..NNN..WWWW..NNN..WWWW.")]
@@ -65,10 +59,6 @@ public class SyntaxTests
     {
         Assert.Equal(expected, Style(SyntaxType.Json, line));
     }
-
-    #endregion
-
-    #region CSS
 
     [Theory]
     [InlineData("body { color: red; }", "WWWW...NNNNN........")]
@@ -121,10 +111,6 @@ public class SyntaxTests
         Assert.Equal("W....", styles[5]);
     }
 
-    #endregion
-
-    #region HTML
-
     [Theory]
     [InlineData("<p class=\"a b\">Text</p>", "WW.NNNNN.SSSSSW....WWWW")]
     [InlineData("<br/> &amp; &#169; a & b", "WWWWW.99999.999999......")]
@@ -174,10 +160,6 @@ public class SyntaxTests
             Style(SyntaxType.Html, "<script>let x = 1;</script><p>"));
     }
 
-    #endregion
-
-    #region XML
-
     [Theory]
     [InlineData("<?xml version=\"1.0\"?>", "WWWWW.NNNNNNN.SSSSSWW")]
     [InlineData("<a:b c=\"d\"/> &lt;", "WWWW.N.SSSWW.9999")]
@@ -195,10 +177,6 @@ public class SyntaxTests
             Styles(SyntaxType.Xml, "<![CDATA[ <a>", "<b/> ", "x ]]><c>"));
         Assert.Equal(new[] { "####", "######WW" }, Styles(SyntaxType.Xml, "<!--", "<a>--><c"));
     }
-
-    #endregion
-
-    #region C#
 
     [Theory]
     [InlineData("public int x = 12;", "WWWWWW.WWW.....99.")]
@@ -240,10 +218,6 @@ public class SyntaxTests
         Assert.Equal("C#", SyntaxHighlighter.Name(SyntaxType.CSharp));
     }
 
-    #endregion
-
-    #region PHP
-
     [Theory]
     [InlineData("<b><?= $n ?></b>", "WWWWWW.NN.WWWWWW")]
     [InlineData("<a href=\"<?= $u ?>x\">", "WW.NNNN.SWWW.NN.WWSSW")]
@@ -279,10 +253,6 @@ public class SyntaxTests
         Assert.Equal("PHP", SyntaxHighlighter.Name(SyntaxType.Php));
     }
 
-    #endregion
-
-    #region INI
-
     [Theory]
     [InlineData("; DIMENSIONS", "############")]
     [InlineData("  # note", "..######")]
@@ -305,10 +275,6 @@ public class SyntaxTests
         Assert.Equal("INI", SyntaxHighlighter.Name(SyntaxType.Ini));
     }
 
-    #endregion
-
-    #region C and C++
-
     [Theory]
     [InlineData("int n = 1'000'000;", "WWW.....999999999.")]
     [InlineData("char c = 'x';", "WWWW.....SSS.")]
@@ -329,10 +295,6 @@ public class SyntaxTests
         Assert.Equal(SyntaxType.Cpp, SyntaxHighlighter.ParseType("c"));
         Assert.Equal("C/C++", SyntaxHighlighter.Name(SyntaxType.Cpp));
     }
-
-    #endregion
-
-    #region Rust
 
     [Theory]
     [InlineData("let mut v = vec![1, 2];", "WWW.WWW.....WWWW.9..9..")]
@@ -358,10 +320,6 @@ public class SyntaxTests
         Assert.Equal("Rust", SyntaxHighlighter.Name(SyntaxType.Rust));
     }
 
-    #endregion
-
-    #region Python
-
     [Theory]
     [InlineData("def f(x=1): # c", "WWW.....9...###")]
     [InlineData("s = r\"C:\\dir\" + f'{x}'", "....SSSSSSSSS...SSSSSS")]
@@ -383,10 +341,6 @@ public class SyntaxTests
         Assert.Equal(SyntaxType.Python, SyntaxHighlighter.ParseType("py"));
         Assert.Equal("Python", SyntaxHighlighter.Name(SyntaxType.Python));
     }
-
-    #endregion
-
-    #region PowerShell
 
     [Theory]
     [InlineData("$files = Get-ChildItem -Path $dir", "NNNNNN.......................NNNN")]
@@ -410,10 +364,6 @@ public class SyntaxTests
         Assert.Equal("PowerShell", SyntaxHighlighter.Name(SyntaxType.PowerShell));
     }
 
-    #endregion
-
-    #region Batch files
-
     [Theory]
     [InlineData("@echo off", "WWWWW.WWW")]
     [InlineData("REM a note", "##########")]
@@ -436,10 +386,6 @@ public class SyntaxTests
         Assert.Equal(SyntaxType.Batch, SyntaxHighlighter.ParseType("cmd"));
         Assert.Equal("Batch", SyntaxHighlighter.Name(SyntaxType.Batch));
     }
-
-    #endregion
-
-    #region Shell scripts
 
     [Theory]
     [InlineData("#!/bin/bash", "###########")]
@@ -483,10 +429,6 @@ public class SyntaxTests
     {
         Assert.Equal(expected, SyntaxHighlighter.TypeOfFile(name, text).ToString());
     }
-
-    #endregion
-
-    #region Typst
 
     [Theory]
     [InlineData("= Title", "1111111")]
@@ -626,10 +568,6 @@ public class SyntaxTests
         Assert.Equal("Typst", SyntaxHighlighter.Name(SyntaxType.Typst));
     }
 
-    #endregion
-
-    #region Kinds of text
-
     [Theory]
     [InlineData("index.html", nameof(SyntaxType.Html))]
     [InlineData("PAGE.HTM", nameof(SyntaxType.Html))]
@@ -676,10 +614,6 @@ public class SyntaxTests
         Assert.Equal(JavaScriptHighlighter.InComment, state);
     }
 
-    #endregion
-
-    #region In the editor
-
     private static EditorEngine Editor(string text)
     {
         return new EditorEngine(text, 40, 10, false);
@@ -688,7 +622,7 @@ public class SyntaxTests
     private static string Styles(EditorEngine editor, int line)
     {
         var styles = editor.SyntaxStyles(line);
-        return styles == null
+        return styles is null
             ? new string('.', editor.Buffer[line].Length)
             : string.Concat(styles.Select(style => Codes[(int)style]));
     }
@@ -754,6 +688,4 @@ public class SyntaxTests
         Assert.Equal("######", Styles(editor, 1));
         Assert.Equal("WWW...", Styles(editor, 3));
     }
-
-    #endregion
 }

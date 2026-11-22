@@ -104,7 +104,7 @@ internal sealed class ShellLineReader
                     break;
                 case ConsoleKey.UpArrow or ConsoleKey.DownArrow:
                     var recalled = key.Key == ConsoleKey.UpArrow ? recall.Previous(_text) : recall.Next();
-                    if (recalled == null) break;
+                    if (recalled is null) break;
                     _text = recalled;
                     _cursor = _text.Length;
                     break;

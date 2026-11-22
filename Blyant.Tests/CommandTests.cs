@@ -6,8 +6,6 @@ namespace Blyant.Tests;
 [Collection("Static state")]
 public class CommandTests
 {
-    #region Completion
-
     // Press Tab a number of times and show what the command line holds after each
     private static string Tabs(CommandContext context, string typed, int times, bool forward = true)
     {
@@ -122,14 +120,10 @@ public class CommandTests
         Assert.Equal("one\none", editor.Buffer.GetText());
     }
 
-    #endregion
-
-    #region The tables and the code that runs the commands
-
     private static string Source(string file)
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);
-        while (directory != null && !File.Exists(Path.Combine(directory.FullName, "Blyant.sln")))
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "Blyant.sln")))
         {
             directory = directory.Parent;
         }
@@ -264,6 +258,4 @@ public class CommandTests
         Assert.False(Commands.IsKnown("logout"));
         Assert.False(Commands.IsKnown("password"));
     }
-
-    #endregion
 }

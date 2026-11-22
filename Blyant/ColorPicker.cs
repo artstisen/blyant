@@ -65,8 +65,8 @@ internal static class ColorPicker
         picked = current;
         var first = withDefault ? 1 : 0; // The row of the first color
         var rows = Count + first;
-        var selected = current == null ? 0 : (int)current.Value + first;
-        bool CanSelect(int row) => row < first || isAllowed == null || isAllowed((ConsoleColor)(row - first));
+        var selected = current is null ? 0 : (int)current.Value + first;
+        bool CanSelect(int row) => row < first || isAllowed is null || isAllowed((ConsoleColor)(row - first));
 
         // The box is as wide as the longest name (in brackets when it cannot be picked), and stays on the page
         var longest = TextMetrics.WidthOf(DialogText.ColorDefault);
@@ -108,7 +108,7 @@ internal static class ColorPicker
                 {
                     // The colors are not shown in black and white
                 }
-                else if (setSampleColors != null)
+                else if (setSampleColors is not null)
                 {
                     setSampleColors(color);
                 }

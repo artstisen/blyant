@@ -48,7 +48,7 @@ internal static class CommandLine
         var text = ReadText(prefix, isCommand, context);
         // A command of the Jump menu while it is turned off (Configuration: Modules): told in a box, and not given
         // to the page (which draws itself again, as after a command)
-        if (context != null && text != null && Modules.RefusesJumpCommand(Name(text).ToLowerInvariant()) &&
+        if (context is not null && text is not null && Modules.RefusesJumpCommand(Name(text).ToLowerInvariant()) &&
             Modules.JumpTurnedOff())
         {
             return null;
@@ -62,12 +62,12 @@ internal static class CommandLine
         // (the bottom line, also when a box is shown)
         using var outside = ConsoleColors.OutsideBox();
         var command = string.Empty;
-        var completion = context == null ? null : new CommandCompletion(context.Value);
+        var completion = context is null ? null : new CommandCompletion(context.Value);
         // Up and Down: the commands given here before
-        var recall = context == null ? null : new CommandRecall(context.Value);
+        var recall = context is null ? null : new CommandRecall(context.Value);
         // The commands of the place in a box above the line, narrowed while typing (the page draws again what it
         // covered when the command line is closed)
-        var list = context != null && prefix == Prefix && CommandList.Enabled ? new CommandList(context.Value) : null;
+        var list = context is not null && prefix == Prefix && CommandList.Enabled ? new CommandList(context.Value) : null;
         // The whole line is highlighted while typing
         WriteLine(prefix == Prefix ? DialogText.CommandPrompt : prefix.ToString(),
             ConsoleColors.ColorPreset.CommandLineInverted, true);
@@ -79,7 +79,7 @@ internal static class CommandLine
         // asking the terminal is slow on Linux and macOS)
         void ShowList()
         {
-            if (list == null) return;
+            if (list is null) return;
             list.Draw(command);
             ConsoleColors.SetColors(ConsoleColors.ColorPreset.CommandLineInverted);
             Tools.SetCursorEx(Init.LineCount - 1, left + TextMetrics.WidthOf(command));
@@ -121,7 +121,7 @@ internal static class CommandLine
                 if (key.Key is ConsoleKey.UpArrow or ConsoleKey.DownArrow)
                 {
                     var recalled = key.Key == ConsoleKey.UpArrow ? recall?.Previous(command) : recall?.Next();
-                    if (recalled != null)
+                    if (recalled is not null)
                     {
                         Replace(recalled);
                         completion?.Reset();
@@ -134,7 +134,7 @@ internal static class CommandLine
                 if (key.Key == ConsoleKey.Enter)
                 {
                     // A command line of a place (also one read as typed, as the file browser's) keeps its commands
-                    if (context != null) CommandHistory.Add(context.Value, command);
+                    if (context is not null) CommandHistory.Add(context.Value, command);
                     if (isCommand)
                     {
                         LastArgument = Argument(command.Trim());

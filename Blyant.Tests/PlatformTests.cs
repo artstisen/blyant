@@ -119,7 +119,7 @@ public class PlatformTests
     public void StaticInitializers_DoNotCallAMethodOfTheirOwnClass()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);
-        while (directory != null && !File.Exists(Path.Combine(directory.FullName, "Blyant.sln"))) directory = directory.Parent;
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "Blyant.sln"))) directory = directory.Parent;
         Assert.NotNull(directory);
         var root = Path.Combine(directory!.FullName, "Blyant");
         var found = new List<string>();

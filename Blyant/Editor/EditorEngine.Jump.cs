@@ -23,7 +23,7 @@ internal sealed partial class EditorEngine
     /// <summary>
     /// True while a jump is made: the keys are the letters of the labels
     /// </summary>
-    internal bool IsJumping => _jumpSpots != null;
+    internal bool IsJumping => _jumpSpots is not null;
 
     /// <summary>
     /// The labels of the spots on a line while a jump is made: the char index where the word starts, and the letters
@@ -31,7 +31,7 @@ internal sealed partial class EditorEngine
     /// </summary>
     internal IEnumerable<(int Col, string Label)> JumpLabels(int line)
     {
-        if (_jumpSpots == null) yield break;
+        if (_jumpSpots is null) yield break;
         foreach (var (pos, label) in _jumpSpots)
         {
             if (pos.Line == line) yield return (pos.Col, label[_jumpTyped.Length..]);

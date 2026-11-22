@@ -21,7 +21,6 @@ internal static class Tools
         return dots && length > 3 ? TextMetrics.StartPart(s, length - 3) + "..." : TextMetrics.StartPart(s, length);
     }
 
-
     public static string[] SplitStringOnNewLine(string input, bool trim)
     {
         if (IsValid(input))
@@ -117,13 +116,11 @@ internal static class Tools
         return invalidChars.All(c => !input.Contains(c));
     }
 
-
     public static bool IsNumeric(string s)
     {
         // Only 0-9: \d also matches the digits of other scripts, which Convert.ToInt32 cannot read
         return Regex.IsMatch(s, "^[0-9]+$");
     }
-
 
     internal static int WordCount(string text)
     {
@@ -184,7 +181,6 @@ internal static class Tools
         return 0;
     }
 
-
     public static void WriteCenterScreen(string[] text)
     {
         var lineWidth = Init.LineWidth / 2;
@@ -202,7 +198,6 @@ internal static class Tools
         }
     }
 
-
     /// <summary>
     /// Edit the settings file in the editor (from the Configuration page)
     /// </summary>
@@ -217,9 +212,6 @@ internal static class Tools
         textArea.ClearUndoRedoCache();
         return textArea.SaveWasInvoked;
     }
-
-
-    #region String memory (Internal clipboard)
 
     internal const int MaxLineMemoryCount = 64;
     private static List<string> _stringMemory = new();
@@ -353,10 +345,6 @@ internal static class Tools
         return lines ? Lang.F("(lines) {0}", row) : row;
     }
 
-    #endregion
-
-
-
     /// <summary>
     /// Restart Blyant and continue as when it is started: with the start page (or what it is set to show)
     /// </summary>
@@ -390,9 +378,6 @@ internal static class Tools
         ChoiceBox.Message(DialogText.CaptionsKeyError, DialogText.ErrorUnsupportedAction, errorMsg);
     }
 
-
-
-
     /// <summary>
     /// A text cut to fit on a line of the window after a number of columns already used (texts in other
     /// languages can be longer, and writing past the last column of the bottom line would scroll the window)
@@ -421,7 +406,6 @@ internal static class Tools
         Console.Clear();
         ChoiceBox.Forget();
     }
-
 
     internal static void ExitApplication()
     {
@@ -468,11 +452,9 @@ internal static class Tools
         }
     }
 
-
     // Shortcuts
     //private static string tempPageNumber = "Page 1/2";
     private static List<Shortcut> _shortcutList = new();
-
 
     // Clear data to enable rewriting it with new values for shortcuts
     public static void ClearEditorHelpData()
@@ -1321,7 +1303,7 @@ internal static class Tools
             {
                 // Search: go to the first matching line from the top of the page
                 var text = CommandLine.Read('/', false);
-                if (text == null) continue;
+                if (text is null) continue;
                 search = text;
                 match = FindHelpLine(lines, search, top - 1, true);
                 if (match < 0)
@@ -1387,9 +1369,6 @@ internal static class Tools
 
         return -1;
     }
-
-
-    #region Cursor
 
     public static void ShowCursor()
     {
@@ -1614,7 +1593,6 @@ internal static class Tools
         return requested;
     }
 
-
     public static void CursorReturn()
     {
         InitializeCursor();
@@ -1625,7 +1603,6 @@ internal static class Tools
             Refresh();
         }
     }
-
 
     public static void CursorLeft()
     {
@@ -1641,7 +1618,6 @@ internal static class Tools
             CursorUp(true);
         }
     }
-
 
     public static void CursorLeft(int count)
     {
@@ -1771,10 +1747,6 @@ internal static class Tools
         }
     }
 
-    #endregion
-
-    #region Cursor memory
-
     private static List<CursorMemory> _cursorMemory = new();
 
     private static void InitializeCursorMemory()
@@ -1814,11 +1786,6 @@ internal static class Tools
         }
     }
 
-    #endregion
-
-
-    #region Progress bar
-
     private const decimal ProgressbarWidth = 40;
     private const char ProgressBarChar = '#';
 
@@ -1847,12 +1814,9 @@ internal static class Tools
             return DialogText.NotAvailable;
         }
     }
-
-    #endregion
-
 }
 
-internal class CursorMemory
+internal sealed class CursorMemory
 {
     public int Left { get; set; }
     public int Top { get; set; }

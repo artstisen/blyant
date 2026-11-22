@@ -68,13 +68,13 @@ internal sealed class ZenFrame : EditorFrame
         if (facts.Top < 1 || facts.Kind == EditorKind.Peek) return;
         var row = facts.Top - 1;
         var tag = facts.ReferenceFocused ? string.Empty : ModeTag(facts);
-        var focusWidth = facts.Other == null ? Init.LineWidth - 1 : facts.FocusWidth;
+        var focusWidth = facts.Other is null ? Init.LineWidth - 1 : facts.FocusWidth;
         var readOnly = facts.ReadOnly ? DialogText.ReadOnlyLabel : string.Empty;
         var name = Fit(NameOf(facts), focusWidth - TextMetrics.WidthOf(tag) - TextMetrics.WidthOf(readOnly));
         string? other = null;
         if (facts.Other is { } pane)
         {
-            other = Fit(facts.ReferenceName != null ? ReferenceLabel(facts.ReferenceName) : facts.Title, pane.Width);
+            other = Fit(facts.ReferenceName is not null ? ReferenceLabel(facts.ReferenceName) : facts.Title, pane.Width);
         }
 
         var key = tag + TextArea.ZenColors + "\u0001" + name + "\u0001" + readOnly + "\u0001" + other + "\u0001" +
@@ -86,7 +86,7 @@ internal sealed class ZenFrame : EditorFrame
         Tools.SetCursorEx(row, 0);
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
         Console.Write(new string(' ', Init.LineWidth - 1));
-        Tools.SetCursorEx(row, facts.Other == null ? 0 : facts.FocusLeft);
+        Tools.SetCursorEx(row, facts.Other is null ? 0 : facts.FocusLeft);
         // The mode in the color of its mode, as the mode label outside Zen mode (setting "zencolors"), or in the color
         // of the name (of the text)
         ConsoleColors.SetColors(TextArea.ZenColors && tag.Length > 0
@@ -103,7 +103,7 @@ internal sealed class ZenFrame : EditorFrame
             Console.Write(readOnly);
         }
 
-        if (facts.Other is { } otherPane && other != null)
+        if (facts.Other is { } otherPane && other is not null)
         {
             Tools.SetCursorEx(row, otherPane.Left);
             ConsoleColors.SetColors(facts.ReferenceFocused
@@ -115,7 +115,7 @@ internal sealed class ZenFrame : EditorFrame
         // The completions after the name (over the other pane too: they are shown only while typing)
         if (facts.Completions.Count > 0)
         {
-            var start = (facts.Other == null ? 0 : facts.FocusLeft) +
+            var start = (facts.Other is null ? 0 : facts.FocusLeft) +
                         TextMetrics.WidthOf(tag + name + readOnly) + 1;
             DrawCompletions(facts, row, start, ' ');
         }

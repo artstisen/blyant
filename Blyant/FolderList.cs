@@ -104,7 +104,7 @@ internal sealed class FolderList<T> where T : class, IFolderItem
     /// </summary>
     internal void Inserted(int index)
     {
-        if (_removed == null) return;
+        if (_removed is null) return;
         _removed = _removed.Select(part => (part.Index >= index ? part.Index + 1 : part.Index, part.Items)).ToList();
     }
 
@@ -123,7 +123,7 @@ internal sealed class FolderList<T> where T : class, IFolderItem
     /// <returns>The place in the list of the first that was put back, or -1 if there is nothing to put back</returns>
     internal int UndoRemove(Func<T, bool> canReturn)
     {
-        if (_removed == null) return -1;
+        if (_removed is null) return -1;
         var first = -1;
         // From the top, so that each gets the place it had
         foreach (var (place, removed) in _removed)
@@ -158,12 +158,12 @@ internal sealed class FolderList<T> where T : class, IFolderItem
     /// <returns>The place in the list of the first of them, or -1 if nothing was moved</returns>
     internal int MoveToFolder(ICollection<T> items, T? folder)
     {
-        if (folder != null && (!folder.IsFolder || !Items.Contains(folder))) return -1;
+        if (folder is not null && (!folder.IsFolder || !Items.Contains(folder))) return -1;
         var moving = Items.Where(item => !item.IsFolder && items.Contains(item)).ToList();
         if (moving.Count == 0) return -1;
         Items.RemoveAll(item => moving.Contains(item));
         var index = Items.Count;
-        if (folder != null)
+        if (folder is not null)
         {
             var at = Items.IndexOf(folder);
             index = at + 1;
@@ -171,7 +171,7 @@ internal sealed class FolderList<T> where T : class, IFolderItem
             Open(at);
         }
 
-        foreach (var item in moving) item.Level = folder == null ? 0 : folder.Level + 1;
+        foreach (var item in moving) item.Level = folder is null ? 0 : folder.Level + 1;
         Items.InsertRange(index, moving);
         return index;
     }
@@ -191,7 +191,7 @@ internal sealed class FolderList<T> where T : class, IFolderItem
         var end = FolderEnd(index);
         var block = Items.GetRange(index, end - index + 1);
         int level;
-        if (into == null)
+        if (into is null)
         {
             if (folder.Level == 0) return -1;
             level = 0;
@@ -207,7 +207,7 @@ internal sealed class FolderList<T> where T : class, IFolderItem
             level = 1;
         }
 
-        var parent = into == null ? Items[Parent(index)] : into;
+        var parent = into is null ? Items[Parent(index)] : into;
         Items.RemoveRange(index, block.Count);
         var at = Items.IndexOf(parent);
         // Last in the folder, or right after the folder it was in
@@ -216,7 +216,7 @@ internal sealed class FolderList<T> where T : class, IFolderItem
         foreach (var item in block) item.Level += change;
         Items.InsertRange(target, block);
         // Opened, so that it can be seen where it went
-        if (into != null) Open(at);
+        if (into is not null) Open(at);
         return target;
     }
 
@@ -246,7 +246,7 @@ internal sealed class FolderList<T> where T : class, IFolderItem
             }
 
             int at;
-            if (group.Key == null)
+            if (group.Key is null)
             {
                 at = top ? 0 : Items.Count;
             }
@@ -282,8 +282,6 @@ internal sealed class FolderList<T> where T : class, IFolderItem
         Reveal(at);
         return at;
     }
-
-    #region Folders
 
     /// <summary>
     /// Add a folder in front of an item of the list (in front of its folder, if it is in one)
@@ -492,13 +490,13 @@ internal sealed class FolderList<T> where T : class, IFolderItem
         {
             if (source.IsFolder)
             {
-                var sub = source.Level > 0 && folder != null;
+                var sub = source.Level > 0 && folder is not null;
                 var start = sub ? list.IndexOf(folder!) + 1 : 0;
                 var end = sub ? End(folder!) + 1 : list.Count;
                 var same = list.GetRange(start, end - start).FirstOrDefault(item =>
                     item.IsFolder && item.Level == (sub ? 1 : 0) &&
                     item.Name.Equals(source.Name, StringComparison.OrdinalIgnoreCase));
-                if (same == null)
+                if (same is null)
                 {
                     same = newFolder(source.Name);
                     same.Color = source.Color;
@@ -536,7 +534,7 @@ internal sealed class FolderList<T> where T : class, IFolderItem
 
             // (also one added before: a place that is twice in the other list is added once)
             var there = list.Find(item => !item.IsFolder && samePlace(item, place));
-            if (there != null)
+            if (there is not null)
             {
                 CopyNote(source, there);
                 skipped++;
@@ -545,9 +543,9 @@ internal sealed class FolderList<T> where T : class, IFolderItem
 
             var into = subfolder ?? folder;
             place.Color = source.Color;
-            place.Level = into == null ? 0 : into.Level + 1;
+            place.Level = into is null ? 0 : into.Level + 1;
             CopyNote(source, place);
-            if (into == null)
+            if (into is null)
             {
                 list.Add(place);
             }
@@ -590,8 +588,6 @@ internal sealed class FolderList<T> where T : class, IFolderItem
         if (index > 0 ? level > Deepest(Items[index - 1]) : level > 0) return false;
         return index >= Items.Count || Items[index].Level <= level;
     }
-
-    #endregion
 
     /// <summary>
     /// Move an item or a folder one place up or down in the list.

@@ -156,7 +156,7 @@ internal sealed partial class ShellSession
         {
             var name = words.Count == 1 ? words[0] : string.Empty;
             window = PeekMarks.Get(name);
-            if (window == null)
+            if (window is null)
             {
                 Error(name.Length > 0
                     ? Lang.F("No saved peek named {0} (peek saved lists them)", name)
@@ -217,17 +217,17 @@ internal sealed partial class ShellSession
             return;
         }
 
-        var pattern = search != null ? FileSearch.WildcardText(search) : null;
+        var pattern = search is not null ? FileSearch.WildcardText(search) : null;
         var rows = new List<(int Number, string Name, PeekMarks.Window Window, (int Line, string Text)? Found)>();
         for (var i = 0; i < saved.Count; i++)
         {
             var (name, window) = saved[i];
-            if (filter != null && !Fits(filter, window.Path, name)) continue;
+            if (filter is not null && !Fits(filter, window.Path, name)) continue;
             (int, string)? found = null;
-            if (pattern != null)
+            if (pattern is not null)
             {
                 found = FirstLineInWindow(window, pattern);
-                if (found == null) continue;
+                if (found is null) continue;
             }
 
             rows.Add((i + 1, name, window, found));
@@ -235,8 +235,8 @@ internal sealed partial class ShellSession
 
         if (rows.Count == 0)
         {
-            Line(search == null ? Lang.F("No saved peeks with {0} in the name or path", filter!)
-                : filter == null ? Lang.F("No saved peeks with {0} in the lines", search)
+            Line(search is null ? Lang.F("No saved peeks with {0} in the name or path", filter!)
+                : filter is null ? Lang.F("No saved peeks with {0} in the lines", search)
                 : Lang.F("No saved peeks with {0} in the name or path and {1} in the lines", filter, search));
             return;
         }

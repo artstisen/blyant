@@ -163,7 +163,7 @@ internal static class Bookmarks
             line = line.TrimStart(' ');
             if (Notes.IsNote(line, out var note))
             {
-                if (last != null) last.Note = note;
+                if (last is not null) last.Note = note;
                 continue;
             }
 
@@ -247,7 +247,7 @@ internal static class Bookmarks
         try
         {
             var directory = Path.GetDirectoryName(Path.GetFullPath(FilePath));
-            if (directory != null) FileIo.CreateDirectory(directory);
+            if (directory is not null) FileIo.CreateDirectory(directory);
             FileIo.WriteAllBytesSafe(FilePath, new UTF8Encoding(false).GetBytes(Serialize()));
             return DialogText.Success;
         }
@@ -451,7 +451,7 @@ internal static class Bookmarks
         // The name of the place (as offered when renaming), with or without the line: no name of its own. A name of
         // another bookmark, or of only digits, is not taken (NameProblem tells why)
         name = name == entry.Target.Name || name == entry.PlaceName ? string.Empty : name;
-        if (NameProblem(name, entry) != null) return false;
+        if (NameProblem(name, entry) is not null) return false;
         entry.Name = name;
         return true;
     }
@@ -460,8 +460,6 @@ internal static class Bookmarks
     {
         if (index >= 0 && index < List.Count) List[index].Color = color;
     }
-
-    #region Folders
 
     /// <summary>
     /// A name that can be used for a folder (the brackets mark a folder in the file)
@@ -521,8 +519,6 @@ internal static class Bookmarks
     /// The number of bookmarks in a folder, with those in its subfolders
     /// </summary>
     internal static int FolderCount(int index) => Folders.FolderCount(index);
-
-    #endregion
 
     /// <summary>
     /// Empty the list (the folders too)
@@ -589,7 +585,7 @@ internal static class Bookmarks
         var existing = Find(target);
         var named = FindByName(name);
         Entry entry;
-        if (named != null && named != existing)
+        if (named is not null && named != existing)
         {
             if (!moveName)
             {
@@ -598,13 +594,13 @@ internal static class Bookmarks
             }
 
             // (a place has one bookmark: the one it has keeps its own name)
-            if (existing != null) return Lang.F("Already bookmarked ({0}): {1}", NumberOf(existing), existing.Shown);
+            if (existing is not null) return Lang.F("Already bookmarked ({0}): {1}", NumberOf(existing), existing.Shown);
             named.Target = target;
             isError = !Saved(out var moved);
             return isError ? moved : Lang.F("Bookmark {0} moved here: {1}", NumberOf(named), named.Shown);
         }
 
-        if (existing != null)
+        if (existing is not null)
         {
             isError = false;
             if (name.Length == 0 || existing.Name.Equals(name, StringComparison.Ordinal))

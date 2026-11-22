@@ -19,7 +19,7 @@ internal sealed partial class EditorEngine
     /// <summary>
     /// Are misspelled words marked?
     /// </summary>
-    internal bool IsSpellOn => _spell != null;
+    internal bool IsSpellOn => _spell is not null;
 
     /// <summary>
     /// The languages used for spell checking (empty when it is off)
@@ -74,7 +74,7 @@ internal sealed partial class EditorEngine
     /// </summary>
     internal List<(int Start, int End)> Misspelled(int line)
     {
-        if (_spell == null) return NoWords;
+        if (_spell is null) return NoWords;
         var words = CheckLine(line);
         // A word is not marked while it is being written
         if (Mode == EditorMode.Insert && line == Cursor.Line && words.Count > 0)
@@ -87,8 +87,8 @@ internal sealed partial class EditorEngine
 
     private bool RequireSpell()
     {
-        if (_spell == null) SetError(DialogText.SpellOff);
-        return _spell != null;
+        if (_spell is null) SetError(DialogText.SpellOff);
+        return _spell is not null;
     }
 
     // "]s" and "[s": move the cursor to the next or previous misspelled word (continuing from the other end
@@ -101,7 +101,7 @@ internal sealed partial class EditorEngine
         for (; count > 0; count--)
         {
             var next = FindMisspelled(position, forward);
-            if (next == null) break;
+            if (next is null) break;
             position = next.Value;
             found = true;
         }
@@ -160,7 +160,7 @@ internal sealed partial class EditorEngine
     internal string SpellWord()
     {
         var word = SpellWordAtCursor();
-        return word == null ? string.Empty : CurrentLine.Substring(word.Value.Start, word.Value.End - word.Value.Start);
+        return word is null ? string.Empty : CurrentLine.Substring(word.Value.Start, word.Value.End - word.Value.Start);
     }
 
     /// <summary>
@@ -191,7 +191,7 @@ internal sealed partial class EditorEngine
     internal void ReplaceSpellWord(string replacement)
     {
         var word = SpellWordAtCursor();
-        if (word == null || replacement.Length == 0) return;
+        if (word is null || replacement.Length == 0) return;
         _stepCursor = Cursor;
         var from = new TextPos(Cursor.Line, word.Value.Start);
         Delete(from, new TextPos(Cursor.Line, word.Value.End));

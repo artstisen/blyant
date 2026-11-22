@@ -13,7 +13,7 @@ public class SafeWriteTests
     private static string SourceDirectory()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);
-        while (directory != null && !File.Exists(Path.Combine(directory.FullName, "Blyant.sln")))
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "Blyant.sln")))
         {
             directory = directory.Parent;
         }

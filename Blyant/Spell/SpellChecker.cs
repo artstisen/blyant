@@ -28,8 +28,6 @@ internal sealed class SpellChecker
     private const string DefaultMidWordChars = "";
     private const int MinWordLength = 2; // Single letters are not checked
 
-    #region The active spell checker
-
     /// <summary>
     /// The spell checker in use, or null when spell checking is off
     /// </summary>
@@ -91,7 +89,7 @@ internal sealed class SpellChecker
     {
         if (languages.Trim().Length == 0) languages = Languages;
         var checker = Load(languages, DirectoryName, out var error);
-        if (checker == null) return error;
+        if (checker is null) return error;
         Current = checker;
         Languages = checker.LanguageNames;
         return DialogText.Success;
@@ -101,8 +99,6 @@ internal sealed class SpellChecker
     {
         Current = null;
     }
-
-    #endregion
 
     private readonly List<SpellDictionary> _dictionaries = new();
     private readonly HashSet<string> _addedWords = new(StringComparer.Ordinal);
@@ -175,8 +171,6 @@ internal sealed class SpellChecker
         if (midWordChars.Length > 0) checker._midWordChars = new string(midWordChars);
         return checker;
     }
-
-    #region Words added by the user
 
     // The file has one word per line. A word followed by "/!" is a wrong word, lines starting with "#" are
     // comments, and other things after a "/" are ignored
@@ -256,10 +250,6 @@ internal sealed class SpellChecker
                word == char.ToUpperInvariant(lower[0]) + lower.Substring(1);
     }
 
-    #endregion
-
-    #region Checking
-
     /// <summary>
     /// True if a word is spelled correctly in one of the languages
     /// </summary>
@@ -281,7 +271,7 @@ internal sealed class SpellChecker
         foreach (var dictionary in _dictionaries)
         {
             var result = dictionary.Check(word);
-            if (result == null) return false; // Marked as wrong in a dictionary
+            if (result is null) return false; // Marked as wrong in a dictionary
             if (result == true) correct = true;
         }
 
@@ -421,10 +411,6 @@ internal sealed class SpellChecker
         return null;
     }
 
-    #endregion
-
-    #region Suggestions
-
     /// <summary>
     /// Suggest spellings for a word: the best first
     /// </summary>
@@ -538,6 +524,4 @@ internal sealed class SpellChecker
 
         return previous[b.Length];
     }
-
-    #endregion
 }

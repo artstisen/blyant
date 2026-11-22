@@ -110,7 +110,7 @@ internal static class FileTags
         try
         {
             var directory = Path.GetDirectoryName(Path.GetFullPath(FilePath));
-            if (directory != null) FileIo.CreateDirectory(directory);
+            if (directory is not null) FileIo.CreateDirectory(directory);
             FileIo.WriteAllBytesSafe(FilePath, new UTF8Encoding(false).GetBytes(Serialize()));
             return DialogText.Success;
         }
@@ -162,8 +162,8 @@ internal static class FileTags
         var index = IndexOf(Path.GetFullPath(path));
         if (index < 0) return false;
         var tags = Entries[index].Tags;
-        var removed = tag == null ? tags.Count > 0 : tags.Remove(tag.ToLowerInvariant());
-        if (tag == null || tags.Count == 0) Entries.RemoveAt(index);
+        var removed = tag is null ? tags.Count > 0 : tags.Remove(tag.ToLowerInvariant());
+        if (tag is null || tags.Count == 0) Entries.RemoveAt(index);
         return removed;
     }
 
@@ -226,8 +226,8 @@ internal static class FileTags
     /// </summary>
     internal static int ClearTag(string? tag)
     {
-        var count = tag == null ? Entries.Count(entry => entry.Tags.Count > 0) : FilesWith(tag).Count;
-        if (tag == null)
+        var count = tag is null ? Entries.Count(entry => entry.Tags.Count > 0) : FilesWith(tag).Count;
+        if (tag is null)
         {
             Entries.Clear();
             return count;
@@ -260,7 +260,7 @@ internal static class FileTags
     internal static bool Copied(string fromPath, string toPath)
     {
         var copies = Entries.Select(entry => (Copy: FileOperations.FollowedPath(entry.Path, fromPath, toPath), entry.Tags))
-            .Where(copy => copy.Copy != null).ToList();
+            .Where(copy => copy.Copy is not null).ToList();
         foreach (var (copy, tags) in copies)
         {
             foreach (var tag in tags) Add(copy!, tag);

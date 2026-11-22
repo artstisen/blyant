@@ -41,7 +41,7 @@ internal sealed partial class ShellSession
             }
 
             if (TagSearch(full ? AfterWords(argument, 1) : argument, true) is not { } search) return;
-            if (search.Tag == null && _tag == null)
+            if (search.Tag is null && _tag is null)
             {
                 Error(Lang.T("No tag yet: tag add notes.md draft, then tag draft"));
                 return;
@@ -83,7 +83,7 @@ internal sealed partial class ShellSession
         _tag = tag;
         var names = Names(files.Select(path => (path, false)).ToList(), full);
         var rows = files.Select((path, i) => (new Item(path, false), names[i])).ToList();
-        if (filter == null && text == null) List(rows, string.Empty);
+        if (filter is null && text is null) List(rows, string.Empty);
         else SearchTagged(files, rows, names, filter, text, !full);
     }
 
@@ -104,7 +104,7 @@ internal sealed partial class ShellSession
         string? tag = null;
         // ("filter" alone is a tag of that name when there is one: made before "filter" was a word of tag)
         if (words.Count > 0 &&
-            (!IsFilterWord(words[0]) || (filterCanBeTag && words.Count == 1 && text == null && FilterIsATag())))
+            (!IsFilterWord(words[0]) || (filterCanBeTag && words.Count == 1 && text is null && FilterIsATag())))
         {
             if (TagName(words[0]) is not { } named) return null;
             tag = named;
@@ -137,8 +137,8 @@ internal sealed partial class ShellSession
     private void SearchTagged(IReadOnlyList<string> paths, List<(Item Item, string Text)> rows, IReadOnlyList<string> names,
         string? filter, string? text, bool lineUp)
     {
-        var fits = paths.Select(path => filter == null || Fits(filter, path, null)).ToList();
-        if (text == null)
+        var fits = paths.Select(path => filter is null || Fits(filter, path, null)).ToList();
+        if (text is null)
         {
             Filtered(rows, i => fits[i], Lang.F("No files with {0} in them", filter!));
             return;
@@ -188,14 +188,14 @@ internal sealed partial class ShellSession
         }
 
         string? tag = null;
-        if (words.Count == 3 && TagName(words[2]) == null) return;
+        if (words.Count == 3 && TagName(words[2]) is null) return;
         if (words.Count == 3) tag = words[2].ToLowerInvariant();
         if (FilesOf(words[1], false) is not { } files) return;
         FileTags.Load();
         var removed = files.Where(file => FileTags.Remove(file.Path, tag)).ToList();
         if (removed.Count == 0)
         {
-            Line(tag == null ? Lang.T("Nothing taken off: no tags there") : Lang.F("Nothing taken off: no tag {0} there", tag));
+            Line(tag is null ? Lang.T("Nothing taken off: no tags there") : Lang.F("Nothing taken off: no tag {0} there", tag));
             return;
         }
 
@@ -205,13 +205,13 @@ internal sealed partial class ShellSession
         foreach (var file in removed) EventLog.Add(DialogText.LogFile + "Tag remove: " + file.Path);
         if (removed.Count == 1)
         {
-            Line(tag == null
+            Line(tag is null
                 ? Lang.F("Tags taken off: {0}", removed[0].Path)
                 : Lang.F("Tag {0} taken off: {1}", tag, removed[0].Path));
         }
         else
         {
-            Line(tag == null
+            Line(tag is null
                 ? Lang.F("Tags taken off {0} files", removed.Count)
                 : Lang.F("Tag {0} taken off {1} files", tag, removed.Count));
         }
@@ -293,7 +293,7 @@ internal sealed partial class ShellSession
         if (words.Count > 0 && (words[0].Equals("filter", StringComparison.OrdinalIgnoreCase) || words.Contains("-t")))
         {
             if (TagSearch(argument, false) is not { } search) return;
-            if (search.Tag != null)
+            if (search.Tag is not null)
             {
                 Error(Lang.T("tags lists the tags, tags -f the files with tags, and tags clear takes them all off"));
                 return;
@@ -420,7 +420,7 @@ internal sealed partial class ShellSession
     {
         if (word == "@")
         {
-            if (_file == null)
+            if (_file is null)
             {
                 Error(Lang.T("@ is the file and the line of the last command: none yet (words notes.md 12)"));
                 return null;
@@ -483,15 +483,15 @@ internal sealed partial class ShellSession
     // "tags", which set it themselves
     private void TagFollowsFile(string? before, string command)
     {
-        if (command is "tag" or "tags" || _file == null ||
-            (before != null && FileOperations.NameComparer.Equals(before, _file)))
+        if (command is "tag" or "tags" || _file is null ||
+            (before is not null && FileOperations.NameComparer.Equals(before, _file)))
         {
             return;
         }
 
         FileTags.Load();
         var tags = FileTags.TagsOf(_file);
-        if (tags.Count == 0 || (_tag != null && tags.Contains(_tag))) return;
+        if (tags.Count == 0 || (_tag is not null && tags.Contains(_tag))) return;
         _tag = tags[^1];
         Line("  $tag = " + _tag); // English: a name set, as reg shows a register
     }

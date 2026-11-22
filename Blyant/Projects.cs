@@ -107,8 +107,6 @@ internal static class Projects
         return Add(path);
     }
 
-    #region The list of the projects
-
     /// <summary>
     /// The list of the projects: a path on each line (in the data directory)
     /// </summary>
@@ -156,7 +154,7 @@ internal static class Projects
             var text = "# Blyant: the projects (a folder on each line)\n" +
                        string.Concat(paths.Select(path => path + "\n"));
             var directory = Path.GetDirectoryName(ListPath);
-            if (directory != null) FileIo.CreateDirectory(directory);
+            if (directory is not null) FileIo.CreateDirectory(directory);
             FileIo.WriteAllBytesSafe(ListPath, new UTF8Encoding(false).GetBytes(text));
             return DialogText.Success;
         }
@@ -221,10 +219,6 @@ internal static class Projects
         if (changed) SaveList(paths);
     }
 
-    #endregion
-
-    #region The files of a project
-
     /// <summary>
     /// The file in a project with its color (the line "color=DarkCyan"), so it goes with the folder when it is
     /// moved, copied or synced. It is made when a color is set, and removed when the color is
@@ -269,14 +263,14 @@ internal static class Projects
             var kept = ReadInfoLines(project).Where(line => line.Length > 0 && !line.StartsWith('#') &&
                                                             !line.StartsWith("color=", StringComparison.Ordinal)).ToList();
             var path = Path.Combine(project, InfoFileName);
-            if (color == null && kept.Count == 0)
+            if (color is null && kept.Count == 0)
             {
                 FileIo.DeleteFile(path);
                 return DialogText.Success;
             }
 
             var lines = new List<string> { "# Blyant: the settings of this project" }; // English
-            if (color != null) lines.Add("color=" + color);
+            if (color is not null) lines.Add("color=" + color);
             lines.AddRange(kept);
             // LF on all systems, so the file is the same wherever it is synced to. Written safely, and a file that
             // is hidden (on Windows) stays so
@@ -402,6 +396,4 @@ internal static class Projects
             return e.Message;
         }
     }
-
-    #endregion
 }

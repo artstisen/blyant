@@ -27,7 +27,7 @@ namespace Blyant;
      }
  */
 
-public partial class TextArea
+internal sealed partial class TextArea
 {
     private const char StyleMarker = '\u0001'; // Separates the differently colored parts of a row
     private const int StyleNormal = 0;
@@ -79,7 +79,7 @@ public partial class TextArea
     internal static bool ZenColors { get; set; } = true;
 
     // Not in a peek, or a field of one line
-    private bool ShowsWhitespace => ShowWhitespace && _peek == null && !_singleLine;
+    private bool ShowsWhitespace => ShowWhitespace && _peek is null && !_singleLine;
 
     internal const int DefaultScrollOffLines = 12;
 
@@ -164,7 +164,7 @@ public partial class TextArea
     private readonly PeekOptions? _peek;
 
     // A peek whose text can be changed and saved (a macro in its box)
-    private bool EditablePeek => _peek?.SaveText != null;
+    private bool EditablePeek => _peek?.SaveText is not null;
 
     /// <summary>
     /// A peek was closed with Enter: the file is to be opened in the editor (at the cursor)
@@ -243,7 +243,7 @@ public partial class TextArea
     }
 
     // The editor of a file (or a blank page) on the whole window: it can be in Zen mode
-    private bool IsFileEditor => _saveMode == SaveAsFile && _peek == null && !_singleLine && !_readOnly;
+    private bool IsFileEditor => _saveMode == SaveAsFile && _peek is null && !_singleLine && !_readOnly;
 
     // ":zen": Zen mode on or off, as the setting (saved), and for this editor: the text moves up or down a row
     private void ToggleZen()
@@ -271,7 +271,7 @@ public partial class TextArea
     private void FollowIndentSetting()
     {
         _engine.IndentWidth = EditorEngine.IndentSetting;
-        if (_otherPane != null) _otherPane.Engine.IndentWidth = EditorEngine.IndentSetting;
+        if (_otherPane is not null) _otherPane.Engine.IndentWidth = EditorEngine.IndentSetting;
     }
 
     // The frame of the setting Zen mode (it can also be changed in Configuration, opened from the Jump menu): when it
@@ -364,18 +364,18 @@ public partial class TextArea
         {
             MaxCells = width - 3,
             // A peek is narrow: no line numbers
-            LineNumbers = LineNumbers && !_singleLine && !readOnly && peek == null,
-            BlankGutter = BlankGutter && !_singleLine && !readOnly && peek == null,
+            LineNumbers = LineNumbers && !_singleLine && !readOnly && peek is null,
+            BlankGutter = BlankGutter && !_singleLine && !readOnly && peek is null,
             Wrap = _singleLine || (WordWrap && peek?.NoWrap != true),
             ScrollOffLines = ScrollOffLines,
             ScrollOff = ScrollOff && !_singleLine && !readOnly ? ScrollOffLines : 0,
             // Words are completed while typing, as set (not in a peek or a line of a dialog)
-            AutoComplete = Completions.Enabled && !_singleLine && !readOnly && peek == null,
+            AutoComplete = Completions.Enabled && !_singleLine && !readOnly && peek is null,
             // The macros played with ":play name" are read from their files
             MacroLoader = MacroFiles.Load
         };
         // The marks set in the file earlier in this session
-        if (marks != null && !_singleLine && peek == null) _engine.LoadMarks(marks);
+        if (marks is not null && !_singleLine && peek is null) _engine.LoadMarks(marks);
         // Tab after ":split " and ":view " completes the names of the files next to the file being edited
         CommandCompletion.Arguments["split"] = SplitFileNames;
         CommandCompletion.Arguments["view"] = SplitFileNames;
@@ -389,7 +389,7 @@ public partial class TextArea
         if (!_singleLine) Completions.Refresh();
         // Files of a known kind (Markdown, HTML, CSS, JavaScript, JSON ...) are colored, unless that is turned off,
         // and so is the settings file (as INI) when it is edited from Configuration
-        var fileType = peek != null ? peek.Syntax
+        var fileType = peek is not null ? peek.Syntax
             : saveMode == SaveAsFile && !_singleLine && !readOnly
                 // (a blank page is of the kind of new files: Markdown, unless another is set)
                 ? FileExplorer.IsUntitled
@@ -400,7 +400,7 @@ public partial class TextArea
                     : SyntaxType.None;
         _engine.CompletionSyntax = fileType;
         // ":format": the formatter of the kind of file, as Blyant Validator tells it by the name
-        _engine.FormatKind = peek == null && saveMode == SaveAsFile && !_singleLine && !readOnly
+        _engine.FormatKind = peek is null && saveMode == SaveAsFile && !_singleLine && !readOnly
             ? FormatKindOfFile()
             : DocumentKind.Unknown;
         if (fileType != SyntaxType.None)
@@ -419,7 +419,7 @@ public partial class TextArea
             _engine.ReadOnlyMessage = peek.ReadOnlyText ?? DialogText.PeekReadOnly;
             _engine.ChangeLines = peek.Changes;
             // A comparison is colored, also when colors are turned off for files
-            if (peek.Changes != null) _engine.Syntax = peek.Syntax;
+            if (peek.Changes is not null) _engine.Syntax = peek.Syntax;
         }
 
         if (scrollToEnd)
@@ -454,7 +454,7 @@ public partial class TextArea
             _engine.OpenSearch();
         }
 
-        if (_peek != null)
+        if (_peek is not null)
         {
             // The pane is cleared where the text is written, and the keys of a peek are told
             Array.Fill(_shownCells, width - 1);
@@ -470,9 +470,8 @@ public partial class TextArea
                 ? mixed
                 : DialogText.EditorHelpHint, false);
             // The file read only beside it when it was closed (that it is, or that it is gone, is told instead)
-            if (reference != null && saveMode == SaveAsFile && split == null) RestoreReference(reference);
+            if (reference is not null && saveMode == SaveAsFile && split is null) RestoreReference(reference);
         }
-
 
         // (a page of its own, also when it is opened from a box: the note of a bookmark in the Jump menu; a field of one
         // row is a part of its box)
@@ -500,8 +499,6 @@ public partial class TextArea
         _engine.Buffer.ClearHistory();
     }
 
-    #region Read only scrolling
-
     /// <summary>
     /// True if the text has more rows than the text area can show
     /// </summary>
@@ -522,10 +519,6 @@ public partial class TextArea
         _engine.ScrollView(rows);
         Draw();
     }
-
-    #endregion
-
-    #region Main loop (keyboard input)
 
     private void MainLoop()
     {
@@ -569,7 +562,7 @@ public partial class TextArea
                     continue;
                 }
 
-                if (_peek != null && !EditablePeek && key.Key == ConsoleKey.Enter && _engine.Mode == EditorMode.Normal)
+                if (_peek is not null && !EditablePeek && key.Key == ConsoleKey.Enter && _engine.Mode == EditorMode.Normal)
                 {
                     // Enter in a peek: the file in the editor
                     OpenRequested = true;
@@ -579,22 +572,22 @@ public partial class TextArea
                 // Esc closes a peek, also when a search is highlighted (a key typed before it is only cancelled). In a
                 // comparison it removes the highlighting first, so "n" "N" go to the changes again
                 // (one that can be changed closes as the editor does: Esc asks about changes that are not saved)
-                if (_peek != null && !EditablePeek && key.Key == ConsoleKey.Escape &&
+                if (_peek is not null && !EditablePeek && key.Key == ConsoleKey.Escape &&
                     _engine.Mode == EditorMode.Normal && !_engine.HasPending &&
-                    !(_peek.Changes != null && _engine.IsSearchHighlighted)) break;
+                    !(_peek.Changes is not null && _engine.IsSearchHighlighted)) break;
                 if (_peek is { TabCloses: true } && key.Key == ConsoleKey.Tab && _engine.Mode == EditorMode.Normal &&
                     !_engine.HasPending) break;
 
                 var request = _engine.HandleKey(key);
 
-                if (_peek != null && !EditablePeek && request is EditorRequest.Quit or EditorRequest.ForceQuit
+                if (_peek is not null && !EditablePeek && request is EditorRequest.Quit or EditorRequest.ForceQuit
                         or EditorRequest.SaveAndQuit)
                 {
                     // Esc or :q closes a peek (nothing was changed)
                     break;
                 }
 
-                if (_peek?.SaveDirectory != null && request == EditorRequest.WriteCopy)
+                if (_peek?.SaveDirectory is not null && request == EditorRequest.WriteCopy)
                 {
                     // ":w name" in a comparison
                     SaveComparison(_peek.SaveDirectory);
@@ -602,7 +595,7 @@ public partial class TextArea
                     continue;
                 }
 
-                if (_peek != null && request is not (EditorRequest.None or EditorRequest.Clipboard
+                if (_peek is not null && request is not (EditorRequest.None or EditorRequest.Clipboard
                         or EditorRequest.PasteBinWrite or EditorRequest.PasteBinPath or EditorRequest.Help
                         or EditorRequest.SyntaxChanged
                         or EditorRequest.WrapChanged or EditorRequest.ScrollOffChanged) &&
@@ -699,11 +692,11 @@ public partial class TextArea
                 }
 
                 break;
-            case EditorRequest.ForceQuit when _otherPane != null:
+            case EditorRequest.ForceQuit when _otherPane is not null:
                 // In a split: only the pane is closed (the text is still shown in the other)
                 ClosePane();
                 break;
-            case EditorRequest.SaveAndQuit when _otherPane != null:
+            case EditorRequest.SaveAndQuit when _otherPane is not null:
                 if (Save()) ClosePane();
                 break;
             case EditorRequest.SaveAndQuit:
@@ -744,7 +737,7 @@ public partial class TextArea
                 RedrawAll();
                 var recent = RecentBox.Pick(RecentCurrent);
                 RedrawAll();
-                if (recent != null) Jump.ToPlace(new JumpTarget(JumpKind.File, recent), LeaveForJump);
+                if (recent is not null) Jump.ToPlace(new JumpTarget(JumpKind.File, recent), LeaveForJump);
                 break;
             }
             case EditorRequest.Splits:
@@ -753,7 +746,7 @@ public partial class TextArea
                 RedrawAll();
                 var split = SplitsBox.Pick();
                 RedrawAll();
-                if (split != null) OpenSplit(split);
+                if (split is not null) OpenSplit(split);
                 break;
             }
             case EditorRequest.SwitchPane:
@@ -922,7 +915,7 @@ public partial class TextArea
                 DrawStatusLine();
                 var title = SnippetBox.Add(_engine.SnippetText);
                 RedrawAll();
-                if (title != null) _engine.ShowMessage(DialogText.SnippetAdded, false);
+                if (title is not null) _engine.ShowMessage(DialogText.SnippetAdded, false);
                 break;
             }
             case EditorRequest.SnippetsEdit:
@@ -1106,7 +1099,7 @@ public partial class TextArea
                 // not saved are asked about first (Save, Discard, Cancel). Only the editor of a file
                 Draw();
                 Tools.HideCursor();
-                if (_saveMode == SaveAsFile && _peek == null)
+                if (_saveMode == SaveAsFile && _peek is null)
                 {
                     var file = FileExplorer.CurrentFilePath;
                     Jump.ToShell(LeaveForJump, file.Length > 0 ? System.IO.Path.GetDirectoryName(file) : null,
@@ -1416,7 +1409,7 @@ public partial class TextArea
             return;
         }
 
-        if (_peek != null || _saveMode != SaveAsFile || FileExplorer.EditingBlyantFile)
+        if (_peek is not null || _saveMode != SaveAsFile || FileExplorer.EditingBlyantFile)
         {
             _engine.SetMessage(Lang.T("A new file is not made here"), true);
             return;
@@ -1501,7 +1494,7 @@ public partial class TextArea
         Tools.HideCursor();
         var written = System.IO.Path.GetFileName(FileExplorer.PathNextToCurrent(FileExplorer.CurrentFilePath, name));
         var problem = FileExplorer.SaveCurrentFileAs(GetText(), name, saveAs);
-        if (problem != null)
+        if (problem is not null)
         {
             RedrawAll();
             // (nothing is said when the user gave up)
@@ -1611,12 +1604,12 @@ public partial class TextArea
         // In the middle of the window (also in a split: counted from the pane, it can be left of it)
         var left = Math.Max(0, (Init.LineWidth - ReplaceDialog.Width) / 2) - _left;
         var lines = _engine.ReplaceLines;
-        if (ReplaceDialog.Show(_top + firstRow, _left + left, lines != null, _engine.ReplaceFind, out var scope))
+        if (ReplaceDialog.Show(_top + firstRow, _left + left, lines is not null, _engine.ReplaceFind, out var scope))
         {
             var cursorLine = _engine.Cursor.Line;
             var (first, last) = scope switch
             {
-                ReplaceDialog.Scope.SelectedLines when lines != null => lines.Value,
+                ReplaceDialog.Scope.SelectedLines when lines is not null => lines.Value,
                 ReplaceDialog.Scope.CurrentLine => (cursorLine, cursorLine),
                 _ => (0, _engine.Buffer.LineCount - 1)
             };
@@ -1842,7 +1835,7 @@ public partial class TextArea
         if (_peek?.SaveText is { } saveText) return SaveEditablePeek(saveText);
         // A peek is never saved: it shows another file than the one the editor saves to, and maybe only the start
         // of it (it is read only, so this only guards against a request let through by mistake)
-        if (_peek != null) return true;
+        if (_peek is not null) return true;
         if (!_engine.IsModified) return true;
         Tools.HideCursor();
         DocumentInfo.HasChanged = true;
@@ -1915,7 +1908,7 @@ public partial class TextArea
         Tools.HideCursor();
         var problem = saveText(GetText());
         RedrawAll();
-        if (problem != null)
+        if (problem is not null)
         {
             _engine.SetMessage(problem, true);
             return false;
@@ -2139,7 +2132,7 @@ public partial class TextArea
             _engine.ShowMessage(Lang.F("Line endings: {0} (:lineendings lf or crlf changes them)",
                 FileExplorer.CurrentLineEndingLabel), false);
         }
-        else if (ending == null)
+        else if (ending is null)
         {
             _engine.ShowMessage(Lang.T("Line endings are lf or crlf: :lineendings lf"), true);
         }
@@ -2167,11 +2160,9 @@ public partial class TextArea
         if (modified == DocumentInfo.HasChanged) return;
         DocumentInfo.HasChanged = modified;
         // (a peek is in a pane or a box: the label at the top is of the page behind it)
-        if (_singleLine || _peek != null) return;
+        if (_singleLine || _peek is not null) return;
         _frame.ShowChanged(Facts());
     }
-
-    #endregion
 
     // "gf": open the file named in the text, as a jump (changes that are not saved are asked about first). Where
     // the name fits several files, they are shown to pick one
@@ -2198,7 +2189,7 @@ public partial class TextArea
             FileOperations.IsFileThere, IsTopFolder);
         if (found.Count == 0)
         {
-            _engine.ShowMessage(current == null
+            _engine.ShowMessage(current is null
                 ? Lang.F("Not in favorites or history: {0}", name)
                 : Lang.F("Not next to the file, in favorites or history: {0}", name), true);
             return;
@@ -2281,8 +2272,6 @@ public partial class TextArea
         return true;
     }
 
-    #region Drawing
-
     // Redraw the whole screen (after a dialog or message has been shown on top of the editor)
     private void RedrawAll()
     {
@@ -2290,7 +2279,7 @@ public partial class TextArea
         Tools.HideCursor();
         ConsoleColors.SetColors(ConsoleColors.ColorPreset.Normal);
         Tools.ClearScreen();
-        if (_peek != null)
+        if (_peek is not null)
         {
             // The file browser behind the peek, and the peek on top of its pane
             _peek.DrawBehind();
@@ -2364,16 +2353,16 @@ public partial class TextArea
     // window was drawn again (and the cursor placed)
     private bool DrawCommandList()
     {
-        if (_engine.Mode == EditorMode.Command && CommandList.Enabled && _peek == null)
+        if (_engine.Mode == EditorMode.Command && CommandList.Enabled && _peek is null)
         {
             _commandList ??= new CommandList(CommandContext.Editor);
             _commandList.Draw(_engine.CommandText);
             return false;
         }
 
-        if (_commandList == null) return false;
+        if (_commandList is null) return false;
         _commandList = null;
-        if (_otherPane != null)
+        if (_otherPane is not null)
         {
             RedrawAll();
             return true;
@@ -2580,7 +2569,7 @@ public partial class TextArea
         var misspelled = _engine.Misspelled(line);
         var markdown = _engine.SyntaxStyles(line);
         var blank = ShowsWhitespace && s.AsSpan(start, end - start).IndexOfAny(' ', '\t') >= 0;
-        if (selection == null && !hasMatches && misspelled.Count == 0 && markdown == null && labels == null &&
+        if (selection is null && !hasMatches && misspelled.Count == 0 && markdown is null && labels is null &&
             !blank)
         {
             row.Append(TextMetrics.Printable(s, start, end));
@@ -2588,7 +2577,7 @@ public partial class TextArea
         }
 
         var styles = new int[end - start];
-        if (markdown != null)
+        if (markdown is not null)
         {
             // The colors of the text are below the marks: misspelled words, search matches and the selection
             for (var i = start; i < end && i < markdown.Length; i++)
@@ -2632,7 +2621,7 @@ public partial class TextArea
             }
         }
 
-        if (selection != null)
+        if (selection is not null)
         {
             for (var i = Math.Max(start, selection.Value.Start); i < Math.Min(end, selection.Value.End); i++)
             {
@@ -2640,7 +2629,7 @@ public partial class TextArea
             }
         }
 
-        if (labels != null)
+        if (labels is not null)
         {
             foreach (var (at, (_, next)) in labels)
             {
@@ -2666,7 +2655,7 @@ public partial class TextArea
         }
 
         // Show that the end of the line is part of the selection (this also makes selected empty lines visible)
-        if (selection != null && end == s.Length && selection.Value.End == s.Length &&
+        if (selection is not null && end == s.Length && selection.Value.End == s.Length &&
             (s.Length == 0 || _engine.Mode == EditorMode.VisualLine))
         {
             row.Append(StyleMarker).Append((char)('0' + StyleSelection)).Append(' ');
@@ -2703,7 +2692,7 @@ public partial class TextArea
     private void AppendShown(StringBuilder row, string s, int start, int end,
         Dictionary<int, (char Letter, bool Next)>? labels)
     {
-        if (labels == null)
+        if (labels is null)
         {
             row.Append(Visible(s, start, end));
             return;
@@ -2831,7 +2820,7 @@ public partial class TextArea
                 : "[" + (current > 0 ? current.ToString() : "-") + "/" + total + "]";
         }
 
-        var kind = _peek != null ? EditorKind.Peek
+        var kind = _peek is not null ? EditorKind.Peek
             : _singleLine || _readOnly ? EditorKind.Other
             : _saveMode switch
             {
@@ -2861,7 +2850,7 @@ public partial class TextArea
                 : string.Empty,
             Spell = _engine.IsSpellOn ? DialogText.SpellStatus + " " + _engine.SpellLanguages : string.Empty,
             // A text file: its type and encoding (not in a peek or a comparison: it is not the file being edited)
-            FileLabel = _saveMode == SaveAsFile && _peek == null ? FileExplorer.CurrentFileLabel : string.Empty,
+            FileLabel = _saveMode == SaveAsFile && _peek is null ? FileExplorer.CurrentFileLabel : string.Empty,
             Completions = _engine.CompletionList,
             CompletionIndex = _engine.CompletionIndex,
             Title = _saveMode == SaveAsSettings ? FileIo.SettingsFileName
@@ -2870,8 +2859,8 @@ public partial class TextArea
             ReadOnly = _engine.ReadOnly,
             FocusLeft = _left,
             FocusWidth = _width,
-            Other = _otherPane == null ? null : (_otherPane.Left, _otherPane.Width),
-            ReferenceName = _referencePath == null ? null : Path.GetFileName(_referencePath),
+            Other = _otherPane is null ? null : (_otherPane.Left, _otherPane.Width),
+            ReferenceName = _referencePath is null ? null : Path.GetFileName(_referencePath),
             ReferenceFocused = _referenceFocused
         };
     }
@@ -2897,8 +2886,6 @@ public partial class TextArea
 
         Tools.ShowCursor();
     }
-
-    #endregion
 }
 
 internal static class DocumentInfo

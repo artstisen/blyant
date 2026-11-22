@@ -46,7 +46,7 @@ internal static partial class FileExplorer
                 var parent = isDirectory && action == FavoriteAction.Open
                     ? path
                     : System.IO.Path.GetDirectoryName(path);
-                if (parent == null || !Directory.Exists(parent))
+                if (parent is null || !Directory.Exists(parent))
                 {
                     _favoriteMessage = DialogText.DirectoryNotFound;
                     continue;
@@ -177,7 +177,7 @@ internal static partial class FileExplorer
             }
 
             var count = _listCount.Take();
-            if (count != null && key.Key == ConsoleKey.Escape)
+            if (count is not null && key.Key == ConsoleKey.Escape)
             {
                 redraw = hadMessage;
                 continue;
@@ -215,21 +215,21 @@ internal static partial class FileExplorer
             if (key.KeyChar == ':')
             {
                 var command = CommandLine.Read(CommandContext.Favorites);
-                if (command != null && CommandLine.Name(command) is "exit" or "qa")
+                if (command is not null && CommandLine.Name(command) is "exit" or "qa")
                 {
                     // Leave Blyant (asked first)
                     Jump.Exit();
                     continue;
                 }
 
-                if (command != null && CommandLine.Name(command) == "shell")
+                if (command is not null && CommandLine.Name(command) == "shell")
                 {
                     // Go on as the shell, in the directory of the file browser
                     Jump.ToShell(directory: ShellDirectory);
                     continue;
                 }
 
-                if (command != null && CommandLine.Name(command) is "jump" or "ju" or "jmp" or "board" or "corkboard"
+                if (command is not null && CommandLine.Name(command) is "jump" or "ju" or "jmp" or "board" or "corkboard"
                         or "favorites" or "favs" or "history" or "hist" or "hotlist" or "hot" or "browse"
                         or "file" or "open")
                 {
@@ -240,7 +240,7 @@ internal static partial class FileExplorer
                     continue;
                 }
 
-                if (command != null && CommandLine.Name(command) == "book")
+                if (command is not null && CommandLine.Name(command) == "book")
                 {
                     // ":book 3": jump to bookmark 3
                     Jump.ToBookmark(CommandLine.Argument(command));
@@ -248,14 +248,14 @@ internal static partial class FileExplorer
                     continue;
                 }
 
-                if (command != null && CommandLine.Name(command) == "log")
+                if (command is not null && CommandLine.Name(command) == "log")
                 {
                     // The log, on top of the page
                     Jump.ShowLog();
                     continue;
                 }
 
-                if (command != null && CommandLine.Name(command) is "colorscheme" or "colo")
+                if (command is not null && CommandLine.Name(command) is "colorscheme" or "colo")
                 {
                     // ":colorscheme name": another color scheme, the page drawn again in it
                     _favoriteMessage = SchemeEditor.UseByName(CommandLine.Argument(command), out _);
@@ -263,7 +263,7 @@ internal static partial class FileExplorer
                 }
 
                 // A name can follow the command
-                if (command != null && CommandLine.Name(command) is "folder" or "subfolder" or "rename" or "new" or "import" or "list"
+                if (command is not null && CommandLine.Name(command) is "folder" or "subfolder" or "rename" or "new" or "import" or "list"
                     or "bookmark" or "bookmark!")
                 {
                     command = CommandLine.Name(command);
@@ -580,7 +580,7 @@ internal static partial class FileExplorer
 
         SaveFavoriteList();
         FilterFavorites();
-        if (keep != null)
+        if (keep is not null)
         {
             _favoriteIndex = Math.Max(0,
                 _favorites.FindIndex(number => ReferenceEquals(FileFavorites.Items[number], keep)));
@@ -664,7 +664,7 @@ internal static partial class FileExplorer
         var directory = argument.Length > 0
             ? argument
             : FileExplorer.PickDirectory(Lang.T("Add a folder to favorites"));
-        if (directory == null) return;
+        if (directory is null) return;
         try
         {
             var shown = ActivePane.Directory;
@@ -686,7 +686,7 @@ internal static partial class FileExplorer
 
         var tooMany = Lang.F("More than {0} files: choose a folder with fewer", FileFavorites.FolderImportMax);
         var own = FileFavorites.ReadFolder(directory, false);
-        if (own.Error != null || own.TooMany)
+        if (own.Error is not null || own.TooMany)
         {
             _favoriteMessage = own.Error ?? tooMany;
             return;
@@ -791,7 +791,7 @@ internal static partial class FileExplorer
         if (name.Length == 0)
         {
             var asked = AskName(DialogText.FavoriteNewFolder, string.Empty);
-            if (asked == null) return;
+            if (asked is null) return;
             name = asked;
         }
 
@@ -816,7 +816,7 @@ internal static partial class FileExplorer
         ChoiceBox.Forget();
         var path = StartMenu.AskNewFile(DialogText.NewFile, name, FavoriteFolderForNewFile(selected));
         Tools.ClearScreen();
-        if (path == null) return null;
+        if (path is null) return null;
         try
         {
             // Only a new file: one that was made in the meantime is not emptied (it is logged, or why it failed)
@@ -850,12 +850,12 @@ internal static partial class FileExplorer
         if (item.IsFolder)
         {
             item = FileFavorites.InFolder(selected).FirstOrDefault(favorite => !favorite.IsFolder);
-            if (item == null) return null;
+            if (item is null) return null;
         }
 
         if (Directory.Exists(item.Path)) return item.Path;
         var directory = System.IO.Path.GetDirectoryName(item.Path);
-        return File.Exists(item.Path) && directory != null && Directory.Exists(directory) ? directory : null;
+        return File.Exists(item.Path) && directory is not null && Directory.Exists(directory) ? directory : null;
     }
 
     // S or ":subfolder name": ask for the name of a new subfolder (if it is not given) and add it to the folder of the
@@ -877,7 +877,7 @@ internal static partial class FileExplorer
         if (name.Length == 0)
         {
             var asked = AskName(Lang.T("New subfolder"), string.Empty);
-            if (asked == null) return;
+            if (asked is null) return;
             name = asked;
         }
 
@@ -906,7 +906,7 @@ internal static partial class FileExplorer
         if (name.Length == 0)
         {
             var asked = AskName(DialogText.FavoriteRenameFolder, FileFavorites.Items[number].Name);
-            if (asked == null) return;
+            if (asked is null) return;
             name = asked;
         }
 
@@ -975,7 +975,7 @@ internal static partial class FileExplorer
         {
             // A new folder, where the folder (or the folder it is in) is
             var name = AskName(DialogText.FavoriteNewFolder, string.Empty);
-            if (name == null) return;
+            if (name is null) return;
             var at = FileFavorites.AddFolder(name, index);
             if (at < 0)
             {
@@ -996,7 +996,7 @@ internal static partial class FileExplorer
         FilterFavorites();
         _favoriteIndex = Math.Max(0,
             _favorites.FindIndex(number => ReferenceEquals(FileFavorites.Items[number], folder)));
-        _favoriteMessage = DialogText.FavoriteMovedOne + (into == null ? DialogText.FavoriteNoFolder : into.Name);
+        _favoriteMessage = DialogText.FavoriteMovedOne + (into is null ? DialogText.FavoriteNoFolder : into.Name);
         SaveFavoriteList();
     }
 
@@ -1032,7 +1032,7 @@ internal static partial class FileExplorer
         {
             // A new folder, where the first of the favorites is
             var name = AskName(DialogText.FavoriteNewFolder, string.Empty);
-            if (name == null) return;
+            if (name is null) return;
             var first = -1;
             for (var i = 0; i < FileFavorites.Items.Count && first < 0; i++)
             {
@@ -1060,7 +1060,7 @@ internal static partial class FileExplorer
         FilterFavorites();
         _favoriteIndex = Math.Max(0,
             _favorites.FindIndex(number => ReferenceEquals(FileFavorites.Items[number], folder ?? items[0])));
-        var where = folder == null ? DialogText.FavoriteNoFolder : folder.Name;
+        var where = folder is null ? DialogText.FavoriteNoFolder : folder.Name;
         _favoriteMessage = items.Count == 1
             ? DialogText.FavoriteMovedOne + where
             : DialogText.FavoriteMovedMany(items.Count, where);
@@ -1368,7 +1368,7 @@ internal static partial class FileExplorer
             {
                 ConsoleColors.SetColors(ConsoleColors.ColorPreset.HighlightInverted);
             }
-            else if (favorite.Color != null)
+            else if (favorite.Color is not null)
             {
                 ConsoleColors.SetTextColor(favorite.Color.Value);
             }

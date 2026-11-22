@@ -271,11 +271,11 @@ internal sealed partial class ShellSession
             return;
         }
 
-        var what = folder != null
+        var what = folder is not null
             ? "[" + folder.Name + "]"
             : string.Join(", ", moved.Select(FavoriteName));
-        var error = folder != null ? MoveFolder(folder, where) : MoveRows(moved, where);
-        if (error == null) FavoritesChanged(Lang.F("Moved: {0}", what), "move");
+        var error = folder is not null ? MoveFolder(folder, where) : MoveRows(moved, where);
+        if (error is null) FavoritesChanged(Lang.F("Moved: {0}", what), "move");
         else if (error.Length > 0) Error(error);
     }
 

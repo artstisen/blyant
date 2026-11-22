@@ -70,7 +70,7 @@ internal static class LineDiff
         }
 
         var middle = CompareMiddle(a, b, start, endA - start, endB - start);
-        if (middle == null) return null;
+        if (middle is null) return null;
         var lines = new List<Line>(Math.Max(a.Length, b.Length) + middle.Count);
         for (var i = 0; i < start; i++) lines.Add(new Line(Kind.Same, newLines[i], i, i));
         foreach (var (kind, oldIndex, newIndex) in middle)
@@ -125,7 +125,7 @@ internal static class LineDiff
             for (var k = -d; k <= d; k += 2)
             {
                 var step = Choose(kk => v[offset + kk], k, d, n, m);
-                if (step == null)
+                if (step is null)
                 {
                     v[offset + k] = Unreachable;
                     continue;
@@ -222,8 +222,8 @@ internal static class LineDiff
             if (from != Unreachable && from + 1 <= n) right = (from + 1, k - 1, from);
         }
 
-        if (down == null) return right;
-        if (right == null) return down;
+        if (down is null) return right;
+        if (right is null) return down;
         return down.Value.X >= right.Value.X ? down : right;
     }
 

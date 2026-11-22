@@ -222,7 +222,7 @@ internal sealed partial class ShellSession
                         : kept.Count == 1
                             ? Lang.F("No command {0}: 1 is kept (again lists it)", number)
                             : Lang.F("No command {0}: {1} are kept (again lists them)", number, kept.Count);
-            if (refused != null)
+            if (refused is not null)
             {
                 // English: the log (by name, as other commands)
                 EventLog.AddCommand(DialogText.LogShell, "again");
@@ -240,7 +240,7 @@ internal sealed partial class ShellSession
         // "$w notes.md 12" as typed)
         if (_typed && !_notKept && !CommandLine.Name(line).Equals("again", StringComparison.OrdinalIgnoreCase))
         {
-            var kept = again == null ? typedLine : line;
+            var kept = again is null ? typedLine : line;
             CommandHistory.Add(CommandContext.Shell, kept);
             // (and in shellhistory.txt, for the next shell)
             ShellHistory.Add(kept);
@@ -283,7 +283,7 @@ internal sealed partial class ShellSession
         var problem = _runDepth > 0 && name == "screen"
             ? Lang.T("screen is refused in a run: run it after")
             : help ? null : ExpansionProblem(name, line, argument);
-        if (problem != null)
+        if (problem is not null)
         {
             NewPage();
             Error(problem);
@@ -376,7 +376,7 @@ internal sealed partial class ShellSession
         var argument = CommandLine.Argument(line);
         // ("again filter lines": a list, as "again" alone; "again 3-5 > $tidy": kept, not run; "again edit 3": put in a
         // file to edit)
-        if (argument.Length == 0 || FilterOf(argument) != null || TargetAtEnd(argument) != null ||
+        if (argument.Length == 0 || FilterOf(argument) is not null || TargetAtEnd(argument) is not null ||
             CommandLine.Name(argument).Equals("edit", StringComparison.OrdinalIgnoreCase))
         {
             return null;
@@ -430,7 +430,7 @@ internal sealed partial class ShellSession
         var found = 0;
         for (var i = 0; i < kept.Count; i++)
         {
-            if (filter != null && !(ShellCompletion.IsPattern(filter)
+            if (filter is not null && !(ShellCompletion.IsPattern(filter)
                     ? ShellCompletion.PatternFits(filter, kept[i])
                     : kept[i].Contains(filter, StringComparison.OrdinalIgnoreCase)))
             {
@@ -457,7 +457,7 @@ internal sealed partial class ShellSession
         foreach (var (reserved, value) in new[] { (ShellRegisters.ClipName, ShellRegisters.Clip), (ShellRegisters.PeekName, ShellRegisters.Peek) })
         {
             if (!ShellRegisters.Mentions(argument, reserved)) continue;
-            if (value == null)
+            if (value is null)
             {
                 return reserved == ShellRegisters.ClipName
                     ? Lang.T("Nothing copied yet: clip copies a text for $clip")
@@ -480,27 +480,27 @@ internal sealed partial class ShellSession
             return MoreThanOneLine(several);
         }
 
-        if (ShellRegisters.Calc == null && ShellRegisters.Mentions(argument, ShellRegisters.CalcName))
+        if (ShellRegisters.Calc is null && ShellRegisters.Mentions(argument, ShellRegisters.CalcName))
         {
             return Lang.T("Nothing calculated yet: calc 2 + 3 gives $calc");
         }
 
-        if (_file == null && ShellRegisters.Mentions(argument, "file"))
+        if (_file is null && ShellRegisters.Mentions(argument, "file"))
         {
             return Lang.T("No file yet: open, peek, insert, new ... give $file");
         }
 
-        if (_previousDirectory == null && ShellRegisters.Mentions(argument, "prev"))
+        if (_previousDirectory is null && ShellRegisters.Mentions(argument, "prev"))
         {
             return Lang.T("No directory before this one yet: cd, up, home ... give $prev");
         }
 
-        if (CommandsFileNow == null && ShellRegisters.Mentions(argument, "cmd"))
+        if (CommandsFileNow is null && ShellRegisters.Mentions(argument, "cmd"))
         {
             return Lang.T("No $cmd yet: again edit puts the commands typed in it");
         }
 
-        return ShellRegisters.Mentions(argument, "line") && FileLine == null
+        return ShellRegisters.Mentions(argument, "line") && FileLine is null
             ? Lang.T("No line yet: words, peek, insert ... give $line")
             : null;
 
@@ -576,7 +576,7 @@ internal sealed partial class ShellSession
     // A row shown by a list: its full path kept when the list goes to a register
     private void RowShown(Item item)
     {
-        if (_shownPaths != null && item.Path.Length > 0) _shownPaths.Add(Path.GetFullPath(item.Path));
+        if (_shownPaths is not null && item.Path.Length > 0) _shownPaths.Add(Path.GetFullPath(item.Path));
     }
 
     // "find -t TODO > $open", "recent >> $files", "fav filter draft > $drafts": the list shown as always, and the full
@@ -641,7 +641,7 @@ internal sealed partial class ShellSession
 
         if (words.Count == 0)
         {
-            if (_file == null) Error(Lang.T("No file yet: open, peek, insert, new ... give $file"));
+            if (_file is null) Error(Lang.T("No file yet: open, peek, insert, new ... give $file"));
             else Line(Lang.F("$file: {0}", _file));
             return;
         }
@@ -669,11 +669,11 @@ internal sealed partial class ShellSession
         }
 
         // (another file: no line yet; the same file keeps it)
-        if (_file == null || !FileOperations.NameComparer.Equals(_file, path)) _line = null;
+        if (_file is null || !FileOperations.NameComparer.Equals(_file, path)) _line = null;
         _file = path;
-        if (at != null) _line = at;
+        if (at is not null) _line = at;
         Line(Lang.F("$file: {0}", _file));
-        if (at != null) Line(Lang.F("$line: {0}", at));
+        if (at is not null) Line(Lang.F("$line: {0}", at));
     }
 
     // How many lines a file has now; null, and why, when it cannot be read or is not a text Blyant opens
@@ -716,7 +716,7 @@ internal sealed partial class ShellSession
             return;
         }
 
-        if (_file == null)
+        if (_file is null)
         {
             Error(Lang.T("No file yet: open, peek, insert, new ... give $file"));
             return;
@@ -789,7 +789,7 @@ internal sealed partial class ShellSession
         }
 
         var (result, error) = Calculator.Calculate(expression);
-        if (result == null)
+        if (result is null)
         {
             Error(error ?? string.Empty);
             return;
@@ -890,7 +890,7 @@ internal sealed partial class ShellSession
     /// The file of "again edit" when this shell has written it and it is there, for $cmd (null: not now). A file with
     /// the number of this process left by an earlier Blyant (the number given again) is not $cmd
     /// </summary>
-    internal static string? CommandsFileNow => _commandsFile != null && File.Exists(_commandsFile) ? _commandsFile : null;
+    internal static string? CommandsFileNow => _commandsFile is not null && File.Exists(_commandsFile) ? _commandsFile : null;
 
     // The file "again edit" puts commands in, while Blyant runs: in the folder "temp" of the data directory, with the
     // number of the process in the name (two shells at a time have a file each). Kept as written (the data directory
@@ -1025,7 +1025,7 @@ internal sealed partial class ShellSession
         {
             FileIo.CreateDirectory(CommandsDirectory);
             // (a link of that name is taken away: the commands are written in the folder, not where it points)
-            if (new FileInfo(path).LinkTarget != null) FileIo.DeleteFile(path);
+            if (new FileInfo(path).LinkTarget is not null) FileIo.DeleteFile(path);
             if (!File.Exists(path)) FileIo.CreateNewFile(path);
             FileIo.WriteAllBytesSafe(path, new System.Text.UTF8Encoding(false).GetBytes(string.Join("\n", commands) + "\n"));
             _commandsFile = path;
@@ -1127,8 +1127,8 @@ internal sealed partial class ShellSession
     private void Echo(string text)
     {
         var unknown = ShellRegisters.NamesIn(_typedArgument ?? string.Empty)
-            .FirstOrDefault(name => ShellRegisters.Get(name) == null && !ShellRegisters.IsReserved(name));
-        if (unknown != null)
+            .FirstOrDefault(name => ShellRegisters.Get(name) is null && !ShellRegisters.IsReserved(name));
+        if (unknown is not null)
         {
             Error(Lang.F("No register named {0} (reg lists them)", unknown));
             return;
@@ -1449,8 +1449,6 @@ internal sealed partial class ShellSession
         return parts.Length > 1 ? parts[1] : string.Empty;
     }
 
-    #region Places
-
     // A row that is not in the last list: told with how many rows it has (a list of one row: the file a command worked on)
     private string NoRow(string row) =>
         !_listShown ? Lang.F("No row {0}: no list has been shown", row)
@@ -1466,7 +1464,7 @@ internal sealed partial class ShellSession
         // "%" alone in the place of a file is $file, as in Vim ("peek %", "copy % backup"; a file named "%" is "./%")
         if (argument.Trim() == "%")
         {
-            if (_file != null) return new Item(_file, false);
+            if (_file is not null) return new Item(_file, false);
             Error(Lang.T("% is $file, the file worked on last: none yet (peek notes.md)"));
             return null;
         }
@@ -1497,7 +1495,7 @@ internal sealed partial class ShellSession
     internal string CompletionFile(string typed)
     {
         // ("shift @ " and "shift % " and Tab: the headings of $file)
-        if (typed is "@" or "%" && _file != null) return _file;
+        if (typed is "@" or "%" && _file is not null) return _file;
         var word = ShellRegisters.Expand(typed, int.MaxValue).Trim().Trim('"');
         return RowOf(word)?.Path ?? PathOf(word);
     }
@@ -1527,7 +1525,7 @@ internal sealed partial class ShellSession
         // "cd -": the directory the shell was in before ($prev), as in bash; again: back (a directory named "-" is "cd ./-")
         if (argument.Trim() == "-")
         {
-            if (_previousDirectory == null)
+            if (_previousDirectory is null)
             {
                 Error(Lang.T("No directory before this one yet: cd - goes back after cd, up, home, hot ..."));
                 return;
@@ -1545,7 +1543,7 @@ internal sealed partial class ShellSession
         }
 
         var item = argument.Trim().Length == 0 ? new Item(PathOf("~"), true) : Resolve(argument, true);
-        if (item == null) return;
+        if (item is null) return;
         if (!System.IO.Directory.Exists(item.Path) && File.Exists(item.Path) &&
             Path.GetDirectoryName(Path.GetFullPath(item.Path)) is { Length: > 0 } folder)
         {
@@ -1631,7 +1629,7 @@ internal sealed partial class ShellSession
         }
 
         var item = Resolve(argument, true);
-        if (item == null) return;
+        if (item is null) return;
         if (!System.IO.Directory.Exists(item.Path))
         {
             Error(Lang.F("Not found: {0}", item.Path));
@@ -1675,12 +1673,8 @@ internal sealed partial class ShellSession
             ? row
             : (row.Item, Padded(row.Text, width) +
                          (dates ? "  " + (ChangedOf(row.Item.Path) ?? "-") : string.Empty) +
-                         (sizeTexts != null ? "  " + sizeTexts[row.Item.Path].PadLeft(sizeWidth) : string.Empty))).ToList();
+                         (sizeTexts is not null ? "  " + sizeTexts[row.Item.Path].PadLeft(sizeWidth) : string.Empty))).ToList();
     }
-
-    #endregion
-
-    #region Lists
 
     // "fav", "fav work": the favorites of the open list, or of another. "fav -l", "fav -l work": the full paths.
     // "options": false for "fav use -l" (a list named "-l")
@@ -1700,7 +1694,7 @@ internal sealed partial class ShellSession
         }
 
         // "fav -t storm": the favorites with the text in a line, as a filter shows them
-        if (search != null)
+        if (search is not null)
         {
             FilterFavorites(null, full, search);
             return;
@@ -1814,19 +1808,19 @@ internal sealed partial class ShellSession
         var sizeWidth = sizeTexts is { Count: > 0 } ? sizeTexts.Max(TextMetrics.WidthOf) : 0;
         var rows = entries.Select((entry, i) => (new Item(entry.Path, false),
             Padded(names[i], width) + "  " + IsoDateTime.Local(entry.Opened, "yyyy-MM-dd HH:mm") +
-            (sizeTexts == null ? string.Empty : "  " + sizeTexts[i].PadLeft(sizeWidth)))).ToList();
-        if (search != null)
+            (sizeTexts is null ? string.Empty : "  " + sizeTexts[i].PadLeft(sizeWidth)))).ToList();
+        if (search is not null)
         {
             // The rows with the text: the line found instead of the date ("02-storm.md:3  The storm came"), numbered
             // as in the whole list, so "open 4" opens row 4 at that line
             var (shown, found) = FoundRows(entries.Select(entry => entry.Path).ToList(), rows, names, search, !full,
                 _ => true);
-            Filtered(shown, i => found[i] && (filter == null || Fits(filter, entries[i].Path, null)),
+            Filtered(shown, i => found[i] && (filter is null || Fits(filter, entries[i].Path, null)),
                 Lang.F("No file has {0} in a line", search));
             return;
         }
 
-        if (filter != null)
+        if (filter is not null)
         {
             Filtered(rows, i => Fits(filter, entries[i].Path, null), Lang.F("No files with {0} in them", filter));
             return;
@@ -1863,13 +1857,13 @@ internal sealed partial class ShellSession
     {
         var pattern = FileSearch.WildcardText(text);
         var found = paths.Select((path, i) => look(i) ? FileSearch.FirstLineWith(path, pattern) : null).ToList();
-        var width = !lineUp ? 0 : found.Select((line, i) => line == null ? 0 : TextMetrics.WidthOf(names[i]) + 1 +
+        var width = !lineUp ? 0 : found.Select((line, i) => line is null ? 0 : TextMetrics.WidthOf(names[i]) + 1 +
             (line.Value.Line + 1).ToString(CultureInfo.InvariantCulture).Length).DefaultIfEmpty(0).Max();
         var shown = rows.Select((row, i) => found[i] is { } line
             ? (new Item(paths[i], false, (line.Line + 1, 1), text),
                 Padded(names[i] + ":" + (line.Line + 1).ToString(CultureInfo.InvariantCulture), width) + "  " + line.Text)
             : row).ToList();
-        return (shown, found.Select(line => line != null).ToList());
+        return (shown, found.Select(line => line is not null).ToList());
     }
 
     // A filter fits a path (or a name it has: of a directory of the hotlist): the text is in it (letter case alike),
@@ -1883,7 +1877,7 @@ internal sealed partial class ShellSession
         }
 
         return path.Contains(filter, StringComparison.OrdinalIgnoreCase) ||
-               (name != null && name.Contains(filter, StringComparison.OrdinalIgnoreCase));
+               (name is not null && name.Contains(filter, StringComparison.OrdinalIgnoreCase));
     }
 
     // "hot": the directories of the hotlist; "hot filter notes" those with a text in their name or path
@@ -2184,10 +2178,6 @@ internal sealed partial class ShellSession
         Line(row);
     }
 
-    #endregion
-
-    #region Open
-
     // "open notes.md", "open 3", "open notes.md +12": the editor of the full screen, and back at the prompt when it is
     // closed. A file that is not there (in a directory that is) is made if you want that. A directory: gone to
     private void Open(string argument)
@@ -2196,7 +2186,7 @@ internal sealed partial class ShellSession
         var words = Words(argument);
         var line = words.Select(word => IsLine(word)
             ? int.TryParse(word[1..], out var n) ? Math.Max(1, n) : int.MaxValue
-            : (int?)null).LastOrDefault(n => n != null);
+            : (int?)null).LastOrDefault(n => n is not null);
         var name = string.Join(' ', words.Where(word => !IsLine(word)));
         if (name.Length == 0)
         {
@@ -2292,7 +2282,7 @@ internal sealed partial class ShellSession
             return null;
         }
 
-        if (_file == null)
+        if (_file is null)
         {
             Error(Lang.T("No file yet: open, peek, insert, new ... give $file"));
             return null;
@@ -2342,6 +2332,4 @@ internal sealed partial class ShellSession
             Init.LeaveScreen();
         }
     }
-
-    #endregion
 }

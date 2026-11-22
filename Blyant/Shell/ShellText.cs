@@ -71,7 +71,7 @@ internal sealed partial class ShellSession
 
         var rest = AfterWords(argument, 2);
         var at = InsertPlace(words[1]);
-        if (at == null)
+        if (at is null)
         {
             Error(Lang.F("Not a place in a file: {0} (top, bottom or +12)", words[1]));
             return;
@@ -121,7 +121,7 @@ internal sealed partial class ShellSession
         // ("input" alone and "input @" are $file after $line, put in before: see WithAt)
         var words = Words(argument);
         var place = words.Count == 2 ? InsertPlace(words[1]) : null;
-        if (place == null)
+        if (place is null)
         {
             Error(Lang.T("Give a file and where, or nothing: input, input notes.md bottom, input notes.md +12"));
             return;
@@ -353,7 +353,7 @@ internal sealed partial class ShellSession
         var endsWithBreak = text.EndsWith('\n');
         var lines = LinesOfText(text);
         lines.RemoveRange(first - 1, last - first + 1);
-        if (line != null) lines.InsertRange(first - 1, LinesPutIn(line));
+        if (line is not null) lines.InsertRange(first - 1, LinesPutIn(line));
         if (lines.Count == 0) return (string.Empty, 1);
         return (string.Join("\n", lines) + (endsWithBreak ? "\n" : string.Empty), Math.Min(first, lines.Count));
     }
@@ -399,7 +399,7 @@ internal sealed partial class ShellSession
         var words = Words(argument);
         var item = words.Count == 0 ? new Item(Directory, true) : words.Count == 1 ? Existing(words[0]) : null;
         if (words.Count > 1) Error(Lang.T("Give one file or directory: info 3"));
-        if (item == null) return;
+        if (item is null) return;
         List<(string Label, string Value)> rows;
         try
         {

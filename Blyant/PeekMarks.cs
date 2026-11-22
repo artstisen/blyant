@@ -113,7 +113,7 @@ internal static class PeekMarks
     private static string Serialize()
     {
         var all = Entries.Select(entry => (entry.Name, entry.Window)).ToList();
-        if (_last != null) all.Add((LastName, _last));
+        if (_last is not null) all.Add((LastName, _last));
         return string.Concat(all.Where(entry => Keepable(entry.Window.Path)).Select(entry =>
             entry.Name + "\t" + entry.Window.First.ToString(CultureInfo.InvariantCulture) + "\t" +
             entry.Window.Count.ToString(CultureInfo.InvariantCulture) + "\t" + entry.Window.Path + "\n"));
@@ -134,7 +134,7 @@ internal static class PeekMarks
         try
         {
             var directory = Path.GetDirectoryName(Path.GetFullPath(FilePath));
-            if (directory != null && !Directory.Exists(directory)) FileIo.CreateDirectory(directory);
+            if (directory is not null && !Directory.Exists(directory)) FileIo.CreateDirectory(directory);
             FileIo.WriteAllBytesSafe(FilePath, new UTF8Encoding(false).GetBytes(Serialize()));
             return DialogText.Success;
         }
@@ -194,7 +194,7 @@ internal static class PeekMarks
     internal static void SetLast(Window? window)
     {
         Load();
-        if (window != null && !Keepable(window.Path)) window = null;
+        if (window is not null && !Keepable(window.Path)) window = null;
         if (_last == window) return;
         _last = window;
         SaveLogged();
@@ -223,7 +223,7 @@ internal static class PeekMarks
             changed = true;
         }
 
-        if (_last != null && FileOperations.FollowedPath(_last.Path, oldPath, newPath) is { } lastPath)
+        if (_last is not null && FileOperations.FollowedPath(_last.Path, oldPath, newPath) is { } lastPath)
         {
             _last = _last with { Path = lastPath };
             changed = true;

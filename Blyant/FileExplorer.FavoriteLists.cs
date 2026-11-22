@@ -31,7 +31,7 @@ internal static partial class FileExplorer
                         {
                             case ConsoleKey.N:
                                 open = NewFavoriteList();
-                                return open != null ? PickListBox.KeyUse.Close : PickListBox.KeyUse.Used;
+                                return open is not null ? PickListBox.KeyUse.Close : PickListBox.KeyUse.Used;
                             case ConsoleKey.R:
                                 return RenameFavoriteList(lists[row]);
                             case ConsoleKey.D:
@@ -42,7 +42,7 @@ internal static partial class FileExplorer
                     }
                 });
             if (picked == PickListBox.Reload) continue;
-            if (open != null) OpenFavoriteList(open);
+            if (open is not null) OpenFavoriteList(open);
             else if (picked >= 0 && lists[picked] != FileFavorites.CurrentList) OpenFavoriteList(lists[picked]);
             return;
         }
@@ -70,7 +70,7 @@ internal static partial class FileExplorer
         ChoiceBox.Forget();
         var name = ChoiceBox.AskText(Lang.T("New list"), DialogText.TypeNameAndPressEnter, DialogText.NameColon,
             string.Empty);
-        if (name == null) return null;
+        if (name is null) return null;
         var result = FileFavorites.NewList(name);
         if (result == DialogText.Success) return name.Trim();
         ChoiceBox.Message(Lang.T("New list"), result, string.Empty);
@@ -87,7 +87,7 @@ internal static partial class FileExplorer
         }
 
         var newName = ChoiceBox.AskText(Lang.T("Rename list"), DialogText.TypeNameAndPressEnter, DialogText.NameColon, name);
-        if (newName == null) return PickListBox.KeyUse.Used;
+        if (newName is null) return PickListBox.KeyUse.Used;
         var result = FileFavorites.RenameList(name, newName);
         if (result == DialogText.Success)
         {

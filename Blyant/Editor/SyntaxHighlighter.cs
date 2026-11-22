@@ -52,7 +52,7 @@ internal static class SyntaxHighlighter
     internal static SyntaxType TypeOfFile(string fileName, string? text)
     {
         var type = TypeOfFile(fileName);
-        if (type != SyntaxType.None || text == null || Path.GetExtension(fileName).Length > 0) return type;
+        if (type != SyntaxType.None || text is null || Path.GetExtension(fileName).Length > 0) return type;
         return TypeOfScript(text);
     }
 
